@@ -1,0 +1,22 @@
+.lab-header-section,
+.card,
+.sidebar,
+.header,
+.footer,
+.modal-content {
+  background-color: var(--glass-bg) !important;
+  transition:
+    backdrop-filter 0.3s ease,
+    background-color 0.3s ease;
+}
+
+/* Apply the blur ONLY when the user preference class is present */
+html.enable-blur .lab-header-section,
+html.enable-blur .card,
+html.enable-blur .sidebar,
+html.enable-blur .header,
+html.enable-blur .footer,
+html.enable-blur .modal-content {
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+}

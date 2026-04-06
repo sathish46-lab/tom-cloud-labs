@@ -1,0 +1,26 @@
+#scene {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 103vh;
+  width: 103vw;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+
+  [data-coreui-theme="dark"] & {
+    background-color: #112c54;
+    filter: saturate(160%) brightness(65%);
+  }
+  [data-coreui-theme="light"] & {
+    background-color: #0d1117;
+    filter: saturate(150%) brightness(65%);
+  }
+  .bg-cover {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    background-size: cover;
+    background-position: center center;
+  }
+}

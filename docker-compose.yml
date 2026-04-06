@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  vps:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tomlabs_vps
+    privileged: true
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+      - .:/host_www
+      - docker-data:/var/lib/docker
+    networks:
+      - tomlabs_net
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8081:8081"
+      - "8082:8082"
+      - "5672:5672"
+      - "15672:15672"
+      - "51820:51820/udp"
+    stop_signal: SIGRTMIN+3
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: tomlabs_cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=eyJhIjoiYmU0MzJjMGY1OTFiOGFjZDRjMDkzY2YwZWY1ZTA5MWUiLCJ0IjoiOTBmNjBjMjItMGM0YS00MWRkLTgwNTItZDg2ZDFiNjc1Mjc2IiwicyI6IlpHSXpPR1psTVdZdFpqYzNaUzAwTm1Oa0xUa3pNek10TkRFd016azJZbU0xTnpjMiJ9
+    networks:
+      - tomlabs_net
+
+networks:
+  tomlabs_net:
+    name: tomlabs_net
+    driver: bridge
+
+volumes:
+  docker-data:

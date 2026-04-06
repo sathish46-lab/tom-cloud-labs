@@ -1,0 +1,83 @@
+// It gives this file access to the transition mixin
+@use "../../grunt/node_modules/@coreui/coreui/scss/coreui" as *;
+
+body {
+  background-color: var(--cui-tertiary-bg);
+}
+
+.wrapper {
+  width: 100%;
+  padding-inline: var(--cui-sidebar-occupy-start, 0)
+    var(--cui-sidebar-occupy-end, 0);
+  will-change: auto;
+  @include transition(padding 0.15s);
+}
+
+.header > .container-fluid,
+.sidebar-header {
+  min-height: calc(4rem + 1px);
+}
+
+.sidebar-brand-full {
+  margin-left: 3px;
+}
+
+.sidebar-header {
+  .nav-underline-border {
+    --cui-nav-underline-border-link-padding-x: 1rem;
+    --cui-nav-underline-border-gap: 0;
+  }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    min-height: calc(4rem + 1px);
+  }
+}
+
+.sidebar-toggler {
+  margin-inline-start: auto;
+}
+
+.sidebar-narrow,
+.sidebar-narrow-unfoldable:not(:hover) {
+  .sidebar-toggler {
+    margin-inline-end: auto;
+  }
+}
+
+.header > .container-fluid + .container-fluid {
+  min-height: 3rem;
+}
+
+// Match header height to sidebar header height
+.header {
+  --cui-header-min-height: 4rem;
+  --cui-header-height: 4rem;
+  padding: 0; // Remove extra padding that might increase height
+}
+
+.header-sticky {
+  height: 4rem;
+}
+
+// Adjust the top margin of the wrapper to match the new smaller header
+.wrapper {
+  margin-top: 0; // If you use sticky header, ensure the body doesn't overlap
+  backdrop-filter: blur(var(--blur-intensity)) saturate(150%);
+}
+
+.footer {
+  min-height: calc(3rem + 1px);
+  background: var(--cui-body-bg);
+}
+
+@include color-mode(dark) {
+  body {
+    background-color: var(--cui-dark-bg-subtle);
+  }
+
+  .footer {
+    --cui-footer-bg: var(--cui-body-bg);
+  }
+}

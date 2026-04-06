@@ -1,0 +1,42 @@
+# ----------------------------------------------------------------------
+# FIXED PROFESSIONAL ROUTING
+# ----------------------------------------------------------------------
+RewriteEngine On
+RewriteBase /
+
+# 1. Force HTTPS - COMMENT THESE OUT TO AVOID REDIRECT LOOPS
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# 2. Skip real files
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# 3. Authentication Routing
+RewriteRule ^signin$ auth/signin.php [L,QSA]
+RewriteRule ^signup$ auth/signup.php [L,QSA]
+RewriteRule ^logout$ auth/logout.php [L,QSA]
+
+# 4. Intelligent Folder Routing
+RewriteCond %{DOCUMENT_ROOT}/auth/$1.php -f
+RewriteRule ^([^/]+)$ auth/$1.php [L,QSA]
+
+RewriteCond %{DOCUMENT_ROOT}/app/$1.php -f
+RewriteRule ^([^/]+)$ app/$1.php [L,QSA]
+
+# 5. USER PROFILE ROUTING
+RewriteCond %{DOCUMENT_ROOT}/app/account.php -f
+RewriteRule ^([a-zA-Z0-9_.-]+)$ app/account.php?username=$1 [L,QSA]
+
+# 6. API ROUTING (Dual-Support: root api/ and src/api/)
+RewriteCond %{DOCUMENT_ROOT}/src/api/$1/$2.php -f
+RewriteRule ^api/([^/]+)/([^/]+)$ src/api/$1/$2.php [L,QSA]
+
+RewriteCond %{DOCUMENT_ROOT}/api/$1/$2.php -f
+RewriteRule ^api/([^/]+)/([^/]+)$ api/$1/$2.php [L,QSA]
+
+# Dashboard Routing
+RewriteRule ^labs/dashboard/([a-f0-9]{32})$ app/labs/dashboard.php?hash=$1 [L,QSA]
+RewriteRule ^labs/domains/([a-f0-9]{32})$ app/labs/domains.php?hash=$1 [L,QSA]
+RewriteRule ^labs/preferences/([a-f0-9]{32})$ app/labs/preferences.php?hash=$1 [L,QSA]

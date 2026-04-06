@@ -1,0 +1,22 @@
+{
+    "name": "tom/dashboard-web",
+    "description": "Tom Lab Dashboard Project",
+    "type": "project",
+    "require": {
+        "php": ">=7.4",
+        "mongodb/mongodb": "^2.1",
+        "phpmailer/phpmailer": "^7.0",
+        "php-amqplib/php-amqplib": "^3.7",
+        "aws/aws-sdk-php": "^3.369"
+    },
+    "autoload": {
+        "files": [
+            "src/load.php"
+        ]
+    },
+    "config": {
+        "allow-plugins": {
+            "symfony/flex": true
+        }
+    }
+}
