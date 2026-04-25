@@ -1,0 +1,45 @@
+// 1. ALL @use statements must come first
+@use "../grunt/node_modules/@coreui/coreui/scss/coreui" as * with ($enable-deprecation-messages: false);
+@use "../grunt/node_modules/@coreui/coreui/scss/variables" as *;
+@use "../grunt/node_modules/@coreui/coreui/scss/mixins/breakpoints" as *;
+@use "../grunt/node_modules/@coreui/coreui/scss/mixins/color-mode" as *;
+@use "../grunt/node_modules/simplebar/dist/simplebar.min";
+@use "../grunt/node_modules/@coreui/chartjs/dist/css/coreui-chartjs";
+@use "coreui/style";
+@use "coreui/theme";
+@use "coreui/toast";
+@use "components/hover";
+@use "template/parallax";
+@use "template/_backdrop";
+@use "components/tooltip";
+@use "components/serverlog";
+@use "components/challenges";
+
+// 2. Global Layout Fixes (Standard CSS rules come last)
+.wrapper {
+  width: 100%;
+  padding-inline-start: var(--cui-sidebar-occupy-start, 0);
+  padding-inline-end: var(--cui-sidebar-occupy-end, 0);
+  will-change: auto;
+  @include transition(padding 0.15s);
+}
+
+.lab-header-section {
+  /* 1. Theme Background */
+  background-color: var(--cui-body-bg);
+  border-bottom: 1px solid var(--color-border);
+
+  /* 2. Layout */
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 20px;
+
+  /* 3. Negative Margins to stretch full width over parent padding */
+  padding: 24px 30px;
+  margin: -0px -24px 26px -24px;
+
+  position: relative;
+  z-index: 5;
+}

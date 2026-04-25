@@ -1,0 +1,74 @@
+# =========================
+# Global ignores
+# =========================
+*.log
+*.tmp
+*.cache
+.env
+.env.*
+.DS_Store
+Thumbs.db
+
+# =========================
+# Composer / Node
+# =========================
+vendor/
+node_modules/
+
+# =========================
+# Labs specific ignores
+# =========================
+labs/**/vendor/
+labs/**/node_modules/
+labs/**/.env
+labs/**/storage/
+labs/**/cache/
+labs/**/logs/
+labs/htdocs/js/
+labs/htdocs/js/app.min.js
+labs/htdocs/js/app.js
+labs/htdocs/js/app.o.js
+labs/htdocs/css/app.css
+
+labs/workspace/tools/*
+
+# =========================
+# VPN API specific ignores
+# =========================
+vpn-api/**/vendor/
+vpn-api/**/node_modules/
+vpn-api/**/.env
+vpn-api/**/cache/
+vpn-api/**/logs/
+
+# =========================
+# Ignore build / runtime junk
+# =========================
+*.pid
+*.sock
+*.lock
+
+# =========================
+# Ignore editor files
+# =========================
+.vscode/
+.idea/
+*.swp
+
+
+env.json
+
+# =========================
+# Docker Infrastructure Data
+# =========================
+mongo-data/
+rabbitmq-data/
+apache-logs/
+gitlab_config/
+gitlab_data/
+gitlab_logs/
+scratch/
+traefik-conf/
+wireguard-conf/
+opt/
+work/

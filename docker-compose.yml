@@ -1,0 +1,79 @@
+services:
+  vps:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: docker_tomlabs_vps
+    privileged: true
+    environment:
+      - MAIN_DOMAIN=awshosting.in
+      - VPN_DOMAIN=vpn.awshosting.in
+      - MQS_DOMAIN=mq.awshosting.in
+      - CODE_DOMAIN=tomweb.shop
+      - WORK_DOMAIN=work.awshosting.in
+      - SSL_EMAIL=admin@example.com
+      - DOCKER_HOST=unix:///var/docker.sock
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+      - .:/host_www
+      - /var/run/docker.sock:/var/docker.sock
+      - ./labs:/var/www/labs
+      - ./vpn-api:/var/www/vpn-api
+      - ./work:/var/www/work
+      - ./test.json:/var/www/env.json
+      - ./consume_all.py:/var/www/consume_all.py
+      - ./publish_test.py:/var/www/publish_test.py
+      - ./opt/labs-control-panel:/opt/labs-control-panel
+      # ⬇️ NEW PERSISTENT VOLUMES ⬇️
+      - ./mongo-data:/var/lib/mongodb
+      - ./rabbitmq-data:/var/lib/rabbitmq
+      - ./wireguard-conf:/etc/wireguard
+      - ./apache-logs:/var/log/apache2
+      - ./traefik-conf:/etc/traefik
+    networks:
+      - docker_tomlabs_net
+      - tomlabs_net
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8081:8081"
+      - "8082:8082"
+      - "5672:5672"
+      - "15672:15672"
+      - "51820:51820/udp"
+      - "27017:27017" # Expose MongoDB locally
+    stop_signal: SIGRTMIN+3
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: docker_tomlabs_cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=eyJhIjoiYmU0MzJjMGY1OTFiOGFjZDRjMDkzY2YwZWY1ZTA5MWUiLCJ0IjoiOTBmNjBjMjItMGM0YS00MWRkLTgwNTItZDg2ZDFiNjc1Mjc2IiwicyI6IlpHSXpPR1psTVdZdFpqYzNaUzAwTm1Oa0xUa3pNek10TkRFd016azJZbU0xTnpjMiJ9
+    networks:
+      - docker_tomlabs_net
+
+  # gitlab:
+  #   image: 'gitlab/gitlab-ce:latest'
+  #   container_name: docker_tomlabs_gitlab
+  #   restart: always
+  #   hostname: 'git.awshosting.in'
+  #   environment:
+  #     GITLAB_OMNIBUS_CONFIG: |
+  #       external_url 'https://git.awshosting.in'
+  #       nginx['listen_port'] = 80
+  #       nginx['listen_https'] = false
+  #   volumes:
+  #     - './gitlab_config:/etc/gitlab'
+  #     - './gitlab_logs:/var/log/gitlab'
+  #     - './gitlab_data:/var/opt/gitlab'
+  #   networks:
+  #     - docker_tomlabs_net
+
+networks:
+  docker_tomlabs_net:
+    name: docker_tomlabs_net
+    driver: bridge
+  tomlabs_net:
+    external: true

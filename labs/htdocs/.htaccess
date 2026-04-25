@@ -1,0 +1,60 @@
+# ----------------------------------------------------------------------
+# FIXED PROFESSIONAL ROUTING
+# ----------------------------------------------------------------------
+RewriteEngine On
+RewriteBase /
+
+# 1. Force HTTPS - COMMENT THESE OUT TO AVOID REDIRECT LOOPS
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# 2. Skip real files
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# 3. Authentication Routing
+RewriteRule ^signin$ auth/signin.php [L,QSA]
+RewriteRule ^signup$ auth/signup.php [L,QSA]
+RewriteRule ^logout$ auth/logout.php [L,QSA]
+
+# 4. Intelligent Folder Routing
+RewriteCond %{DOCUMENT_ROOT}/auth/$1.php -f
+RewriteRule ^([^/]+)$ auth/$1.php [L,QSA]
+
+RewriteCond %{DOCUMENT_ROOT}/app/$1.php -f
+RewriteRule ^([^/]+)$ app/$1.php [L,QSA]
+
+# 7. Learn AI Routing
+RewriteRule ^learn$ app/learnAI/dashboard.php [L,QSA]
+RewriteRule ^learn/lesson/([^/]+)$ app/learnAI/course_view.php?id=$1 [L,QSA]
+RewriteRule ^learn/lesson/([^/]+)/chapter/([^/]+)$ app/learnAI/content.php?id=$2 [L,QSA]
+
+# 5. USER PROFILE ROUTING
+RewriteCond %{DOCUMENT_ROOT}/app/account.php -f
+RewriteRule ^([a-zA-Z0-9_.-]+)$ app/account.php?username=$1 [L,QSA]
+
+# 6. API ROUTING (Consolidated src/api/)
+RewriteRule ^api/([^/]+)/([^/]+)$ src/api/$1/$2.php [L,QSA]
+
+
+# 1. Existing Lab Tabs (Dashboard, Domains, Prefs)
+RewriteRule ^labs/(dashboard|domains|preferences)/([a-f0-9]{32})$ app/labs/$1.php [L,QSA]
+
+# ------------------------------------------------------------------
+# Challenge Routing — Pattern: /challenges/{tab}/{hash-or-slug}
+# ------------------------------------------------------------------
+
+# Redirect /labs/challenges/... to /challenges/... (Compatibility)
+RewriteRule ^labs/(challenges|leaderboard|dashboard|achievements)/([a-zA-Z0-9_-]+)$ challenges/$1/$2 [R=301,L]
+
+# Challenge Tabs
+# Pattern: /challenges/{tab}/{hash}
+RewriteRule ^challenges/(dashboard|challenges|leaderboard|achievements)/([a-f0-9]{32})$ app/challenges/$1.php [L,QSA]
+
+# Pattern: /challenges/{tab}/{slug}
+RewriteRule ^challenges/(dashboard|challenges|leaderboard|achievements)/([a-zA-Z0-9_-]+)$ app/challenges/$1.php [L,QSA]
+
+# Global Leaderboard Fallback
+RewriteRule ^leaderboard/([a-f0-9]{32})$        app/challenges/leaderboard.php [L,QSA]
+RewriteRule ^leaderboard/([a-zA-Z0-9_-]+)$      app/challenges/leaderboard.php [L,QSA]

@@ -1,0 +1,137 @@
+// Light theme glass definitions
+[data-coreui-theme="light"] {
+  --cui-body-bg: rgba(255, 255, 255, 0.8);
+  --cui-card-bg: rgba(255, 255, 255, 0.754);
+  --cui-card-border-color: rgba(255, 255, 255, 0.3);
+  --glass-bg: rgba(255, 255, 255, 0.866);
+}
+
+// Update your existing dark theme block
+[data-coreui-theme="dark"] {
+  --cui-body-bg: rgba(3, 17, 36, 0.98);
+  --cui-card-bg: rgba(255, 255, 255, 0.03);
+  --cui-card-border-color: rgba(255, 255, 255, 0.05);
+  --glass-bg: rgba(0, 10, 24, 0.823);
+}
+
+body {
+  /* Use theme variables for the background to match light/dark palettes */
+  background: linear-gradient(
+    -45deg,
+    var(--c1),
+    var(--c2),
+    var(--c3),
+    var(--c4)
+  );
+  background-size: 400% 400%;
+  animation: drift 30s ease infinite;
+}
+
+.glass-card {
+  background: var(--cui-card-bg);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--cui-card-border-color) !important;
+}
+
+.profile-hero-card {
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.7));
+  }
+
+  .card-body {
+    position: relative;
+    z-index: 2;
+  }
+}
+
+.text-shadow-sm {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.ls-1 {
+  letter-spacing: 1px;
+}
+
+@keyframes drift {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/*════════════════════════════════════════════
+  1.  COREUI THEME PALettes
+════════════════════════════════════════════*/
+
+/* LIGHT — pastel frost (moderate saturation) */
+html[data-coreui-theme="light"] {
+  --c1: #ffffff;
+  --c2: #e4e6ff;
+  --c3: #e4fbff;
+  --c4: #e2ecff;
+  --c5: #e6fff6;
+}
+
+html[data-coreui-theme="dark"] {
+  --c1: #0b1e36;
+  --c2: #112e4a;
+  --c3: #16375e;
+  --c4: #1a2c48;
+  --c5: #153b53;
+  --c6: #122b47;
+  --c7: #1d2640;
+  --c8: #0d1828;
+}
+
+/*════════════════════════════════════════════
+  2.  BACKDROP (tiny-load animation)
+════════════════════════════════════════════*/
+:root {
+  --cycle-time: 30s;
+  --step-count: 120;
+}
+
+/* one discrete jump every 2 s */
+@keyframes drift {
+  from {
+    background-position: 0% 50%;
+  }
+
+  to {
+    background-position: 100% 50%;
+  }
+}
+
+/* Motion-sensitive users get a static backdrop */
+@media (prefers-reduced-motion: reduce) {
+  body {
+    animation: none;
+  }
+}

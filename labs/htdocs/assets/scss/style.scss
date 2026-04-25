@@ -1,0 +1,255 @@
+@use "@coreui/coreui/scss/coreui" as * with (
+  $enable-deprecation-messages: false
+);
+@use "vendors/simplebar";
+
+body {
+  background-color: var(--cui-tertiary-bg);
+}
+
+.wrapper {
+  width: 100%;
+  padding-inline: var(--cui-sidebar-occupy-start, 0) var(--cui-sidebar-occupy-end, 0);
+  will-change: auto;
+  @include transition(padding .15s);
+}
+
+.header > .container-fluid,
+.sidebar-header {
+  min-height: calc(4rem + 1px); // stylelint-disable-line function-disallowed-list
+}
+
+.sidebar-brand-full {
+  margin-left: 3px;
+}
+
+.sidebar-header {
+  .nav-underline-border {
+    --cui-nav-underline-border-link-padding-x: 1rem;
+    --cui-nav-underline-border-gap: 0;
+  }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    min-height: calc(4rem + 1px); // stylelint-disable-line function-disallowed-list
+  }
+}
+
+.sidebar-toggler {
+  margin-inline-start: auto;
+}
+
+.sidebar-narrow,
+.sidebar-narrow-unfoldable:not(:hover) {
+  .sidebar-toggler {
+    margin-inline-end: auto;
+  }
+}
+
+.header > .container-fluid + .container-fluid {
+  min-height: 3rem;
+}
+
+.footer {
+  min-height: calc(3rem + 1px); // stylelint-disable-line function-disallowed-list
+  width: 100%;
+  padding-inline: var(--cui-sidebar-occupy-start, 0) var(--cui-sidebar-occupy-end, 0);
+  @include transition(padding .15s);
+}
+
+@include color-mode(dark) {
+  body {
+    background-color: var(--cui-dark-bg-subtle);
+  }
+
+  .footer {
+    --cui-footer-bg: var(--cui-body-bg);
+  }
+}
+
+// Lab Cards Styling - Professional Design
+.lab-card-main {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+  border: 1px solid rgba(148, 163, 184, 0.1) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+
+  // Professional gradient overlay on hover
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+    transition: left 0.5s ease;
+    z-index: 0;
+  }
+
+  &:hover {
+    transform: translateY(-8px);
+    border-color: rgba(148, 163, 184, 0.3);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4),
+                inset 0 1px 1px rgba(255, 255, 255, 0.08);
+
+    &::before {
+      left: 100%;
+    }
+  }
+
+  .card-body {
+    position: relative;
+    z-index: 2;
+  }
+}
+
+// The Large Faded Icon in background
+.lab-bg-icon {
+  position: absolute;
+  right: -15px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 180px;
+  opacity: 0.08;
+  color: #fff;
+  z-index: 1;
+  transition: transform 0.3s ease;
+}
+
+.lab-card-main:hover .lab-bg-icon {
+  transform: translateY(-50%) scale(1.1);
+}
+
+// Professional Badge Styling
+.badge-mini {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.25);
+    transform: scale(1.05);
+  }
+}
+
+// Modern Segmented Button Bar
+.lab-btn-group {
+  display: flex;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  padding: 4px;
+  gap: 4px;
+  backdrop-filter: blur(10px);
+
+  .lab-btn {
+    flex: 1;
+    padding: 10px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    color: #fff;
+    text-align: center;
+    border: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 8px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+
+    // Subtle shimmer effect
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+
+    &:hover::after {
+      width: 300px;
+      height: 300px;
+    }
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  // Button color variants with gradient
+  .btn-code {
+    background: linear-gradient(135deg, #8e99f3 0%, #7c8ff0 100%);
+    color: #fff;
+    font-weight: 700;
+
+    &:hover {
+      background: linear-gradient(135deg, #9eaff7 0%, #8c9ff7 100%);
+      box-shadow: 0 8px 20px rgba(142, 153, 243, 0.4);
+    }
+  }
+
+  .btn-dash {
+    background: linear-gradient(135deg, #66bb6a 0%, #5aaf5e 100%);
+    color: #fff;
+    font-weight: 700;
+
+    &:hover {
+      background: linear-gradient(135deg, #76cb7a 0%, #6abf6c 100%);
+      box-shadow: 0 8px 20px rgba(102, 187, 106, 0.4);
+    }
+  }
+
+  .btn-info-mini {
+    flex: 0 0 44px;
+    background: linear-gradient(135deg, #4fc3f7 0%, #29b6f6 100%);
+    color: #fff;
+    padding: 10px;
+
+    &:hover {
+      background: linear-gradient(135deg, #5fcef9 0%, #39c6f8 100%);
+      box-shadow: 0 8px 20px rgba(79, 195, 247, 0.4);
+    }
+  }
+}
+
+// Card title styling
+.lab-card-main .card-title {
+  font-size: 16px;
+  letter-spacing: 0.3px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+// IP address styling
+.lab-card-main .font-monospace {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  letter-spacing: 1px;
+}

@@ -1,0 +1,497 @@
+<?php
+
+/**
+ * Session class
+ * Static helper for page/session state.
+ */
+class Session
+{
+    /* ----------------------------------------------------------------------
+     * Page presentation fields
+     * -------------------------------------------------------------------- */
+    public static $pageTitle          = 'Welcome to Tom Lab ';
+    public static $subLogo            = '';
+    public static $meta               = array();      // meta tags
+    public static $customCss          = array();      // list of CSS files
+    public static $customJs          = array();      // list of JS files
+    public static $localPack          = null;         // local messages, etc.
+    public static $ConsoleLogs        = array();      // console log entries
+
+    /* ----------------------------------------------------------------------
+     * Environment / version info
+     * -------------------------------------------------------------------- */
+    public static $csrfToken          = '';
+    // public static $version            = '';
+    public static $fullVersion        = '';
+    public static $versionDescription = '';
+    public static $environment        = '';           // local / beta / prod
+    public static $cacheCDN           = null;         // CDN base url
+
+    /* ----------------------------------------------------------------------
+     * User / auth flags
+     * -------------------------------------------------------------------- */
+    public static $userSession        = null;         // instance of UserSession or similar
+    public static $authStatus         = null;         // STATUS_DEFAULT / STATUS_LOGGEDIN
+    public static $isModerator        = false;
+    public static $isSuperUser        = false;
+    public static $privileges         = null;         // array of privileges
+    public static $privilegesGroup    = null;
+
+    /* ----------------------------------------------------------------------
+     * Generic key/value storage
+     * -------------------------------------------------------------------- */
+    public static $property           = array();      // arbitrary shared data
+
+    /* ----------------------------------------------------------------------
+     * Basic key/value API
+     * -------------------------------------------------------------------- */
+
+    /**
+     * Set a shared value.
+     *
+     * @param string $key
+     * @param mixed  $value
+     */
+    public static function set($key, $value)
+    {
+        self::$property[$key] = $value;
+    }
+
+    /**
+     * Get a shared value.
+     *
+     * @param string $key
+     * @param mixed  $default
+     * @return mixed
+     */
+    public static function get($key, $default = false)
+    {
+        if (isset(self::$property[$key])) {
+            return self::$property[$key];
+        }
+        return $default;
+    }
+
+    /* ----------------------------------------------------------------------
+     * Meta tags
+     * -------------------------------------------------------------------- */
+
+    /**
+     * Add a meta tag (string or array).
+     *
+     * @param mixed $tag
+     */
+    public static function addMetaTag($tag)
+    {
+        if (!self::get('meta-processed')) {
+            if (is_array($tag)) {
+                foreach ($tag as $t) {
+                    self::$meta[] = $t;
+                }
+            } else {
+                self::$meta[] = $tag;
+            }
+        } else {
+            trigger_error(
+                'Unable to add meta tags after Session::loadMaster() has been called',
+                E_USER_WARNING
+            );
+        }
+    }
+
+    /**
+     * Calculate the time taken to render the page in microseconds.
+     *
+     * @return string Formatted string in milliseconds/microseconds
+     */
+    public static function getRenderTime()
+    {
+        if (!defined('PAGE_START_TIME')) {
+            return '0ms';
+        }
+        
+        $endTime = microtime(true);
+        $duration = $endTime - PAGE_START_TIME;
+
+        // Convert to milliseconds and format to 2 decimal places
+        return number_format($duration * 1000, 2) . ' ms';
+    }
+
+    /* ----------------------------------------------------------------------
+     * User / auth helpers
+     * -------------------------------------------------------------------- */
+
+    /**
+     * Get stored user session object.
+     *
+     * @return mixed
+     */
+    public static function getUserSession()
+    {
+        return self::$userSession;
+    }
+
+    /**
+     * Example wrapper to return the user model from UserSession.
+     *
+     * @return mixed|null
+     */
+    public static function getUser()
+    {
+        if (!self::$userSession) {
+            return null;
+        }
+        if (method_exists(self::$userSession, 'getUser')) {
+            return self::$userSession->getUser();
+        }
+        return null;
+    }
+
+    /**
+     * Return current auth status.
+     *
+     * @return mixed
+     */
+    public static function getAuthStatus()
+    {
+        return self::$authStatus;
+    }
+
+    /* ----------------------------------------------------------------------
+     * Navigation inclusion helpers
+     * -------------------------------------------------------------------- */
+
+    public static function getNav()
+    {
+        // Fixed path: src/lib/core -> src/lib -> src/template
+        include __DIR__ . '/../../template/_nav.php'; 
+    }
+
+    public static function getSiteNav()
+    {
+        include __DIR__ . '/../../template/_sitenav.php';
+    }
+
+    
+    public static function getVersion() {
+        global $git_version;
+        
+        // Priority 1: Manual override from env.json
+        $manual_version = get_config('asset_version');
+        if (!empty($manual_version)) {
+            return $manual_version;
+        }
+        
+        // Priority 2: The real Git hash from load.php
+        if (!empty($git_version) && $git_version !== '1.0.0') {
+            return $git_version;
+        }
+
+        // Priority 3: File timestamp (for local dev without git)
+        $basePath = realpath(__DIR__ . '/../../'); 
+        $file = $basePath . '/htdocs/js/app.js';
+        if (file_exists($file)) {
+            return filemtime($file); 
+        }
+        
+        // Priority 4: Final fallback
+        return $git_version ?? '1.0.0'; 
+    }
+
+    /**
+     * Build a cache-busted URL using the real Git Hash.
+     */
+    public static function cacheCDN($url)
+    {
+        $version = self::getVersion();
+        $separator = (strpos($url, '?') === false) ? '?' : '&';
+        return $url . $separator . 'v=' . $version;
+    }
+    /**
+     * Global CDN helper for MinIO S3 assets.
+     * Usage: Session::cdn('icons/ubuntu.png')
+     */
+    public static function cdn3($path) {
+        $config = get_config('s3');
+        if (!$config) {
+            // Fallback to local if S3 isn't configured
+            return "/assets/" . ltrim($path, '/');
+        }
+        
+        // Construct the direct public URL
+        // Format: https://endpoint/bucket/path
+        return rtrim($config['endpoint'], '/') . '/' . $config['bucket'] . '/' . ltrim($path, '/');
+    }
+
+    /* ----------------------------------------------------------------------
+     * Master layout and footer
+     * -------------------------------------------------------------------- */
+
+    public static function loadMaster()
+    {
+        // This was the specific line causing your error
+        include __DIR__ . '/../../template/_master.php';
+    }
+
+    public static function generateFooter()
+    {
+        include __DIR__ . '/../../template/_footer.php';
+    }
+
+    /* ----------------------------------------------------------------------
+     * Template helpers
+     * -------------------------------------------------------------------- */
+
+    public static function loadTemplate($template, $general = false, $customFile = null)
+    {
+        $customFile = self::getCurrentFile($customFile);
+
+        if ($template === '_error') {
+            include __DIR__ . '/../../template/' . $template . '.php';
+            return;
+        }
+
+        if ($general) {
+            $path = __DIR__ . '/../../template/' . $template . '.php';
+            if (!file_exists($path)) {
+                throw new TemplateUnavailableException('Template not found: ' . $template);
+            }
+            include $path;
+        } else {
+            $path = __DIR__ . '/../../template/' . $customFile . '/' . $template . '.php';
+            if (!file_exists($path)) {
+                throw new TemplateUnavailableException(
+                    'Template not found: ' . $template . ' in ' . $customFile
+                );
+            }
+            include $path;
+        }
+    }
+
+    public static function templateExists($template, $general = false, $customFile = null)
+    {
+        $customFile = self::getCurrentFile($customFile);
+
+        if ($template === Constants::TEMPLATE_ERROR) {
+            return true;
+        }
+
+        if ($general) {
+            return file_exists(__DIR__ . '/../../template/' . $template . '.php');
+        }
+
+        return file_exists(
+            __DIR__ . '/../../template/' . $customFile . '/' . $template . '.php'
+        );
+    }
+
+    /**
+     * Load the standard error page inside the master layout.
+     */
+    public static function loadErrorPage()
+    {
+        self::set('brokenPage', true);
+        self::set('footer', false);
+        self::loadMaster();
+    }
+
+    /* ----------------------------------------------------------------------
+     * Utility helpers
+     * -------------------------------------------------------------------- */
+
+    /**
+     * Generate a pseudo‑random hash (Base64 encoded).
+     *
+     * @param int $length Length in bytes before encoding
+     * @return string
+     */
+    public static function generatePseudoRandomHash($length = 10)
+    {
+        $bytes = openssl_random_pseudo_bytes($length);
+        return base64_encode($bytes);
+    }
+
+    
+    /**
+     * Updated: Preserves folder structure for template loading
+     */
+    public static function generatePageBody()
+    {
+        $self = $_SERVER['PHP_SELF'];
+        $relPath = str_replace(['/app/', '.php'], '', $self);
+        $templateRoot = __DIR__ . '/../../template/pages/'; 
+
+        if (self::getAuthStatus() == Constants::STATUS_LOGGEDIN) {
+            // Check for folder-based template
+            $file = $templateRoot . $relPath . '.php';
+            if (file_exists($file)) {
+                include $file;
+                return;
+            }
+            // Fallback to basic dashboard if path fails
+            include $templateRoot . 'dashboard.php';
+        } else {
+            include $templateRoot . 'index.php';
+        }
+    }
+
+    /**
+     * Return the current script name without extension, or
+     * the base name of a provided path.
+     *
+     * @param string|null $file
+     * @return string
+     */
+    public static function getCurrentFile($file = null)
+    {
+        if ($file === null) {
+            $self = $_SERVER['PHP_SELF'];
+            return str_replace(['/app/', '.php'], '', $self);
+        }
+        return basename($file, '.php');
+    }
+    /* ----------------------------------------------------------------------
+     * Environment helpers (instance‑style)
+     * -------------------------------------------------------------------- */
+
+    /**
+     * Get the configured environment string.
+     *
+     * @return string
+     */
+    public function getEnvironment()
+    {
+        return $this->environment;
+    }
+
+    public function isBeta()
+    {
+        return $this->environment === 'beta';
+    }
+
+    public function isProd()
+    {
+        return $this->environment === 'prod';
+    }
+
+    public function isAlpha()
+    {
+        return $this->environment === 'alpha';
+    }
+
+    public static function getProcessorCount() {
+    $ncpu = Cache::get('processor_count');
+    if ($ncpu) {
+        return $ncpu;
+    } else {
+        $cpus = @file_get_contents('/sys/devices/system/cpu/online'); 
+        if (!$cpus) return 1;
+
+        $parts = explode('-', trim($cpus));
+        // For "0-1", parts[1] is "1". (int)1 + 1 = 2 cores.
+        $ncpu = isset($parts[1]) ? (int)$parts[1] + 1 : 1; 
+        
+        Cache::set('processor_count', $ncpu);
+        return $ncpu;
+    }
+}
+    public function getEvironment(){
+        return $this->environment;
+    }
+    /* ----------------------------------------------------------------------
+     * Custom Assets (CSS/JS)
+     * -------------------------------------------------------------------- */
+
+    /**
+     * Add a custom CSS file to the page.
+     * @param string $css Path to the CSS file
+     */
+    public static function addCustomCss($css)
+    {
+        self::$customCss[] = $css;
+    }
+
+    /**
+     * Add a custom JS file to the page.
+     * @param string $js Path to the JS file
+     */
+    public static function addCustomJs($js)
+    {
+        self::$customJs[] = $js;
+    }
+
+    public static function url($route) {
+
+        // This allows you to change the routing in one place later
+        $routes = [
+            'signin'    => '/signin',
+            'signup'    => '/signup',
+            'logout'    => '/logout',
+            'dashboard' => '/dashboard',
+            'challenges' => '/challenges',
+            'verify' => '/verify'
+        ];
+        return $routes[$route] ?? '/';
+    }
+
+    /**
+     * Get the current user's avatar with a robust fallback system.
+     * Checks database/session and verifies physical file existence.
+     *
+     * @return string Valid URL to an avatar image
+     * 
+     * Get dynamic user avatar with unique fallback.
+     * Fixes the remote URL override bug.
+     */
+    public static function getAvatar()
+    {
+        $user = self::getUser();
+        
+        // 1. Professional default pool
+        $defaultAvatars = [
+            '/assets/avatars/avatar1.png', '/assets/avatars/avatar2.png',
+            '/assets/avatars/avatar3.png', '/assets/avatars/avatar4.png',
+            '/assets/avatars/avatar5.png'
+        ];
+
+        // 2. Load the actual user profile link
+        $avatarUrl = $user?->getAvatarUrl() ?? $_SESSION['user_avatar'] ?? null;
+
+        if (!empty($avatarUrl)) {
+            // CHECK: Is it a remote URL (like Google)?
+            if (strpos($avatarUrl, 'http') === 0) {
+                // Remote URL is always valid
+                return htmlspecialchars($avatarUrl); 
+            }
+            
+            // CHECK: Is it a valid local file?
+            if (file_exists($_SERVER['DOCUMENT_ROOT'] . $avatarUrl)) {
+                // Local file exists
+                return htmlspecialchars($avatarUrl);
+            }
+        }
+
+        // 3. DYNAMIC FALLBACK: Consistent "random" choice based on User ID
+        $seedValue = $user ? $user->getUserId() : session_id();
+        $index = abs(crc32($seedValue)) % count($defaultAvatars);
+
+        return $defaultAvatars[$index];
+    }
+    /**
+     * Generates a unique CSS hue-rotate based on the user's ID
+     * 
+     * Generates a unique color shift for default avatars
+     */
+    public static function getAvatarStyle() {
+        $user = self::getUser();
+        
+        // If the user HAS a real profile (Google/Uploaded), do not change the color
+        if ($user && $user->getAvatarUrl() && strpos($user->getAvatarUrl(), 'http') === 0) {
+            return ""; 
+        }
+
+        $seed = $user ? $user->getUserId() : session_id();
+        $hue = abs(crc32($seed)) % 360;
+        return "filter: hue-rotate({$hue}deg);";
+    }
+}

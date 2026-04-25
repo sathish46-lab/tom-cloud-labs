@@ -1,0 +1,63 @@
+.terminal-info-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    cursor: help;
+}
+
+.terminal-tooltip {
+    visibility: hidden;
+    width: 280px;
+    color: #fff;
+    text-align: center;
+    border-radius: 12px;
+    padding: 10px;
+
+    /* POSITION FIX - Reverted to Top as requested */
+    position: absolute;
+    bottom: 30px;
+    /* Distance above the icon */
+    top: auto;
+    left: 50%;
+    /* Move to center of icon */
+    transform: translateX(-50%) translateY(10px);
+    /* Center precisely over icon */
+
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    font-size: 11px;
+    line-height: 1.4;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(0, 0, 0, 0.9);
+    /* Ensure dark background */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8);
+    pointer-events: none;
+}
+
+/* Tooltip Arrow - Points Down (since tooltip is on top) */
+.terminal-tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    /* Arrow at bottom of tooltip */
+    bottom: auto;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: rgba(0, 0, 0, 0.9) transparent transparent transparent;
+}
+
+/* Updated Show State */
+.terminal-info-wrapper:hover .terminal-tooltip {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    /* Remove the 10px offset on hover */
+}
+
+/* FIX: Ensure card stays on top when hovering to show tooltip over header */
+.col-12.col-md-4:hover .card {
+    z-index: 1050 !important;
+}

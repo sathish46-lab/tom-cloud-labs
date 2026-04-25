@@ -1,0 +1,182 @@
+@use "sass:color";
+
+// Challenge Card Styles - EXACT MATCH TO TARGET RECTANGLE SHAPE
+.lab-card {
+  position: relative;
+  border: none;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.03); // Ultra transparent for better blur
+  backdrop-filter: blur(25px); // Stronger blur
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  height: auto;
+
+  &.blur {
+    background: rgba(10, 10, 20, 0.3); // Deep tint but transparent
+    backdrop-filter: blur(30px);
+  }
+
+  .labs-index-cover {
+    height: 140px; // REDUCED HEIGHT for rectangle shape
+    width: 100%;
+    object-fit: cover;
+    filter: brightness(0.6);
+  }
+
+  .card-img-overlay {
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.8) 100%);
+    padding: 1rem 1.2rem; // Tighter padding
+    padding-bottom: 2px !important;
+
+    @media (max-width: 768px) {
+      padding: 0.8rem 1rem;
+    }
+  }
+
+  .card-title {
+    font-size: 1.3rem; // Slightly smaller to fit rectangle
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    margin-bottom: 0.15rem !important;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+    color: #fff;
+
+    @media (max-width: 1200px) {
+      font-size: 1.1rem;
+    }
+  }
+
+  h6.card-title {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 600;
+  }
+
+  .badge {
+    padding: 0.3em 0.7em;
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: lowercase;
+    border-radius: 50rem;
+    margin-right: 3px;
+    margin-bottom: 2px;
+  }
+
+  // Ribbons - Tighter Fit
+  .event-ended-ribbon,
+  .event-retired-ribbon {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 80px;
+    height: 35px;
+    color: white;
+    font-weight: 800;
+    font-size: 0.7rem;
+    line-height: 1;
+    text-align: center;
+    border-radius: 0 0 0 10px;
+    z-index: 10;
+
+    >span {
+      position: absolute;
+      top: -4px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      padding-top: 8px;
+    }
+
+    small {
+      font-size: 0.55rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+  }
+
+  .event-ended-ribbon {
+    background: #e55353;
+  }
+
+  .event-retired-ribbon {
+    background: #f47923;
+  }
+
+  // Points Display - More Compact
+  .points-display {
+    i {
+      font-size: 1.3rem;
+      color: #fff;
+    }
+
+    h3 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+  }
+
+  .card-footer {
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.4);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+
+    .btn-group {
+      gap: 1px; // Tiny gap for visual separation
+      border-radius: 50rem;
+      overflow: hidden;
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+
+      .btn {
+        border: none;
+        border-radius: 0 !important;
+        font-size: 0.75rem; // Compact font
+        font-weight: 700;
+        padding: 10px 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        flex: 1;
+
+        i,
+        svg {
+          font-size: 1rem;
+          margin-right: 4px;
+        }
+
+        &.btn-success {
+          background: #2eb85c;
+          color: #fff;
+        }
+
+        &.btn-danger {
+          background: #e55353;
+          color: #fff;
+        }
+
+        &.btn-info {
+          background: #3399ff;
+          color: #fff;
+        }
+
+        &:hover {
+          filter: brightness(1.1);
+        }
+      }
+    }
+  }
+}
+
+// Global utilities
+.blur {
+  backdrop-filter: blur(10px);
+}
+
+.simple-blur {
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(8px);
+}

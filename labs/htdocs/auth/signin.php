@@ -1,0 +1,117 @@
+<?php
+require_once '../src/load.php';
+use Auth\GoogleAuth;
+
+$google = new GoogleAuth();
+$metadata = http(get_config('google_oauth')['metadata_url']);
+
+// Handle Google Callback
+if (isset($_GET['code'])) {
+    $state = $_GET['state'] ?? null;
+    $user = $google->handleCallback($metadata, $_GET['code'], $state);
+    if ($user) {
+        $_SESSION['username'] = $user['username'];
+        $_SESSION['auth_status'] = Constants::STATUS_LOGGEDIN;
+        header('Location: /dashboard');
+        exit;
+    } else {
+        header('Location: /finish-signup');
+        exit;
+    }
+}
+
+// Handle Standard Login
+if (isset($_POST['email']) && isset($_POST['password'])) {
+    if (UserSession::authenticate($_POST['email'], $_POST['password'])) {
+        header("Location: /dashboard");
+        exit;
+    }
+}
+
+$google_url = $google->getAuthUrl($metadata);
+define('IS_LOGIN_PAGE', true);
+Session::$pageTitle = "Sign In";
+ob_start();
+?>
+
+
+<div class="min-vh-100 d-flex align-items-center">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-5 d-none d-lg-block pe-lg-5">
+                <img src="<?= Session::cdn3('/logo/logo.png') ?>" width="60" class="mb-4" alt="Logo">
+                <h1 class="display-5 fw-bold mb-3 text-body">Tom Labs Infrastructure</h1>
+                <p class=" text-body-secondary">
+                    Selfmade Ninja Academy inspired virtual lab system.
+                    Access your isolated environments, manage domains, and deploy
+                    scalable database services with a single click.
+                </p>
+            </div>
+
+            <div class="col-md-7 col-lg-4">
+                <div class="card shadow-lg border-0 rounded-4 p-4">
+                    <div class="card-body">
+                        <div class="text-center mb-4 d-lg-none">
+                            <img src="/assets/logo/logo.png" width="50" class="mb-3">
+                        </div>
+                        
+                        <h3 class="fw-bold mb-4 text-body">Sign in</h3>
+
+                        <form method="POST">
+                            <div class="mb-3">
+                                <label class="small fw-bold text-secondary mb-1">USERNAME OR EMAIL</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-transparent border-end-0">
+                                        <i class="bx bx-user"></i>
+                                    </span>
+                                    <input type="text" name="email" class="form-control border-start-0 ps-0" required>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <label class="small fw-bold text-secondary mb-1">PASSWORD</label>
+                                    <a href="#" class="small text-warning text-decoration-none">Forgot?</a>
+                                </div>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-transparent border-end-0">
+                                        <i class="bx bx-lock-alt"></i>
+                                    </span>
+                                    <input type="password" name="password" class="form-control border-start-0 ps-0" required>
+                                </div>
+                            </div>
+
+                            <div class="form-check form-switch mb-4">
+                                <input class="form-check-input" type="checkbox" id="remember">
+                                <label class="form-check-label small text-warning" for="remember">Remember me</label>
+                            </div>
+
+                            <button type="submit" class="btn btn-warning btn-lg w-100 mb-3 fw-bold">
+                                Sign in
+                            </button>
+                        </form>
+
+                        <div class="d-flex align-items-center my-4">
+                            <hr class="flex-grow-1 opacity-25">
+                            <span class="mx-3 small text-secondary">or sign in with</span>
+                            <hr class="flex-grow-1 opacity-25">
+                        </div>
+
+                        <a href="<?= $google_url ?>" class="btn btn-outline-secondary btn-lg w-100 d-flex align-items-center justify-content-center fw-semibold">
+                            <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="18" class="me-2">
+                            Google
+                        </a>
+
+                        <p class="text-center mt-4 mb-0 small text-secondary">
+                            Don't have an account? <a href="/signup" class="text-warning fw-bold text-decoration-none">Register now</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php
+Session::set('page_content', ob_get_clean());
+Session::loadMaster();

@@ -1,0 +1,16 @@
+/* _hover.scss */
+.hovermini:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s ease;
+}
+
+/* _toast.scss */
+.toast-container {
+  z-index: 2000;
+}
+.toast {
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  background-color: rgba(240, 202, 51, 0.85) !important;
+}
