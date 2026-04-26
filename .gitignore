@@ -1,5 +1,17 @@
 # =========================
-# Global ignores
+# Global Strict Ignore
+# =========================
+# Ignore everything in the root
+/*
+
+# EXCEPT for these directories and files
+!/labs/
+!/vpn-api/
+!/.gitignore
+!/README.md
+
+# =========================
+# Original Ignores
 # =========================
 *.log
 *.tmp

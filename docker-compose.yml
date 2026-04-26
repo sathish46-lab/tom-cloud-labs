@@ -1,16 +1,16 @@
 services:
-  vps:
+  vps_dev:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: docker_tomlabs_vps
+    container_name: docker_tomlabs_vps_dev
     privileged: true
     environment:
-      - MAIN_DOMAIN=awshosting.in
-      - VPN_DOMAIN=vpn.awshosting.in
-      - MQS_DOMAIN=mq.awshosting.in
-      - CODE_DOMAIN=tomweb.shop
-      - WORK_DOMAIN=work.awshosting.in
+      - MAIN_DOMAIN=dev.awshosting.in
+      - VPN_DOMAIN=vpn.dev.awshosting.in
+      - MQS_DOMAIN=mq.dev.awshosting.in
+      - CODE_DOMAIN=code.dev.awshosting.in
+      - WORK_DOMAIN=work.dev.awshosting.in
       - SSL_EMAIL=admin@example.com
       - DOCKER_HOST=unix:///var/docker.sock
     volumes:
@@ -20,12 +20,11 @@ services:
       - ./labs:/var/www/labs
       - ./vpn-api:/var/www/vpn-api
       - ./work:/var/www/work
-      - ./test.json:/var/www/env.json
+      - ./env.json:/var/www/env.json
       - ./consume_all.py:/var/www/consume_all.py
       - ./publish_test.py:/var/www/publish_test.py
       - ./opt/labs-control-panel:/opt/labs-control-panel
       # ⬇️ NEW PERSISTENT VOLUMES ⬇️
-      - ./mongo-data:/var/lib/mongodb
       - ./rabbitmq-data:/var/lib/rabbitmq
       - ./wireguard-conf:/etc/wireguard
       - ./apache-logs:/var/log/apache2
@@ -34,25 +33,30 @@ services:
       - docker_tomlabs_net
       - tomlabs_net
     ports:
-      - "80:80"
-      - "443:443"
-      - "8081:8081"
-      - "8082:8082"
-      - "5672:5672"
-      - "15672:15672"
-      - "51820:51820/udp"
-      - "27017:27017" # Expose MongoDB locally
+      - "8080:80"
+      - "8443:443"
+      - "9081:8081"
+      - "9082:8082"
+      - "5673:5672"
+      - "15673:15672"
+      - "51821:51820/udp"
     stop_signal: SIGRTMIN+3
 
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    container_name: docker_tomlabs_cloudflared
-    restart: unless-stopped
-    command: tunnel --no-autoupdate run
+  mongodb:
+    image: mongo:8.0
+    container_name: docker_tomlabs_mongodb
     environment:
-      - TUNNEL_TOKEN=eyJhIjoiYmU0MzJjMGY1OTFiOGFjZDRjMDkzY2YwZWY1ZTA5MWUiLCJ0IjoiOTBmNjBjMjItMGM0YS00MWRkLTgwNTItZDg2ZDFiNjc1Mjc2IiwicyI6IlpHSXpPR1psTVdZdFpqYzNaUzAwTm1Oa0xUa3pNek10TkRFd016azJZbU0xTnpjMiJ9
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: Tombootroot
+    volumes:
+      - ./mongo-data:/data/db
     networks:
       - docker_tomlabs_net
+    ports:
+      - "27018:27017"
+    restart: always
+
+
 
   # gitlab:
   #   image: 'gitlab/gitlab-ce:latest'
@@ -73,7 +77,6 @@ services:
 
 networks:
   docker_tomlabs_net:
-    name: docker_tomlabs_net
-    driver: bridge
+    external: true
   tomlabs_net:
     external: true

@@ -6,6 +6,9 @@ ${basename(__FILE__, '.php')} = function(){
             $device = $this->_request['device'] ?? 'wg0';
             $wg = new Wireguard($device);
             
+            // Auto-initialize if database is empty
+            $wg->initialize();
+            
             // 1. Logic Check: If a specific IP is requested, we should still 
             // check if it falls within the protected .1 - .9 range.
             $requestedIp = $this->_request['ip'] ?? null;
