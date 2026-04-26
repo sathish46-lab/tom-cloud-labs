@@ -38,7 +38,7 @@ labs/**/.env
 labs/**/storage/
 labs/**/cache/
 labs/**/logs/
-labs/htdocs/js/
+# labs/htdocs/js/
 # labs/htdocs/js/app.min.js
 # labs/htdocs/js/app.js
 # labs/htdocs/js/app.o.js
