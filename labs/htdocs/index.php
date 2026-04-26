@@ -125,7 +125,7 @@ ob_start();
                     <span
                         id="multi-link"
                         style="color: Orange; cursor: pointer;">
-                        SELFMADE NINJA ACADEMY test
+                        SELFMADE NINJA ACADEMY test over
                     </span>
                 </p>
                 <div class="hero-button-group">

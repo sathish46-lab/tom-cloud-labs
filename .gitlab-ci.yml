@@ -21,11 +21,11 @@ deploy_to_docker_lab:
   script:
     - echo "Starting deployment to Docker_lab..."
     
-    # Sync the 'labs' folder. 
-    # The --delete flag removes files in Docker_lab that you deleted in your repo.
-    - rsync -av --delete labs/ /Users/sathish/Downloads/Docker_lab/labs/
+    # 1. Sync the 'labs' folder. 
+    # We exclude 'vendor' and 'node_modules' so production dependencies stay safe.
+    - rsync -av --delete --exclude 'vendor' --exclude 'node_modules' labs/ /Users/sathish/Downloads/Docker_lab/labs/
     
-    # Sync the 'vpn-api' folder.
-    - rsync -av --delete vpn-api/ /Users/sathish/Downloads/Docker_lab/vpn-api/
+    # 2. Sync the 'vpn-api' folder.
+    - rsync -av --delete --exclude 'vendor' --exclude 'node_modules' vpn-api/ /Users/sathish/Downloads/Docker_lab/vpn-api/
     
     - echo "Deployment of labs and vpn-api completed successfully!"
