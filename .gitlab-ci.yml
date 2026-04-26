@@ -1,0 +1,31 @@
+stages:
+  - deploy
+
+deploy_to_docker_lab:
+  stage: deploy
+  
+  # This tag must match the tag you give your GitLab Runner when you register it.
+  # It tells GitLab to run this job on YOUR specific server.
+  tags:
+    - production
+    
+  # Only run this deployment if changes happen on the 'main' branch
+  # AND only if files inside 'labs/' or 'vpn-api/' were changed.
+  only:
+    refs:
+      - master
+    changes:
+      - "labs/**/*"
+      - "vpn-api/**/*"
+      
+  script:
+    - echo "Starting deployment to Docker_lab..."
+    
+    # Sync the 'labs' folder. 
+    # The --delete flag removes files in Docker_lab that you deleted in your repo.
+    - rsync -av --delete labs/ /Users/sathish/Downloads/Docker_lab/labs/
+    
+    # Sync the 'vpn-api' folder.
+    - rsync -av --delete vpn-api/ /Users/sathish/Downloads/Docker_lab/vpn-api/
+    
+    - echo "Deployment of labs and vpn-api completed successfully!"

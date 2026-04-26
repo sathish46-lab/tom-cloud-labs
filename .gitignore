@@ -9,6 +9,7 @@
 !/vpn-api/
 !/.gitignore
 !/README.md
+!/.gitlab-ci.yml
 
 # =========================
 # Original Ignores
