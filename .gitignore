@@ -13,6 +13,7 @@
 # =========================
 # Original Ignores
 # =========================
+docker-compose.yml
 *.log
 *.tmp
 *.cache
