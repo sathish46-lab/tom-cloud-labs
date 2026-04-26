@@ -22,27 +22,26 @@ require_once __DIR__ . '/core/UserSession.class.php';
 require_once __DIR__ . '/core/WebAPI.class.php';
 require_once __DIR__ . '/labs/LabTemplateConfig.php';
 
-# Git version check this one need permission ?
-## Trust the specific project directory
-# "$ git config --system --add safe.directory /var/www/labs "
-
-# Trust the parent directory (as requested by the error)
-# " git config --system --add safe.directory /var/www "
-
-# "$ sudo -u www-data /usr/bin/git -C /var/www/labs describe --always "
-
+# Git version detection
 $repo_root = '/var/www/labs'; 
-$git_bin = '/usr/bin/git'; 
-
-$cmd = "$git_bin -C " . escapeshellarg($repo_root) . " describe --always 2>&1";
-exec($cmd, $version_mini_hash, $return_var);
+$version_file = $repo_root . '/.version';
 
 global $git_version;
-if ($return_var === 0 && !empty($version_mini_hash[0])) {
-    $git_version = trim($version_mini_hash[0]);
-} else {
 
-    $git_version = '1.0.0'; 
+if (file_exists($version_file)) {
+    // Priority 1: .version file (Created by CI/CD or locally)
+    $git_version = trim(file_get_contents($version_file));
+} else {
+    // Priority 2: Try running git command (Local fallback)
+    $git_bin = '/usr/bin/git'; 
+    $cmd = "$git_bin -C " . escapeshellarg($repo_root) . " describe --always 2>&1";
+    exec($cmd, $version_mini_hash, $return_var);
+    
+    if ($return_var === 0 && !empty($version_mini_hash[0])) {
+        $git_version = trim($version_mini_hash[0]);
+    } else {
+        $git_version = '1.0.0'; 
+    }
 }
 
 require_from_json();

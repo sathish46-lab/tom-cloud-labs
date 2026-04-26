@@ -21,6 +21,9 @@ deploy_to_docker_lab:
   script:
     - echo "Starting deployment to Docker_lab..."
     
+    # 0. Generate version file based on current commit
+    - git rev-parse --short HEAD > labs/.version
+    
     # 1. Sync the 'labs' folder. 
     # We exclude 'vendor' and 'node_modules' so production dependencies stay safe.
     - rsync -av --delete --exclude 'vendor' --exclude 'node_modules' labs/ /Users/sathish/Downloads/Docker_lab/labs/
