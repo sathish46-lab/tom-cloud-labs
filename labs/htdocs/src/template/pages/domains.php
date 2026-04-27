@@ -18,41 +18,47 @@ function timeAgo($timestamp) {
     return date('M j, Y', $timestamp);
 }
 ?>
-<div class="lab-header-section mb-4 d-flex justify-content-between align-items-center">
-    <div>
-        <h1 class="fw-bold theme-text m-0">Domains</h1>
-        <p class="text-secondary opacity-75 small">Reserve stylish subdomains or register 3rd party domains to access your lab over Internet.</p>
-    </div>
-    <div class="d-flex gap-2">
-        <button class="btn btn-success fw-bold px-4 rounded-pill shadow-sm" data-coreui-toggle="modal" data-coreui-target="#addDomainModal">
-            <i class="bx bx-plus"></i> Add New Domain
-        </button>
+<div class="lab-header-section mb-4 px-4">
+    <div class="row align-items-center">
+        <div class="col">
+            <h1 class="fw-bold theme-text m-0" style="font-size: 1.8rem; letter-spacing: -0.5px;">Domains</h1>
+            <p class="text-secondary opacity-75 mt-2 mb-0" style="font-size: 0.85rem; line-height: 1.7; letter-spacing: 0.2px;">
+                My Domains is a section where you can reserve stylish Tom Lab Domains or register 3rd party domains to access your lab over Internet.
+                In case of 3rd party domains, you will have to manually modify the DNS records of your domain to point to your lab. Domains are used to
+                show your work to the WWW over SSL seemlessly. Your online presence makes you powerful 🔥
+            </p>
+        </div>
+        <div class="col-auto text-end">
+            <button class="btn btn-success fw-bold px-4 rounded-pill shadow-sm" style="font-size: 0.8rem; height: 38px; white-space: nowrap;" data-coreui-toggle="modal" data-coreui-target="#addDomainModal">
+                <i class="bx bx-plus"></i> Add New Domain
+            </button>
+        </div>
     </div>
 </div>
 
-<div class="row g-4 px-4 mb-4">
+<div class="row g-4 mb-4">
     <?php foreach (Session::get('user_domains') as $d): ?>
     <div class="col-xl-4 col-md-6">
-        <div class="card border-0 shadow-lg rounded-4 h-100 domain-card">
-            <div class="card-body d-flex justify-content-between align-items-start">
-                <div style="margin-bottom: 10px;">
-                    <div class="fs-4 fw-semibold mb-2">
+        <div class="card border-0 shadow-lg rounded-4 h-100 domain-card glass-card">
+            <div class="card-body d-flex justify-content-between align-items-start p-3">
+                <div class="w-100" style="margin-bottom: 6px;">
+                    <div class="fw-bold mb-2" style="font-size: 1.15rem; letter-spacing: -0.3px;">
                         <a style="text-decoration: none; color: #3498db;" target="_blank" href="https://<?= $d['domain'] ?>">
                             <?= $d['domain'] ?>
                         </a>
                     </div>
 
-                    <div style="margin-bottom: 15px;" class="d-flex gap-2">
+                    <div style="margin-bottom: 14px;" class="d-flex gap-1 flex-wrap">
                         <?php if (strtolower($d['type']) == 'custom'): ?>
-                            <span class="badge bg-info rounded-pill px-1 py-1 fw-bold ls-1">custom</span>
+                            <span class="badge bg-info rounded-pill fw-bold" style="font-size: 10px; padding: 2.5px 10px; letter-spacing: 0.5px; background-color: #3498db !important;">custom</span>
                         <?php else: ?>
-                            <span class="badge bg-primary rounded-pill px-1 py-1 fw-bold ls-1"><?= $d['type'] ?></span>
+                            <span class="badge bg-primary rounded-pill fw-bold" style="font-size: 10px; padding: 2.5px 10px; letter-spacing: 0.5px; background-color: #6c5ce7 !important;"><?= $d['type'] ?></span>
                         <?php endif; ?>
                         
                         <?php if ($d['verified']): ?>
-                            <span class="badge bg-success rounded-pill px-1 py-1">verified</span>
+                            <span class="badge bg-success rounded-pill" style="font-size: 10px; padding: 2.5px 10px; letter-spacing: 0.5px; background-color: #27ae60 !important;">verified</span>
                         <?php else: ?>
-                            <span class="badge bg-warning text-dark rounded-pill px-1 py-1">dns pending</span>
+                            <span class="badge bg-warning text-dark rounded-pill" style="font-size: 10px; padding: 2.5px 10px; letter-spacing: 0.5px; background-color: #f1c40f !important;">dns pending</span>
                         <?php endif; ?>
                         
                         <?php 
@@ -61,36 +67,30 @@ function timeAgo($timestamp) {
                             $usageInfo = $dm->getDomainUsage(Session::getUser()->getUserId(), $d['domain']);
                             if ($usageInfo): 
                         ?>
-                            <span class="badge bg-danger text-white rounded-pill px-1 py-1">used</span>
+                            <span class="badge bg-danger text-white rounded-pill" style="font-size: 10px; padding: 2.5px 10px; letter-spacing: 0.5px; background-color: #e74c3c !important;">in use</span>
                         <?php else: ?>
-                            <span class="badge bg-info text-white rounded-pill px-1 py-1">available</span>
+                            <span class="badge bg-info text-white rounded-pill" style="font-size: 10px; padding: 2.5px 10px; letter-spacing: 0.5px; background-color: #00cec9 !important;">available</span>
                         <?php endif; ?>
                     </div>
-                    
-                    <?php if (strtolower($d['type']) == 'custom' && isset($d['last_checked'])): ?>
-                    <div class="small text-secondary mb-2">
-                        <!-- <i class="bx bx-time-five"></i> Last verified: <?= timeAgo($d['last_checked']) ?> -->
-                    </div>
-                    <?php endif; ?>
 
-                    <div style="font-size: 0.8rem; line-height: 1.6;">
+                    <div style="font-size: 0.8rem; line-height: 1.2; color: var(--glass-text);">
                         <div class="mb-1">
-                            <b class="text-body-secondary opacity-75">Common Name:</b> 
+                            <b style="color: var(--glass-text-muted); font-weight: 600;">Common Name:</b> 
                             <span class="ms-1"><?= explode('.', $d['domain'])[0] ?></span>
                         </div>
                         
                         <div class="mb-1">
-                            <b class="text-body-secondary opacity-75">Domain Name:</b> 
-                            <span class="text-info ms-1"><?= $d['domain'] ?></span>
+                            <b style="color: var(--glass-text-muted); font-weight: 600;">Domain Name:</b> 
+                            <span class="ms-1" style="color: #3498db;"><?= $d['domain'] ?></span>
                         </div>
                         
                         <div class="mb-1">
-                            <b class="text-body-secondary opacity-75">A Record:</b> 
+                            <b style="color: var(--glass-text-muted); font-weight: 600;">A Record:</b> 
                             <span class="ms-1"><?php $dm = new DomainManager(); echo $dm->getServerIP(); ?></span>
                         </div>
                         
                         <div class="mb-1">
-                            <b class="text-body-secondary opacity-75">Service:</b> 
+                            <b style="color: var(--glass-text-muted); font-weight: 600;">Service:</b> 
                             <span class="ms-1"><?= (strtolower($d['type']) == 'tom') ? 'Tom Lab' : 'Custom' ?></span>
                         </div>
                         
@@ -99,27 +99,29 @@ function timeAgo($timestamp) {
                             if ($usageInfo): 
                         ?>
                             <div class="mb-1">
-                                <b class="text-body-secondary opacity-75">Currently Used:</b> 
+                                <b style="color: var(--glass-text-muted); font-weight: 600;">Currently Used:</b> 
                                 <span class="text-success ms-1"><?= $usageInfo['usage'] ?> (<?= $usageInfo['lab_type'] ?> lab)</span>
                             </div>
                         <?php else: ?>
                             <div class="mb-1">
-                                <b class="text-body-secondary opacity-75">Currently Used:</b> 
-                                <span class="text-secondary ms-1">Not in use</span>
+                                <b style="color: var(--glass-text-muted); font-weight: 600;">Currently Used:</b> 
+                                <span class="ms-1 opacity-50">Not in use</span>
                             </div>
                         <?php endif; ?>
                     </div>
                 </div>
 
                 <div class="dropdown">
-                    <button class="btn btn-link  p-0 opacity-50 shadow-none" data-coreui-toggle="dropdown">
-                        <i class='bx bx-dots-vertical-rounded fs-4'></i>
+                    <button class="btn btn-link p-0 opacity-50 shadow-none border-0 d-flex align-items-center justify-content-center rounded-circle" 
+                            data-coreui-toggle="dropdown" 
+                            style="width: 32px; height: 32px; transition: all 0.2s; text-decoration: none !important;">
+                        <i class='bx bx-dots-vertical-rounded fs-4' style="color: var(--glass-icon); text-decoration: none !important;"></i>
                     </button>
-                    <ul class="dropdown-menu  dropdown-menu-end shadow">
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 glass-card" style="min-width: 4rem; border-radius: 14px; padding: 6px; overflow: hidden;">
                         <?php if (!$d['verified']): ?>
-                            <li><a class="dropdown-item" href="#" onclick="verifyDomain('<?= $d['_id'] ?>')"><i class='bx bx-check-shield me-2'></i> Verify DNS</a></li>
+                            <li><a class="dropdown-item rounded-3 mb-1 px-2 py-1" href="#" onclick="verifyDomain('<?= $d['_id'] ?>')" style="font-size: 0.75rem;"><i class='bx bx-check-shield me-2'></i> Verify</a></li>
                         <?php endif; ?>
-                        <li><a class="dropdown-item text-danger" href="#" onclick="removeDomain('<?= $d['_id'] ?>')"><i class='bx bx-trash me-2'></i> Remove Domain</a></li>
+                        <li><a class="dropdown-item text-danger rounded-3 px-2 py-1" href="#" onclick="removeDomain('<?= $d['_id'] ?>')" style="font-size: 0.75rem;"><i class='bx bx-trash me-2'></i> Delete</a></li>
                     </ul>
                 </div>
             </div>

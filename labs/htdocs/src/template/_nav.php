@@ -113,6 +113,21 @@ $current = Session::getCurrentFile();
 </div>
 
 <style>
+/* Sidebar Layout Fix: Ensure Footer and Stats stay at bottom */
+.sidebar {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.sidebar-nav {
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+}
+
+#sidebar-stats-container, .sidebar-footer {
+    flex: 0 0 auto !important;
+}
+
 /* 0. IMMEDIATE HIDE FOR RECOVERY (Prevents UI Flicker) */
 .sidebar-init-hidden #sidebar {
     display: none !important;

@@ -8,6 +8,15 @@
   transition:
     backdrop-filter 0.3s ease,
     background-color 0.3s ease;
+
+  /* Increase opacity for professional look when blur is OFF */
+  html:not(.enable-blur) & {
+    background-color: rgba(255, 255, 255, 0.98) !important;
+  }
+
+  html:not(.enable-blur)[data-coreui-theme="dark"] & {
+    background-color: rgba(10, 20, 35, 0.98) !important;
+  }
 }
 
 /* Apply the blur ONLY when the user preference class is present */
