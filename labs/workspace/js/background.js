@@ -58,9 +58,13 @@ const TomBG = {
     this.initWheel();
     this.initScenery();
 
-    // Reset editing state when modal closes
-    const modalEl = document.getElementById("themeDesignerModal");
+    // Handle editing state when modal opens/closes
+    const modalEl = document.getElementById("plainColorModal");
     if (modalEl) {
+      modalEl.addEventListener("show.bs.modal", () => {
+        // Default to Slot 0 if no specific slot was picked via the wand icon
+        if (this.currentEditingSlot === null) this.currentEditingSlot = 0;
+      });
       modalEl.addEventListener("hidden.bs.modal", () => {
         this.currentEditingSlot = null;
       });
@@ -73,7 +77,7 @@ const TomBG = {
     this.currentEditingSlot = index;
     const slotColor = localStorage.getItem(`tom-labs-custom-color-${index}`) || "#ffffff";
     this.setPlainColor(slotColor);
-    bootstrap.Modal.getOrCreateInstance(document.getElementById("themeDesignerModal")).show();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById("plainColorModal")).show();
   },
 
   applySlot: function (index) {
@@ -360,15 +364,16 @@ const TomBG = {
   setPlainColor: function (color) {
     const hex = this.toHex(color);
 
-    if (this.currentEditingSlot !== null) {
-      // Save to specific slot
-      this.saveCustomColor(this.currentEditingSlot, hex);
-    } else {
-      // Save to main theme
-      localStorage.setItem("tom-labs-plain-color", hex);
-      localStorage.setItem("tom-labs-bg-mode", "plain");
-      this.apply("plain");
-    }
+    // Default to Slot 0 if no slot is active, ensuring the Designer always has a target
+    const targetSlot = (this.currentEditingSlot !== null) ? this.currentEditingSlot : 0;
+
+    // Save to the target slot (Real-time update)
+    this.saveCustomColor(targetSlot, hex);
+
+    // Always update main theme and apply immediately for real-time feedback
+    localStorage.setItem("tom-labs-plain-color", hex);
+    localStorage.setItem("tom-labs-bg-mode", "plain");
+    this.apply("plain");
 
     // Sync preview
     const preview = document.getElementById("hex-preview");
@@ -447,8 +452,8 @@ const TomBG = {
         const primaryColor = this.adjustColor(themeColor, isLight ? -40 : 40);
         const pRGB = this.hexToRgbValues(primaryColor);
 
-        root.style.setProperty("--glass-bg", isLight ? "rgba(255, 255, 255, 0.45)" : this.hexToRgba(safeColor, 0.85));
-        root.style.setProperty("--cui-card-bg", isLight ? "rgba(255, 255, 255, 0.1)" : this.hexToRgba(safeColor, 0.2));
+        root.style.setProperty("--glass-bg", isLight ? "rgba(255, 255, 255, 0.79)" : this.hexToRgba(safeColor, 0.85));
+        root.style.setProperty("--cui-card-bg", isLight ? "rgba(255, 255, 255, 0.7)" : this.hexToRgba(safeColor, 0.2));
         root.style.setProperty("--cui-body-bg", safeColor);
         root.style.setProperty("--cui-primary", primaryColor);
         root.style.setProperty("--cui-primary-rgb", pRGB);
@@ -462,7 +467,7 @@ const TomBG = {
       } else {
         // Fallback for image themes without specific colors
         if (isLight) {
-          root.style.setProperty("--glass-bg", "rgba(255, 255, 255, 0.45)");
+          root.style.setProperty("--glass-bg", "rgba(255, 255, 255, 0.79)");
           root.style.setProperty("--cui-card-bg", "rgba(255, 255, 255, 0.1)");
           root.style.setProperty("--cui-body-bg", "#f8f9fa");
           root.style.setProperty("--cui-sidebar-bg", "rgba(255, 255, 255, 0.6)");

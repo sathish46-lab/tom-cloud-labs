@@ -279,11 +279,11 @@ define('PAGE_START_TIME', microtime(true));
                             <?php
                             $presets = [
                                 'Default' => '#0b1e36',
-                                'Charcoal' => '#1a1a1a',
-                                'Midnight' => '#1c0b2b',
-                                'Emerald' => '#0b2b1c',
-                                'Crimson' => '#2b0b0b',
-                                'Slate' => '#1e293b'
+                                'Charcoal' => '#545454',
+                                'Midnight' => '#FF6251',
+                                'Emerald' => '#00BBD6',
+                                'Crimson' => '#FFE373',
+                                'Slate' => '#000000'
                             ];
                             foreach ($presets as $name => $hex): ?>
                                 <div class="color-preset-wrapper text-center">

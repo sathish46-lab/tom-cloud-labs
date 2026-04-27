@@ -14368,6 +14368,16 @@ body::before {
   overflow: hidden;
   transform: translateZ(0);
   /* GPU Layering */
+  /* Fallback for when Visual Blur is OFF */
+}
+:root:not(.enable-blur) .glass-card {
+  background: rgba(255, 255, 255, 0.9) !important;
+  --glass-bg: rgba(255, 255, 255, 0.7) !important;
+}
+[data-coreui-theme=dark] :root:not(.enable-blur) .glass-card {
+  background: rgba(15, 23, 42, 0.95) !important;
+}
+.glass-card {
   /* Glass Shimmer Animation */
 }
 .glass-card::before {
