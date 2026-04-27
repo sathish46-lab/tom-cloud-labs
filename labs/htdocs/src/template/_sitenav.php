@@ -118,6 +118,12 @@
                             <span class="small fw-semibold">Change Background</span>
                         </a>
 
+                        <a class="dropdown-item d-flex align-items-center px-2 py-2 rounded pointer" 
+                            data-coreui-toggle="modal" data-coreui-target="#plainColorModal">
+                            <i class="bx bx-color-fill fs-5 me-2 text-secondary"></i>
+                            <span class="small fw-semibold">Plain Theme Color</span>
+                        </a>
+
                         <div class="dropdown-divider mx-n3 my-2"></div>
 
                         <a class="dropdown-item d-flex align-items-center px-2 py-2 rounded text-danger fw-bold"

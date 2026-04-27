@@ -51,18 +51,94 @@ define('PAGE_START_TIME', microtime(true));
          * Removes bgColors object and applies specific styles directly
          */
         const isLoginPage = <?= (defined('IS_LOGIN_PAGE') && IS_LOGIN_PAGE) ? 'true' : 'false' ?>;
-        // const savedBG = isLoginPage ? 'ninja' : (localStorage.getItem('tom-labs-bg-mode') || 'parallax');
+        const savedBG = isLoginPage ? 'ninja' : (localStorage.getItem('tom-labs-bg-mode') || 'parallax');
+        const savedColor = localStorage.getItem('tom-labs-plain-color') || '#0b1e36';
 
-        // if (savedBG === 'ninja') {
-        //     // Apply Ninja specific glass color
-        //     document.documentElement.style.setProperty("--glass-bg", "rgba(5, 9, 30, 0.85)");
-        // } else if (savedBG === 'parallax') {
-        //     // Apply Parallax specific glass color
-        //     document.documentElement.style.setProperty("--glass-bg", "rgba(0, 10, 24, 0.823)");
-        // } else if (savedBG === 'plain') {
-        //     // Standard plain mode
-        //     document.documentElement.classList.add('mode-plain');
-        // }
+        const themeColors = {
+            'robo': '#0b2b1c',
+            'robotower': '#0b2b1c',
+            'ninja': '#1c0b2b'
+        };
+
+        const isLight = themeToApply === 'light';
+
+        if (savedBG === 'plain' || themeColors[savedBG]) {
+            const color = savedBG === 'plain' ? savedColor : themeColors[savedBG];
+            const safeColor = isLight ? ensureLightness(color, 0.8) : ensureDarkness(color, 0.15);
+
+            if (savedBG === 'plain') {
+                document.documentElement.classList.add('mode-plain');
+            }
+            
+            // Apply theme variables instantly to prevent flicker in sidebar/cards
+            const primaryColor = adjustColor(color, isLight ? -40 : 40);
+            const pRGB = hexToRgbValues(primaryColor);
+
+            document.documentElement.style.setProperty("--glass-bg", isLight ? hexToRgba(safeColor, 0.4) : hexToRgba(safeColor, 0.85));
+            document.documentElement.style.setProperty("--cui-card-bg", isLight ? "rgba(0,0,0,0.05)" : hexToRgba(safeColor, 0.2));
+            document.documentElement.style.setProperty("--cui-body-bg", safeColor);
+            document.documentElement.style.setProperty("--cui-primary", primaryColor);
+            document.documentElement.style.setProperty("--cui-primary-rgb", pRGB);
+            document.documentElement.style.setProperty("--cui-sidebar-bg", isLight ? hexToRgba(safeColor, 0.6) : hexToRgba(safeColor, 0.95));
+            document.documentElement.style.setProperty("--cui-header-bg", isLight ? hexToRgba(safeColor, 0.4) : hexToRgba(safeColor, 0.85));
+
+            // Sync subtle background variants
+            document.documentElement.style.setProperty("--c1", adjustColor(safeColor, isLight ? 3 : -3));
+            document.documentElement.style.setProperty("--c2", safeColor);
+            document.documentElement.style.setProperty("--c3", adjustColor(safeColor, isLight ? -3 : 3));
+            document.documentElement.style.setProperty("--c4", adjustColor(safeColor, isLight ? -6 : 6));
+        }
+
+        function adjustColor(hex, percent) {
+            var num = parseInt(hex.replace("#",""),16),
+            amt = Math.round(2.55 * percent),
+            R = (num >> 16) + amt,
+            B = (num >> 8 & 0x00FF) + amt,
+            G = (num & 0x0000FF) + amt;
+            return "#" + (0x1000000 + (R<255?R<1?0:R:255)*0x10000 + (B<255?B<1?0:B:255)*0x100 + (G<255?G<1?0:G:255)).toString(16).slice(1);
+        }
+
+        function hexToRgba(hex, opacity) {
+            return `rgba(${hexToRgbValues(hex)}, ${opacity})`;
+        }
+
+        function hexToRgbValues(hex) {
+            var num = parseInt(hex.replace("#", ""), 16),
+            R = (num >> 16) & 0xff,
+            G = (num >> 8) & 0xff,
+            B = num & 0xff;
+            return `${R}, ${G}, ${B}`;
+        }
+
+        function ensureDarkness(hex, maxLuminance) {
+            const rgbStr = hexToRgbValues(hex).split(",");
+            const r = parseInt(rgbStr[0]), g = parseInt(rgbStr[1]), b = parseInt(rgbStr[2]);
+            const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+            
+            if (luminance > maxLuminance) {
+                const factor = maxLuminance / luminance;
+                const nr = Math.round(r * factor);
+                const ng = Math.round(g * factor);
+                const nb = Math.round(b * factor);
+                return "#" + (0x1000000 + (nr << 16) + (ng << 8) + nb).toString(16).slice(1);
+            }
+            return hex;
+        }
+
+        function ensureLightness(hex, minLuminance) {
+            const rgbStr = hexToRgbValues(hex).split(",");
+            const r = parseInt(rgbStr[0]), g = parseInt(rgbStr[1]), b = parseInt(rgbStr[2]);
+            const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+            
+            if (luminance < minLuminance) {
+                const factor = (1 - minLuminance) / (1 - luminance);
+                const nr = Math.round(255 - (255 - r) * factor);
+                const ng = Math.round(255 - (255 - g) * factor);
+                const nb = Math.round(255 - (255 - b) * factor);
+                return "#" + (0x1000000 + (nr << 16) + (ng << 8) + nb).toString(16).slice(1);
+            }
+            return hex;
+        }
 
         // Keep the global variable so app.js knows which images to load
         window.FORCED_BG_MODE = isLoginPage ? 'ninja' : null;
@@ -92,6 +168,7 @@ define('PAGE_START_TIME', microtime(true));
         <div class="bg-cover bg-img-1" data-depth="0.1"></div>
         <div class="bg-cover bg-img-2" data-depth="0.2"></div>
         <div class="bg-cover bg-img-3" data-depth="0.4"></div>
+        <div class="bg-cover bg-img-4" data-depth="0.6"></div>
     </div>
     <?php endif; ?>
 
@@ -161,15 +238,97 @@ define('PAGE_START_TIME', microtime(true));
                         <div class="col-md-6">
                             <div class="bg-preview rounded-3 p-5 text-center pointer" 
                                 onclick="TomBG.setMode('robo')" 
-                                style="background: url('/assets/img/robo/robo.jpg'); background-size: cover;">
+                                style="background: url('/assets/Background_Img/robo/robo.jpg'); background-size: cover;">
                                 <h6 class="fw-bold m-0 text-white">Robot Mode</h6>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="bg-preview rounded-3 p-5 text-center pointer" 
                                 onclick="TomBG.setMode('ninja')" 
-                                style="background: url('/assets/img/ninja/ninja.jpg'); background-size: cover;">
+                                style="background: url('/assets/Background_Img/ninja/ninja.jpg'); background-size: cover;">
                                 <h6 class="fw-bold m-0 text-white">Ninja Mode</h6>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="bg-preview rounded-3 p-5 text-center pointer" 
+                                onclick="TomBG.setMode('robotower')" 
+                                style="background: url('/assets/Background_Img/RoboTower/3.png'); background-size: cover;">
+                                <h6 class="fw-bold m-0 text-white">Robo Tower</h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Plain Theme Color Picker Modal -->
+    <div class="modal fade" id="plainColorModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-5 shadow-lg bg-transparent">
+                <div class="apple-card">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="fw-bold m-0 text-white">Theme Designer</h5>
+                        <button type="button" class="btn-close btn-close-white" data-coreui-dismiss="modal"></button>
+                    </div>
+
+                    <!-- Preset Themes -->
+                    <div class="mb-5">
+                        <label class="text-secondary fw-bold d-block mb-3 small uppercase tracking-widest">PRESET PALETTES</label>
+                        <div class="d-flex justify-content-between align-items-center px-1">
+                            <?php
+                            $presets = [
+                                'Default' => '#0b1e36',
+                                'Charcoal' => '#1a1a1a',
+                                'Midnight' => '#1c0b2b',
+                                'Emerald' => '#0b2b1c',
+                                'Crimson' => '#2b0b0b',
+                                'Slate' => '#1e293b'
+                            ];
+                            foreach ($presets as $name => $hex): ?>
+                                <div class="color-preset-wrapper text-center">
+                                    <div class="color-preset rounded-circle pointer border border-white border-opacity-10" 
+                                        onclick="TomBG.setPlainColor('<?= $hex ?>')"
+                                        style="background: <?= $hex ?>; width: 38px; height: 38px;"
+                                        title="<?= $name ?>"></div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+
+                    <!-- My Themes (Slots) -->
+                    <div class="mb-5">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <label class="text-secondary fw-bold small uppercase tracking-widest m-0">SAVED THEMES</label>
+                            <span class="smaller text-secondary opacity-50" style="font-size: 9px;">Click + to save current</span>
+                        </div>
+                        <div class="d-flex justify-content-between gap-2">
+                            <?php for($i=0; $i<4; $i++): ?>
+                                <div id="custom-slot-<?= $i ?>" class="custom-slot flex-grow-1" onclick="if(this.classList.contains('has-color')) { TomBG.setPlainColor(this.style.background); }">
+                                    <i class="bx bx-plus opacity-25"></i>
+                                    <div class="edit-icon" title="Save Current Color" onclick="event.stopPropagation(); TomBG.saveCustomColor(<?= $i ?>);">
+                                        <i class="bx bx-save"></i>
+                                    </div>
+                                </div>
+                            <?php endfor; ?>
+                        </div>
+                    </div>
+
+                    <!-- Custom Picker Card -->
+                    <div class="p-3 rounded-4 border border-white border-opacity-10 bg-white bg-opacity-5">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="p-2 rounded-3 bg-white bg-opacity-10">
+                                <i class="bx bx-paint fs-5 text-white"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="small fw-bold text-white m-0">Custom Tint</label>
+                                    <span class="text-secondary" style="font-size: 10px;" id="hex-preview">#0b1e36</span>
+                                </div>
+                                <input type="color" class="form-control form-control-color border-0 p-0 bg-transparent w-100" 
+                                    id="customPlainColor" value="#0b1e36" 
+                                    onchange="TomBG.setPlainColor(this.value); document.getElementById('hex-preview').innerText = this.value.toUpperCase();" 
+                                    style="height: 24px; border-radius: 4px !important; cursor: pointer;">
                             </div>
                         </div>
                     </div>

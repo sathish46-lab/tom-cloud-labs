@@ -16,13 +16,11 @@
 
 body {
   /* Use theme variables for the background to match light/dark palettes */
-  background: linear-gradient(
-    -45deg,
-    var(--c1),
-    var(--c2),
-    var(--c3),
-    var(--c4)
-  );
+  background: linear-gradient(-45deg,
+      var(--c1),
+      var(--c2),
+      var(--c3),
+      var(--c4));
   background-size: 400% 400%;
   animation: drift 30s ease infinite;
 }
@@ -129,9 +127,87 @@ html[data-coreui-theme="dark"] {
   }
 }
 
-/* Motion-sensitive users get a static backdrop */
-@media (prefers-reduced-motion: reduce) {
-  body {
-    animation: none;
-  }
+/* Modern Color Picker UI */
+.apple-card {
+  background: rgba(15, 15, 15, 0.7);
+  backdrop-filter: blur(30px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 2rem;
+  padding: 2rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+[data-coreui-theme="light"] .apple-card {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
+}
+
+[data-coreui-theme="light"] .apple-card .text-white {
+  color: #1a1a1a !important;
+}
+
+.custom-slot {
+  height: 50px;
+  border-radius: 16px;
+  border: 2px dashed rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+[data-coreui-theme="light"] .custom-slot {
+  border-color: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.02);
+  color: #666;
+}
+
+.custom-slot:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.custom-slot.has-color {
+  border-style: solid;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.custom-slot .edit-icon {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #fff;
+  color: #000;
+  font-size: 10px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.2s;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+}
+
+.custom-slot:hover .edit-icon {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.color-preset {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.color-preset:hover {
+  transform: scale(1.2) translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
 }
