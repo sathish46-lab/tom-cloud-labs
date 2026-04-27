@@ -1,27 +1,29 @@
-<div class="lab-header-section">
-    <div class="header-text">
-        <h1>Lab Environment</h1>
-        <p>
-            Deploy and manage your personal development instances.
-            Instant access to Ubuntu, n8n, Node-RED, and AI Labs.
-        </p>
-    </div>
-
-    <div class="header-actions">
-    <a href="https://blog.tomweb.fun" target="_blank" class="header-btn">
-        <i class='bx bx-book'></i> Lab Blogs
-    </a>
-    
-    <div class="header-stat">
-        <span>Active Labs: <?= Session::get('running_count', 0) ?>/<?= Session::get('total_labs', 0) ?></span>
+<div class="lab-header-section mb-4 px-4">
+    <div class="row align-items-center">
+        <div class="col">
+            <h1 class="fw-bold theme-text m-0" style="font-size: 1.8rem; letter-spacing: -0.5px;">Labs</h1>
+            <p class="text-secondary opacity-75 mt-2 mb-0" style="font-size: 0.85rem; line-height: 1.7; letter-spacing: 0.2px;">
+                Explore the Labs, a technical playground for you. Each lab is a portal to virtual experiences, fostering innovation and digital mastery. Immerse yourself in this journey of tech exploration and discovery.
+            </p>
+        </div>
+        <div class="col-auto">
+            <div class="d-flex align-items-center gap-3">
+                <div class="text-end d-none d-md-block">
+                    <div class="small text-secondary opacity-50 text-uppercase fw-bold ls-1" style="font-size: 10px;">Active Labs</div>
+                    <div class="fw-bold theme-text" style="font-size: 1.1rem;"><?= Session::get('running_count', 0) ?> <span class="opacity-50" style="font-weight: 400;">/ <?= Session::get('total_labs', 0) ?></span></div>
+                </div>
+                <a href="https://blog.tomweb.fun" target="_blank" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center" style="font-size: 0.8rem; height: 38px;">
+                    <i class='bx bx-book me-2'></i> Lab Blogs
+                </a>
+            </div>
+        </div>
     </div>
 </div>
-</div>
 
-<div class="row g-4 mb-4">
+<div class="row g-4 mb-4 px-4">
     <?php foreach(Session::get('labs_list', []) as $lab): ?>
     <div class="col-12 col-md-4">
-        <div class="card h-100 border hovermini border-secondary border-opacity-10 shadow-sm rounded-4 position-relative">
+        <div class="card h-100 border-0 shadow-lg rounded-4 overflow-hidden glass-card position-relative">
             
             <div class="position-absolute end-0 top-50 translate-middle-y pe-3 opacity-10" style="z-index: 1;">
                 <?php if ($lab['id'] === 'minio'): ?>
@@ -43,7 +45,7 @@
 
             <div class="card-body p-4 text-center d-flex flex-column align-items-center position-relative" style="z-index: 2;">
                 <div class="mb-2">
-                    <h5 class="card-title fw-bold mb-0">
+                    <h5 class="card-title fw-bold mb-0" style="color: var(--glass-text); letter-spacing: -0.2px;">
                         <?= $lab['name'] ?>
                         <div class="terminal-info-wrapper ms-1">
                             <i class="bx bx-info-circle small text-muted"></i>
@@ -63,15 +65,19 @@
 
                 <div class="d-flex justify-content-center flex-wrap gap-2 mb-4">
                     <?php foreach($lab['badges'] as $b): ?>
-                        <span class="badge rounded-pill text-bg-primary px-2 py-1 small border-0"><?= $b ?></span>
+                        <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-1 fw-bold" style="font-size: 10px;"><?= $b ?></span>
                     <?php endforeach; ?>
 
-                    <span class="badge rounded-pill text-bg-warning px-2 py-1 small text-dark">
-                        <?= $lab['is_public'] ?>
+                    <span class="badge rounded-pill bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3 py-1 fw-bold" style="font-size: 10px;">
+                        <?= strtoupper($lab['is_public']) ?>
                     </span>
 
-                    <span class="badge rounded-pill text-bg-<?= $lab['status'] == 'running' ? 'success' : 'danger' ?> px-2 py-1 small">
-                        <?= $lab['status'] ?>
+                    <?php 
+                        $status = strtolower($lab['status']);
+                        $statusClass = ($status === 'running') ? 'bg-success text-success' : 'bg-danger text-danger';
+                    ?>
+                    <span class="badge rounded-pill <?= $statusClass ?> bg-opacity-10 border border-opacity-25 px-3 py-1 fw-bold" style="font-size: 10px;">
+                        <?= strtoupper($status) ?>
                     </span>
                 </div>
 
