@@ -21,12 +21,15 @@ body {
     radial-gradient(at 0% 0%, var(--c2) 0, transparent 50%),
     radial-gradient(at 100% 0%, var(--c4) 0, transparent 50%),
     radial-gradient(at 50% 100%, var(--c3) 0, transparent 50%);
-  background-size: 200% 200%;
-  animation: meshDrift 30s ease infinite alternate;
+  background-size: cover;
+  /* Changed from 200% to cover for CPU relief */
+  /* Animation removed for major CPU savings */
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
   transition: background 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translate3d(0, 0, 0);
+  /* Force GPU layering */
 }
 
 /* Premium CSS Scenery (Snow, Mountains, House) */
@@ -38,21 +41,9 @@ body {
   overflow: hidden;
 }
 
-/* Layer 1: Snowfall */
+/* Snow Effect Removed for Performance */
 .scenery-snow {
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(1.5px 1.5px at 10% 10%, var(--snow-color, #fff), transparent),
-    radial-gradient(2px 2px at 30% 20%, var(--snow-color, #fff), transparent),
-    radial-gradient(1.5px 1.5px at 50% 40%, var(--snow-color, #fff), transparent),
-    radial-gradient(2px 2px at 70% 60%, var(--snow-color, #fff), transparent),
-    radial-gradient(1.5px 1.5px at 90% 80%, var(--snow-color, #fff), transparent),
-    radial-gradient(2px 2px at 15% 90%, var(--snow-color, #fff), transparent);
-  background-size: 400px 400px;
-  animation: snowFall 20s linear infinite;
-  opacity: 0.25;
-  /* Increased for light mode visibility */
+  display: none;
 }
 
 /* Layer 2: Distant Mountains */
@@ -83,28 +74,21 @@ body {
   filter: blur(0.5px);
 }
 
-@keyframes snowFall {
-  from {
-    background-position: 0 0;
-  }
+/* Snowfall animation removed */
 
-  to {
-    background-position: 200px 400px;
-  }
-}
-
-/* Premium Grain Overlay */
+/* Premium Grain Overlay (Optimized) */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  opacity: 0.015;
+  /* Simple opacity is much faster for GPU than mix-blend-mode */
+  background-image: url("https://www.transparenttextures.com/patterns/carbon-fibre.png");
+  opacity: 0.02;
   pointer-events: none;
   z-index: 0;
 }
 
-/* Premium Floating Ambient Orbs (Moved behind scene) */
+/* Premium Floating Ambient Orbs (Optimized for GPU) */
 .scenery-orb-1 {
   position: absolute;
   top: 10%;
@@ -112,9 +96,13 @@ body::before {
   width: 45vw;
   height: 45vw;
   background: radial-gradient(circle, var(--c4), transparent 70%);
-  filter: blur(120px);
-  opacity: 0.25;
-  animation: float1 40s ease-in-out infinite alternate;
+  filter: blur(60px);
+  /* Reduced from 120px for GPU efficiency */
+  opacity: 0.2;
+  animation: float1 50s ease-in-out infinite alternate;
+  will-change: transform;
+  transform: translateZ(0);
+  /* Force Hardware Acceleration */
 }
 
 .scenery-orb-2 {
@@ -124,9 +112,12 @@ body::before {
   width: 40vw;
   height: 40vw;
   background: radial-gradient(circle, var(--c3), transparent 70%);
-  filter: blur(120px);
-  opacity: 0.2;
-  animation: float2 55s ease-in-out infinite alternate-reverse;
+  filter: blur(60px);
+  /* Reduced from 120px for GPU efficiency */
+  opacity: 0.15;
+  animation: float2 65s ease-in-out infinite alternate-reverse;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 @keyframes float1 {
@@ -177,10 +168,13 @@ body::before {
 
 .glass-card {
   background: var(--cui-card-bg);
-  backdrop-filter: blur(15px) saturate(160%);
+  backdrop-filter: blur(4px) saturate(120%);
+  /* Reduced to 4px for extreme GPU savings */
   border: 1px solid var(--cui-card-border-color) !important;
   position: relative;
   overflow: hidden;
+  transform: translateZ(0);
+  /* GPU Layering */
 
   /* Glass Shimmer Animation */
   &::before {
@@ -192,12 +186,14 @@ body::before {
     height: 300%;
     background: linear-gradient(45deg,
         transparent 45%,
-        rgba(255, 255, 255, 0.08) 50%,
+        rgba(255, 255, 255, 0.05) 50%,
         transparent 55%);
     transition: all 0.5s;
-    animation: shimmer 12s infinite;
+    animation: shimmer 15s infinite;
+    /* Throttled to 15s */
     pointer-events: none;
     z-index: 1;
+    will-change: transform;
   }
 }
 
