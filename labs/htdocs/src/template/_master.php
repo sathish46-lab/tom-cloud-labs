@@ -406,9 +406,13 @@ define('PAGE_START_TIME', microtime(true));
                             <label class="small fw-bold text-white d-block mb-3 opacity-50 tracking-widest uppercase" style="font-size: 9px;">Professional Pencils</label>
                             <div class="pencils-container">
                                 <?php 
-                                $pencils = ['#000','#444','#888','#ccc','#fff','#f00','#0f0','#00f','#ff0','#0ff','#f0f','#800','#080','#008','#880','#088','#808','#orange','#pink','#brown','#cyan','#magenta','#gold','#silver'];
+                                $pencils = [
+                                    '#0b1e36', '#1e293b', '#334155', '#475569', '#64748b', '#94a3b8', '#cbd5e1', '#f8fafc',
+                                    '#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e', '#10b981', '#06b6d4',
+                                    '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e', '#71717a'
+                                ];
                                 foreach($pencils as $p): ?>
-                                    <div class="pencil-item" style="--pencil-color: <?= $p ?>" onclick="TomBG.setPlainColor('<?= $p ?>')"></div>
+                                    <div class="pencil-item" data-color="<?= $p ?>" style="--pencil-color: <?= $p ?>"></div>
                                 <?php endforeach; ?>
                             </div>
                         </div>

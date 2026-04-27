@@ -14683,28 +14683,51 @@ html[data-coreui-theme=dark] {
 }
 
 .pencil-item {
-  height: 50px;
+  height: 60px;
+  width: 16px;
+  margin: 0 auto;
   background: var(--pencil-color);
-  border-radius: 4px 4px 0 0;
+  border-radius: 0 0 4px 4px;
+  /* Rounded at bottom */
   cursor: pointer;
   position: relative;
-  transition: transform 0.2s;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: inset -3px 0 rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+/* Wood Section (Top) */
 .pencil-item::after {
   content: "";
   position: absolute;
-  bottom: -10px;
+  top: -12px;
+  /* Nib at top */
   left: 0;
   right: 0;
-  height: 10px;
+  height: 12px;
   background: #e5ccac;
   /* Wood color */
-  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  clip-path: polygon(50% 0, 0 100%, 100% 100%);
+  /* Points UP */
+}
+
+/* Graphite Lead Tip (Top) */
+.pencil-item::before {
+  content: "";
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 5px;
+  height: 5px;
+  background: var(--pencil-color);
+  clip-path: polygon(50% 0, 0 100%, 100% 100%);
+  z-index: 1;
 }
 
 .pencil-item:hover {
-  transform: translateY(-8px);
+  transform: scale(1.15) translateY(5px);
+  z-index: 10;
+  filter: brightness(1.1);
 }
 
 /* Custom Spectrum Picker */
