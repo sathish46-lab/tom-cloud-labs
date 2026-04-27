@@ -1,7 +1,47 @@
 <?php
 // Start the timer at the earliest possible moment
 define('PAGE_START_TIME', microtime(true));
+
+// Professional Background Theme Configuration
+$tomThemes = [
+    'robo' => [
+        'assets' => [
+            '/assets/Background_Img/robo/0.png',
+            '/assets/Background_Img/robo/1.png',
+            '/assets/Background_Img/robo/2.png'
+        ],
+        'color' => '#17218cc2'
+    ],
+    'ninja' => [
+        'assets' => [
+            '/assets/Background_Img/ninja/0.png',
+            '/assets/Background_Img/ninja/1.png',
+            '/assets/Background_Img/ninja/2.png'
+        ]
+    ],
+    'robotower' => [
+        'assets' => [
+            '/assets/Background_Img/RoboTower/0.png',
+            '/assets/Background_Img/RoboTower/1.png',
+            '/assets/Background_Img/RoboTower/2.png',
+            '/assets/Background_Img/RoboTower/3.png'
+        ],
+        'color' => '#0b2b1c'
+    ],
+    'parallax' => [
+        'assets' => [
+            '/assets/Background_Img/parallax/0.png',
+            '/assets/Background_Img/parallax/1.png',
+            '/assets/Background_Img/parallax/2.png',
+            '/assets/Background_Img/parallax/3.png'
+        ]
+    ]
+];
 ?>
+<script>
+    // Pass PHP themes to JavaScript
+    window.TomThemes = <?php echo json_encode($tomThemes); ?>;
+</script>
 <!DOCTYPE html>
 <html lang="en">
 

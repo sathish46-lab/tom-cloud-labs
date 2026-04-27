@@ -502,34 +502,8 @@ const TomVisuals = {
 document.addEventListener("DOMContentLoaded", () => TomVisuals.init());
 
 const TomBG = {
-  // Define your image sets here.
-  // You can add as many as you want!
-  themes: {
-    robo: {
-      assets: [
-        "/assets/Background_Img/robo/0.png",
-        "/assets/Background_Img/robo/1.png",
-        "/assets/Background_Img/robo/2.png"
-      ],
-      color: "#0b2b1c"
-    },
-    ninja: {
-      assets: [
-        "/assets/Background_Img/ninja/0.png",
-        "/assets/Background_Img/ninja/1.png",
-        "/assets/Background_Img/ninja/2.png"
-      ]
-    },
-    robotower: {
-      assets: [
-        "/assets/Background_Img/RoboTower/0.png",
-        "/assets/Background_Img/RoboTower/1.png",
-        "/assets/Background_Img/RoboTower/2.png",
-        "/assets/Background_Img/RoboTower/3.png"
-      ],
-      color: "#0b2b1c"
-    }
-  },
+  // Themes are now loaded dynamically from PHP (window.TomThemes)
+  themes: window.TomThemes || {},
 
   init: function () {
     // 1. Check for forced mode (Login Page) before looking at localStorage
