@@ -273,8 +273,8 @@ define('PAGE_START_TIME', microtime(true));
                     </div>
 
                     <!-- Preset Themes -->
-                    <div class="mb-5">
-                        <label class="text-secondary fw-bold d-block mb-3 small uppercase tracking-widest">PRESET PALETTES</label>
+                    <div class="mb-3">
+                        <label class="text-secondary fw-bold d-block mb-2 small uppercase tracking-widest">PRESET PALETTES</label>
                         <div class="d-flex justify-content-between align-items-center px-1">
                             <?php
                             $presets = [
@@ -297,38 +297,119 @@ define('PAGE_START_TIME', microtime(true));
                     </div>
 
                     <!-- My Themes (Slots) -->
-                    <div class="mb-5">
+                    <div class="mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <label class="text-secondary fw-bold small uppercase tracking-widest m-0">SAVED THEMES</label>
-                            <span class="smaller text-secondary opacity-50" style="font-size: 9px;">Click + to save current</span>
+                            <span class="smaller text-secondary opacity-50" style="font-size: 9px;">Select individual colors for each slot</span>
                         </div>
                         <div class="d-flex justify-content-between gap-2">
                             <?php for($i=0; $i<4; $i++): ?>
-                                <div id="custom-slot-<?= $i ?>" class="custom-slot flex-grow-1" onclick="if(this.classList.contains('has-color')) { TomBG.setPlainColor(this.style.background); }">
-                                    <i class="bx bx-plus opacity-25"></i>
-                                    <div class="edit-icon" title="Save Current Color" onclick="event.stopPropagation(); TomBG.saveCustomColor(<?= $i ?>);">
-                                        <i class="bx bx-save"></i>
+                                <div class="position-relative flex-grow-1">
+                                    <div id="custom-slot-<?= $i ?>" class="custom-slot w-100" onclick="TomBG.applySlot(<?= $i ?>)">
+                                        <i class="bx bx-plus opacity-25"></i>
+                                        <?php if($i === 0): ?>
+                                            <div class="edit-icon shadow-sm" onclick="event.stopPropagation(); TomBG.openDesignerForSlot(0)">
+                                                <i class="bx bxs-magic-wand"></i>
+                                            </div>
+                                        <?php else: ?>
+                                            <div class="edit-icon shadow-sm" onclick="event.stopPropagation(); document.getElementById('slot-picker-<?= $i ?>').click()">
+                                                <i class="bx bx-pencil"></i>
+                                            </div>
+                                            <input type="color" id="slot-picker-<?= $i ?>" class="position-absolute opacity-0 pointer-none" 
+                                                style="top:0; left:0; width:1px; height:1px;" 
+                                                onchange="TomBG.saveCustomColor(<?= $i ?>, this.value)">
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             <?php endfor; ?>
                         </div>
                     </div>
 
-                    <!-- Custom Picker Card -->
-                    <div class="p-3 rounded-4 border border-white border-opacity-10 bg-white bg-opacity-5">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="p-2 rounded-3 bg-white bg-opacity-10">
-                                <i class="bx bx-paint fs-5 text-white"></i>
+                    <!-- Tabbed Color Designer -->
+                    <div class="color-designer-tabs d-flex justify-content-center gap-2 mb-3 p-1 rounded-4">
+                        <button type="button" class="designer-tab active" onclick="TomBG.switchPickerTab('spectrum')" title="Spectrum">
+                            <i class="bx bxs-grid-alt"></i>
+                        </button>
+                        <button type="button" class="designer-tab" onclick="TomBG.switchPickerTab('wheel')" title="Wheel">
+                            <i class="bx bx-loader-circle"></i>
+                        </button>
+                        <button type="button" class="designer-tab" onclick="TomBG.switchPickerTab('sliders')" title="Sliders">
+                            <i class="bx bx-slider-alt"></i>
+                        </button>
+                        <button type="button" class="designer-tab" onclick="TomBG.switchPickerTab('palettes')" title="Palettes">
+                            <i class="bx bxs-palette"></i>
+                        </button>
+                        <button type="button" class="designer-tab" onclick="TomBG.switchPickerTab('pencils')" title="Pencils">
+                            <i class="bx bx-pencil"></i>
+                        </button>
+                    </div>
+
+                    <div id="picker-content" class="picker-content">
+                        <!-- Spectrum Mode -->
+                        <div id="picker-spectrum" class="picker-mode active">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <label class="small fw-bold text-white m-0 opacity-50 tracking-widest uppercase" style="font-size: 9px;">Spectrum Designer</label>
+                                <span class="text-secondary fw-mono" style="font-size: 10px;" id="hex-preview">#0B1E36</span>
                             </div>
-                            <div class="flex-grow-1">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <label class="small fw-bold text-white m-0">Custom Tint</label>
-                                    <span class="text-secondary" style="font-size: 10px;" id="hex-preview">#0b1e36</span>
+                            <div id="spectrum-map" class="spectrum-map rounded-4 position-relative pointer shadow-inner mb-4">
+                                <div class="spectrum-cursor" id="spectrum-cursor"></div>
+                            </div>
+                        </div>
+
+                        <!-- Wheel Mode -->
+                        <div id="picker-wheel" class="picker-mode d-none text-center">
+                            <label class="small fw-bold text-white d-block mb-3 opacity-50 tracking-widest uppercase text-start" style="font-size: 9px;">Color Wheel</label>
+                            <div class="d-flex justify-content-center mb-3">
+                                <div id="color-wheel" class="color-wheel">
+                                    <div class="wheel-cursor" id="wheel-cursor"></div>
                                 </div>
-                                <input type="color" class="form-control form-control-color border-0 p-0 bg-transparent w-100" 
-                                    id="customPlainColor" value="#0b1e36" 
-                                    onchange="TomBG.setPlainColor(this.value); document.getElementById('hex-preview').innerText = this.value.toUpperCase();" 
-                                    style="height: 24px; border-radius: 4px !important; cursor: pointer;">
+                            </div>
+                        </div>
+                        
+                        <!-- Global Brightness (For Wheel & Spectrum) -->
+                        <div class="brightness-container mb-2 px-2 d-none" id="global-brightness-cont">
+                            <div class="d-flex justify-content-between small mb-2 opacity-50"><span>Brightness</span><span id="val-bright">100%</span></div>
+                            <input type="range" id="brightness-slider" min="0" max="100" value="100" class="brightness-slider w-100" oninput="TomBG.updateBrightness(this.value)">
+                        </div>
+
+                        <!-- Sliders Mode -->
+                        <div id="picker-sliders" class="picker-mode d-none">
+                            <label class="small fw-bold text-white d-block mb-3 opacity-50 tracking-widest uppercase" style="font-size: 9px;">RGB Sliders</label>
+                            <div class="slider-group mb-3">
+                                <div class="d-flex justify-content-between small mb-1"><span>Red</span><span id="val-r">0</span></div>
+                                <input type="range" class="rgb-slider r" min="0" max="255" value="11" oninput="TomBG.updateFromSliders()">
+                            </div>
+                            <div class="slider-group mb-3">
+                                <div class="d-flex justify-content-between small mb-1"><span>Green</span><span id="val-g">0</span></div>
+                                <input type="range" class="rgb-slider g" min="0" max="255" value="30" oninput="TomBG.updateFromSliders()">
+                            </div>
+                            <div class="slider-group mb-3">
+                                <div class="d-flex justify-content-between small mb-1"><span>Blue</span><span id="val-b">0</span></div>
+                                <input type="range" class="rgb-slider b" min="0" max="255" value="54" oninput="TomBG.updateFromSliders()">
+                            </div>
+                        </div>
+
+                        <!-- Palettes Mode -->
+                        <div id="picker-palettes" class="picker-mode d-none">
+                            <label class="small fw-bold text-white d-block mb-3 opacity-50 tracking-widest uppercase" style="font-size: 9px;">Web Palettes</label>
+                            <div class="palette-grid">
+                                <?php 
+                                $webColors = ['#F44336','#E91E63','#9C27B0','#673AB7','#3F51B5','#2196F3','#03A9F4','#00BCD4','#009688','#4CAF50','#8BC34A','#CDDC39','#FFEB3B','#FFC107','#FF9800','#FF5722','#795548','#9E9E9E','#607D8B','#000000','#FFFFFF'];
+                                foreach($webColors as $c): ?>
+                                    <div class="palette-item" style="background: <?= $c ?>" onclick="TomBG.setPlainColor('<?= $c ?>')"></div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+
+                        <!-- Pencils Mode -->
+                        <div id="picker-pencils" class="picker-mode d-none">
+                            <label class="small fw-bold text-white d-block mb-3 opacity-50 tracking-widest uppercase" style="font-size: 9px;">Professional Pencils</label>
+                            <div class="pencils-container">
+                                <?php 
+                                $pencils = ['#000','#444','#888','#ccc','#fff','#f00','#0f0','#00f','#ff0','#0ff','#f0f','#800','#080','#008','#880','#088','#808','#orange','#pink','#brown','#cyan','#magenta','#gold','#silver'];
+                                foreach($pencils as $p): ?>
+                                    <div class="pencil-item" style="--pencil-color: <?= $p ?>" onclick="TomBG.setPlainColor('<?= $p ?>')"></div>
+                                <?php endforeach; ?>
                             </div>
                         </div>
                     </div>

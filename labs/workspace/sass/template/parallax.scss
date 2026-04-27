@@ -12,10 +12,12 @@
     background-color: #112c54;
     filter: saturate(160%) brightness(65%);
   }
-  [data-coreui-theme="light"] & {
-    background-color: #0d1117;
-    filter: saturate(150%) brightness(65%);
+
+  [data-coreui-theme="light"] {
+    background-color: #f8f9fa;
+    filter: saturate(110%) brightness(95%);
   }
+
   .bg-cover {
     position: absolute;
     height: 100%;

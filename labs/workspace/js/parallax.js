@@ -3,9 +3,10 @@
  */
 const TomParallax = {
   instance: null,
-  sceneElement: document.getElementById("scene"),
+  sceneElement: null,
 
   init: function () {
+    this.sceneElement = document.getElementById("scene");
     if (!this.sceneElement) return;
 
     // Initialize the engine
