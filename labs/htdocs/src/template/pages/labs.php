@@ -7,14 +7,20 @@
             </p>
         </div>
         <div class="col-auto">
-            <div class="d-flex align-items-center gap-3">
-                <div class="text-end d-none d-md-block">
-                    <div class="small text-secondary opacity-50 text-uppercase fw-bold ls-1" style="font-size: 10px;">Active Labs</div>
-                    <div class="fw-bold theme-text" style="font-size: 1.1rem;"><?= Session::get('running_count', 0) ?> <span class="opacity-50" style="font-weight: 400;">/ <?= Session::get('total_labs', 0) ?></span></div>
+            <div class="d-flex flex-column align-items-center" style="min-width: 140px;">
+                <div class="d-flex align-items-baseline justify-content-center mb-1">
+                    <span class="fw-bold theme-text" style="font-size: 2.2rem; line-height: 1;"><?= Session::get('running_count', 0) ?></span>
+                    <span class="text-secondary opacity-50 ms-2" style="font-size: 1.2rem; font-weight: 500;">/ <?= Session::get('total_labs', 0) ?></span>
                 </div>
-                <a href="https://blog.tomweb.fun" target="_blank" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center" style="font-size: 0.8rem; height: 38px;">
-                    <i class='bx bx-book me-2'></i> Lab Blogs
-                </a>
+                <?php 
+                    $total = (int)Session::get('total_labs', 1);
+                    if ($total <= 0) $total = 1;
+                    $percent = ((int)Session::get('running_count', 0) / $total) * 100;
+                ?>
+                <div class="progress bg-secondary bg-opacity-10 rounded-pill mb-1 w-100" style="height: 6px;">
+                    <div class="progress-bar bg-success rounded-pill" role="progressbar" style="width: <?= $percent ?>%" aria-valuenow="<?= $percent ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <div class="text-secondary opacity-50 text-uppercase fw-bold ls-1" style="font-size: 9px; letter-spacing: 0.5px;">Running Labs</div>
             </div>
         </div>
     </div>
@@ -57,18 +63,18 @@
                     </h5>
                 </div>
 
-                <div class="mb-4">
+                <div class="mb-3">
                     <span class="text-<?= $lab['status'] == 'running' ? 'info' : 'secondary opacity-50' ?> font-monospace small fw-bold">
                         <?= $lab['ip'] ?>
                     </span>
                 </div>
 
-                <div class="d-flex justify-content-center flex-wrap gap-2 mb-4">
+                <div class="d-flex justify-content-center flex-wrap gap-1 mb-4">
                     <?php foreach($lab['badges'] as $b): ?>
-                        <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-1 fw-bold" style="font-size: 10px;"><?= $b ?></span>
+                        <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 fw-bold" style="font-size: 9px; padding-top: 2px; padding-bottom: 2px;"><?= $b ?></span>
                     <?php endforeach; ?>
 
-                    <span class="badge rounded-pill bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3 py-1 fw-bold" style="font-size: 10px;">
+                    <span class="badge rounded-pill bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-2 fw-bold" style="font-size: 9px; padding-top: 2px; padding-bottom: 2px;">
                         <?= strtoupper($lab['is_public']) ?>
                     </span>
 
