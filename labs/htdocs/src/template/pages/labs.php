@@ -7,20 +7,20 @@
             </p>
         </div>
         <div class="col-auto">
-            <div class="d-flex flex-column align-items-center" style="min-width: 140px;">
-                <div class="d-flex align-items-baseline justify-content-center mb-1">
+            <div class="d-flex flex-column align-items-center justify-content-center text-center" style="min-width: 140px;">
+                <div class="d-flex align-items-center justify-content-center mb-1">
                     <span class="fw-bold theme-text" style="font-size: 2.2rem; line-height: 1;"><?= Session::get('running_count', 0) ?></span>
-                    <span class="text-secondary opacity-50 ms-2" style="font-size: 1.2rem; font-weight: 500;">/ <?= Session::get('total_labs', 0) ?></span>
+                    <span class="text-secondary opacity-50 ms-2" style="font-size: 1.1rem; font-weight: 500; margin-top: 8px;">/ <?= Session::get('total_labs', 0) ?></span>
                 </div>
                 <?php 
                     $total = (int)Session::get('total_labs', 1);
                     if ($total <= 0) $total = 1;
                     $percent = ((int)Session::get('running_count', 0) / $total) * 100;
                 ?>
-                <div class="progress bg-secondary bg-opacity-10 rounded-pill mb-1 w-100" style="height: 6px;">
+                <div class="progress bg-secondary bg-opacity-10 rounded-pill mb-2 w-100" style="height: 6px; max-width: 120px;">
                     <div class="progress-bar bg-success rounded-pill" role="progressbar" style="width: <?= $percent ?>%" aria-valuenow="<?= $percent ?>" aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
-                <div class="text-secondary opacity-50 text-uppercase fw-bold ls-1" style="font-size: 9px; letter-spacing: 0.5px;">Running Labs</div>
+                <div class="text-secondary opacity-50 text-uppercase fw-bold ls-1" style="font-size: 9px; letter-spacing: 0.8px;">Running Labs</div>
             </div>
         </div>
     </div>

@@ -404,7 +404,9 @@ const TomBG = {
       const pRGB = this.hexToRgbValues(primaryColor);
 
       root.style.setProperty("--glass-bg", isLight ? this.hexToRgba(safeColor, 0.4) : this.hexToRgba(safeColor, 0.85));
+      root.style.setProperty("--glass-bg-solid", this.hexToRgba(safeColor, 0.98));
       root.style.setProperty("--cui-card-bg", isLight ? "rgba(255,255,255,0.05)" : this.hexToRgba(safeColor, 0.2));
+      root.style.setProperty("--cui-card-bg-solid", isLight ? "rgba(255,255,255,0.98)" : this.hexToRgba(safeColor, 0.95));
       root.style.setProperty("--cui-body-bg", safeColor);
       root.style.setProperty("--cui-primary", primaryColor);
       root.style.setProperty("--cui-primary-rgb", pRGB);
@@ -427,7 +429,9 @@ const TomBG = {
         const pRGB = this.hexToRgbValues(primaryColor);
 
         root.style.setProperty("--glass-bg", isLight ? "rgba(255, 255, 255, 0.79)" : this.hexToRgba(safeColor, 0.85));
+        root.style.setProperty("--glass-bg-solid", isLight ? "rgba(255, 255, 255, 0.98)" : this.hexToRgba(safeColor, 0.98));
         root.style.setProperty("--cui-card-bg", isLight ? "rgba(255, 255, 255, 0.7)" : this.hexToRgba(safeColor, 0.2));
+        root.style.setProperty("--cui-card-bg-solid", isLight ? "rgba(255, 255, 255, 0.98)" : this.hexToRgba(safeColor, 0.95));
         root.style.setProperty("--cui-body-bg", safeColor);
         root.style.setProperty("--cui-primary", primaryColor);
         root.style.setProperty("--cui-primary-rgb", pRGB);
