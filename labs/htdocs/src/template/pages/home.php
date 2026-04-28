@@ -59,6 +59,19 @@ $gridItems = [
 </div>
 
 <style>
+/* Elite Cross-Browser Performance Optimization */
+:root {
+    --glass-blur: 12px;
+    --glass-opacity: 0.5;
+}
+
+/* Ensure smooth font rendering across all browsers */
+.home-grid-container {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
 /* 5-column layout for Large screens */
 @media (min-width: 992px) {
     .col-lg-2-4 {
@@ -69,39 +82,53 @@ $gridItems = [
 
 .home-nav-card {
     min-height: 145px;
-    background: rgba(15, 25, 45, 0.5) !important;
+    background: rgba(15, 25, 45, var(--glass-opacity)) !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
     border-radius: 18px !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    backdrop-filter: blur(var(--glass-blur)) !important;
+    -webkit-backdrop-filter: blur(var(--glass-blur)) !important; /* Safari Support */
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+    will-change: transform, box-shadow, background-color; /* Hardware Acceleration */
+    overflow: hidden;
 }
 
 .home-nav-card:hover {
     background: rgba(255, 255, 255, 0.06) !important;
     border-color: rgba(100, 200, 255, 0.4) !important;
-    transform: translateY(-6px);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5) !important;
+    transform: translateY(-6px) translateZ(0); /* Force 3D context */
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6) !important;
 }
 
 .home-nav-card .icon-wrapper {
-    transition: transform 0.3s ease;
+    transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    will-change: transform;
 }
 
 .home-nav-card:hover .icon-wrapper {
-    transform: scale(1.1);
+    transform: scale(1.1) translateZ(0);
 }
 
+/* Smooth Fade-in Animation */
 .fade-in {
-    animation: fadeInUp 0.6s ease-out forwards;
+    opacity: 0;
+    animation: fadeInUp 0.8s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+    will-change: transform, opacity;
 }
 
 @keyframes fadeInUp {
     from {
         opacity: 0;
-        transform: translateY(15px);
+        transform: translateY(15px) translateZ(0);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0) translateZ(0);
     }
+}
+
+/* Optimize image rendering */
+.avatar-wrapper img {
+    image-rendering: -webkit-optimize-contrast;
+    backface-visibility: hidden;
 }
 </style>

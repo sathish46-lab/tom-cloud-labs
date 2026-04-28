@@ -15,13 +15,30 @@
 @use "components/serverlog";
 @use "components/challenges";
 
-// 2. Global Layout Fixes (Standard CSS rules come last)
+// 2. Global Performance & Smooth Rendering Optimizations
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
 .wrapper {
   width: 100%;
   padding-inline-start: var(--cui-sidebar-occupy-start, 0);
   padding-inline-end: var(--cui-sidebar-occupy-end, 0);
-  will-change: auto;
-  @include transition(padding 0.15s);
+  will-change: padding;
+  /* Hardware Acceleration */
+  transform: translateZ(0);
+  /* Force 3D context */
+  @include transition(padding 0.2s cubic-bezier(0.165, 0.84, 0.44, 1));
 }
 
 .lab-header-section {

@@ -7,10 +7,27 @@
   z-index: -1;
   overflow: hidden;
   pointer-events: none;
+  contain: strict;
+  /* High-performance rendering isolation */
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background-color: #000;
+  /* Neutral base to prevent color pop */
+  transition: background-color 1s ease;
 
+  // Instead of expensive filters on the container, we use a more efficient approach
   [data-coreui-theme="dark"] & {
-    background-color: #112c54;
-    filter: saturate(160%) brightness(65%);
+    // background-color is set dynamically by JS, but we use a dark fallback
+    background-color: #02060c;
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 10, 30, 0.35);
+      /* More performant than filter: brightness */
+      z-index: 10;
+    }
   }
 
   [data-coreui-theme="light"] {
@@ -24,5 +41,8 @@
     width: 100%;
     background-size: cover;
     background-position: center center;
+    will-change: transform;
+    /* Critical for Chrome smooth parallax */
+    transform: translateZ(0);
   }
 }

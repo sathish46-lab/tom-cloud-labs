@@ -15092,10 +15092,24 @@ html[data-coreui-theme=dark] {
   z-index: -1;
   overflow: hidden;
   pointer-events: none;
+  contain: strict;
+  /* High-performance rendering isolation */
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background-color: #000;
+  /* Neutral base to prevent color pop */
+  transition: background-color 1s ease;
 }
 [data-coreui-theme=dark] #scene {
-  background-color: #112c54;
-  filter: saturate(160%) brightness(65%);
+  background-color: #02060c;
+}
+[data-coreui-theme=dark] #scene::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 10, 30, 0.35);
+  /* More performant than filter: brightness */
+  z-index: 10;
 }
 #scene [data-coreui-theme=light] {
   background-color: #f8f9fa;
@@ -15107,6 +15121,9 @@ html[data-coreui-theme=dark] {
   width: 100%;
   background-size: cover;
   background-position: center center;
+  will-change: transform;
+  /* Critical for Chrome smooth parallax */
+  transform: translateZ(0);
 }
 
 .lab-header-section,
@@ -15417,12 +15434,29 @@ html.enable-blur .server-logs-panel {
   backdrop-filter: blur(8px);
 }
 
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
 .wrapper {
   width: 100%;
   padding-inline-start: var(--cui-sidebar-occupy-start, 0);
   padding-inline-end: var(--cui-sidebar-occupy-end, 0);
-  will-change: auto;
-  transition: padding 0.15s;
+  will-change: padding;
+  /* Hardware Acceleration */
+  transform: translateZ(0);
+  /* Force 3D context */
+  transition: padding 0.2s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 @media (prefers-reduced-motion: reduce) {
   .wrapper {
