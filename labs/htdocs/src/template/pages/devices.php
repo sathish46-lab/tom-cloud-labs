@@ -91,7 +91,7 @@ $defaultIp = !empty($resources) ? end($resources)['ip_addr'] : "";
                         </ul>
                     </div>
                 </div>
-                <div class="d-flex gap-1 flex-wrap mb-3">
+                <div class="d-flex gap-1 flex-wrap mb-2">
                     <?php 
                         $type = strtolower($device['device_type'] ?? 'mobile');
                         $typeClass = 'bg-primary';
@@ -115,7 +115,7 @@ $defaultIp = !empty($resources) ? end($resources)['ip_addr'] : "";
                         <i class='bx <?= $statusIcon ?> me-1'></i> <?= strtoupper($status) ?>
                     </span>
                 </div>
-                <div class="small stats-area mt-3 pt-3 border-top border-light border-opacity-10" style="font-size: 0.75rem;">
+                <div class="small stats-area" style="font-size: 0.75rem;">
                     <div class="d-flex justify-content-between mb-1">
                         <span style="color: var(--glass-text-muted);">Device IP:</span> 
                         <span class="theme-text font-monospace" style="color: var(--glass-text);"><?= $device['assigned_ip'] ?></span>

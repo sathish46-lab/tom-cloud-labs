@@ -49,7 +49,7 @@ $tomThemes = [
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
-    <title><?= Session::$pageTitle ?> | Tom Labs</title>
+    <title><?= Session::$pageTitle ?></title>
 
     <!-- Professional Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -330,7 +330,9 @@ $tomThemes = [
                                 'Midnight' => '#FF6251',
                                 'Emerald' => '#00BBD6',
                                 'Crimson' => '#FFE373',
-                                'Slate' => '#000000'
+                                'Slate' => '#000000',
+                                'Green' => '#5FFF66',
+                                
                             ];
                             foreach ($presets as $name => $hex): ?>
                                 <div class="color-preset-wrapper text-center">
@@ -557,6 +559,17 @@ $tomThemes = [
         // OPTIONAL: Dispatch event for parallax.js or GSAP backgrounds to re-calculate
         window.dispatchEvent(new Event('themeChanged'));
     }
+
+    // Initialize all tooltips globally with body container to fix positioning issues
+    document.addEventListener('DOMContentLoaded', () => {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-coreui-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new coreui.Tooltip(tooltipTriggerEl, {
+                container: 'body',
+                trigger: 'hover'
+            });
+        });
+    });
     
     </script>
     <?php 

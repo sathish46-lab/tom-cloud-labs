@@ -10,35 +10,60 @@
 
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb my-0">
-                    <li class="breadcrumb-item">
-                        <a href="/" class="text-decoration-none text-secondary small fw-medium">Home</a>
-                    </li>
                     <?php
                     $titleParts = explode(' / ', Session::$pageTitle);
+                    $labHash = Session::get('full_instance_hash');
+                    
+                    // Always prepend Home if it's not there
+                    if (strtolower(trim($titleParts[0])) !== 'home') {
+                        array_unshift($titleParts, 'Home');
+                    }
+
                     $count = count($titleParts);
+                    $hasLabsContext = false;
                     
                     foreach ($titleParts as $index => $part) {
                         $isLast = ($index === $count - 1);
+                        $displayPart = trim($part);
                         $url = null;
-                        $displayPart = $part;
+                        $lowerPart = strtolower($displayPart);
 
-                        // Logic to map common labels to URLs
-                        if (strtolower($part) === 'dashboard') {
-                            $url = '/dashboard';
-                        } elseif (strtolower($part) === 'lab' || strtolower($part) === 'labs') {
+                        // Check if we have seen "Labs" in the breadcrumb to set context
+                        if (stripos($lowerPart, 'lab') !== false) {
+                            $hasLabsContext = true;
+                        }
+
+                        // Smart Mapping Logic
+                        if (stripos($lowerPart, 'home') !== false) {
+                            $url = '/';
+                        } elseif (stripos($lowerPart, 'dashboard') !== false) {
+                            // If in Labs context and hash is available, link to Lab Dashboard
+                            $url = ($hasLabsContext && $labHash) ? "/labs/dashboard/$labHash" : '/dashboard';
+                        } elseif ($lowerPart === 'lab' || $lowerPart === 'labs') {
                             $url = '/labs';
                             $displayPart = 'Labs';
-                        } elseif (strtolower($part) === 'challenges') {
+                        } elseif (stripos($lowerPart, 'challenge') !== false) {
                             $url = '/challenges';
-                            $displayPart = 'Challenges';
+                        } elseif (stripos($lowerPart, 'device') !== false) {
+                            $url = '/devices';
+                        } elseif (stripos($lowerPart, 'network') !== false) {
+                            $url = '/network';
+                        } elseif (stripos($lowerPart, 'domain') !== false) {
+                            // Context-Aware Domains
+                            $url = ($hasLabsContext && $labHash) ? "/labs/domains/$labHash" : '/domains';
+                        } elseif (stripos($lowerPart, 'pref') !== false && $hasLabsContext && $labHash) {
+                            // Lab-specific preferences
+                            $url = "/labs/preferences/$labHash";
+                        } elseif (stripos($lowerPart, 'account') !== false) {
+                            $url = '/account';
                         }
+
+                        $href = $url ? $url : '#';
                         
                         if ($isLast) {
-                            echo '<li class="breadcrumb-item active"><span class="small fw-bold text-white">' . htmlspecialchars($displayPart) . '</span></li>';
-                        } elseif ($url) {
-                            echo '<li class="breadcrumb-item"><a href="' . $url . '" class="text-decoration-none text-secondary small fw-medium">' . htmlspecialchars($displayPart) . '</a></li>';
+                            echo '<li class="breadcrumb-item active"><a href="' . $href . '" class="text-decoration-none small fw-bold theme-text transition-all">' . htmlspecialchars($displayPart) . '</a></li>';
                         } else {
-                            echo '<li class="breadcrumb-item"><span class="text-secondary small fw-medium">' . htmlspecialchars($displayPart) . '</span></li>';
+                            echo '<li class="breadcrumb-item"><a href="' . $href . '" class="text-decoration-none text-secondary hover-theme-text small fw-medium transition-all">' . htmlspecialchars($displayPart) . '</a></li>';
                         }
                     }
                     ?>

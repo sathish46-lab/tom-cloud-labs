@@ -907,9 +907,9 @@ const TomBG = {
       const pRGB = this.hexToRgbValues(primaryColor);
 
       root.style.setProperty("--glass-bg", isLight ? this.hexToRgba(safeColor, 0.4) : this.hexToRgba(safeColor, 0.85));
-      root.style.setProperty("--glass-bg-solid", isLight ? this.hexToRgba(this.ensureLightness(color, 0.92), 0.98) : this.hexToRgba(safeColor, 0.98));
+      root.style.setProperty("--glass-bg-solid", isLight ? this.hexToRgba(this.ensureLightness(color, 0.92), 0.94) : this.hexToRgba(safeColor, 0.94));
       root.style.setProperty("--cui-card-bg", isLight ? "rgba(255,255,255,0.05)" : this.hexToRgba(safeColor, 0.2));
-      root.style.setProperty("--cui-card-bg-solid", isLight ? this.hexToRgba(this.ensureLightness(color, 0.96), 0.98) : this.hexToRgba(safeColor, 0.95));
+      root.style.setProperty("--cui-card-bg-solid", isLight ? this.hexToRgba(this.ensureLightness(color, 0.96), 0.94) : this.hexToRgba(safeColor, 0.95));
       root.style.setProperty("--cui-body-bg", safeColor);
       root.style.setProperty("--cui-primary", primaryColor);
       root.style.setProperty("--cui-primary-rgb", pRGB);
@@ -932,9 +932,9 @@ const TomBG = {
         const pRGB = this.hexToRgbValues(primaryColor);
 
         root.style.setProperty("--glass-bg", isLight ? "rgba(255, 255, 255, 0.79)" : this.hexToRgba(safeColor, 0.85));
-        root.style.setProperty("--glass-bg-solid", isLight ? this.hexToRgba(this.ensureLightness(themeColor, 0.92), 0.98) : this.hexToRgba(safeColor, 0.98));
+        root.style.setProperty("--glass-bg-solid", isLight ? this.hexToRgba(this.ensureLightness(themeColor, 0.92), 0.94) : this.hexToRgba(safeColor, 0.94));
         root.style.setProperty("--cui-card-bg", isLight ? "rgba(255, 255, 255, 0.7)" : this.hexToRgba(safeColor, 0.2));
-        root.style.setProperty("--cui-card-bg-solid", isLight ? this.hexToRgba(this.ensureLightness(themeColor, 0.96), 0.98) : this.hexToRgba(safeColor, 0.95));
+        root.style.setProperty("--cui-card-bg-solid", isLight ? this.hexToRgba(this.ensureLightness(themeColor, 0.96), 0.94) : this.hexToRgba(safeColor, 0.95));
         root.style.setProperty("--cui-body-bg", safeColor);
         root.style.setProperty("--cui-primary", primaryColor);
         root.style.setProperty("--cui-primary-rgb", pRGB);
@@ -947,19 +947,24 @@ const TomBG = {
         root.style.setProperty("--c4", isLight ? "#f0f2f5" : this.adjustColor(safeColor, 10));
       } else {
         // Fallback for image themes without specific colors
+        const defaultPrimary = isLight ? "#0d6efd" : "rgba(255, 255, 255, 0.9)";
+        const pRGB = isLight ? "13, 110, 253" : "255, 255, 255";
+        root.style.setProperty("--cui-primary", defaultPrimary);
+        root.style.setProperty("--cui-primary-rgb", pRGB);
+
         if (isLight) {
           root.style.setProperty("--glass-bg", "rgba(255, 255, 255, 0.79)");
-          root.style.setProperty("--glass-bg-solid", "rgba(240, 245, 255, 0.98)");
+          root.style.setProperty("--glass-bg-solid", "rgba(240, 245, 255, 0.94)");
           root.style.setProperty("--cui-card-bg", "rgba(255, 255, 255, 0.1)");
-          root.style.setProperty("--cui-card-bg-solid", "rgba(248, 250, 255, 0.98)");
+          root.style.setProperty("--cui-card-bg-solid", "rgba(248, 250, 255, 0.94)");
           root.style.setProperty("--cui-body-bg", "#f8f9fa");
           root.style.setProperty("--cui-sidebar-bg", "rgba(245, 250, 255, 0.95)");
         } else {
           root.style.setProperty("--glass-bg", "rgba(0, 10, 24, 0.823)");
-          root.style.setProperty("--glass-bg-solid", "rgba(10, 20, 35, 0.98)");
+          root.style.setProperty("--glass-bg-solid", "rgba(10, 20, 35, 0.94)");
           root.style.setProperty("--cui-card-bg", "rgba(255, 255, 255, 0.03)");
-          root.style.setProperty("--cui-card-bg-solid", "rgba(15, 30, 50, 0.98)");
-          root.style.setProperty("--cui-body-bg", "rgba(3, 17, 36, 0.98)");
+          root.style.setProperty("--cui-card-bg-solid", "rgba(15, 30, 50, 0.94)");
+          root.style.setProperty("--cui-body-bg", "rgba(3, 17, 36, 0.94)");
           root.style.setProperty("--cui-sidebar-bg", "rgba(11, 30, 54, 0.95)");
         }
       }
@@ -2930,7 +2935,22 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!text) return;
 
     try {
-      await navigator.clipboard.writeText(text);
+      // Robust Copy Handler with Fallback
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        // Fallback for non-secure contexts
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        textArea.style.top = "0";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
 
       // 1. Visual Feedback on Button
       const originalInner = btn.innerHTML;
