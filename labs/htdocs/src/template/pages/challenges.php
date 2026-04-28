@@ -109,18 +109,29 @@ $challenges = [
 ];
 ?>
 
-<div class="lab-header-section mb-4 p-4 shadow-sm">
-    <div class="row align-items-center">
-        <div class="col-12 col-md-8">
-            <h2 class="fw-bold text-white mb-1">Challenge Labs</h2>
-            <p class="text-white-50 small mb-0">Real-world hacking scenarios and penetration testing.</p>
+<div class="lab-header-section mb-4 px-4">
+    <div class="row align-items-start">
+        <div class="col">
+            <h1 class="fw-bold theme-text m-0" style="font-size: 1.8rem; letter-spacing: -0.5px;">Challenge Labs</h1>
+            <p class="text-secondary opacity-75 mt-2 mb-0" style="font-size: 0.85rem; line-height: 1.7; letter-spacing: 0.2px;">
+                Challenge Labs offer a realm of cybersecurity and ethical hacking. Engage in real-world hacking scenarios, learning network security and penetration testing. Each lab is a stepping stone in your cybersecurity expertise journey.
+            </p>
         </div>
-        <div class="col-12 col-md-4 text-md-end mt-3 mt-md-0">
-            <div class="card bg-dark bg-opacity-50 border-0 rounded-4 d-inline-block shadow-sm">
-                <div class="card-body py-1 px-4 text-start">
-                    <h3 class="fw-bold mb-0 text-white">2 <span class="fs-6 opacity-50">/ <?= count($challenges) ?></span></h3>
-                    <div class="small text-success fw-bold text-uppercase" style="font-size: 0.5rem;">Running Labs</div>
+        <div class="col-auto">
+            <div class="d-flex flex-column align-items-center justify-content-center text-center" style="min-width: 140px;">
+                <div class="d-flex align-items-center justify-content-center mb-1">
+                    <span class="fw-bold theme-text" style="font-size: 2.2rem; line-height: 1;">2</span>
+                    <span class="text-secondary opacity-50 ms-2" style="font-size: 1.1rem; font-weight: 500; margin-top: 8px;">/ <?= count($challenges) ?></span>
                 </div>
+                <?php 
+                    $total = count($challenges);
+                    $running = 2; // Specific to challenges context
+                    $percent = ($running / $total) * 100;
+                ?>
+                <div class="progress bg-secondary bg-opacity-10 rounded-pill mb-2 w-100" style="height: 6px; max-width: 120px;">
+                    <div class="progress-bar bg-success rounded-pill" role="progressbar" style="width: <?= $percent ?>%" aria-valuenow="<?= $percent ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <div class="text-secondary opacity-50 text-uppercase fw-bold ls-1" style="font-size: 9px; letter-spacing: 0.8px;">Running Labs</div>
             </div>
         </div>
     </div>

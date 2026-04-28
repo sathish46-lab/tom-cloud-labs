@@ -126,11 +126,11 @@ $defaultIp = !empty($resources) ? end($resources)['ip_addr'] : "";
                     </div>
                     <div class="d-flex justify-content-between mb-1">
                         <span style="color: var(--glass-text-muted);">Received:</span> 
-                        <span class="rx-val text-info fw-bold"><?= $device['rx'] ?></span>
+                        <span class="rx-val theme-text"><?= $device['rx'] ?></span>
                     </div>
                     <div class="d-flex justify-content-between">
                         <span style="color: var(--glass-text-muted);">Sent:</span> 
-                        <span class="tx-val text-warning fw-bold"><?= $device['tx'] ?></span>
+                        <span class="tx-val theme-text"><?= $device['tx'] ?></span>
                     </div>
                 </div>
             </div>

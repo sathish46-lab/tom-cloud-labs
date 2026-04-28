@@ -13,6 +13,7 @@
                     <?php
                     $titleParts = explode(' / ', Session::$pageTitle);
                     $labHash = Session::get('full_instance_hash');
+                    $challengeHash = Session::get('challenge_instance_hash');
                     
                     // Always prepend Home if it's not there
                     if (strtolower(trim($titleParts[0])) !== 'home') {
@@ -21,6 +22,7 @@
 
                     $count = count($titleParts);
                     $hasLabsContext = false;
+                    $hasChallengesContext = false;
                     
                     foreach ($titleParts as $index => $part) {
                         $isLast = ($index === $count - 1);
@@ -28,34 +30,51 @@
                         $url = null;
                         $lowerPart = strtolower($displayPart);
 
-                        // Check if we have seen "Labs" in the breadcrumb to set context
+                        // Check context
                         if (stripos($lowerPart, 'lab') !== false) {
                             $hasLabsContext = true;
+                        }
+                        if (stripos($lowerPart, 'challenge') !== false) {
+                            $hasChallengesContext = true;
                         }
 
                         // Smart Mapping Logic
                         if (stripos($lowerPart, 'home') !== false) {
                             $url = '/';
                         } elseif (stripos($lowerPart, 'dashboard') !== false) {
-                            // If in Labs context and hash is available, link to Lab Dashboard
-                            $url = ($hasLabsContext && $labHash) ? "/labs/dashboard/$labHash" : '/dashboard';
+                            // Context-Aware Dashboard Links
+                            if ($hasLabsContext && $labHash) {
+                                $url = "/labs/dashboard/$labHash";
+                            } elseif ($hasChallengesContext && $challengeHash) {
+                                $url = "/challenges/dashboard/$challengeHash";
+                            } else {
+                                $url = '/dashboard';
+                            }
                         } elseif ($lowerPart === 'lab' || $lowerPart === 'labs') {
                             $url = '/labs';
                             $displayPart = 'Labs';
-                        } elseif (stripos($lowerPart, 'challenge') !== false) {
+                        } elseif ($lowerPart === 'challenge' || $lowerPart === 'challenges') {
                             $url = '/challenges';
+                            $displayPart = 'Challenges';
                         } elseif (stripos($lowerPart, 'device') !== false) {
                             $url = '/devices';
                         } elseif (stripos($lowerPart, 'network') !== false) {
                             $url = '/network';
                         } elseif (stripos($lowerPart, 'domain') !== false) {
                             // Context-Aware Domains
-                            $url = ($hasLabsContext && $labHash) ? "/labs/domains/$labHash" : '/domains';
+                            if ($hasLabsContext && $labHash) {
+                                $url = "/labs/domains/$labHash";
+                            } else {
+                                $url = '/domains';
+                            }
                         } elseif (stripos($lowerPart, 'pref') !== false && $hasLabsContext && $labHash) {
-                            // Lab-specific preferences
                             $url = "/labs/preferences/$labHash";
                         } elseif (stripos($lowerPart, 'account') !== false) {
                             $url = '/account';
+                        } elseif (stripos($lowerPart, 'achieve') !== false && $challengeHash) {
+                            $url = "/challenges/achievements/$challengeHash";
+                        } elseif (stripos($lowerPart, 'leader') !== false && $challengeHash) {
+                            $url = "/challenges/leaderboard/$challengeHash";
                         }
 
                         $href = $url ? $url : '#';
@@ -63,7 +82,7 @@
                         if ($isLast) {
                             echo '<li class="breadcrumb-item active"><a href="' . $href . '" class="text-decoration-none small fw-bold theme-text transition-all">' . htmlspecialchars($displayPart) . '</a></li>';
                         } else {
-                            echo '<li class="breadcrumb-item"><a href="' . $href . '" class="text-decoration-none text-secondary hover-theme-text small fw-medium transition-all">' . htmlspecialchars($displayPart) . '</a></li>';
+                            echo '<li class="breadcrumb-item"><a href="' . $href . '" class="text-decoration-none hover-theme-text small fw-medium transition-all" style="color: var(--glass-text-muted);">' . htmlspecialchars($displayPart) . '</a></li>';
                         }
                     }
                     ?>
