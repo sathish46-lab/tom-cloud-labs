@@ -14526,12 +14526,13 @@ body::before {
   background: var(--cui-card-bg);
   backdrop-filter: blur(6px) saturate(140%);
   -webkit-backdrop-filter: blur(6px) saturate(140%);
-  border: 1px solid var(--cui-card-border-color) !important;
+  border: 1px solid rgba(100, 200, 255, 0.25) !important;
+  /* Permanent high-end blue border */
   border-radius: 16px;
   position: relative;
   /* overflow: hidden; Removed to allow tooltips and dropdowns to bleed out professionally */
-  box-shadow: 0 0 0 1px var(--glass-border-glow), 0 8px 32px rgba(0, 0, 0, 0.12), inset 0 1px 0 var(--glass-shine);
-  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  box-shadow: 0 0 0 1px rgba(100, 200, 255, 0.15), 0 8px 32px rgba(0, 0, 0, 0.15), inset 0 1px 0 var(--glass-shine);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   /* Fallback for when Visual Blur is OFF */
 }
 :root:not(.enable-blur) .glass-card {
@@ -14606,6 +14607,11 @@ body::before {
 }
 
 /* Enhanced visibility for dropdown menus in fallback mode */
+.dropdown-menu {
+  z-index: 2000 !important;
+  /* Always stay above hovering glass-cards */
+}
+
 .dropdown-menu.glass-card {
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15) !important;
   border: 1px solid rgba(0, 0, 0, 0.1) !important;

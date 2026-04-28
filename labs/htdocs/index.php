@@ -3,7 +3,7 @@ require_once 'src/load.php';
 
 // 1. If already logged in, go straight to dashboard
 if (Session::getAuthStatus() == Constants::STATUS_LOGGEDIN) {
-    header("Location: app/dashboard.php");
+    header("Location: /dashboard");
     exit;
 }
 
