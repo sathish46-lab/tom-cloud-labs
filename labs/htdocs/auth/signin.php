@@ -12,7 +12,7 @@ if (isset($_GET['code'])) {
     if ($user) {
         $_SESSION['username'] = $user['username'];
         $_SESSION['auth_status'] = Constants::STATUS_LOGGEDIN;
-        header('Location: /dashboard');
+        header('Location: /home');
         exit;
     } else {
         header('Location: /finish-signup');
@@ -23,7 +23,7 @@ if (isset($_GET['code'])) {
 // Handle Standard Login
 if (isset($_POST['email']) && isset($_POST['password'])) {
     if (UserSession::authenticate($_POST['email'], $_POST['password'])) {
-        header("Location: /dashboard");
+        header("Location: /home");
         exit;
     }
 }

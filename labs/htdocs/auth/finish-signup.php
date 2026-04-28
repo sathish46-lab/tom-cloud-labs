@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username'])) {
         $_SESSION['username'] = $username;
         $_SESSION['auth_status'] = Constants::STATUS_LOGGEDIN;
         
-        header("Location: /dashboard");
+        header("Location: /home");
         exit;
     }
 }
