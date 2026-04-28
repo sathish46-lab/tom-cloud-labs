@@ -22,10 +22,27 @@ $current = Session::getCurrentFile();
         <li class="nav-item">
             <a class="nav-link <?= (str_contains($current, 'learn')) ? 'active' : '' ?>" href="/learn">
                 <i class="nav-icon bx bxs-graduation"></i>
-                Learn AI <span class="badge badge-sm bg-info-gradient ms-auto">New</span>
+                Learn AI 
             </a>
         </li>
-        <li class="nav-title">Features</li>
+        <li class="nav-group">
+            <a class="nav-link nav-group-toggle" href="#">
+                <i class="nav-icon bx bx-spreadsheet"></i> Evaluate
+            </a>
+            <ul class="nav-group-items">
+                <li class="nav-item">
+                    <a class="nav-link <?= $current == 'quiz' ? 'active' : '' ?>" href="/quiz">
+                        <i class="nav-icon bx bxs-zap text-warning"></i> Spot Quiz ⚡
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="nav-icon bx bx-code-alt"></i> Code Arena 👨🏽‍💻
+                    </a>
+                </li>
+            </ul>
+        </li>
+        <li class="nav-title">Tom Labs</li>
         <li class="nav-item">
             <a class="nav-link <?= $current == 'devices' ? 'active' : '' ?>" href="/devices">
                 <svg class="nav-icon">

@@ -1,0 +1,157 @@
+{
+    "Learning": [
+        {
+            "id": "learn-roadmap",
+            "title": "Roadmaps",
+            "desc": "Quizzes generated from learning roadmaps and their nodes."
+        },
+        {
+            "id": "learn-lesson",
+            "title": "Lessons",
+            "desc": "Quizzes generated from AI-powered lessons across all subjects."
+        },
+        {
+            "id": "learn-syllabus",
+            "title": "Syllabi",
+            "desc": "Quizzes generated from academic syllabus units and courses."
+        }
+    ],
+    "Technology": [
+        {
+            "id": "tech-linux-cli",
+            "title": "Linux CLI",
+            "desc": "Using the unix-like terminal to interact with Linux systems."
+        },
+        {
+            "id": "9114b868-78c8-4de4-b773-609f5d844268",
+            "title": "Cybersecurity",
+            "desc": "Protecting systems, networks, and programs from digital attacks.",
+            "subtopics": [
+                { "id": "1a79243e-4f74-44fb-a63e-11fea9aada7c", "title": "Firewalls and VPNs", "desc": "Tools for network security and privacy." },
+                { "id": "2b80354f-5g85-55gc-b74f-22gfb9bbdb8d", "title": "Intrusion Detection Systems (IDS)", "desc": "Monitoring and detecting malicious activities." },
+                { "id": "3c91465g-6h96-66hd-c85g-33hgc0ccdc9e", "title": "Secure Network Design", "desc": "Designing networks for maximum security." },
+                { "id": "4d02576h-7i07-77ie-d96h-44ihd1dde0af", "title": "Malware Analysis", "desc": "Identifying and understanding malicious software." },
+                { "id": "5e13687i-8j18-88jf-e07i-55jie2eef1bg", "title": "Cryptography", "desc": "Securing communication with codes." },
+                { "id": "6f24798j-9k29-99kg-f18j-66kjf3ffg2ch", "title": "Ethical Hacking", "desc": "Legal exploitation of systems to improve security." },
+                { "id": "7g35809k-0l30-00lh-g29k-77lkg4ggh3di", "title": "Security Policies and Procedures", "desc": "Guidelines and actions for maintaining security." },
+                { "id": "8h46910l-1m31-11mi-h30l-88mlh5hhi4ej", "title": "Incident Response", "desc": "Responding to security incidents effectively." },
+                { "id": "9i57021m-2n32-22nj-i41m-99nmi6iij5fk", "title": "Risk Management", "desc": "Identifying, evaluating, and mitigating risks." },
+                { "id": "0j68132n-3o33-33ok-j52n-00onj7jjk6gl", "title": "Cloud Security", "desc": "Protecting cloud-based data and applications." },
+                { "id": "1k79243o-4p34-44pl-k63o-11pok8kkl7hm", "title": "Penetration Testing", "desc": "Evaluating system security by simulating attacks." },
+                { "id": "2l80354p-5q35-55qm-l74p-22qpl9llm8in", "title": "Data Loss Prevention", "desc": "Methods to protect sensitive data from leaving network." }
+            ]
+        },
+        {
+            "id": "tech-git",
+            "title": "Git and GitLab",
+            "desc": "GitLab, an open-source DevOps tool, integrates Git for version control system."
+        },
+        {
+            "id": "tech-iot",
+            "title": "Internet of Things (IoT)",
+            "desc": "IoT refers to the network of physical devices connected to the internet."
+        },
+        {
+            "id": "tech-microcontrollers",
+            "title": "Microcontrollers",
+            "desc": "Understanding and programming microcontrollers for a variety of apps."
+        },
+        {
+            "id": "tech-ai",
+            "title": "Artificial Intelligence",
+            "desc": "Simulating intelligent behavior in machines and enabling automation."
+        },
+        {
+            "id": "tech-os",
+            "title": "Operating Systems",
+            "desc": "Understanding and managing the software that supports hardware."
+        },
+        {
+            "id": "tech-networks",
+            "title": "Computer Networks",
+            "desc": "Understanding the principles and protocols used in communication."
+        },
+        {
+            "id": "tech-ml",
+            "title": "Machine Learning",
+            "desc": "Using algorithms and statistical models to enable predictions."
+        }
+    ],
+    "Programming": [
+        {
+            "id": "prog-generic",
+            "title": "Generic Programming",
+            "desc": "Writing code to create functional software."
+        },
+        {
+            "id": "prog-c",
+            "title": "C Programming",
+            "desc": "Writing code in the C programming language."
+        },
+        {
+            "id": "prog-bash",
+            "title": "Bash Programming",
+            "desc": "Writing scripts in the Bash shell scripting language."
+        },
+        {
+            "id": "prog-mongodb",
+            "title": "MongoDB",
+            "desc": "A source-available cross-platform document-oriented database."
+        },
+        {
+            "id": "prog-socket",
+            "title": "Socket Programming",
+            "desc": "Socket programming is a network paradigm for data exchange."
+        },
+        {
+            "id": "prog-python",
+            "title": "Python Programming",
+            "desc": "Writing code in the Python programming language."
+        },
+        {
+            "id": "prog-php",
+            "title": "PHP Programming",
+            "desc": "Writing code in the PHP programming language."
+        },
+        {
+            "id": "prog-html-css",
+            "title": "HTML & CSS",
+            "desc": "The standard markup and styling languages for web pages."
+        },
+        {
+            "id": "prog-micropython",
+            "title": "MicroPython",
+            "desc": "A Python 3 variant optimized for microcontrollers."
+        },
+        {
+            "id": "prog-bootstrap",
+            "title": "Bootstrap 5",
+            "desc": "A popular, free, and open-source CSS framework."
+        },
+        {
+            "id": "prog-nodejs",
+            "title": "Node.js Programming",
+            "desc": "Writing code using the Node.js runtime environment."
+        },
+        {
+            "id": "prog-jquery",
+            "title": "jQuery",
+            "desc": "A fast, small, and feature-rich JavaScript library."
+        },
+        {
+            "id": "prog-js",
+            "title": "JavaScript Programming",
+            "desc": "Writing code using the JavaScript programming language."
+        },
+        {
+            "id": "prog-react",
+            "title": "React.js Programming",
+            "desc": "Writing code using the React.js library for building UIs."
+        },
+        {
+            "id": "prog-java",
+            "title": "Java Programming",
+            "desc": "Writing code in the Java programming language."
+        }
+    ]
+}

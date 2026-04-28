@@ -26,6 +26,10 @@ RewriteCond %{DOCUMENT_ROOT}/app/$1.php -f
 RewriteRule ^([^/]+)$ app/$1.php [L,QSA]
 
 RewriteRule ^home$ app/home.php [L,QSA]
+RewriteRule ^quiz/([a-zA-Z0-9-]+)/recent/([a-zA-Z0-9-]+)/?$ app/quiz/answer.php?parent=$1&quiz_id=$2 [L,QSA]
+RewriteRule ^quiz/([a-zA-Z0-9-]+)/v/([a-zA-Z0-9-]+)/?$ app/quiz/start.php?parent=$1&topic_id=$2 [L,QSA]
+RewriteRule ^quiz/([a-zA-Z0-9-]+)/?$ app/quiz/quiz_view.php?id=$1 [L,QSA]
+RewriteRule ^quiz$ app/quiz/quiz_hub.php [L,QSA]
 
 # 7. Learn AI Routing
 RewriteRule ^learn$ app/learnAI/dashboard.php [L,QSA]

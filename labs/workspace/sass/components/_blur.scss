@@ -1,0 +1,21 @@
+.blur {
+    border-radius: var(--cui-border-radius) !important;
+    overflow: hidden;
+}
+
+#learn-panel-3 .container .card .card-body,
+#learn-panel-3 .container .blur .card-body,
+#roadmap-panel-right .container .card .card-body,
+#roadmap-panel-right .container .blur .card-body {
+    border-radius: 0 !important;
+}
+
+#learn-panel-3 .container .card .card-body .chat-container,
+#learn-panel-3 .container .blur .card-body .chat-container,
+#roadmap-panel-right .container .card .card-body .chat-container,
+#roadmap-panel-right .container .blur .card-body .chat-container {
+    border-radius: 0;
+    border-bottom-right-radius: var(--cui-border-radius) !important;
+    border-bottom-left-radius: var(--cui-border-radius) !important;
+    position: relative;
+}

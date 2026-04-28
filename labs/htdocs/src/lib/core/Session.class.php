@@ -428,6 +428,8 @@ class Session
             'signup'    => '/signup',
             'logout'    => '/logout',
             'home'      => '/home',
+            'quiz'      => '/quiz',
+            'quiz_view' => '/quiz/%',
             'dashboard' => '/dashboard',
             'challenges' => '/challenges',
             'verify' => '/verify'

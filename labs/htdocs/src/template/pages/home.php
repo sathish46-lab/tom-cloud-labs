@@ -7,7 +7,7 @@ $gridItems = [
     ['icon' => 'bx-tachometer', 'title' => 'Dashboard', 'desc' => 'Your control center', 'url' => '/dashboard', 'color' => '#00d2ff'],
     ['icon' => 'bx-monitor', 'title' => 'Machine Labs', 'desc' => 'Deploy & practice', 'url' => '/labs', 'color' => '#27ae60'],
     ['icon' => 'bx-shield-quarter', 'title' => 'Challenge Labs', 'desc' => 'CTF & security', 'url' => '/challenges', 'color' => '#e74c3c'],
-    ['icon' => 'bx-check-square', 'title' => 'Spot Quiz', 'desc' => 'Test your knowledge', 'url' => '#', 'color' => '#8e44ad'],
+    ['icon' => 'bx-check-square', 'title' => 'Spot Quiz', 'desc' => 'Test your knowledge', 'url' => '/quiz', 'color' => '#8e44ad'],
     ['icon' => 'bx-code-alt', 'title' => 'Code Arena', 'desc' => 'Solve & compete', 'url' => '#', 'color' => '#f1c40f'],
     ['icon' => 'bx-book-open', 'title' => 'Learn AI', 'desc' => 'AI-powered lessons', 'url' => '/learn', 'color' => '#3498db'],
     ['icon' => 'bx-map-alt', 'title' => 'Roadmaps', 'desc' => 'Learning paths', 'url' => '#', 'color' => '#16a085'],
