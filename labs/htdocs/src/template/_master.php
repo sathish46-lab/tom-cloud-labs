@@ -326,12 +326,12 @@ $tomThemes = [
                             <?php
                             $presets = [
                                 'Default' => '#0b1e36',
-                                'Charcoal' => '#545454',
+                                'Charcoal' => '#0B1E36',
                                 'Midnight' => '#FF6251',
                                 'Emerald' => '#00BBD6',
                                 'Crimson' => '#FFE373',
                                 'Slate' => '#000000',
-                                'Green' => '#5FFF66',
+                                'Green' => '#ffffffff',
                                 
                             ];
                             foreach ($presets as $name => $hex): ?>

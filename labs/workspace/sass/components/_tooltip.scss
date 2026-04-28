@@ -28,6 +28,8 @@
     transition: opacity 0.3s, transform 0.3s;
     font-size: 11px;
     line-height: 1.4;
+    word-break: break-all;
+    /* Ensure long hashes don't overflow */
     border: 1px solid rgba(255, 255, 255, 0.1);
     background-color: rgba(0, 0, 0, 0.9);
     /* Ensure dark background */

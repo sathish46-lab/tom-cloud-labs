@@ -14529,7 +14529,7 @@ body::before {
   border: 1px solid var(--cui-card-border-color) !important;
   border-radius: 16px;
   position: relative;
-  overflow: hidden;
+  /* overflow: hidden; Removed to allow tooltips and dropdowns to bleed out professionally */
   box-shadow: 0 0 0 1px var(--glass-border-glow), 0 8px 32px rgba(0, 0, 0, 0.12), inset 0 1px 0 var(--glass-shine);
   transition: box-shadow 0.3s ease, border-color 0.3s ease;
   /* Fallback for when Visual Blur is OFF */
@@ -15169,6 +15169,8 @@ html.enable-blur .modal-content {
   transition: opacity 0.3s, transform 0.3s;
   font-size: 11px;
   line-height: 1.4;
+  word-break: break-all;
+  /* Ensure long hashes don't overflow */
   border: 1px solid rgba(255, 255, 255, 0.1);
   background-color: rgba(0, 0, 0, 0.9);
   /* Ensure dark background */
