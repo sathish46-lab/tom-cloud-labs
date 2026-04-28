@@ -120,27 +120,29 @@ $tomThemes = [
             const pRGB = hexToRgbValues(primaryColor);
 
             document.documentElement.style.setProperty("--glass-bg", isLight ? hexToRgba(safeColor, 0.4) : hexToRgba(safeColor, 0.85));
+            document.documentElement.style.setProperty("--glass-bg-solid", isLight ? hexToRgba(ensureLightness(color, 0.92), 0.98) : hexToRgba(safeColor, 0.98));
             document.documentElement.style.setProperty("--cui-card-bg", isLight ? "rgba(0,0,0,0.05)" : hexToRgba(safeColor, 0.2));
+            document.documentElement.style.setProperty("--cui-card-bg-solid", isLight ? hexToRgba(ensureLightness(color, 0.96), 0.98) : hexToRgba(safeColor, 0.95));
             document.documentElement.style.setProperty("--cui-body-bg", safeColor);
             document.documentElement.style.setProperty("--cui-primary", primaryColor);
             document.documentElement.style.setProperty("--cui-primary-rgb", pRGB);
-            document.documentElement.style.setProperty("--cui-sidebar-bg", isLight ? hexToRgba(safeColor, 0.6) : hexToRgba(safeColor, 0.95));
-            document.documentElement.style.setProperty("--cui-header-bg", isLight ? hexToRgba(safeColor, 0.4) : hexToRgba(safeColor, 0.85));
+            document.documentElement.style.setProperty("--cui-sidebar-bg", isLight ? hexToRgba(safeColor, 0.95) : hexToRgba(safeColor, 0.95));
+            document.documentElement.style.setProperty("--cui-header-bg", isLight ? hexToRgba(safeColor, 0.85) : hexToRgba(safeColor, 0.85));
 
             // Sync subtle background variants
-            document.documentElement.style.setProperty("--c1", adjustColor(safeColor, isLight ? 3 : -3));
-            document.documentElement.style.setProperty("--c2", safeColor);
-            document.documentElement.style.setProperty("--c3", adjustColor(safeColor, isLight ? -3 : 3));
-            document.documentElement.style.setProperty("--c4", adjustColor(safeColor, isLight ? -6 : 6));
+            document.documentElement.style.setProperty("--c1", isLight ? "#ffffff" : adjustColor(safeColor, -5));
+            document.documentElement.style.setProperty("--c2", isLight ? "#f8f9fa" : safeColor);
+            document.documentElement.style.setProperty("--c3", isLight ? "#ffffff" : adjustColor(safeColor, 5));
+            document.documentElement.style.setProperty("--c4", isLight ? "#f0f2f5" : adjustColor(safeColor, 10));
         }
 
         function adjustColor(hex, percent) {
             var num = parseInt(hex.replace("#",""),16),
             amt = Math.round(2.55 * percent),
             R = (num >> 16) + amt,
-            B = (num >> 8 & 0x00FF) + amt,
-            G = (num & 0x0000FF) + amt;
-            return "#" + (0x1000000 + (R<255?R<1?0:R:255)*0x10000 + (B<255?B<1?0:B:255)*0x100 + (G<255?G<1?0:G:255)).toString(16).slice(1);
+            G = (num >> 8 & 0x00FF) + amt,
+            B = (num & 0x0000FF) + amt;
+            return "#" + (0x1000000 + (R<255?R<1?0:R:255)*0x10000 + (G<255?G<1?0:G:255)*0x100 + (B<255?B<1?0:B:255)).toString(16).slice(1);
         }
 
         function hexToRgba(hex, opacity) {

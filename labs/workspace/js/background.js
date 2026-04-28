@@ -404,9 +404,9 @@ const TomBG = {
       const pRGB = this.hexToRgbValues(primaryColor);
 
       root.style.setProperty("--glass-bg", isLight ? this.hexToRgba(safeColor, 0.4) : this.hexToRgba(safeColor, 0.85));
-      root.style.setProperty("--glass-bg-solid", this.hexToRgba(safeColor, 0.98));
+      root.style.setProperty("--glass-bg-solid", isLight ? this.hexToRgba(this.ensureLightness(color, 0.92), 0.98) : this.hexToRgba(safeColor, 0.98));
       root.style.setProperty("--cui-card-bg", isLight ? "rgba(255,255,255,0.05)" : this.hexToRgba(safeColor, 0.2));
-      root.style.setProperty("--cui-card-bg-solid", isLight ? "rgba(255,255,255,0.98)" : this.hexToRgba(safeColor, 0.95));
+      root.style.setProperty("--cui-card-bg-solid", isLight ? this.hexToRgba(this.ensureLightness(color, 0.96), 0.98) : this.hexToRgba(safeColor, 0.95));
       root.style.setProperty("--cui-body-bg", safeColor);
       root.style.setProperty("--cui-primary", primaryColor);
       root.style.setProperty("--cui-primary-rgb", pRGB);
@@ -429,9 +429,9 @@ const TomBG = {
         const pRGB = this.hexToRgbValues(primaryColor);
 
         root.style.setProperty("--glass-bg", isLight ? "rgba(255, 255, 255, 0.79)" : this.hexToRgba(safeColor, 0.85));
-        root.style.setProperty("--glass-bg-solid", isLight ? "rgba(255, 255, 255, 0.98)" : this.hexToRgba(safeColor, 0.98));
+        root.style.setProperty("--glass-bg-solid", isLight ? this.hexToRgba(this.ensureLightness(themeColor, 0.92), 0.98) : this.hexToRgba(safeColor, 0.98));
         root.style.setProperty("--cui-card-bg", isLight ? "rgba(255, 255, 255, 0.7)" : this.hexToRgba(safeColor, 0.2));
-        root.style.setProperty("--cui-card-bg-solid", isLight ? "rgba(255, 255, 255, 0.98)" : this.hexToRgba(safeColor, 0.95));
+        root.style.setProperty("--cui-card-bg-solid", isLight ? this.hexToRgba(this.ensureLightness(themeColor, 0.96), 0.98) : this.hexToRgba(safeColor, 0.95));
         root.style.setProperty("--cui-body-bg", safeColor);
         root.style.setProperty("--cui-primary", primaryColor);
         root.style.setProperty("--cui-primary-rgb", pRGB);
@@ -446,12 +446,16 @@ const TomBG = {
         // Fallback for image themes without specific colors
         if (isLight) {
           root.style.setProperty("--glass-bg", "rgba(255, 255, 255, 0.79)");
+          root.style.setProperty("--glass-bg-solid", "rgba(240, 245, 255, 0.98)");
           root.style.setProperty("--cui-card-bg", "rgba(255, 255, 255, 0.1)");
+          root.style.setProperty("--cui-card-bg-solid", "rgba(248, 250, 255, 0.98)");
           root.style.setProperty("--cui-body-bg", "#f8f9fa");
-          root.style.setProperty("--cui-sidebar-bg", "rgba(255, 255, 255, 0.6)");
+          root.style.setProperty("--cui-sidebar-bg", "rgba(245, 250, 255, 0.95)");
         } else {
           root.style.setProperty("--glass-bg", "rgba(0, 10, 24, 0.823)");
+          root.style.setProperty("--glass-bg-solid", "rgba(10, 20, 35, 0.98)");
           root.style.setProperty("--cui-card-bg", "rgba(255, 255, 255, 0.03)");
+          root.style.setProperty("--cui-card-bg-solid", "rgba(15, 30, 50, 0.98)");
           root.style.setProperty("--cui-body-bg", "rgba(3, 17, 36, 0.98)");
           root.style.setProperty("--cui-sidebar-bg", "rgba(11, 30, 54, 0.95)");
         }
