@@ -2,7 +2,7 @@
 require_once '../src/load.php';
 
 if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    header("Location: /auth/signin.php");
+    header("Location: /signin");
     exit;
 }
 

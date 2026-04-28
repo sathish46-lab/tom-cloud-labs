@@ -1,10 +1,12 @@
 <?php
-require_once '../src/load.php';
+// /app/home.php
+require_once __DIR__ . '/../src/load.php';
 
 if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
     header("Location: /signin");
     exit;
 }
 
-Session::$pageTitle = "Challenges";
+define('IS_HOME_PAGE', true);
+Session::$pageTitle = "Home";
 Session::loadMaster();

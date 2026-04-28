@@ -14,6 +14,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email'], $_POST['pass
     $db = DatabaseConnection::getDefaultDatabase();
     $email = trim(strtolower($_POST['email']));
     $username = trim($_POST['username']);
+    $first_name = trim($_POST['first_name'] ?? '');
+    $last_name = trim($_POST['last_name'] ?? '');
 
     $existingUser = $db->users->findOne(['$or' => [['email' => $email], ['username' => $username]]]);
     if ($existingUser) {
@@ -24,6 +26,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email'], $_POST['pass
             'user_id' => DatabaseConnection::getNextSequence("userid"),
             'username' => $username,
             'email' => $email,
+            'first_name' => $first_name,
+            'last_name' => $last_name,
             'password' => password_hash($_POST['password'], PASSWORD_DEFAULT),
             'verification_token' => $token,
             'is_verified' => false,
@@ -83,13 +87,28 @@ ob_start();
                             </div>
                         <?php else: ?>
                             <form method="POST">
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <label class="small fw-bold text-secondary mb-1">FIRST NAME</label>
+                                        <div class="input-group">
+                                            <input type="text" name="first_name" class="form-control" placeholder="Jane" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="small fw-bold text-secondary mb-1">LAST NAME</label>
+                                        <div class="input-group">
+                                            <input type="text" name="last_name" class="form-control" placeholder="Doe">
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="mb-3">
                                     <label class="small fw-bold text-secondary mb-1">USERNAME</label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-transparent border-end-0">
                                             <i class="bx bx-user"></i>
                                         </span>
-                                        <input type="text" name="username" class="form-control border-start-0 ps-0" required autofocus>
+                                        <input type="text" name="username" class="form-control border-start-0 ps-0" placeholder="janedoe" required>
                                     </div>
                                 </div>
 

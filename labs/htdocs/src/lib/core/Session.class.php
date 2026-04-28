@@ -427,6 +427,7 @@ class Session
             'signin'    => '/signin',
             'signup'    => '/signup',
             'logout'    => '/logout',
+            'home'      => '/home',
             'dashboard' => '/dashboard',
             'challenges' => '/challenges',
             'verify' => '/verify'

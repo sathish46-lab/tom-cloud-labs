@@ -25,6 +25,8 @@ RewriteRule ^([^/]+)$ auth/$1.php [L,QSA]
 RewriteCond %{DOCUMENT_ROOT}/app/$1.php -f
 RewriteRule ^([^/]+)$ app/$1.php [L,QSA]
 
+RewriteRule ^home$ app/home.php [L,QSA]
+
 # 7. Learn AI Routing
 RewriteRule ^learn$ app/learnAI/dashboard.php [L,QSA]
 RewriteRule ^learn/lesson/([^/]+)$ app/learnAI/course_view.php?id=$1 [L,QSA]

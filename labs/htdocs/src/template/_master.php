@@ -231,13 +231,13 @@ $tomThemes = [
     <?php if (!Session::get('footer', false)) { echo Session::generateFooter(); } ?>
 
     <?php else: ?>
-    <?php Session::getNav(); ?>
+    <?php if (!defined('IS_HOME_PAGE')): Session::getNav(); endif; ?>
 
-    <div class="wrapper d-flex flex-column min-vh-100 bg-transparent"> 
-    <?php Session::getSiteNav(); ?>
+    <div class="wrapper d-flex flex-column min-vh-100 bg-transparent" style="<?= defined('IS_HOME_PAGE') ? '--cui-sidebar-occupy-start: 0px;' : '' ?>"> 
+    <?php if (!defined('IS_HOME_PAGE')): Session::getSiteNav(); endif; ?>
 
     <div class="body flex-grow-1 bg-transparent"> 
-        <div class="container-fluid <?= Session::get('is_learn_ai') ? 'p-0' : 'px-4' ?> bg-transparent">
+        <div class="container-fluid <?= (Session::get('is_learn_ai') || defined('IS_HOME_PAGE')) ? 'p-0' : 'px-4' ?> bg-transparent">
                 <?php
                     if (!Session::get('brokenPage', false)) {
                         echo Session::generatePageBody();
@@ -248,7 +248,7 @@ $tomThemes = [
             </div>
         </div>
 
-        <?php if (!Session::get('footer', false)) { echo Session::generateFooter(); } ?>
+        <?php if (!Session::get('footer', false) && !defined('IS_HOME_PAGE')) { echo Session::generateFooter(); } ?>
     </div>
     <!-- Toast Container (Message Toast) -->
     <div class="toast-container position-fixed top-0 end-0 p-3" style="margin-top: 4rem; z-index: 2000;">

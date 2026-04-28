@@ -217,8 +217,12 @@ public function getAuthUrl($metadata) {
         // Triggers Stage A if user is new
         if (!$user || empty($user['username'])) {
              $_SESSION['pending_user'] = [
-                'email' => $userinfo->email, 'name' => $userinfo->name,
-                'sub' => $userinfo->sub, 'avatar' => $userinfo->picture ?? null
+                'email' => $userinfo->email, 
+                'name' => $userinfo->name,
+                'first_name' => $userinfo->given_name ?? '',
+                'last_name' => $userinfo->family_name ?? '',
+                'sub' => $userinfo->sub, 
+                'avatar' => $userinfo->picture ?? null
             ];
             return null; 
         }

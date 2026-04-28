@@ -3,7 +3,7 @@ require_once __DIR__ . '/../src/load.php';
 require_once __DIR__ . '/../src/lib/core/VPN.class.php';
 
 if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    header("Location: /auth/signin.php"); exit;
+    header("Location: /signin"); exit;
 }
 
 $user = Session::getUser();

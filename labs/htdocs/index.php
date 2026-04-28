@@ -1,9 +1,9 @@
 <?php
 require_once 'src/load.php';
 
-// 1. If already logged in, go straight to dashboard
+// 1. If already logged in, go straight to home
 if (Session::getAuthStatus() == Constants::STATUS_LOGGEDIN) {
-    header("Location: /dashboard");
+    header("Location: /home");
     exit;
 }
 

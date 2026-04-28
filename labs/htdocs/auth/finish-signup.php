@@ -24,6 +24,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username'])) {
             'user_id'       => DatabaseConnection::getNextSequence("userid"),
             'username'      => $username,
             'email'         => $pending['email'],
+            'first_name'    => $pending['first_name'] ?? '',
+            'last_name'     => $pending['last_name'] ?? '',
             'avatar_url'    => $pending['avatar'],
             'google_sub'    => $pending['sub'],
             'is_verified'   => true, // Professional Best Practice: Google users are verified
