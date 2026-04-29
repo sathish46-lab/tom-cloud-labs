@@ -40,7 +40,7 @@
         <div class="row g-3 mb-2">
             <!-- Achievement Card 1 -->
             <div class="col-md-3">
-                <div class="card quiz-glass-card h-100">
+                <div class="card glass-card quiz-glass-card h-100 transition-all">
                     <div class="card-body p-3">
                         <div class="d-flex align-items-start gap-3 mb-3">
                             <div class="achievement-icon bg-primary bg-opacity-10 rounded-3 p-2">
@@ -72,7 +72,7 @@
 
             <!-- Achievement Card 2 (Rare) -->
             <div class="col-md-3">
-                <div class="card quiz-glass-card h-100">
+                <div class="card glass-card quiz-glass-card h-100 transition-all">
                     <div class="card-body p-3">
                         <div class="d-flex align-items-start gap-3 mb-3">
                             <div class="achievement-icon bg-info bg-opacity-10 rounded-3 p-2">
@@ -104,7 +104,7 @@
 
             <!-- Overall Stats Card -->
             <div class="col-md-4">
-                <div class="card quiz-glass-card border-info border-opacity-25 h-100">
+                <div class="card glass-card quiz-glass-card border-info border-opacity-25 h-100 transition-all">
                     <div class="card-body d-flex flex-column justify-content-center text-center p-3">
                         <h2 class="display-6 fw-bold text-info mb-0">62 / 128</h2>
                         <p class="text-body-secondary small mb-3">Collected</p>
@@ -125,7 +125,7 @@
 
             <!-- Ready to Collect Card -->
             <div class="col-md-2">
-                <div class="card quiz-glass-card border-warning border-opacity-25 h-100">
+                <div class="card glass-card quiz-glass-card border-warning border-opacity-25 h-100 transition-all">
                     <div class="card-body d-flex flex-column text-center p-3">
                         <h2 class="display-5 fw-bold text-warning mb-0">4</h2>
                         <p class="text-body-secondary small mb-auto">Ready to Collect</p>
@@ -140,21 +140,21 @@
 
         <hr class="opacity-10 my-2">
 
-        <!-- 3. Dynamic Learning Sections from JSON -->
+        <!-- 3. Dynamic Learning Sections from MongoDB -->
         <?php 
-        $jsonFile = __DIR__ . '/../../../data/quiz_topics.json';
-        $quizData = file_exists($jsonFile) ? json_decode(file_get_contents($jsonFile), true) : [];
+        use TomLabs\Labs\Quiz;
+        $sections = Quiz::getAllCategories();
         
-        foreach ($quizData as $category => $items): ?>
+        foreach ($sections as $sectionName => $categories): ?>
         <div class="mb-5">
-            <h4 class="fw-bold theme-text mb-3"><?= $category ?></h4>
+            <h4 class="fw-bold theme-text mb-3"><?= $sectionName ?></h4>
             <div class="row row-cols-1 row-cols-md-3 g-3">
-                <?php foreach ($items as $item): ?>
+                <?php foreach ($categories as $cat): ?>
                 <div class="col">
-                    <div class="card quiz-item-card h-100" onclick="startQuiz('<?= $item['id'] ?>')">
+                    <div class="card glass-card quiz-item-card h-100 transition-all" onclick="startQuiz('<?= $cat['_id'] ?>')">
                         <div class="card-body p-4">
-                            <h5 class="fw-bold mb-2 card-title-text"><?= $item['title'] ?></h5>
-                            <p class="text-body-secondary small mb-0 opacity-75"><?= $item['desc'] ?></p>
+                            <h5 class="fw-bold mb-2 card-title-text"><?= $cat['title'] ?></h5>
+                            <p class="text-body-secondary small mb-0 opacity-75"><?= $cat['desc'] ?></p>
                         </div>
                     </div>
                 </div>
@@ -172,84 +172,3 @@ function startQuiz(id) {
 }
 </script>
 
-<style>
-.quiz-container {
-    -webkit-font-smoothing: antialiased;
-    padding: 0 1rem;
-}
-
-/* Theme Aware Colors */
-.theme-text {
-    color: var(--bs-heading-color);
-}
-
-.card-title-text {
-    color: var(--bs-heading-color);
-}
-
-/* Elite Layered Glass Card - Theme Adaptive */
-.quiz-glass-card {
-    background: linear-gradient(145deg, rgba(var(--bs-emphasis-color-rgb), 0.05) 0%, rgba(var(--bs-emphasis-color-rgb), 0.01) 100%) !important;
-    border: 1px solid rgba(var(--bs-emphasis-color-rgb), 0.1) !important;
-    border-top: 1px solid rgba(var(--bs-emphasis-color-rgb), 0.15) !important;
-    backdrop-filter: blur(15px) saturate(160%);
-    -webkit-backdrop-filter: blur(15px) saturate(160%);
-    border-radius: 24px !important;
-    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-}
-
-.quiz-glass-card:hover {
-    background: rgba(var(--bs-emphasis-color-rgb), 0.08) !important;
-    border-color: rgba(var(--bs-info-rgb), 0.4) !important;
-    transform: translateY(-5px);
-    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.25);
-}
-
-/* Category Grid Cards */
-.quiz-item-card {
-    background: linear-gradient(145deg, rgba(var(--bs-emphasis-color-rgb), 0.04) 0%, rgba(var(--bs-emphasis-color-rgb), 0.01) 100%) !important;
-    border: 1px solid rgba(var(--bs-emphasis-color-rgb), 0.08) !important;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-radius: 20px !important;
-    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-    cursor: pointer;
-}
-
-.quiz-item-card:hover {
-    background: rgba(var(--bs-emphasis-color-rgb), 0.08) !important;
-    border-color: rgba(var(--bs-info-rgb), 0.4) !important;
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2);
-}
-
-/* Utilities */
-.x-small { font-size: 0.72rem; }
-.letter-spacing-1 { letter-spacing: 1px; }
-
-.achievement-icon {
-    width: 48px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 14px;
-}
-
-.progress {
-    background: rgba(var(--bs-emphasis-color-rgb), 0.05) !important;
-    border-radius: 10px;
-}
-
-/* Header Highlight for Glass Cards */
-.quiz-glass-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(var(--bs-info-rgb), 0.2), transparent);
-}
-</style>

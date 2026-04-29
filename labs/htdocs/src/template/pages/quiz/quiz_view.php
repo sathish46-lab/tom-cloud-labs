@@ -41,7 +41,7 @@ $subtopics = $topic['subtopics'] ?? [];
                     <li><a class="dropdown-item" href="#">Recent in All</a></li>
                     <li><hr class="dropdown-divider opacity-10"></li>
                     <?php foreach ($subtopics as $sub): ?>
-                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="launchQuiz('<?= $sub['id'] ?>')">Recent in <?= $sub['title'] ?></a></li>
+                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="launchQuiz('<?= $sub['_id'] ?>')">Recent in <?= $sub['title'] ?></a></li>
                     <?php endforeach; ?>
                 </ul>
             </div>
@@ -52,7 +52,7 @@ $subtopics = $topic['subtopics'] ?? [];
                 </button>
                 <ul class="dropdown-menu quiz-dropdown-menu shadow-lg border-0 mt-2">
                     <?php foreach ($subtopics as $sub): ?>
-                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="launchQuiz('<?= $sub['id'] ?>')">Completed in <?= $sub['title'] ?></a></li>
+                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="launchQuiz('<?= $sub['_id'] ?>')">Completed in <?= $sub['title'] ?></a></li>
                     <?php endforeach; ?>
                 </ul>
             </div>
@@ -74,7 +74,7 @@ $subtopics = $topic['subtopics'] ?? [];
             <?php else: ?>
                 <?php foreach ($subtopics as $sub): ?>
                 <div class="col">
-                    <div class="card subtopic-premium-card h-100" onclick="launchQuiz('<?= $sub['id'] ?>')">
+                    <div class="card glass-card subtopic-premium-card h-100 transition-all" onclick="launchQuiz('<?= $sub['_id'] ?>')">
                         <div class="card-body p-4">
                             <h5 class="fw-bold mb-2 card-title-text"><?= $sub['title'] ?></h5>
                             <p class="text-body-secondary small mb-0 opacity-75 lh-base"><?= $sub['desc'] ?></p>
@@ -88,159 +88,9 @@ $subtopics = $topic['subtopics'] ?? [];
 </div>
 
 <script>
-function launchQuiz(topicId) {
-    const parentId = '<?= $topic['id'] ?>';
-    console.log("Launching Quiz for ID:", topicId, "under parent:", parentId);
-    window.location.href = `/quiz/${parentId}/v/${topicId}`;
+function launchQuiz(subtopicId) {
+    const parentId = '<?= $topic['_id'] ?>';
+    window.location.href = `/quiz/${parentId}/Recent/${subtopicId}`;
 }
 </script>
 
-<style>
-/* Base Styling & Theme Awareness */
-.quiz-topic-view {
-    -webkit-font-smoothing: antialiased;
-}
-
-/* Header Typography */
-.theme-text {
-    color: var(--bs-heading-color);
-}
-
-/* Surprise AI Button */
-.surprise-btn {
-    background: #00acee !important;
-    border: none !important;
-    font-size: 0.95rem;
-    color: #fff !important;
-    transition: all 0.3s ease;
-}
-.surprise-btn:hover {
-    background: #00c3ff !important;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 20px rgba(0, 172, 238, 0.4) !important;
-}
-
-/* Performance Modes */
-.performance-modes {
-    background: rgba(var(--bs-emphasis-color-rgb), 0.05);
-    border: 1px solid rgba(var(--bs-emphasis-color-rgb), 0.1);
-}
-
-.mode-btn {
-    border: none;
-    padding: 10px 20px;
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: #fff;
-    transition: all 0.2s ease;
-}
-
-.btn-sprint { background: #ffc107; color: #000 !important; }
-.btn-rapid { background: #ff4757; }
-.btn-blitz { background: #3742fa; }
-.btn-marathon { background: #2ed573; }
-
-.mode-btn:hover {
-    filter: brightness(1.1);
-    transform: translateY(-1px);
-}
-
-/* Tab Pills - Exact Match */
-.quiz-tabs-row .btn-pill-active {
-    background: var(--bs-emphasis-color) !important;
-    color: var(--bs-body-bg) !important;
-    border-radius: 50px;
-    padding: 8px 24px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    border: none;
-}
-
-.quiz-tabs-row .btn-pill-outline {
-    background: rgba(var(--bs-emphasis-color-rgb), 0.03);
-    color: var(--bs-body-secondary);
-    border: 1px solid rgba(var(--bs-emphasis-color-rgb), 0.15);
-    border-radius: 50px;
-    padding: 8px 24px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    transition: all 0.3s ease;
-}
-
-.quiz-tabs-row .btn-pill-outline:hover {
-    background: rgba(var(--bs-emphasis-color-rgb), 0.08);
-    border-color: rgba(var(--bs-emphasis-color-rgb), 0.4);
-    color: var(--bs-emphasis-color);
-}
-
-.badge-new {
-    color: #00d2ff;
-    font-size: 0.8rem;
-    margin-left: 5px;
-}
-
-/* Sub-Topic Cards - Premium Glass & Theme Adaptive */
-.subtopic-premium-card {
-    background: rgba(var(--bs-emphasis-color-rgb), 0.03) !important;
-    border: 1px solid rgba(var(--bs-emphasis-color-rgb), 0.08) !important;
-    border-top: 1px solid rgba(var(--bs-emphasis-color-rgb), 0.15) !important;
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    border-radius: 24px !important;
-    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-}
-
-.subtopic-premium-card .card-body {
-    padding: 1.75rem !important;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    height: 100%;
-}
-
-.subtopic-premium-card:hover {
-    background: rgba(var(--bs-emphasis-color-rgb), 0.06) !important;
-    border-color: rgba(0, 172, 238, 0.4) !important;
-    transform: translateY(-8px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15), 0 0 15px rgba(0, 172, 238, 0.05);
-}
-
-.card-title-text {
-    color: var(--bs-heading-color);
-    font-size: 1.1rem;
-    letter-spacing: -0.2px;
-    margin-bottom: 0.3rem !important;
-}
-
-.subtopic-premium-card p {
-    font-size: 0.72rem !important;
-    line-height: 1.4 !important;
-}
-
-/* Light Mode Specific Overrides for Clean Look */
-[data-bs-theme="light"] .subtopic-premium-card {
-    background: #ffffff !important;
-    border: 1px solid rgba(0, 0, 0, 0.06) !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-}
-
-[data-bs-theme="light"] .subtopic-premium-card:hover {
-    background: #ffffff !important;
-    border-color: rgba(0, 172, 238, 0.3) !important;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
-}
-
-/* Empty State */
-.empty-state-card {
-    background: rgba(var(--bs-emphasis-color-rgb), 0.02);
-    border: 2px dashed rgba(var(--bs-emphasis-color-rgb), 0.1);
-    border-radius: 30px;
-    padding: 80px 20px;
-}
-
-/* Utilities */
-.lh-lg { line-height: 1.8 !important; }
-</style>

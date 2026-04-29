@@ -13,25 +13,17 @@ if (!$id) {
     exit;
 }
 
-// Find the topic in JSON
-$jsonFile = __DIR__ . '/../../src/data/quiz_topics.json';
-$quizData = file_exists($jsonFile) ? json_decode(file_get_contents($jsonFile), true) : [];
-$currentTopic = null;
+use TomLabs\Labs\Quiz;
 
-foreach ($quizData as $category => $items) {
-    foreach ($items as $item) {
-        if ($item['id'] === $id) {
-            $currentTopic = $item;
-            break 2;
-        }
-    }
-}
-
+$currentTopic = Quiz::getCategory($id);
 if (!$currentTopic) {
     header("Location: /quiz");
     exit;
 }
 
+$subtopics = Quiz::getSubtopicsForCategory($id);
 Session::$property['current_topic'] = $currentTopic;
+Session::$property['current_topic']['subtopics'] = $subtopics;
+
 Session::$pageTitle = $currentTopic['title'];
 Session::loadMaster();

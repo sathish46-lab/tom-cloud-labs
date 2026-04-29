@@ -8,43 +8,20 @@ if (!Session::getAuthStatus()) {
 }
 
 $parentId = $_GET['parent'] ?? null;
-$topicId = $_GET['topic_id'] ?? null;
+$subtopicId = $_GET['topic_id'] ?? null;
 
-if (!$parentId || !$topicId) {
+if (!$parentId || !$subtopicId) {
     header("Location: /quiz");
     exit;
 }
 
-// Find parent topic in JSON
-$jsonFile = __DIR__ . '/../../src/data/quiz_topics.json';
-$quizData = file_exists($jsonFile) ? json_decode(file_get_contents($jsonFile), true) : [];
-$parentTopic = null;
+use TomLabs\Labs\Quiz;
 
-foreach ($quizData as $category => $items) {
-    foreach ($items as $item) {
-        if ($item['id'] === $parentId) {
-            $parentTopic = $item;
-            break 2;
-        }
-    }
-}
+$parentTopic = Quiz::getCategory($parentId);
+$subtopic = Quiz::getSubtopic($subtopicId);
 
-if (!$parentTopic) {
+if (!$parentTopic || !$subtopic) {
     header("Location: /quiz");
-    exit;
-}
-
-// Find specific subtopic by ID
-$subtopic = null;
-foreach ($parentTopic['subtopics'] ?? [] as $sub) {
-    if ($sub['id'] === $topicId) {
-        $subtopic = $sub;
-        break;
-    }
-}
-
-if (!$subtopic) {
-    header("Location: /quiz/" . $parentId);
     exit;
 }
 

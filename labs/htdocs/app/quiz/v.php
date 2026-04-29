@@ -1,0 +1,32 @@
+<?php
+require_once '../../src/load.php';
+use TomLabs\Labs\Quiz;
+
+// Auth Protection
+if (!Session::getAuthStatus()) {
+    header("Location: /signin");
+    exit;
+}
+
+$hash = $_GET['hash'] ?? null;
+if (!$hash) {
+    header("Location: /quiz");
+    exit;
+}
+
+$quiz = Quiz::getByHash($hash);
+if (!$quiz) {
+    header("Location: /quiz");
+    exit;
+}
+
+// Fetch context for breadcrumbs and navigation
+$subtopic = Quiz::getSubtopic($quiz['subtopic_id']);
+$parent = Quiz::getCategory($quiz['category_id']);
+
+Session::$property['current_quiz'] = $quiz;
+Session::$property['parent_topic'] = $parent;
+Session::$property['current_subtopic'] = $subtopic;
+
+Session::$pageTitle = $quiz['title'] . " - Spot Quiz";
+Session::loadMaster();

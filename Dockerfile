@@ -40,7 +40,11 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install Python packages not available via apt
-RUN pip3 install --break-system-packages google-generativeai requests
+RUN pip3 install --break-system-packages google-generativeai requests pymongo
+
+# Create symlink for labsctl
+RUN ln -sf /opt/labs-control-panel/labsctl.py /usr/local/bin/labsctl && \
+    chmod +x /opt/labs-control-panel/labsctl.py
 
 # 4. Install Traefik
 RUN wget https://github.com/traefik/traefik/releases/download/v2.10.6/traefik_v2.10.6_linux_amd64.tar.gz && \
@@ -82,7 +86,7 @@ RUN systemctl enable mongod.service rabbitmq-server.service container-setup.serv
 
 # Sudoers & Git config
 RUN echo "www-data ALL=(ALL) NOPASSWD: /usr/bin/python3 /opt/labs-control-panel/labsctl.py *" > /etc/sudoers.d/labs-www-data && \
-    echo "www-data ALL=(ALL) NOPASSWD: /usr/bin/python3 /opt/labs-control-panel/labsctl.py" >> /etc/sudoers.d/labs-www-data && \
+    echo "www-data ALL=(ALL) NOPASSWD: /usr/local/bin/labsctl *" >> /etc/sudoers.d/labs-www-data && \
     echo "www-data ALL=(ALL) NOPASSWD: /usr/bin/docker" >> /etc/sudoers.d/labs-www-data && \
     echo "www-data ALL=(ALL) NOPASSWD: /usr/bin/ip" >> /etc/sudoers.d/labs-www-data && \
     echo "www-data ALL=(ALL) NOPASSWD: /usr/sbin/iptables" >> /etc/sudoers.d/labs-www-data && \
