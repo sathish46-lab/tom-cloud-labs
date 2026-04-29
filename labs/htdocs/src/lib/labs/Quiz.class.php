@@ -114,14 +114,15 @@ class Quiz {
     }
 
     /**
-     * Get recent quizzes for a subtopic (Database required)
+     * Get recent quizzes for a subtopic with pagination support
      */
-    public static function getRecentForSubtopic($subtopicId, $limit = 8) {
+    public static function getRecentForSubtopic($subtopicId, $limit = 8, $offset = 0) {
         return DatabaseConnection::getDefaultDatabase()->quizzes->find(
             ['subtopic_id' => $subtopicId],
             [
                 'sort' => ['created_at' => -1],
-                'limit' => $limit
+                'limit' => $limit,
+                'skip' => $offset
             ]
         )->toArray();
     }

@@ -130,16 +130,31 @@ $totalRewards = $points * 5;
     </div>
 </div>
 
+<?php
+// Assets are now bundled into app.js/app.css
+?>
+
 <script>
-const quizData = <?= json_encode($quiz['questions']) ?>;
-const pointsPerCorrect = <?= $quiz['points_per_correct'] ?? 25 ?>;
+window.QuizEngineConfig = {
+    quizData: <?= json_encode($quizData) ?>,
+    pointsPerCorrect: <?= $pointsPerCorrect ?>
+};
+
+/**
+ * Quiz Engine Module (Restored to Template for Stability)
+ * Handles dynamic question loading, state management, and scoring
+ */
 
 let currentStep = 0;
 let selectedOption = null;
 let score = 0;
 
-// Initialize Dynamic Progress Bar
+/**
+ * Initialize Dynamic Progress Bar
+ */
 function initProgressBar() {
+    if (!window.QuizEngineConfig || !window.QuizEngineConfig.quizData) return;
+    const quizData = window.QuizEngineConfig.quizData;
     const container = document.getElementById('evaluation-progress-container');
     if (!container) return;
     container.innerHTML = '';
@@ -160,10 +175,9 @@ function initProgressBar() {
     });
 }
 
-// Global Initialization
-initProgressBar();
-
-// Unified Button Management (Strictly Professional State Handling)
+/**
+ * Unified Button Management
+ */
 function toggleButton(id, show) {
     const btn = document.getElementById(id);
     if (!btn) return;
@@ -182,18 +196,35 @@ function resetButtons() {
     toggleButton('result-btn', false);
 }
 
-function startQuiz() {
-    document.getElementById('quiz-start-view').classList.add('d-none');
-    document.getElementById('quiz-question-view').classList.remove('d-none');
+window.startQuiz = function() {
+    console.log("[Quiz Engine] Starting Quiz...");
+    const startView = document.getElementById('quiz-start-view');
+    const questionView = document.getElementById('quiz-question-view');
+    
+    if (!startView || !questionView) {
+        console.error("[Quiz Engine] UI Views not found!");
+        return;
+    }
+
+    startView.classList.add('d-none');
+    questionView.classList.remove('d-none');
     loadQuestion();
-}
+};
 
 function loadQuestion() {
+    if (!window.QuizEngineConfig || !window.QuizEngineConfig.quizData) {
+        console.error("[Quiz Engine] Quiz data missing!");
+        return;
+    }
+    const quizData = window.QuizEngineConfig.quizData;
     const q = quizData[currentStep];
-    document.getElementById('question-text').innerText = q.text;
+    const qText = document.getElementById('question-text');
+    if (qText) qText.innerText = q.text;
+
     const btns = document.querySelectorAll('.quiz-option-btn');
     btns.forEach((btn, idx) => {
-        btn.querySelector('.option-text').innerText = q.options[idx];
+        const optText = btn.querySelector('.option-text');
+        if (optText) optText.innerText = q.options[idx];
         btn.classList.remove('correct', 'wrong', 'selected');
         btn.disabled = false;
     });
@@ -201,7 +232,6 @@ function loadQuestion() {
     resetButtons();
     selectedOption = null;
     
-    // Update progress steps
     const steps = document.querySelectorAll('.step-item');
     steps.forEach((step, idx) => {
         if(idx === currentStep) step.classList.add('active');
@@ -209,25 +239,25 @@ function loadQuestion() {
     });
 }
 
-function selectOption(idx) {
+window.selectOption = function(idx) {
     selectedOption = idx;
     const btns = document.querySelectorAll('.quiz-option-btn');
     btns.forEach((btn, i) => {
         if(i === idx) btn.classList.add('selected');
         else btn.classList.remove('selected');
     });
-    
     toggleButton('submit-btn', true);
-}
+};
 
-function submitAnswer() {
+window.submitAnswer = function() {
+    if (!window.QuizEngineConfig || !window.QuizEngineConfig.quizData) return;
+    const quizData = window.QuizEngineConfig.quizData;
     const q = quizData[currentStep];
     const btns = document.querySelectorAll('.quiz-option-btn');
     const steps = document.querySelectorAll('.step-item');
     const segments = document.querySelectorAll('.progress-segment');
     const currentStepItem = steps[currentStep];
     
-    // Disable all options and clear button states
     btns.forEach(btn => btn.disabled = true);
     resetButtons();
 
@@ -243,25 +273,26 @@ function submitAnswer() {
         if (segments[currentStep]) segments[currentStep].classList.add('wrong');
     }
 
-    // Explicitly show the next action button based on progress
     const isLastQuestion = (currentStep >= quizData.length - 1);
-    if (isLastQuestion) {
-        toggleButton('result-btn', true);
-    } else {
-        toggleButton('next-btn', true);
-    }
-}
+    if (isLastQuestion) toggleButton('result-btn', true);
+    else toggleButton('next-btn', true);
+};
 
-function nextQuestion() {
+window.nextQuestion = function() {
     currentStep++;
     loadQuestion();
-}
+};
 
-function showResult() {
-    document.getElementById('quiz-question-view').classList.add('d-none');
-    document.getElementById('quiz-result-view').classList.remove('d-none');
+window.showResult = function() {
+    if (!window.QuizEngineConfig || !window.QuizEngineConfig.quizData) return;
+    const quizData = window.QuizEngineConfig.quizData;
+    const pointsPerCorrect = window.QuizEngineConfig.pointsPerCorrect;
+
+    const qView = document.getElementById('quiz-question-view');
+    const rView = document.getElementById('quiz-result-view');
+    if (qView) qView.classList.add('d-none');
+    if (rView) rView.classList.remove('d-none');
     
-    // Update score text to show total questions
     const resultScoreContainer = document.querySelector('.result-score');
     if (resultScoreContainer) {
         resultScoreContainer.innerHTML = `<span id="score-val">${score}</span>/${quizData.length}`;
@@ -269,7 +300,6 @@ function showResult() {
     
     const totalPoints = score * pointsPerCorrect;
     const ratio = score / quizData.length;
-    
     let msg = "";
     if(ratio === 1) msg = `Priceless! 💎 You earned ${totalPoints} Zeal 🔥. Perfect command!`;
     else if(ratio >= 0.6) msg = `Great job! ⚡️ You earned ${totalPoints} Zeal 🔥. Solid grasp!`;
@@ -277,5 +307,7 @@ function showResult() {
     
     const resultMsg = document.getElementById('result-msg');
     if (resultMsg) resultMsg.innerText = msg;
-}
+};
+
+document.addEventListener('DOMContentLoaded', initProgressBar);
 </script>
