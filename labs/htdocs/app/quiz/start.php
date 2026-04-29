@@ -28,5 +28,5 @@ if (!$parentTopic || !$subtopic) {
 Session::$property['parent_topic'] = $parentTopic;
 Session::$property['current_subtopic'] = $subtopic;
 
-Session::$pageTitle = $subtopic['title'] . " - Spot Quiz";
+Session::$pageTitle = "Quiz / " . $parentTopic['title'] . " / " . $subtopic['title'];
 Session::loadMaster();

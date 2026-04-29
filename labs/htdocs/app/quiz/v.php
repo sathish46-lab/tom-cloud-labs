@@ -28,5 +28,5 @@ Session::$property['current_quiz'] = $quiz;
 Session::$property['parent_topic'] = $parent;
 Session::$property['current_subtopic'] = $subtopic;
 
-Session::$pageTitle = $quiz['title'] . " - Spot Quiz";
+Session::$pageTitle = "Quiz / " . $parent['title'] . " / " . $subtopic['title'] . " / Spot Quiz";
 Session::loadMaster();

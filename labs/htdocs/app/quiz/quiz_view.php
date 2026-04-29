@@ -25,5 +25,5 @@ $subtopics = Quiz::getSubtopicsForCategory($id);
 Session::$property['current_topic'] = $currentTopic;
 Session::$property['current_topic']['subtopics'] = $subtopics;
 
-Session::$pageTitle = $currentTopic['title'];
+Session::$pageTitle = "Quiz / " . $currentTopic['title'];
 Session::loadMaster();

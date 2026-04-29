@@ -7,5 +7,5 @@ if (!Session::getAuthStatus()) {
     exit;
 }
 
-Session::$pageTitle = "Spot Quiz";
+Session::$pageTitle = "Quiz";
 Session::loadMaster();

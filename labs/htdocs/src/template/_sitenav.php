@@ -75,6 +75,24 @@
                             $url = "/challenges/achievements/$challengeHash";
                         } elseif (stripos($lowerPart, 'leader') !== false && $challengeHash) {
                             $url = "/challenges/leaderboard/$challengeHash";
+                        } elseif ($lowerPart === 'quiz') {
+                            $url = '/quiz';
+                        } elseif ($lowerPart === 'spot quiz') {
+                            $quiz = Session::get('current_quiz');
+                            $url = $quiz ? "/quiz/v/" . $quiz['hash'] : '/quiz';
+                        } else {
+                            // Quiz Hub Context Mapping
+                            $quizParent = Session::get('parent_topic');
+                            $quizSubtopic = Session::get('current_subtopic');
+                            $quizCategory = Session::get('current_topic');
+
+                            if (($quizParent && $displayPart === $quizParent['title']) || ($quizCategory && $displayPart === $quizCategory['title'])) {
+                                $cat = $quizParent ?? $quizCategory;
+                                $url = "/quiz/" . ($cat['id'] ?? $cat['_id']);
+                            } elseif ($quizSubtopic && $displayPart === $quizSubtopic['title']) {
+                                $catId = $quizParent ? ($quizParent['id'] ?? $quizParent['_id']) : ($quizCategory ? ($quizCategory['id'] ?? $quizCategory['_id']) : 'all');
+                                $url = "/quiz/$catId/Recent/" . ($quizSubtopic['id'] ?? $quizSubtopic['_id']);
+                            }
                         }
 
                         $href = $url ? $url : '#';
