@@ -95,21 +95,23 @@ class QuizEngine:
         }}
         """
 
-        self._update_job(job_id, 30, "Prompt engineered. Consulting Gemini...")
+        self._update_job(job_id, 30, "Prompt engineered. Consulting AI...")
 
         try:
             # 3. Call AI
             response = self.model.generate_content(prompt)
             raw_text = response.text.strip()
             
-            # Clean JSON if AI added markdown blocks
-            if "```json" in raw_text:
-                raw_text = raw_text.split("```json")[1].split("```")[0].strip()
-            elif "```" in raw_text:
-                raw_text = raw_text.split("```")[1].split("```")[0].strip()
+            # Clean JSON using a more robust regex method
+            import re
+            json_match = re.search(r'(\{.*\})', raw_text, re.DOTALL)
+            if json_match:
+                cleaned_content = json_match.group(1)
+            else:
+                cleaned_content = raw_text
 
-            quiz_data = json.loads(raw_text)
-            self._update_job(job_id, 70, "Quiz data generated. Finalizing persistence...")
+            quiz_data = json.loads(cleaned_content)
+            self._update_job(job_id, 70, "Expert evaluation completed. Finalizing...")
 
             # 4. Persistence & Hashing
             quiz_hash = secrets.token_hex(16)
@@ -121,7 +123,7 @@ class QuizEngine:
                 "difficulty": difficulty,
                 "title": quiz_data.get('title', f"{subtopic['title']} - {difficulty.capitalize()} Mode"),
                 "desc": quiz_data.get('desc', subtopic['desc']),
-                "tags": quiz_data.get('tags', [topic['title'].lower(), subtopic['slug']]),
+                "tags": quiz_data.get('tags', [topic['title'].lower(), subtopic.get('id', 'tech')]),
                 "questions": quiz_data['questions'],
                 "created_at": time.time(),
                 "points_per_correct": {"easy": 10, "normal": 25, "hard": 50}.get(difficulty, 25)
