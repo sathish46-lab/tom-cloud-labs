@@ -8,7 +8,7 @@ $subtopic = Session::get('current_subtopic');
 $quizzes = Quiz::getRecentForSubtopic($subtopic['_id'], 8);
 ?>
 
-<div class="quiz-start-view fade-in pb-5 lab-header-section">
+<div class="fade-in pb-5 lab-header-section">
     <div class="evaluation-bg"></div>
     <div class="container-fluid px-4 pt-2">
         

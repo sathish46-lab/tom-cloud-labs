@@ -15843,7 +15843,7 @@ body {
   gap: 20px;
   /* 3. Negative Margins to stretch full width over parent padding */
   padding: 24px 30px;
-  margin: 0px -24px 26px -24px;
+  margin: 0px -24px 0px -24px;
   position: relative;
   z-index: 5;
 }

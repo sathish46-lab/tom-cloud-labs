@@ -11,12 +11,12 @@ $points = $quiz['points_per_correct'] ?? 25;
 $totalRewards = $points * 5;
 ?>
 
-<div class="quiz-evaluation-view fade-in">
+<div class="quiz-evaluation-view fade-in lab-header-section">
     <!-- 1. Background Layer -->
     <div class="evaluation-bg"></div>
 
     <!-- 2. Header Section (Title, Desc, Tags, Stats) -->
-    <div class="lab-header-section simple-blur d-flex flex-column align-items-center">
+    <div class=" d-flex flex-column align-items-center">
         <!-- Narrative Block -->
         <div class="col-md-8 col-xl-8 text-center mb-3">
             <h3 class="fw-bold mb-2 text-body-emphasis"><?= $quiz['title'] ?></h3>
