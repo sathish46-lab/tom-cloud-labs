@@ -13,21 +13,47 @@ class Lab:
         self.session_hash = session_hash
         self.docker = DockerHelper()
         self.config = self._load_global_config()
+        self.env = self._load_env_config()
         
+        # 1. Prioritize Connection from env.json (Source of Truth)
+        mongo_uri = self.env.get('database_file')
+        db_name = self.env.get('main_db', 'tom_labs_db')
+        
+        if mongo_uri:
+            try:
+                self.mongo_client = pymongo.MongoClient(mongo_uri, serverSelectionTimeoutMS=2000)
+                self.mongo_client.admin.command('ping')
+                self.db = self.mongo_client[db_name]
+                return # Connection Successful
+            except Exception as e:
+                print(f"[DEBUG] Env Connection Failed: {e}")
+
+        # 2. Fallback Logic for local development/bootstrapping
         try:
-            # Check if we are in a docker environment with a 'mongodb' host
-            self.mongo_client = pymongo.MongoClient("mongodb://admin:Tombootroot@docker_tomlabs_mongodb:27017/?authSource=admin")
-            # Trigger a ping to force connection check
+            # Try Docker Internal Network
+            self.mongo_client = pymongo.MongoClient("mongodb://admin:Tombootroot@docker_tomlabs_mongodb:27017/?authSource=admin", serverSelectionTimeoutMS=2000)
             self.mongo_client.admin.command('ping')
             self.db = self.mongo_client.tom_labs_db 
         except Exception:
             try:
-                # Fallback for Host Execution: Use the mapped port (27018) instead of 27017
-                self.mongo_client = pymongo.MongoClient("mongodb://admin:Tombootroot@localhost:27018/?authSource=admin")
+                # Try Local Host (Mapped Port)
+                self.mongo_client = pymongo.MongoClient("mongodb://admin:Tombootroot@localhost:27018/?authSource=admin", serverSelectionTimeoutMS=2000)
                 self.mongo_client.admin.command('ping')
                 self.db = self.mongo_client.tom_labs_db
-            except Exception as e:
+            except Exception:
                 self.db = None
+
+    def _load_env_config(self):
+        """Load the global environment configuration (env.json)"""
+        paths = ['/var/www/env.json', '/Users/sathish/Development/local_dev_lab/env.json', 'env.json']
+        for path in paths:
+            if os.path.exists(path):
+                try:
+                    with open(path, 'r') as f:
+                        return json.load(f)
+                except:
+                    continue
+        return {}
 
     def _load_global_config(self):
         config_path = '/opt/labs-control-panel/config.json'
@@ -262,7 +288,8 @@ class Lab:
         # Security: Fetch User's VPN IPs to restrict SSH access
         user_vpn_ips = []
         try:
-            vpn_db = self.mongo_client.tom_labs_vpn
+            vpn_db_name = self.env.get('vpn_db', 'tom_labs_vpn')
+            vpn_db = self.mongo_client[vpn_db_name]
             # In tom_labs_vpn, the 'networks' collection contains 1 document PER IP allocation
             # The 'email' field holds the username
             allocations = vpn_db.networks.find({'email': username})
@@ -572,7 +599,8 @@ class Lab:
         # 2. Fetch User's VPN IPs (by username OR email)
         user_vpn_ips = []
         try:
-            vpn_db = self.mongo_client.tom_labs_vpn
+            vpn_db_name = self.env.get('vpn_db', 'tom_labs_vpn')
+            vpn_db = self.mongo_client[vpn_db_name]
             allocations = vpn_db.networks.find({'email': {'$in': search_emails}})
             for alloc in allocations:
                 if 'ip_addr' in alloc:
