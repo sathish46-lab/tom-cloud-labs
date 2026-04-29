@@ -10,42 +10,111 @@ use Exception;
  */
 class Quiz {
     
+    private static $cachedCats = null;
+    private static $cachedSubs = null;
+
     /**
-     * Get all active categories organized by section
+     * Internal helper to load categories from JSON source
+     */
+    private static function loadCategories() {
+        if (self::$cachedCats === null) {
+            $jsonPath = __DIR__ . '/../../data/quiz_categories.json';
+            if (file_exists($jsonPath)) {
+                $content = file_get_contents($jsonPath);
+                self::$cachedCats = json_decode($content, true);
+            } else {
+                self::$cachedCats = [];
+            }
+        }
+        return self::$cachedCats;
+    }
+
+    /**
+     * Internal helper to load subtopics from JSON source
+     */
+    private static function loadSubtopics() {
+        if (self::$cachedSubs === null) {
+            $jsonPath = __DIR__ . '/../../data/quiz_subtopics.json';
+            if (file_exists($jsonPath)) {
+                $content = file_get_contents($jsonPath);
+                self::$cachedSubs = json_decode($content, true);
+            } else {
+                self::$cachedSubs = [];
+            }
+        }
+        return self::$cachedSubs;
+    }
+
+    /**
+     * Get all categories organized by section from JSON source
      */
     public static function getAllCategories() {
-        $cursor = DatabaseConnection::getDefaultDatabase()->quiz_categories->find([], [
-            'sort' => ['section' => 1, 'title' => 1]
-        ]);
-        
+        $cats = self::loadCategories();
         $sections = [];
-        foreach ($cursor as $cat) {
-            $sections[$cat['section']][] = $cat;
+        
+        foreach ($cats as &$cat) {
+            $cat['_id'] = $cat['id']; // Map for backward compatibility
+            $section = isset($cat['section']) ? $cat['section'] : 'General';
+            $sections[$section][] = $cat;
         }
+        
+        // Sort sections alphabetically
+        ksort($sections);
         return $sections;
     }
 
+    /**
+     * Find a category by ID from JSON source
+     */
     public static function getCategory($id) {
-        return DatabaseConnection::getDefaultDatabase()->quiz_categories->findOne(['_id' => $id]);
-    }
-
-    public static function getSubtopic($id) {
-        return DatabaseConnection::getDefaultDatabase()->quiz_subtopics->findOne(['_id' => $id]);
-    }
-
-    public static function getSubtopicsForCategory($categoryId) {
-        return DatabaseConnection::getDefaultDatabase()->quiz_subtopics->find(['category_id' => $categoryId])->toArray();
+        $cats = self::loadCategories();
+        foreach ($cats as &$cat) {
+            if ($cat['id'] === $id) {
+                $cat['_id'] = $cat['id']; // Map for backward compatibility
+                return $cat;
+            }
+        }
+        return null;
     }
 
     /**
-     * Fetch a specific quiz by its industry-standard URL hash
+     * Find a subtopic by ID from JSON source
+     */
+    public static function getSubtopic($id) {
+        $subs = self::loadSubtopics();
+        foreach ($subs as &$sub) {
+            if ($sub['id'] === $id) {
+                $sub['_id'] = $sub['id']; // Map for backward compatibility
+                return $sub;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get all subtopics for a specific category from JSON source
+     */
+    public static function getSubtopicsForCategory($categoryId) {
+        $subs = self::loadSubtopics();
+        $filtered = [];
+        foreach ($subs as &$sub) {
+            if ($sub['category_id'] === $categoryId) {
+                $sub['_id'] = $sub['id']; // Map for backward compatibility
+                $filtered[] = $sub;
+            }
+        }
+        return $filtered;
+    }
+
+    /**
+     * Fetch a specific quiz by its industry-standard URL hash (Database required)
      */
     public static function getByHash($hash) {
         return DatabaseConnection::getDefaultDatabase()->quizzes->findOne(['hash' => $hash]);
     }
 
     /**
-     * Get recent quizzes for a subtopic
+     * Get recent quizzes for a subtopic (Database required)
      */
     public static function getRecentForSubtopic($subtopicId, $limit = 8) {
         return DatabaseConnection::getDefaultDatabase()->quizzes->find(

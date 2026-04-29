@@ -1,0 +1,164 @@
+[
+    {
+        "id": "learn-roadmap",
+        "title": "Roadmaps",
+        "desc": "Quizzes generated from learning roadmaps and their nodes.",
+        "section": "Learning"
+    },
+    {
+        "id": "learn-lesson",
+        "title": "Lessons",
+        "desc": "Quizzes generated from AI-powered lessons across all subjects.",
+        "section": "Learning"
+    },
+    {
+        "id": "learn-syllabus",
+        "title": "Syllabi",
+        "desc": "Quizzes generated from academic syllabus units and courses.",
+        "section": "Learning"
+    },
+    {
+        "id": "tech-linux-cli",
+        "title": "Linux CLI",
+        "desc": "Using the unix-like terminal to interact with Linux systems.",
+        "section": "Technology"
+    },
+    {
+        "id": "9114b868-78c8-4de4-b773-609f5d844268",
+        "title": "Cybersecurity",
+        "desc": "Protecting systems, networks, and programs from digital attacks.",
+        "section": "Technology"
+    },
+    {
+        "id": "tech-git",
+        "title": "Git and GitLab",
+        "desc": "GitLab, an open-source DevOps tool, integrates Git for version control system.",
+        "section": "Technology"
+    },
+    {
+        "id": "tech-iot",
+        "title": "Internet of Things (IoT)",
+        "desc": "IoT refers to the network of physical devices connected to the internet.",
+        "section": "Technology"
+    },
+    {
+        "id": "tech-microcontrollers",
+        "title": "Microcontrollers",
+        "desc": "Understanding and programming microcontrollers for a variety of apps.",
+        "section": "Technology"
+    },
+    {
+        "id": "tech-ai",
+        "title": "Artificial Intelligence",
+        "desc": "Simulating intelligent behavior in machines and enabling automation.",
+        "section": "Technology"
+    },
+    {
+        "id": "tech-os",
+        "title": "Operating Systems",
+        "desc": "Understanding and managing the software that supports hardware.",
+        "section": "Technology"
+    },
+    {
+        "id": "tech-networks",
+        "title": "Computer Networks",
+        "desc": "Understanding the principles and protocols used in communication.",
+        "section": "Technology"
+    },
+    {
+        "id": "tech-ml",
+        "title": "Machine Learning",
+        "desc": "Using algorithms and statistical models to enable predictions.",
+        "section": "Technology"
+    },
+    {
+        "id": "prog-generic",
+        "title": "Generic Programming",
+        "desc": "Writing code to create functional software.",
+        "section": "Programming"
+    },
+    {
+        "id": "prog-c",
+        "title": "C Programming",
+        "desc": "Writing code in the C programming language.",
+        "section": "Programming"
+    },
+    {
+        "id": "prog-bash",
+        "title": "Bash Programming",
+        "desc": "Writing scripts in the Bash shell scripting language.",
+        "section": "Programming"
+    },
+    {
+        "id": "prog-mongodb",
+        "title": "MongoDB",
+        "desc": "A source-available cross-platform document-oriented database.",
+        "section": "Programming"
+    },
+    {
+        "id": "prog-socket",
+        "title": "Socket Programming",
+        "desc": "Socket programming is a network paradigm for data exchange.",
+        "section": "Programming"
+    },
+    {
+        "id": "prog-python",
+        "title": "Python Programming",
+        "desc": "Writing code in the Python programming language.",
+        "section": "Programming"
+    },
+    {
+        "id": "prog-php",
+        "title": "PHP Programming",
+        "desc": "Writing code in the PHP programming language.",
+        "section": "Programming"
+    },
+    {
+        "id": "prog-html-css",
+        "title": "HTML & CSS",
+        "desc": "The standard markup and styling languages for web pages.",
+        "section": "Programming"
+    },
+    {
+        "id": "prog-micropython",
+        "title": "MicroPython",
+        "desc": "A Python 3 variant optimized for microcontrollers.",
+        "section": "Programming"
+    },
+    {
+        "id": "prog-bootstrap",
+        "title": "Bootstrap 5",
+        "desc": "A popular, free, and open-source CSS framework.",
+        "section": "Programming"
+    },
+    {
+        "id": "prog-nodejs",
+        "title": "Node.js Programming",
+        "desc": "Writing code using the Node.js runtime environment.",
+        "section": "Programming"
+    },
+    {
+        "id": "prog-jquery",
+        "title": "jQuery",
+        "desc": "A fast, small, and feature-rich JavaScript library.",
+        "section": "Programming"
+    },
+    {
+        "id": "prog-js",
+        "title": "JavaScript Programming",
+        "desc": "Writing code using the JavaScript programming language.",
+        "section": "Programming"
+    },
+    {
+        "id": "prog-react",
+        "title": "React.js Programming",
+        "desc": "Writing code using the React.js library for building UIs.",
+        "section": "Programming"
+    },
+    {
+        "id": "prog-java",
+        "title": "Java Programming",
+        "desc": "Writing code in the Java programming language.",
+        "section": "Programming"
+    }
+]

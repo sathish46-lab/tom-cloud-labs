@@ -1,0 +1,74 @@
+[
+    {
+        "id": "1a79243e-4f74-44fb-a63e-11fea9aada7c",
+        "title": "Firewalls and VPNs",
+        "desc": "Tools for network security and privacy.",
+        "category_id": "9114b868-78c8-4de4-b773-609f5d844268"
+    },
+    {
+        "id": "2b80354f-5g85-55gc-b74f-22gfb9bbdb8d",
+        "title": "Intrusion Detection Systems (IDS)",
+        "desc": "Monitoring and detecting malicious activities.",
+        "category_id": "9114b868-78c8-4de4-b773-609f5d844268"
+    },
+    {
+        "id": "3c91465g-6h96-66hd-c85g-33hgc0ccdc9e",
+        "title": "Secure Network Design",
+        "desc": "Designing networks for maximum security.",
+        "category_id": "9114b868-78c8-4de4-b773-609f5d844268"
+    },
+    {
+        "id": "4d02576h-7i07-77ie-d96h-44ihd1dde0af",
+        "title": "Malware Analysis",
+        "desc": "Identifying and understanding malicious software.",
+        "category_id": "9114b868-78c8-4de4-b773-609f5d844268"
+    },
+    {
+        "id": "5e13687i-8j18-88jf-e07i-55jie2eef1bg",
+        "title": "Cryptography",
+        "desc": "Securing communication with codes.",
+        "category_id": "9114b868-78c8-4de4-b773-609f5d844268"
+    },
+    {
+        "id": "6f24798j-9k29-99kg-f18j-66kjf3ffg2ch",
+        "title": "Ethical Hacking",
+        "desc": "Legal exploitation of systems to improve security.",
+        "category_id": "9114b868-78c8-4de4-b773-609f5d844268"
+    },
+    {
+        "id": "7g35809k-0l30-00lh-g29k-77lkg4ggh3di",
+        "title": "Security Policies and Procedures",
+        "desc": "Guidelines and actions for maintaining security.",
+        "category_id": "9114b868-78c8-4de4-b773-609f5d844268"
+    },
+    {
+        "id": "8h46910l-1m31-11mi-h30l-88mlh5hhi4ej",
+        "title": "Incident Response",
+        "desc": "Responding to security incidents effectively.",
+        "category_id": "9114b868-78c8-4de4-b773-609f5d844268"
+    },
+    {
+        "id": "9i57021m-2n32-22nj-i41m-99nmi6iij5fk",
+        "title": "Risk Management",
+        "desc": "Identifying, evaluating, and mitigating risks.",
+        "category_id": "9114b868-78c8-4de4-b773-609f5d844268"
+    },
+    {
+        "id": "0j68132n-3o33-33ok-j52n-00onj7jjk6gl",
+        "title": "Cloud Security",
+        "desc": "Protecting cloud-based data and applications.",
+        "category_id": "9114b868-78c8-4de4-b773-609f5d844268"
+    },
+    {
+        "id": "1k79243o-4p34-44pl-k63o-11pok8kkl7hm",
+        "title": "Penetration Testing",
+        "desc": "Evaluating system security by simulating attacks.",
+        "category_id": "9114b868-78c8-4de4-b773-609f5d844268"
+    },
+    {
+        "id": "2l80354p-5q35-55qm-l74p-22qpl9llm8in",
+        "title": "Data Loss Prevention",
+        "desc": "Methods to protect sensitive data from leaving network.",
+        "category_id": "9114b868-78c8-4de4-b773-609f5d844268"
+    }
+]
