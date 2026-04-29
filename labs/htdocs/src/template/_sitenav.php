@@ -38,11 +38,28 @@
                             $hasChallengesContext = true;
                         }
 
-                        // Smart Mapping Logic
-                        if (stripos($lowerPart, 'home') !== false) {
+                        // 1. Quiz Hub Context Mapping (High Priority Context)
+                        $quizParent = Session::get('parent_topic');
+                        $quizSubtopic = Session::get('current_subtopic');
+                        $quizCategory = Session::get('current_topic');
+
+                        if (strcasecmp($lowerPart, 'quiz') === 0) {
+                            $url = '/quiz';
+                        } elseif (strcasecmp($lowerPart, 'spot quiz') === 0) {
+                            $quiz = Session::get('current_quiz');
+                            $url = $quiz ? "/quiz/v/" . $quiz['hash'] : '/quiz';
+                        } elseif (($quizParent && strcasecmp(trim($displayPart), trim($quizParent['title'])) === 0) || 
+                                  ($quizCategory && strcasecmp(trim($displayPart), trim($quizCategory['title'])) === 0)) {
+                            $cat = $quizParent ?? $quizCategory;
+                            $url = "/quiz/" . ($cat['id'] ?? $cat['_id']);
+                        } elseif ($quizSubtopic && strcasecmp(trim($displayPart), trim($quizSubtopic['title'])) === 0) {
+                            $catId = $quizParent ? ($quizParent['id'] ?? $quizParent['_id']) : ($quizCategory ? ($quizCategory['id'] ?? $quizCategory['_id']) : 'all');
+                            $url = "/quiz/$catId/Recent/" . ($quizSubtopic['id'] ?? $quizSubtopic['_id']);
+                        
+                        // 2. Standard Global Mappings (Lower Priority Keywords)
+                        } elseif (stripos($lowerPart, 'home') !== false) {
                             $url = '/';
                         } elseif (stripos($lowerPart, 'dashboard') !== false) {
-                            // Context-Aware Dashboard Links
                             if ($hasLabsContext && $labHash) {
                                 $url = "/labs/dashboard/$labHash";
                             } elseif ($hasChallengesContext && $challengeHash) {
@@ -61,7 +78,6 @@
                         } elseif (stripos($lowerPart, 'network') !== false) {
                             $url = '/network';
                         } elseif (stripos($lowerPart, 'domain') !== false) {
-                            // Context-Aware Domains
                             if ($hasLabsContext && $labHash) {
                                 $url = "/labs/domains/$labHash";
                             } else {
@@ -75,24 +91,6 @@
                             $url = "/challenges/achievements/$challengeHash";
                         } elseif (stripos($lowerPart, 'leader') !== false && $challengeHash) {
                             $url = "/challenges/leaderboard/$challengeHash";
-                        } elseif ($lowerPart === 'quiz') {
-                            $url = '/quiz';
-                        } elseif ($lowerPart === 'spot quiz') {
-                            $quiz = Session::get('current_quiz');
-                            $url = $quiz ? "/quiz/v/" . $quiz['hash'] : '/quiz';
-                        } else {
-                            // Quiz Hub Context Mapping
-                            $quizParent = Session::get('parent_topic');
-                            $quizSubtopic = Session::get('current_subtopic');
-                            $quizCategory = Session::get('current_topic');
-
-                            if (($quizParent && $displayPart === $quizParent['title']) || ($quizCategory && $displayPart === $quizCategory['title'])) {
-                                $cat = $quizParent ?? $quizCategory;
-                                $url = "/quiz/" . ($cat['id'] ?? $cat['_id']);
-                            } elseif ($quizSubtopic && $displayPart === $quizSubtopic['title']) {
-                                $catId = $quizParent ? ($quizParent['id'] ?? $quizParent['_id']) : ($quizCategory ? ($quizCategory['id'] ?? $quizCategory['_id']) : 'all');
-                                $url = "/quiz/$catId/Recent/" . ($quizSubtopic['id'] ?? $quizSubtopic['_id']);
-                            }
                         }
 
                         $href = $url ? $url : '#';
