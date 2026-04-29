@@ -1,0 +1,27 @@
+{
+    "lab_name": "n8n Workflow Lab",
+    "lab_id": "n8n",
+    "version": 1.0,
+    "stability": "beta",
+    "resources": {
+        "memory": "1.5g",
+        "cpus": "0.5",
+        "pids_limit": 80
+    },
+    "network": {
+        "hostname": "n8n",
+        "exposed_ports": [
+            "5678",
+            "8080",
+            "80",
+            "22"
+        ]
+    },
+    "storage": {
+        "mount_target": "/home/{user}"
+    },
+    "scripts": {
+        "linkuser": "/var/labsdata/scripts/linkuser.sh",
+        "entry": "/var/labsdata/scripts/entry.sh"
+    }
+}

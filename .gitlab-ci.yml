@@ -17,6 +17,7 @@ deploy_to_docker_lab:
     changes:
       - "labs/**/*"
       - "vpn-api/**/*"
+      - "opt/**/*"
       
   script:
     - echo "Starting deployment to Docker_lab..."
@@ -31,4 +32,7 @@ deploy_to_docker_lab:
     # 2. Sync the 'vpn-api' folder.
     - rsync -av --delete --exclude 'vendor' --exclude 'node_modules' vpn-api/ /Users/sathish/Downloads/Docker_lab/vpn-api/
     
-    - echo "Deployment of labs and vpn-api completed successfully!"
+    # 3. Sync the 'opt' folder (Labs Control Panel & Orchestrators)
+    - rsync -av --delete opt/ /Users/sathish/Downloads/Docker_lab/opt/
+    
+    - echo "Deployment of labs, vpn-api, and opt completed successfully!"

@@ -210,9 +210,11 @@
 .quiz-start-view,
 .quiz-container,
 .quiz-topic-view {
-  min-height: 80vh;
+  min-height: calc(100vh - 100px);
   background: transparent;
   position: relative;
+  display: flex;
+  flex-direction: column;
 
   .evaluation-bg {
     position: absolute;

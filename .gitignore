@@ -7,6 +7,7 @@
 # EXCEPT for these directories and files
 !/labs/
 !/vpn-api/
+!/opt/
 !/.gitignore
 !/README.md
 !/.gitlab-ci.yml
@@ -84,5 +85,5 @@ gitlab_logs/
 scratch/
 traefik-conf/
 wireguard-conf/
-opt/
+# opt/
 work/

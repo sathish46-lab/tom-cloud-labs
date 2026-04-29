@@ -1,0 +1,9 @@
+redis
+mysql-connector-python
+docker
+colorama
+pytz
+pika
+psutil
+requests
+pymongo

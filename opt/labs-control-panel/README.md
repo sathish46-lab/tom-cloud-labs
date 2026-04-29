@@ -1,0 +1,1 @@
+sudo mkdir -p /var/tomlabs/storage sudo chown -R www-data:www-data /var/tomlabs

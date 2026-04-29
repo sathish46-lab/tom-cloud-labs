@@ -1,0 +1,14 @@
+[Unit]
+Description=Labs Docker Stats Collector
+After=docker.service
+Wants=docker.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /opt/labs-control-panel/src/StatsCollector.py
+Restart=always
+RestartSec=5
+User=root
+
+[Install]
+WantedBy=multi-user.target

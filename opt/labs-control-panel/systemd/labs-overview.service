@@ -1,0 +1,14 @@
+[Unit]
+Description=Labs Overview Stream
+After=network.target rabbitmq-server.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/labs-control-panel
+ExecStart=/usr/local/bin/labsctl stream --key=overview
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,22 @@
+{
+  "lab_name": "Tom Essentials Lab",
+  "lab_id": "essentials",
+  "version": 1.0,
+  "stability": "beta",
+  "resources": {
+    "memory": "2g",
+    "cpus": "0.5",
+    "pids_limit": 100
+  },
+  "network": {
+    "hostname": "essentials",
+    "exposed_ports": []
+  },
+  "storage": {
+    "mount_target": "/home/{user}"
+  },
+  "scripts": {
+    "linkuser": "/var/labsdata/scripts/linkuser.sh",
+    "entry": "/var/labsdata/scripts/entry.sh"
+  }
+}

@@ -1,0 +1,35 @@
+#!/bin/bash
+# entry.sh - MinIO S3 Container Startup
+
+echo "[*] Initializing MinIO S3 Lab Environment..."
+
+# 1. Start System Services
+# SSH is required for administrative shell access and SFTP
+service ssh start
+
+# 2. Configure WireGuard Mesh Networking
+if [ -f /etc/wireguard/wg0.conf ]; then
+    echo "[*] Activating WireGuard Mesh..."
+    wg-quick up wg0 || true
+    
+    # Ensure all traffic within the lab network is routed through the tunnel
+    ip route add 172.30.0.0/16 dev wg0 metric 10 2>/dev/null || true
+fi
+
+# 3. Handle MinIO Specifics
+# We don't start MinIO here because linkuser.sh handles the initial start with 
+# dynamic credentials. However, we ensure the data directory exists.
+mkdir -p /mnt/data
+chmod 777 /mnt/data
+
+# 4. Optional: Apache for Documentation
+# If you want to show a "Welcome" page or S3 instructions on Port 80
+if command -v apache2 >/dev/null 2>&1; then
+    echo "[*] Starting Apache for lab instructions..."
+    find /etc/apache2/sites-available -name "*.conf" -exec a2ensite {} +
+    service apache2 restart
+fi
+
+# 5. Keep the container alive
+echo "[✓] MinIO Lab is ready."
+tail -f /dev/null

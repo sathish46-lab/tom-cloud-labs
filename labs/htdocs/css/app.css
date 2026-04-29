@@ -15638,9 +15638,11 @@ html.enable-blur .server-logs-panel {
 .quiz-start-view,
 .quiz-container,
 .quiz-topic-view {
-  min-height: 80vh;
+  min-height: calc(100vh - 100px);
   background: transparent;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 .quiz-evaluation-view .evaluation-bg,
 .quiz-start-view .evaluation-bg,

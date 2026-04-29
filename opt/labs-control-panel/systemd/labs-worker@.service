@@ -1,0 +1,18 @@
+[Unit]
+Description=Labs Job Queue Worker (Instance %i)
+After=network.target rabbitmq-server.service
+
+[Service]
+Type=simple
+User=root
+# Adjust python path if necessary
+ExecStart=/usr/bin/python3 -u /var/www/labs/worker/labs_worker.py
+Restart=always
+RestartSec=3
+Environment="DOCKER_HOST=unix:///var/docker.sock"
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=labs-worker-%i
+
+[Install]
+WantedBy=multi-user.target

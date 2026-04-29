@@ -1,0 +1,18 @@
+{
+  "lab_name": "MinIO S3 Storage",
+  "lab_id": "minio",
+  "version": "1.0.1",
+  "resources": {
+    "memory": "1g",
+    "cpus": "0.5"
+  },
+  "storage": {
+    "mount_target": "/home/{user}"
+  },
+  "network": {
+    "hostname": "minio-cloud"
+  },
+  "scripts": {
+    "linkuser": "/var/labsdata/scripts/linkuser.sh"
+  }
+}
