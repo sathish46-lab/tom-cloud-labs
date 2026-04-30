@@ -67,26 +67,26 @@ elseif ($qDiff === 'hard') $diffColor = '#e55353';
             <div class="mt-auto pt-2 border-top border-secondary border-opacity-10 d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center gap-2">
                     <div class="d-flex align-items-center gap-1" title="Zeal Reward">
-                        <span style="font-size: 0.8rem; font-weight: 800; color: #e55353;"><?= $zealReward ?></span>
+                        <span style="font-size: 0.8rem; font-weight: 800;"><?= $zealReward ?></span>
                         <span style="font-size: 0.75rem;">🔥</span>
                     </div>
                     <div class="d-flex align-items-center gap-1" title="Jolt Reward">
-                        <span style="font-size: 0.8rem; font-weight: 800; color: #f9b115;"><?= $joltReward ?></span>
+                        <span style="font-size: 0.8rem; font-weight: 800;"><?= $joltReward ?></span>
                         <span style="font-size: 0.75rem;">⚡️</span>
                     </div>
                     <div class="d-flex align-items-center gap-1 opacity-50" title="Views">
-                        <span style="font-size: 0.8rem; font-weight: 800; color: #3399ff;"><?= $viewCount ?></span>
+                        <span style="font-size: 0.8rem; font-weight: 800;"><?= $viewCount ?></span>
                         <span style="font-size: 0.75rem;">👁️</span>
                     </div>
                     
                     <button class="btn btn-link btn-sm clipboard p-0 ms-1 opacity-50 hover-opacity-100 theme-text" 
-                        data-clipboard-text="<?= "https://labs.selfmade.ninja/quiz/v/" . $qHash ?>" 
+                        data-clipboard-text="<?= (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] . "/quiz/v/" . $qHash ?>" 
                         style="text-decoration: none;">
                         <i class="bx bx-share-alt" style="font-size: 0.9rem;"></i>
                     </button>
                 </div>
 
-                <a href="/quiz/v/<?= $qHash ?>" class="btn btn-success btn-sm rounded-pill fw-bold px-3 py-1" style="font-size: 0.675rem; letter-spacing: 0.3px;">
+                <a href="/quiz/v/<?= $qHash ?>" class="btn <?= $isAttempted ? 'btn-info' : 'btn-success' ?> btn-sm rounded-pill fw-bold px-2 py-1" style="font-size: 0.675rem; letter-spacing: 0.3px;">
                     <?= $isAttempted ? 'Retake Quiz' : 'Answer Quiz' ?>
                 </a>
             </div>
