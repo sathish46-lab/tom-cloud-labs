@@ -55,13 +55,19 @@ $quizzes = Quiz::getRecentForSubtopic($subtopic['_id'], 8);
         <!-- 3. Quizzes Grid -->
         <div id="quiz-list-container" class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4 position-relative" style="z-index: 2;">
             <?php if (empty($quizzes)): ?>
-                <div class="col-12 text-center py-5">
-                    <div class="card quiz-glass-card p-5 border-dashed">
-                        <i class="bx bxs-inbox fs-1 theme-text opacity-25 mb-3"></i>
-                        <h5 class="fw-bold theme-text">No Quizzes Available Yet</h5>
-                        <p class="text-body-secondary small mb-4">Be the first to generate a professional challenge for this topic!</p>
-                        <button class="btn btn-success rounded-pill px-4 fw-bold" onclick="triggerGeneration()">
-                            Generate Now with AI
+                <div class="w-100 d-flex justify-content-center py-5 mt-4" style="flex: 0 0 100%;">
+                    <div class="card quiz-glass-card border-0 shadow-lg text-center p-4 p-md-5" style="max-width: 420px; width: 100%; border-radius: 20px; background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05) !important;">
+                        <div class="d-flex justify-content-center mb-4">
+                            <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center border border-success border-opacity-25" style="width: 70px; height: 70px;">
+                                <i class="bx bxs-bot fs-1 text-success"></i>
+                            </div>
+                        </div>
+                        <h4 class="fw-bold text-body-emphasis mb-2">No Quizzes Yet</h4>
+                        <p class="text-body-secondary small mb-4 lh-base px-2">
+                            There are currently no challenges for this topic. Be the first to generate a professional AI-powered quiz and test your skills!
+                        </p>
+                        <button class="btn btn-success rounded-pill px-4 py-2 fw-bold shadow-sm transition-all" onclick="triggerGeneration()" style="font-size: 0.95rem;">
+                            <i class="bx bxs-zap me-1"></i> Generate with AI
                         </button>
                     </div>
                 </div>

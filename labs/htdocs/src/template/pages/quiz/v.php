@@ -15,49 +15,51 @@ $quizData = $quiz['questions'] ?? $quiz['content'] ?? [];
 $pointsPerCorrect = $points;
 ?>
 
-<div class="quiz-evaluation-view fade-in lab-header-section">
+<div class="quiz-evaluation-view fade-in">
     <!-- 1. Background Layer -->
     <div class="evaluation-bg"></div>
 
     <!-- 2. Header Section (Title, Desc, Tags, Stats) -->
-    <div class=" d-flex flex-column align-items-center">
-        <!-- Narrative Block -->
-        <div class="col-md-8 col-xl-8 text-center mb-3">
-            <h3 class="fw-bold mb-2 text-body-emphasis"><?= $quiz['title'] ?></h3>
-            <p class="small text-body-secondary lh-base mb-0 opacity-75">
-                <?= $desc ?>
-            </p>
-        </div>
-
-        <!-- Tags Block -->
-        <div class="col-12 text-center mb-3">
-            <div class="d-flex flex-wrap justify-content-center gap-2">
-                <?php foreach ($tags as $tag): ?>
-                    <span class="badge badge-evaluation-tag px-3 py-2 rounded-pill"><?= strtolower($tag) ?></span>
-                <?php endforeach; ?>
-                <button class="btn btn-link text-body-secondary p-0 ms-1" title="Share Quiz"><i class="bx bx-share-alt small"></i></button>
+    <div class="lab-header-section pt-5 pb-1 mb-4 shadow-sm border-bottom border-secondary border-opacity-10" style="z-index: 10; position: relative;">
+        <div class="container d-flex flex-column align-items-center">
+            <!-- Narrative Block -->
+            <div class="col-md-8 col-xl-8 text-center mb-3 mt-2">
+                <h3 class="fw-bold mb-2 text-body-emphasis"><?= $quiz['title'] ?></h3>
+                <p class="small text-body-secondary lh-base mb-0 opacity-75">
+                    <?= $desc ?>
+                </p>
             </div>
-        </div>
 
-        <!-- Stats Block -->
-        <div class="col-12 text-center">
-            <div class="d-flex flex-wrap justify-content-center align-items-center gap-4 py-3 evaluation-stats-bar border-top border-secondary border-opacity-10">
-                <div class="stat-group d-flex align-items-center">
-                    <span class="text-body-secondary x-small me-3">Difficulty</span>
-                    <span class="badge <?= $difficulty == 'hard' ? 'bg-danger' : ($difficulty == 'easy' ? 'bg-info' : 'bg-success') ?> bg-opacity-25 <?= $difficulty == 'hard' ? 'text-danger' : ($difficulty == 'easy' ? 'text-info' : 'text-success') ?> border border-opacity-25 px-3 py-1 rounded-pill x-small fw-bold">
-                        <?= strtoupper($difficulty) ?>
-                    </span>
+            <!-- Tags Block -->
+            <div class="col-12 text-center mb-3">
+                <div class="d-flex flex-wrap justify-content-center gap-2">
+                    <?php foreach ($tags as $tag): ?>
+                        <span class="badge bg-primary bg-opacity-75 text-white px-3 py-2 rounded-pill shadow-sm" style="font-size: 0.85rem; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1); letter-spacing: 0.5px;"><?= strtolower($tag) ?></span>
+                    <?php endforeach; ?>
+                    <button class="btn btn-link text-body-secondary p-0 ms-1" title="Share Quiz"><i class="bx bx-share-alt small"></i></button>
                 </div>
-                <div class="vr bg-secondary opacity-10 d-none d-md-block" style="height: 20px;"></div>
-                <div class="stat-group d-flex align-items-center">
-                    <span class="text-body-secondary x-small me-3">Rewards Available</span>
-                    <span class="text-body-emphasis fw-bold me-2"><?= $totalRewards ?> <i class="bx bxs-hot text-danger"></i></span>
-                    <span class="text-body-emphasis fw-bold">2 <i class="bx bxs-zap text-warning"></i></span>
-                </div>
-                <div class="vr bg-secondary opacity-10 d-none d-md-block" style="height: 20px;"></div>
-                <div class="stat-group d-flex align-items-center">
-                    <span class="text-body-secondary x-small me-3">Time Remaining</span>
-                    <span class="text-body-emphasis fw-bold">06:00 <i class="bx bx-time-five text-body-secondary ms-1"></i></span>
+            </div>
+
+            <!-- Stats Block -->
+            <div class="col-12 text-center">
+                <div class="d-flex flex-wrap justify-content-center align-items-center gap-4 py-3 evaluation-stats-bar border-top border-secondary border-opacity-10">
+                    <div class="stat-group d-flex align-items-center">
+                        <span class="text-body-secondary x-small me-3">Difficulty</span>
+                        <span class="badge <?= $difficulty == 'hard' ? 'bg-danger' : ($difficulty == 'easy' ? 'bg-info' : 'bg-success') ?> bg-opacity-25 <?= $difficulty == 'hard' ? 'text-danger' : ($difficulty == 'easy' ? 'text-info' : 'text-success') ?> border border-opacity-25 px-3 py-1 rounded-pill x-small fw-bold">
+                            <?= strtoupper($difficulty) ?>
+                        </span>
+                    </div>
+                    <div class="vr bg-secondary opacity-10 d-none d-md-block" style="height: 20px;"></div>
+                    <div class="stat-group d-flex align-items-center">
+                        <span class="text-body-secondary x-small me-3">Rewards Available</span>
+                        <span class="text-body-emphasis fw-bold me-2"><?= $totalRewards ?> <i class="bx bxs-hot text-danger"></i></span>
+                        <span class="text-body-emphasis fw-bold">2 <i class="bx bxs-zap text-warning"></i></span>
+                    </div>
+                    <div class="vr bg-secondary opacity-10 d-none d-md-block" style="height: 20px;"></div>
+                    <div class="stat-group d-flex align-items-center">
+                        <span class="text-body-secondary x-small me-3">Time Remaining</span>
+                        <span class="text-body-emphasis fw-bold">06:00 <i class="bx bx-time-five text-body-secondary ms-1"></i></span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -65,7 +67,7 @@ $pointsPerCorrect = $points;
 
     <!-- 3. Interactive Area Section -->
     <div class="container-fluid px-0 mb-3 pb-3">
-        <div class="glass-card p-4 p-lg-5 py-xl-5 mt-4">
+        <div class="card border-0 shadow-lg p-4 p-lg-5 py-xl-5 mt-4" style="background: rgba(var(--bs-body-bg-rgb, 11, 30, 54), 0.45); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08) !important; border-radius: 24px;">
             <div class="row justify-content-center">
                 <div class="col-lg-10">
                     
