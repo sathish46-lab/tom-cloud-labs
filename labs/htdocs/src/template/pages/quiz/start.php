@@ -6,6 +6,10 @@ $subtopic = Session::get('current_subtopic');
 
 // Fetch real quizzes from MongoDB (High Density Limit)
 $quizzes = Quiz::getRecentForSubtopic($subtopic['_id'], 8);
+
+$user = Session::getUser();
+$userStats = $user ? Quiz::getUserStats($user->getEmail()) : ['zeal' => 0, 'jolt' => 0];
+$availableJolt = $userStats['jolt'] ?? 0;
 ?>
 
 <div class="fade-in pb-5 lab-header-section">
@@ -109,21 +113,31 @@ $quizzes = Quiz::getRecentForSubtopic($subtopic['_id'], 8);
                         <div class="mt-auto pt-3 border-top border-white border-opacity-10">
                             <div class="d-flex align-items-center justify-content-between">
                                 <div class="d-flex align-items-center gap-3">
-                                    <div class="stat-item">
-                                        <span class="fw-bold"><?= $q['points_per_correct'] ?></span>
+                                    <?php 
+                                        $qDiff = strtolower($q['difficulty'] ?? 'normal');
+                                        $qJolt = 2;
+                                        if ($qDiff === 'easy') $qJolt = 1;
+                                        elseif ($qDiff === 'hard') $qJolt = 5;
+                                    ?>
+                                    <div class="stat-item" title="Zeal Reward">
+                                        <span class="fw-bold"><?= $isAttempted ? 0 : ($q['points_per_correct'] ?? 25) ?></span>
                                         <i class="bx bxs-hot text-danger"></i>
                                     </div>
-                                    <div class="stat-item">
-                                        <span class="fw-bold">2</span>
+                                    <div class="stat-item" title="Jolt Reward">
+                                        <span class="fw-bold"><?= $isAttempted ? 0 : $qJolt ?></span>
                                         <i class="bx bxs-zap text-warning"></i>
                                     </div>
-                                    <div class="stat-item">
-                                        <span class="fw-bold">16</span>
+                                    <div class="stat-item" title="Total Views">
+                                        <span class="fw-bold"><?= $q['view_count'] ?? 0 ?></span>
                                         <i class="bx bxs-show text-info"></i>
                                     </div>
                                 </div>
-                                <a href="/quiz/v/<?= $q['hash'] ?>" class="btn btn-success btn-sm rounded-pill fw-bold px-3">
-                                    Answer Quiz
+                                <?php 
+                                    $user = Session::getUser();
+                                    $isAttempted = $user ? Quiz::hasAttempted($user->getEmail(), $q['hash']) : false;
+                                ?>
+                                <a href="/quiz/v/<?= $q['hash'] ?>" class="btn <?= $isAttempted ? 'btn-info' : 'btn-success' ?> btn-sm rounded-pill fw-bold px-3">
+                                    <?= $isAttempted ? 'Retake Quiz' : 'Answer Quiz' ?>
                                 </a>
                             </div>
                         </div>
@@ -175,8 +189,8 @@ $quizzes = Quiz::getRecentForSubtopic($subtopic['_id'], 8);
                         <tbody>
                             <tr class="fw-bold">
                                 <td class="py-2">1 ⚡️</td>
-                                <td class="py-2">8783 ⚡️</td>
-                                <td class="py-2">8782 ⚡️</td>
+                                <td class="py-2"><?= $availableJolt ?> ⚡️</td>
+                                <td class="py-2"><?= max(0, $availableJolt - 1) ?> ⚡️</td>
                             </tr>
                         </tbody>
                     </table>
@@ -318,8 +332,16 @@ window.startGenerationProcess = function() {
     fetch(`/api/quiz/generate?topic=${window.QuizConfig.parentTopicId}&subtopic=${window.QuizConfig.subtopicId}&diff=${selectedDiff}`)
         .then(res => res.json())
         .then(data => {
-            if (data.id) pollStatus(data.id);
-            else showError(data.error || 'Failed to start generation.');
+            if (data.id) {
+                pollStatus(data.id);
+                // Update header Jolt balance immediately
+                if (typeof data.new_jolt !== 'undefined') {
+                    const globalJolt = document.getElementById('header-jolt');
+                    if (globalJolt) globalJolt.innerText = data.new_jolt.toLocaleString();
+                }
+            } else {
+                showError(data.error || 'Failed to start generation.');
+            }
         })
         .catch(err => {
             console.error("[Quiz Hub] API Error:", err);
@@ -448,11 +470,13 @@ if (window.QuizConfig && window.QuizConfig.subtopicId) {
                     <div class="mt-auto pt-3 border-top border-white border-opacity-10">
                         <div class="d-flex align-items-center justify-content-between">
                             <div class="d-flex align-items-center gap-3">
-                                <div class="stat-item"><span class="fw-bold">${q.points_per_correct || 25}</span> <i class="bx bxs-hot text-danger"></i></div>
-                                <div class="stat-item"><span class="fw-bold">2</span> <i class="bx bxs-zap text-warning"></i></div>
-                                <div class="stat-item"><span class="fw-bold">16</span> <i class="bx bxs-show text-info"></i></div>
+                                <div class="stat-item" title="Zeal Reward"><span class="fw-bold">${typeof q.points !== 'undefined' ? q.points : 25}</span> <i class="bx bxs-hot text-danger"></i></div>
+                                <div class="stat-item" title="Jolt Reward"><span class="fw-bold">${typeof q.jolt_reward !== 'undefined' ? q.jolt_reward : 2}</span> <i class="bx bxs-zap text-warning"></i></div>
+                                <div class="stat-item" title="Total Views"><span class="fw-bold">${q.view_count || 0}</span> <i class="bx bxs-show text-info"></i></div>
                             </div>
-                            <a href="/quiz/v/${q.hash}" class="btn btn-success btn-sm rounded-pill fw-bold px-3">Answer Quiz</a>
+                            <a href="/quiz/v/${q.hash}" class="btn ${q.is_attempted ? 'btn-info' : 'btn-success'} btn-sm rounded-pill fw-bold px-3">
+                                ${q.is_attempted ? 'Retake Quiz' : 'Answer Quiz'}
+                            </a>
                         </div>
                     </div>
                 </div>

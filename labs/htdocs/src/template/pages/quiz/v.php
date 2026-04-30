@@ -8,11 +8,16 @@ $desc = $quiz['desc'] ?? "Challenge yourself with these intriguing queries. Each
 $tags = (isset($quiz['tags']) && is_array($quiz['tags'])) ? $quiz['tags'] : [$parent['title'] ?? 'Cybersecurity', $subtopic['title'] ?? 'Networking'];
 $difficulty = $quiz['difficulty'] ?? 'normal';
 $points = $quiz['points_per_correct'] ?? 25;
-$totalRewards = $points * 5;
 
 // Extract quiz questions for the frontend engine
 $quizData = $quiz['questions'] ?? $quiz['content'] ?? [];
 $pointsPerCorrect = $points;
+$qCount = count($quizData);
+$totalRewards = $points * $qCount;
+
+$joltReward = 2; // Default Normal
+if ($difficulty === 'easy') $joltReward = 1;
+elseif ($difficulty === 'hard') $joltReward = 5;
 ?>
 
 <div class="quiz-evaluation-view fade-in">
@@ -52,13 +57,13 @@ $pointsPerCorrect = $points;
                     <div class="vr bg-secondary opacity-10 d-none d-md-block" style="height: 20px;"></div>
                     <div class="stat-group d-flex align-items-center">
                         <span class="text-body-secondary x-small me-3">Rewards Available</span>
-                        <span class="text-body-emphasis fw-bold me-2"><?= $totalRewards ?> <i class="bx bxs-hot text-danger"></i></span>
-                        <span class="text-body-emphasis fw-bold">2 <i class="bx bxs-zap text-warning"></i></span>
+                        <span class="text-body-emphasis fw-bold me-2"><?= number_format($totalRewards) ?> <i class="bx bxs-hot text-danger"></i></span>
+                        <span class="text-body-emphasis fw-bold"><?= $joltReward ?> <i class="bx bxs-zap text-warning"></i></span>
                     </div>
                     <div class="vr bg-secondary opacity-10 d-none d-md-block" style="height: 20px;"></div>
                     <div class="stat-group d-flex align-items-center">
                         <span class="text-body-secondary x-small me-3">Time Remaining</span>
-                        <span class="text-body-emphasis fw-bold">06:00 <i class="bx bx-time-five text-body-secondary ms-1"></i></span>
+                        <span id="timer-display" class="text-body-emphasis fw-bold">--:-- <i class="bx bx-time-five text-body-secondary ms-1"></i></span>
                     </div>
                 </div>
             </div>
@@ -122,8 +127,11 @@ $pointsPerCorrect = $points;
                         <div class="result-circle mx-auto mb-2">
                             <div class="result-score"><span id="score-val">0</span>/5</div>
                         </div>
-                        <h3 class="text-body-emphasis fw-bold mb-4">Evaluation Complete!</h3>
+                        <h3 class="text-body-emphasis fw-bold mb-2">Evaluation Complete!</h3>
                         <p id="result-msg" class="text-body-secondary mb-3"></p>
+                        <p id="reward-msg" class="text-info small mb-4 d-none">
+                            <i class="bx bxs-gift me-1"></i> Perfect Score! You earned <span id="zeal-earned">0</span> Zeal 🔥 and <span id="jolt-earned">0</span> Jolt ⚡️
+                        </p>
                         <div class="d-flex justify-content-center gap-3">
                             <button class="btn btn-success rounded-pill px-5 py-2 fw-bold transition-all" onclick="location.reload()">Retake Quiz</button>
                             <a href="/quiz" class="btn btn-outline-secondary rounded-pill px-5 py-2 fw-bold">Back to Hub</a>
@@ -143,7 +151,9 @@ $pointsPerCorrect = $points;
 <script>
 window.QuizEngineConfig = {
     quizData: <?= json_encode($quizData) ?>,
-    pointsPerCorrect: <?= $pointsPerCorrect ?>
+    pointsPerCorrect: <?= $pointsPerCorrect ?>,
+    difficulty: "<?= $difficulty ?>",
+    hash: "<?= $quiz['hash'] ?>"
 };
 
 /**
@@ -154,6 +164,8 @@ window.QuizEngineConfig = {
 let currentStep = 0;
 let selectedOption = null;
 let score = 0;
+let timeLeft = 0;
+let timerInterval = null;
 
 /**
  * Initialize Dynamic Progress Bar
@@ -212,10 +224,65 @@ window.startQuiz = function() {
         return;
     }
 
+    // Record an initial attempt with 'started' status
+    const quizHash = window.QuizEngineConfig.hash;
+    const formData = new FormData();
+    formData.append('hash', quizHash);
+    formData.append('score', 0);
+    formData.append('status', 'started');
+    formData.append('total', window.QuizEngineConfig.quizData.length);
+    fetch('/api/quiz/record_attempt', {
+        method: 'POST',
+        body: formData
+    });
+
     startView.classList.add('d-none');
     questionView.classList.remove('d-none');
+    
+    initTimer();
     loadQuestion();
 };
+
+function initTimer() {
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimerDisplay();
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            alert("Time is up! Let's see your results.");
+            showResult();
+        }
+    }, 1000);
+}
+
+function preInitTimer() {
+    const config = window.QuizEngineConfig;
+    if (!config || !config.quizData) return;
+    
+    const qCount = config.quizData.length;
+    let timePerQuestion = 45; // Default Normal
+
+    if (config.difficulty === "easy") timePerQuestion = 30;
+    else if (config.difficulty === "hard") timePerQuestion = 60;
+
+    timeLeft = qCount * timePerQuestion;
+    updateTimerDisplay();
+}
+
+function updateTimerDisplay() {
+    const display = document.getElementById('timer-display');
+    if (!display) return;
+    
+    const mins = Math.floor(timeLeft / 60);
+    const secs = timeLeft % 60;
+    const timeStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    display.innerHTML = `${timeStr} <i class="bx bx-time-five text-body-secondary ms-1"></i>`;
+    
+    if (timeLeft <= 30) {
+        display.classList.add('text-danger');
+        display.classList.remove('text-body-emphasis');
+    }
+}
 
 function loadQuestion() {
     if (!window.QuizEngineConfig || !window.QuizEngineConfig.quizData || window.QuizEngineConfig.quizData.length === 0) {
@@ -293,8 +360,12 @@ window.submitAnswer = function() {
     }
 
     const isLastQuestion = (currentStep >= quizData.length - 1);
-    if (isLastQuestion) toggleButton('result-btn', true);
-    else toggleButton('next-btn', true);
+    if (isLastQuestion) {
+        if (timerInterval) clearInterval(timerInterval);
+        toggleButton('result-btn', true);
+    } else {
+        toggleButton('next-btn', true);
+    }
 };
 
 window.nextQuestion = function() {
@@ -303,9 +374,38 @@ window.nextQuestion = function() {
 };
 
 window.showResult = function() {
+    if (timerInterval) clearInterval(timerInterval);
     if (!window.QuizEngineConfig || !window.QuizEngineConfig.quizData) return;
     const quizData = window.QuizEngineConfig.quizData;
     const pointsPerCorrect = window.QuizEngineConfig.pointsPerCorrect;
+    const quizHash = window.QuizEngineConfig.hash;
+
+    const formData = new FormData();
+    formData.append('hash', quizHash);
+    formData.append('score', score);
+    formData.append('status', 'completed');
+    formData.append('total', quizData.length);
+
+    fetch('/api/quiz/record_attempt', {
+        method: 'POST',
+        body: formData
+    }).then(res => res.json())
+      .then(data => {
+          // Always update global header points from source of truth
+          const globalZeal = document.getElementById('header-zeal');
+          const globalJolt = document.getElementById('header-jolt');
+          if (globalZeal && typeof data.total_zeal !== 'undefined') globalZeal.innerText = data.total_zeal.toLocaleString();
+          if (globalJolt && typeof data.total_jolt !== 'undefined') globalJolt.innerText = data.total_jolt.toLocaleString();
+
+          if (data.rewarded) {
+              const rewardMsg = document.getElementById('reward-msg');
+              const zealVal = document.getElementById('zeal-earned');
+              const joltVal = document.getElementById('jolt-earned');
+              if (rewardMsg) rewardMsg.classList.remove('d-none');
+              if (zealVal) zealVal.innerText = data.zeal;
+              if (joltVal) joltVal.innerText = data.jolt;
+          }
+      });
 
     const qView = document.getElementById('quiz-question-view');
     const rView = document.getElementById('quiz-result-view');
@@ -320,13 +420,27 @@ window.showResult = function() {
     const totalPoints = score * pointsPerCorrect;
     const ratio = score / quizData.length;
     let msg = "";
-    if(ratio === 1) msg = `Priceless! 💎 You earned ${totalPoints} Zeal 🔥. Perfect command!`;
-    else if(ratio >= 0.6) msg = `Great job! ⚡️ You earned ${totalPoints} Zeal 🔥. Solid grasp!`;
-    else msg = `Keep learning! 🔥 You earned ${totalPoints} Zeal 🔥. Practice makes perfect.`;
+    if(ratio === 1) msg = `Outstanding! 💎 Perfect command of the subject.`;
+    else if(ratio >= 0.6) msg = `Great job! ⚡️ Solid grasp of the concepts.`;
+    else msg = `Keep learning! 🔥 Practice makes perfect.`;
     
     const resultMsg = document.getElementById('result-msg');
     if (resultMsg) resultMsg.innerText = msg;
 };
 
-document.addEventListener('DOMContentLoaded', initProgressBar);
+document.addEventListener('DOMContentLoaded', () => {
+    initProgressBar();
+    preInitTimer();
+
+    // Record unique view
+    const quizHash = window.QuizEngineConfig.hash;
+    if (quizHash) {
+        const formData = new FormData();
+        formData.append('hash', quizHash);
+        fetch('/api/quiz/record_view', {
+            method: 'POST',
+            body: formData
+        });
+    }
+});
 </script>

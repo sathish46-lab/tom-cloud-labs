@@ -190,6 +190,75 @@ class Quiz {
     }
 
     /**
+     * Record a user's quiz attempt results in the database
+     */
+    public static function recordAttempt($userEmail, $quizHash, $score, $total, $status = 'completed') {
+        if (!$userEmail) return false;
+        $db = DatabaseConnection::getDefaultDatabase();
+        return $db->quiz_attempts->insertOne([
+            'user_email' => $userEmail,
+            'quiz_hash' => $quizHash,
+            'score' => (int)$score,
+            'total' => (int)$total,
+            'status' => $status,
+            'attempted_at' => time()
+        ]);
+    }
+
+    /**
+     * Check if a user has already attempted a specific quiz
+     */
+    public static function hasAttempted($userEmail, $quizHash) {
+        if (!$userEmail) return false;
+        $db = DatabaseConnection::getDefaultDatabase();
+        $attempt = $db->quiz_attempts->findOne([
+            'user_email' => $userEmail,
+            'quiz_hash' => $quizHash
+        ]);
+        return $attempt !== null;
+    }
+
+    /**
+     * Record a unique view for a quiz
+     */
+    public static function recordView($userEmail, $quizHash) {
+        if (!$userEmail || !$quizHash) return false;
+        $db = DatabaseConnection::getDefaultDatabase();
+        
+        // Only increment if user hasn't viewed before
+        return $db->quizzes->updateOne(
+            ['hash' => $quizHash, 'viewers' => ['$ne' => $userEmail]],
+            ['$addToSet' => ['viewers' => $userEmail], '$inc' => ['view_count' => 1]]
+        );
+    }
+
+    /**
+     * Get user statistics (Zeal and Jolt)
+     */
+    public static function getUserStats($userEmail) {
+        if (!$userEmail) return ['zeal' => 0, 'jolt' => 0];
+        $db = DatabaseConnection::getDefaultDatabase();
+        $stats = $db->user_stats->findOne(['user_email' => $userEmail]);
+        if (!$stats) {
+            $stats = ['user_email' => $userEmail, 'zeal' => 0, 'jolt' => 10]; // 10 starter jolt
+            $db->user_stats->insertOne($stats);
+        }
+        return $stats;
+    }
+
+    /**
+     * Update user statistics by adding Zeal and Jolt
+     */
+    public static function updateUserStats($userEmail, $zeal, $jolt) {
+        if (!$userEmail) return false;
+        $db = DatabaseConnection::getDefaultDatabase();
+        return $db->user_stats->updateOne(
+            ['user_email' => $userEmail],
+            ['$inc' => ['zeal' => (int)$zeal, 'jolt' => (int)$jolt]]
+        );
+    }
+
+    /**
      * Delete old/stale jobs
      */
     public static function cleanupJobs($maxAge = 3600) {

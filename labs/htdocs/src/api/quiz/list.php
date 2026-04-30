@@ -21,17 +21,28 @@ if (!$subtopicId) {
 
 try {
     $quizzes = Quiz::getRecentForSubtopic($subtopicId, $limit, $offset);
-    
+    $user = Session::getUser();
+    $userEmail = $user ? $user->getEmail() : null;
     // Format for frontend
-    $formatted = array_map(function($q) use ($subtopicId) {
+    $formatted = array_map(function($q) use ($subtopicId, $userEmail) {
+        $diff = strtolower($q['difficulty'] ?? 'normal');
+        $joltReward = 2; // Default Normal
+        if ($diff === 'easy') $joltReward = 1;
+        elseif ($diff === 'hard') $joltReward = 5;
+
+        $isAttempted = Quiz::hasAttempted($userEmail, $q['hash']);
+
         return [
             'hash' => $q['hash'],
             'title' => $q['title'],
             'desc' => $q['desc'] ?? "Explore the intricate mechanics of this domain through our AI-curated challenge.",
             'difficulty' => strtoupper($q['difficulty']),
             'created_at' => date('M j', (int)$q['created_at']),
-            'points' => $q['points_per_correct'] ?? 25,
-            'tags' => (isset($q['tags']) && is_array($q['tags'])) ? array_slice($q['tags'], 0, 3) : ['tech', 'cybersecurity']
+            'points' => $isAttempted ? 0 : ($q['points_per_correct'] ?? 25),
+            'jolt_reward' => $isAttempted ? 0 : $joltReward,
+            'view_count' => $q['view_count'] ?? 0,
+            'tags' => (isset($q['tags']) && is_array($q['tags'])) ? array_slice($q['tags'], 0, 3) : ['tech', 'cybersecurity'],
+            'is_attempted' => $isAttempted
         ];
     }, $quizzes);
 
