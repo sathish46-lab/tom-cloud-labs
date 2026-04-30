@@ -17,16 +17,21 @@
 
   // Instead of expensive filters on the container, we use a more efficient approach
   [data-coreui-theme="dark"] & {
-    // background-color is set dynamically by JS, but we use a dark fallback
-    background-color: #02060c;
+    background-color: #091723;
 
     &::after {
       content: '';
       position: absolute;
       inset: 0;
-      background: rgba(0, 10, 30, 0.35);
-      /* More performant than filter: brightness */
+      background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.2) 0%, rgba(9, 23, 35, 0.6) 100%);
+      /* Darker, more muted overlay */
       z-index: 10;
+    }
+
+    .bg-cover {
+      /* Mid-rate Saturation for the "Ninja" aesthetic */
+      filter: saturate(2.2) brightness(0.9);
+      transition: filter 0.3s ease;
     }
   }
 

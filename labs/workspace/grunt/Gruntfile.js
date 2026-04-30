@@ -53,7 +53,7 @@ module.exports = function (grunt) {
 
     sass: {
       options: {
-        style: "compressed",
+        style: "expanded",
         sourceMap: false,
         implementation: sass,
         // This tells Sass to look inside the grunt/node_modules folder automatically

@@ -38,9 +38,6 @@ body {
   padding-inline-start: var(--cui-sidebar-occupy-start, 0);
   padding-inline-end: var(--cui-sidebar-occupy-end, 0);
   will-change: padding;
-  /* Hardware Acceleration */
-  transform: translateZ(0);
-  /* Force 3D context */
   @include transition(padding 0.2s cubic-bezier(0.165, 0.84, 0.44, 1));
 }
 

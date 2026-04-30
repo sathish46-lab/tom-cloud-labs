@@ -9,8 +9,7 @@ $tomThemes = [
             '/assets/Background_Img/robo/0.png',
             '/assets/Background_Img/robo/1.png',
             '/assets/Background_Img/robo/2.png'
-        ],
-        'color' => '#17218cc2'
+        ]
     ],
     'ninja' => [
         'assets' => [
@@ -25,8 +24,7 @@ $tomThemes = [
             '/assets/Background_Img/RoboTower/1.png',
             '/assets/Background_Img/RoboTower/2.png',
             '/assets/Background_Img/RoboTower/3.png'
-        ],
-        'color' => '#0b2b1c'
+        ]
     ],
     'parallax' => [
         'assets' => [
@@ -54,7 +52,7 @@ $tomThemes = [
     <!-- Professional Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
 
     <script>
     /**
@@ -69,7 +67,6 @@ $tomThemes = [
             savedTheme;
         document.documentElement.setAttribute('data-coreui-theme', themeToApply);
 
-        // 2. Sidebar recovery: APPLY CLASSES INSTANTLY
         const isNarrow = localStorage.getItem('tom-labs-sidebar-narrow') === 'true';
         if (isNarrow) {
             document.documentElement.classList.add('sidebar-init-narrow');
@@ -101,7 +98,7 @@ $tomThemes = [
 
         const themeColors = {
             'robo': '#0b2b1c',
-            'robotower': '#0b2b1c',
+            'robotower': '#0b1e36',
             'ninja': '#1c0b2b'
         };
 
@@ -134,6 +131,24 @@ $tomThemes = [
             document.documentElement.style.setProperty("--c2", isLight ? "#f8f9fa" : safeColor);
             document.documentElement.style.setProperty("--c3", isLight ? "#ffffff" : adjustColor(safeColor, 5));
             document.documentElement.style.setProperty("--c4", isLight ? "#f0f2f5" : adjustColor(safeColor, 10));
+        } else {
+            // Parallax / image themes: set neutral defaults to prevent color flash
+            if (isLight) {
+                document.documentElement.style.setProperty("--c1", "#ffffff");
+                document.documentElement.style.setProperty("--c2", "#f8f9fa");
+                document.documentElement.style.setProperty("--c3", "#ffffff");
+                document.documentElement.style.setProperty("--c4", "#f0f2f5");
+                document.documentElement.style.setProperty("--cui-body-bg", "#f8f9fa");
+            } else {
+                document.documentElement.style.setProperty("--c1", "#0b1e36");
+                document.documentElement.style.setProperty("--c2", "#112e4a");
+                document.documentElement.style.setProperty("--c3", "#16375e");
+                document.documentElement.style.setProperty("--c4", "#1a2c48");
+                document.documentElement.style.setProperty("--cui-body-bg", "rgba(3, 17, 36, 0.94)");
+                document.documentElement.style.setProperty("--glass-bg", "rgba(0, 10, 24, 0.823)");
+                document.documentElement.style.setProperty("--glass-bg-solid", "rgba(10, 20, 35, 0.94)");
+                document.documentElement.style.setProperty("--cui-sidebar-bg", "rgba(11, 30, 54, 0.95)");
+            }
         }
 
         function adjustColor(hex, percent) {
@@ -193,11 +208,11 @@ $tomThemes = [
     </script>
 
     <?php if (!defined('IS_LANDING_PAGE') || IS_LANDING_PAGE === false): ?>
-    <link rel="stylesheet" href="<?= Session::cacheCDN("/css/app.css") ?>">
+    <link rel="stylesheet" href="/css/app.css?v=<?= time() ?>">
     <?php endif; ?>
 
     <?php foreach (Session::$customCss as $css): ?>
-    <link rel="stylesheet" href="<?= Session::cacheCDN($css) ?>">
+    <link rel="stylesheet" href="<?= Session::cacheCDN($css) ?>?v=<?= time() ?>">
     <?php endforeach; ?>
 
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
@@ -212,10 +227,10 @@ $tomThemes = [
 <body>
     <?php if (!defined('IS_LANDING_PAGE') || IS_LANDING_PAGE === false): ?>
     <div id="scene">
-        <div class="bg-cover bg-img-1" data-depth="0.1"></div>
-        <div class="bg-cover bg-img-2" data-depth="0.2"></div>
-        <div class="bg-cover bg-img-3" data-depth="0.4"></div>
-        <div class="bg-cover bg-img-4" data-depth="0.6"></div>
+        <div class="bg-cover bg-img-1" data-depth="0.8"></div>
+        <div class="bg-cover bg-img-2" data-depth="0.5"></div>
+        <div class="bg-cover bg-img-3" data-depth="0.3"></div>
+        <div class="bg-cover bg-img-4" data-depth="0.1"></div>
     </div>
     <?php endif; ?>
 

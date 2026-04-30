@@ -337,12 +337,12 @@ function pollStatus(jobId) {
                 if (pText) pText.innerText = progress + '%';
                 if (sText) sText.innerText = job.status_text || `Attempt: 1 / 3`;
 
-                if (job.status === 'completed' && job.quiz_hash) {
+                if (job.generation_success && job.result_hash) {
                     if (sText) sText.innerText = 'Generation Complete!';
                     setTimeout(() => {
-                        window.location.href = `/quiz/v/${job.quiz_hash}`;
+                        window.location.href = `/quiz/v/${job.result_hash}`;
                     }, 800);
-                } else if (job.status === 'failed') {
+                } else if (job.generation_failed) {
                     showError(job.error || 'AI Generation failed.');
                 } else {
                     setTimeout(check, 1500);

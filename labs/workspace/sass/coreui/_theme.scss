@@ -1,29 +1,75 @@
 // Light theme glass definitions
 [data-coreui-theme="light"] {
+  /* Force global text colors to black */
+  --cui-body-color: #000000 !important;
+  --cui-heading-color: #000000 !important;
   --cui-body-bg: rgba(255, 255, 255, 0.8);
   --cui-card-bg: rgba(255, 255, 255, 0.45);
   --cui-card-border-color: rgba(255, 255, 255, 0.5);
   --glass-border-glow: rgba(255, 255, 255, 0.6);
   --glass-shine: rgba(255, 255, 255, 0.4);
   --glass-bg: rgba(255, 255, 255, 0.866);
-  --glass-text: #1a1a1a;
-  --glass-text-muted: rgba(0, 0, 0, 0.65);
-  --glass-icon: #4f5d73;
+  --glass-text: #000000 !important;
+  --glass-text-muted: rgba(0, 0, 0, 0.65) !important;
+  --glass-icon: #000000 !important;
+
+  /* Sidebar Light Mode Refinement */
+  --cui-sidebar-nav-link-active-bg: #ffffff !important;
+  --cui-sidebar-nav-link-active-color: #000000 !important;
+  --cui-sidebar-nav-link-hover-bg: rgba(0, 0, 0, 0.05) !important;
+  --cui-sidebar-nav-link-color: #000000 !important;
+
+  /* Specific Heading Lockdown */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  .h1,
+  .h2,
+  .h3,
+  p,
+  span,
+  a,
+  .card-title,
+  .lab-title {
+    color: #000000 !important;
+  }
 }
 
 // Update your existing dark theme block
+:root,
 [data-coreui-theme="dark"] {
-  --cui-body-bg: rgba(3, 17, 36, 0.94);
-  --cui-card-bg: rgba(15, 25, 50, 0.35);
-  --cui-card-border-color: rgba(100, 200, 255, 0.12);
-  --glass-border-glow: rgba(80, 180, 255, 0.15);
-  --glass-shine: rgba(255, 255, 255, 0.08);
-  --glass-bg: rgba(0, 10, 24, 0.823);
+  /* Forced Neutral Baseline - Set at :root level to eliminate purple reload flash */
+  --cui-body-bg: #091723;
+  --cui-body-color: #ffffff;
+  --cui-heading-color: #ffffff;
+  --cui-tertiary-bg: #091723;
+  --cui-secondary-bg: #071e31;
+  --cui-dark-bg-subtle: #091723;
+
+  /* Selfmade Ninja Functional Colors - 100% Match */
+  --cui-primary: #8b91f9;
+  --cui-success: #55b16e;
+  --cui-info: #50c7f6;
+  --cui-warning: #f2b90d;
+  --cui-danger: #d87466;
+  --sn-orange: #f47923;
+  --sn-highlight: #ff8800;
+
+  /* Glassmorphism Tokens - Premium SN Style */
+  --cui-card-bg: rgba(0, 0, 0, 0.45);
+  --cui-card-border-color: rgba(255, 255, 255, 0.1);
+  --glass-border-glow: rgba(255, 255, 255, 0.14);
+  --glass-shine: rgba(255, 255, 255, 0.22);
+  --glass-bg: rgba(0, 0, 0, 0.65);
   --glass-text: #ffffff;
-  /* Maximum contrast white */
-  --glass-text-muted: rgba(255, 255, 255, 0.8);
-  /* Highly visible muted text */
-  --glass-icon: rgba(255, 255, 255, 0.7);
+  --glass-text-muted: rgba(255, 255, 255, 0.6);
+  --glass-icon: rgba(255, 255, 255, 0.85);
+  --cui-card-border-radius: 1.2rem;
+  --cui-sidebar-width: 224px;
+  --cui-sidebar-narrow-width: 56px;
 }
 
 .theme-text {
@@ -119,24 +165,19 @@
 }
 
 body {
-  font-family: 'Rubik', sans-serif !important;
-  -webkit-font-smoothing: subpixel-antialiased;
-  /* Softer, richer rendering */
-  -moz-osx-font-smoothing: auto;
-  background: var(--c1);
-  background-image:
-    radial-gradient(at 0% 0%, var(--c2) 0, transparent 50%),
-    radial-gradient(at 100% 0%, var(--c4) 0, transparent 50%),
-    radial-gradient(at 50% 100%, var(--c3) 0, transparent 50%);
+  font-family: 'Ubuntu', sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--cui-body-bg);
+  background-image: radial-gradient(circle at 100% 100%, var(--c5), var(--c6) 42%, var(--c7) 68%);
+  background-attachment: fixed;
   background-size: cover;
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
-  transition: background 1.5s cubic-bezier(0.4, 0, 0.2, 1);
-  font-size: 0.9375rem;
+  font-size: 0.8rem;
   letter-spacing: -0.01em;
-  /* Relaxed for better flow */
-  font-weight: 500;
+  font-weight: 400;
   color: var(--glass-text) !important;
 }
 
@@ -146,12 +187,7 @@ h1,
 h2,
 .h2,
 h3,
-.h3 {
-  font-weight: 700 !important;
-  letter-spacing: -0.025em !important;
-  line-height: 1.15;
-}
-
+.h3,
 h4,
 .h4,
 h5,
@@ -159,13 +195,65 @@ h5,
 h6,
 .h6 {
   font-weight: 700 !important;
-  letter-spacing: -0.015em !important;
+  letter-spacing: -0.025em !important;
+  line-height: 1.15;
+  color: var(--glass-text) !important;
 }
 
 .sidebar-nav .nav-link {
   font-weight: 600 !important;
   font-size: 0.85rem !important;
   letter-spacing: -0.02em;
+  transition: all 0.2s ease;
+  color: var(--glass-text) !important;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.05) !important;
+    color: #000 !important;
+
+    [data-coreui-theme="dark"] & {
+      background: rgba(255, 255, 255, 0.1) !important;
+      color: #fff !important;
+    }
+  }
+
+  &.active {
+    background: #fff !important;
+    color: #000 !important;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+    [data-coreui-theme="dark"] & {
+      background: rgba(255, 255, 255, 0.15) !important;
+      color: #fff !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Subtle premium indicator */
+    &::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 15%;
+      bottom: 15%;
+      width: 3px;
+      background: var(--cui-primary);
+      border-radius: 0 4px 4px 0;
+    }
+
+    .nav-icon {
+      color: #000 !important;
+
+      [data-coreui-theme="dark"] & {
+        color: #fff !important;
+      }
+    }
+  }
+
+  .nav-icon {
+    color: var(--glass-icon) !important;
+    transition: color 0.2s ease;
+  }
 }
 
 .card-title,
@@ -247,8 +335,8 @@ body::before {
   /* Simple opacity is much faster for GPU than mix-blend-mode */
   background-image: url("https://www.transparenttextures.com/patterns/carbon-fibre.png");
   opacity: 0.02;
-  pointer-events: none;
-  z-index: 0;
+  pointer-events: none !important;
+  z-index: -5 !important;
 }
 
 /* Premium Floating Ambient Orbs (Optimized for GPU) */
@@ -329,7 +417,31 @@ body::before {
   }
 }
 
+/* Breadcrumb Contrast Fix */
+.breadcrumb-item,
+.breadcrumb-item a,
+.breadcrumb-item+.breadcrumb-item::before {
+  color: var(--glass-text-muted) !important;
+}
+
+.breadcrumb-item.active,
+.breadcrumb-item.active a {
+  color: var(--glass-text) !important;
+}
+
+/* Global Muted Text Contrast */
+.text-muted,
+.text-body-secondary {
+  color: var(--glass-text-muted) !important;
+}
+
+[data-coreui-theme="light"] .text-muted,
+[data-coreui-theme="light"] .text-body-secondary {
+  color: rgba(0, 0, 0, 0.55) !important;
+}
+
 .glass-card {
+  color: var(--glass-text) !important;
   background: var(--cui-card-bg);
   backdrop-filter: blur(6px) saturate(140%);
   -webkit-backdrop-filter: blur(6px) saturate(140%);
@@ -377,26 +489,33 @@ body::before {
     z-index: 2;
   }
 
-  /* Force transparency on all dropdown parts to fix "white box" bug in light mode */
+  /* Force visibility on dropdown parts for Light/Dark modes */
   .dropdown,
-  .dropdown *,
-  .btn-link,
-  .dropdown-toggle {
-    background-color: transparent !important;
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    outline: none !important;
+  .dropdown-toggle,
+  .form-select,
+  .form-control {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    color: var(--glass-text) !important;
+    backdrop-filter: blur(5px);
+    z-index: 5;
+
+    [data-coreui-theme="dark"] & {
+      background-color: rgba(255, 255, 255, 0.05) !important;
+      border-color: rgba(255, 255, 255, 0.1) !important;
+    }
 
     &:hover,
-    &:focus,
-    &:active {
-      background-color: rgba(0, 0, 0, 0.04) !important;
-
-      [data-coreui-theme="dark"] & {
-        background-color: rgba(255, 255, 255, 0.08) !important;
-      }
+    &:focus {
+      background-color: rgba(255, 255, 255, 0.1) !important;
+      border-color: var(--cui-primary) !important;
     }
+  }
+
+  .btn-link {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
   }
 
   /* Subtle hover glow */
@@ -407,6 +526,20 @@ body::before {
       0 12px 40px rgba(0, 0, 0, 0.18),
       inset 0 1px 0 var(--glass-shine);
   }
+}
+
+/* Ensure Modals are always clickable and on top */
+.modal-backdrop {
+  z-index: 10000 !important;
+}
+
+.modal {
+  z-index: 10005 !important;
+}
+
+.modal-content {
+  z-index: 10006 !important;
+  pointer-events: auto !important;
 }
 
 /* Enhanced visibility for dropdown menus in fallback mode */
@@ -493,14 +626,14 @@ html[data-coreui-theme="light"] {
 }
 
 html[data-coreui-theme="dark"] {
-  --c1: #0b1e36;
-  --c2: #112e4a;
-  --c3: #16375e;
-  --c4: #1a2c48;
-  --c5: #153b53;
-  --c6: #122b47;
-  --c7: #1d2640;
-  --c8: #0d1828;
+  --c1: #091723;
+  --c2: #071e31;
+  --c3: #061c26;
+  --c4: #0058a1;
+  --c5: #0c2032;
+  --c6: #0f2439;
+  --c7: #04090e;
+  --c8: #091723;
 }
 
 /*════════════════════════════════════════════
@@ -868,6 +1001,47 @@ html[data-coreui-theme="dark"] {
 
 [data-coreui-theme="light"] .labs-banner-tab.active::before {
   box-shadow: 5px 5px 0 5px rgba(255, 255, 255, 0.866);
+}
+
+/*════════════════════════════════════════════
+  3.  SELFMADE NINJA PREMIUM EFFECTS
+  ════════════════════════════════════════════*/
+
+.liquid-rim,
+.unified-input-box {
+  position: relative;
+  box-shadow: rgba(0, 0, 0, 0.18) 0 12px 28px 0, rgba(0, 0, 0, 0.08) 0 2px 4px 0, rgba(0, 0, 0, 0.14) 0 0 24px 0 !important;
+  border: 0 !important;
+  border-radius: 0.75rem;
+
+  &::after {
+    content: '' !important;
+    position: absolute !important;
+    inset: 0 !important;
+    pointer-events: none !important;
+    border-radius: inherit !important;
+    z-index: 5 !important;
+    padding: 1px !important;
+    background: transparent !important;
+    backdrop-filter: saturate(400%) brightness(1.18) !important;
+    -webkit-backdrop-filter: saturate(400%) brightness(1.18) !important;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0) !important;
+    mask-composite: exclude !important;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0) !important;
+    -webkit-mask-composite: xor !important;
+    box-shadow: rgba(0, 0, 0, 0.14) 0 0 0 1px inset, rgba(0, 0, 0, 0.22) 0 1px 0 0 inset !important;
+  }
+}
+
+[data-coreui-theme="dark"] .liquid-rim,
+[data-coreui-theme="dark"] .unified-input-box {
+  box-shadow: rgba(0, 0, 0, 0.4) 0 15px 35px 0, rgba(0, 0, 0, 0.2) 0 5px 15px 0 !important;
+
+  &::after {
+    backdrop-filter: saturate(200%) brightness(0.8) !important;
+    -webkit-backdrop-filter: saturate(200%) brightness(0.8) !important;
+    box-shadow: rgba(255, 255, 255, 0.08) 0 0 0 1px inset, rgba(255, 255, 255, 0.12) 0 1px 0 0 inset !important;
+  }
 }
 
 [data-coreui-theme="light"] .labs-banner-tab.active::after {

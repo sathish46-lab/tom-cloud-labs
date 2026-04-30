@@ -946,26 +946,51 @@ const TomBG = {
         root.style.setProperty("--c3", isLight ? "#ffffff" : this.adjustColor(safeColor, 5));
         root.style.setProperty("--c4", isLight ? "#f0f2f5" : this.adjustColor(safeColor, 10));
       } else {
-        // Fallback for image themes without specific colors
-        const defaultPrimary = isLight ? "#0d6efd" : "rgba(255, 255, 255, 0.9)";
-        const pRGB = isLight ? "13, 110, 253" : "255, 255, 255";
-        root.style.setProperty("--cui-primary", defaultPrimary);
-        root.style.setProperty("--cui-primary-rgb", pRGB);
+        // Extract dominant color from 0.png background image with safety timeout
+        const firstImage = assets[0];
+        if (firstImage) {
+          let colorExtracted = false;
 
-        if (isLight) {
-          root.style.setProperty("--glass-bg", "rgba(255, 255, 255, 0.79)");
-          root.style.setProperty("--glass-bg-solid", "rgba(240, 245, 255, 0.94)");
-          root.style.setProperty("--cui-card-bg", "rgba(255, 255, 255, 0.1)");
-          root.style.setProperty("--cui-card-bg-solid", "rgba(248, 250, 255, 0.94)");
-          root.style.setProperty("--cui-body-bg", "#f8f9fa");
-          root.style.setProperty("--cui-sidebar-bg", "rgba(245, 250, 255, 0.95)");
-        } else {
-          root.style.setProperty("--glass-bg", "rgba(0, 10, 24, 0.823)");
-          root.style.setProperty("--glass-bg-solid", "rgba(10, 20, 35, 0.94)");
-          root.style.setProperty("--cui-card-bg", "rgba(255, 255, 255, 0.03)");
-          root.style.setProperty("--cui-card-bg-solid", "rgba(15, 30, 50, 0.94)");
-          root.style.setProperty("--cui-body-bg", "rgba(3, 17, 36, 0.94)");
-          root.style.setProperty("--cui-sidebar-bg", "rgba(11, 30, 54, 0.95)");
+          // Safety fallback timeout (500ms) to prevent UI freeze
+          const safetyTimeout = setTimeout(() => {
+            if (!colorExtracted) {
+              console.warn("Background color extraction timed out, using fallback.");
+              applyColors("#0b1e36");
+            }
+          }, 500);
+
+          function applyColors(extractedColor) {
+            colorExtracted = true;
+            clearTimeout(safetyTimeout);
+
+            const safeColor = isLight
+              ? TomBG.ensureLightness(extractedColor, 0.8)
+              : TomBG.ensureDarkness(extractedColor, 0.15);
+            const primaryColor = TomBG.adjustColor(extractedColor, isLight ? -40 : 40);
+            const pRGB = TomBG.hexToRgbValues(primaryColor);
+
+            root.style.setProperty("--glass-bg", isLight ? "rgba(255, 255, 255, 0.79)" : TomBG.hexToRgba(safeColor, 0.85));
+            root.style.setProperty("--glass-bg-solid", isLight ? TomBG.hexToRgba(TomBG.ensureLightness(extractedColor, 0.92), 0.94) : TomBG.hexToRgba(safeColor, 0.94));
+            root.style.setProperty("--cui-card-bg", isLight ? "rgba(255, 255, 255, 0.7)" : TomBG.hexToRgba(safeColor, 0.2));
+            root.style.setProperty("--cui-card-bg-solid", isLight ? TomBG.hexToRgba(TomBG.ensureLightness(extractedColor, 0.96), 0.94) : TomBG.hexToRgba(safeColor, 0.95));
+            root.style.setProperty("--cui-body-bg", safeColor);
+            root.style.setProperty("--cui-primary", primaryColor);
+            root.style.setProperty("--cui-primary-rgb", pRGB);
+            root.style.setProperty("--cui-sidebar-bg", isLight ? "rgba(255, 255, 255, 0.6)" : TomBG.hexToRgba(safeColor, 0.95));
+            root.style.setProperty("--cui-header-bg", isLight ? "rgba(255, 255, 255, 0.4)" : TomBG.hexToRgba(safeColor, 0.85));
+
+            root.style.setProperty("--c1", isLight ? "#ffffff" : TomBG.adjustColor(safeColor, -5));
+            root.style.setProperty("--c2", isLight ? "#f8f9fa" : safeColor);
+            root.style.setProperty("--c3", isLight ? "#ffffff" : TomBG.adjustColor(safeColor, 5));
+            root.style.setProperty("--c4", isLight ? "#f0f2f5" : TomBG.adjustColor(safeColor, 10));
+          }
+
+          try {
+            this.extractColorFromImage(firstImage, applyColors);
+          } catch (e) {
+            console.error("Color extraction failed:", e);
+            applyColors("#0b1e36");
+          }
         }
       }
 
@@ -1052,6 +1077,41 @@ const TomBG = {
       return "#" + toHexStr(r) + toHexStr(g) + toHexStr(b);
     }
     return hex;
+  },
+
+  extractColorFromImage: function (imageSrc, callback) {
+    var img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = function () {
+      try {
+        var canvas = document.createElement("canvas");
+        var ctx = canvas.getContext("2d");
+        var size = 50;
+        canvas.width = size;
+        canvas.height = size;
+        ctx.drawImage(img, 0, 0, size, size);
+        var data = ctx.getImageData(0, 0, size, size).data;
+        var r = 0, g = 0, b = 0, count = 0;
+        for (var i = 0; i < data.length; i += 16) {
+          r += data[i];
+          g += data[i + 1];
+          b += data[i + 2];
+          count++;
+        }
+        r = Math.round(r / count);
+        g = Math.round(g / count);
+        b = Math.round(b / count);
+        var hex = "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        callback(hex);
+      } catch (e) {
+        console.error("CORS or Canvas Error in color extraction:", e);
+        callback("#0b1e36");
+      }
+    };
+    img.onerror = function () {
+      callback("#0b1e36");
+    };
+    img.src = imageSrc;
   },
 
   saveCustomColor: function (index, color) {
@@ -3718,12 +3778,16 @@ const TomParallax = {
     // Initialize the engine
     this.instance = new Parallax(this.sceneElement, {
       relativeInput: true, // Movement relative to the element
-      hoverOnly: true, // Only move when mouse is over the page
-      pointerEvents: false, // Don't interfere with clicks on the dashboard
-      frictionX: 0.1, // Smoothness of horizontal return
-      frictionY: 0.1, // Smoothness of vertical return
-      scalarX: 8.0, // Sensitivity of movement
-      scalarY: 8.0,
+      hoverOnly: false, // Track across the whole viewport like reference
+      pointerEvents: false,
+      frictionX: 1.0, // Instant movement matching SN
+      frictionY: 1.0,
+      scalarX: 2.0, // Subtle movement range matching SN
+      scalarY: 2.0,
+      invertX: true, // Opposite direction tracking
+      invertY: true,
+      originX: 0.5,
+      originY: 0.5,
     });
 
     console.log("[✓] Parallax background active.");

@@ -12,12 +12,16 @@ const TomParallax = {
     // Initialize the engine
     this.instance = new Parallax(this.sceneElement, {
       relativeInput: true, // Movement relative to the element
-      hoverOnly: true, // Only move when mouse is over the page
-      pointerEvents: false, // Don't interfere with clicks on the dashboard
-      frictionX: 0.1, // Smoothness of horizontal return
-      frictionY: 0.1, // Smoothness of vertical return
-      scalarX: 8.0, // Sensitivity of movement
-      scalarY: 8.0,
+      hoverOnly: false, // Track across the whole viewport like reference
+      pointerEvents: false,
+      frictionX: 1.0, // Instant movement matching SN
+      frictionY: 1.0,
+      scalarX: 2.0, // Subtle movement range matching SN
+      scalarY: 2.0,
+      invertX: true, // Opposite direction tracking
+      invertY: true,
+      originX: 0.5,
+      originY: 0.5,
     });
 
     console.log("[✓] Parallax background active.");

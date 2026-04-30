@@ -9,6 +9,10 @@ $tags = (isset($quiz['tags']) && is_array($quiz['tags'])) ? $quiz['tags'] : [$pa
 $difficulty = $quiz['difficulty'] ?? 'normal';
 $points = $quiz['points_per_correct'] ?? 25;
 $totalRewards = $points * 5;
+
+// Extract quiz questions for the frontend engine
+$quizData = $quiz['questions'] ?? $quiz['content'] ?? [];
+$pointsPerCorrect = $points;
 ?>
 
 <div class="quiz-evaluation-view fade-in lab-header-section">
@@ -212,19 +216,23 @@ window.startQuiz = function() {
 };
 
 function loadQuestion() {
-    if (!window.QuizEngineConfig || !window.QuizEngineConfig.quizData) {
-        console.error("[Quiz Engine] Quiz data missing!");
+    if (!window.QuizEngineConfig || !window.QuizEngineConfig.quizData || window.QuizEngineConfig.quizData.length === 0) {
+        console.error("[Quiz Engine] Quiz data missing or empty!");
+        alert("Sorry, the quiz questions could not be loaded. Please try generating a new quiz.");
         return;
     }
     const quizData = window.QuizEngineConfig.quizData;
     const q = quizData[currentStep];
+    if (!q) return;
+
     const qText = document.getElementById('question-text');
-    if (qText) qText.innerText = q.text;
+    if (qText) qText.innerText = q.text || q.question || "Unknown Question";
 
     const btns = document.querySelectorAll('.quiz-option-btn');
     btns.forEach((btn, idx) => {
         const optText = btn.querySelector('.option-text');
-        if (optText) optText.innerText = q.options[idx];
+        const optionsArray = q.options || q.answers || [];
+        if (optText) optText.innerText = optionsArray[idx] || "";
         btn.classList.remove('correct', 'wrong', 'selected');
         btn.disabled = false;
     });
