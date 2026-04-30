@@ -85,7 +85,7 @@ $pointsPerCorrect = $points;
 
                     <!-- 2. Question View -->
                     <div id="quiz-question-view" class="quiz-step-view d-none">
-                        <h4 id="question-text" class="text-center text-body-emphasis mb-5 fw-bold px-md-5"></h4>
+                        <h3 id="question-text" class="text-center text-body-emphasis mb-5 px-md-5" style="line-height: 1.6; font-weight: 500; font-size: 1.35rem; letter-spacing: 0.2px;"></h3>
                         
                         <div class="row g-4 mb-5">
                             <div class="col-md-6">
@@ -228,13 +228,22 @@ function loadQuestion() {
     if (!q) return;
 
     const qText = document.getElementById('question-text');
-    if (qText) qText.innerText = q.text || q.question || "Unknown Question";
+    if (qText) {
+        let rawText = q.text || q.question || "Unknown Question";
+        // Parse backticks into beautifully styled inline code blocks
+        rawText = rawText.replace(/`([^`]+)`/g, '<code class="text-info bg-info bg-opacity-10 px-2 py-1 rounded mx-1" style="font-family: var(--cui-font-monospace, monospace); font-weight: 600;">$1</code>');
+        qText.innerHTML = rawText;
+    }
 
     const btns = document.querySelectorAll('.quiz-option-btn');
     btns.forEach((btn, idx) => {
         const optText = btn.querySelector('.option-text');
         const optionsArray = q.options || q.answers || [];
-        if (optText) optText.innerText = optionsArray[idx] || "";
+        if (optText) {
+            let optStr = optionsArray[idx] || "";
+            optStr = optStr.replace(/`/g, ''); // Remove backticks since options are already styled as code
+            optText.innerText = optStr;
+        }
         btn.classList.remove('correct', 'wrong', 'selected');
         btn.disabled = false;
     });

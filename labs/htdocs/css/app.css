@@ -15821,37 +15821,41 @@ html.enable-blur .server-logs-panel {
 }
 
 .quiz-option-btn {
-  background: rgba(var(--cui-emphasis-color-rgb), 0.03);
-  border: 1.5px solid rgba(var(--cui-emphasis-color-rgb), 0.1);
-  color: #43d1ff;
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--cui-success, #2eb85c);
+  font-family: var(--cui-font-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);
   border-radius: 12px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  font-weight: 600;
-  font-size: 1rem;
+  font-weight: 500;
+  font-size: 1.15rem;
+  line-height: 1.6;
+  letter-spacing: 0.5px;
 }
 [data-coreui-theme=light] .quiz-option-btn {
-  background: #fff;
-  border-color: rgba(0, 0, 0, 0.08);
-  color: #0d6efd;
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.15);
+  color: var(--cui-success, #2eb85c);
 }
 .quiz-option-btn:hover:not(:disabled) {
-  background: rgba(var(--cui-emphasis-color-rgb), 0.05);
-  border-color: #43d1ff;
+  background: rgba(var(--cui-success-rgb, 46, 184, 92), 0.05);
+  border-color: var(--cui-success, #2eb85c);
+  color: var(--cui-success, #2eb85c);
   transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(var(--cui-success-rgb, 46, 184, 92), 0.15);
 }
 [data-coreui-theme=light] .quiz-option-btn:hover:not(:disabled) {
-  border-color: #0d6efd;
-  background: rgba(13, 110, 253, 0.02);
+  background: rgba(var(--cui-success-rgb, 46, 184, 92), 0.05);
 }
 .quiz-option-btn.selected {
-  border-color: #43d1ff;
-  background: rgba(67, 209, 255, 0.05);
-  box-shadow: 0 0 20px rgba(67, 209, 255, 0.15);
+  border-color: var(--cui-success, #2eb85c);
+  background: rgba(var(--cui-success-rgb, 46, 184, 92), 0.1);
+  color: var(--cui-success, #2eb85c);
+  box-shadow: 0 0 0 3px rgba(var(--cui-success-rgb, 46, 184, 92), 0.25);
+  font-weight: 600;
 }
 [data-coreui-theme=light] .quiz-option-btn.selected {
-  border-color: #0d6efd;
-  background: rgba(13, 110, 253, 0.05);
-  box-shadow: 0 0 15px rgba(13, 110, 253, 0.1);
+  background: rgba(var(--cui-success-rgb, 46, 184, 92), 0.1);
 }
 .quiz-option-btn.correct {
   background: rgba(46, 184, 92, 0.15) !important;
