@@ -112,16 +112,16 @@ function timeAgo($timestamp) {
                 </div>
 
                 <div class="dropdown">
-                    <button class="btn btn-link p-0 opacity-50 shadow-none border-0 d-flex align-items-center justify-content-center rounded-circle" 
+                    <button class="action-dots p-0 opacity-50 shadow-none border-0 d-flex align-items-center justify-content-center" 
                             data-coreui-toggle="dropdown" 
-                            style="width: 32px; height: 32px; transition: all 0.2s; text-decoration: none !important;">
-                        <i class='bx bx-dots-vertical-rounded fs-4' style="color: var(--glass-icon); text-decoration: none !important;"></i>
+                            style="width: 32px; height: 32px; transition: all 0.2s; background: none; border: none;">
+                        <i class='bx bx-dots-vertical-rounded fs-4' style="color: var(--glass-icon);"></i>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 glass-card" style="min-width: 4rem; border-radius: 14px; padding: 6px; overflow: hidden;">
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="min-width: 8rem; border-radius: 12px; padding: 8px; background: var(--cui-dropdown-bg); backdrop-filter: blur(10px);">
                         <?php if (!$d['verified']): ?>
-                            <li><a class="dropdown-item rounded-3 mb-1 px-2 py-1" href="#" onclick="verifyDomain('<?= $d['_id'] ?>')" style="font-size: 0.75rem;"><i class='bx bx-check-shield me-2'></i> Verify</a></li>
+                            <li><a class="dropdown-item rounded-3 mb-1 px-3 py-2 d-flex align-items-center" href="#" onclick="verifyDomain('<?= $d['_id'] ?>')" style="font-size: 0.8rem;"><i class='bx bx-check-shield me-2 text-primary'></i> Verify</a></li>
                         <?php endif; ?>
-                        <li><a class="dropdown-item text-danger rounded-3 px-2 py-1" href="#" onclick="removeDomain('<?= $d['_id'] ?>')" style="font-size: 0.75rem;"><i class='bx bx-trash me-2'></i> Delete</a></li>
+                        <li><a class="dropdown-item text-danger rounded-3 px-3 py-2 d-flex align-items-center" href="#" onclick="removeDomain('<?= $d['_id'] ?>')" style="font-size: 0.8rem;"><i class='bx bx-trash me-2'></i> Delete</a></li>
                     </ul>
                 </div>
             </div>

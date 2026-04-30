@@ -47,6 +47,18 @@ class Session
      * -------------------------------------------------------------------- */
 
     /**
+     * Trigger a premium notification toast.
+     * Usage: Session::toast("Device added!", "success");
+     * 
+     * @param string $message The message body
+     * @param string $type success|error|warning|info
+     */
+    public static function toast($message, $type = 'success')
+    {
+        self::set("toast_$type", $message);
+    }
+
+    /**
      * Set a shared value.
      *
      * @param string $key
@@ -322,16 +334,38 @@ class Session
         $templateRoot = __DIR__ . '/../../template/pages/'; 
 
         if (self::getAuthStatus() == Constants::STATUS_LOGGEDIN) {
-            // Check for folder-based template
+            // Try specific file first
             $file = $templateRoot . $relPath . '.php';
             if (file_exists($file)) {
                 include $file;
                 return;
             }
-            // Fallback to basic dashboard if path fails
-            include $templateRoot . 'dashboard.php';
+            
+            // Try category fallback (e.g., if on quiz/quiz_hub, try quiz.php)
+            if (strpos($relPath, '/') !== false) {
+                $parts = explode('/', $relPath);
+                $catFile = $templateRoot . $parts[0] . '.php';
+                if (file_exists($catFile)) {
+                    include $catFile;
+                    return;
+                }
+            }
+
+            // Fallback to dashboard
+            if (file_exists($templateRoot . 'dashboard.php')) {
+                include $templateRoot . 'dashboard.php';
+            } else {
+                echo '<div class="alert alert-danger">Error: Template not found for ' . htmlspecialchars($relPath) . '</div>';
+            }
         } else {
-            include $templateRoot . 'index.php';
+            // Not logged in: show signin/index
+            if (file_exists($templateRoot . 'index.php')) {
+                include $templateRoot . 'index.php';
+            } elseif (file_exists(__DIR__ . '/../../auth/signin.php')) {
+                include __DIR__ . '/../../auth/signin.php';
+            } else {
+                echo '<div class="alert alert-warning">Please sign in to access this page.</div>';
+            }
         }
     }
 
@@ -345,8 +379,13 @@ class Session
     public static function getCurrentFile($file = null)
     {
         if ($file === null) {
-            $self = $_SERVER['PHP_SELF'];
-            return str_replace(['/app/', '.php'], '', $self);
+            $path = str_replace(['/app/', '.php'], '', $_SERVER['PHP_SELF']);
+            // For nested paths like quiz/quiz_hub, return the first part for nav highlights
+            if (strpos($path, '/') !== false) {
+                $parts = explode('/', $path);
+                return $parts[0];
+            }
+            return $path;
         }
         return basename($file, '.php');
     }

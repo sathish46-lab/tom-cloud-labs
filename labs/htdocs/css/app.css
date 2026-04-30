@@ -14245,6 +14245,62 @@ body {
 [data-coreui-theme=light] .lab-title {
   color: #000000 !important;
 }
+[data-coreui-theme=light] {
+  /* Professional Dropdown Hover Fixes */
+}
+[data-coreui-theme=light] .dropdown-item:hover {
+  background-color: rgba(var(--cui-primary-rgb, 52, 152, 219), 0.08) !important;
+  color: var(--cui-primary, #3498db) !important;
+}
+[data-coreui-theme=light] .dropdown-item.text-danger:hover {
+  background-color: rgba(231, 76, 60, 0.1) !important;
+  color: #e74c3c !important;
+}
+[data-coreui-theme=light] .badge {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px;
+  padding: 4px 10px !important;
+}
+
+/* Global Badge Refinement */
+.badge {
+  text-transform: uppercase;
+  font-size: 0.65rem !important;
+  border-radius: 50px !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.badge.bg-primary {
+  background: linear-gradient(135deg, #6c5ce7, #a29bfe) !important;
+}
+.badge.bg-success {
+  background: linear-gradient(135deg, #27ae60, #2ecc71) !important;
+}
+.badge.bg-danger {
+  background: linear-gradient(135deg, #e74c3c, #ff7675) !important;
+}
+.badge.bg-info {
+  background: linear-gradient(135deg, #0984e3, #74b9ff) !important;
+  color: #fff !important;
+}
+.badge.bg-warning {
+  background: linear-gradient(135deg, #f1c40f, #fdcb6e) !important;
+  color: #000 !important;
+}
+
+/* Ensure dropdown icons match the text on hover */
+.dropdown-item:hover i {
+  color: inherit !important;
+}
+
+/* Standardize Glass Dropdowns */
+.dropdown-menu {
+  transition: all 0.2s ease-in-out;
+  transform-origin: top right;
+}
 
 :root,
 [data-coreui-theme=dark] {
@@ -14311,9 +14367,21 @@ body {
 }
 
 [data-coreui-theme=dark] .form-check-input:checked {
-  background-color: var(--glass-text) !important;
-  border-color: var(--glass-text) !important;
-  opacity: 0.8;
+  background-color: var(--cui-primary) !important;
+  border-color: var(--cui-primary) !important;
+  opacity: 1;
+}
+
+/* Improve Dropdown Icon Visibility */
+.dropdown-item i {
+  color: var(--cui-primary) !important;
+  opacity: 0.85;
+  transition: all 0.2s ease;
+}
+
+.dropdown-item:hover i {
+  opacity: 1;
+  transform: scale(1.1);
 }
 
 .transition-all {
@@ -14669,7 +14737,6 @@ body::before {
 .glass-card {
   /* Force visibility on dropdown parts for Light/Dark modes */
 }
-.glass-card .dropdown,
 .glass-card .dropdown-toggle,
 .glass-card .form-select,
 .glass-card .form-control {
@@ -14679,16 +14746,13 @@ body::before {
   backdrop-filter: blur(5px);
   z-index: 5;
 }
-[data-coreui-theme=dark] .glass-card .dropdown,
 [data-coreui-theme=dark] .glass-card .dropdown-toggle,
 [data-coreui-theme=dark] .glass-card .form-select,
 [data-coreui-theme=dark] .glass-card .form-control {
   background-color: rgba(255, 255, 255, 0.05) !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
 }
-.glass-card .dropdown:hover, .glass-card .dropdown:focus,
-.glass-card .dropdown-toggle:hover,
-.glass-card .dropdown-toggle:focus,
+.glass-card .dropdown-toggle:hover, .glass-card .dropdown-toggle:focus,
 .glass-card .form-select:hover,
 .glass-card .form-select:focus,
 .glass-card .form-control:hover,
@@ -14698,8 +14762,30 @@ body::before {
 }
 .glass-card .btn-link {
   background-color: transparent !important;
+  background: transparent !important;
   border: none !important;
   box-shadow: none !important;
+  text-decoration: none !important;
+}
+.glass-card .btn-link:hover, .glass-card .btn-link:focus, .glass-card .btn-link:active {
+  background-color: rgba(var(--cui-emphasis-color-rgb, 128, 128, 128), 0.1) !important;
+  text-decoration: none !important;
+  box-shadow: none !important;
+}
+.glass-card {
+  /* Specialized Action Dots (Naked Style) */
+}
+.glass-card .action-dots {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.glass-card .action-dots:hover {
+  opacity: 1 !important;
+  transform: scale(1.1);
 }
 .glass-card {
   /* Subtle hover glow */
@@ -15600,17 +15686,19 @@ html.enable-blur .server-logs-panel {
 .quiz-challenge-card,
 .subtopic-premium-card,
 .quiz-item-card {
-  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-  overflow: hidden;
+  background: rgba(15, 23, 42, 0.6) !important;
+  backdrop-filter: blur(25px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
 }
 .quiz-glass-card:hover,
 .quiz-challenge-card:hover,
 .subtopic-premium-card:hover,
 .quiz-item-card:hover {
   transform: translateY(-8px);
-  background: rgba(var(--cui-emphasis-color-rgb), 0.08) !important;
-  border-color: rgba(var(--cui-info-rgb), 0.4) !important;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  background: rgba(15, 23, 42, 0.8) !important;
+  border-color: rgba(var(--cui-info-rgb), 0.5) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 .quiz-glass-card .card-body,
 .quiz-challenge-card .card-body,
@@ -15770,11 +15858,43 @@ html.enable-blur .server-logs-panel {
   color: #3399ff !important;
   font-size: 0.65rem;
 }
+[data-coreui-theme=light] .badge-quiz-tag {
+  background: rgba(51, 153, 255, 0.1) !important;
+  color: #007bff !important;
+}
 
 .badge-quiz-cat {
-  background: rgba(102, 16, 242, 0.1) !important;
-  color: #6610f2 !important;
   font-size: 0.65rem;
+  font-weight: 800 !important;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+.badge-quiz-cat.difficulty-easy {
+  background: rgba(46, 184, 87, 0.15) !important;
+  color: #2eb857 !important;
+  border: 1px solid rgba(46, 184, 87, 0.2) !important;
+}
+.badge-quiz-cat.difficulty-normal {
+  background: rgba(249, 177, 21, 0.15) !important;
+  color: #f9b115 !important;
+  border: 1px solid rgba(249, 177, 21, 0.2) !important;
+}
+.badge-quiz-cat.difficulty-hard {
+  background: rgba(229, 83, 83, 0.15) !important;
+  color: #e55353 !important;
+  border: 1px solid rgba(229, 83, 83, 0.2) !important;
+}
+[data-coreui-theme=light] .badge-quiz-cat.difficulty-easy {
+  background: rgba(46, 184, 87, 0.15) !important;
+  color: #28a745 !important;
+}
+[data-coreui-theme=light] .badge-quiz-cat.difficulty-normal {
+  background: rgba(249, 177, 21, 0.15) !important;
+  color: #d39100 !important;
+}
+[data-coreui-theme=light] .badge-quiz-cat.difficulty-hard {
+  background: rgba(229, 83, 83, 0.15) !important;
+  color: #dc3545 !important;
 }
 
 .badge-quiz-time {
@@ -15787,6 +15907,49 @@ html.enable-blur .server-logs-panel {
   color: #00d2ff;
   font-size: 0.8rem;
   margin-left: 5px;
+}
+
+.bg-primary-gradient {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6) !important;
+  color: #fff !important;
+  border: none !important;
+  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+}
+
+.bg-secondary-gradient {
+  background: linear-gradient(135deg, #f1f5f9, #cbd5e1) !important;
+  color: #0f172a !important;
+  border: none !important;
+}
+
+.bg-warning {
+  background-color: #f9b115 !important;
+  color: #000 !important;
+}
+
+.quiz-tag-more {
+  background: rgba(var(--cui-emphasis-color-rgb), 0.1) !important;
+  color: var(--cui-emphasis-color) !important;
+  border: 1px solid rgba(var(--cui-emphasis-color-rgb), 0.1) !important;
+  transition: all 0.2s ease;
+}
+.quiz-tag-more:hover {
+  background: rgba(var(--cui-emphasis-color-rgb), 0.2) !important;
+}
+
+.reward {
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-right: 12px;
+}
+.reward.zeal-reward {
+  color: #e55353;
+}
+.reward.jolt-reward {
+  color: #f9b115;
+}
+.reward.view-reward {
+  color: #3399ff;
 }
 
 .stat-item {
@@ -15962,6 +16125,10 @@ html.enable-blur .server-logs-panel {
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2) !important;
   border-radius: 24px !important;
 }
+.glass-effect-premium.blur {
+  backdrop-filter: blur(30px) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+}
 
 .glass-effect-premium:hover {
   background: rgba(255, 255, 255, 0.07) !important;
@@ -15975,6 +16142,10 @@ html.enable-blur .server-logs-panel {
   color: #a5a9ff !important;
   font-size: 0.65rem;
   font-weight: 700;
+}
+[data-coreui-theme=light] .badge-tag-dynamic {
+  background: rgba(102, 106, 255, 0.1) !important;
+  color: #4b4efd !important;
 }
 
 /* Spot Quiz Modal - Let CoreUI handle display/centering/backdrop natively */

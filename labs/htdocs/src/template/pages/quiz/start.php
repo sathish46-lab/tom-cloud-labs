@@ -4,8 +4,21 @@ use TomLabs\Labs\Quiz;
 $parentTopic = Session::get('parent_topic');
 $subtopic = Session::get('current_subtopic');
 
+$difficultyFilter = $_GET['difficulty'] ?? $_COOKIE['quiz_difficulty_filter'] ?? 'normal';
+$difficultyFilter = strtolower($difficultyFilter);
+
+// Reinforce cookie from PHP side
+if (isset($_GET['difficulty']) || isset($_COOKIE['quiz_difficulty_filter'])) {
+    setcookie('quiz_difficulty_filter', $difficultyFilter, time() + (86400 * 30), "/");
+}
+
+// Debugging
+if (class_exists('Session')) {
+    logit("Difficulty Filter active: " . $difficultyFilter, "quiz_debug");
+}
+
 // Fetch real quizzes from MongoDB (High Density Limit)
-$quizzes = Quiz::getRecentForSubtopic($subtopic['_id'], 8);
+$quizzes = Quiz::getRecentForSubtopic($subtopic['_id'], 8, 0, $difficultyFilter);
 
 $user = Session::getUser();
 $userStats = $user ? Quiz::getUserStats($user->getEmail()) : ['zeal' => 0, 'jolt' => 0];
@@ -33,9 +46,9 @@ $availableJolt = $userStats['jolt'] ?? 0;
                         <i class="bx bxs-zap me-1"></i>Spot Quiz
                     </button>
                     <div id="difficultySelector" class="difficulty-modes">
-                        <button class="diff-btn btn-easy" data-diff="easy">Easy</button>
-                        <button class="diff-btn btn-normal active" data-diff="normal">Normal</button>
-                        <button class="diff-btn btn-hard" data-diff="hard">Hard</button>
+                        <button class="diff-btn btn-easy <?= $difficultyFilter == 'easy' ? 'active' : '' ?>" data-diff="easy">Easy</button>
+                        <button class="diff-btn btn-normal <?= $difficultyFilter == 'normal' ? 'active' : '' ?>" data-diff="normal">Normal</button>
+                        <button class="diff-btn btn-hard <?= $difficultyFilter == 'hard' ? 'active' : '' ?>" data-diff="hard">Hard</button>
                     </div>
                 </div>
             </div>
@@ -56,105 +69,63 @@ $availableJolt = $userStats['jolt'] ?? 0;
 
         <hr class="border-secondary opacity-10 mb-4 position-relative" style="z-index: 2;">
 
-        <!-- 3. Quizzes Grid -->
-        <div id="quiz-list-container" class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4 position-relative" style="z-index: 2;">
-            <?php if (empty($quizzes)): ?>
-                <div class="w-100 d-flex justify-content-center py-5 mt-4" style="flex: 0 0 100%;">
-                    <div class="card quiz-glass-card border-0 shadow-lg text-center p-4 p-md-5" style="max-width: 420px; width: 100%; border-radius: 20px; background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05) !important;">
-                        <div class="d-flex justify-content-center mb-4">
-                            <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center border border-success border-opacity-25" style="width: 70px; height: 70px;">
-                                <i class="bx bxs-bot fs-1 text-success"></i>
-                            </div>
-                        </div>
-                        <h4 class="fw-bold text-body-emphasis mb-2">No Quizzes Yet</h4>
-                        <p class="text-body-secondary small mb-4 lh-base px-2">
-                            There are currently no challenges for this topic. Be the first to generate a professional AI-powered quiz and test your skills!
-                        </p>
-                        <button class="btn btn-success rounded-pill px-4 py-2 fw-bold shadow-sm transition-all" onclick="triggerGeneration()" style="font-size: 0.95rem;">
-                            <i class="bx bxs-zap me-1"></i> Generate with AI
-                        </button>
-                    </div>
-                </div>
-            <?php else: foreach ($quizzes as $q): ?>
-            <div class="col">
-                <div class="card quiz-glass-card h-100 border-0 shadow-sm glass-effect-premium">
-                    <div class="card-body d-flex flex-column p-4">
-                        <!-- Title -->
-                        <h6 class="card-title-text fw-bold mb-2" style="min-height: 2.2rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                            <?= $q['title'] ?>
-                        </h6>
-
-                        <!-- Description -->
-                        <p class="text-body-secondary x-small mb-3 opacity-75" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.8rem;">
-                            <?= $q['desc'] ?? "Explore the intricate mechanics of this domain through our AI-curated challenge." ?>
-                        </p>
-                        
-                        <!-- Badges Row -->
-                        <div class="d-flex flex-wrap gap-1 mb-3">
-                            <span class="badge badge-quiz-tag rounded-pill px-2">new ✨</span>
-                            <span class="badge badge-quiz-cat rounded-pill px-2"><?= strtoupper($q['difficulty']) ?></span>
-                            
-                            <?php 
-                            $tags = (isset($q['tags']) && is_array($q['tags'])) ? $q['tags'] : [$parentTopic['title'] ?? 'Cybersecurity', 'tech'];
-                            foreach (array_slice($tags, 0, 3) as $tag): 
-                            ?>
-                                <span class="badge badge-tag-dynamic rounded-pill px-2"><?= strtolower($tag) ?></span>
-                            <?php endforeach; ?>
-
-                            <div class="ms-auto">
-                                <span class="badge badge-quiz-time rounded-pill px-2">
-                                    <i class="bx bx-time-five"></i>
-                                    <?php try { echo date('M j', (int)$q['created_at']); } catch (\Throwable $t) { echo "recent"; } ?>
-                                </span>
-                            </div>
-                        </div>
-
-                        <!-- Stats Footer -->
-                        <div class="mt-auto pt-3 border-top border-white border-opacity-10">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <div class="d-flex align-items-center gap-3">
-                                    <?php 
-                                        $qDiff = strtolower($q['difficulty'] ?? 'normal');
-                                        $qJolt = 2;
-                                        if ($qDiff === 'easy') $qJolt = 1;
-                                        elseif ($qDiff === 'hard') $qJolt = 5;
-                                    ?>
-                                    <div class="stat-item" title="Zeal Reward">
-                                        <span class="fw-bold"><?= $isAttempted ? 0 : ($q['points_per_correct'] ?? 25) ?></span>
-                                        <i class="bx bxs-hot text-danger"></i>
-                                    </div>
-                                    <div class="stat-item" title="Jolt Reward">
-                                        <span class="fw-bold"><?= $isAttempted ? 0 : $qJolt ?></span>
-                                        <i class="bx bxs-zap text-warning"></i>
-                                    </div>
-                                    <div class="stat-item" title="Total Views">
-                                        <span class="fw-bold"><?= $q['view_count'] ?? 0 ?></span>
-                                        <i class="bx bxs-show text-info"></i>
-                                    </div>
-                                </div>
-                                <?php 
-                                    $user = Session::getUser();
-                                    $isAttempted = $user ? Quiz::hasAttempted($user->getEmail(), $q['hash']) : false;
-                                ?>
-                                <a href="/quiz/v/<?= $q['hash'] ?>" class="btn <?= $isAttempted ? 'btn-info' : 'btn-success' ?> btn-sm rounded-pill fw-bold px-3">
-                                    <?= $isAttempted ? 'Retake Quiz' : 'Answer Quiz' ?>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
+<!-- Reusable Empty State Template (Hidden for JS usage) -->
+<template id="quiz-empty-state-template">
+    <div class="w-100 d-flex justify-content-center py-5 mt-4 animate__animated animate__fadeIn" style="flex: 0 0 100%;">
+        <div class="card quiz-glass-card border-0 shadow-lg text-center p-4 p-md-5" style="max-width: 420px; width: 100%; border-radius: 20px; background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05) !important;">
+            <div class="d-flex justify-content-center mb-4">
+                <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center border border-success border-opacity-25" style="width: 70px; height: 70px;">
+                    <i class="bx bxs-bot fs-1 text-success"></i>
                 </div>
             </div>
-            <?php endforeach; endif; ?>
+            <h4 class="fw-bold text-body-emphasis mb-2">No Quizzes Found</h4>
+            <p class="text-body-secondary small mb-4 lh-base px-2">
+                There are currently no challenges for the <strong class="selected-diff-text"><?= strtoupper($difficultyFilter) ?></strong> level in this topic. Be the first to generate a professional AI-powered quiz and test your skills!
+            </p>
+            <button class="btn btn-success rounded-pill px-4 py-2 fw-bold shadow-sm transition-all" onclick="triggerGeneration()" style="font-size: 0.95rem;">
+                <i class="bx bxs-zap me-1"></i> Generate with AI
+            </button>
         </div>
+    </div>
+</template>
 
-        <!-- Infinite Scroll Sentinel (Strictly Professional) -->
-        <div id="infinite-scroll-sentinel" class="text-center py-5 opacity-50" style="min-height: 100px;">
-            <div id="scroll-loader" class="spinner-border theme-text d-none" role="status" style="width: 3rem; height: 3rem;">
-                <span class="visually-hidden">Loading...</span>
+    <!-- 3. Quizzes Grid -->
+    <div id="quiz-list-container" class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4 position-relative" style="z-index: 2;">
+        <?php if (empty($quizzes)): ?>
+            <div class="w-100 d-flex justify-content-center py-5 mt-4" style="flex: 0 0 100%;">
+                <div class="card quiz-glass-card border-0 shadow-lg text-center p-4 p-md-5" style="max-width: 420px; width: 100%; border-radius: 20px; background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05) !important;">
+                    <div class="d-flex justify-content-center mb-4">
+                        <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center border border-success border-opacity-25" style="width: 70px; height: 70px;">
+                            <i class="bx bxs-bot fs-1 text-success"></i>
+                        </div>
+                    </div>
+                    <h4 class="fw-bold text-body-emphasis mb-2">No Quizzes Found</h4>
+                    <p class="text-body-secondary small mb-4 lh-base px-2">
+                        There are currently no challenges for the <strong class="selected-diff-text"><?= strtoupper($difficultyFilter) ?></strong> level in this topic. Be the first to generate a professional AI-powered quiz and test your skills!
+                    </p>
+                    <button class="btn btn-success rounded-pill px-4 py-2 fw-bold shadow-sm transition-all" onclick="triggerGeneration()" style="font-size: 0.95rem;">
+                        <i class="bx bxs-zap me-1"></i> Generate with AI
+                    </button>
+                </div>
             </div>
-            <div id="no-more-msg" class="text-body-secondary small d-none mt-3">
-                <i class="bx bx-check-circle me-1"></i> You've explored all challenges for this topic.
-            </div>
+        <?php else: foreach ($quizzes as $q): 
+            $qDiff = strtolower($q['difficulty'] ?? 'normal');
+            $qJolt = 2;
+            if ($qDiff === 'easy') $qJolt = 1;
+            elseif ($qDiff === 'hard') $qJolt = 5;
+            $user = Session::getUser();
+            $isAttempted = $user ? Quiz::hasAttempted($user->getEmail(), $q['hash']) : false;
+            include __DIR__ . '/_card.php';
+        endforeach; endif; ?>
+    </div>
+
+    <!-- Infinite Scroll Sentinel (Strictly Professional) -->
+    <div id="infinite-scroll-sentinel" class="text-center py-5 opacity-50" style="min-height: 100px;">
+        <div id="scroll-loader" class="spinner-border theme-text d-none" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <div id="no-more-msg" class="text-body-secondary small d-none mt-3">
+            <i class="bx bx-check-circle me-1"></i> You've explored all challenges for this topic.
         </div>
     </div>
 </div>
@@ -245,7 +216,7 @@ window.QuizConfig = {
  * Handles AI generation triggers and Infinite Scroll
  */
 
-let selectedDiff = 'normal';
+let selectedDiff = '<?= $difficultyFilter ?>';
 let generationModal = null;
 
 // Initialize Modal and Handle BFcache
@@ -271,9 +242,22 @@ window.addEventListener('pageshow', function (event) {
 // Difficulty Selection
 document.querySelectorAll('.difficulty-modes .diff-btn').forEach(btn => {
     btn.addEventListener('click', function () {
+        if (this.classList.contains('active')) return; 
+
         document.querySelectorAll('.difficulty-modes .diff-btn').forEach(b => b.classList.remove('active'));
         this.classList.add('active');
         selectedDiff = this.dataset.diff;
+        
+        // Persist to cookie for PHP access on reload
+        document.cookie = "quiz_difficulty_filter=" + selectedDiff + "; path=/; max-age=" + (86400 * 30) + "; SameSite=Lax";
+        
+        // Reset and Reload
+        const container = document.getElementById('quiz-list-container');
+        if (container) container.innerHTML = '<div class="w-100 text-center py-5"><div class="spinner-border theme-text" role="status"></div></div>';
+        
+        scrollOffset = 0;
+        hasMoreQuizzes = true;
+        loadMoreQuizzes(true); 
     });
 });
 
@@ -422,18 +406,30 @@ if (window.QuizConfig && window.QuizConfig.subtopicId) {
         if (!saved) return;
         const state = JSON.parse(saved);
         if (state.subtopic !== subtopicIdForState) return;
+        
+        // We rely on PHP-initialized selectedDiff for consistency
+        document.querySelectorAll('.difficulty-modes .diff-btn').forEach(b => {
+            if (b.dataset.diff === selectedDiff) b.classList.add('active');
+            else b.classList.remove('active');
+        });
 
         if (state.offset > 8) {
-            const fetchLimit = state.offset - 8;
+            const fetchLimit = state.offset;
             isScrollLoading = true;
-            fetch(`/api/quiz/list?subtopic_id=${subtopicIdForState}&offset=8&limit=${fetchLimit}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'success' && data.data.length > 0) {
+            fetch(`/api/quiz/list?subtopic_id=${subtopicIdForState}&offset=0&limit=${fetchLimit}&difficulty=${selectedDiff}`)
+                .then(res => res.text())
+                .then(html => {
+                    if (html && html.trim().length > 0) {
                         const container = document.getElementById('quiz-list-container');
-                        data.data.forEach(q => renderQuizCard(container, q));
-                        scrollOffset = state.offset;
-                        hasMoreQuizzes = data.has_more;
+                        container.innerHTML = html; 
+                        
+                        const temp = document.createElement('div');
+                        temp.innerHTML = html;
+                        const cardCount = temp.querySelectorAll('.quiz-card-item').length;
+                        
+                        scrollOffset = cardCount;
+                        // For restoration, we assume if we got cards, there might be more if we hit the limit
+                        hasMoreQuizzes = cardCount >= 8; 
                         setTimeout(() => window.scrollTo({ top: state.scrollTop, behavior: 'instant' }), 100);
                     }
                 })
@@ -441,77 +437,61 @@ if (window.QuizConfig && window.QuizConfig.subtopicId) {
         }
     }
 
-    function renderQuizCard(container, q) {
-        const col = document.createElement('div');
-        col.className = 'col animate__animated animate__fadeIn';
-        let tagsHtml = '';
-        if (q.tags && Array.isArray(q.tags)) {
-            q.tags.forEach(tag => {
-                tagsHtml += `<span class="badge badge-tag-dynamic rounded-pill px-2 me-1">${tag.toLowerCase()}</span>`;
-            });
-        }
-        col.innerHTML = `
-            <div class="card quiz-glass-card h-100 border-0 shadow-sm glass-effect-premium">
-                <div class="card-body d-flex flex-column p-4">
-                    <h6 class="card-title-text fw-bold mb-2" style="min-height: 2.2rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                        ${q.title}
-                    </h6>
-                    <p class="text-body-secondary x-small mb-3 opacity-75" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.8rem;">
-                        ${q.desc}
-                    </p>
-                    <div class="d-flex flex-wrap gap-1 mb-3">
-                        <span class="badge badge-quiz-tag rounded-pill px-2">new ✨</span>
-                        <span class="badge badge-quiz-cat rounded-pill px-2">${q.difficulty}</span>
-                        ${tagsHtml}
-                        <div class="ms-auto">
-                            <span class="badge badge-quiz-time rounded-pill px-2"><i class="bx bx-time-five"></i> ${q.created_at}</span>
-                        </div>
-                    </div>
-                    <div class="mt-auto pt-3 border-top border-white border-opacity-10">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="stat-item" title="Zeal Reward"><span class="fw-bold">${typeof q.points !== 'undefined' ? q.points : 25}</span> <i class="bx bxs-hot text-danger"></i></div>
-                                <div class="stat-item" title="Jolt Reward"><span class="fw-bold">${typeof q.jolt_reward !== 'undefined' ? q.jolt_reward : 2}</span> <i class="bx bxs-zap text-warning"></i></div>
-                                <div class="stat-item" title="Total Views"><span class="fw-bold">${q.view_count || 0}</span> <i class="bx bxs-show text-info"></i></div>
-                            </div>
-                            <a href="/quiz/v/${q.hash}" class="btn ${q.is_attempted ? 'btn-info' : 'btn-success'} btn-sm rounded-pill fw-bold px-3">
-                                ${q.is_attempted ? 'Retake Quiz' : 'Answer Quiz'}
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-        container.appendChild(col);
-    }
 
-    function loadMoreQuizzes() {
+
+    function loadMoreQuizzes(replace = false) {
         isScrollLoading = true;
         const loader = document.getElementById('scroll-loader');
         if (loader) loader.classList.remove('d-none');
-        setTimeout(() => {
-            fetch(`/api/quiz/list?subtopic_id=${subtopicIdForState}&offset=${scrollOffset}&limit=8`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'success' && data.data.length > 0) {
-                        const container = document.getElementById('quiz-list-container');
-                        data.data.forEach(q => renderQuizCard(container, q));
-                        scrollOffset += data.data.length;
-                        hasMoreQuizzes = data.has_more;
-                        saveScrollState();
-                    } else {
-                        hasMoreQuizzes = false;
+        
+        const currentOffset = replace ? 0 : scrollOffset;
+        const fetchLimit = 8;
+        fetch(`/api/quiz/list?subtopic_id=${subtopicIdForState}&offset=${currentOffset}&limit=${fetchLimit}&difficulty=${selectedDiff}`)
+            .then(res => res.text())
+            .then(html => {
+                const container = document.getElementById('quiz-list-container');
+                if (!container) return;
+
+                if (replace) container.innerHTML = '';
+
+                if (html && html.trim().length > 0) {
+                    if (replace) container.innerHTML = html;
+                    else container.insertAdjacentHTML('beforeend', html);
+
+                    // Robust counting
+                    const temp = document.createElement('div');
+                    temp.innerHTML = html;
+                    const newCards = temp.querySelectorAll('.quiz-card-item').length;
+                    
+                    if (replace) scrollOffset = newCards;
+                    else scrollOffset += newCards;
+                    
+                    hasMoreQuizzes = newCards === fetchLimit;
+                    saveScrollState();
+                } else {
+                    console.log("[Quiz Hub] No more quizzes found.");
+                    hasMoreQuizzes = false;
+                    if (replace) {
+                        const template = document.getElementById('quiz-empty-state-template');
+                        if (template) {
+                            const clone = template.content.cloneNode(true);
+                            const diffText = clone.querySelector('.selected-diff-text');
+                            if (diffText) diffText.innerText = selectedDiff.toUpperCase();
+                            container.appendChild(clone);
+                        }
                     }
-                })
-                .finally(() => {
-                    isScrollLoading = false;
-                    if (loader) loader.classList.add('d-none');
-                    if (!hasMoreQuizzes) {
-                        const noMore = document.getElementById('no-more-msg');
-                        if (noMore) noMore.classList.remove('d-none');
-                        scrollObserver.unobserve(scrollSentinel);
-                    }
-                });
-        }, 800);
+                }
+            })
+            .finally(() => {
+                isScrollLoading = false;
+                if (loader) loader.classList.add('d-none');
+                const noMore = document.getElementById('no-more-msg');
+                if (!hasMoreQuizzes) {
+                    if (noMore) noMore.classList.remove('d-none');
+                } else {
+                    if (noMore) noMore.classList.add('d-none');
+                }
+            });
     }
     window.addEventListener('scroll', () => { if (!isScrollLoading) saveScrollState(); });
 }

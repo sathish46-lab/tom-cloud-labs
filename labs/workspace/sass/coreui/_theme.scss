@@ -36,6 +36,68 @@
   .lab-title {
     color: #000000 !important;
   }
+
+  /* Professional Dropdown Hover Fixes */
+  .dropdown-item:hover {
+    background-color: rgba(var(--cui-primary-rgb, 52, 152, 219), 0.08) !important;
+    color: var(--cui-primary, #3498db) !important;
+  }
+
+  .dropdown-item.text-danger:hover {
+    background-color: rgba(231, 76, 60, 0.1) !important;
+    color: #e74c3c !important;
+  }
+
+  .badge {
+    color: #ffffff !important; // Force white text for better contrast on solid badges
+    font-weight: 700 !important;
+    letter-spacing: 0.5px;
+    padding: 4px 10px !important;
+  }
+}
+
+/* Global Badge Refinement */
+.badge {
+  text-transform: uppercase;
+  font-size: 0.65rem !important;
+  border-radius: 50px !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  &.bg-primary {
+    background: linear-gradient(135deg, #6c5ce7, #a29bfe) !important;
+  }
+
+  &.bg-success {
+    background: linear-gradient(135deg, #27ae60, #2ecc71) !important;
+  }
+
+  &.bg-danger {
+    background: linear-gradient(135deg, #e74c3c, #ff7675) !important;
+  }
+
+  &.bg-info {
+    background: linear-gradient(135deg, #0984e3, #74b9ff) !important;
+    color: #fff !important;
+  }
+
+  &.bg-warning {
+    background: linear-gradient(135deg, #f1c40f, #fdcb6e) !important;
+    color: #000 !important;
+  }
+}
+
+/* Ensure dropdown icons match the text on hover */
+.dropdown-item:hover i {
+  color: inherit !important;
+}
+
+/* Standardize Glass Dropdowns */
+.dropdown-menu {
+  transition: all 0.2s ease-in-out;
+  transform-origin: top right;
 }
 
 // Update your existing dark theme block
@@ -106,9 +168,21 @@
 }
 
 [data-coreui-theme="dark"] .form-check-input:checked {
-  background-color: var(--glass-text) !important;
-  border-color: var(--glass-text) !important;
-  opacity: 0.8;
+  background-color: var(--cui-primary) !important;
+  border-color: var(--cui-primary) !important;
+  opacity: 1;
+}
+
+/* Improve Dropdown Icon Visibility */
+.dropdown-item i {
+  color: var(--cui-primary) !important;
+  opacity: 0.85;
+  transition: all 0.2s ease;
+}
+
+.dropdown-item:hover i {
+  opacity: 1;
+  transform: scale(1.1);
 }
 
 .transition-all {
@@ -490,7 +564,6 @@ body::before {
   }
 
   /* Force visibility on dropdown parts for Light/Dark modes */
-  .dropdown,
   .dropdown-toggle,
   .form-select,
   .form-control {
@@ -514,8 +587,33 @@ body::before {
 
   .btn-link {
     background-color: transparent !important;
+    background: transparent !important;
     border: none !important;
     box-shadow: none !important;
+    text-decoration: none !important;
+
+    &:hover,
+    &:focus,
+    &:active {
+      background-color: rgba(var(--cui-emphasis-color-rgb, 128, 128, 128), 0.1) !important;
+      text-decoration: none !important;
+      box-shadow: none !important;
+    }
+  }
+
+  /* Specialized Action Dots (Naked Style) */
+  .action-dots {
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      opacity: 1 !important;
+      transform: scale(1.1);
+    }
   }
 
   /* Subtle hover glow */

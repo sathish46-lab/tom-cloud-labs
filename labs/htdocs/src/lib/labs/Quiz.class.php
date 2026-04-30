@@ -116,13 +116,17 @@ class Quiz {
     /**
      * Get recent quizzes for a subtopic with pagination support
      */
-    public static function getRecentForSubtopic($subtopicId, $limit = 8, $offset = 0) {
+    public static function getRecentForSubtopic($subtopicId, $limit = 8, $offset = 0, $difficulty = null) {
+        $filter = ['subtopic_id' => $subtopicId];
+        if ($difficulty && $difficulty !== 'all') {
+            $filter['difficulty'] = new \MongoDB\BSON\Regex('^' . preg_quote($difficulty) . '$', 'i');
+        }
         return DatabaseConnection::getDefaultDatabase()->quizzes->find(
-            ['subtopic_id' => $subtopicId],
+            $filter,
             [
                 'sort' => ['created_at' => -1],
-                'limit' => $limit,
-                'skip' => $offset
+                'limit' => (int)$limit,
+                'skip' => (int)$offset
             ]
         )->toArray();
     }
@@ -266,5 +270,50 @@ class Quiz {
         DatabaseConnection::getDefaultDatabase()->quiz_jobs->deleteMany([
             'created_at' => ['$lt' => $threshold]
         ]);
+    }
+    /**
+     * Get a random motivational message based on performance
+     * @param bool $isCorrect
+     * @return string
+     */
+    public static function getMotivationalMessage($isCorrect = true) {
+        $correctMessages = [
+            "Outstanding! Your technical intuition is razor-sharp! ⚡",
+            "Brilliant! You've successfully decoded that complexity. 🧠",
+            "Legendary! That's how a true Ninja approaches a challenge. 🥷",
+            "Exceptional work! You're dominating this topic. 🔥",
+            "Perfect! Your understanding of this domain is impressive. 💎",
+            "Boom! Knowledge is power, and you've got plenty of it! 🚀",
+            "Spot on! You make even the toughest problems look easy. ✨",
+            "Incredible! Your skills are evolving at a rapid pace. 📈",
+            "Absolute mastery! Keep this momentum going. 👑",
+            "Phenomenal! That's another milestone conquered. 🚩",
+            "Great job! You're building a formidable expertise here. 🛡️",
+            "Fantastic! Your attention to detail is your superpower. 🔍",
+            "Superb! You've got the logic of a high-performance machine. 🤖",
+            "Magnificent! Your technical growth is inspiring to watch. 🌟",
+            "Top-tier performance! You're reaching new heights today. 🏔️"
+        ];
+
+        $wrongMessages = [
+            "Not quite, but every mistake is a step toward mastery! 📚",
+            "Close! Re-analyze the logic and you'll crush it next time. 🔄",
+            "Don't stop now! Even the best Ninjas fail before they succeed. 🥷",
+            "A tough one, but your persistence is what counts. Keep going! 💪",
+            "Mistakes are just data points for your future success. 📊",
+            "Keep your head up! You're learning things most people don't. 🎓",
+            "Almost there! Refine your approach and try again. 🛠️",
+            "That was a tricky one. Take a breath and dive back in! 🌊",
+            "Failure is the mother of success. Stay hungry! 🍕",
+            "Every wrong answer is an opportunity to strengthen your mind. 🧠",
+            "Consistency is key! You'll get it on the next attempt. 🔑",
+            "Don't be discouraged. The path to expert is paved with errors. 🛣️",
+            "Stay focused! You're much closer than you think. 🎯",
+            "It's a learning curve, and you're already halfway up! 🎢",
+            "Analyze, adapt, and overcome. You've got this! 🦾"
+        ];
+
+        $pool = $isCorrect ? $correctMessages : $wrongMessages;
+        return $pool[array_rand($pool)];
     }
 }

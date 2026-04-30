@@ -18,6 +18,47 @@ $totalRewards = $points * $qCount;
 $joltReward = 2; // Default Normal
 if ($difficulty === 'easy') $joltReward = 1;
 elseif ($difficulty === 'hard') $joltReward = 5;
+
+// Premium Motivational Library
+$correctMessages = [
+    "Outstanding! Your technical intuition is razor-sharp! ⚡",
+    "Brilliant! You've successfully decoded that complexity. 🧠",
+    "Legendary! That's how a true Ninja approaches a challenge. 🥷",
+    "Exceptional work! You're dominating this topic. 🔥",
+    "Perfect! Your understanding of this domain is impressive. 💎",
+    "Boom! Knowledge is power, and you've got plenty of it! 🚀",
+    "Spot on! You make even the toughest problems look easy. ✨",
+    "Incredible! Your skills are evolving at a rapid pace. 📈",
+    "Absolute mastery! Keep this momentum going. 👑",
+    "Phenomenal! That's another milestone conquered. 🚩",
+    "Great job! You're building a formidable expertise here. 🛡️",
+    "Fantastic! Your attention to detail is your superpower. 🔍",
+    "Superb! You've got the logic of a high-performance machine. 🤖",
+    "Magnificent! Your technical growth is inspiring to watch. 🌟",
+    "Top-tier performance! You're reaching new heights today. 🏔️",
+    "Majestic! Your progress is a testament to your dedication. 🏛️",
+    "Victory! You've claimed another triumph in this arena. ⚔️"
+];
+
+$wrongMessages = [
+    "Not quite, but every mistake is a step toward mastery! 📚",
+    "Close! Re-analyze the logic and you'll crush it next time. 🔄",
+    "Don't stop now! Even the best Ninjas fail before they succeed. 🥷",
+    "A tough one, but your persistence is what counts. Keep going! 💪",
+    "Mistakes are just data points for your future success. 📊",
+    "Keep your head up! You're learning things most people don't. 🎓",
+    "Almost there! Refine your approach and try again. 🛠️",
+    "That was a tricky one. Take a breath and dive back in! 🌊",
+    "Failure is the mother of success. Stay hungry! 🍕",
+    "Every wrong answer is an opportunity to strengthen your mind. 🧠",
+    "Consistency is key! You'll get it on the next attempt. 🔑",
+    "Don't be discouraged. The path to expert is paved with errors. 🛣️",
+    "Stay focused! You're much closer than you think. 🎯",
+    "It's a learning curve, and you're already halfway up! 🎢",
+    "Analyze, adapt, and overcome. You've got this! 🦾",
+    "Keep swinging! Each miss makes you stronger for the hit. ⚾",
+    "Persistence is your ally. One more try might be the one! 🔄"
+];
 ?>
 
 <div class="quiz-evaluation-view fade-in">
@@ -153,7 +194,11 @@ window.QuizEngineConfig = {
     quizData: <?= json_encode($quizData) ?>,
     pointsPerCorrect: <?= $pointsPerCorrect ?>,
     difficulty: "<?= $difficulty ?>",
-    hash: "<?= $quiz['hash'] ?>"
+    hash: "<?= $quiz['hash'] ?>",
+    motivation: {
+        correct: <?= json_encode($correctMessages) ?>,
+        wrong: <?= json_encode($wrongMessages) ?>
+    }
 };
 
 /**
@@ -352,11 +397,20 @@ window.submitAnswer = function() {
         btns[selectedOption].classList.add('correct');
         currentStepItem.classList.add('completed-correct');
         score++;
-        if (segments[currentStep]) segments[currentStep].classList.add('correct');
+        // Motivational Toast for Correct Answer
+        const motivation = window.QuizEngineConfig.motivation.correct;
+        const randomMsg = motivation[Math.floor(Math.random() * motivation.length)];
+        if (window.TomNotify) TomNotify.show(randomMsg, "Correct Answer", "success", 2500);
+
     } else {
         btns[selectedOption].classList.add('wrong');
         currentStepItem.classList.add('completed-wrong');
         if (segments[currentStep]) segments[currentStep].classList.add('wrong');
+
+        // Encouragement Toast for Wrong Answer
+        const encouragement = window.QuizEngineConfig.motivation.wrong;
+        const randomMsg = encouragement[Math.floor(Math.random() * encouragement.length)];
+        if (window.TomNotify) TomNotify.show(randomMsg, "Keep Going", "warning", 2500);
     }
 
     const isLastQuestion = (currentStep >= quizData.length - 1);

@@ -265,56 +265,44 @@ $tomThemes = [
 
         <?php if (!Session::get('footer', false) && !defined('IS_HOME_PAGE')) { echo Session::generateFooter(); } ?>
     </div>
-    <!-- Toast Container (Message Toast) -->
-    <div class="toast-container position-fixed top-0 end-0 p-3" style="margin-top: 4rem; z-index: 2000;">
-        <div id="copyToast" class="toast border-0 rounded-3 overflow-hidden shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" style="background: rgba(8, 12, 22, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1) !important; min-width: 300px;">
-            <div class="toast-header border-0 bg-transparent text-white pt-3 px-3 d-flex align-items-center">
-                <strong class="me-auto d-flex align-items-center gap-2 fs-6">
-                    <i id="toast-icon" class="bx bxs-check-circle text-success"></i> 
-                    <span id="toast-title" class="ls-tight">Copied!</span>
-                </strong>
-                <small class="opacity-50 fw-light" style="font-size: 11px;">now</small>
-                <button type="button" class="btn-close btn-close-white ms-3 mb-1" style="font-size: 10px;" data-coreui-dismiss="toast" aria-label="Close"></button>
-            </div>
-            <div class="toast-body text-white opacity-75 px-3 pb-3 pt-1">
-                <span id="toast-message" class="small">Information has been copied into your clipboard</span>
-            </div>
-        </div>
+    <!-- Premium Stackable Notification Container -->
+    <div id="notification-container" class="toast-container position-fixed top-0 end-0 p-3" style="margin-top: 4rem; z-index: 2000;">
+        <!-- Toasts will be injected here dynamically -->
     </div>
     <!-- This card section is for the background selection modal -->
     <div class="modal fade" id="bgSelectModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content  border-0 rounded-4 shadow-lg">
+            <div class="modal-content border-0 rounded-4 shadow-lg" style="background: rgba(var(--cui-body-bg-rgb, 11, 30, 54), 0.75); backdrop-filter: blur(24px); border: 1px solid rgba(var(--cui-emphasis-color-rgb, 255, 255, 255), 0.1) !important;">
                 <div class="modal-header border-0 pt-4 px-4">
-                    <h5 class="fw-bold m-0">Change Background</h5>
-                    <button type="button" class="btn-close" data-coreui-dismiss="modal"></button>
+                    <h5 class="fw-bold m-0 text-body-emphasis">Change Background</h5>
+                    <button type="button" class="btn-close" data-coreui-dismiss="modal" style="filter: var(--cui-btn-close-white-filter, none);"></button>
                 </div>
                 <div class="modal-body p-4">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <div class="bg-preview rounded-3 p-5 text-center pointer" 
-                                onclick="TomBG.setMode('plain')" style="background: #0b1e36;">
+                            <div class="bg-preview rounded-3 p-5 text-center pointer border border-white border-opacity-10 transition-all hover-scale" 
+                                onclick="TomBG.setMode('plain')" style="background: #0b1e36; min-height: 140px; display: flex; align-items: center; justify-content: center;">
                                 <h6 class="fw-bold m-0 text-white">Plain Theme</h6>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="bg-preview rounded-3 p-5 text-center pointer" 
+                            <div class="bg-preview rounded-3 p-5 text-center pointer border border-white border-opacity-10 transition-all hover-scale" 
                                 onclick="TomBG.setMode('robo')" 
-                                style="background: url('/assets/Background_Img/robo/robo.jpg'); background-size: cover;">
+                                style="background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('/assets/Background_Img/robo/robo.jpg'); background-size: cover; background-position: center; min-height: 140px; display: flex; align-items: center; justify-content: center;">
                                 <h6 class="fw-bold m-0 text-white">Robot Mode</h6>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="bg-preview rounded-3 p-5 text-center pointer" 
+                            <div class="bg-preview rounded-3 p-5 text-center pointer border border-white border-opacity-10 transition-all hover-scale" 
                                 onclick="TomBG.setMode('ninja')" 
-                                style="background: url('/assets/Background_Img/ninja/ninja.jpg'); background-size: cover;">
+                                style="background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('/assets/Background_Img/ninja/ninja.jpg'); background-size: cover; background-position: center; min-height: 140px; display: flex; align-items: center; justify-content: center;">
                                 <h6 class="fw-bold m-0 text-white">Ninja Mode</h6>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="bg-preview rounded-3 p-5 text-center pointer" 
+                            <div class="bg-preview rounded-3 p-5 text-center pointer border border-white border-opacity-10 transition-all hover-scale" 
                                 onclick="TomBG.setMode('robotower')" 
-                                style="background: url('/assets/Background_Img/RoboTower/3.png'); background-size: cover;">
+                                style="background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('/assets/Background_Img/RoboTower/3.png'); background-size: contain; background-repeat: no-repeat; background-position: center bottom; background-color: #0b1e36; min-height: 140px; display: flex; align-items: center; justify-content: center;">
                                 <h6 class="fw-bold m-0 text-white">Robo Tower</h6>
                             </div>
                         </div>
@@ -585,8 +573,87 @@ $tomThemes = [
             });
         });
     });
-    
     </script>
+    <?php if (!defined('IS_LOGIN_PAGE') || IS_LOGIN_PAGE === false): ?>
+    <script>
+        /**
+         * TomNotify - Premium Stackable Notification System
+         */
+        window.TomNotify = {
+            show: function(message, title = 'Notification', type = 'success', duration = 5000) {
+                const container = document.getElementById('notification-container');
+                if (!container) return;
+
+                const iconMap = {
+                    success: 'bxs-check-circle text-success',
+                    error: 'bxs-error-circle text-danger',
+                    warning: 'bxs-warning text-warning',
+                    info: 'bxs-info-circle text-info'
+                };
+
+                const toastId = 'toast-' + Date.now() + Math.floor(Math.random() * 1000);
+                const icon = iconMap[type] || iconMap.success;
+                const progressColor = type === 'error' ? '#e74c3c' : (type === 'warning' ? '#f1c40f' : 'var(--cui-primary, #8b91f9)');
+
+                const html = `
+                    <div id="${toastId}" class="toast border-0 rounded-4 overflow-hidden shadow-lg mb-3" role="alert" aria-live="assertive" aria-atomic="true" 
+                        style="background: rgba(10, 20, 35, 0.85); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.08) !important; min-width: 320px;">
+                        <div class="toast-header border-0 bg-transparent text-white pt-3 px-3 d-flex align-items-center">
+                            <strong class="me-auto d-flex align-items-center gap-2 fs-6">
+                                <i class="bx ${icon}"></i> 
+                                <span class="ls-tight">${title}</span>
+                            </strong>
+                            <small class="opacity-50 fw-light" style="font-size: 10px;">now</small>
+                            <button type="button" class="btn-close btn-close-white ms-3 mb-1" style="font-size: 9px;" data-coreui-dismiss="toast"></button>
+                        </div>
+                        <div class="toast-body text-white opacity-80 px-3 pb-3 pt-1">
+                            <span class="small" style="line-height: 1.5;">${message}</span>
+                        </div>
+                        <div class="toast-progress-container" style="height: 3px; background: rgba(255,255,255,0.05); width: 100%;">
+                            <div class="toast-progress-bar" style="height: 100%; width: 100%; background: ${progressColor}; transition: width ${duration}ms linear;"></div>
+                        </div>
+                    </div>
+                `;
+
+                container.insertAdjacentHTML('afterbegin', html);
+                const toastEl = document.getElementById(toastId);
+                const toast = new coreui.Toast(toastEl, { autohide: true, delay: duration });
+                toast.show();
+
+                // Start progress bar animation
+                setTimeout(() => {
+                    const progressBar = toastEl.querySelector('.toast-progress-bar');
+                    if (progressBar) progressBar.style.width = '0%';
+                }, 50);
+
+                // Clean up DOM after hidden
+                toastEl.addEventListener('hidden.coreui.toast', () => {
+                    toastEl.remove();
+                });
+            }
+        };
+
+        // Legacy compatibility
+        window.showToast = (msg) => TomNotify.show(msg, "System", "info");
+        window.copyToClipboard = (text, label = 'Information') => {
+            navigator.clipboard.writeText(text).then(() => {
+                TomNotify.show(`${label} copied to clipboard!`, "Copied", "success", 3000);
+            });
+        };
+
+        // Auto-trigger from PHP Sessions
+        document.addEventListener('DOMContentLoaded', () => {
+            <?php 
+            $flashTypes = ['success' => 'Success', 'error' => 'Failed', 'info' => 'Notice', 'warning' => 'Warning'];
+            foreach ($flashTypes as $key => $title):
+                if ($msg = Session::get("toast_$key")): 
+            ?>
+                TomNotify.show("<?= htmlspecialchars($msg) ?>", "<?= $title ?>", "<?= $key ?>");
+            <?php endif; endforeach; ?>
+        });
+    </script>
+    <?php endif; ?>
+
     <?php 
     // This translates your indented Session::$ConsoleLogs into JS
     Console::flush(); 

@@ -112,14 +112,14 @@
                 $navStats = $navUser ? \TomLabs\Labs\Quiz::getUserStats($navUser->getEmail()) : ['zeal' => 0, 'jolt' => 10];
             ?>
             <li class="nav-item d-none d-md-flex align-items-center me-3">
-                <div class="d-flex align-items-center gap-3 bg-white bg-opacity-5 rounded-pill px-3 py-1 border border-white border-opacity-10 shadow-sm">
+                <div class="d-flex align-items-center gap-3 rounded-pill px-3 py-1 border border-secondary border-opacity-10 shadow-sm" style="background: rgba(var(--cui-emphasis-color-rgb, 128, 128, 128), 0.05);">
                     <div class="d-flex align-items-center gap-1" title="Total Zeal (Experience Points)">
-                        <span class="fw-bold theme-text small" id="header-zeal"><?= number_format($navStats['zeal'] ?? 0) ?></span>
+                        <span class="fw-bold text-body-emphasis small" id="header-zeal" style="font-size: 0.85rem;"><?= number_format($navStats['zeal'] ?? 0) ?></span>
                         <i class="bx bxs-hot text-danger" style="font-size: 0.9rem;"></i>
                     </div>
-                    <div class="vr opacity-20" style="height: 12px;"></div>
+                    <div class="vr bg-secondary opacity-20" style="height: 12px;"></div>
                     <div class="d-flex align-items-center gap-1" title="Available Jolt (Fuel)">
-                        <span class="fw-bold theme-text small" id="header-jolt"><?= number_format($navStats['jolt'] ?? 0) ?></span>
+                        <span class="fw-bold text-body-emphasis small" id="header-jolt" style="font-size: 0.85rem;"><?= number_format($navStats['jolt'] ?? 0) ?></span>
                         <i class="bx bxs-zap text-warning" style="font-size: 0.9rem;"></i>
                     </div>
                 </div>

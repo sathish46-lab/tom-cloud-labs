@@ -73,12 +73,12 @@ $defaultIp = !empty($resources) ? end($resources)['ip_addr'] : "";
                     <h5 class="fw-bold m-0 text-truncate" style="text-transform: none; color: var(--glass-text); font-size: 1.15rem; letter-spacing: -0.3px;">
                         <?= htmlspecialchars($device['device_name']) ?></h5>
                     <div class="dropdown">
-                        <button class="btn btn-link p-0 opacity-50 shadow-none border-0 d-flex align-items-center justify-content-center rounded-circle" 
+                        <button class="action-dots p-0 opacity-50 shadow-none border-0 d-flex align-items-center justify-content-center" 
                                 data-coreui-toggle="dropdown" 
-                                style="width: 32px; height: 32px; transition: all 0.2s; text-decoration: none !important;">
-                            <i class='bx bx-dots-vertical-rounded fs-4' style="color: var(--glass-icon); text-decoration: none !important;"></i>
+                                style="width: 32px; height: 32px; transition: all 0.2s; background: none; border: none;">
+                            <i class='bx bx-dots-vertical-rounded fs-4' style="color: var(--glass-icon);"></i>
                         </button>
-                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 glass-card" style="min-width: 4rem; border-radius: 14px; padding: 6px; overflow: hidden;">
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="min-width: 10rem; border-radius: 12px; padding: 8px; background: var(--cui-dropdown-bg); backdrop-filter: blur(10px);">
                             <li><a class="dropdown-item rounded-3 mb-1 px-2 py-1" href="javascript:void(0)" style="font-size: 0.75rem;"
                                     onclick="openVPNConnectionModal('<?= $dbId ?>', '<?= htmlspecialchars($device['device_name']) ?>')"><i
                                         class='bx bx-qr-scan me-2 text-primary'></i> Config</a></li>
