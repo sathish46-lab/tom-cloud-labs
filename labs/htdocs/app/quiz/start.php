@@ -2,9 +2,10 @@
 require_once '../../src/load.php';
 
 // Auth Protection
-if (!Session::getAuthStatus()) {
-    header("Location: /signin");
-    exit;
+// Auth Protection is handled within the master layout for a better UX
+if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
+    // We don't redirect here so that the user can see the "Session Expired" UI
+    // inside the professional layout (sidebar, etc.)
 }
 
 $parentId = $_GET['parent'] ?? null;

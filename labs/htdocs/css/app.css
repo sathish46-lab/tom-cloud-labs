@@ -15686,7 +15686,7 @@ html.enable-blur .server-logs-panel {
 .quiz-challenge-card,
 .subtopic-premium-card,
 .quiz-item-card {
-  background: rgba(15, 23, 42, 0.6) !important;
+  background: var(--glass-bg) !important;
   backdrop-filter: blur(25px) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   color: #fff !important;
@@ -15696,7 +15696,8 @@ html.enable-blur .server-logs-panel {
 .subtopic-premium-card:hover,
 .quiz-item-card:hover {
   transform: translateY(-8px);
-  background: rgba(15, 23, 42, 0.8) !important;
+  background: var(--glass-bg) !important;
+  filter: brightness(1.1);
   border-color: rgba(var(--cui-info-rgb), 0.5) !important;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
@@ -16217,6 +16218,110 @@ html.enable-blur .server-logs-panel {
   position: relative;
 }
 
+#session-expired-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(12px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: sessionFadeIn 0.4s ease-out;
+}
+#session-expired-overlay .popup-content {
+  background: linear-gradient(145deg, #1a2c48, #0b1e36);
+  border: 2px solid rgba(255, 165, 0, 0.4);
+  border-radius: 32px;
+  padding: 48px;
+  text-align: center;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+  animation: sessionSlideIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+#session-expired-overlay .icon-container {
+  margin-bottom: 24px;
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 165, 0, 0.15);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px auto;
+  border: 1px solid rgba(255, 165, 0, 0.3);
+}
+#session-expired-overlay .icon-container i {
+  font-size: 48px;
+  color: #ffa500;
+}
+#session-expired-overlay h2 {
+  color: white;
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 12px;
+  letter-spacing: -0.5px;
+}
+#session-expired-overlay p {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+#session-expired-overlay .btn-signin {
+  background: #ffa500;
+  color: #000;
+  padding: 16px 32px;
+  border-radius: 16px;
+  text-decoration: none;
+  font-weight: 800;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 20px rgba(255, 165, 0, 0.2);
+  display: block;
+}
+#session-expired-overlay .btn-signin:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 30px rgba(255, 165, 0, 0.3);
+}
+#session-expired-overlay .btn-signin:active {
+  transform: scale(0.98);
+}
+#session-expired-overlay .btn-home {
+  color: rgba(255, 255, 255, 0.4);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  transition: color 0.3s;
+  margin-top: 12px;
+  display: inline-block;
+}
+#session-expired-overlay .btn-home:hover {
+  color: #fff;
+}
+
+@keyframes sessionFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes sessionSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;

@@ -3,9 +3,8 @@ require_once '../../src/load.php';
 use TomLabs\Labs\Quiz;
 
 // Auth Protection
-if (!Session::getAuthStatus()) {
-    header("Location: /signin");
-    exit;
+if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
+    // Session expired UI
 }
 
 $hash = $_GET['hash'] ?? null;

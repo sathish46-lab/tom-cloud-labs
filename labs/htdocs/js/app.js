@@ -401,11 +401,35 @@ const TomVisuals = {
   },
 
   showWarning: function (message, type = "success") {
-    if (window.TomNotify) {
-      const titles = { success: "Success", warning: "Warning", danger: "Error" };
-      const types = { success: "success", warning: "warning", danger: "error" };
-      TomNotify.show(message, titles[type] || "Notice", types[type] || "info");
+    const toastEl = document.getElementById("copyToast");
+    const msgEl = document.getElementById("toast-message");
+    const iconEl = document.getElementById("toast-icon");
+
+    if (!toastEl) return;
+
+    toastEl.classList.remove(
+      "text-bg-success",
+      "text-bg-warning",
+      "text-bg-danger",
+      "text-white",
+      "text-dark",
+    );
+    iconEl.className = "bx fs-5";
+
+    if (type === "warning") {
+      toastEl.classList.add("text-bg-warning", "text-dark");
+      iconEl.classList.add("bx-error");
+    } else if (type === "danger") {
+      toastEl.classList.add("text-bg-danger", "text-white");
+      iconEl.classList.add("bx-x-circle");
+    } else {
+      toastEl.classList.add("text-bg-success", "text-white");
+      iconEl.classList.add("bx-check-circle");
     }
+
+    msgEl.innerText = message;
+    const toast = new coreui.Toast(toastEl);
+    toast.show();
   },
 
   checkHardware: function () {
@@ -446,21 +470,14 @@ const TomVisuals = {
     localStorage.setItem("tom-labs-visual-blur", shouldEnable);
     this.apply(shouldEnable);
 
-    // Use the new Premium Stackable Notification System
-    if (window.TomNotify) {
-      if (shouldEnable) {
-        TomNotify.show(
-          "Visual Blur has been enabled for a premium look.",
-          "Visuals Enhanced",
-          "success",
-        );
-      } else {
-        TomNotify.show(
-          "Visual Blur disabled. Interface optimized for performance.",
-          "Performance Mode",
-          "warning",
-        );
-      }
+    // Show the message based on state
+    if (shouldEnable) {
+      this.showWarning("Visual Blur Enabled", "success");
+    } else {
+      this.showWarning(
+        "Visual Blur Disabled - Performance Optimized",
+        "warning",
+      );
     }
   },
 

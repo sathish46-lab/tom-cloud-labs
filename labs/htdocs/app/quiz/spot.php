@@ -2,9 +2,8 @@
 require_once '../../src/load.php';
 
 // Auth Protection
-if (!Session::getAuthStatus()) {
-    header("Location: /signin");
-    exit;
+if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
+    // Session expired UI
 }
 
 $quizId = $_GET['id'] ?? null;

@@ -658,6 +658,7 @@ $tomThemes = [
     // This translates your indented Session::$ConsoleLogs into JS
     Console::flush(); 
     ?>
+    <?php include __DIR__ . '/_session_expired_popup.php'; ?>
 </body>
 
 </html>

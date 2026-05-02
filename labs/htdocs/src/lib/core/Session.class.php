@@ -358,14 +358,8 @@ class Session
                 echo '<div class="alert alert-danger">Error: Template not found for ' . htmlspecialchars($relPath) . '</div>';
             }
         } else {
-            // Not logged in: show signin/index
-            if (file_exists($templateRoot . 'index.php')) {
-                include $templateRoot . 'index.php';
-            } elseif (file_exists(__DIR__ . '/../../auth/signin.php')) {
-                include __DIR__ . '/../../auth/signin.php';
-            } else {
-                echo '<div class="alert alert-warning">Please sign in to access this page.</div>';
-            }
+            // Not logged in: Trigger the global professional popup
+            Session::set('show_session_expired', true);
         }
     }
 

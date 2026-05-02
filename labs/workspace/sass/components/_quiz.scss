@@ -7,14 +7,15 @@
 .quiz-challenge-card,
 .subtopic-premium-card,
 .quiz-item-card {
-  background: rgba(15, 23, 42, 0.6) !important; // Deep Dark Slate
+  background: var(--glass-bg) !important;
   backdrop-filter: blur(25px) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   color: #fff !important;
 
   &:hover {
     transform: translateY(-8px);
-    background: rgba(15, 23, 42, 0.8) !important;
+    background: var(--glass-bg) !important;
+    filter: brightness(1.1);
     border-color: rgba(var(--cui-info-rgb), 0.5) !important;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   }

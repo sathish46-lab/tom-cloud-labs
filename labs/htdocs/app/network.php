@@ -1,6 +1,12 @@
 <?php
 require_once __DIR__ . '/../src/load.php';
 require_once __DIR__ . '/../src/lib/core/VPN.class.php';
+// Auth Protection: Ensures layout loads instead of blank page
+if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
+    Session::$pageTitle = "My Network";
+    Session::loadMaster();
+    exit;
+}
 
 $user = Session::getUser();
 $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');

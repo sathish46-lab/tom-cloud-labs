@@ -3,7 +3,9 @@ require_once __DIR__ . '/../src/load.php';
 require_once __DIR__ . '/../src/lib/core/VPN.class.php';
 
 if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    header("Location: /signin"); exit;
+    Session::$pageTitle = "Devices";
+    Session::loadMaster();
+    exit;
 }
 
 $user = Session::getUser();
