@@ -6,8 +6,14 @@ $subtopic = Session::get('current_subtopic');
 // Professional fallbacks for high-density rendering
 $desc = $quiz['desc'] ?? "Challenge yourself with these intriguing queries. Each question sheds light on a different aspect of this domain, honing your beginner skills and paving the way to grasp more complex concepts.";
 $tags = (isset($quiz['tags']) && is_array($quiz['tags'])) ? $quiz['tags'] : [$parent['title'] ?? 'Cybersecurity', $subtopic['title'] ?? 'Networking'];
-$difficulty = $quiz['difficulty'] ?? 'normal';
-$points = $quiz['points_per_correct'] ?? 25;
+$difficulty = strtolower($quiz['difficulty'] ?? 'normal');
+
+// Base Points per difficulty
+$basePoints = 25; // Default Normal
+if ($difficulty === 'easy') $basePoints = 15;
+elseif ($difficulty === 'hard') $basePoints = 50;
+
+$points = $quiz['points_per_correct'] ?? $basePoints;
 
 // Extract quiz questions for the frontend engine
 $quizData = $quiz['questions'] ?? $quiz['content'] ?? [];

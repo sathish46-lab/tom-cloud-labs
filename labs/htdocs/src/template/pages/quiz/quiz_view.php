@@ -31,8 +31,12 @@ $subtopics = $topic['subtopics'] ?? [];
         </div>
 
         <!-- 2. Navigation Tabs -->
+        <?php 
+            $activeTab = Session::get('active_tab', 'topics'); 
+            $topicId = $topic['hash'] ?? $topic['_id'];
+        ?>
         <div class="d-flex align-items-center gap-2 mb-4 overflow-auto pb-2 flex-nowrap quiz-tabs-row">
-            <button class="btn btn-pill-active shadow-sm">Topics</button>
+            <a href="/quiz/<?= $topicId ?>" class="btn <?= ($activeTab === 'topics' || $activeTab === 'recent') ? 'btn-pill-active shadow-sm' : 'btn-pill-outline' ?> topic-tab-btn">Topics</a>
             <div class="dropdown">
                 <button class="btn btn-pill-outline dropdown-toggle" type="button" data-bs-toggle="dropdown">
                     Recent 📂 in <?= $topic['title'] ?>
@@ -41,56 +45,120 @@ $subtopics = $topic['subtopics'] ?? [];
                     <li><a class="dropdown-item" href="#">Recent in All</a></li>
                     <li><hr class="dropdown-divider opacity-10"></li>
                     <?php foreach ($subtopics as $sub): ?>
-                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="launchQuiz('<?= $sub['_id'] ?>')">Recent in <?= $sub['title'] ?></a></li>
+                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="launchQuiz('<?= $sub['hash'] ?? $sub['_id'] ?>')">Recent in <?= $sub['title'] ?></a></li>
                     <?php endforeach; ?>
                 </ul>
             </div>
-            <button class="btn btn-pill-outline">Trending</button>
-            <div class="dropdown">
-                <button class="btn btn-pill-outline dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    Completed ✅ in <?= $topic['title'] ?>
-                </button>
-                <ul class="dropdown-menu quiz-dropdown-menu shadow-lg border-0 mt-2">
-                    <?php foreach ($subtopics as $sub): ?>
-                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="launchQuiz('<?= $sub['_id'] ?>')">Completed in <?= $sub['title'] ?></a></li>
-                    <?php endforeach; ?>
-                </ul>
-            </div>
-            <button class="btn btn-pill-outline">Leaderboard <span class="badge-new">New 🆕 ✨</span></button>
+            <a href="/quiz/<?= $topicId ?>/trending" class="btn <?= $activeTab === 'trending' ? 'btn-pill-active shadow-sm' : 'btn-pill-outline' ?> topic-tab-btn">Trending</a>
+            <a href="/quiz/<?= $topicId ?>/completed" class="btn <?= $activeTab === 'completed' ? 'btn-pill-active shadow-sm' : 'btn-pill-outline' ?> topic-tab-btn">Completed ✅</a>
+            <a href="/quiz/<?= $topicId ?>/leaderboard" class="btn <?= $activeTab === 'leaderboard' ? 'btn-pill-active shadow-sm' : 'btn-pill-outline' ?> topic-tab-btn">Leaderboard <span class="badge-new">New 🆕 ✨</span></a>
         </div>
 
         <hr class="border-secondary opacity-10 mb-5">
 
-        <!-- 3. Sub-Topics Grid -->
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-            <?php if (empty($subtopics)): ?>
-                <div class="col-12 text-center py-5">
-                    <div class="empty-state-card">
-                        <i class="bx bx-folder-open display-1 text-body-tertiary mb-3 opacity-25"></i>
-                        <h4 class="text-body-secondary">No sub-topics available for this track.</h4>
-                        <a href="/quiz" class="btn btn-outline-info rounded-pill px-4 mt-3">Back to Hub</a>
-                    </div>
-                </div>
-            <?php else: ?>
-                <?php foreach ($subtopics as $sub): ?>
-                <div class="col">
-                    <div class="card glass-card subtopic-premium-card h-100 transition-all" onclick="launchQuiz('<?= $sub['_id'] ?>')">
-                        <div class="card-body p-4">
-                            <h5 class="fw-bold mb-2 card-title-text"><?= $sub['title'] ?></h5>
-                            <p class="text-body-secondary small mb-0 opacity-75 lh-base"><?= $sub['desc'] ?></p>
+        <!-- 3. Content Area -->
+        <div id="topic-content-container">
+            <!-- Default: Sub-Topics Grid -->
+            <?php $activeTab = Session::get('active_tab', 'topics'); ?>
+            <div id="topics-grid" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 animate__animated animate__fadeIn <?= ($activeTab !== 'topics' && $activeTab !== 'recent') ? 'd-none' : '' ?>">
+                <?php if (empty($subtopics)): ?>
+                    <div class="col-12 text-center py-5">
+                        <div class="empty-state-card">
+                            <i class="bx bx-folder-open display-1 text-body-tertiary mb-3 opacity-25"></i>
+                            <h4 class="text-body-secondary">No sub-topics available for this track.</h4>
+                            <a href="/quiz" class="btn btn-outline-info rounded-pill px-4 mt-3">Back to Hub</a>
                         </div>
                     </div>
-                </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
+                <?php else: ?>
+                    <?php foreach ($subtopics as $sub): ?>
+                    <div class="col">
+                        <div class="card glass-card subtopic-premium-card h-100 transition-all" onclick="launchQuiz('<?= $sub['hash'] ?? $sub['_id'] ?>')">
+                            <div class="card-body p-4">
+                                <h5 class="fw-bold mb-2 card-title-text"><?= $sub['title'] ?></h5>
+                                <p class="text-body-secondary small mb-0 opacity-75 lh-base"><?= $sub['desc'] ?></p>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+            
+            <!-- AJAX Content Container -->
+            <div id="ajax-tab-content" class="<?= ($activeTab !== 'topics' && $activeTab !== 'recent') ? '' : 'd-none' ?>">
+                <?php 
+                if ($activeTab === 'trending') {
+                    $quizzes = \TomLabs\Labs\Quiz::getTrendingForTopic($topic['_id']);
+                    if (empty($quizzes)) {
+                        echo '<div class="col-12 text-center py-5 animate__animated animate__fadeIn"><div class="empty-state-card opacity-50"><i class="bx bx-trending-up display-1 mb-3"></i><h5 class="text-body-secondary">No trending quizzes yet. Be the first to play!</h5></div></div>';
+                    } else {
+                        echo '<div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4 quiz-masonry-row animate__animated animate__fadeIn">';
+                        foreach ($quizzes as $q) {
+                            $qDiff = strtolower($q['difficulty'] ?? 'normal');
+                            $qJolt = ($qDiff === 'easy') ? 1 : (($qDiff === 'hard') ? 5 : 2);
+                            $userEmail = Session::getUser() ? Session::getUser()->getEmail() : null;
+                            $isAttempted = $userEmail ? \TomLabs\Labs\Quiz::hasAttempted($userEmail, $q['hash']) : false;
+                            include __DIR__ . '/_card.php';
+                        }
+                        echo '</div>';
+                    }
+                } elseif ($activeTab === 'completed') {
+                    $userEmail = Session::getUser() ? Session::getUser()->getEmail() : null;
+                    $quizzes = \TomLabs\Labs\Quiz::getCompletedForUser($userEmail, $topic['_id']);
+                    if (empty($quizzes)) {
+                        echo '<div class="col-12 text-center py-5 animate__animated animate__fadeIn"><div class="empty-state-card opacity-50"><i class="bx bx-check-circle display-1 mb-3"></i><h5 class="text-body-secondary">You haven\'t completed any quizzes in this category yet.</h5></div></div>';
+                    } else {
+                        echo '<div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4 quiz-masonry-row animate__animated animate__fadeIn">';
+                        foreach ($quizzes as $q) {
+                            $qDiff = strtolower($q['difficulty'] ?? 'normal');
+                            $qJolt = ($qDiff === 'easy') ? 1 : (($qDiff === 'hard') ? 5 : 2);
+                            $isAttempted = true;
+                            include __DIR__ . '/_card.php';
+                        }
+                        echo '</div>';
+                    }
+                } elseif ($activeTab === 'leaderboard') {
+                    $leaderboard = \TomLabs\Labs\Quiz::getLeaderboardForTopic($topic['_id']);
+                    include __DIR__ . '/_leaderboard.php';
+                }
+                ?>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
+// Masonry Initialization Engine
+function initQuizMasonry() {
+    const grids = document.querySelectorAll('.quiz-masonry-row');
+    grids.forEach(grid => {
+        // Initialize Masonry
+        const msnry = new Masonry(grid, {
+            itemSelector: '.quiz-card-item',
+            percentPosition: true,
+            transitionDuration: '0.4s'
+        });
+
+        // Layout again after images/fonts load
+        if (typeof imagesLoaded !== 'undefined') {
+            imagesLoaded(grid).on('progress', () => {
+                msnry.layout();
+            });
+        }
+        
+        // Expose to window for manual triggers
+        grid.msnry = msnry;
+    });
+}
+
 function launchQuiz(subtopicId) {
-    const parentId = '<?= $topic['_id'] ?>';
+    const parentId = '<?= $topic['hash'] ?? $topic['_id'] ?>';
     window.location.href = `/quiz/${parentId}/Recent/${subtopicId}`;
 }
+
+// Handle initial tab from server-side session
+document.addEventListener('DOMContentLoaded', () => {
+    initQuizMasonry();
+    const initialTab = '<?= Session::get('active_tab', 'topics') ?>';
+});
 </script>
 

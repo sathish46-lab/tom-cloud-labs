@@ -3,1014 +3,1183 @@
         "id": "1a79243e-4f74-44fb-a63e-11fea9aada7c",
         "title": "Firewalls and VPNs",
         "desc": "Tools for network security and privacy.",
-        "category_id": "9114b868-78c8-4de4-b773-609f5d844268"
+        "category_id": "cybersecurity",
+        "hash": "769467f8-1bdc-493a-9e38-a9042804b09f"
     },
     {
         "id": "2b80354f-5g85-55gc-b74f-22gfb9bbdb8d",
         "title": "Intrusion Detection Systems (IDS)",
         "desc": "Monitoring and detecting malicious activities.",
-        "category_id": "9114b868-78c8-4de4-b773-609f5d844268"
+        "category_id": "cybersecurity",
+        "hash": "1c24f047-b319-4799-9e3e-4550e49cae19"
     },
     {
         "id": "3c91465g-6h96-66hd-c85g-33hgc0ccdc9e",
         "title": "Secure Network Design",
         "desc": "Designing networks for maximum security.",
-        "category_id": "9114b868-78c8-4de4-b773-609f5d844268"
+        "category_id": "cybersecurity",
+        "hash": "5e66e029-b08f-4ff4-9949-f2e8282cc514"
     },
     {
         "id": "4d02576h-7i07-77ie-d96h-44ihd1dde0af",
         "title": "Malware Analysis",
         "desc": "Identifying and understanding malicious software.",
-        "category_id": "9114b868-78c8-4de4-b773-609f5d844268"
+        "category_id": "cybersecurity",
+        "hash": "9b54a209-bc43-4127-8996-258f8bcb03eb"
     },
     {
         "id": "5e13687i-8j18-88jf-e07i-55jie2eef1bg",
         "title": "Cryptography",
         "desc": "Securing communication with codes.",
-        "category_id": "9114b868-78c8-4de4-b773-609f5d844268"
+        "category_id": "cybersecurity",
+        "hash": "fe695a76-211e-4f08-a530-c3b04924c1de"
     },
     {
         "id": "6f24798j-9k29-99kg-f18j-66kjf3ffg2ch",
         "title": "Ethical Hacking",
         "desc": "Legal exploitation of systems to improve security.",
-        "category_id": "9114b868-78c8-4de4-b773-609f5d844268"
+        "category_id": "cybersecurity",
+        "hash": "3f17659a-4605-405d-bdc6-519bd57dcb4b"
     },
     {
         "id": "7g35809k-0l30-00lh-g29k-77lkg4ggh3di",
         "title": "Security Policies and Procedures",
         "desc": "Guidelines and actions for maintaining security.",
-        "category_id": "9114b868-78c8-4de4-b773-609f5d844268"
+        "category_id": "cybersecurity",
+        "hash": "a6310ffb-1fa4-4abe-8437-66c53d1f01ea"
     },
     {
         "id": "8h46910l-1m31-11mi-h30l-88mlh5hhi4ej",
         "title": "Incident Response",
         "desc": "Responding to security incidents effectively.",
-        "category_id": "9114b868-78c8-4de4-b773-609f5d844268"
+        "category_id": "cybersecurity",
+        "hash": "04078a16-1f05-4c8b-bb93-55656161feed"
     },
     {
         "id": "9i57021m-2n32-22nj-i41m-99nmi6iij5fk",
         "title": "Risk Management",
         "desc": "Identifying, evaluating, and mitigating risks.",
-        "category_id": "9114b868-78c8-4de4-b773-609f5d844268"
+        "category_id": "cybersecurity",
+        "hash": "77edb9a3-3083-41f6-a1c2-c35cf65fff2d"
     },
     {
         "id": "0j68132n-3o33-33ok-j52n-00onj7jjk6gl",
         "title": "Cloud Security",
         "desc": "Protecting cloud-based data and applications.",
-        "category_id": "9114b868-78c8-4de4-b773-609f5d844268"
+        "category_id": "cybersecurity",
+        "hash": "640dbcb7-0323-414e-9bb1-6a3ac10e51bb"
     },
     {
         "id": "1k79243o-4p34-44pl-k63o-11pok8kkl7hm",
         "title": "Penetration Testing",
         "desc": "Evaluating system security by simulating attacks.",
-        "category_id": "9114b868-78c8-4de4-b773-609f5d844268"
+        "category_id": "cybersecurity",
+        "hash": "d03ea664-39c1-4ef2-a063-0264fab73935"
     },
     {
         "id": "2l80354p-5q35-55qm-l74p-22qpl9llm8in",
         "title": "Data Loss Prevention",
         "desc": "Methods to protect sensitive data from leaving network.",
-        "category_id": "9114b868-78c8-4de4-b773-609f5d844268"
+        "category_id": "cybersecurity",
+        "hash": "cff701ff-6160-4d4f-81a2-6b521c922bbd"
     },
     {
         "id": "69f2fd5b349b4-learn-roadmap-0",
         "title": "Frontend Development",
         "desc": "Mastering HTML, CSS, JavaScript and frameworks.",
-        "category_id": "learn-roadmap"
+        "category_id": "roadmap",
+        "hash": "3d1f173b-67f1-4b50-b285-b235efd965c0"
     },
     {
         "id": "69f2fd5b349b7-learn-roadmap-1",
         "title": "Backend Development",
         "desc": "Server-side logic, databases, and APIs.",
-        "category_id": "learn-roadmap"
+        "category_id": "roadmap",
+        "hash": "47880df1-86da-46cb-bc60-931137e114ea"
     },
     {
         "id": "69f2fd5b349b8-learn-roadmap-2",
         "title": "DevOps Engineering",
         "desc": "CI/CD, containers, and cloud infrastructure.",
-        "category_id": "learn-roadmap"
+        "category_id": "roadmap",
+        "hash": "8db90dd7-3539-4af7-9670-621f33db6466"
     },
     {
         "id": "69f2fd5b349b9-learn-roadmap-3",
         "title": "Cloud Architecture",
         "desc": "Designing scalable systems on AWS, GCP, or Azure.",
-        "category_id": "learn-roadmap"
+        "category_id": "roadmap",
+        "hash": "c71146f5-5e4d-400c-ae36-786bc168cbbd"
     },
     {
         "id": "69f2fd5b349ba-learn-roadmap-4",
         "title": "Data Science",
         "desc": "Python, statistics, and machine learning pipelines.",
-        "category_id": "learn-roadmap"
+        "category_id": "roadmap",
+        "hash": "56a4e27e-ba87-4776-8c44-7ef8091ee413"
     },
     {
         "id": "69f2fd5b349bb-learn-roadmap-5",
         "title": "Cyber Security",
         "desc": "Ethical hacking, defense, and networking.",
-        "category_id": "learn-roadmap"
+        "category_id": "roadmap",
+        "hash": "2e0e3ad0-2d7f-453d-a60f-f0ea37b8e655"
     },
     {
         "id": "69f2fd5b349bc-learn-roadmap-6",
         "title": "Mobile App Development",
         "desc": "Building iOS and Android apps using modern tools.",
-        "category_id": "learn-roadmap"
+        "category_id": "roadmap",
+        "hash": "6f626652-bd66-42fe-8473-06b53bce77fb"
     },
     {
         "id": "69f2fd5b349bd-learn-lesson-0",
         "title": "AI Prompt Engineering",
         "desc": "Crafting perfect inputs for large language models.",
-        "category_id": "learn-lesson"
+        "category_id": "lesson",
+        "hash": "5762759b-f663-442f-b9d1-df163765dd5b"
     },
     {
         "id": "69f2fd5b349be-learn-lesson-1",
         "title": "Large Language Models",
         "desc": "Understanding the architecture behind ChatGPT and others.",
-        "category_id": "learn-lesson"
+        "category_id": "lesson",
+        "hash": "ae90b4be-b4c6-4a87-becb-a4a18cd8537a"
     },
     {
         "id": "69f2fd5b349bf-learn-lesson-2",
         "title": "System Design Basics",
         "desc": "Building scalable and resilient software systems.",
-        "category_id": "learn-lesson"
+        "category_id": "lesson",
+        "hash": "bfcab362-d7b2-4d6a-99b7-fd1929f7eae5"
     },
     {
         "id": "69f2fd5b349c0-learn-lesson-3",
         "title": "API Development",
         "desc": "Creating RESTful and GraphQL APIs.",
-        "category_id": "learn-lesson"
+        "category_id": "lesson",
+        "hash": "ce811b9f-eb0d-429a-bddb-12da76610fe9"
     },
     {
         "id": "69f2fd5b349c1-learn-lesson-4",
         "title": "Microservices",
         "desc": "Decoupling applications into small, manageable services.",
-        "category_id": "learn-lesson"
+        "category_id": "lesson",
+        "hash": "448a3dba-3a4c-4411-82b4-f0d5106c3e3e"
     },
     {
         "id": "69f2fd5b349c2-learn-lesson-5",
         "title": "CI/CD Pipelines",
         "desc": "Automating testing and deployment workflows.",
-        "category_id": "learn-lesson"
+        "category_id": "lesson",
+        "hash": "20c5c09d-dc10-4605-ae78-a4ae7daabbb1"
     },
     {
         "id": "69f2fd5b349c3-learn-syllabus-0",
         "title": "Computer Architecture",
         "desc": "CPU design, memory hierarchies, and instruction sets.",
-        "category_id": "learn-syllabus"
+        "category_id": "syllabus",
+        "hash": "bf67f9fb-d2cc-4071-86cf-fd92df9da02a"
     },
     {
         "id": "69f2fd5b349c4-learn-syllabus-1",
         "title": "Data Structures & Algorithms",
         "desc": "Core concepts for efficient programming.",
-        "category_id": "learn-syllabus"
+        "category_id": "syllabus",
+        "hash": "78355513-6e17-488f-bde1-ea245513fe47"
     },
     {
         "id": "69f2fd5b349c5-learn-syllabus-2",
         "title": "Operating Systems",
         "desc": "Process management, memory, and file systems.",
-        "category_id": "learn-syllabus"
+        "category_id": "syllabus",
+        "hash": "788a527f-33be-482c-a006-6b65e0dcfa59"
     },
     {
         "id": "69f2fd5b349c6-learn-syllabus-3",
         "title": "Computer Networks",
         "desc": "OSI model, routing, and switching fundamentals.",
-        "category_id": "learn-syllabus"
+        "category_id": "syllabus",
+        "hash": "77b9a861-a0da-4069-b9de-b4d6958c188a"
     },
     {
         "id": "69f2fd5b349c7-learn-syllabus-4",
         "title": "Database Management",
         "desc": "SQL, normalization, and transaction properties.",
-        "category_id": "learn-syllabus"
+        "category_id": "syllabus",
+        "hash": "73342256-7dce-4057-8bf1-e59cd569316e"
     },
     {
         "id": "69f2fd5b349c8-learn-syllabus-5",
         "title": "Software Engineering",
         "desc": "SDLC, agile methodologies, and testing.",
-        "category_id": "learn-syllabus"
+        "category_id": "syllabus",
+        "hash": "e95bc0fb-0b1f-4ed2-947f-d08d48a210ad"
     },
     {
         "id": "69f2fd5b349c9-tech-linux-cli-0",
         "title": "File System Navigation",
         "desc": "Mastering cd, ls, pwd, and directory structures.",
-        "category_id": "tech-linux-cli"
+        "category_id": "networking",
+        "hash": "1bf091c5-0f08-4857-a598-1476bc7f2ace"
     },
     {
         "id": "69f2fd5b349ca-tech-linux-cli-1",
         "title": "File Permissions",
         "desc": "Understanding chmod, chown, and access control.",
-        "category_id": "tech-linux-cli"
+        "category_id": "networking",
+        "hash": "9d4b35ac-30d8-4ee2-b121-7a02f8b9fa2e"
     },
     {
         "id": "69f2fd5b349cb-tech-linux-cli-2",
         "title": "Process Management",
         "desc": "Using ps, top, kill, and background jobs.",
-        "category_id": "tech-linux-cli"
+        "category_id": "networking",
+        "hash": "cb3f4da4-818b-44a3-91b1-d93cadd176e3"
     },
     {
         "id": "69f2fd5b349cc-tech-linux-cli-3",
         "title": "Text Processing",
         "desc": "Advanced usage of grep, awk, and sed.",
-        "category_id": "tech-linux-cli"
+        "category_id": "networking",
+        "hash": "3fcc408a-ef8d-4c4a-b019-d1bc9226479b"
     },
     {
         "id": "69f2fd5b349cd-tech-linux-cli-4",
         "title": "Package Management",
         "desc": "Installing software via apt, yum, and pacman.",
-        "category_id": "tech-linux-cli"
+        "category_id": "networking",
+        "hash": "ec1f3663-f3cb-400e-bc59-c3e20360f38d"
     },
     {
         "id": "69f2fd5b349ce-tech-linux-cli-5",
         "title": "Networking Commands",
         "desc": "Using ping, netstat, nmap, and curl.",
-        "category_id": "tech-linux-cli"
+        "category_id": "networking",
+        "hash": "585fb92b-c33d-4eb3-b087-357cf05220e3"
     },
     {
         "id": "69f2fd5b349cf-tech-git-0",
         "title": "Branching and Merging",
         "desc": "Managing parallel development workflows.",
-        "category_id": "tech-git"
+        "category_id": "programming",
+        "hash": "56d98273-34e9-4eda-bde5-d26bd479d195"
     },
     {
         "id": "69f2fd5b349d0-tech-git-1",
         "title": "Resolving Conflicts",
         "desc": "Handling merge conflicts efficiently.",
-        "category_id": "tech-git"
+        "category_id": "programming",
+        "hash": "762c80da-6276-4ed0-bfd1-717c3d8a6865"
     },
     {
         "id": "69f2fd5b349d1-tech-git-2",
         "title": "Rebase vs Merge",
         "desc": "Understanding history rewriting techniques.",
-        "category_id": "tech-git"
+        "category_id": "programming",
+        "hash": "21250ac9-679c-42f1-b5ef-415013009db1"
     },
     {
         "id": "69f2fd5b349d2-tech-git-3",
         "title": "Git Hooks",
         "desc": "Automating tasks before and after commits.",
-        "category_id": "tech-git"
+        "category_id": "programming",
+        "hash": "39747638-f9ed-4a2d-b382-39ecb3065bdd"
     },
     {
         "id": "69f2fd5b349d3-tech-git-4",
         "title": "GitHub Actions",
         "desc": "Building CI/CD pipelines directly in GitHub.",
-        "category_id": "tech-git"
+        "category_id": "programming",
+        "hash": "7a3ca80e-50e7-4a82-8b4a-e7e63e9b24c2"
     },
     {
         "id": "69f2fd5b349d4-tech-git-5",
         "title": "GitLab CI",
         "desc": "Configuring .gitlab-ci.yml for automation.",
-        "category_id": "tech-git"
+        "category_id": "programming",
+        "hash": "2fb75529-361c-40fd-8f10-82ee19efcda6"
     },
     {
         "id": "69f2fd5b349d5-tech-iot-0",
         "title": "Sensors & Actuators",
         "desc": "Interfacing with the physical world.",
-        "category_id": "tech-iot"
+        "category_id": "hardware",
+        "hash": "e3005c30-419d-41b1-bbf9-5581a96f7959"
     },
     {
         "id": "69f2fd5b349d6-tech-iot-1",
         "title": "MQTT Protocol",
         "desc": "Lightweight messaging for IoT devices.",
-        "category_id": "tech-iot"
+        "category_id": "hardware",
+        "hash": "2f02c073-8dd6-4aad-bbba-db85584a69f1"
     },
     {
         "id": "69f2fd5b349d7-tech-iot-2",
         "title": "Edge Computing",
         "desc": "Processing data closer to the source.",
-        "category_id": "tech-iot"
+        "category_id": "hardware",
+        "hash": "c5382db6-9c57-4f7e-97a0-320f76de28a6"
     },
     {
         "id": "69f2fd5b349d8-tech-iot-3",
         "title": "Smart Home Systems",
         "desc": "Home automation protocols like Zigbee and Z-Wave.",
-        "category_id": "tech-iot"
+        "category_id": "hardware",
+        "hash": "84413e83-7c27-4426-9871-de2438fcea99"
     },
     {
         "id": "69f2fd5b349d9-tech-iot-4",
         "title": "Industrial IoT (IIoT)",
         "desc": "Applying IoT to manufacturing and logistics.",
-        "category_id": "tech-iot"
+        "category_id": "hardware",
+        "hash": "0c9220a7-470b-4c4a-b9e1-cc565c130c19"
     },
     {
         "id": "69f2fd5b349da-tech-iot-5",
         "title": "IoT Security",
         "desc": "Securing constrained devices and networks.",
-        "category_id": "tech-iot"
+        "category_id": "hardware",
+        "hash": "2f403da6-513c-475a-aae6-ecc1aa96c76d"
     },
     {
         "id": "69f2fd5b349db-tech-microcontrollers-0",
         "title": "Arduino Programming",
         "desc": "Writing C/C++ for Arduino boards.",
-        "category_id": "tech-microcontrollers"
+        "category_id": "tech-microcontrollers",
+        "hash": "23b13939-f745-4b95-831a-4ab87746ad2c"
     },
     {
         "id": "69f2fd5b349dc-tech-microcontrollers-1",
         "title": "Raspberry Pi GPIO",
         "desc": "Controlling hardware pins via Python.",
-        "category_id": "tech-microcontrollers"
+        "category_id": "tech-microcontrollers",
+        "hash": "cbab8dec-822b-4f87-b752-c2bffa00346f"
     },
     {
         "id": "69f2fd5b349dd-tech-microcontrollers-2",
         "title": "ESP32 & ESP8266",
         "desc": "Adding Wi-Fi and Bluetooth to embedded projects.",
-        "category_id": "tech-microcontrollers"
+        "category_id": "tech-microcontrollers",
+        "hash": "84d27c27-32d7-485f-b38f-19fe0e39fccf"
     },
     {
         "id": "69f2fd5b349de-tech-microcontrollers-3",
         "title": "Real-Time OS (RTOS)",
         "desc": "Task scheduling in embedded systems.",
-        "category_id": "tech-microcontrollers"
+        "category_id": "tech-microcontrollers",
+        "hash": "97b47a5f-79da-418f-a109-f1b5942d83b6"
     },
     {
         "id": "69f2fd5b349df-tech-microcontrollers-4",
         "title": "Analog-to-Digital",
         "desc": "Reading sensor data (ADC).",
-        "category_id": "tech-microcontrollers"
+        "category_id": "tech-microcontrollers",
+        "hash": "9cffaf3d-9328-49d7-b9f1-6b06be47db5a"
     },
     {
         "id": "69f2fd5b349e0-tech-microcontrollers-5",
         "title": "I2C/SPI Protocols",
         "desc": "Serial communication between components.",
-        "category_id": "tech-microcontrollers"
+        "category_id": "tech-microcontrollers",
+        "hash": "1549e818-c8d7-4ef9-a24a-dbb04717a2f2"
     },
     {
         "id": "69f2fd5b349e1-tech-ai-0",
         "title": "Neural Networks",
         "desc": "Deep learning basics and perceptrons.",
-        "category_id": "tech-ai"
+        "category_id": "artificial-intelligence",
+        "hash": "54902027-9faf-49c4-94c2-6dd9d8f46c90"
     },
     {
         "id": "69f2fd5b349e2-tech-ai-1",
         "title": "Natural Language Processing",
         "desc": "Understanding and generating human language.",
-        "category_id": "tech-ai"
+        "category_id": "artificial-intelligence",
+        "hash": "8983233b-5e33-47ba-9d27-2de01b689ea2"
     },
     {
         "id": "69f2fd5b349e3-tech-ai-2",
         "title": "Computer Vision",
         "desc": "Image processing and object detection.",
-        "category_id": "tech-ai"
+        "category_id": "artificial-intelligence",
+        "hash": "00268406-53f0-405d-aa65-8fc7412f6173"
     },
     {
         "id": "69f2fd5b349e4-tech-ai-3",
         "title": "Generative AI",
         "desc": "GANs, diffusion models, and creative AI.",
-        "category_id": "tech-ai"
+        "category_id": "artificial-intelligence",
+        "hash": "a30ff616-a7f4-4736-866c-17a5e2ba75c5"
     },
     {
         "id": "69f2fd5b349e5-tech-ai-4",
         "title": "Reinforcement Learning",
         "desc": "Training agents via rewards and penalties.",
-        "category_id": "tech-ai"
+        "category_id": "artificial-intelligence",
+        "hash": "2424c465-1a50-4e8a-829e-d8824b00f722"
     },
     {
         "id": "69f2fd5b349e6-tech-ai-5",
         "title": "Transformer Models",
         "desc": "The architecture behind modern LLMs.",
-        "category_id": "tech-ai"
+        "category_id": "artificial-intelligence",
+        "hash": "e63af781-7826-4039-af3c-752e568041a2"
     },
     {
         "id": "69f2fd5b349e7-tech-os-0",
         "title": "Process Synchronization",
         "desc": "Mutexes, semaphores, and race conditions.",
-        "category_id": "tech-os"
+        "category_id": "networking",
+        "hash": "a6473175-16ff-414f-8ad0-6c25756313ac"
     },
     {
         "id": "69f2fd5b349e8-tech-os-1",
         "title": "Memory Management",
         "desc": "Paging, segmentation, and virtual memory.",
-        "category_id": "tech-os"
+        "category_id": "networking",
+        "hash": "3ec8a21b-0a10-4632-9e6e-82a83598000d"
     },
     {
         "id": "69f2fd5b349e9-tech-os-2",
         "title": "File Systems",
         "desc": "EXT4, NTFS, and storage management.",
-        "category_id": "tech-os"
+        "category_id": "networking",
+        "hash": "a2684c37-9e35-4c2a-949e-6a7b415a4652"
     },
     {
         "id": "69f2fd5b349ea-tech-os-3",
         "title": "Deadlocks",
         "desc": "Prevention, avoidance, and detection.",
-        "category_id": "tech-os"
+        "category_id": "networking",
+        "hash": "40957cc8-3b38-4b57-85da-ce4ee0c32014"
     },
     {
         "id": "69f2fd5b349eb-tech-os-4",
         "title": "Virtualization",
         "desc": "Hypervisors and virtual machines.",
-        "category_id": "tech-os"
+        "category_id": "networking",
+        "hash": "a9502ae5-486e-4fc2-bf14-8f64266c557f"
     },
     {
         "id": "69f2fd5b349ec-tech-os-5",
         "title": "Containers",
         "desc": "Docker, namespaces, and cgroups.",
-        "category_id": "tech-os"
+        "category_id": "networking",
+        "hash": "489df6cb-9856-4a10-b8bf-84665e3f0f05"
     },
     {
         "id": "69f2fd5b349ed-tech-networks-0",
         "title": "TCP/IP Protocol Suite",
         "desc": "The foundation of internet communication.",
-        "category_id": "tech-networks"
+        "category_id": "networking",
+        "hash": "a1971b4a-e81c-46e5-956a-953178632e41"
     },
     {
         "id": "69f2fd5b349ee-tech-networks-1",
         "title": "Routing and Switching",
         "desc": "Directing traffic across local and wide areas.",
-        "category_id": "tech-networks"
+        "category_id": "networking",
+        "hash": "631c3e35-3d54-4c29-a509-ec953ed58126"
     },
     {
         "id": "69f2fd5b349ef-tech-networks-2",
         "title": "NAT",
         "desc": "Network Address Translation basics.",
-        "category_id": "tech-networks"
+        "category_id": "networking",
+        "hash": "6c2b83a2-35ce-4e3a-99be-bb7c8107b1b5"
     },
     {
         "id": "69f2fd5b349f0-tech-networks-3",
         "title": "DNS & DHCP",
         "desc": "Domain resolution and IP assignment.",
-        "category_id": "tech-networks"
+        "category_id": "networking",
+        "hash": "82da71a4-1d3b-4368-8e2e-64fee790e03f"
     },
     {
         "id": "69f2fd5b349f1-tech-networks-4",
         "title": "Wireless Networking",
         "desc": "Wi-Fi standards and security protocols.",
-        "category_id": "tech-networks"
+        "category_id": "networking",
+        "hash": "9666603c-d44b-45f2-b14b-d419fe71662c"
     },
     {
         "id": "69f2fd5b349f2-tech-networks-5",
         "title": "Network Security",
         "desc": "Firewalls, IDS/IPS, and VPNs.",
-        "category_id": "tech-networks"
+        "category_id": "networking",
+        "hash": "ba9fa4ac-4e6f-4232-8a9e-be1aae877fcb"
     },
     {
         "id": "69f2fd5b349f3-tech-ml-0",
         "title": "Linear & Logistic Regression",
         "desc": "Fundamental predictive modeling algorithms.",
-        "category_id": "tech-ml"
+        "category_id": "artificial-intelligence",
+        "hash": "aea09a99-5d38-444e-a954-ca89c0e41c1b"
     },
     {
         "id": "69f2fd5b349f4-tech-ml-1",
         "title": "Decision Trees",
         "desc": "Classification via tree-based structures.",
-        "category_id": "tech-ml"
+        "category_id": "artificial-intelligence",
+        "hash": "aaa61b79-e2cc-4f43-9bd1-8e4f6e9f8903"
     },
     {
         "id": "69f2fd5b349f5-tech-ml-2",
         "title": "Support Vector Machines",
         "desc": "Finding the optimal hyperplane.",
-        "category_id": "tech-ml"
+        "category_id": "artificial-intelligence",
+        "hash": "6e088062-70d7-4986-975a-43b592ca4865"
     },
     {
         "id": "69f2fd5b349f6-tech-ml-3",
         "title": "K-Means Clustering",
         "desc": "Unsupervised learning for data grouping.",
-        "category_id": "tech-ml"
+        "category_id": "artificial-intelligence",
+        "hash": "65ccd1b9-3c84-4c36-ba74-c7494de1a6f6"
     },
     {
         "id": "69f2fd5b349f7-tech-ml-4",
         "title": "PCA",
         "desc": "Principal Component Analysis and dimensionality reduction.",
-        "category_id": "tech-ml"
+        "category_id": "artificial-intelligence",
+        "hash": "76786a9a-7e83-46ef-b9e6-2bbff2a10065"
     },
     {
         "id": "69f2fd5b349f8-tech-ml-5",
         "title": "Model Evaluation",
         "desc": "Cross-validation, precision, and recall.",
-        "category_id": "tech-ml"
+        "category_id": "artificial-intelligence",
+        "hash": "25c92da6-5d68-4ddc-a4ba-e4317a32ba62"
     },
     {
         "id": "69f2fd5b349f9-prog-generic-0",
         "title": "Object-Oriented Programming",
         "desc": "Classes, inheritance, and polymorphism.",
-        "category_id": "prog-generic"
+        "category_id": "programming",
+        "hash": "46a52cea-d590-4e33-baba-d113a2ea1d0c"
     },
     {
         "id": "69f2fd5b349fa-prog-generic-1",
         "title": "Functional Programming",
         "desc": "Immutability and pure functions.",
-        "category_id": "prog-generic"
+        "category_id": "programming",
+        "hash": "1eec826d-dcc6-4094-b9a0-82c315fca92f"
     },
     {
         "id": "69f2fd5b349fb-prog-generic-2",
         "title": "Design Patterns",
         "desc": "Common solutions to software design problems.",
-        "category_id": "prog-generic"
+        "category_id": "programming",
+        "hash": "814f79d0-d8e1-46c7-9b07-148d7705debd"
     },
     {
         "id": "69f2fd5b349fc-prog-generic-3",
         "title": "SOLID Principles",
         "desc": "Writing maintainable and scalable code.",
-        "category_id": "prog-generic"
+        "category_id": "programming",
+        "hash": "ba5f6428-5300-43ea-a8d6-2e53d10efa41"
     },
     {
         "id": "69f2fd5b349fd-prog-generic-4",
         "title": "Big O Notation",
         "desc": "Analyzing algorithmic time and space complexity.",
-        "category_id": "prog-generic"
+        "category_id": "programming",
+        "hash": "c713a0ac-fa02-4ead-9672-ab90f0c802ea"
     },
     {
         "id": "69f2fd5b349fe-prog-generic-5",
         "title": "Recursion",
         "desc": "Solving problems by calling the same function.",
-        "category_id": "prog-generic"
+        "category_id": "programming",
+        "hash": "9b74f0e8-d05a-4a10-b565-c040fbf5a6b7"
     },
     {
         "id": "69f2fd5b349ff-prog-c-0",
         "title": "Pointers and Memory",
         "desc": "Manual memory management with malloc and free.",
-        "category_id": "prog-c"
+        "category_id": "c-programming",
+        "hash": "9400f1a6-083b-4d65-8bd3-cfe7104169eb"
     },
     {
         "id": "69f2fd5b34a00-prog-c-1",
         "title": "Structs and Unions",
         "desc": "Creating complex data types.",
-        "category_id": "prog-c"
+        "category_id": "c-programming",
+        "hash": "6976b7a5-f0b8-4078-a82d-dc85e9c0ce9d"
     },
     {
         "id": "69f2fd5b34a01-prog-c-2",
         "title": "File Handling",
         "desc": "Reading and writing files in C.",
-        "category_id": "prog-c"
+        "category_id": "c-programming",
+        "hash": "b3cf6dd4-8eb2-447a-960a-8fae371cfac0"
     },
     {
         "id": "69f2fd5b34a02-prog-c-3",
         "title": "Preprocessor Directives",
         "desc": "Macros and conditional compilation.",
-        "category_id": "prog-c"
+        "category_id": "c-programming",
+        "hash": "f8b1e674-d91a-475b-a495-549e8f095d75"
     },
     {
         "id": "69f2fd5b34a03-prog-c-4",
         "title": "Multithreading",
         "desc": "Using pthreads for concurrent execution.",
-        "category_id": "prog-c"
+        "category_id": "c-programming",
+        "hash": "f006a3ee-c7a5-4519-a6fc-a98dfc2859eb"
     },
     {
         "id": "69f2fd5b34a04-prog-c-5",
         "title": "Bitwise Operations",
         "desc": "Manipulating data at the bit level.",
-        "category_id": "prog-c"
+        "category_id": "c-programming",
+        "hash": "804a861a-4449-473f-b81b-4e73fddf0872"
     },
     {
         "id": "69f2fd5b34a05-prog-bash-0",
         "title": "Variables and Loops",
         "desc": "Core syntax for shell scripting.",
-        "category_id": "prog-bash"
+        "category_id": "prog-bash",
+        "hash": "a20d78c7-1f87-40bc-b825-14e7a9a9108e"
     },
     {
         "id": "69f2fd5b34a06-prog-bash-1",
         "title": "Conditional Statements",
         "desc": "If/else logic in Bash.",
-        "category_id": "prog-bash"
+        "category_id": "prog-bash",
+        "hash": "52cf5779-133e-45db-a7e4-011cb3c8222a"
     },
     {
         "id": "69f2fd5b34a07-prog-bash-2",
         "title": "Awk & Sed",
         "desc": "Powerful stream editing and text processing.",
-        "category_id": "prog-bash"
+        "category_id": "prog-bash",
+        "hash": "e692509b-2dc2-4e0f-baff-201b3cc3af64"
     },
     {
         "id": "69f2fd5b34a08-prog-bash-3",
         "title": "Cron Jobs",
         "desc": "Scheduling automated tasks.",
-        "category_id": "prog-bash"
+        "category_id": "prog-bash",
+        "hash": "afb7c9e7-6696-4664-8ade-d99842f2d44d"
     },
     {
         "id": "69f2fd5b34a09-prog-bash-4",
         "title": "I/O Redirection",
         "desc": "Pipes, stdout, and stderr.",
-        "category_id": "prog-bash"
+        "category_id": "prog-bash",
+        "hash": "f1d5f03f-606d-426d-9ade-5cfd591b00c9"
     },
     {
         "id": "69f2fd5b34a0a-prog-bash-5",
         "title": "Error Handling",
         "desc": "Managing exit codes and trapping signals.",
-        "category_id": "prog-bash"
+        "category_id": "prog-bash",
+        "hash": "2dd887ec-9704-479b-89a3-5ba3e2e2922a"
     },
     {
         "id": "69f2fd5b34a0b-prog-mongodb-0",
         "title": "CRUD Operations",
         "desc": "Inserting, querying, updating, and deleting documents.",
-        "category_id": "prog-mongodb"
+        "category_id": "mongodb",
+        "hash": "caf597c5-435d-4e6c-b5d6-f8f0f74ec92a"
     },
     {
         "id": "69f2fd5b34a0c-prog-mongodb-1",
         "title": "Aggregation Framework",
         "desc": "Complex data processing pipelines.",
-        "category_id": "prog-mongodb"
+        "category_id": "mongodb",
+        "hash": "d06f4b33-5d8c-4090-bdb5-bc8e7caad997"
     },
     {
         "id": "69f2fd5b34a0d-prog-mongodb-2",
         "title": "Indexing",
         "desc": "Improving query performance.",
-        "category_id": "prog-mongodb"
+        "category_id": "mongodb",
+        "hash": "5778f9a3-4549-4058-bbac-8a94b7bcce2e"
     },
     {
         "id": "69f2fd5b34a0e-prog-mongodb-3",
         "title": "Replication",
         "desc": "High availability via replica sets.",
-        "category_id": "prog-mongodb"
+        "category_id": "mongodb",
+        "hash": "ed4f5300-3945-4691-b417-f50a713fffd5"
     },
     {
         "id": "69f2fd5b34a0f-prog-mongodb-4",
         "title": "Sharding",
         "desc": "Horizontal scaling for large datasets.",
-        "category_id": "prog-mongodb"
+        "category_id": "mongodb",
+        "hash": "5af6b87b-8acb-40cd-860e-54c6aad2f351"
     },
     {
         "id": "69f2fd5b34a10-prog-mongodb-5",
         "title": "Data Modeling",
         "desc": "Schema design in a NoSQL environment.",
-        "category_id": "prog-mongodb"
+        "category_id": "mongodb",
+        "hash": "cb1d97e0-d589-48f8-8d27-64b691d513e2"
     },
     {
         "id": "69f2fd5b34a11-prog-socket-0",
         "title": "TCP Sockets",
         "desc": "Reliable, connection-oriented communication.",
-        "category_id": "prog-socket"
+        "category_id": "socket-programming",
+        "hash": "364d8ec1-7c10-490b-9e57-ec60a2dd585b"
     },
     {
         "id": "69f2fd5b34a12-prog-socket-1",
         "title": "UDP Sockets",
         "desc": "Fast, connectionless communication.",
-        "category_id": "prog-socket"
+        "category_id": "socket-programming",
+        "hash": "ef3bbd72-a084-4101-b01f-8289dbf072b9"
     },
     {
         "id": "69f2fd5b34a13-prog-socket-2",
         "title": "Non-blocking I/O",
         "desc": "Handling multiple connections efficiently.",
-        "category_id": "prog-socket"
+        "category_id": "socket-programming",
+        "hash": "fc555f8e-0862-49f3-b2c8-f01c99cae861"
     },
     {
         "id": "69f2fd5b34a14-prog-socket-3",
         "title": "WebSockets",
         "desc": "Real-time bidirectional communication for the web.",
-        "category_id": "prog-socket"
+        "category_id": "socket-programming",
+        "hash": "6ae220a9-b6b1-451d-aef2-0b4bbfc76d4a"
     },
     {
         "id": "69f2fd5b34a15-prog-socket-4",
         "title": "Multiplexing",
         "desc": "Using select, poll, and epoll.",
-        "category_id": "prog-socket"
+        "category_id": "socket-programming",
+        "hash": "6f12018e-363b-49ae-8a9e-530111a8cc77"
     },
     {
         "id": "69f2fd5b34a16-prog-socket-5",
         "title": "Network Endianness",
         "desc": "Byte order conversion (Network vs Host).",
-        "category_id": "prog-socket"
+        "category_id": "socket-programming",
+        "hash": "2a8005dd-11be-49d8-9ee8-18929c76f618"
     },
     {
         "id": "69f2fd5b34a17-prog-python-0",
         "title": "Lists and Dictionaries",
         "desc": "Core data structures in Python.",
-        "category_id": "prog-python"
+        "category_id": "python-programming",
+        "hash": "1e7f0506-b4e7-44b7-bb42-37f816078e15"
     },
     {
         "id": "69f2fd5b34a18-prog-python-1",
         "title": "Generators and Iterators",
         "desc": "Memory-efficient data processing.",
-        "category_id": "prog-python"
+        "category_id": "python-programming",
+        "hash": "9a7aa5f1-7087-40b3-aa37-e1eb974daf9b"
     },
     {
         "id": "69f2fd5b34a19-prog-python-2",
         "title": "Decorators",
         "desc": "Modifying function behavior dynamically.",
-        "category_id": "prog-python"
+        "category_id": "python-programming",
+        "hash": "354fd1d4-f20b-43a9-9a39-07f583afd893"
     },
     {
         "id": "69f2fd5b34a1a-prog-python-3",
         "title": "Context Managers",
         "desc": "Using the \"with\" statement for resource handling.",
-        "category_id": "prog-python"
+        "category_id": "python-programming",
+        "hash": "2b0c2cb2-c447-4752-9ac9-891d83bba8b3"
     },
     {
         "id": "69f2fd5b34a1b-prog-python-4",
         "title": "Asyncio",
         "desc": "Asynchronous programming in Python.",
-        "category_id": "prog-python"
+        "category_id": "python-programming",
+        "hash": "1a35bf70-45b8-4ae7-a7cf-c84c77cb337f"
     },
     {
         "id": "69f2fd5b34a1c-prog-python-5",
         "title": "Data Analysis",
         "desc": "Using Pandas and NumPy.",
-        "category_id": "prog-python"
+        "category_id": "python-programming",
+        "hash": "e4f9fe3d-37c2-4fcb-affd-33977670be98"
     },
     {
         "id": "69f2fd5b34a1d-prog-php-0",
         "title": "Object-Oriented PHP",
         "desc": "Classes, interfaces, and traits.",
-        "category_id": "prog-php"
+        "category_id": "php-programming",
+        "hash": "babd3244-02be-4911-8e1c-32e0ac5ce102"
     },
     {
         "id": "69f2fd5b34a1e-prog-php-1",
         "title": "PDO and Databases",
         "desc": "Secure database interaction.",
-        "category_id": "prog-php"
+        "category_id": "php-programming",
+        "hash": "03e3a33e-037b-48e0-a347-400e672d5929"
     },
     {
         "id": "69f2fd5b34a1f-prog-php-2",
         "title": "Composer",
         "desc": "Dependency management in PHP.",
-        "category_id": "prog-php"
+        "category_id": "php-programming",
+        "hash": "4cf67272-be32-4c0f-95b0-bfb02757c2ca"
     },
     {
         "id": "69f2fd5b34a20-prog-php-3",
         "title": "Laravel Basics",
         "desc": "Introduction to the Laravel framework.",
-        "category_id": "prog-php"
+        "category_id": "php-programming",
+        "hash": "be3f8f4b-8c0f-412f-81e5-4e90cb817ba1"
     },
     {
         "id": "69f2fd5b34a21-prog-php-4",
         "title": "RESTful APIs",
         "desc": "Building web services with PHP.",
-        "category_id": "prog-php"
+        "category_id": "php-programming",
+        "hash": "556e81c9-5507-4ea3-b839-129ae6e91031"
     },
     {
         "id": "69f2fd5b34a22-prog-php-5",
         "title": "Session & Cookies",
         "desc": "State management across requests.",
-        "category_id": "prog-php"
+        "category_id": "php-programming",
+        "hash": "274b2ee2-13c6-4735-a073-589f9dcb6b8c"
     },
     {
         "id": "69f2fd5b34a23-prog-html-css-0",
         "title": "Semantic HTML5",
         "desc": "Structuring web pages meaningfully.",
-        "category_id": "prog-html-css"
+        "category_id": "web-development",
+        "hash": "e3c7fa04-9b84-4688-8376-91386e5e1eb4"
     },
     {
         "id": "69f2fd5b34a24-prog-html-css-1",
         "title": "CSS Flexbox",
         "desc": "One-dimensional layout module.",
-        "category_id": "prog-html-css"
+        "category_id": "web-development",
+        "hash": "94cff4e8-2bed-4e96-bf97-e222dde92b26"
     },
     {
         "id": "69f2fd5b34a25-prog-html-css-2",
         "title": "CSS Grid Layout",
         "desc": "Two-dimensional layout module.",
-        "category_id": "prog-html-css"
+        "category_id": "web-development",
+        "hash": "82038b9f-d251-4818-a20f-4027ea02e2e4"
     },
     {
         "id": "69f2fd5b34a26-prog-html-css-3",
         "title": "Responsive Web Design",
         "desc": "Media queries and fluid layouts.",
-        "category_id": "prog-html-css"
+        "category_id": "web-development",
+        "hash": "e48d2130-696c-45f7-aa33-92392805c30f"
     },
     {
         "id": "69f2fd5b34a27-prog-html-css-4",
         "title": "CSS Animations",
         "desc": "Keyframes and transitions.",
-        "category_id": "prog-html-css"
+        "category_id": "web-development",
+        "hash": "7bbfe2d5-e90d-4d7b-9adb-e5e3758f782b"
     },
     {
         "id": "69f2fd5b34a28-prog-html-css-5",
         "title": "Web Accessibility (a11y)",
         "desc": "Making the web usable for everyone.",
-        "category_id": "prog-html-css"
+        "category_id": "web-development",
+        "hash": "27ed8638-53a2-4846-8fa9-63480a675629"
     },
     {
         "id": "69f2fd5b34a29-prog-micropython-0",
         "title": "Hardware Control",
         "desc": "Interacting with pins and peripherals.",
-        "category_id": "prog-micropython"
+        "category_id": "programming",
+        "hash": "38d6c8f2-3cc4-4d43-abe2-3c563315b19a"
     },
     {
         "id": "69f2fd5b34a2a-prog-micropython-1",
         "title": "Wi-Fi Connectivity",
         "desc": "Connecting microcontrollers to the internet.",
-        "category_id": "prog-micropython"
+        "category_id": "programming",
+        "hash": "acd2fb75-bc69-4c75-b784-55f82e87de11"
     },
     {
         "id": "69f2fd5b34a2b-prog-micropython-2",
         "title": "Reading Sensors",
         "desc": "Acquiring data from the environment.",
-        "category_id": "prog-micropython"
+        "category_id": "programming",
+        "hash": "552cc4d5-8bb9-425f-8c14-520f8592e02e"
     },
     {
         "id": "69f2fd5b34a2c-prog-micropython-3",
         "title": "WebREPL",
         "desc": "Wireless programming interface.",
-        "category_id": "prog-micropython"
+        "category_id": "programming",
+        "hash": "1c2b7a2b-19d9-4941-97b8-52e823d169dc"
     },
     {
         "id": "69f2fd5b34a2d-prog-micropython-4",
         "title": "File System",
         "desc": "Managing files on the microcontroller flash.",
-        "category_id": "prog-micropython"
+        "category_id": "programming",
+        "hash": "a6bf16f3-b233-4e20-a072-d2cb0685d675"
     },
     {
         "id": "69f2fd5b34a2e-prog-micropython-5",
         "title": "PWM and Timers",
         "desc": "Precise hardware timing and control.",
-        "category_id": "prog-micropython"
+        "category_id": "programming",
+        "hash": "6f0ba7f9-1edd-4a31-92d9-7267e4475a6c"
     },
     {
         "id": "69f2fd5b34a2f-prog-bootstrap-0",
         "title": "Grid System",
         "desc": "Building responsive layouts with rows and columns.",
-        "category_id": "prog-bootstrap"
+        "category_id": "prog-bootstrap",
+        "hash": "ef1a01b4-3d12-45bb-b7a7-481fc42ab4f2"
     },
     {
         "id": "69f2fd5b34a30-prog-bootstrap-1",
         "title": "Navigation Components",
         "desc": "Navbars, tabs, and breadcrumbs.",
-        "category_id": "prog-bootstrap"
+        "category_id": "prog-bootstrap",
+        "hash": "7c8c2035-22a2-4fb4-ad11-6aeff3b1fd0b"
     },
     {
         "id": "69f2fd5b34a31-prog-bootstrap-2",
         "title": "Modals and Alerts",
         "desc": "Interactive UI components.",
-        "category_id": "prog-bootstrap"
+        "category_id": "prog-bootstrap",
+        "hash": "ade16e31-fb77-4f9b-92b2-07ddadb17d79"
     },
     {
         "id": "69f2fd5b34a32-prog-bootstrap-3",
         "title": "Utility Classes",
         "desc": "Spacing, typography, and color helpers.",
-        "category_id": "prog-bootstrap"
+        "category_id": "prog-bootstrap",
+        "hash": "25d9342b-074e-432b-b0be-a8d107077ebd"
     },
     {
         "id": "69f2fd5b34a33-prog-bootstrap-4",
         "title": "Form Controls",
         "desc": "Styling inputs, selects, and validation.",
-        "category_id": "prog-bootstrap"
+        "category_id": "prog-bootstrap",
+        "hash": "a86dcb8a-14e6-417a-a494-f2ecea65313a"
     },
     {
         "id": "69f2fd5b34a34-prog-bootstrap-5",
         "title": "Theming with SASS",
         "desc": "Customizing Bootstrap variables.",
-        "category_id": "prog-bootstrap"
+        "category_id": "prog-bootstrap",
+        "hash": "86fb81ca-7b9a-4241-811b-e8e8e016c892"
     },
     {
         "id": "69f2fd5b34a35-prog-nodejs-0",
         "title": "Event Loop",
         "desc": "Understanding Node.js asynchronous architecture.",
-        "category_id": "prog-nodejs"
+        "category_id": "prog-nodejs",
+        "hash": "35c2da79-58d4-48f1-936f-74915cc02213"
     },
     {
         "id": "69f2fd5b34a36-prog-nodejs-1",
         "title": "Express.js Framework",
         "desc": "Building web servers quickly.",
-        "category_id": "prog-nodejs"
+        "category_id": "prog-nodejs",
+        "hash": "4b87997f-1283-41f9-821a-f56c498a8973"
     },
     {
         "id": "69f2fd5b34a37-prog-nodejs-2",
         "title": "File System (fs)",
         "desc": "Reading and writing files asynchronously.",
-        "category_id": "prog-nodejs"
+        "category_id": "prog-nodejs",
+        "hash": "3d41abd1-9c99-4fd2-a0d1-5d87105db80c"
     },
     {
         "id": "69f2fd5b34a38-prog-nodejs-3",
         "title": "Streams and Buffers",
         "desc": "Handling large data efficiently.",
-        "category_id": "prog-nodejs"
+        "category_id": "prog-nodejs",
+        "hash": "df1cf2d0-cffb-4f28-a7ad-7f4268effa68"
     },
     {
         "id": "69f2fd5b34a39-prog-nodejs-4",
         "title": "Authentication (JWT)",
         "desc": "Securing API endpoints.",
-        "category_id": "prog-nodejs"
+        "category_id": "prog-nodejs",
+        "hash": "39e996b0-d72f-4b94-adcd-44c6c6f5e8df"
     },
     {
         "id": "69f2fd5b34a3a-prog-nodejs-5",
         "title": "Socket.io",
         "desc": "Real-time event-based communication.",
-        "category_id": "prog-nodejs"
+        "category_id": "prog-nodejs",
+        "hash": "948a8250-038b-4b7f-b04a-6794806d3707"
     },
     {
         "id": "69f2fd5b34a3b-prog-jquery-0",
         "title": "DOM Traversal",
         "desc": "Finding elements in the DOM tree efficiently.",
-        "category_id": "prog-jquery"
+        "category_id": "prog-jquery",
+        "hash": "0552ed3b-c477-4c25-ac6f-12e329667336"
     },
     {
         "id": "69f2fd5b34a3c-prog-jquery-1",
         "title": "Event Handling",
         "desc": "Managing clicks, hovers, and keyboard inputs.",
-        "category_id": "prog-jquery"
+        "category_id": "prog-jquery",
+        "hash": "92d820af-4ad4-4f01-ba67-7fb5a70cac9a"
     },
     {
         "id": "69f2fd5b34a3d-prog-jquery-2",
         "title": "AJAX Requests",
         "desc": "Fetching data without reloading the page.",
-        "category_id": "prog-jquery"
+        "category_id": "prog-jquery",
+        "hash": "2c045098-4a13-4f79-8a7e-017401311778"
     },
     {
         "id": "69f2fd5b34a3e-prog-jquery-3",
         "title": "Animation Effects",
         "desc": "Fading, sliding, and custom animations.",
-        "category_id": "prog-jquery"
+        "category_id": "prog-jquery",
+        "hash": "9ac888a8-b114-4154-a598-c33d3eaecb26"
     },
     {
         "id": "69f2fd5b34a3f-prog-jquery-4",
         "title": "jQuery Plugins",
         "desc": "Extending jQuery functionality.",
-        "category_id": "prog-jquery"
+        "category_id": "prog-jquery",
+        "hash": "d4ab1050-0b3b-460e-9ded-8853cc3c1a2a"
     },
     {
         "id": "69f2fd5b34a40-prog-jquery-5",
         "title": "Form Validation",
         "desc": "Checking user input dynamically.",
-        "category_id": "prog-jquery"
+        "category_id": "prog-jquery",
+        "hash": "d211de14-d4fd-483a-8ed7-02b6dce7f35d"
     },
     {
         "id": "69f2fd5b34a41-prog-js-0",
         "title": "Closures and Scope",
         "desc": "Understanding variable lifecycle and context.",
-        "category_id": "prog-js"
+        "category_id": "prog-js",
+        "hash": "09a3f016-b3cb-4625-baf6-c71cb4396b51"
     },
     {
         "id": "69f2fd5b34a42-prog-js-1",
         "title": "Promises and Async/Await",
         "desc": "Modern asynchronous JavaScript.",
-        "category_id": "prog-js"
+        "category_id": "prog-js",
+        "hash": "c35b40e2-fcef-447c-bc4d-ef172bba74ed"
     },
     {
         "id": "69f2fd5b34a43-prog-js-2",
         "title": "Array Methods",
         "desc": "Mastering map, filter, and reduce.",
-        "category_id": "prog-js"
+        "category_id": "prog-js",
+        "hash": "46f0e607-5b4d-4612-9995-64d8b14ad449"
     },
     {
         "id": "69f2fd5b34a44-prog-js-3",
         "title": "DOM APIs",
         "desc": "Interacting with HTML elements natively.",
-        "category_id": "prog-js"
+        "category_id": "prog-js",
+        "hash": "57a0258f-42ad-4095-ac5d-6e1ff47f694a"
     },
     {
         "id": "69f2fd5b34a45-prog-js-4",
         "title": "ES6+ Modules",
         "desc": "Importing and exporting code.",
-        "category_id": "prog-js"
+        "category_id": "prog-js",
+        "hash": "df4b6e6d-67cc-43b1-bb3b-2a670febc831"
     },
     {
         "id": "69f2fd5b34a46-prog-js-5",
         "title": "Web APIs",
         "desc": "Using Fetch, LocalStorage, and Geolocation.",
-        "category_id": "prog-js"
+        "category_id": "prog-js",
+        "hash": "bd763b00-560b-482d-9a28-f02b6caafec1"
     },
     {
         "id": "69f2fd5b34a47-prog-react-0",
         "title": "JSX Syntax",
         "desc": "Writing HTML-like syntax in JavaScript.",
-        "category_id": "prog-react"
+        "category_id": "prog-react",
+        "hash": "40a75bb8-67b4-40da-accf-4e2b6ebbced7"
     },
     {
         "id": "69f2fd5b34a48-prog-react-1",
         "title": "Functional Components & Hooks",
         "desc": "Using useState, useEffect, and custom hooks.",
-        "category_id": "prog-react"
+        "category_id": "prog-react",
+        "hash": "e2727101-42c1-42c8-99f2-694c39860a73"
     },
     {
         "id": "69f2fd5b34a49-prog-react-2",
         "title": "State Management",
         "desc": "Managing global state with Redux or Context API.",
-        "category_id": "prog-react"
+        "category_id": "prog-react",
+        "hash": "e5ed2050-7d79-4f01-a9aa-240740fcfff7"
     },
     {
         "id": "69f2fd5b34a4a-prog-react-3",
         "title": "React Router",
         "desc": "Client-side routing for SPAs.",
-        "category_id": "prog-react"
+        "category_id": "prog-react",
+        "hash": "1ffdaa12-78e1-435e-b252-0627da743820"
     },
     {
         "id": "69f2fd5b34a4b-prog-react-4",
         "title": "Server-Side Rendering",
         "desc": "Introduction to Next.js.",
-        "category_id": "prog-react"
+        "category_id": "prog-react",
+        "hash": "a7c88775-d6f7-4ac1-8a63-f133baa8ee6b"
     },
     {
         "id": "69f2fd5b34a4c-prog-react-5",
         "title": "Performance Optimization",
         "desc": "Using memo, useMemo, and lazy loading.",
-        "category_id": "prog-react"
+        "category_id": "prog-react",
+        "hash": "580c6be8-8b51-4692-b5ff-685aadc6014d"
     },
     {
         "id": "69f2fd5b34a4d-prog-java-0",
         "title": "Interfaces & Abstract Classes",
         "desc": "Enforcing design contracts.",
-        "category_id": "prog-java"
+        "category_id": "prog-java",
+        "hash": "2345b12b-08a8-43eb-ae57-56f86bb98573"
     },
     {
         "id": "69f2fd5b34a4e-prog-java-1",
         "title": "Java Collections",
         "desc": "Lists, Sets, and Maps.",
-        "category_id": "prog-java"
+        "category_id": "prog-java",
+        "hash": "bccc94ee-b100-423a-8a9e-137d183604ca"
     },
     {
         "id": "69f2fd5b34a4f-prog-java-2",
         "title": "Exceptions Handling",
         "desc": "Try-catch blocks and custom exceptions.",
-        "category_id": "prog-java"
+        "category_id": "prog-java",
+        "hash": "eb2a052b-7eac-40ae-8a0a-632b671fc914"
     },
     {
         "id": "69f2fd5b34a50-prog-java-3",
         "title": "Java Streams API",
         "desc": "Functional-style operations on collections.",
-        "category_id": "prog-java"
+        "category_id": "prog-java",
+        "hash": "82bdc0c3-352d-4985-af12-0de7713b28ab"
     },
     {
         "id": "69f2fd5b34a51-prog-java-4",
         "title": "Multithreading",
         "desc": "Concurrency and the ExecutorService.",
-        "category_id": "prog-java"
+        "category_id": "prog-java",
+        "hash": "a2e3c8de-2d11-4a7b-9b68-66d515084a2a"
     },
     {
         "id": "69f2fd5b34a52-prog-java-5",
         "title": "Spring Boot Basics",
         "desc": "Building rapid enterprise applications.",
-        "category_id": "prog-java"
+        "category_id": "prog-java",
+        "hash": "9fea76e5-d5af-4ebd-863a-cea6aea64600"
     }
 ]

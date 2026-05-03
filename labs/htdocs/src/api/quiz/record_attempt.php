@@ -34,7 +34,13 @@ if (Session::getUser()) {
             $quiz = Quiz::getByHash($quizHash);
             if ($quiz) {
                 $diff = strtolower($quiz['difficulty'] ?? 'normal');
-                $pointsPerCorrect = $quiz['points_per_correct'] ?? 25;
+                
+                // Base Points per difficulty
+                $basePoints = 25; // Default Normal
+                if ($diff === 'easy') $basePoints = 15;
+                elseif ($diff === 'hard') $basePoints = 50;
+                
+                $pointsPerCorrect = $quiz['points_per_correct'] ?? $basePoints;
                 
                 // Zeal is based on points_per_correct * total
                 $zealEarned = (int)$pointsPerCorrect * (int)$total;

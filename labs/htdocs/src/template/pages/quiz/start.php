@@ -55,146 +55,256 @@ $availableJolt = $userStats['jolt'] ?? 0;
         </div>
 
         <!-- 2. Navigation Tabs -->
+        <?php 
+            $parentId = $parentTopic['hash'] ?? $parentTopic['_id'];
+            $subtopicId = $subtopic['hash'] ?? $subtopic['_id'];
+        ?>
         <div class="d-flex align-items-center gap-2 mb-4 overflow-auto pb-2 flex-nowrap quiz-tabs-row position-relative" style="z-index: 2;">
-            <button class="btn btn-pill-outline" onclick="window.history.back()">
+            <a href="/quiz/<?= $parentId ?>" class="btn btn-pill-outline">
                 <i class="bx bx-left-arrow-alt me-1"></i>Topics
-            </button>
-            <button class="btn btn-pill-active">
+            </a>
+            <a href="/quiz/<?= $parentId ?>/Recent/<?= $subtopicId ?>" class="btn <?= $activeTab === 'recent' ? 'btn-pill-active shadow-sm' : 'btn-pill-outline' ?> topic-tab-btn">
                 Recent 📂 in <?= $subtopic['title'] ?>
-            </button>
-            <button class="btn btn-pill-outline">Trending</button>
-            <button class="btn btn-pill-outline">Completed ✅</button>
-            <button class="btn btn-pill-outline">Leaderboard <span class="badge-new">New 🆕 ✨</span></button>
+            </a>
+            <a href="/quiz/<?= $parentId ?>/trending" class="btn <?= $activeTab === 'trending' ? 'btn-pill-active shadow-sm' : 'btn-pill-outline' ?> topic-tab-btn">Trending</a>
+            <a href="/quiz/<?= $parentId ?>/completed" class="btn <?= $activeTab === 'completed' ? 'btn-pill-active shadow-sm' : 'btn-pill-outline' ?> topic-tab-btn">Completed ✅</a>
+            <a href="/quiz/<?= $parentId ?>/leaderboard" class="btn <?= $activeTab === 'leaderboard' ? 'btn-pill-active shadow-sm' : 'btn-pill-outline' ?> topic-tab-btn">Leaderboard <span class="badge-new">New 🆕 ✨</span></a>
         </div>
 
         <hr class="border-secondary opacity-10 mb-4 position-relative" style="z-index: 2;">
 
-<!-- Reusable Empty State Template (Hidden for JS usage) -->
-<template id="quiz-empty-state-template">
-    <div class="w-100 d-flex justify-content-center py-5 mt-4 animate__animated animate__fadeIn" style="flex: 0 0 100%;">
-        <div class="card quiz-glass-card border-0 shadow-lg text-center p-4 p-md-5" style="max-width: 420px; width: 100%; border-radius: 20px; background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05) !important;">
-            <div class="d-flex justify-content-center mb-4">
-                <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center border border-success border-opacity-25" style="width: 70px; height: 70px;">
-                    <i class="bx bxs-bot fs-1 text-success"></i>
+        <!-- 3. Content Area -->
+<script>
+// Masonry Initialization Engine
+function initQuizMasonry() {
+    const grids = document.querySelectorAll('.quiz-masonry-row');
+    grids.forEach(grid => {
+        // Initialize Masonry
+        const msnry = new Masonry(grid, {
+            itemSelector: '.quiz-card-item',
+            percentPosition: true,
+            transitionDuration: '0.4s'
+        });
+
+        // Layout again after images/fonts load
+        if (typeof imagesLoaded !== 'undefined') {
+            imagesLoaded(grid).on('progress', () => {
+                msnry.layout();
+            });
+        }
+        
+        // Expose to window for manual triggers
+        grid.msnry = msnry;
+    });
+}
+
+// Trigger on load
+document.addEventListener('DOMContentLoaded', () => {
+    initQuizMasonry();
+    
+    // Mutation Observer to handle infinite scroll / AJAX loads
+    const observer = new MutationObserver((mutations) => {
+        initQuizMasonry();
+    });
+    
+    const container = document.getElementById('recent-quizzes-grid');
+    if (container) observer.observe(container, { childList: true });
+});
+</script>
+
+<div class="container-fluid py-4 px-0">
+    <div id="topic-content-container" class="position-relative" style="z-index: 2;">
+        <!-- Default: Quizzes Grid -->
+        <?php $activeTab = Session::get('active_tab', 'recent'); ?>
+        <div id="recent-quizzes-grid" class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4 quiz-masonry-row <?= $activeTab !== 'recent' ? 'd-none' : '' ?>">
+            <?php if (!empty($quizzes)): foreach ($quizzes as $q): 
+                $qDiff = strtolower($q['difficulty'] ?? 'normal');
+                $qJolt = ($qDiff === 'easy') ? 1 : (($qDiff === 'hard') ? 5 : 2);
+                include __DIR__ . '/_card.php'; 
+            endforeach; endif; ?>
+        </div>
+
+        <!-- Empty State (Positioned outside the grid to prevent Masonry layout bugs) -->
+        <div id="recent-empty-state" class="<?= ($activeTab === 'recent' && empty($quizzes)) ? '' : 'd-none' ?>">
+             <div class="card border-0 rounded-4 overflow-hidden shadow-lg blur mb-5" 
+                  style="background: rgba(var(--cui-emphasis-color-rgb), 0.05); backdrop-filter: blur(20px); border: 1px solid rgba(var(--cui-emphasis-color-rgb), 0.1) !important;">
+                <div class="card-body p-5 text-center">
+                    <div class="mb-4">
+                        <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto border border-success border-opacity-25 shadow-sm" style="width: 80px; height: 80px;">
+                            <i class="bx bxs-bot display-4 text-success opacity-50"></i>
+                        </div>
+                    </div>
+                    <h4 class="fw-bold theme-text mb-2 ls-tight">No Active Intelligence Found</h4>
+                    <p class="text-body-secondary small mb-4 mx-auto" style="max-width: 450px;">
+                        The mission parameters for <span class="fw-bold theme-text"><?= strtolower($subtopic['title'] ?? 'this topic') ?></span> are currently blank. 
+                        Deploy a new **Spot Quiz** using the engine above to begin your training.
+                    </p>
+                    <div class="d-flex justify-content-center gap-3">
+                        <button class="btn btn-outline-secondary rounded-pill px-4 fw-bold" onclick="window.history.back()">Return to Topics</button>
+                        <button class="btn btn-success rounded-pill px-4 fw-bold shadow-sm" style="background: #2eb857 !important; border: none !important;" onclick="triggerGeneration()">Deploy Spot Quiz</button>
+                    </div>
                 </div>
             </div>
-            <h4 class="fw-bold text-body-emphasis mb-2">No Quizzes Found</h4>
-            <p class="text-body-secondary small mb-4 lh-base px-2">
-                There are currently no challenges for the <strong class="selected-diff-text"><?= strtoupper($difficultyFilter) ?></strong> level in this topic. Be the first to generate a professional AI-powered quiz and test your skills!
+        </div>
+
+        <!-- Infinite Scroll Sentinel -->
+        <div id="infinite-scroll-sentinel" class="text-center py-5 opacity-50" style="min-height: 100px;">
+            <div id="scroll-loader" class="spinner-border theme-text d-none" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div id="no-more-msg" class="text-body-secondary small d-none mt-3">
+                <i class="bx bx-check-circle me-1"></i> You've explored all challenges for this topic.
+            </div>
+        </div>
+
+        <!-- AJAX Content Container -->
+        <div id="ajax-tab-content" class="<?= $activeTab !== 'recent' ? '' : 'd-none' ?>">
+            <?php 
+            if ($activeTab === 'trending') {
+                $quizzes = \TomLabs\Labs\Quiz::getTrendingForTopic($parentTopic['_id']);
+                if (empty($quizzes)) {
+                    echo '<div class="col-12 text-center py-5 animate__animated animate__fadeIn"><div class="empty-state-card opacity-50"><i class="bx bx-trending-up display-1 mb-3"></i><h5 class="text-body-secondary">No trending quizzes yet.</h5></div></div>';
+                } else {
+                    echo '<div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4 quiz-masonry-row animate__animated animate__fadeIn">';
+                    foreach ($quizzes as $q) {
+                        $qDiff = strtolower($q['difficulty'] ?? 'normal');
+                        $qJolt = ($qDiff === 'easy') ? 1 : (($qDiff === 'hard') ? 5 : 2);
+                        $userEmail = Session::getUser() ? Session::getUser()->getEmail() : null;
+                        $isAttempted = $userEmail ? \TomLabs\Labs\Quiz::hasAttempted($userEmail, $q['hash']) : false;
+                        include __DIR__ . '/_card.php';
+                    }
+                    echo '</div>';
+                }
+            } elseif ($activeTab === 'completed') {
+                $userEmail = Session::getUser() ? Session::getUser()->getEmail() : null;
+                $quizzes = \TomLabs\Labs\Quiz::getCompletedForUser($userEmail, $parentTopic['_id']);
+                if (empty($quizzes)) {
+                    echo '<div class="col-12 text-center py-5 animate__animated animate__fadeIn"><div class="empty-state-card opacity-50"><i class="bx bx-check-circle display-1 mb-3"></i><h5 class="text-body-secondary">No completed quizzes yet.</h5></div></div>';
+                } else {
+                    echo '<div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4 quiz-masonry-row animate__animated animate__fadeIn">';
+                    foreach ($quizzes as $q) {
+                        $qDiff = strtolower($q['difficulty'] ?? 'normal');
+                        $qJolt = ($qDiff === 'easy') ? 1 : (($qDiff === 'hard') ? 5 : 2);
+                        $isAttempted = true;
+                        include __DIR__ . '/_card.php';
+                    }
+                    echo '</div>';
+                }
+            } elseif ($activeTab === 'leaderboard') {
+                $leaderboard = \TomLabs\Labs\Quiz::getLeaderboardForTopic($parentTopic['_id']);
+                include __DIR__ . '/_leaderboard.php';
+            }
+            ?>
+        </div>
+    </div>
+</div>
+
+<!-- Empty State Template for Difficulty Filter -->
+<template id="quiz-empty-state-template">
+    <div class="card border-0 rounded-4 overflow-hidden shadow-lg blur mb-5 animate__animated animate__fadeIn" 
+         style="background: rgba(var(--cui-emphasis-color-rgb), 0.05); backdrop-filter: blur(20px); border: 1px solid rgba(var(--cui-emphasis-color-rgb), 0.1) !important;">
+        <div class="card-body p-5 text-center">
+            <div class="mb-4">
+                <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto border border-success border-opacity-25 shadow-sm" style="width: 80px; height: 80px;">
+                    <i class="bx bxs-bot display-4 text-success opacity-50"></i>
+                </div>
+            </div>
+            <h4 class="fw-bold theme-text mb-2">No Quizzes Found</h4>
+            <p class="text-body-secondary small mb-4 lh-base mx-auto" style="max-width: 420px;">
+                There are currently no challenges for the <strong class="selected-diff-text text-warning"></strong> level in this topic. Be the first to generate a professional AI-powered quiz!
             </p>
-            <button class="btn btn-success rounded-pill px-4 py-2 fw-bold shadow-sm transition-all" onclick="triggerGeneration()" style="font-size: 0.95rem;">
+            <button class="btn btn-success rounded-pill px-4 py-2 fw-bold shadow-sm transition-all" onclick="triggerGeneration()" style="background: #2eb857 !important; border: none !important;">
                 <i class="bx bxs-zap me-1"></i> Generate with AI
             </button>
         </div>
     </div>
 </template>
 
-    <!-- 3. Quizzes Grid -->
-    <div id="quiz-list-container" class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4 position-relative" style="z-index: 2;">
-        <?php if (empty($quizzes)): ?>
-            <div class="w-100 d-flex justify-content-center py-5 mt-4" style="flex: 0 0 100%;">
-                <div class="card quiz-glass-card border-0 shadow-lg text-center p-4 p-md-5" style="max-width: 420px; width: 100%; border-radius: 20px; background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05) !important;">
-                    <div class="d-flex justify-content-center mb-4">
-                        <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center border border-success border-opacity-25" style="width: 70px; height: 70px;">
-                            <i class="bx bxs-bot fs-1 text-success"></i>
-                        </div>
-                    </div>
-                    <h4 class="fw-bold text-body-emphasis mb-2">No Quizzes Found</h4>
-                    <p class="text-body-secondary small mb-4 lh-base px-2">
-                        There are currently no challenges for the <strong class="selected-diff-text"><?= strtoupper($difficultyFilter) ?></strong> level in this topic. Be the first to generate a professional AI-powered quiz and test your skills!
-                    </p>
-                    <button class="btn btn-success rounded-pill px-4 py-2 fw-bold shadow-sm transition-all" onclick="triggerGeneration()" style="font-size: 0.95rem;">
-                        <i class="bx bxs-zap me-1"></i> Generate with AI
-                    </button>
-                </div>
-            </div>
-        <?php else: foreach ($quizzes as $q): 
-            $qDiff = strtolower($q['difficulty'] ?? 'normal');
-            $qJolt = 2;
-            if ($qDiff === 'easy') $qJolt = 1;
-            elseif ($qDiff === 'hard') $qJolt = 5;
-            $user = Session::getUser();
-            $isAttempted = $user ? Quiz::hasAttempted($user->getEmail(), $q['hash']) : false;
-            include __DIR__ . '/_card.php';
-        endforeach; endif; ?>
-    </div>
+<script>
+// Tab switching is now handled by full page loads via <a> tags.
 
-    <!-- Infinite Scroll Sentinel (Strictly Professional) -->
-    <div id="infinite-scroll-sentinel" class="text-center py-5 opacity-50" style="min-height: 100px;">
-        <div id="scroll-loader" class="spinner-border theme-text d-none" role="status" style="width: 3rem; height: 3rem;">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-        <div id="no-more-msg" class="text-body-secondary small d-none mt-3">
-            <i class="bx bx-check-circle me-1"></i> You've explored all challenges for this topic.
-        </div>
-    </div>
-</div>
+// Handle initial tab from server-side session
+document.addEventListener('DOMContentLoaded', () => {
+    const initialTab = '<?= Session::get('active_tab', 'recent') ?>';
+    // No action needed for pre-rendered content
+});
+</script>
 
 <!-- Spot Quiz Modal (Two-Step: Confirm -> Generate) -->
 <div class="modal fade" id="spotQuizModal" tabindex="-1" aria-hidden="true" data-coreui-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content shadow-lg">
+        <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden" style="background: rgba(var(--cui-body-bg-rgb, 11, 30, 54), 0.75); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.1) !important;">
             
             <!-- STEP 1: Confirmation View -->
             <div id="modal-view-confirm" class="modal-body p-4">
-                <div class="d-flex align-items-center justify-content-between mb-3 border-bottom border-white border-opacity-10 pb-2">
-                    <h5 class="fw-bold text-white mb-0">Spot Quiz ⚡️</h5>
+                <div class="d-flex align-items-center justify-content-between mb-4 border-bottom border-white border-opacity-10 pb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center border border-success border-opacity-25" style="width: 40px; height: 40px;">
+                            <i class="bx bxs-zap fs-4 text-success"></i>
+                        </div>
+                        <h5 class="fw-bold text-white mb-0">Spot Quiz AI Deployment</h5>
+                    </div>
                     <button type="button" class="btn-close btn-close-white" data-coreui-dismiss="modal" aria-label="Close"></button>
                 </div>
                 
-                <p class="text-white small mb-3">
-                    Are you sure you want to start a spot quiz on this topic with the selected difficulty?<br>
-                    <span class="opacity-75">Once the quiz is generated, you will be notified and 1 ⚡️ will be debited.</span>
+                <p class="text-white small mb-4 opacity-90">
+                    System ready for **AI Intelligence Deployment**. We will generate a unique quiz for this topic based on your current difficulty settings.<br>
+                    <span class="opacity-60 smaller mt-2 d-block">A debit of 1 ⚡️ will be applied upon successful initialization.</span>
                 </p>
 
                 <!-- Cost Table (Reference Match) -->
-                <div class="table-responsive mb-4">
-                    <table class="table table-borderless table-sm text-center text-white small mb-0">
+                <div class="table-responsive mb-4 rounded-3 overflow-hidden border border-white border-opacity-10">
+                    <table class="table table-dark table-borderless table-sm text-center small mb-0" style="background: rgba(255,255,255,0.03);">
                         <thead>
-                            <tr class="opacity-50 border-bottom border-white border-opacity-10">
-                                <th>Spot Quiz Cost</th>
-                                <th>Available Jolt</th>
-                                <th>Jolt Remaining after Generating</th>
+                            <tr class="opacity-40 border-bottom border-white border-opacity-10" style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px;">
+                                <th class="py-2">Deployment Cost</th>
+                                <th class="py-2">Current Jolt</th>
+                                <th class="py-2">Projected Balance</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr class="fw-bold">
-                                <td class="py-2">1 ⚡️</td>
-                                <td class="py-2"><?= $availableJolt ?> ⚡️</td>
-                                <td class="py-2"><?= max(0, $availableJolt - 1) ?> ⚡️</td>
+                            <tr class="fw-bold fs-6">
+                                <td class="py-3">1 ⚡️</td>
+                                <td class="py-3 text-warning"><?= $availableJolt ?> ⚡️</td>
+                                <td class="py-3 text-success"><?= max(0, $availableJolt - 1) ?> ⚡️</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
                 <div class="d-flex justify-content-end gap-2">
-                    <button type="button" class="btn btn-secondary rounded-pill px-4 btn-sm fw-bold" data-coreui-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-success rounded-pill px-4 btn-sm fw-bold shadow-sm" onclick="startGenerationProcess()">Generate Quiz</button>
+                    <button type="button" class="btn btn-link text-white text-decoration-none px-4 btn-sm fw-bold opacity-50 hover-opacity-100" data-coreui-dismiss="modal">Abort</button>
+                    <button type="button" class="btn btn-success rounded-pill px-4 btn-sm fw-bold shadow-sm" onclick="startGenerationProcess()" style="background: #2eb857 !important; border: none !important;">
+                        Initialize Deployment
+                    </button>
                 </div>
             </div>
 
             <!-- STEP 2: Generation View (Hidden initially) -->
             <div id="modal-view-progress" class="modal-body p-5 text-center d-none">
-                <h5 class="fw-bold text-white mb-4">Spot Quiz ⚡️</h5>
+                <div class="spinner-grow text-success mb-4" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h5 class="fw-bold text-white mb-2">Generating Intelligence...</h5>
                 
                 <p class="text-body-secondary small mb-4" id="modalSubtext">
-                    Please wait while we generate your quiz... this may take couple minutes.
+                    Our AI is currently drafting your specialized quiz questions. This mission takes a few moments.
                 </p>
 
                 <div class="mb-2">
                     <div class="fw-bold small theme-text mb-2 text-start d-flex justify-content-between">
-                        <span id="genStatus">Initializing...</span>
-                        <span id="genPercent">0%</span>
+                        <span id="genStatus" class="opacity-50">Initializing...</span>
+                        <span id="genPercent" class="text-success">0%</span>
                     </div>
                     <div class="progress rounded-pill bg-white bg-opacity-10" style="height: 6px;">
-                        <div id="genProgress" class="progress-bar progress-bar-striped progress-bar-animated bg-info" 
-                             role="progressbar" style="width: 0%"></div>
+                        <div id="genProgress" class="progress-bar progress-bar-striped progress-bar-animated bg-success" 
+                             role="progressbar" style="width: 0%; transition: width 0.5s ease;"></div>
                     </div>
                 </div>
 
                 <div id="modalActions" class="d-none mt-4">
-                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-coreui-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-info rounded-pill px-4 fw-bold shadow-sm ms-2" onclick="triggerGeneration()">Try Again</button>
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-coreui-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-info rounded-pill px-4 fw-bold shadow-sm ms-2" onclick="triggerGeneration()">Retry Mission</button>
                 </div>
             </div>
         </div>
@@ -252,7 +362,7 @@ document.querySelectorAll('.difficulty-modes .diff-btn').forEach(btn => {
         document.cookie = "quiz_difficulty_filter=" + selectedDiff + "; path=/; max-age=" + (86400 * 30) + "; SameSite=Lax";
         
         // Reset and Reload
-        const container = document.getElementById('quiz-list-container');
+        const container = document.getElementById('recent-quizzes-grid');
         if (container) container.innerHTML = '<div class="w-100 text-center py-5"><div class="spinner-border theme-text" role="status"></div></div>';
         
         scrollOffset = 0;
@@ -420,7 +530,7 @@ if (window.QuizConfig && window.QuizConfig.subtopicId) {
                 .then(res => res.text())
                 .then(html => {
                     if (html && html.trim().length > 0) {
-                        const container = document.getElementById('quiz-list-container');
+                        const container = document.getElementById('recent-quizzes-grid');
                         container.innerHTML = html; 
                         
                         const temp = document.createElement('div');
@@ -449,35 +559,62 @@ if (window.QuizConfig && window.QuizConfig.subtopicId) {
         fetch(`/api/quiz/list?subtopic_id=${subtopicIdForState}&offset=${currentOffset}&limit=${fetchLimit}&difficulty=${selectedDiff}`)
             .then(res => res.text())
             .then(html => {
-                const container = document.getElementById('quiz-list-container');
+                const container = document.getElementById('recent-quizzes-grid');
                 if (!container) return;
 
-                if (replace) container.innerHTML = '';
-
                 if (html && html.trim().length > 0) {
-                    if (replace) container.innerHTML = html;
-                    else container.insertAdjacentHTML('beforeend', html);
-
-                    // Robust counting
                     const temp = document.createElement('div');
                     temp.innerHTML = html;
-                    const newCards = temp.querySelectorAll('.quiz-card-item').length;
+                    const newItems = Array.from(temp.querySelectorAll('.quiz-card-item'));
+
+                    if (replace) {
+                        const emptyState = document.getElementById('recent-empty-state');
+                        if (emptyState) emptyState.classList.add('d-none');
+                        
+                        container.innerHTML = html;
+                    } else {
+                        newItems.forEach(item => {
+                            container.appendChild(item);
+                        });
+                    }
+
+                    if (container.msnry) {
+                        if (replace) {
+                            container.msnry.reloadItems();
+                        } else {
+                            container.msnry.appended(newItems);
+                        }
+                        imagesLoaded(container).on('progress', () => {
+                            container.msnry.layout();
+                        });
+                    }
+
+                    const newCardsCount = newItems.length;
+                    if (replace) scrollOffset = newCardsCount;
+                    else scrollOffset += newCardsCount;
                     
-                    if (replace) scrollOffset = newCards;
-                    else scrollOffset += newCards;
-                    
-                    hasMoreQuizzes = newCards === fetchLimit;
+                    hasMoreQuizzes = newCardsCount >= fetchLimit;
                     saveScrollState();
                 } else {
                     console.log("[Quiz Hub] No more quizzes found.");
                     hasMoreQuizzes = false;
                     if (replace) {
-                        const template = document.getElementById('quiz-empty-state-template');
-                        if (template) {
-                            const clone = template.content.cloneNode(true);
-                            const diffText = clone.querySelector('.selected-diff-text');
+                        container.innerHTML = '';
+                        const emptyState = document.getElementById('recent-empty-state');
+                        if (emptyState) {
+                            emptyState.classList.remove('d-none');
+                            // Update text if difficulty filter was used
+                            const diffText = emptyState.querySelector('.selected-diff-text');
                             if (diffText) diffText.innerText = selectedDiff.toUpperCase();
-                            container.appendChild(clone);
+                        } else {
+                            // Fallback to template if div doesn't exist
+                            const template = document.getElementById('quiz-empty-state-template');
+                            if (template) {
+                                const clone = template.content.cloneNode(true);
+                                const diffText = clone.querySelector('.selected-diff-text');
+                                if (diffText) diffText.innerText = selectedDiff.toUpperCase();
+                                container.parentNode.insertBefore(clone, container.nextSibling);
+                            }
                         }
                     }
                 }
@@ -496,3 +633,62 @@ if (window.QuizConfig && window.QuizConfig.subtopicId) {
     window.addEventListener('scroll', () => { if (!isScrollLoading) saveScrollState(); });
 }
 </script>
+
+<style>
+.difficulty-modes {
+    display: flex;
+    background: rgba(var(--cui-emphasis-color-rgb), 0.05);
+    padding: 4px;
+    border-radius: 50px;
+    gap: 4px;
+    border: 1px solid rgba(var(--cui-emphasis-color-rgb), 0.1);
+    backdrop-filter: blur(10px);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.diff-btn {
+    border: none;
+    background: transparent;
+    color: rgba(var(--cui-emphasis-color-rgb), 0.6);
+    padding: 6px 18px;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    white-space: nowrap;
+}
+
+.diff-btn:hover {
+    color: var(--cui-emphasis-color);
+    background: rgba(var(--cui-emphasis-color-rgb), 0.08);
+}
+
+.diff-btn.active {
+    color: #fff !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.diff-btn.btn-easy.active { 
+    background: #2eb857 !important; 
+    box-shadow: 0 4px 15px rgba(46, 184, 87, 0.4) !important; 
+}
+.diff-btn.btn-normal.active { 
+    background: #f9b115 !important; 
+    box-shadow: 0 4px 15px rgba(249, 177, 21, 0.4) !important; 
+}
+.diff-btn.btn-hard.active { 
+    background: #e55353 !important; 
+    box-shadow: 0 4px 15px rgba(229, 83, 83, 0.4) !important; 
+}
+
+/* Glass effect for quiz tabs */
+.quiz-tabs-row {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.quiz-tabs-row::-webkit-scrollbar {
+    display: none;
+}
+</style>

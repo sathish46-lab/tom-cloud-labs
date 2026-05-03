@@ -64,13 +64,34 @@ class Quiz {
     }
 
     /**
+     * Resolve a public hash to an internal ID
+     */
+    public static function resolveId($id) {
+        $cats = self::loadCategories();
+        foreach ($cats as $cat) {
+            if (isset($cat['hash']) && $cat['hash'] === $id) {
+                return $cat['id'];
+            }
+        }
+        // Also check subtopics
+        $subs = self::loadSubtopics();
+        foreach ($subs as $sub) {
+            if (isset($sub['hash']) && $sub['hash'] === $id) {
+                return $sub['id'];
+            }
+        }
+        return $id; // Return as-is if no hash matches
+    }
+
+    /**
      * Find a category by ID from JSON source
      */
     public static function getCategory($id) {
         $cats = self::loadCategories();
         foreach ($cats as &$cat) {
-            if ($cat['id'] === $id) {
-                $cat['_id'] = $cat['id']; // Map for backward compatibility
+            // Support both internal ID and public Hash
+            if ($cat['id'] === $id || (isset($cat['hash']) && $cat['hash'] === $id)) {
+                $cat['_id'] = $cat['id']; 
                 return $cat;
             }
         }
@@ -83,8 +104,9 @@ class Quiz {
     public static function getSubtopic($id) {
         $subs = self::loadSubtopics();
         foreach ($subs as &$sub) {
-            if ($sub['id'] === $id) {
-                $sub['_id'] = $sub['id']; // Map for backward compatibility
+            // Support both internal ID and public Hash
+            if ($sub['id'] === $id || (isset($sub['hash']) && $sub['hash'] === $id)) {
+                $sub['_id'] = $sub['id'];
                 return $sub;
             }
         }
@@ -95,6 +117,7 @@ class Quiz {
      * Get all subtopics for a specific category from JSON source
      */
     public static function getSubtopicsForCategory($categoryId) {
+        $categoryId = self::resolveId($categoryId);
         $subs = self::loadSubtopics();
         $filtered = [];
         foreach ($subs as &$sub) {
@@ -270,6 +293,100 @@ class Quiz {
         DatabaseConnection::getDefaultDatabase()->quiz_jobs->deleteMany([
             'created_at' => ['$lt' => $threshold]
         ]);
+    }
+
+    /**
+     * Get trending quizzes for a topic (based on view count)
+     */
+    public static function getTrendingForTopic($topicId, $limit = 8) {
+        $topicId = self::resolveId($topicId);
+        return DatabaseConnection::getDefaultDatabase()->quizzes->find(
+            ['category_id' => $topicId],
+            [
+                'sort' => ['view_count' => -1],
+                'limit' => (int)$limit
+            ]
+        )->toArray();
+    }
+
+    /**
+     * Get completed quizzes for a user in a specific topic
+     */
+    public static function getCompletedForUser($userEmail, $topicId, $limit = 8) {
+        $topicId = self::resolveId($topicId);
+        if (!$userEmail) return [];
+        $db = DatabaseConnection::getDefaultDatabase();
+        
+        // Use aggregation to find unique completed quizzes for this user in this topic
+        return $db->quiz_attempts->aggregate([
+            ['$match' => [
+                'user_email' => $userEmail,
+                'status' => 'completed'
+            ]],
+            ['$lookup' => [
+                'from' => 'quizzes',
+                'localField' => 'quiz_hash',
+                'foreignField' => 'hash',
+                'as' => 'quiz'
+            ]],
+            ['$unwind' => '$quiz'],
+            ['$match' => ['quiz.category_id' => $topicId]],
+            ['$group' => [
+                '_id' => '$quiz_hash',
+                'quiz' => ['$first' => '$quiz'],
+                'max_score' => ['$max' => '$score']
+            ]],
+            ['$replaceRoot' => ['newRoot' => '$quiz']],
+            ['$sort' => ['created_at' => -1]],
+            ['$limit' => (int)$limit]
+        ])->toArray();
+    }
+
+    /**
+     * Get leaderboard for a specific topic
+     */
+    public static function getLeaderboardForTopic($topicId, $limit = 10) {
+        $topicId = self::resolveId($topicId);
+        $db = DatabaseConnection::getDefaultDatabase();
+        
+        return $db->quiz_attempts->aggregate([
+            ['$match' => [
+                'status' => 'completed'
+            ]],
+            ['$lookup' => [
+                'from' => 'quizzes',
+                'localField' => 'quiz_hash',
+                'foreignField' => 'hash',
+                'as' => 'quiz'
+            ]],
+            ['$unwind' => '$quiz'],
+            ['$match' => [
+                'quiz.category_id' => $topicId
+            ]],
+            ['$group' => [
+                '_id' => '$user_email',
+                'zeal_earned' => [
+                    '$sum' => [
+                        '$multiply' => [
+                            '$score',
+                            ['$cond' => [
+                                'if' => ['$eq' => ['$quiz.difficulty', 'easy']], 'then' => 15,
+                                'else' => ['$cond' => [
+                                    'if' => ['$eq' => ['$quiz.difficulty', 'hard']], 'then' => 50,
+                                    'else' => 25
+                                ]]
+                            ]]
+                        ]
+                    ]
+                ],
+                'quizzes_played' => ['$sum' => 1],
+                'total_score' => ['$sum' => '$score'],
+                'total_questions' => ['$sum' => '$total'],
+                'tags' => ['$push' => '$quiz.tags']
+            ]],
+            ['$sort' => ['zeal_earned' => -1]],
+            ['$limit' => (int)$limit]
+        ])->toArray();
     }
     /**
      * Get a random motivational message based on performance

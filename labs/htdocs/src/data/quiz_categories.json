@@ -1,164 +1,128 @@
 [
     {
-        "id": "learn-roadmap",
+        "id": "roadmap",
         "title": "Roadmaps",
         "desc": "Quizzes generated from learning roadmaps and their nodes.",
-        "section": "Learning"
+        "section": "Learning",
+        "hash": "a4f48513-2422-4305-a9d6-e11fc14c059e"
     },
     {
-        "id": "learn-lesson",
+        "id": "lesson",
         "title": "Lessons",
         "desc": "Quizzes generated from AI-powered lessons across all subjects.",
-        "section": "Learning"
+        "section": "Learning",
+        "hash": "74ab6cc6-519e-49f8-bac1-20c2399de788"
     },
     {
-        "id": "learn-syllabus",
+        "id": "syllabus",
         "title": "Syllabi",
         "desc": "Quizzes generated from academic syllabus units and courses.",
-        "section": "Learning"
+        "section": "Learning",
+        "hash": "43fb8176-1f89-481d-9c3b-37e095c5bb9c"
     },
     {
-        "id": "tech-linux-cli",
-        "title": "Linux CLI",
-        "desc": "Using the unix-like terminal to interact with Linux systems.",
-        "section": "Technology"
-    },
-    {
-        "id": "9114b868-78c8-4de4-b773-609f5d844268",
+        "id": "cybersecurity",
         "title": "Cybersecurity",
-        "desc": "Protecting systems, networks, and programs from digital attacks.",
-        "section": "Technology"
+        "desc": "The practice of protecting systems, networks, and programs from digital attacks.",
+        "section": "Domains",
+        "hash": "ec665c69-e8f5-432b-b816-0b60763a6957"
     },
     {
-        "id": "tech-git",
-        "title": "Git and GitLab",
-        "desc": "GitLab, an open-source DevOps tool, integrates Git for version control system.",
-        "section": "Technology"
+        "id": "web-development",
+        "title": "Web Development",
+        "desc": "Building and maintaining websites; the work that happens behind the scenes.",
+        "section": "Domains",
+        "hash": "365b2644-2a87-40c6-9b08-41452224d803"
     },
     {
-        "id": "tech-iot",
-        "title": "Internet of Things (IoT)",
-        "desc": "IoT refers to the network of physical devices connected to the internet.",
-        "section": "Technology"
+        "id": "cloud-computing",
+        "title": "Cloud Computing",
+        "desc": "On-demand delivery of IT resources over the internet with pay-as-you-go pricing.",
+        "section": "Domains",
+        "hash": "4126e1d5-f222-434b-8380-31bcab72e333"
     },
     {
-        "id": "tech-microcontrollers",
-        "title": "Microcontrollers",
-        "desc": "Understanding and programming microcontrollers for a variety of apps.",
-        "section": "Technology"
-    },
-    {
-        "id": "tech-ai",
+        "id": "artificial-intelligence",
         "title": "Artificial Intelligence",
-        "desc": "Simulating intelligent behavior in machines and enabling automation.",
-        "section": "Technology"
+        "desc": "Simulation of human intelligence processes by machines, especially computer systems.",
+        "section": "Domains",
+        "hash": "f8b0b748-1dfe-45ef-bac1-14772c2ed3a3"
     },
     {
-        "id": "tech-os",
-        "title": "Operating Systems",
-        "desc": "Understanding and managing the software that supports hardware.",
-        "section": "Technology"
+        "id": "networking",
+        "title": "Networking",
+        "desc": "The exchange of information and ideas among people with a common profession.",
+        "section": "Domains",
+        "hash": "bdb0f82b-6290-48ad-9505-572a53f84bb1"
     },
     {
-        "id": "tech-networks",
-        "title": "Computer Networks",
-        "desc": "Understanding the principles and protocols used in communication.",
-        "section": "Technology"
+        "id": "database",
+        "title": "Database",
+        "desc": "An organized collection of structured information, or data.",
+        "section": "Domains",
+        "hash": "39ee1854-d3c1-4e0b-8631-cad107761054"
     },
     {
-        "id": "tech-ml",
-        "title": "Machine Learning",
-        "desc": "Using algorithms and statistical models to enable predictions.",
-        "section": "Technology"
+        "id": "programming",
+        "title": "Programming",
+        "desc": "The process of creating a set of instructions that tell a computer how to perform a task.",
+        "section": "Programming",
+        "hash": "f7986034-5eba-4785-98f0-be0f59ac9503"
     },
     {
-        "id": "prog-generic",
-        "title": "Generic Programming",
-        "desc": "Writing code to create functional software.",
-        "section": "Programming"
-    },
-    {
-        "id": "prog-c",
+        "id": "c-programming",
         "title": "C Programming",
         "desc": "Writing code in the C programming language.",
-        "section": "Programming"
+        "section": "Programming",
+        "hash": "827fcef6-c433-4c22-bb2f-8d3bc568f8b2"
     },
     {
-        "id": "prog-bash",
-        "title": "Bash Programming",
-        "desc": "Writing scripts in the Bash shell scripting language.",
-        "section": "Programming"
+        "id": "cpp-programming",
+        "title": "C++ Programming",
+        "desc": "Writing code in the C++ programming language.",
+        "section": "Programming",
+        "hash": "82954f46-fb39-4f4c-8a06-c9f65742115c"
     },
     {
-        "id": "prog-mongodb",
-        "title": "MongoDB",
-        "desc": "A source-available cross-platform document-oriented database.",
-        "section": "Programming"
-    },
-    {
-        "id": "prog-socket",
-        "title": "Socket Programming",
-        "desc": "Socket programming is a network paradigm for data exchange.",
-        "section": "Programming"
-    },
-    {
-        "id": "prog-python",
-        "title": "Python Programming",
-        "desc": "Writing code in the Python programming language.",
-        "section": "Programming"
-    },
-    {
-        "id": "prog-php",
-        "title": "PHP Programming",
-        "desc": "Writing code in the PHP programming language.",
-        "section": "Programming"
-    },
-    {
-        "id": "prog-html-css",
-        "title": "HTML & CSS",
-        "desc": "The standard markup and styling languages for web pages.",
-        "section": "Programming"
-    },
-    {
-        "id": "prog-micropython",
-        "title": "MicroPython",
-        "desc": "A Python 3 variant optimized for microcontrollers.",
-        "section": "Programming"
-    },
-    {
-        "id": "prog-bootstrap",
-        "title": "Bootstrap 5",
-        "desc": "A popular, free, and open-source CSS framework.",
-        "section": "Programming"
-    },
-    {
-        "id": "prog-nodejs",
-        "title": "Node.js Programming",
-        "desc": "Writing code using the Node.js runtime environment.",
-        "section": "Programming"
-    },
-    {
-        "id": "prog-jquery",
-        "title": "jQuery",
-        "desc": "A fast, small, and feature-rich JavaScript library.",
-        "section": "Programming"
-    },
-    {
-        "id": "prog-js",
-        "title": "JavaScript Programming",
-        "desc": "Writing code using the JavaScript programming language.",
-        "section": "Programming"
-    },
-    {
-        "id": "prog-react",
-        "title": "React.js Programming",
-        "desc": "Writing code using the React.js library for building UIs.",
-        "section": "Programming"
-    },
-    {
-        "id": "prog-java",
+        "id": "java-programming",
         "title": "Java Programming",
         "desc": "Writing code in the Java programming language.",
-        "section": "Programming"
+        "section": "Programming",
+        "hash": "816ebbe2-24bb-4262-ba9e-f6c339da5f6d"
+    },
+    {
+        "id": "javascript-programming",
+        "title": "JavaScript Programming",
+        "desc": "Writing code in the JavaScript programming language.",
+        "section": "Programming",
+        "hash": "f5fbe2e5-c851-4ead-b6a0-dae1b2557044"
+    },
+    {
+        "id": "python-programming",
+        "title": "Python Programming",
+        "desc": "Writing code in the Python programming language.",
+        "section": "Programming",
+        "hash": "40f3a55a-a279-4f09-a918-dbb2c5ffa5ac"
+    },
+    {
+        "id": "php-programming",
+        "title": "PHP Programming",
+        "desc": "Writing code in the PHP programming language.",
+        "section": "Programming",
+        "hash": "90e3a68e-1023-4232-82c2-db2a1067185d"
+    },
+    {
+        "id": "mongodb",
+        "title": "MongoDB",
+        "desc": "A source-available cross-platform document-oriented database.",
+        "section": "Programming",
+        "hash": "1dd85b2c-9fbb-4e9d-bc14-efadfe932918"
+    },
+    {
+        "id": "socket-programming",
+        "title": "Socket Programming",
+        "desc": "Socket programming is a network paradigm for data exchange.",
+        "section": "Programming",
+        "hash": "eb05722a-4871-438e-aaf8-8b9da21e307b"
     }
 ]

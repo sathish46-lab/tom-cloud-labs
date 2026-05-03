@@ -20,6 +20,7 @@ use TomLabs\Labs\Quiz;
 
 $parentTopic = Quiz::getCategory($parentId);
 $subtopic = Quiz::getSubtopic($subtopicId);
+$activeTab = strtolower(trim($_GET['tab'] ?? 'recent'));
 
 if (!$parentTopic || !$subtopic) {
     header("Location: /quiz");
@@ -28,6 +29,11 @@ if (!$parentTopic || !$subtopic) {
 
 Session::$property['parent_topic'] = $parentTopic;
 Session::$property['current_subtopic'] = $subtopic;
+Session::$property['active_tab'] = $activeTab;
+
+// Persistent difficulty filter from cookie
+$difficultyFilter = $_COOKIE['quiz_difficulty_filter'] ?? 'normal';
+Session::$property['difficulty_filter'] = $difficultyFilter;
 
 Session::$pageTitle = "Quiz / " . $parentTopic['title'] . " / " . $subtopic['title'];
 Session::loadMaster();

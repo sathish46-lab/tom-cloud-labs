@@ -21,8 +21,11 @@ if (!$currentTopic) {
 }
 
 $subtopics = Quiz::getSubtopicsForCategory($id);
+$activeTab = strtolower(trim($_GET['tab'] ?? 'topics'));
+
 Session::$property['current_topic'] = $currentTopic;
 Session::$property['current_topic']['subtopics'] = $subtopics;
+Session::$property['active_tab'] = $activeTab;
 
 Session::$pageTitle = "Quiz / " . $currentTopic['title'];
 Session::loadMaster();

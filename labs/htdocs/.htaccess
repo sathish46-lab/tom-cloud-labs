@@ -29,8 +29,8 @@ RewriteRule ^home$ app/home.php [L,QSA]
 # 3. Quiz Module Routing (AI Powered)
 RewriteRule ^quiz/v/([a-f0-9]+)/?$ app/quiz/v.php?hash=$1 [L,QSA]
 RewriteRule ^quiz/generate/?$ app/quiz/generate.php [L,QSA]
-RewriteRule ^quiz/([a-zA-Z0-9-]+)/Recent/([a-zA-Z0-9-]+)/?$ app/quiz/start.php?parent=$1&topic_id=$2 [L,QSA]
-RewriteRule ^quiz/([a-zA-Z0-9-]+)/Recent/?$ app/quiz/quiz_view.php?id=$1 [L,QSA]
+RewriteRule ^quiz/([a-zA-Z0-9-]+)/(Recent|trending|completed|leaderboard)/([a-zA-Z0-9-]+)/?$ app/quiz/start.php?parent=$1&tab=$2&topic_id=$3 [L,QSA]
+RewriteRule ^quiz/([a-zA-Z0-9-]+)/(Recent|trending|completed|leaderboard)/?$ app/quiz/quiz_view.php?id=$1&tab=$2 [L,QSA]
 RewriteRule ^quiz/([a-zA-Z0-9-]+)/?$ app/quiz/quiz_view.php?id=$1 [L,QSA]
 RewriteRule ^quiz$ app/quiz/quiz_hub.php [L,QSA]
 

@@ -151,7 +151,7 @@
             <div class="row row-cols-1 row-cols-md-3 g-3">
                 <?php foreach ($categories as $cat): ?>
                 <div class="col">
-                    <div class="card glass-card quiz-item-card h-100 transition-all" onclick="startQuiz('<?= $cat['_id'] ?>')">
+                    <div class="card glass-card quiz-item-card h-100 transition-all" onclick="startQuiz('<?= $cat['hash'] ?? $cat['_id'] ?>')">
                         <div class="card-body p-4">
                             <h5 class="fw-bold mb-2 card-title-text"><?= $cat['title'] ?></h5>
                             <p class="text-body-secondary small mb-0 opacity-75"><?= $cat['desc'] ?></p>
