@@ -7,13 +7,12 @@ body {
 
 .wrapper {
   width: 100%;
-  padding-inline: var(--cui-sidebar-occupy-start, 0)
-    var(--cui-sidebar-occupy-end, 0);
+  padding-inline: var(--cui-sidebar-occupy-start, 0) var(--cui-sidebar-occupy-end, 0);
   will-change: auto;
   @include transition(padding 0.15s);
 }
 
-.header > .container-fluid,
+.header>.container-fluid,
 .sidebar-header {
   min-height: calc(4rem + 1px);
 }
@@ -46,7 +45,7 @@ body {
   }
 }
 
-.header > .container-fluid + .container-fluid {
+.header>.container-fluid+.container-fluid {
   min-height: 3rem;
 }
 
@@ -54,11 +53,13 @@ body {
 .header {
   --cui-header-min-height: 4rem;
   --cui-header-height: 4rem;
-  padding: 0; // Remove extra padding that might increase height
+  padding: 0;
+  overflow: visible !important;
 }
 
 .header-sticky {
   height: 4rem;
+  overflow: visible !important;
 }
 
 // Adjust the top margin of the wrapper to match the new smaller header

@@ -43,8 +43,8 @@ $isNew = (isset($q['created_at']) && time() - (int)$q['created_at'] < 86400 * 30
 ?>
 
 <div class="col animate__animated animate__fadeIn quiz-card-item">
-    <div class="card border-0 shadow-sm blur position-relative" 
-         style="background: rgba(var(--cui-emphasis-color-rgb), 0.04) !important; backdrop-filter: blur(20px) !important; border: 1px solid rgba(var(--cui-emphasis-color-rgb), 0.1) !important; border-radius: 18px !important; transition: all 0.3s ease; overflow: visible !important;">
+    <div class="card glass-card h-100 position-relative" 
+         style="overflow: visible !important;">
         <div class="card-body p-3 d-flex flex-column position-relative" style="overflow: visible !important;">
             
             <!-- Title -->
@@ -55,22 +55,22 @@ $isNew = (isset($q['created_at']) && time() - (int)$q['created_at'] < 86400 * 30
             <!-- Badge Row (Topics & Metadata) -->
             <div class="d-flex flex-wrap align-items-center gap-1 mb-2">
                 <?php if ($isNew): ?>
-                    <span class="badge rounded-pill px-2" style="font-size: 0.52rem; background: #2eb857 !important; color: #fff !important; font-weight: 800; text-transform: lowercase;">new 🥳</span>
+                    <span class="badge rounded-pill px-2" style="font-size: 0.52rem; background: var(--sna-primary) !important; color: #000 !important; font-weight: 800; text-transform: lowercase;">new 🥳</span>
                 <?php endif; ?>
                 
                 <span class="badge rounded-pill px-2" style="font-size: 0.52rem; background: <?= $diffColor ?> !important; color: #fff !important; font-weight: 800; text-transform: lowercase;"><?= strtolower($qDiff) ?></span>
 
                 <!-- AI Tags -->
                 <?php foreach ($displayTags as $tag): ?>
-                    <span class="badge rounded-pill px-2" style="font-size: 0.52rem; background: #5a57cb !important; color: #fff !important; font-weight: 600; text-transform: lowercase;"><?= strtolower($tag) ?></span>
+                    <span class="badge rounded-pill px-2" style="font-size: 0.52rem; background: rgba(255,255,255,0.1) !important; border: 1px solid rgba(255,255,255,0.05); color: #fff !important; font-weight: 600; text-transform: lowercase;"><?= strtolower($tag) ?></span>
                 <?php endforeach; ?>
                 
                 <?php if ($remainingTagsCount > 0): ?>
-                    <span class="badge rounded-pill px-2 quiz-tag-more position-relative" style="cursor: pointer; font-size: 0.52rem; background: #4a4d9c !important; color: #fff !important;"
+                    <span class="badge rounded-pill px-2 quiz-tag-more position-relative" style="cursor: pointer; font-size: 0.52rem; background: rgba(255,255,255,0.1) !important; color: #fff !important;"
                         data-remaining-tags='<?= $remainingTagsJson ?>' onclick="toggleTagPopover(this)">+<?= $remainingTagsCount ?></span>
                 <?php endif; ?>
 
-                <span class="badge rounded-pill px-2" style="font-size: 0.52rem; background: var(--cui-emphasis-color) !important; color: var(--cui-body-bg) !important; font-weight: 800; text-transform: lowercase;">
+                <span class="badge rounded-pill px-2" style="font-size: 0.52rem; background: rgba(255,255,255,0.05) !important; color: var(--sna-text-muted) !important; font-weight: 800; text-transform: lowercase;">
                     <i class="bx bx-time-five me-1"></i><?= strtolower($timeAgo) ?> ago
                 </span>
             </div>
@@ -79,7 +79,7 @@ $isNew = (isset($q['created_at']) && time() - (int)$q['created_at'] < 86400 * 30
             <div class="mb-2"></div>
 
             <!-- Footer: Stats & Start -->
-            <div class="mt-auto pt-2 border-top border-secondary border-opacity-10 d-flex align-items-center justify-content-between">
+            <div class="mt-auto pt-2 border-top border-white border-opacity-10 d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center gap-2">
                     <div class="d-flex align-items-center gap-1">
                         <span class="fw-bold theme-text" style="font-size: 0.85rem;"><?= $zealReward ?></span>
@@ -101,7 +101,8 @@ $isNew = (isset($q['created_at']) && time() - (int)$q['created_at'] < 86400 * 30
                     </button>
                 </div>
 
-                <a href="/quiz/v/<?= $qHash ?>" class="btn btn-success btn-sm rounded-pill fw-bold px-3 py-1" style="font-size: 0.675rem; letter-spacing: 0.5px; background: #2eb857 !important; border: none !important; box-shadow: 0 4px 12px rgba(46, 184, 87, 0.3);">
+                <a href="/quiz/v/<?= $qHash ?>" class="btn btn-success btn-sm rounded-pill fw-bold px-3 py-1" 
+                   style="font-size: 0.675rem; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(var(--sna-primary-rgb), 0.3);">
                     start mission
                 </a>
             </div>

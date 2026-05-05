@@ -31,7 +31,7 @@ $domains = $db->domains->find(['user_id' => ['$in' => [(string)$userId, $userId]
 <div class="container-fluid px-0 pt-4">
     <div class="row g-4 mb-4">
     <div class="col-12 col-md-6">
-        <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden bg-body-tertiary">
+        <div class="card h-100 border-0 glass-card overflow-hidden">
             <div class="card-body p-4 position-relative">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
@@ -42,17 +42,17 @@ $domains = $db->domains->find(['user_id' => ['$in' => [(string)$userId, $userId]
                             <h2 class="fw-bold mb-0 text-body ls-n1"><?= str_pad($activeLabsCount, 2, '0', STR_PAD_LEFT) ?></h2>
                             <span class="text-body-secondary fw-semibold">/ <?= $labsLimit ?></span>
                         </div>
-                        <div class="small text-success fw-bold text-uppercase" style="font-size: 0.65rem;">Active Nodes</div>
+                        <div class="small theme-text fw-bold text-uppercase" style="font-size: 0.65rem;">Active Nodes</div>
                     </div>
                 </div>
 
-                <!-- Device List (Scrollable) -->
+                <!-- Device List -->
                 <div class="device-list mt-4 pe-1" style="max-height: 110px; overflow-y: auto;">
                     <?php if (!empty($labsList)): ?>
                         <?php foreach ($labsList as $lab): ?>
-                        <div class="d-flex align-items-center justify-content-between p-2 mb-2 rounded-3 bg-body-secondary shadow-sm">
+                        <div class="d-flex align-items-center justify-content-between p-2 mb-2 rounded-3 border border-white border-opacity-10" style="background: rgba(255,255,255,0.05);">
                             <div class="d-flex align-items-center gap-2">
-                                <div class="bg-success bg-opacity-10 p-2 rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                <div class="bg-success bg-opacity-20 p-2 rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
                                     <i class='bx bxs-circle text-success animate-pulse' style="font-size: 0.5rem;"></i>
                                 </div>
                                 <div>
@@ -78,7 +78,7 @@ $domains = $db->domains->find(['user_id' => ['$in' => [(string)$userId, $userId]
     </div>
 
     <div class="col-12 col-md-6">
-        <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden bg-body-tertiary">
+        <div class="card h-100 border-0 glass-card overflow-hidden">
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
@@ -96,9 +96,9 @@ $domains = $db->domains->find(['user_id' => ['$in' => [(string)$userId, $userId]
                 <div class="domain-list mt-4 pe-1" style="max-height: 110px; overflow-y: auto;">
                     <?php if ($domainCount > 0): ?>
                         <?php foreach ($domains as $d): ?>
-                        <div class="d-flex align-items-center justify-content-between p-2 mb-2 rounded-3 bg-body border-light shadow-sm">
+                        <div class="d-flex align-items-center justify-content-between p-2 mb-2 rounded-3 border border-white border-opacity-10" style="background: rgba(255,255,255,0.05);">
                             <div class="d-flex align-items-center gap-2">
-                                <div class="bg-info bg-opacity-10 p-2 rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                <div class="bg-info bg-opacity-20 p-2 rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
                                     <i class='bx bx-world text-info' style="font-size: 0.9rem;"></i>
                                 </div>
                                 <div class="text-body fw-medium small"><?= $d['domain'] ?></div>
@@ -114,7 +114,7 @@ $domains = $db->domains->find(['user_id' => ['$in' => [(string)$userId, $userId]
                     <?php endif; ?>
                 </div>
                 <div class="mt-2 text-center">
-                    <a href="/domains" class="text-decoration-none text-body-secondary small fw-bold hover-text-body transition-all uppercase ls-1">
+                    <a href="/domains" class="text-decoration-none text-body-secondary small fw-bold hover-theme-text transition-all uppercase ls-1">
                         VIEW ALL ASSETS <i class='bx bx-right-arrow-alt align-middle'></i>
                     </a>
                 </div>
@@ -125,7 +125,7 @@ $domains = $db->domains->find(['user_id' => ['$in' => [(string)$userId, $userId]
 
 <div class="row g-3">
     <div class="col-12">
-        <div class="card border-0 shadow-sm rounded-4 bg-body-tertiary">
+        <div class="card border-0 glass-card">
             <div class="card-header bg-transparent border-0 pt-3 px-3 d-flex justify-content-between align-items-center">
                 <h6 class="fw-bold mb-0 d-flex align-items-center text-body" style="font-size: 0.85rem;">
                     Machine Labs 
@@ -140,14 +140,14 @@ $domains = $db->domains->find(['user_id' => ['$in' => [(string)$userId, $userId]
                 <div id="machine-labs-container" class="d-flex flex-column gap-2">
                     <?php if (!empty($labsList)): ?>
                         <?php foreach ($labsList as $lab): ?>
-                        <div class="lab-row-premium d-flex flex-column flex-lg-row align-items-center p-3 rounded-4 gap-3 border shadow-sm">
+                        <div class="lab-row-premium d-flex flex-column flex-lg-row align-items-center p-3 rounded-4 gap-3 border border-white border-opacity-10" style="background: rgba(255,255,255,0.03);">
                             <div class="d-flex align-items-center gap-3 flex-grow-1 w-100">
                                     <div class="d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
                                         <?php 
                                             $typeIconMap = ['essentials' => 'bxl-tux', 'minio' => 'bxl-docker', 'n8n' => 'bx-git-repo-forked'];
                                             $iconClass = $typeIconMap[$lab['type']] ?? 'bxl-ubuntu';
                                         ?>
-                                        <i class="bx <?= $iconClass ?> text-body opacity-75" style="font-size: 2.2rem;"></i>
+                                        <i class="bx <?= $iconClass ?> theme-text opacity-75" style="font-size: 2.2rem;"></i>
                                     </div>
                                 <div>
                                     <h6 class="fw-bold mb-1 text-body"><?= $lab['name'] ?> Lab</h6>
@@ -159,7 +159,7 @@ $domains = $db->domains->find(['user_id' => ['$in' => [(string)$userId, $userId]
                                             else if ($lab['status'] === 'deploying') $statusColor = 'bg-warning';
                                             else if ($lab['status'] === 'stopping') $statusColor = 'bg-orange';
                                         ?>
-                                        <span class="badge <?= $statusColor ?> bg-opacity-10 <?= str_replace('bg-', 'text-', $statusColor) ?> border border-opacity-10" style="font-size: 0.6rem; <?= $lab['status'] === 'stopping' ? 'color: #fd7e14 !important;' : '' ?>"><?= strtoupper($lab['status']) ?></span>
+                                        <span class="badge <?= $statusColor ?> bg-opacity-10 <?= str_replace('bg-', 'text-', $statusColor) ?> border border-opacity-10" style="font-size: 0.6rem;"><?= strtoupper($lab['status']) ?></span>
                                     </div>
                                 </div>
                             </div>
@@ -169,17 +169,17 @@ $domains = $db->domains->find(['user_id' => ['$in' => [(string)$userId, $userId]
                                     <div class="fw-bold text-body small" id="cpu-<?= $lab['hash'] ?>">0.00%</div>
                                     <div class="text-body-secondary" style="font-size: 0.65rem; font-weight: 500;">CPU LOAD</div>
                                 </div>
-                                <div class="text-center px-lg-4 border-lg-start border-light">
+                                <div class="text-center px-lg-4 border-lg-start border-white border-opacity-10">
                                     <div class="fw-bold text-body small" id="mem-<?= $lab['hash'] ?>">0.00%</div>
                                     <div class="text-body-secondary" style="font-size: 0.65rem; font-weight: 500;">MEMORY USAGE</div>
                                 </div>
-                                <div class="text-center pe-lg-4 border-lg-end border-light">
+                                <div class="text-center pe-lg-4 border-lg-end border-white border-opacity-10">
                                     <div class="fw-bold text-body small" id="load-<?= $lab['hash'] ?>">0.0000, 0.0000, 0.0000</div>
                                     <div class="text-body-secondary" style="font-size: 0.65rem; font-weight: 500;">LOAD AVERAGE</div>
                                 </div>
                                 
                                 <div class="d-flex gap-2">
-                                    <a href="/labs/dashboard/<?= $lab['hash'] ?>" class="btn btn-sm btn-success bg-opacity-75 border-0 rounded-3 px-3 fw-bold d-flex align-items-center" style="height: 34px; font-size: 0.75rem;">
+                                    <a href="/labs/dashboard/<?= $lab['hash'] ?>" class="btn btn-sm btn-success rounded-3 px-3 fw-bold d-flex align-items-center" style="height: 34px; font-size: 0.75rem;">
                                         <i class='bx bx-grid-alt me-1'></i> Dashboard
                                     </a>
                                     <button onclick="openCodeModal('<?= $lab['hash'] ?>', '<?= $lab['name'] ?> Lab', '<?= $lab['status'] ?>')" class="btn btn-sm btn-primary bg-opacity-75 border-0 rounded-3 px-3 fw-bold d-flex align-items-center" style="height: 34px; font-size: 0.75rem;">

@@ -12,6 +12,7 @@ $tomThemes = [
         ]
     ],
     'ninja' => [
+        'color' => '#010d12',
         'assets' => [
             '/assets/Background_Img/ninja/0.png',
             '/assets/Background_Img/ninja/1.png',
@@ -53,6 +54,7 @@ $tomThemes = [
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@coreui/coreui@5.0.2/dist/css/coreui.min.css" rel="stylesheet">
 
     <script>
     /**
@@ -75,16 +77,11 @@ $tomThemes = [
         if (isHidden) {
             document.documentElement.classList.add('sidebar-init-hidden');
         }
+
         // 3. Visual Blur recovery (Immediate)
         const savedBlur = localStorage.getItem('tom-labs-visual-blur');
-        // Default to true if never set
         const blurEnabled = (savedBlur === null) ? true : (savedBlur === 'true');
-        
-        // Check for Browser Support instantly
-        const supportsBlur = CSS.supports('backdrop-filter', 'blur(1px)') || 
-                            CSS.supports('-webkit-backdrop-filter', 'blur(1px)');
-
-        if (blurEnabled && supportsBlur) {
+        if (blurEnabled && (CSS.supports('backdrop-filter', 'blur(1px)') || CSS.supports('-webkit-backdrop-filter', 'blur(1px)'))) {
             document.documentElement.classList.add('enable-blur');
         }
 
@@ -98,8 +95,8 @@ $tomThemes = [
 
         const themeColors = {
             'robo': '#0b2b1c',
-            'robotower': '#0b1e36',
-            'ninja': '#1c0b2b'
+            'robotower': '#000102ff',
+            'ninja': '#010d12'
         };
 
         const isLight = themeToApply === 'light';
@@ -144,10 +141,10 @@ $tomThemes = [
                 document.documentElement.style.setProperty("--c2", "#112e4a");
                 document.documentElement.style.setProperty("--c3", "#16375e");
                 document.documentElement.style.setProperty("--c4", "#1a2c48");
-                document.documentElement.style.setProperty("--cui-body-bg", "rgba(3, 17, 36, 0.94)");
-                document.documentElement.style.setProperty("--glass-bg", "rgba(0, 10, 24, 0.823)");
-                document.documentElement.style.setProperty("--glass-bg-solid", "rgba(10, 20, 35, 0.94)");
-                document.documentElement.style.setProperty("--cui-sidebar-bg", "rgba(11, 30, 54, 0.95)");
+                document.documentElement.style.setProperty("--cui-body-bg", "rgba(1, 13, 18, 0.94)");
+                document.documentElement.style.setProperty("--glass-bg", "rgba(1, 13, 18, 0.85)");
+                document.documentElement.style.setProperty("--glass-bg-solid", "rgba(1, 13, 18, 0.94)");
+                document.documentElement.style.setProperty("--cui-sidebar-bg", "rgba(1, 13, 18, 0.95)");
             }
         }
 
@@ -281,7 +278,7 @@ $tomThemes = [
                     <div class="row g-3">
                         <div class="col-md-6">
                             <div class="bg-preview rounded-3 p-5 text-center pointer border border-white border-opacity-10 transition-all hover-scale" 
-                                onclick="TomBG.setMode('plain')" style="background: #0b1e36; min-height: 140px; display: flex; align-items: center; justify-content: center;">
+                                onclick="TomBG.setMode('plain')" style="background: #010d12; min-height: 140px; display: flex; align-items: center; justify-content: center;">
                                 <h6 class="fw-bold m-0 text-white">Plain Theme</h6>
                             </div>
                         </div>
@@ -302,7 +299,7 @@ $tomThemes = [
                         <div class="col-md-6">
                             <div class="bg-preview rounded-3 p-5 text-center pointer border border-white border-opacity-10 transition-all hover-scale" 
                                 onclick="TomBG.setMode('robotower')" 
-                                style="background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('/assets/Background_Img/RoboTower/3.png'); background-size: contain; background-repeat: no-repeat; background-position: center bottom; background-color: #0b1e36; min-height: 140px; display: flex; align-items: center; justify-content: center;">
+                                style="background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('/assets/Background_Img/RoboTower/robo_tower.jpg'); background-size: cover; background-position: center; min-height: 140px; display: flex; align-items: center; justify-content: center;">
                                 <h6 class="fw-bold m-0 text-white">Robo Tower</h6>
                             </div>
                         </div>
@@ -328,7 +325,7 @@ $tomThemes = [
                         <div class="d-flex justify-content-between align-items-center px-1">
                             <?php
                             $presets = [
-                                'Default' => '#0b1e36',
+                                'Default' => '#010d12',
                                 'Charcoal' => '#0B1E36',
                                 'Midnight' => '#FF6251',
                                 'Emerald' => '#00BBD6',
@@ -459,7 +456,7 @@ $tomThemes = [
                             <div class="pencils-container">
                                 <?php 
                                 $pencils = [
-                                    '#0b1e36', '#1e293b', '#334155', '#475569', '#64748b', '#94a3b8', '#cbd5e1', '#f8fafc',
+                                    '#010d12', '#1e293b', '#334155', '#475569', '#64748b', '#94a3b8', '#cbd5e1', '#f8fafc',
                                     '#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e', '#10b981', '#06b6d4',
                                     '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e', '#71717a'
                                 ];
@@ -474,52 +471,6 @@ $tomThemes = [
         </div>
     </div>
 
-    <!-- This card section is for the visual recommendation modal -->
-    <div class="modal fade" id="visualsRecommendationModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content  border-0 rounded-4 shadow-lg p-3">
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title fw-bold">Visuals Recommendation</h5>
-                    <button type="button" class="btn-close btn-close-white" data-coreui-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="small opacity-75 mb-4">
-                        This website uses Blur effects for background. This effect is only available if your browser supports WebGL and your GPU is a high-performance one. You can check your GPU info below.
-                    </p>
-                    
-                    <div class="table-responsive rounded-3 border border-white border-opacity-10">
-                        <table class="table table-dark table-borderless mb-0 small">
-                            <tbody>
-                                <tr class="border-bottom border-white border-opacity-10">
-                                    <td class="text-secondary py-2 ps-3">WebGL Support</td>
-                                    <td class="fw-bold text-success py-2 pe-3 text-end" id="gpu-webgl">Detecting...</td>
-                                </tr>
-                                <tr class="border-bottom border-white border-opacity-10">
-                                    <td class="text-secondary py-2 ps-3">High Performance GPU</td>
-                                    <td class="fw-bold text-success py-2 pe-3 text-end" id="gpu-performance">Detecting...</td>
-                                </tr>
-                                <tr class="border-bottom border-white border-opacity-10">
-                                    <td class="text-secondary py-2 ps-3">GPU Vendor</td>
-                                    <td class="py-2 pe-3 text-end" id="gpu-vendor">Detecting...</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-secondary py-2 ps-3">Renderer</td>
-                                    <td class="py-2 pe-3 text-end" id="gpu-renderer">Detecting...</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <p class="mt-4 mb-0 small text-secondary italic">
-                        <span class="fw-bold text-white">Note:</span> This info is only for recommendation purpose. You can still use this website without WebGL support or High Performance GPU. However, some visual effects may not work properly.
-                    </p>
-                </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-warning rounded-pill px-4 fw-bold text-dark" data-coreui-dismiss="modal">Okay</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <?php endif; ?>
 
@@ -597,7 +548,7 @@ $tomThemes = [
 
                 const html = `
                     <div id="${toastId}" class="toast border-0 rounded-4 overflow-hidden shadow-lg mb-3" role="alert" aria-live="assertive" aria-atomic="true" 
-                        style="background: rgba(10, 20, 35, 0.85); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.08) !important; min-width: 320px;">
+                        style="background: rgba(1, 13, 18, 0.85); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.08) !important; min-width: 320px;">
                         <div class="toast-header border-0 bg-transparent text-white pt-3 px-3 d-flex align-items-center">
                             <strong class="me-auto d-flex align-items-center gap-2 fs-6">
                                 <i class="bx ${icon}"></i> 

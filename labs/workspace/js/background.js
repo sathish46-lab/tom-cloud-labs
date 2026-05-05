@@ -116,7 +116,7 @@ const TomBG = {
   updateBrightness: function (val) {
     const valBright = document.getElementById("val-bright");
     if (valBright) valBright.innerText = val + "%";
-    const currentHex = localStorage.getItem("tom-labs-plain-color") || "#0b1e36";
+    const currentHex = localStorage.getItem("tom-labs-plain-color") || "#010d12";
     const hsv = this.hexToHsv(currentHex);
     const newHex = this.hsvToHex(hsv.h, hsv.s, val);
     this.setPlainColor(newHex);
@@ -452,7 +452,7 @@ const TomBG = {
           const safetyTimeout = setTimeout(() => {
             if (!colorExtracted) {
               console.warn("Background color extraction timed out, using fallback.");
-              applyColors("#0b1e36");
+              applyColors("#010d12");
             }
           }, 500);
 
@@ -602,11 +602,11 @@ const TomBG = {
         callback(hex);
       } catch (e) {
         console.error("CORS or Canvas Error in color extraction:", e);
-        callback("#0b1e36");
+        callback("#010d12");
       }
     };
     img.onerror = function () {
-      callback("#0b1e36");
+      callback("#010d12");
     };
     img.src = imageSrc;
   },
@@ -646,10 +646,10 @@ const TomBG = {
   },
 
   toHex: function (color) {
-    if (!color) return "#0b1e36";
+    if (!color) return "#010d12";
     if (color.indexOf("#") === 0) return color;
     const rgb = color.match(/\d+/g);
-    if (!rgb || rgb.length < 3) return "#0b1e36";
+    if (!rgb || rgb.length < 3) return "#010d12";
     const r = parseInt(rgb[0]),
       g = parseInt(rgb[1]),
       b = parseInt(rgb[2]);

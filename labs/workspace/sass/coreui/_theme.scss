@@ -104,10 +104,10 @@
 :root,
 [data-coreui-theme="dark"] {
   /* Forced Neutral Baseline - Set at :root level to eliminate purple reload flash */
-  --cui-body-bg: #091723;
+  --cui-body-bg: #010d12;
   --cui-body-color: #ffffff;
   --cui-heading-color: #ffffff;
-  --cui-tertiary-bg: #091723;
+  --cui-tertiary-bg: #010d12;
   --cui-secondary-bg: #071e31;
   --cui-dark-bg-subtle: #091723;
 
@@ -125,10 +125,10 @@
   --cui-card-border-color: rgba(255, 255, 255, 0.1);
   --glass-border-glow: rgba(255, 255, 255, 0.14);
   --glass-shine: rgba(255, 255, 255, 0.22);
-  --glass-bg: rgba(0, 0, 0, 0.65);
-  --glass-text: #ffffff;
-  --glass-text-muted: rgba(255, 255, 255, 0.6);
-  --glass-icon: rgba(255, 255, 255, 0.85);
+  --glass-bg: rgba(0, 0, 0, 0.45);
+  --glass-blur: 24px;
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12);
   --cui-card-border-radius: 1.2rem;
   --cui-sidebar-width: 224px;
   --cui-sidebar-narrow-width: 56px;
@@ -516,19 +516,34 @@ body::before {
 
 .glass-card {
   color: var(--glass-text) !important;
-  background: var(--cui-card-bg);
-  backdrop-filter: blur(6px) saturate(140%);
-  -webkit-backdrop-filter: blur(6px) saturate(140%);
-  border: 1px solid rgba(100, 200, 255, 0.25) !important;
-  /* Permanent high-end blue border */
-  border-radius: 16px;
+  /* Apple Liquid Glass Effect */
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border-radius: 1.25rem; /* 20px */
   position: relative;
-  /* overflow: hidden; Removed to allow tooltips and dropdowns to bleed out professionally */
-  box-shadow:
-    0 0 0 1px rgba(100, 200, 255, 0.15),
-    0 8px 32px rgba(0, 0, 0, 0.15),
-    inset 0 1px 0 var(--glass-shine);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Selfmade Ninja Liquid Rim Effect */
+  :root.enable-blur &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    z-index: 5;
+    padding: 1px; /* Thickness of the glowing glass rim */
+    background: transparent;
+    backdrop-filter: saturate(400%) brightness(1.2);
+    -webkit-backdrop-filter: saturate(400%) brightness(1.2);
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  }
 
   /* Fallback for when Visual Blur is OFF */
   :root:not(.enable-blur) & {

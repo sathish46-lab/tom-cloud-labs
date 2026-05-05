@@ -108,7 +108,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     const container = document.getElementById('recent-quizzes-grid');
-    if (container) observer.observe(container, { childList: true });
+    if (container) {
+        observer.observe(container, { childList: true });
+        
+        // Re-layout when visibility changes (Fixes card size issue when switching tabs)
+        const visibilityObserver = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting) {
+                console.log("[Quiz Hub] Grid visible, re-laying out Masonry...");
+                if (container.msnry) container.msnry.layout();
+            }
+        }, { threshold: 0.1 });
+        visibilityObserver.observe(container);
+    }
 });
 </script>
 
@@ -233,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <!-- Spot Quiz Modal (Two-Step: Confirm -> Generate) -->
 <div class="modal fade" id="spotQuizModal" tabindex="-1" aria-hidden="true" data-coreui-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden" style="background: rgba(var(--cui-body-bg-rgb, 11, 30, 54), 0.75); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.1) !important;">
+        <div class="modal-content glass-card border-0 shadow-lg overflow-hidden">
             
             <!-- STEP 1: Confirmation View -->
             <div id="modal-view-confirm" class="modal-body p-4">

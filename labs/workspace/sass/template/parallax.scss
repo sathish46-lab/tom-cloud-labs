@@ -23,14 +23,14 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.2) 0%, rgba(9, 23, 35, 0.6) 100%);
-      /* Darker, more muted overlay */
+      background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.5) 100%);
+      /* Clearer overlay to let the background image shine through */
       z-index: 10;
     }
 
     .bg-cover {
-      /* Mid-rate Saturation for the "Ninja" aesthetic */
-      filter: saturate(2.2) brightness(0.9);
+      /* Optimized for the "Glass" aesthetic */
+      filter: saturate(1.2) brightness(1.05);
       transition: filter 0.3s ease;
     }
   }

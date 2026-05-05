@@ -149,9 +149,6 @@ $current = Session::getCurrentFile();
 .sidebar-init-hidden #sidebar {
     display: none !important;
 }
-.sidebar-init-hidden .wrapper {
-    margin-left: 0 !important;
-}
 
 /* 1. HIDE STATS ON COLLAPSE */
 .sidebar-narrow #sidebar-stats-container,
@@ -159,21 +156,7 @@ $current = Session::getCurrentFile();
     display: none !important;
 }
 
-/* 2. THEME-BASED COLORS */
-[data-coreui-theme="dark"] .stat-label,
-[data-coreui-theme="dark"] .stat-subtext {
-    color: #ffffff !important;
-}
-
-[data-coreui-theme="light"] .stat-label {
-    color: #3c4b64 !important;
-}
-
-[data-coreui-theme="light"] .stat-subtext {
-    color: #768192 !important;
-}
-
-/* 3. PROGRESS BAR STYLING */
+/* 2. PROGRESS BAR STYLING */
 .stats-progress-bg {
     height: 6px;
     background: rgba(0, 0, 0, 0.2);
@@ -182,63 +165,18 @@ $current = Session::getCurrentFile();
 
 .stat-label {
     font-size: 0.75rem;
+    font-weight: 700;
 }
 
 .stat-subtext {
     font-size: 0.7rem;
+    opacity: 0.7;
 }
 
-/* 4. PER-CORE STYLING */
+/* 3. PER-CORE STYLING */
 .cpuinfo.progress {
     display: flex;
     background: rgba(0, 0, 0, 0.2);
-}
-
-.cpuinfo .progress-bar {
-    transition: none;
-    /* jQuery handles animation for that high-quality look */
-}
-
-/* 5. GRADIENT COLORS */
-.bg-danger-gradient {
-    background: linear-gradient(180deg, #f86c6b 0%, #f64846 100%);
-}
-
-.bg-warning-gradient {
-    background: linear-gradient(180deg, #ffc107 0%, #f6960b 100%);
-}
-
-.bg-primary-gradient {
-    background: linear-gradient(180deg, #20a8d8 0%, #1985ac 100%);
-}
-
-.bg-success-gradient {
-    background: linear-gradient(180deg, #4dbd74 0%, #3a9d5d 100%);
-}
-
-.bg-info-gradient {
-    background: linear-gradient(180deg, #63c2de 0%, #29b0d0 100%);
-}
-
-.bg-secondary-gradient {
-    background: linear-gradient(180deg, #c8ced3 0%, #acb4bc 100%);
-}
-
-.critical-border {
-    outline: 1px solid #ff4d4d;
-    animation: pulse-border 1s infinite;
-}
-
-@keyframes pulse-border {
-
-    0%,
-    100% {
-        outline-color: rgba(255, 77, 77, 1);
-    }
-
-    50% {
-        outline-color: rgba(255, 77, 77, 0.2);
-    }
 }
 </style>
 
