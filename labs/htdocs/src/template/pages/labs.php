@@ -1,4 +1,4 @@
-<div class="lab-header-section mb-4 px-4">
+<div class="lab-header-section mb-4">
     <div class="row align-items-center">
         <div class="col">
             <h1 class="fw-bold theme-text m-0" style="font-size: 1.8rem; letter-spacing: -0.5px;">Labs</h1>
@@ -26,7 +26,7 @@
     </div>
 </div>
 
-<div class="row g-4 mb-4 px-4">
+<div class="row g-4 mb-4">
     <?php foreach(Session::get('labs_list', []) as $lab): ?>
     <div class="col-12 col-md-4">
         <div class="card h-100 border-0 shadow-lg rounded-4 glass-card position-relative">

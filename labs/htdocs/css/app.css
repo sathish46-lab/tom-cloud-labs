@@ -14275,22 +14275,35 @@ body {
   align-items: center;
   justify-content: center;
 }
-.badge.bg-primary {
+.badge.bg-primary, .badge.bg-primary-gradient {
   background: linear-gradient(135deg, #6c5ce7, #a29bfe) !important;
+  color: #fff !important;
 }
-.badge.bg-success {
+.badge.bg-success, .badge.bg-success-gradient {
   background: linear-gradient(135deg, #27ae60, #2ecc71) !important;
+  color: #fff !important;
 }
-.badge.bg-danger {
+.badge.bg-danger, .badge.bg-danger-gradient {
   background: linear-gradient(135deg, #e74c3c, #ff7675) !important;
+  color: #fff !important;
 }
-.badge.bg-info {
+.badge.bg-info, .badge.bg-info-gradient {
   background: linear-gradient(135deg, #0984e3, #74b9ff) !important;
   color: #fff !important;
 }
-.badge.bg-warning {
+.badge.bg-warning, .badge.bg-warning-gradient {
   background: linear-gradient(135deg, #f1c40f, #fdcb6e) !important;
   color: #000 !important;
+}
+[data-coreui-theme=dark] .badge.bg-warning, [data-coreui-theme=dark] .badge.bg-warning-gradient {
+  color: #fff !important;
+}
+.badge.bg-secondary, .badge.bg-secondary-gradient {
+  background: linear-gradient(135deg, #a4b0be, #f1f2f6) !important;
+  color: #2f3542 !important;
+}
+[data-coreui-theme=dark] .badge.bg-secondary, [data-coreui-theme=dark] .badge.bg-secondary-gradient {
+  color: #fff !important;
 }
 
 /* Ensure dropdown icons match the text on hover */
@@ -14559,6 +14572,12 @@ small {
   z-index: -2;
   pointer-events: none;
   overflow: hidden;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+.scenery-container[style*="display: none"], :root.mode-plain .scenery-container {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  display: none !important;
 }
 
 /* Snow Effect Removed for Performance */
@@ -14593,14 +14612,18 @@ small {
 }
 
 /* Snowfall animation removed */
-/* Premium Grain Overlay (Optimized) */
+/* Premium Grain Overlay (Conditional for Plain Mode) */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
-  /* Simple opacity is much faster for GPU than mix-blend-mode */
+  /* Pattern only shows in parallax modes, hidden in plain mode for clean colors */
+}
+:root:not(.mode-plain) body::before {
   background-image: url("https://www.transparenttextures.com/patterns/carbon-fibre.png");
   opacity: 0.02;
+}
+body::before {
   pointer-events: none !important;
   z-index: -5 !important;
 }
@@ -14698,48 +14721,26 @@ body::before {
 
 .glass-card {
   color: var(--glass-text) !important;
-  /* Apple Liquid Glass Effect */
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
-  backdrop-filter: blur(24px) saturate(200%);
-  -webkit-backdrop-filter: blur(24px) saturate(200%);
-  border: 1px solid rgba(255, 255, 255, 0.05) !important;
-  border-radius: 1.25rem; /* 20px */
-  position: relative;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  /* Selfmade Ninja Liquid Rim Effect */
+  background: var(--cui-card-bg, rgba(255, 255, 255, 0.05));
 }
-:root.enable-blur .glass-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  border-radius: inherit;
-  z-index: 5;
-  padding: 1px; /* Thickness of the glowing glass rim */
-  background: transparent;
-  backdrop-filter: saturate(400%) brightness(1.2);
-  -webkit-backdrop-filter: saturate(400%) brightness(1.2);
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+:root.enable-blur .glass-card {
+  backdrop-filter: blur(var(--glass-blur, 10px));
+  -webkit-backdrop-filter: blur(var(--glass-blur, 10px));
 }
 .glass-card {
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 1.25rem;
+  position: relative;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   /* Fallback for when Visual Blur is OFF */
 }
 :root:not(.enable-blur) .glass-card {
-  background: var(--cui-card-bg-solid, rgba(255, 255, 255, 0.94)) !important;
+  background: var(--cui-card-bg-solid, #ffffff) !important;
   border-color: rgba(0, 0, 0, 0.08) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
-}
-:root:not(.enable-blur)[data-coreui-theme=dark] .glass-card {
-  background: var(--cui-card-bg-solid, rgba(15, 30, 50, 0.94)) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
 }
 .glass-card {
   /* Top-edge light refraction (static — no animation = no GPU cost) */
@@ -14894,13 +14895,15 @@ body::before {
 /*════════════════════════════════════════════
   1.  COREUI THEME PALettes
   ════════════════════════════════════════════*/
-/* LIGHT — pastel frost (moderate saturation) */
+/* LIGHT — neutral frost (clean & professional) */
 html[data-coreui-theme=light] {
   --c1: #ffffff;
-  --c2: #e4e6ff;
-  --c3: #e4fbff;
-  --c4: #e2ecff;
-  --c5: #e6fff6;
+  --c2: #f8faff;
+  --c3: #f0f4ff;
+  --c4: #e8eeff;
+  --c5: #ffffff;
+  --c6: #f8f9fa;
+  --c7: #f0f2f5;
 }
 
 html[data-coreui-theme=dark] {
@@ -15537,6 +15540,12 @@ html.enable-blur .modal-content {
 #mq-status-dot.dot-connected {
   color: rgb(14, 181, 0) !important;
   filter: drop-shadow(0 0 3px #0a4c04);
+}
+
+/* Always maintain blur for the Server Logs panel as requested */
+.server-logs-panel {
+  backdrop-filter: blur(12px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(150%) !important;
 }
 
 /* Global Blur support */
@@ -16343,6 +16352,94 @@ html.enable-blur .server-logs-panel {
     transform: translateY(0) scale(1);
   }
 }
+.mode-plain[data-coreui-theme=light] .card,
+.mode-plain[data-coreui-theme=light] .glass-card,
+.mode-plain[data-coreui-theme=light] .lab-card-main {
+  background: #ffffff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  box-shadow: rgba(0, 0, 0, 0.08) 0px 8px 24px, rgba(0, 0, 0, 0.04) 0px 2px 4px !important;
+  color: #1a1a2e;
+}
+.mode-plain[data-coreui-theme=light] .sidebar {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.06);
+}
+.mode-plain[data-coreui-theme=light] .header {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+:root.enable-blur .mode-plain[data-coreui-theme=light] .header {
+  backdrop-filter: blur(12px);
+}
+.mode-plain[data-coreui-theme=light] .footer {
+  background: rgba(255, 255, 255, 0.6) !important;
+}
+.mode-plain[data-coreui-theme=light] .lab-card-main {
+  background: var(--cui-card-bg-solid, rgba(255, 255, 255, 0.95)) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 12px 28px, rgba(0, 0, 0, 0.04) 0px 2px 6px !important;
+}
+.mode-plain[data-coreui-theme=light] .lab-card-main .card-title,
+.mode-plain[data-coreui-theme=light] .lab-card-main .fw-bold {
+  color: #1a1a2e !important;
+}
+.mode-plain[data-coreui-theme=light] .lab-card-main .text-secondary,
+.mode-plain[data-coreui-theme=light] .lab-card-main .small,
+.mode-plain[data-coreui-theme=light] .lab-card-main .font-monospace {
+  color: rgba(26, 26, 46, 0.7) !important;
+}
+.mode-plain[data-coreui-theme=light] .lab-card-main .font-monospace {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+.mode-plain[data-coreui-theme=light] .lab-bg-icon {
+  color: #000;
+  opacity: 0.04;
+}
+.mode-plain[data-coreui-theme=light] .badge-mini {
+  border-color: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.04) !important;
+  color: rgba(26, 26, 46, 0.8);
+}
+.mode-plain[data-coreui-theme=light] .sidebar-nav .nav-link {
+  color: rgba(26, 26, 46, 0.75);
+}
+.mode-plain[data-coreui-theme=light] .sidebar-nav .nav-link:hover {
+  color: rgba(26, 26, 46, 0.95);
+}
+.mode-plain[data-coreui-theme=light] .sidebar-nav .nav-link.active {
+  color: var(--cui-primary);
+}
+.mode-plain[data-coreui-theme=light] .sidebar-nav .nav-group-toggle::after {
+  filter: invert(0.3);
+}
+.mode-plain[data-coreui-theme=dark] .card {
+  background: var(--cui-card-bg, rgba(0, 0, 0, 0.35)) !important;
+}
+:root:not(.enable-blur) .mode-plain[data-coreui-theme=dark] .card {
+  background: var(--cui-card-bg-solid, rgba(0, 0, 0, 0.95)) !important;
+}
+.mode-plain[data-coreui-theme=dark] .card {
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 24px, rgba(255, 255, 255, 0.02) 0px 0px 12px !important;
+}
+.mode-plain[data-coreui-theme=dark] .sidebar {
+  border-right: 1px solid rgba(255, 255, 255, 0.04);
+}
+.mode-plain[data-coreui-theme=dark] .header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+:root.enable-blur .mode-plain[data-coreui-theme=dark] .header {
+  backdrop-filter: blur(12px);
+}
+.mode-plain[data-coreui-theme=dark] .lab-card-main {
+  background: var(--cui-card-bg-solid, rgba(0, 0, 0, 0.4)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: rgba(0, 0, 0, 0.4) 0px 12px 28px, rgba(255, 255, 255, 0.03) 0px 0px 16px !important;
+}
+
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
@@ -16371,18 +16468,37 @@ body {
 }
 
 .lab-header-section {
-  /* 1. Theme Background */
-  background-color: var(--cui-body-bg);
-  border-bottom: 1px solid var(--color-border);
+  /* 1. Theme Background - Uses Glass effect only when enabled */
+  background-color: var(--glass-bg, var(--cui-body-bg));
+}
+:root.enable-blur .lab-header-section {
+  backdrop-filter: blur(var(--glass-blur, 12px));
+  -webkit-backdrop-filter: blur(var(--glass-blur, 12px));
+}
+.lab-header-section {
+  border-bottom: 1px solid var(--cui-card-border-color, rgba(255, 255, 255, 0.1));
   /* 2. Layout */
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   flex-wrap: wrap;
   gap: 20px;
-  /* 3. Negative Margins to stretch full width over parent padding */
-  padding: 24px 30px;
-  margin: 0px -24px 0px -24px;
+  /* 3. Spacing - Aligned with cards */
+  padding: 2rem 1.5rem;
+  margin: 0 -24px 2rem -24px;
   position: relative;
   z-index: 5;
+}
+
+/* 3. Dashboard Stat Cards Inner */
+.stat-card-inner {
+  box-shadow: rgba(0, 0, 0, 0.4) 0px 4px 12px, rgba(0, 0, 0, 0.2) 0px 1px 3px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+.stat-card-inner:hover {
+  transform: translateY(-3px);
+  box-shadow: rgba(0, 0, 0, 0.5) 0px 12px 24px, rgba(0, 0, 0, 0.3) 0px 4px 6px !important;
+  border-color: rgba(var(--cui-primary-rgb), 0.3) !important;
+  background-color: rgba(0, 0, 0, 0.35) !important;
 }

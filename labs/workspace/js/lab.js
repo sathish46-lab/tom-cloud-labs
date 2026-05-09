@@ -125,43 +125,107 @@ const Dashboard = {
    * Initialize all monitoring charts
    */
   initCharts: function () {
-    const create = (id, color, type = "line") => {
+    const create = (id, color, type = "line", extraOptions = {}) => {
       const ctx = document.getElementById(id);
       if (!ctx) return;
+
+      const isBar = type === "bar";
+      const limit = extraOptions.limit || this.historyLimit;
+
+      const datasets = extraOptions.datasets || [
+        {
+          data: new Array(limit).fill(0),
+          borderColor: color,
+          backgroundColor: isBar ? color : "transparent",
+          borderWidth: isBar ? 0 : 2,
+          pointRadius: 0,
+          tension: extraOptions.tension !== undefined ? extraOptions.tension : 0.4,
+          fill: extraOptions.fill || false,
+          barThickness: extraOptions.barThickness || 'flex',
+          borderRadius: 2
+        },
+      ];
 
       this.charts[id] = new Chart(ctx, {
         type: type,
         data: {
-          labels: new Array(this.historyLimit).fill(""),
-          datasets: [
-            {
-              data: new Array(this.historyLimit).fill(0),
-              borderColor: color,
-              backgroundColor: type === "bar" ? color : "transparent",
-              borderWidth: 2,
-              pointRadius: 0,
-              tension: 0.4,
-            },
-          ],
+          labels: new Array(limit).fill(""),
+          datasets: datasets,
         },
         options: {
           maintainAspectRatio: false,
-          animation: { duration: 800 },
-          plugins: { legend: { display: false }, tooltip: { enabled: false } },
-          scales: { x: { display: false }, y: { display: false } },
+          animation: {
+            duration: 300,
+            easing: 'linear'
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: false }
+          },
+          scales: {
+            x: { display: false },
+            y: {
+              display: false,
+              suggestedMin: 0
+            }
+          },
+          ...extraOptions.options
         },
       });
+      this.charts[id].limit = limit;
     };
 
-    // Initialize all charts
-    create("chart-net-io", "#89b4fa");
-    create("chart-block-io", "#a6e3a1");
-    create("chart-avg-1", "#89b4fa", "bar");
-    create("chart-avg-5", "#fab387", "bar");
-    create("chart-avg-15", "#a6e3a1", "bar");
-    create("chart-peak-cpu", "#89b4fa");
-    create("chart-max-pid", "#f38ba8");
-    create("chart-high-mem", "#f9e2af");
+    // SNA Colors
+    const colors = {
+      cyan: "#00e5ff",
+      green: "#00ff88",
+      yellow: "#ffcc00",
+      red: "#ff4444",
+      blue: "#3d5afe"
+    };
+
+    // Initialize all charts with SNA-style configurations
+    // Net IO: Download (Purple) & Upload (Cyan)
+    create("chart-net-io", "#8b91f9", "line", {
+      tension: 0.4,
+      limit: 30,
+      datasets: [
+        { label: 'Download', borderColor: "#8b91f9", data: new Array(30).fill(0), borderWidth: 2, pointRadius: 0, tension: 0.4 },
+        { label: 'Upload', borderColor: "#50c7f6", data: new Array(30).fill(0), borderWidth: 2, pointRadius: 0, tension: 0.4 }
+      ]
+    });
+
+    // Block IO: Read (Yellow) & Write (Green)
+    create("chart-block-io", "#f2b90d", "line", {
+      tension: 0.4,
+      limit: 30,
+      datasets: [
+        { label: 'Read', borderColor: "#f2b90d", data: new Array(30).fill(0), borderWidth: 2, pointRadius: 0, tension: 0.4 },
+        { label: 'Write', borderColor: "#55b16e", data: new Array(30).fill(0), borderWidth: 2, pointRadius: 0, tension: 0.4 }
+      ]
+    });
+
+    // Averages use varying densities and wide bars
+    create("chart-avg-1", colors.blue, "bar", { barThickness: 15, limit: 6 });
+    create("chart-avg-5", colors.yellow, "bar", { barThickness: 4, limit: 15 });
+    create("chart-avg-15", colors.green, "bar", { barThickness: 4, limit: 15 });
+
+    // History uses jagged line charts
+    create("chart-peak-cpu", colors.cyan, "line", { tension: 0.4, limit: 30 });
+    create("chart-max-pid", colors.red, "line", {
+      tension: 0.4,
+      limit: 30,
+      options: {
+        scales: {
+          y: {
+            display: false,
+            suggestedMin: 0,
+            suggestedMax: 150 // Better context for standard PID counts (~80-100)
+          }
+        }
+      }
+    });
+    create("chart-high-mem", colors.yellow, "line", { tension: 0.4, limit: 30 });
   },
 
   /**
@@ -173,9 +237,23 @@ const Dashboard = {
     const chart = this.charts[id];
     if (!chart) return;
 
-    const d = chart.data.datasets[0].data;
-    d.push(value);
-    if (d.length > this.historyLimit) d.shift();
+    const limit = chart.limit || this.historyLimit;
+
+    // Handle multi-dataset vs single dataset
+    if (Array.isArray(value)) {
+      value.forEach((v, i) => {
+        if (chart.data.datasets[i]) {
+          const d = chart.data.datasets[i].data;
+          d.push(v);
+          if (d.length > limit) d.shift();
+        }
+      });
+    } else {
+      const d = chart.data.datasets[0].data;
+      d.push(value);
+      if (d.length > limit) d.shift();
+    }
+
     chart.update("none");
   },
 
@@ -278,7 +356,7 @@ const Dashboard = {
       };
 
       poll(); // Initial call
-      this.statsInterval = setInterval(poll, 5000); // Poll every 5 seconds
+      this.statsInterval = setInterval(poll, 5000); // Standard 5s polling to save resources
     };
 
     const stop = () => {
@@ -354,11 +432,20 @@ const Dashboard = {
       this.isFirstLoad = false;
     } else {
       // Incremental updates
-      this.pushChartData("chart-net-io", parseFloat(data.NetIO));
-      this.pushChartData("chart-block-io", parseFloat(data.BlockIO));
+      // Parse composite strings for IO charts (e.g., "1.46kB / 358B")
+      const parseIO = (str) => {
+        if (!str) return [0, 0];
+        const parts = str.split(' / ').map(p => parseFloat(p) || 0);
+        return parts.length === 2 ? parts : [parts[0] || 0, 0];
+      };
+
+      this.pushChartData("chart-net-io", parseIO(data.NetIO));
+      this.pushChartData("chart-block-io", parseIO(data.BlockIO));
+
       this.pushChartData("chart-peak-cpu", parseFloat(data.CPUPerc));
       this.pushChartData("chart-high-mem", parseFloat(data.MemPerc));
       this.pushChartData("chart-max-pid", parseInt(data.PIDs));
+
       this.pushChartData("chart-avg-1", data.Load1);
       this.pushChartData("chart-avg-5", data.Load5);
       this.pushChartData("chart-avg-15", data.Load15);

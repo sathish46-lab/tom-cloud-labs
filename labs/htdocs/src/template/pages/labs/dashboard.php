@@ -151,7 +151,7 @@
                     <div class="card-body p-4">
                         <div class="row g-3">
                             <div class="col-6">
-                                <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 text-center">
+                                <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100 text-center stat-card-inner">
                                     <div class="text-muted small text-uppercase fw-bold mb-2">Net IO</div>
                                     <div class="fw-bold text-white mb-2" id="stat-net-io">0B / 0B</div>
                                     <div style="height:40px;">
@@ -160,7 +160,7 @@
                                 </div>
                             </div>
                             <div class="col-6">
-                                <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 text-center">
+                                <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100 text-center stat-card-inner">
                                     <div class="text-muted small text-uppercase fw-bold mb-2">Block IO</div>
                                     <div class="fw-bold text-white mb-2" id="stat-block-io">0B / 0B</div>
                                     <div style="height:40px;">
@@ -188,41 +188,35 @@
                     <div class="card-body p-4">
                         <div class="row g-3 mb-4">
                             <div class="col-6">
-                                <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10">
-                                    <div class="d-flex justify-content-between mb-1">
-                                        <span class="small fw-bold text-white">
-                                        <span id="stat-cpu-usage">0.00%</span> <small class="text-muted ms-1">CPU
-                                            LOAD</small>
+                                <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 text-start stat-card-inner">
+                                    <div class="mb-1">
+                                        <span class="small fw-bold text-white text-start">
+                                            <span id="stat-cpu-usage">0.00%</span> <small class="text-muted ms-1">CPU LOAD</small>
                                         </span>
-                                        <span class="badge bg-info-subtle text-info rounded-pill">idle</span>
                                     </div>
                                     <div class="progress" style="height: 4px; background: rgba(255,255,255,0.1);">
                                         <div class="progress-bar bg-info" id="stat-cpu-bar" style="width: 0%"></div>
                                     </div>
-                                    <div class="small text-muted mt-2">PID Count: <span id="stat-pid-count">0</span></div>
+                                    <div class="small text-muted mt-2 text-start">PID Count: <span id="stat-pid-count">0</span></div>
                                 </div>
                             </div>
                             <div class="col-6">
-                                <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10">
-                                    <div class="d-flex justify-content-between mb-1">
-                                        <span class="small fw-bold text-white">
-                                            <span id="stat-mem-perc">0.00%
-                                            </span> 
-                                            <small class="text-muted ms-1">MEMORY
-                                                USAGE
-                                            </small>
+                                <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 text-start stat-card-inner">
+                                    <div class="mb-1">
+                                        <span class="small fw-bold text-white text-start">
+                                            <span id="stat-mem-perc">0.00%</span> <small class="text-muted ms-1">MEMORY USAGE</small>
                                         </span>
                                     </div>
                                     <div class="progress" style="height: 4px; background: rgba(255,255,255,0.1);">
                                         <div class="progress-bar bg-warning" id="stat-mem-bar" style="width: 0%"></div>
                                     </div>
-                                    <div class="small text-muted mt-2" id="stat-mem-info"> </div>
+                                    <div class="small text-muted mt-2 text-start" id="stat-mem-info"> </div>
                                 </div>
                             </div>
                         </div>
                         <div class="row g-2">
                             <div class="col-4">
-                                <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 text-center">
+                                <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100 text-center stat-card-inner">
                                     <div class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 9px;">1 Min Avg
                                     </div>
                                     <div class="fw-bold text-white small" id="stat-load-1">0.0000</div>
@@ -232,7 +226,7 @@
                                 </div>
                             </div>
                             <div class="col-4">
-                                <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 text-center">
+                                <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100 text-center stat-card-inner">
                                     <div class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 9px;">5 Min Avg
                                     </div>
                                     <div class="fw-bold text-white small" id="stat-load-5">0.0000</div>
@@ -242,7 +236,7 @@
                                 </div>
                             </div>
                             <div class="col-4">
-                                <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 text-center">
+                                <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100 text-center stat-card-inner">
                                     <div class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 9px;">15 Min Avg
                                     </div>
                                     <div class="fw-bold text-white small" id="stat-load-15">0.0000</div>
@@ -261,7 +255,7 @@
                     <div class="card-body p-4">
                         <div class="row g-3">
                             <div class="col-4 text-center">
-                                <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100">
+                                <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100 text-center stat-card-inner">
                                     <div class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 9px;">CPU Peak
                                     </div>
                                     <div class="fw-bold text-white" id="stat-peak-cpu">0.00%</div>
@@ -271,7 +265,7 @@
                                 </div>
                             </div>
                             <div class="col-4 text-center">
-                                <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100">
+                                <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100 text-center stat-card-inner">
                                     <div class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 9px;">PID Max
                                     </div>
                                     <div class="fw-bold text-white" id="stat-max-pid">0</div>
@@ -281,7 +275,7 @@
                                 </div>
                             </div>
                             <div class="col-4 text-center">
-                                <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100">
+                                <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100 text-center stat-card-inner">
                                     <div class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 9px;">Memory High
                                     </div>
                                     <div class="fw-bold text-white" id="stat-high-mem">0.00 MB</div>

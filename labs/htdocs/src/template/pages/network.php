@@ -26,10 +26,10 @@ $resources = Session::get('network_resources', []);
             <div class="mb-3">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <h5 class="fw-bold m-0 font-monospace" style="color: var(--glass-text); font-size: 1.1rem;"><?= htmlspecialchars($res['ip_addr']) ?></h5>
-                    <span class="badge bg-secondary-gradient rounded-pill fw-bold" style="font-size: 10px; padding: 3px 8px;"><?= strtoupper($label) ?></span>
+                    <span class="badge bg-secondary-gradient rounded-pill fw-bold" style="font-size: 10px; padding: 3px 10px;"><?= strtoupper($label) ?></span>
                 </div>
                 
-                <span class="badge rounded-pill <?= $isAllocated ? 'bg-success' : 'bg-danger' ?> opacity-90 fw-bold" style="font-size: 10px; padding: 3px 8px;">
+                <span class="badge rounded-pill bg-<?= $isAllocated ? 'success' : 'danger' ?>-gradient fw-bold" style="font-size: 10px; padding: 3px 10px;">
                     <?= $isAllocated ? 'ACTIVE' : 'RESERVED' ?>
                 </span>
             </div>

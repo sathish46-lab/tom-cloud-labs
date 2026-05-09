@@ -74,10 +74,9 @@ $current = Session::getCurrentFile();
     </ul>
 
     <div id="sidebar-stats-container" class="sidebar-stats p-3 mt-auto border-top border-light border-opacity-10">
-
-        <div class="stat-group mb-3">
+        <div class="stat-group mb-2">
             <div class="small mb-1 cpuinfotext">
-                <span class="stat-label fw-bold text-white">CPU USAGE: <span id="sidebar-cpu-val">0.00%</span></span>
+                <span class="stat-label fw-bold">CPU USAGE: <span id="sidebar-cpu-val">0.00%</span></span>
             </div>
             <div class="progress rounded-0 stats-progress-bg cpuinfo" style="height: 6px; background: rgba(0,0,0,0.3);">
                 <?php
@@ -87,33 +86,30 @@ $current = Session::getCurrentFile();
                     $colorClass = $style[$i % count($style)];
                     // Use transition: width for smooth animation without jQuery
                     echo '<div class="progress-bar bg-' . $colorClass . '-gradient cpu-' . $i . '" 
-                               role="progressbar" style="width: 0%; transition: width 0.4s ease;" 
-                               aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>';
+                                role="progressbar" style="width: 0%; transition: width 0.4s ease;" 
+                                aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>';
                 }
                 ?>
             </div>
-            <div id="sidebar-load-val" class="stat-subtext mt-1 text-white text-opacity-50">Load Avg: 0.00, 0.00, 0.00
-            </div>
+            <div id="sidebar-load-val" class="stat-subtext mt-1">Load Avg: 0.00, 0.00, 0.00</div>
         </div>
 
-        <div class="stat-group mb-3">
-            <div class="small mb-1"><span class="stat-label fw-bold text-white">MEMORY USAGE</span></div>
+        <div class="stat-group mb-2">
+            <div class="small mb-1"><span class="stat-label fw-bold">MEMORY USAGE</span></div>
             <div class="progress rounded-0 stats-progress-bg" style="height: 6px; background: rgba(0,0,0,0.3);">
                 <div id="sidebar-mem-bar" class="progress-bar bg-warning"
                     style="width: 0%; transition: width 0.4s ease;"></div>
             </div>
-            <div id="sidebar-mem-details" class="stat-subtext mt-1 text-white text-opacity-50">0 GiB / 0 GiB Avail: 0
-                GiB</div>
+            <div id="sidebar-mem-details" class="stat-subtext mt-1">0 GiB / 0 GiB Avail: 0 GiB</div>
         </div>
 
-        <div class="stat-group mb-3">
-            <div class="small mb-1"><span class="stat-label fw-bold text-white">SWAP USAGE</span></div>
+        <div class="stat-group mb-2">
+            <div class="small mb-1"><span class="stat-label fw-bold">SWAP USAGE</span></div>
             <div class="progress rounded-0 stats-progress-bg" style="height: 6px; background: rgba(0,0,0,0.3);">
                 <div id="sidebar-swap-bar" class="progress-bar bg-danger"
                     style="width: 0%; transition: width 0.4s ease;"></div>
             </div>
-            <div id="sidebar-swap-details" class="stat-subtext mt-1 text-white text-opacity-50">0 MiB / 0 GiB Free: 0
-                GiB</div>
+            <div id="sidebar-swap-details" class="stat-subtext mt-1">0 MiB / 0 GiB Free: 0 GiB</div>
         </div>
     </div>
 
@@ -166,11 +162,12 @@ $current = Session::getCurrentFile();
 .stat-label {
     font-size: 0.75rem;
     font-weight: 700;
+    color: var(--glass-text, #fff);
 }
 
 .stat-subtext {
     font-size: 0.7rem;
-    opacity: 0.7;
+    color: var(--glass-text-muted, rgba(255, 255, 255, 0.7));
 }
 
 /* 3. PER-CORE STYLING */

@@ -17,6 +17,7 @@
 @use "components/quiz";
 @use "components/blur";
 @use "components/session_expired";
+@use "components/plain_theme";
 
 
 // 2. Global Performance & Smooth Rendering Optimizations
@@ -43,9 +44,16 @@ body {
 }
 
 .lab-header-section {
-  /* 1. Theme Background */
-  background-color: var(--cui-body-bg);
-  border-bottom: 1px solid var(--color-border);
+  /* 1. Theme Background - Uses Glass effect only when enabled */
+  background-color: var(--glass-bg, var(--cui-body-bg));
+
+  :root.enable-blur & {
+    backdrop-filter: blur(var(--glass-blur, 12px));
+    -webkit-backdrop-filter: blur(var(--glass-blur, 12px));
+  }
+
+  border-bottom: 1px solid var(--cui-card-border-color, rgba(255, 255, 255, 0.1));
+  // border-radius: 0 0 1.5rem 1.5rem;
 
   /* 2. Layout */
   display: flex;
@@ -54,10 +62,25 @@ body {
   flex-wrap: wrap;
   gap: 20px;
 
-  /* 3. Negative Margins to stretch full width over parent padding */
-  padding: 24px 30px;
-  margin: -0px -24px 0px -24px;
+  /* 3. Spacing - Aligned with cards */
+  padding: 2rem 1.5rem;
+  margin: 0 -24px 2rem -24px;
 
   position: relative;
   z-index: 5;
+  // box-shadow: var(--glass-shadow);
+}
+
+/* 3. Dashboard Stat Cards Inner */
+.stat-card-inner {
+  box-shadow: rgba(0, 0, 0, 0.4) 0px 4px 12px, rgba(0, 0, 0, 0.2) 0px 1px 3px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: rgba(0, 0, 0, 0.5) 0px 12px 24px, rgba(0, 0, 0, 0.3) 0px 4px 6px !important;
+    border-color: rgba(var(--cui-primary-rgb), 0.3) !important;
+    background-color: rgba(0, 0, 0, 0.35) !important;
+  }
 }

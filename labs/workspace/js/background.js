@@ -1,6 +1,38 @@
 const TomBG = {
-  // Themes are now loaded dynamically from PHP (window.TomThemes)
-  themes: window.TomThemes || {},
+  // Theme configuration is now encapsulated here to keep the HTML head clean like SNA
+  themes: {
+    'robo': {
+      'assets': [
+        '/assets/Background_Img/robo/0.png',
+        '/assets/Background_Img/robo/1.png',
+        '/assets/Background_Img/robo/2.png'
+      ]
+    },
+    'ninja': {
+      'color': '#010d12',
+      'assets': [
+        '/assets/Background_Img/ninja/0.png',
+        '/assets/Background_Img/ninja/1.png',
+        '/assets/Background_Img/ninja/2.png'
+      ]
+    },
+    'robotower': {
+      'assets': [
+        '/assets/Background_Img/RoboTower/0.png',
+        '/assets/Background_Img/RoboTower/1.png',
+        '/assets/Background_Img/RoboTower/2.png',
+        '/assets/Background_Img/RoboTower/3.png'
+      ]
+    },
+    'parallax': {
+      'assets': [
+        '/assets/Background_Img/parallax/0.png',
+        '/assets/Background_Img/parallax/1.png',
+        '/assets/Background_Img/parallax/2.png',
+        '/assets/Background_Img/parallax/3.png'
+      ]
+    }
+  },
 
   init: function () {
     // 1. Check for forced mode (Login Page) before looking at localStorage
@@ -377,47 +409,63 @@ const TomBG = {
     const isLight = root.getAttribute("data-coreui-theme") === "light";
     const sc = document.querySelector(".scenery-container");
 
+    let cssVars = "";
+    const setVar = (name, value) => {
+      cssVars += `${name}: ${value} !important; `;
+    };
+
     if (mode === "plain") {
       const color = localStorage.getItem("tom-labs-plain-color") || "#0b1e36";
-      if (sc) sc.style.opacity = "1";
+      if (sc) sc.style.display = "none";
       scene.style.display = "none";
-      document.body.style.background = ""; // Clear inline transparent style
+      document.body.style.background = "";
+      root.classList.add("mode-plain");
 
-      const safeColor = isLight ? this.ensureLightness(color, 0.8) : this.ensureDarkness(color, 0.2);
+      const safeColor = isLight ? this.ensureLightness(color, 0.95) : this.ensureDarkness(color, 0.2);
 
       if (isLight) {
-        const baseLight = this.ensureLightness(color, 0.92);
-        root.style.setProperty("--c1", "#ffffff");
-        root.style.setProperty("--c2", this.adjustColor(baseLight, 2));
-        root.style.setProperty("--c3", this.adjustColor(baseLight, 5));
-        root.style.setProperty("--c4", this.adjustColor(baseLight, -5));
-        root.style.setProperty("--snow-color", "rgba(0,0,0,0.15)");
+        const baseLight = this.ensureLightness(color, 0.98);
+        setVar("--c1", "#ffffff");
+        setVar("--c2", baseLight);
+        setVar("--c3", this.adjustColor(baseLight, -2));
+        setVar("--c4", this.adjustColor(baseLight, -5));
+        setVar("--c5", "#ffffff");
+        setVar("--c6", baseLight);
+        setVar("--c7", this.adjustColor(baseLight, -3));
+        setVar("--snow-color", "rgba(0,0,0,0.05)");
       } else {
-        root.style.setProperty("--c1", this.adjustColor(color, -35));
-        root.style.setProperty("--c2", this.adjustColor(color, -15));
-        root.style.setProperty("--c3", this.adjustColor(color, 20));
-        root.style.setProperty("--c4", this.adjustColor(color, 45));
-        root.style.setProperty("--snow-color", "#ffffff");
+        setVar("--c1", this.adjustColor(safeColor, -10));
+        setVar("--c2", safeColor);
+        setVar("--c3", this.adjustColor(safeColor, 8));
+        setVar("--c4", this.adjustColor(safeColor, 15));
+        setVar("--c5", this.adjustColor(safeColor, 5));
+        setVar("--c6", safeColor);
+        setVar("--c7", this.adjustColor(safeColor, -5));
+        setVar("--snow-color", "#ffffff");
       }
 
       const primaryColor = this.adjustColor(color, isLight ? -40 : 40);
       const pRGB = this.hexToRgbValues(primaryColor);
 
-      root.style.setProperty("--glass-bg", isLight ? this.hexToRgba(safeColor, 0.4) : this.hexToRgba(safeColor, 0.85));
-      root.style.setProperty("--glass-bg-solid", isLight ? this.hexToRgba(this.ensureLightness(color, 0.92), 0.94) : this.hexToRgba(safeColor, 0.94));
-      root.style.setProperty("--cui-card-bg", isLight ? "rgba(255,255,255,0.05)" : this.hexToRgba(safeColor, 0.2));
-      root.style.setProperty("--cui-card-bg-solid", isLight ? this.hexToRgba(this.ensureLightness(color, 0.96), 0.94) : this.hexToRgba(safeColor, 0.95));
-      root.style.setProperty("--cui-body-bg", safeColor);
-      root.style.setProperty("--cui-primary", primaryColor);
-      root.style.setProperty("--cui-primary-rgb", pRGB);
-      root.style.setProperty("--cui-sidebar-bg", this.hexToRgba(safeColor, 0.95));
-      root.style.setProperty("--cui-header-bg", this.hexToRgba(safeColor, 0.85));
+      setVar("--glass-bg", isLight ? "#ffffff" : this.hexToRgba(safeColor, 0.88));
+      setVar("--glass-bg-solid", isLight ? "#ffffff" : this.hexToRgba(safeColor, 0.96));
+      setVar("--cui-card-bg", isLight ? "#ffffff" : this.hexToRgba(safeColor, 0.45));
+      setVar("--cui-card-bg-solid", isLight ? "#ffffff" : this.hexToRgba(safeColor, 0.95));
+      setVar("--cui-body-bg", safeColor);
+      setVar("--cui-primary", primaryColor);
+      setVar("--cui-primary-rgb", pRGB);
+      setVar("--cui-sidebar-bg", isLight ? "#ffffff" : this.hexToRgba(safeColor, 0.97));
+      setVar("--cui-header-bg", isLight ? "#ffffff" : this.hexToRgba(safeColor, 0.92));
 
       if (typeof TomParallax !== "undefined") TomParallax.destroy();
     } else {
       scene.style.display = "block";
       document.body.style.background = "transparent";
-      if (sc) sc.style.opacity = "0";
+      if (sc) {
+        sc.style.display = "block";
+        sc.style.opacity = "0";
+      }
+      root.classList.remove("mode-plain");
 
       const theme = this.themes[mode] || this.themes["parallax"];
       const assets = theme.assets || theme;
@@ -428,67 +476,20 @@ const TomBG = {
         const primaryColor = this.adjustColor(themeColor, isLight ? -40 : 40);
         const pRGB = this.hexToRgbValues(primaryColor);
 
-        root.style.setProperty("--glass-bg", isLight ? "rgba(255, 255, 255, 0.79)" : this.hexToRgba(safeColor, 0.85));
-        root.style.setProperty("--glass-bg-solid", isLight ? this.hexToRgba(this.ensureLightness(themeColor, 0.92), 0.94) : this.hexToRgba(safeColor, 0.94));
-        root.style.setProperty("--cui-card-bg", isLight ? "rgba(255, 255, 255, 0.7)" : this.hexToRgba(safeColor, 0.2));
-        root.style.setProperty("--cui-card-bg-solid", isLight ? this.hexToRgba(this.ensureLightness(themeColor, 0.96), 0.94) : this.hexToRgba(safeColor, 0.95));
-        root.style.setProperty("--cui-body-bg", safeColor);
-        root.style.setProperty("--cui-primary", primaryColor);
-        root.style.setProperty("--cui-primary-rgb", pRGB);
-        root.style.setProperty("--cui-sidebar-bg", isLight ? "rgba(255, 255, 255, 0.6)" : this.hexToRgba(safeColor, 0.95));
-        root.style.setProperty("--cui-header-bg", isLight ? "rgba(255, 255, 255, 0.4)" : this.hexToRgba(safeColor, 0.85));
+        setVar("--glass-bg", isLight ? "rgba(255, 255, 255, 0.79)" : this.hexToRgba(safeColor, 0.85));
+        setVar("--glass-bg-solid", isLight ? this.hexToRgba(this.ensureLightness(themeColor, 0.92), 0.94) : this.hexToRgba(safeColor, 0.94));
+        setVar("--cui-card-bg", isLight ? "rgba(255, 255, 255, 0.7)" : this.hexToRgba(safeColor, 0.2));
+        setVar("--cui-card-bg-solid", isLight ? this.hexToRgba(this.ensureLightness(themeColor, 0.96), 0.94) : this.hexToRgba(safeColor, 0.95));
+        setVar("--cui-body-bg", safeColor);
+        setVar("--cui-primary", primaryColor);
+        setVar("--cui-primary-rgb", pRGB);
+        setVar("--cui-sidebar-bg", isLight ? "rgba(255, 255, 255, 0.6)" : this.hexToRgba(safeColor, 0.95));
+        setVar("--cui-header-bg", isLight ? "rgba(255, 255, 255, 0.4)" : this.hexToRgba(safeColor, 0.85));
 
-        root.style.setProperty("--c1", isLight ? "#ffffff" : this.adjustColor(safeColor, -5));
-        root.style.setProperty("--c2", isLight ? "#f8f9fa" : safeColor);
-        root.style.setProperty("--c3", isLight ? "#ffffff" : this.adjustColor(safeColor, 5));
-        root.style.setProperty("--c4", isLight ? "#f0f2f5" : this.adjustColor(safeColor, 10));
-      } else {
-        // Extract dominant color from 0.png background image with safety timeout
-        const firstImage = assets[0];
-        if (firstImage) {
-          let colorExtracted = false;
-
-          // Safety fallback timeout (500ms) to prevent UI freeze
-          const safetyTimeout = setTimeout(() => {
-            if (!colorExtracted) {
-              console.warn("Background color extraction timed out, using fallback.");
-              applyColors("#010d12");
-            }
-          }, 500);
-
-          function applyColors(extractedColor) {
-            colorExtracted = true;
-            clearTimeout(safetyTimeout);
-
-            const safeColor = isLight
-              ? TomBG.ensureLightness(extractedColor, 0.8)
-              : TomBG.ensureDarkness(extractedColor, 0.15);
-            const primaryColor = TomBG.adjustColor(extractedColor, isLight ? -40 : 40);
-            const pRGB = TomBG.hexToRgbValues(primaryColor);
-
-            root.style.setProperty("--glass-bg", isLight ? "rgba(255, 255, 255, 0.79)" : TomBG.hexToRgba(safeColor, 0.85));
-            root.style.setProperty("--glass-bg-solid", isLight ? TomBG.hexToRgba(TomBG.ensureLightness(extractedColor, 0.92), 0.94) : TomBG.hexToRgba(safeColor, 0.94));
-            root.style.setProperty("--cui-card-bg", isLight ? "rgba(255, 255, 255, 0.7)" : TomBG.hexToRgba(safeColor, 0.2));
-            root.style.setProperty("--cui-card-bg-solid", isLight ? TomBG.hexToRgba(TomBG.ensureLightness(extractedColor, 0.96), 0.94) : TomBG.hexToRgba(safeColor, 0.95));
-            root.style.setProperty("--cui-body-bg", safeColor);
-            root.style.setProperty("--cui-primary", primaryColor);
-            root.style.setProperty("--cui-primary-rgb", pRGB);
-            root.style.setProperty("--cui-sidebar-bg", isLight ? "rgba(255, 255, 255, 0.6)" : TomBG.hexToRgba(safeColor, 0.95));
-            root.style.setProperty("--cui-header-bg", isLight ? "rgba(255, 255, 255, 0.4)" : TomBG.hexToRgba(safeColor, 0.85));
-
-            root.style.setProperty("--c1", isLight ? "#ffffff" : TomBG.adjustColor(safeColor, -5));
-            root.style.setProperty("--c2", isLight ? "#f8f9fa" : safeColor);
-            root.style.setProperty("--c3", isLight ? "#ffffff" : TomBG.adjustColor(safeColor, 5));
-            root.style.setProperty("--c4", isLight ? "#f0f2f5" : TomBG.adjustColor(safeColor, 10));
-          }
-
-          try {
-            this.extractColorFromImage(firstImage, applyColors);
-          } catch (e) {
-            console.error("Color extraction failed:", e);
-            applyColors("#0b1e36");
-          }
-        }
+        setVar("--c1", isLight ? "#ffffff" : this.adjustColor(safeColor, -5));
+        setVar("--c2", isLight ? "#f8f9fa" : safeColor);
+        setVar("--c3", isLight ? "#ffffff" : this.adjustColor(safeColor, 5));
+        setVar("--c4", isLight ? "#f0f2f5" : this.adjustColor(safeColor, 10));
       }
 
       const layers = scene.querySelectorAll(".bg-cover");
@@ -504,6 +505,18 @@ const TomBG = {
 
       if (typeof TomParallax !== "undefined") TomParallax.init();
     }
+
+    // Inject variables into a clean style tag to keep HTML tag simple like SNA
+    let themeStyle = document.getElementById("tom-theme-vars");
+    if (!themeStyle) {
+      themeStyle = document.createElement("style");
+      themeStyle.id = "tom-theme-vars";
+      document.head.appendChild(themeStyle);
+    }
+    themeStyle.innerHTML = `:root { ${cssVars} }`;
+
+    // Remove all style attributes from root to keep it clean like SNA
+    root.removeAttribute("style");
   },
 
   adjustColor: function (hex, percent) {

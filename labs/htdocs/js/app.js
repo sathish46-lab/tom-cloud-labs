@@ -502,8 +502,40 @@ const TomVisuals = {
 document.addEventListener("DOMContentLoaded", () => TomVisuals.init());
 
 const TomBG = {
-  // Themes are now loaded dynamically from PHP (window.TomThemes)
-  themes: window.TomThemes || {},
+  // Theme configuration is now encapsulated here to keep the HTML head clean like SNA
+  themes: {
+    'robo': {
+      'assets': [
+        '/assets/Background_Img/robo/0.png',
+        '/assets/Background_Img/robo/1.png',
+        '/assets/Background_Img/robo/2.png'
+      ]
+    },
+    'ninja': {
+      'color': '#010d12',
+      'assets': [
+        '/assets/Background_Img/ninja/0.png',
+        '/assets/Background_Img/ninja/1.png',
+        '/assets/Background_Img/ninja/2.png'
+      ]
+    },
+    'robotower': {
+      'assets': [
+        '/assets/Background_Img/RoboTower/0.png',
+        '/assets/Background_Img/RoboTower/1.png',
+        '/assets/Background_Img/RoboTower/2.png',
+        '/assets/Background_Img/RoboTower/3.png'
+      ]
+    },
+    'parallax': {
+      'assets': [
+        '/assets/Background_Img/parallax/0.png',
+        '/assets/Background_Img/parallax/1.png',
+        '/assets/Background_Img/parallax/2.png',
+        '/assets/Background_Img/parallax/3.png'
+      ]
+    }
+  },
 
   init: function () {
     // 1. Check for forced mode (Login Page) before looking at localStorage
@@ -880,47 +912,63 @@ const TomBG = {
     const isLight = root.getAttribute("data-coreui-theme") === "light";
     const sc = document.querySelector(".scenery-container");
 
+    let cssVars = "";
+    const setVar = (name, value) => {
+      cssVars += `${name}: ${value} !important; `;
+    };
+
     if (mode === "plain") {
       const color = localStorage.getItem("tom-labs-plain-color") || "#0b1e36";
-      if (sc) sc.style.opacity = "1";
+      if (sc) sc.style.display = "none";
       scene.style.display = "none";
-      document.body.style.background = ""; // Clear inline transparent style
+      document.body.style.background = "";
+      root.classList.add("mode-plain");
 
-      const safeColor = isLight ? this.ensureLightness(color, 0.8) : this.ensureDarkness(color, 0.2);
+      const safeColor = isLight ? this.ensureLightness(color, 0.95) : this.ensureDarkness(color, 0.2);
 
       if (isLight) {
-        const baseLight = this.ensureLightness(color, 0.92);
-        root.style.setProperty("--c1", "#ffffff");
-        root.style.setProperty("--c2", this.adjustColor(baseLight, 2));
-        root.style.setProperty("--c3", this.adjustColor(baseLight, 5));
-        root.style.setProperty("--c4", this.adjustColor(baseLight, -5));
-        root.style.setProperty("--snow-color", "rgba(0,0,0,0.15)");
+        const baseLight = this.ensureLightness(color, 0.98);
+        setVar("--c1", "#ffffff");
+        setVar("--c2", baseLight);
+        setVar("--c3", this.adjustColor(baseLight, -2));
+        setVar("--c4", this.adjustColor(baseLight, -5));
+        setVar("--c5", "#ffffff");
+        setVar("--c6", baseLight);
+        setVar("--c7", this.adjustColor(baseLight, -3));
+        setVar("--snow-color", "rgba(0,0,0,0.05)");
       } else {
-        root.style.setProperty("--c1", this.adjustColor(color, -35));
-        root.style.setProperty("--c2", this.adjustColor(color, -15));
-        root.style.setProperty("--c3", this.adjustColor(color, 20));
-        root.style.setProperty("--c4", this.adjustColor(color, 45));
-        root.style.setProperty("--snow-color", "#ffffff");
+        setVar("--c1", this.adjustColor(safeColor, -10));
+        setVar("--c2", safeColor);
+        setVar("--c3", this.adjustColor(safeColor, 8));
+        setVar("--c4", this.adjustColor(safeColor, 15));
+        setVar("--c5", this.adjustColor(safeColor, 5));
+        setVar("--c6", safeColor);
+        setVar("--c7", this.adjustColor(safeColor, -5));
+        setVar("--snow-color", "#ffffff");
       }
 
       const primaryColor = this.adjustColor(color, isLight ? -40 : 40);
       const pRGB = this.hexToRgbValues(primaryColor);
 
-      root.style.setProperty("--glass-bg", isLight ? this.hexToRgba(safeColor, 0.4) : this.hexToRgba(safeColor, 0.85));
-      root.style.setProperty("--glass-bg-solid", isLight ? this.hexToRgba(this.ensureLightness(color, 0.92), 0.94) : this.hexToRgba(safeColor, 0.94));
-      root.style.setProperty("--cui-card-bg", isLight ? "rgba(255,255,255,0.05)" : this.hexToRgba(safeColor, 0.2));
-      root.style.setProperty("--cui-card-bg-solid", isLight ? this.hexToRgba(this.ensureLightness(color, 0.96), 0.94) : this.hexToRgba(safeColor, 0.95));
-      root.style.setProperty("--cui-body-bg", safeColor);
-      root.style.setProperty("--cui-primary", primaryColor);
-      root.style.setProperty("--cui-primary-rgb", pRGB);
-      root.style.setProperty("--cui-sidebar-bg", this.hexToRgba(safeColor, 0.95));
-      root.style.setProperty("--cui-header-bg", this.hexToRgba(safeColor, 0.85));
+      setVar("--glass-bg", isLight ? "#ffffff" : this.hexToRgba(safeColor, 0.88));
+      setVar("--glass-bg-solid", isLight ? "#ffffff" : this.hexToRgba(safeColor, 0.96));
+      setVar("--cui-card-bg", isLight ? "#ffffff" : this.hexToRgba(safeColor, 0.45));
+      setVar("--cui-card-bg-solid", isLight ? "#ffffff" : this.hexToRgba(safeColor, 0.95));
+      setVar("--cui-body-bg", safeColor);
+      setVar("--cui-primary", primaryColor);
+      setVar("--cui-primary-rgb", pRGB);
+      setVar("--cui-sidebar-bg", isLight ? "#ffffff" : this.hexToRgba(safeColor, 0.97));
+      setVar("--cui-header-bg", isLight ? "#ffffff" : this.hexToRgba(safeColor, 0.92));
 
       if (typeof TomParallax !== "undefined") TomParallax.destroy();
     } else {
       scene.style.display = "block";
       document.body.style.background = "transparent";
-      if (sc) sc.style.opacity = "0";
+      if (sc) {
+        sc.style.display = "block";
+        sc.style.opacity = "0";
+      }
+      root.classList.remove("mode-plain");
 
       const theme = this.themes[mode] || this.themes["parallax"];
       const assets = theme.assets || theme;
@@ -931,67 +979,20 @@ const TomBG = {
         const primaryColor = this.adjustColor(themeColor, isLight ? -40 : 40);
         const pRGB = this.hexToRgbValues(primaryColor);
 
-        root.style.setProperty("--glass-bg", isLight ? "rgba(255, 255, 255, 0.79)" : this.hexToRgba(safeColor, 0.85));
-        root.style.setProperty("--glass-bg-solid", isLight ? this.hexToRgba(this.ensureLightness(themeColor, 0.92), 0.94) : this.hexToRgba(safeColor, 0.94));
-        root.style.setProperty("--cui-card-bg", isLight ? "rgba(255, 255, 255, 0.7)" : this.hexToRgba(safeColor, 0.2));
-        root.style.setProperty("--cui-card-bg-solid", isLight ? this.hexToRgba(this.ensureLightness(themeColor, 0.96), 0.94) : this.hexToRgba(safeColor, 0.95));
-        root.style.setProperty("--cui-body-bg", safeColor);
-        root.style.setProperty("--cui-primary", primaryColor);
-        root.style.setProperty("--cui-primary-rgb", pRGB);
-        root.style.setProperty("--cui-sidebar-bg", isLight ? "rgba(255, 255, 255, 0.6)" : this.hexToRgba(safeColor, 0.95));
-        root.style.setProperty("--cui-header-bg", isLight ? "rgba(255, 255, 255, 0.4)" : this.hexToRgba(safeColor, 0.85));
+        setVar("--glass-bg", isLight ? "rgba(255, 255, 255, 0.79)" : this.hexToRgba(safeColor, 0.85));
+        setVar("--glass-bg-solid", isLight ? this.hexToRgba(this.ensureLightness(themeColor, 0.92), 0.94) : this.hexToRgba(safeColor, 0.94));
+        setVar("--cui-card-bg", isLight ? "rgba(255, 255, 255, 0.7)" : this.hexToRgba(safeColor, 0.2));
+        setVar("--cui-card-bg-solid", isLight ? this.hexToRgba(this.ensureLightness(themeColor, 0.96), 0.94) : this.hexToRgba(safeColor, 0.95));
+        setVar("--cui-body-bg", safeColor);
+        setVar("--cui-primary", primaryColor);
+        setVar("--cui-primary-rgb", pRGB);
+        setVar("--cui-sidebar-bg", isLight ? "rgba(255, 255, 255, 0.6)" : this.hexToRgba(safeColor, 0.95));
+        setVar("--cui-header-bg", isLight ? "rgba(255, 255, 255, 0.4)" : this.hexToRgba(safeColor, 0.85));
 
-        root.style.setProperty("--c1", isLight ? "#ffffff" : this.adjustColor(safeColor, -5));
-        root.style.setProperty("--c2", isLight ? "#f8f9fa" : safeColor);
-        root.style.setProperty("--c3", isLight ? "#ffffff" : this.adjustColor(safeColor, 5));
-        root.style.setProperty("--c4", isLight ? "#f0f2f5" : this.adjustColor(safeColor, 10));
-      } else {
-        // Extract dominant color from 0.png background image with safety timeout
-        const firstImage = assets[0];
-        if (firstImage) {
-          let colorExtracted = false;
-
-          // Safety fallback timeout (500ms) to prevent UI freeze
-          const safetyTimeout = setTimeout(() => {
-            if (!colorExtracted) {
-              console.warn("Background color extraction timed out, using fallback.");
-              applyColors("#010d12");
-            }
-          }, 500);
-
-          function applyColors(extractedColor) {
-            colorExtracted = true;
-            clearTimeout(safetyTimeout);
-
-            const safeColor = isLight
-              ? TomBG.ensureLightness(extractedColor, 0.8)
-              : TomBG.ensureDarkness(extractedColor, 0.15);
-            const primaryColor = TomBG.adjustColor(extractedColor, isLight ? -40 : 40);
-            const pRGB = TomBG.hexToRgbValues(primaryColor);
-
-            root.style.setProperty("--glass-bg", isLight ? "rgba(255, 255, 255, 0.79)" : TomBG.hexToRgba(safeColor, 0.85));
-            root.style.setProperty("--glass-bg-solid", isLight ? TomBG.hexToRgba(TomBG.ensureLightness(extractedColor, 0.92), 0.94) : TomBG.hexToRgba(safeColor, 0.94));
-            root.style.setProperty("--cui-card-bg", isLight ? "rgba(255, 255, 255, 0.7)" : TomBG.hexToRgba(safeColor, 0.2));
-            root.style.setProperty("--cui-card-bg-solid", isLight ? TomBG.hexToRgba(TomBG.ensureLightness(extractedColor, 0.96), 0.94) : TomBG.hexToRgba(safeColor, 0.95));
-            root.style.setProperty("--cui-body-bg", safeColor);
-            root.style.setProperty("--cui-primary", primaryColor);
-            root.style.setProperty("--cui-primary-rgb", pRGB);
-            root.style.setProperty("--cui-sidebar-bg", isLight ? "rgba(255, 255, 255, 0.6)" : TomBG.hexToRgba(safeColor, 0.95));
-            root.style.setProperty("--cui-header-bg", isLight ? "rgba(255, 255, 255, 0.4)" : TomBG.hexToRgba(safeColor, 0.85));
-
-            root.style.setProperty("--c1", isLight ? "#ffffff" : TomBG.adjustColor(safeColor, -5));
-            root.style.setProperty("--c2", isLight ? "#f8f9fa" : safeColor);
-            root.style.setProperty("--c3", isLight ? "#ffffff" : TomBG.adjustColor(safeColor, 5));
-            root.style.setProperty("--c4", isLight ? "#f0f2f5" : TomBG.adjustColor(safeColor, 10));
-          }
-
-          try {
-            this.extractColorFromImage(firstImage, applyColors);
-          } catch (e) {
-            console.error("Color extraction failed:", e);
-            applyColors("#0b1e36");
-          }
-        }
+        setVar("--c1", isLight ? "#ffffff" : this.adjustColor(safeColor, -5));
+        setVar("--c2", isLight ? "#f8f9fa" : safeColor);
+        setVar("--c3", isLight ? "#ffffff" : this.adjustColor(safeColor, 5));
+        setVar("--c4", isLight ? "#f0f2f5" : this.adjustColor(safeColor, 10));
       }
 
       const layers = scene.querySelectorAll(".bg-cover");
@@ -1007,6 +1008,18 @@ const TomBG = {
 
       if (typeof TomParallax !== "undefined") TomParallax.init();
     }
+
+    // Inject variables into a clean style tag to keep HTML tag simple like SNA
+    let themeStyle = document.getElementById("tom-theme-vars");
+    if (!themeStyle) {
+      themeStyle = document.createElement("style");
+      themeStyle.id = "tom-theme-vars";
+      document.head.appendChild(themeStyle);
+    }
+    themeStyle.innerHTML = `:root { ${cssVars} }`;
+
+    // Remove all style attributes from root to keep it clean like SNA
+    root.removeAttribute("style");
   },
 
   adjustColor: function (hex, percent) {
@@ -1856,43 +1869,107 @@ const Dashboard = {
    * Initialize all monitoring charts
    */
   initCharts: function () {
-    const create = (id, color, type = "line") => {
+    const create = (id, color, type = "line", extraOptions = {}) => {
       const ctx = document.getElementById(id);
       if (!ctx) return;
+
+      const isBar = type === "bar";
+      const limit = extraOptions.limit || this.historyLimit;
+
+      const datasets = extraOptions.datasets || [
+        {
+          data: new Array(limit).fill(0),
+          borderColor: color,
+          backgroundColor: isBar ? color : "transparent",
+          borderWidth: isBar ? 0 : 2,
+          pointRadius: 0,
+          tension: extraOptions.tension !== undefined ? extraOptions.tension : 0.4,
+          fill: extraOptions.fill || false,
+          barThickness: extraOptions.barThickness || 'flex',
+          borderRadius: 2
+        },
+      ];
 
       this.charts[id] = new Chart(ctx, {
         type: type,
         data: {
-          labels: new Array(this.historyLimit).fill(""),
-          datasets: [
-            {
-              data: new Array(this.historyLimit).fill(0),
-              borderColor: color,
-              backgroundColor: type === "bar" ? color : "transparent",
-              borderWidth: 2,
-              pointRadius: 0,
-              tension: 0.4,
-            },
-          ],
+          labels: new Array(limit).fill(""),
+          datasets: datasets,
         },
         options: {
           maintainAspectRatio: false,
-          animation: { duration: 800 },
-          plugins: { legend: { display: false }, tooltip: { enabled: false } },
-          scales: { x: { display: false }, y: { display: false } },
+          animation: {
+            duration: 300,
+            easing: 'linear'
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: false }
+          },
+          scales: {
+            x: { display: false },
+            y: {
+              display: false,
+              suggestedMin: 0
+            }
+          },
+          ...extraOptions.options
         },
       });
+      this.charts[id].limit = limit;
     };
 
-    // Initialize all charts
-    create("chart-net-io", "#89b4fa");
-    create("chart-block-io", "#a6e3a1");
-    create("chart-avg-1", "#89b4fa", "bar");
-    create("chart-avg-5", "#fab387", "bar");
-    create("chart-avg-15", "#a6e3a1", "bar");
-    create("chart-peak-cpu", "#89b4fa");
-    create("chart-max-pid", "#f38ba8");
-    create("chart-high-mem", "#f9e2af");
+    // SNA Colors
+    const colors = {
+      cyan: "#00e5ff",
+      green: "#00ff88",
+      yellow: "#ffcc00",
+      red: "#ff4444",
+      blue: "#3d5afe"
+    };
+
+    // Initialize all charts with SNA-style configurations
+    // Net IO: Download (Purple) & Upload (Cyan)
+    create("chart-net-io", "#8b91f9", "line", {
+      tension: 0.4,
+      limit: 30,
+      datasets: [
+        { label: 'Download', borderColor: "#8b91f9", data: new Array(30).fill(0), borderWidth: 2, pointRadius: 0, tension: 0.4 },
+        { label: 'Upload', borderColor: "#50c7f6", data: new Array(30).fill(0), borderWidth: 2, pointRadius: 0, tension: 0.4 }
+      ]
+    });
+
+    // Block IO: Read (Yellow) & Write (Green)
+    create("chart-block-io", "#f2b90d", "line", {
+      tension: 0.4,
+      limit: 30,
+      datasets: [
+        { label: 'Read', borderColor: "#f2b90d", data: new Array(30).fill(0), borderWidth: 2, pointRadius: 0, tension: 0.4 },
+        { label: 'Write', borderColor: "#55b16e", data: new Array(30).fill(0), borderWidth: 2, pointRadius: 0, tension: 0.4 }
+      ]
+    });
+
+    // Averages use varying densities and wide bars
+    create("chart-avg-1", colors.blue, "bar", { barThickness: 15, limit: 6 });
+    create("chart-avg-5", colors.yellow, "bar", { barThickness: 4, limit: 15 });
+    create("chart-avg-15", colors.green, "bar", { barThickness: 4, limit: 15 });
+
+    // History uses jagged line charts
+    create("chart-peak-cpu", colors.cyan, "line", { tension: 0.4, limit: 30 });
+    create("chart-max-pid", colors.red, "line", {
+      tension: 0.4,
+      limit: 30,
+      options: {
+        scales: {
+          y: {
+            display: false,
+            suggestedMin: 0,
+            suggestedMax: 150 // Better context for standard PID counts (~80-100)
+          }
+        }
+      }
+    });
+    create("chart-high-mem", colors.yellow, "line", { tension: 0.4, limit: 30 });
   },
 
   /**
@@ -1904,9 +1981,23 @@ const Dashboard = {
     const chart = this.charts[id];
     if (!chart) return;
 
-    const d = chart.data.datasets[0].data;
-    d.push(value);
-    if (d.length > this.historyLimit) d.shift();
+    const limit = chart.limit || this.historyLimit;
+
+    // Handle multi-dataset vs single dataset
+    if (Array.isArray(value)) {
+      value.forEach((v, i) => {
+        if (chart.data.datasets[i]) {
+          const d = chart.data.datasets[i].data;
+          d.push(v);
+          if (d.length > limit) d.shift();
+        }
+      });
+    } else {
+      const d = chart.data.datasets[0].data;
+      d.push(value);
+      if (d.length > limit) d.shift();
+    }
+
     chart.update("none");
   },
 
@@ -2009,7 +2100,7 @@ const Dashboard = {
       };
 
       poll(); // Initial call
-      this.statsInterval = setInterval(poll, 5000); // Poll every 5 seconds
+      this.statsInterval = setInterval(poll, 5000); // Standard 5s polling to save resources
     };
 
     const stop = () => {
@@ -2085,11 +2176,20 @@ const Dashboard = {
       this.isFirstLoad = false;
     } else {
       // Incremental updates
-      this.pushChartData("chart-net-io", parseFloat(data.NetIO));
-      this.pushChartData("chart-block-io", parseFloat(data.BlockIO));
+      // Parse composite strings for IO charts (e.g., "1.46kB / 358B")
+      const parseIO = (str) => {
+        if (!str) return [0, 0];
+        const parts = str.split(' / ').map(p => parseFloat(p) || 0);
+        return parts.length === 2 ? parts : [parts[0] || 0, 0];
+      };
+
+      this.pushChartData("chart-net-io", parseIO(data.NetIO));
+      this.pushChartData("chart-block-io", parseIO(data.BlockIO));
+
       this.pushChartData("chart-peak-cpu", parseFloat(data.CPUPerc));
       this.pushChartData("chart-high-mem", parseFloat(data.MemPerc));
       this.pushChartData("chart-max-pid", parseInt(data.PIDs));
+
       this.pushChartData("chart-avg-1", data.Load1);
       this.pushChartData("chart-avg-5", data.Load5);
       this.pushChartData("chart-avg-15", data.Load15);

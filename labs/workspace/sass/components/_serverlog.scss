@@ -41,6 +41,12 @@
     filter: drop-shadow(0 0 3px #0a4c04);
 }
 
+/* Always maintain blur for the Server Logs panel as requested */
+.server-logs-panel {
+    backdrop-filter: blur(12px) saturate(150%) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(150%) !important;
+}
+
 /* Global Blur support */
 html.enable-blur .server-logs-panel {
     backdrop-filter: blur(12px) saturate(150%);

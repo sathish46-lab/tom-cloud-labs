@@ -253,3 +253,88 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.08);
   letter-spacing: 1px;
 }
+
+// ==========================================
+// Plain Theme Mode - Clean Elevated Cards
+// Matches labs.selfmade.ninja/domains style
+// ==========================================
+.mode-plain {
+  // Light mode: white elevated cards on warm cream bg
+  &[data-coreui-theme="light"] {
+    .card {
+      background: rgba(255, 255, 255, 0.9) !important;
+      border: 1px solid rgba(0, 0, 0, 0.06) !important;
+      box-shadow: rgba(0, 0, 0, 0.08) 0px 8px 24px,
+                  rgba(0, 0, 0, 0.04) 0px 2px 4px !important;
+      color: #1a1a2e;
+    }
+
+    .sidebar {
+      background: rgba(255, 255, 255, 0.85) !important;
+      border-right: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .header {
+      background: rgba(255, 255, 255, 0.8) !important;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      backdrop-filter: blur(12px);
+    }
+
+    .lab-card-main {
+      background: rgba(255, 255, 255, 0.95) !important;
+      border: 1px solid rgba(0, 0, 0, 0.08) !important;
+      box-shadow: rgba(0, 0, 0, 0.1) 0px 12px 28px,
+                  rgba(0, 0, 0, 0.04) 0px 2px 6px !important;
+
+      .card-title, .fw-bold {
+        color: #1a1a2e !important;
+      }
+
+      .text-secondary, .small, .font-monospace {
+        color: rgba(26, 26, 46, 0.7) !important;
+      }
+
+      .font-monospace {
+        background: rgba(0, 0, 0, 0.04);
+        border-color: rgba(0, 0, 0, 0.08);
+      }
+    }
+
+    .lab-bg-icon {
+      color: #000;
+      opacity: 0.04;
+    }
+
+    .badge-mini {
+      border-color: rgba(0, 0, 0, 0.1);
+      background: rgba(0, 0, 0, 0.04) !important;
+      color: rgba(26, 26, 46, 0.8);
+    }
+  }
+
+  // Dark mode: dark semi-transparent cards with subtle glow
+  &[data-coreui-theme="dark"] {
+    .card {
+      background: rgba(0, 0, 0, 0.35) !important;
+      border: 1px solid rgba(255, 255, 255, 0.06) !important;
+      box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 24px,
+                  rgba(255, 255, 255, 0.02) 0px 0px 12px !important;
+    }
+
+    .sidebar {
+      border-right: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .header {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(12px);
+    }
+
+    .lab-card-main {
+      background: rgba(0, 0, 0, 0.4) !important;
+      border: 1px solid rgba(255, 255, 255, 0.08) !important;
+      box-shadow: rgba(0, 0, 0, 0.4) 0px 12px 28px,
+                  rgba(255, 255, 255, 0.03) 0px 0px 16px !important;
+    }
+  }
+}

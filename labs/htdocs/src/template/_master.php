@@ -1,48 +1,9 @@
 <?php
 // Start the timer at the earliest possible moment
 define('PAGE_START_TIME', microtime(true));
-
-// Professional Background Theme Configuration
-$tomThemes = [
-    'robo' => [
-        'assets' => [
-            '/assets/Background_Img/robo/0.png',
-            '/assets/Background_Img/robo/1.png',
-            '/assets/Background_Img/robo/2.png'
-        ]
-    ],
-    'ninja' => [
-        'color' => '#010d12',
-        'assets' => [
-            '/assets/Background_Img/ninja/0.png',
-            '/assets/Background_Img/ninja/1.png',
-            '/assets/Background_Img/ninja/2.png'
-        ]
-    ],
-    'robotower' => [
-        'assets' => [
-            '/assets/Background_Img/RoboTower/0.png',
-            '/assets/Background_Img/RoboTower/1.png',
-            '/assets/Background_Img/RoboTower/2.png',
-            '/assets/Background_Img/RoboTower/3.png'
-        ]
-    ],
-    'parallax' => [
-        'assets' => [
-            '/assets/Background_Img/parallax/0.png',
-            '/assets/Background_Img/parallax/1.png',
-            '/assets/Background_Img/parallax/2.png',
-            '/assets/Background_Img/parallax/3.png'
-        ]
-    ]
-];
 ?>
-<script>
-    // Pass PHP themes to JavaScript
-    window.TomThemes = <?php echo json_encode($tomThemes); ?>;
-</script>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-coreui-theme="dark">
 
 <head>
     <meta charset="utf-8">
@@ -56,153 +17,46 @@ $tomThemes = [
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@coreui/coreui@5.0.2/dist/css/coreui.min.css" rel="stylesheet">
 
+    <style id="tom-theme-vars">
+        /* Server-side default theme (SNA Deep Blue) */
+        :root {
+            --cui-body-bg: #0b1e36 !important;
+            --glass-bg: rgba(11, 30, 54, 0.88) !important;
+            --glass-bg-solid: rgba(11, 30, 54, 0.96) !important;
+            --cui-card-bg: rgba(11, 30, 54, 0.45) !important;
+            --cui-card-bg-solid: rgba(11, 30, 54, 0.95) !important;
+            --cui-primary: #5856d6 !important;
+            --cui-sidebar-bg: rgba(11, 30, 54, 0.97) !important;
+            --cui-header-bg: rgba(11, 30, 54, 0.92) !important;
+        }
+    </style>
+
     <script>
-    /**
-     * IMMEDIATE STATE RECOVERY (Prevents UI Flicker)
-     * Runs before <body> is parsed to set instant UI state
-     */
-    (function() {
-        // 1. Theme recovery
-        const savedTheme = localStorage.getItem('tom-labs-theme') || 'dark';
-        const themeToApply = (savedTheme === 'auto') ?
-            (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') :
-            savedTheme;
-        document.documentElement.setAttribute('data-coreui-theme', themeToApply);
-
-        const isNarrow = localStorage.getItem('tom-labs-sidebar-narrow') === 'true';
-        if (isNarrow) {
-            document.documentElement.classList.add('sidebar-init-narrow');
-        }
-        const isHidden = localStorage.getItem('tom-labs-sidebar-hidden') === 'true';
-        if (isHidden) {
-            document.documentElement.classList.add('sidebar-init-hidden');
-        }
-
-        // 3. Visual Blur recovery (Immediate)
-        const savedBlur = localStorage.getItem('tom-labs-visual-blur');
-        const blurEnabled = (savedBlur === null) ? true : (savedBlur === 'true');
-        if (blurEnabled && (CSS.supports('backdrop-filter', 'blur(1px)') || CSS.supports('-webkit-backdrop-filter', 'blur(1px)'))) {
-            document.documentElement.classList.add('enable-blur');
-        }
-
         /**
-         * 4. Background & Color Force Logic
-         * Removes bgColors object and applies specific styles directly
+         * Fast-track state recovery to prevent UI Flicker
+         * Matches SNA's 'simple' architectural pattern
          */
-        const isLoginPage = <?= (defined('IS_LOGIN_PAGE') && IS_LOGIN_PAGE) ? 'true' : 'false' ?>;
-        const savedBG = isLoginPage ? 'ninja' : (localStorage.getItem('tom-labs-bg-mode') || 'parallax');
-        const savedColor = localStorage.getItem('tom-labs-plain-color') || '#0b1e36';
+        (function() {
+            const savedTheme = localStorage.getItem('tom-labs-theme') || 'dark';
+            const themeToApply = (savedTheme === 'auto') ?
+                (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') :
+                savedTheme;
+            document.documentElement.setAttribute('data-coreui-theme', themeToApply);
 
-        const themeColors = {
-            'robo': '#0b2b1c',
-            'robotower': '#000102ff',
-            'ninja': '#010d12'
-        };
+            const mode = localStorage.getItem("tom-labs-bg-mode") || "parallax";
+            document.documentElement.classList.toggle("mode-plain", mode === "plain");
 
-        const isLight = themeToApply === 'light';
-
-        if (savedBG === 'plain' || themeColors[savedBG]) {
-            const color = savedBG === 'plain' ? savedColor : themeColors[savedBG];
-            const safeColor = isLight ? ensureLightness(color, 0.8) : ensureDarkness(color, 0.15);
-
-            if (savedBG === 'plain') {
-                document.documentElement.classList.add('mode-plain');
-            }
+            const isNarrow = localStorage.getItem('tom-labs-sidebar-narrow') === 'true';
+            if (isNarrow) document.documentElement.classList.add('sidebar-init-narrow');
             
-            // Apply theme variables instantly to prevent flicker in sidebar/cards
-            const primaryColor = adjustColor(color, isLight ? -40 : 40);
-            const pRGB = hexToRgbValues(primaryColor);
-
-            document.documentElement.style.setProperty("--glass-bg", isLight ? hexToRgba(safeColor, 0.4) : hexToRgba(safeColor, 0.85));
-            document.documentElement.style.setProperty("--glass-bg-solid", isLight ? hexToRgba(ensureLightness(color, 0.92), 0.98) : hexToRgba(safeColor, 0.98));
-            document.documentElement.style.setProperty("--cui-card-bg", isLight ? "rgba(0,0,0,0.05)" : hexToRgba(safeColor, 0.2));
-            document.documentElement.style.setProperty("--cui-card-bg-solid", isLight ? hexToRgba(ensureLightness(color, 0.96), 0.98) : hexToRgba(safeColor, 0.95));
-            document.documentElement.style.setProperty("--cui-body-bg", safeColor);
-            document.documentElement.style.setProperty("--cui-primary", primaryColor);
-            document.documentElement.style.setProperty("--cui-primary-rgb", pRGB);
-            document.documentElement.style.setProperty("--cui-sidebar-bg", isLight ? hexToRgba(safeColor, 0.95) : hexToRgba(safeColor, 0.95));
-            document.documentElement.style.setProperty("--cui-header-bg", isLight ? hexToRgba(safeColor, 0.85) : hexToRgba(safeColor, 0.85));
-
-            // Sync subtle background variants
-            document.documentElement.style.setProperty("--c1", isLight ? "#ffffff" : adjustColor(safeColor, -5));
-            document.documentElement.style.setProperty("--c2", isLight ? "#f8f9fa" : safeColor);
-            document.documentElement.style.setProperty("--c3", isLight ? "#ffffff" : adjustColor(safeColor, 5));
-            document.documentElement.style.setProperty("--c4", isLight ? "#f0f2f5" : adjustColor(safeColor, 10));
-        } else {
-            // Parallax / image themes: set neutral defaults to prevent color flash
-            if (isLight) {
-                document.documentElement.style.setProperty("--c1", "#ffffff");
-                document.documentElement.style.setProperty("--c2", "#f8f9fa");
-                document.documentElement.style.setProperty("--c3", "#ffffff");
-                document.documentElement.style.setProperty("--c4", "#f0f2f5");
-                document.documentElement.style.setProperty("--cui-body-bg", "#f8f9fa");
-            } else {
-                document.documentElement.style.setProperty("--c1", "#0b1e36");
-                document.documentElement.style.setProperty("--c2", "#112e4a");
-                document.documentElement.style.setProperty("--c3", "#16375e");
-                document.documentElement.style.setProperty("--c4", "#1a2c48");
-                document.documentElement.style.setProperty("--cui-body-bg", "rgba(1, 13, 18, 0.94)");
-                document.documentElement.style.setProperty("--glass-bg", "rgba(1, 13, 18, 0.85)");
-                document.documentElement.style.setProperty("--glass-bg-solid", "rgba(1, 13, 18, 0.94)");
-                document.documentElement.style.setProperty("--cui-sidebar-bg", "rgba(1, 13, 18, 0.95)");
-            }
-        }
-
-        function adjustColor(hex, percent) {
-            var num = parseInt(hex.replace("#",""),16),
-            amt = Math.round(2.55 * percent),
-            R = (num >> 16) + amt,
-            G = (num >> 8 & 0x00FF) + amt,
-            B = (num & 0x0000FF) + amt;
-            return "#" + (0x1000000 + (R<255?R<1?0:R:255)*0x10000 + (G<255?G<1?0:G:255)*0x100 + (B<255?B<1?0:B:255)).toString(16).slice(1);
-        }
-
-        function hexToRgba(hex, opacity) {
-            return `rgba(${hexToRgbValues(hex)}, ${opacity})`;
-        }
-
-        function hexToRgbValues(hex) {
-            var num = parseInt(hex.replace("#", ""), 16),
-            R = (num >> 16) & 0xff,
-            G = (num >> 8) & 0xff,
-            B = num & 0xff;
-            return `${R}, ${G}, ${B}`;
-        }
-
-        function ensureDarkness(hex, maxLuminance) {
-            const rgbStr = hexToRgbValues(hex).split(",");
-            const r = parseInt(rgbStr[0]), g = parseInt(rgbStr[1]), b = parseInt(rgbStr[2]);
-            const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+            const isHidden = localStorage.getItem('tom-labs-sidebar-hidden') === 'true';
+            if (isHidden) document.documentElement.classList.add('sidebar-init-hidden');
             
-            if (luminance > maxLuminance) {
-                const factor = maxLuminance / luminance;
-                const nr = Math.round(r * factor);
-                const ng = Math.round(g * factor);
-                const nb = Math.round(b * factor);
-                return "#" + (0x1000000 + (nr << 16) + (ng << 8) + nb).toString(16).slice(1);
-            }
-            return hex;
-        }
-
-        function ensureLightness(hex, minLuminance) {
-            const rgbStr = hexToRgbValues(hex).split(",");
-            const r = parseInt(rgbStr[0]), g = parseInt(rgbStr[1]), b = parseInt(rgbStr[2]);
-            const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-            
-            if (luminance < minLuminance) {
-                const factor = (1 - minLuminance) / (1 - luminance);
-                const nr = Math.round(255 - (255 - r) * factor);
-                const ng = Math.round(255 - (255 - g) * factor);
-                const nb = Math.round(255 - (255 - b) * factor);
-                return "#" + (0x1000000 + (nr << 16) + (ng << 8) + nb).toString(16).slice(1);
-            }
-            return hex;
-        }
-
-        // Keep the global variable so app.js knows which images to load
-        window.FORCED_BG_MODE = isLoginPage ? 'ninja' : null;
-    })();
+            const savedBlur = localStorage.getItem('tom-labs-visual-blur');
+            if (savedBlur !== 'false') document.documentElement.classList.add('enable-blur');
+        })();
     </script>
+
 
     <?php if (!defined('IS_LANDING_PAGE') || IS_LANDING_PAGE === false): ?>
     <link rel="stylesheet" href="/css/app.css?v=<?= time() ?>">
