@@ -14231,21 +14231,20 @@ body {
   --cui-sidebar-nav-link-color: #000000 !important;
   /* Specific Heading Lockdown */
 }
-[data-coreui-theme=light] h1,
-[data-coreui-theme=light] h2,
-[data-coreui-theme=light] h3,
-[data-coreui-theme=light] h4,
-[data-coreui-theme=light] h5,
-[data-coreui-theme=light] h6,
-[data-coreui-theme=light] .h1,
-[data-coreui-theme=light] .h2,
-[data-coreui-theme=light] .h3,
-[data-coreui-theme=light] p,
-[data-coreui-theme=light] span,
-[data-coreui-theme=light] a,
-[data-coreui-theme=light] .card-title,
-[data-coreui-theme=light] .lab-title {
-  color: #000000 !important;
+[data-coreui-theme=light] h1, [data-coreui-theme=light] h2, [data-coreui-theme=light] h3, [data-coreui-theme=light] h4, [data-coreui-theme=light] h5, [data-coreui-theme=light] h6,
+[data-coreui-theme=light] .h1, [data-coreui-theme=light] .h2, [data-coreui-theme=light] .h3,
+[data-coreui-theme=light] p, [data-coreui-theme=light] span, [data-coreui-theme=light] a,
+[data-coreui-theme=light] .card-title, [data-coreui-theme=light] .lab-title {
+  color: #000000; /* Removed !important to allow utility overrides */
+}
+[data-coreui-theme=light] {
+  /* Allow utility classes to override the global light-mode text color */
+}
+[data-coreui-theme=light] .text-white {
+  color: #ffffff !important;
+}
+[data-coreui-theme=light] .text-white-50 {
+  color: rgba(255, 255, 255, 0.5) !important;
 }
 [data-coreui-theme=light] {
   /* Professional Dropdown Hover Fixes */

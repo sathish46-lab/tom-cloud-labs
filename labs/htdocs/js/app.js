@@ -505,6 +505,7 @@ const TomBG = {
   // Theme configuration is now encapsulated here to keep the HTML head clean like SNA
   themes: {
     'robo': {
+      'color': '#0b1e36',
       'assets': [
         '/assets/Background_Img/robo/0.png',
         '/assets/Background_Img/robo/1.png',
@@ -520,6 +521,7 @@ const TomBG = {
       ]
     },
     'robotower': {
+      'color': '#0b1e36',
       'assets': [
         '/assets/Background_Img/RoboTower/0.png',
         '/assets/Background_Img/RoboTower/1.png',
@@ -528,6 +530,7 @@ const TomBG = {
       ]
     },
     'parallax': {
+      'color': '#0b1e36',
       'assets': [
         '/assets/Background_Img/parallax/0.png',
         '/assets/Background_Img/parallax/1.png',
@@ -973,7 +976,7 @@ const TomBG = {
 
       const theme = this.themes[mode] || this.themes["parallax"];
       const assets = theme.assets || theme;
-      const themeColor = theme.color || null;
+      const themeColor = theme.color || "#0b1e36";
 
       if (themeColor) {
         const safeColor = isLight ? this.ensureLightness(themeColor, 0.8) : this.ensureDarkness(themeColor, 0.15);
