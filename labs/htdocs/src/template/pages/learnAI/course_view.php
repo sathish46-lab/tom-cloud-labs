@@ -24,7 +24,7 @@ foreach ($chapters as $chapter) {
 </script>
 
 <div class="learn-app-wrapper stable-app-view d-flex flex-column overflow-hidden bg-transparent" style="height: var(--app-height, 75vh);">
-    <div class="flex-grow-1 d-flex flex-row overflow-hidden p-1 p-lg-2 gap-0">
+    <div class="flex-grow-1 d-flex flex-row overflow-hidden p-0 gap-0">
         <!-- Sidebar Navigation - Stable -->
         <div id="courseSidebar" class="pane-sidebar d-flex flex-column h-100 transition-all" style="width: var(--courseSidebar-saved-width, 380px); min-width: 300px;">
             <div class="card bg-dark border-secondary border-opacity-10 rounded-4 shadow-sm h-100 d-flex flex-column overflow-hidden">

@@ -53,22 +53,32 @@ body {
   }
 
   border-bottom: 1px solid var(--cui-card-border-color, rgba(255, 255, 255, 0.1));
-  // border-radius: 0 0 1.5rem 1.5rem;
 
-  /* 2. Layout */
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 20px;
-
-  /* 3. Spacing - Aligned with cards */
-  padding: 2rem 1.5rem;
+  /* 2. Spacing - Aligned with screen edges */
+  padding: 2rem 0;
   margin: 0 -24px 2rem -24px;
 
   position: relative;
   z-index: 5;
-  // box-shadow: var(--glass-shadow);
+}
+
+.quiz-container {
+  /* 1. Theme Background - Uses Glass effect only when enabled */
+  background-color: var(--glass-bg, var(--cui-body-bg));
+
+  :root.enable-blur & {
+    backdrop-filter: blur(var(--glass-blur, 12px));
+    -webkit-backdrop-filter: blur(var(--glass-blur, 12px));
+  }
+
+  border-bottom: 1px solid var(--cui-card-border-color, rgba(255, 255, 255, 0.1));
+
+  /* 2. Spacing - Aligned with screen edges */
+  padding: 2rem 0 0 0;
+  margin: 0 -24px 0 -24px;
+
+  position: relative;
+  z-index: 5;
 }
 
 /* 3. Dashboard Stat Cards Inner */

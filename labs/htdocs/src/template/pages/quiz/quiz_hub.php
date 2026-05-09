@@ -1,4 +1,4 @@
-<div class="quiz-container lab-header-section">
+<div class="quiz-container quiz-container">
     <!-- 1. Hero Section -->
     <div class="d-flex flex-column align-items-center text-center py-2 mb-3 w-100">
         <h1 class="display-4 fw-bold theme-text mb-2 d-flex align-items-center justify-content-center">

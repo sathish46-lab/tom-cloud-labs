@@ -55,22 +55,22 @@ $isNew = (isset($q['created_at']) && time() - (int)$q['created_at'] < 86400 * 30
             <!-- Badge Row (Topics & Metadata) -->
             <div class="d-flex flex-wrap align-items-center gap-1 mb-2">
                 <?php if ($isNew): ?>
-                    <span class="badge rounded-pill px-2" style="font-size: 0.52rem; background: var(--sna-primary) !important; color: #000 !important; font-weight: 800; text-transform: lowercase;">new 🥳</span>
+                    <span class="badge bg-success text-white rounded-pill px-2" style="font-size: 0.52rem; font-weight: 800; text-transform: lowercase;">new 🥳</span>
                 <?php endif; ?>
                 
                 <span class="badge rounded-pill px-2" style="font-size: 0.52rem; background: <?= $diffColor ?> !important; color: #fff !important; font-weight: 800; text-transform: lowercase;"><?= strtolower($qDiff) ?></span>
 
                 <!-- AI Tags -->
                 <?php foreach ($displayTags as $tag): ?>
-                    <span class="badge rounded-pill px-2" style="font-size: 0.52rem; background: rgba(255,255,255,0.1) !important; border: 1px solid rgba(255,255,255,0.05); color: #fff !important; font-weight: 600; text-transform: lowercase;"><?= strtolower($tag) ?></span>
+                    <span class="badge rounded-pill px-2" style="font-size: 0.52rem; background: rgba(var(--cui-body-color-rgb), 0.08) !important; border: 1px solid rgba(var(--cui-body-color-rgb), 0.1); color: var(--cui-body-color) !important; font-weight: 600; text-transform: lowercase;"><?= strtolower($tag) ?></span>
                 <?php endforeach; ?>
                 
                 <?php if ($remainingTagsCount > 0): ?>
-                    <span class="badge rounded-pill px-2 quiz-tag-more position-relative" style="cursor: pointer; font-size: 0.52rem; background: rgba(255,255,255,0.1) !important; color: #fff !important;"
+                    <span class="badge rounded-pill px-2 quiz-tag-more position-relative" style="cursor: pointer; font-size: 0.52rem; background: rgba(var(--cui-body-color-rgb), 0.08) !important; border: 1px solid rgba(var(--cui-body-color-rgb), 0.1); color: var(--cui-body-color) !important;"
                         data-remaining-tags='<?= $remainingTagsJson ?>' onclick="toggleTagPopover(this)">+<?= $remainingTagsCount ?></span>
                 <?php endif; ?>
 
-                <span class="badge rounded-pill px-2" style="font-size: 0.52rem; background: rgba(255,255,255,0.05) !important; color: var(--sna-text-muted) !important; font-weight: 800; text-transform: lowercase;">
+                <span class="badge rounded-pill px-2" style="font-size: 0.52rem; background: transparent !important; color: rgba(var(--cui-body-color-rgb), 0.6) !important; font-weight: 800; text-transform: lowercase;">
                     <i class="bx bx-time-five me-1"></i><?= strtolower($timeAgo) ?> ago
                 </span>
             </div>
@@ -79,31 +79,31 @@ $isNew = (isset($q['created_at']) && time() - (int)$q['created_at'] < 86400 * 30
             <div class="mb-2"></div>
 
             <!-- Footer: Stats & Start -->
-            <div class="mt-auto pt-2 border-top border-white border-opacity-10 d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center gap-2">
-                    <div class="d-flex align-items-center gap-1">
-                        <span class="fw-bold theme-text" style="font-size: 0.85rem;"><?= $zealReward ?></span>
-                        <span style="font-size: 0.75rem;">🔥</span>
+            <div class="mt-auto pt-2 border-top d-flex align-items-center justify-content-between" style="border-color: var(--cui-border-color) !important;">
+                <div class="d-flex align-items-center gap-1">
+                    <div class="d-flex align-items-center">
+                        <span class="fw-bold theme-text" style="font-size: 0.75rem;"><?= $zealReward ?></span>
+                        <span style="font-size: 0.65rem; margin-left: 2px;">🔥</span>
                     </div>
-                    <div class="d-flex align-items-center gap-1">
-                        <span class="fw-bold theme-text" style="font-size: 0.85rem;"><?= $joltReward ?></span>
-                        <span style="font-size: 0.75rem;">⚡️</span>
+                    <div class="d-flex align-items-center ms-1">
+                        <span class="fw-bold theme-text" style="font-size: 0.75rem;"><?= $joltReward ?></span>
+                        <span style="font-size: 0.65rem; margin-left: 2px;">⚡️</span>
                     </div>
-                    <div class="d-flex align-items-center gap-1 opacity-50">
-                        <span class="fw-bold theme-text" style="font-size: 0.85rem;"><?= $viewCount ?></span>
-                        <span style="font-size: 0.75rem;">👁️</span>
+                    <div class="d-flex align-items-center opacity-50 ms-1">
+                        <span class="fw-bold theme-text" style="font-size: 0.75rem;"><?= $viewCount ?></span>
+                        <span style="font-size: 0.65rem; margin-left: 2px;">👁️</span>
                     </div>
                     
                     <button class="btn btn-link btn-sm clipboard p-0 ms-1 theme-text opacity-40 hover-opacity-100" 
                         data-clipboard-text="<?= (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] . "/quiz/v/" . $qHash ?>" 
                         style="text-decoration: none;">
-                        <i class="bx bx-share-alt" style="font-size: 0.95rem;"></i>
+                        <i class="bx bx-share-alt" style="font-size: 0.85rem;"></i>
                     </button>
                 </div>
 
-                <a href="/quiz/v/<?= $qHash ?>" class="btn btn-success btn-sm rounded-pill fw-bold px-3 py-1" 
-                   style="font-size: 0.675rem; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(var(--sna-primary-rgb), 0.3);">
-                    start mission
+                <a href="/quiz/v/<?= $qHash ?>" class="btn btn-success btn-sm rounded-pill fw-bold px-2 py-1 ms-1" 
+                   style="font-size: 0.6rem; letter-spacing: 0.3px; white-space: nowrap; box-shadow: 0 4px 12px rgba(var(--sna-primary-rgb), 0.3);">
+                    Answer Quiz
                 </a>
             </div>
         </div>

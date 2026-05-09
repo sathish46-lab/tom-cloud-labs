@@ -6,7 +6,7 @@ $user = Session::getUser();
 
 <div class="learn-app-wrapper pb-5">
     <!-- Main Dashboard Area - Natural Scroll -->
-    <div class="p-2 p-lg-3">
+    <div class="p-0">
         <div class="text-center mb-5 mt-4">
             <h1 class="display-6 fw-bold mb-3">Tell us what you'd like to Learn!</h1>
             

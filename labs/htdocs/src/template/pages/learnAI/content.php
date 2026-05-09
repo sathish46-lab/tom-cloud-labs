@@ -65,7 +65,7 @@ $aiAvatar = "/assets/logo/logo.png";
 
 <div class="learn-app-wrapper stable-app-view d-flex flex-column overflow-hidden bg-transparent" style="height: var(--app-height, 75vh);">
     <!-- Main App Body -->
-    <div class="flex-grow-1 d-flex flex-row overflow-hidden p-1 p-lg-2 gap-0">
+    <div class="flex-grow-1 d-flex flex-row overflow-hidden p-0 gap-0">
         
         <!-- Pane 1: Collapsible Sidebar (Outline) -->
         <div id="outlineSidebar" class="pane-outline d-flex flex-column h-100 transition-all" style="width: var(--outlineSidebar-saved-width, 70px); min-width: 70px;" data-state="collapsed">

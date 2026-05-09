@@ -3,10 +3,15 @@
 $current = Session::getCurrentFile(); 
 ?>
 <div class="sidebar sidebar-fixed border-end-0" id="sidebar">
-    <div class="sidebar-header  border-opacity-10">
-        <div class="sidebar-brand">
-            <img class="sidebar-brand-full" src="/assets/logo/logo.png" width="32" height="32" alt="Logo">
-            <img class="sidebar-brand-narrow" src="/assets/logo/logo.png" width="32" height="32" alt="TL">
+    <div class="sidebar-header border-opacity-10 py-3">
+        <div class="sidebar-brand text-decoration-none">
+            <div class="sidebar-brand-full">
+                <div class="d-flex align-items-center justify-content-center gap-2">
+                    <img src="/assets/logo/logo.png" width="32" height="32" alt="Tom Labs Icon" style="border-radius: 6px;">
+                    <span class="fs-5 fw-bold mb-0" style="color: var(--cui-sidebar-brand-color, inherit); letter-spacing: 0.5px; line-height: 1;">Tom Labs</span>
+                </div>
+            </div>
+            <img class="sidebar-brand-narrow" src="/assets/logo/logo.png" width="32" height="32" alt="TL" style="border-radius: 6px;">
         </div>
     </div>
 

@@ -3,7 +3,7 @@ $topic = Session::get('current_topic');
 $subtopics = $topic['subtopics'] ?? [];
 ?>
 
-<div class="quiz-topic-view fade-in pb-4 lab-header-section">
+<div class="quiz-topic-view fade-in pb-4 quiz-container">
     <div class="container-fluid px-4 pt-2">
         
         <!-- 1. Header Section -->
@@ -148,6 +148,21 @@ function initQuizMasonry() {
         // Expose to window for manual triggers
         grid.msnry = msnry;
     });
+
+    // Watch for CoreUI theme changes (Light/Dark toggle) and re-layout to fix vertical gaps
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'data-coreui-theme') {
+                // Add a small delay to allow CSS transitions to complete before calculating heights
+                setTimeout(() => {
+                    grids.forEach(grid => {
+                        if (grid.msnry) grid.msnry.layout();
+                    });
+                }, 150);
+            }
+        });
+    });
+    observer.observe(document.documentElement, { attributes: true });
 }
 
 function launchQuiz(subtopicId) {

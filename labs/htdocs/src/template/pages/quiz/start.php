@@ -25,7 +25,7 @@ $userStats = $user ? Quiz::getUserStats($user->getEmail()) : ['zeal' => 0, 'jolt
 $availableJolt = $userStats['jolt'] ?? 0;
 ?>
 
-<div class="fade-in pb-5 lab-header-section">
+<div class="fade-in pb-5 quiz-container">
     <div class="evaluation-bg"></div>
     <div class="container-fluid px-4 pt-2">
         
@@ -120,6 +120,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }, { threshold: 0.1 });
         visibilityObserver.observe(container);
     }
+
+    // Watch for CoreUI theme changes (Light/Dark toggle) and re-layout to fix vertical gaps
+    const themeObserver = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'data-coreui-theme') {
+                setTimeout(() => {
+                    document.querySelectorAll('.quiz-masonry-row').forEach(grid => {
+                        if (grid.msnry) grid.msnry.layout();
+                    });
+                }, 150);
+            }
+        });
+    });
+    themeObserver.observe(document.documentElement, { attributes: true });
 });
 </script>
 
