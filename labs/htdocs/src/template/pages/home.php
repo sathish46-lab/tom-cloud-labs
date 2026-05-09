@@ -30,8 +30,8 @@ $gridItems = [
             <div class="position-absolute bottom-0 end-0 bg-success rounded-circle border border-2 border-dark" style="width: 12px; height: 12px;"></div>
         </div>
         <?php 
-        $fullName = trim(($user->getFirstName() ?? '') . ' ' . ($user->getLastName() ?? ''));
-        $displayTitle = !empty($fullName) ? $fullName : $userName;
+        $fullName = $user->getFullName();
+        $displayTitle = !empty($fullName) ? $fullName : $user->getUsername();
         ?>
         <h2 class="fw-bold text-white mb-0" style="font-size: 1.4rem; letter-spacing: -0.2px;">Welcome back, <span class="theme-text text-uppercase"><?= htmlspecialchars($displayTitle) ?></span></h2>
         <p class="text-white-50 small mb-2" style="font-size: 0.75rem; opacity: 0.8;">State of the art laboratories at the hands and homes of every learner!</p>

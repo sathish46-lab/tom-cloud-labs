@@ -8,18 +8,31 @@ class User {
         $this->db = DatabaseConnection::getDefaultDatabase();
         $this->user = $this->db->users->findOne(['email' => $email]);
     }
-
     public function __call($method, $args) {
         if (substr($method, 0, 3) == "get") {
             // Converts "getUserId" to "user_id"
             $property = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', substr($method, 3)));
             
-            // Handle MongoDB BSON objects vs Arrays
+            // Try snake_case first (e.g., first_name)
             if (isset($this->user[$property])) {
                 return $this->user[$property];
             }
+            
+            // Try raw camelCase-to-lowercase (e.g., username)
+            $rawProperty = strtolower(substr($method, 3));
+            if (isset($this->user[$rawProperty])) {
+                return $this->user[$rawProperty];
+            }
         }
         return null;
+    }
+
+    public function getFullName() {
+        $first = $this->getFirstName();
+        $last = $this->getLastName();
+        
+        if (!$first && !$last) return null;
+        return trim(($first ?? '') . ' ' . ($last ?? ''));
     }
     // Inside src/lib/core/User.class.php
     public function getLabHash($labName) {
