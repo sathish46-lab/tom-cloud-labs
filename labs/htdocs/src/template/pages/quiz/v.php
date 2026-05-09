@@ -119,7 +119,7 @@ $wrongMessages = [
 
     <!-- 3. Interactive Area Section -->
     <div class="container-fluid px-0 mb-3 pb-3">
-        <div class="card border-0 shadow-lg p-4 p-lg-5 py-xl-5 mt-4" style="background: rgba(var(--bs-body-bg-rgb, 11, 30, 54), 0.45); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08) !important; border-radius: 24px;">
+        <div class="card border-0 shadow-lg p-4 p-lg-4 py-xl-4 mt-4" style="background: rgba(var(--bs-body-bg-rgb, 11, 30, 54), 0.45); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08) !important; border-radius: 24px;">
             <div class="row justify-content-center">
                 <div class="col-lg-10">
                     
@@ -137,7 +137,7 @@ $wrongMessages = [
 
                     <!-- 2. Question View -->
                     <div id="quiz-question-view" class="quiz-step-view d-none">
-                        <h3 id="question-text" class="text-center text-body-emphasis mb-5 px-md-5" style="line-height: 1.6; font-weight: 500; font-size: 1.35rem; letter-spacing: 0.2px;"></h3>
+                        <h3 id="question-text" class="text-center text-body-emphasis mb-5 px-md-5" style="line-height: 1.6; font-weight: 500; font-size: 1.10rem; letter-spacing: 0.2px;"></h3>
                         
                         <div class="row g-4 mb-5">
                             <div class="col-md-6">

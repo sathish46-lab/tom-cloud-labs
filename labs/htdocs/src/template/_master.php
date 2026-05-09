@@ -31,12 +31,32 @@ define('PAGE_START_TIME', microtime(true));
         }
     </style>
 
+    <?php
+    $serverTheme = [];
+    if (Session::getAuthStatus() == Constants::STATUS_LOGGEDIN) {
+        $user = Session::getUser();
+        if ($user) {
+            $serverTheme = $user->getThemePreferences() ?? [];
+        }
+    }
+    ?>
     <script>
         /**
          * Fast-track state recovery to prevent UI Flicker
          * Matches SNA's 'simple' architectural pattern
          */
         (function() {
+            // 1. Sync Server Preferences to LocalStorage (Server is Source of Truth)
+            const serverTheme = <?= json_encode($serverTheme) ?>;
+            if (serverTheme && serverTheme.mode) localStorage.setItem('tom-labs-bg-mode', serverTheme.mode);
+            if (serverTheme && serverTheme.plain_color) localStorage.setItem('tom-labs-plain-color', serverTheme.plain_color);
+            if (serverTheme && serverTheme.custom_slots && Array.isArray(serverTheme.custom_slots)) {
+                serverTheme.custom_slots.forEach((color, i) => {
+                    if (color) localStorage.setItem('tom-labs-custom-color-' + i, color);
+                });
+            }
+
+            // 2. Apply Theme & Layout State
             const savedTheme = localStorage.getItem('tom-labs-theme') || 'dark';
             const themeToApply = (savedTheme === 'auto') ?
                 (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') :

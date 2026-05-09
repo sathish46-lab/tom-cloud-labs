@@ -37,7 +37,7 @@ $current = Session::getCurrentFile();
             <ul class="nav-group-items">
                 <li class="nav-item">
                     <a class="nav-link <?= $current == 'quiz' ? 'active' : '' ?>" href="/quiz">
-                        <i class="nav-icon bx bxs-zap text-warning"></i> Spot Quiz ⚡
+                        <i class="nav-icon bx bxs-zap text-warning"></i> Spot Quiz  ⚡
                     </a>
                 </li>
                 <li class="nav-item">

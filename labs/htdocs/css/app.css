@@ -16022,9 +16022,9 @@ html.enable-blur .server-logs-panel {
   border-radius: 12px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-weight: 500;
-  font-size: 1.15rem;
-  line-height: 1.6;
-  letter-spacing: 0.5px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  letter-spacing: 0.2px;
 }
 [data-coreui-theme=light] .quiz-option-btn {
   background: #ffffff;

@@ -883,6 +883,7 @@ const TomBG = {
     localStorage.setItem("tom-labs-plain-color", hex);
     localStorage.setItem("tom-labs-bg-mode", "plain");
     this.apply("plain");
+    this.syncToServer();
 
     // Sync preview
     const preview = document.getElementById("hex-preview");
@@ -1131,11 +1132,13 @@ const TomBG = {
     const hex = this.toHex(color);
     localStorage.setItem("tom-labs-custom-color-" + index, hex);
     this.updateCustomSlotsUI();
+    this.syncToServer();
   },
 
   setMode: function (mode) {
     localStorage.setItem("tom-labs-bg-mode", mode);
     this.apply(mode);
+    this.syncToServer();
   },
 
   updateCustomSlotsUI: function () {
@@ -1184,6 +1187,29 @@ const TomBG = {
       <div class="scenery-orb-2"></div>
     `;
     document.body.appendChild(container);
+  },
+
+  _syncTimer: null,
+  syncToServer: function() {
+    const mode = localStorage.getItem("tom-labs-bg-mode");
+    const plainColor = localStorage.getItem("tom-labs-plain-color");
+    const customSlots = [];
+    for (let i = 0; i < 4; i++) {
+      customSlots.push(localStorage.getItem("tom-labs-custom-color-" + i));
+    }
+
+    if (this._syncTimer) clearTimeout(this._syncTimer);
+    this._syncTimer = setTimeout(() => {
+      fetch('/api/account/theme_save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: mode,
+          plainColor: plainColor,
+          customSlots: customSlots
+        })
+      }).catch(err => console.error("Theme sync failed:", err));
+    }, 500);
   }
 };
 

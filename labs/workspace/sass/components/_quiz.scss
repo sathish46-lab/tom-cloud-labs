@@ -272,10 +272,18 @@
   font-size: 0.85rem;
   font-weight: 700;
   margin-right: 12px;
-  
-  &.zeal-reward { color: #e55353; }
-  &.jolt-reward { color: #f9b115; }
-  &.view-reward { color: #3399ff; }
+
+  &.zeal-reward {
+    color: #e55353;
+  }
+
+  &.jolt-reward {
+    color: #f9b115;
+  }
+
+  &.view-reward {
+    color: #3399ff;
+  }
 }
 
 .stat-item {
@@ -321,9 +329,9 @@
   border-radius: 12px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-weight: 500;
-  font-size: 1.15rem;
-  line-height: 1.6;
-  letter-spacing: 0.5px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  letter-spacing: 0.2px;
 
   [data-coreui-theme="light"] & {
     background: #ffffff;
