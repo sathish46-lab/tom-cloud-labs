@@ -63,7 +63,15 @@ define('PAGE_START_TIME', microtime(true));
                 savedTheme;
             document.documentElement.setAttribute('data-coreui-theme', themeToApply);
 
-            const mode = localStorage.getItem("tom-labs-bg-mode") || "parallax";
+            let mode = localStorage.getItem("tom-labs-bg-mode") || "ninja";
+            
+            // Forced state for login page
+            <?php if (defined('IS_LOGIN_PAGE') && IS_LOGIN_PAGE === true): ?>
+            mode = "ninja";
+            document.documentElement.classList.add('enable-blur');
+            window.FORCED_BG_MODE = "ninja";
+            <?php endif; ?>
+
             document.documentElement.classList.toggle("mode-plain", mode === "plain");
 
             const isNarrow = localStorage.getItem('tom-labs-sidebar-narrow') === 'true';

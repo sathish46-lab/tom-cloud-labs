@@ -539,7 +539,7 @@ const TomBG = {
 
   init: function () {
     // 1. Check for forced mode (Login Page) before looking at localStorage
-    const saved = localStorage.getItem("tom-labs-bg-mode") || "parallax";
+    const saved = localStorage.getItem("tom-labs-bg-mode") || "ninja";
     const modeToUse = window.FORCED_BG_MODE || saved;
 
     this.apply(modeToUse);
@@ -551,7 +551,7 @@ const TomBG = {
           const currentMode =
             window.FORCED_BG_MODE ||
             localStorage.getItem("tom-labs-bg-mode") ||
-            "parallax";
+            "ninja";
           this.apply(currentMode);
         }
       });
