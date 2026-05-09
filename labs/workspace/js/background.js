@@ -639,6 +639,11 @@ const TomBG = {
     localStorage.setItem("tom-labs-bg-mode", mode);
     this.apply(mode);
     this.syncToServer();
+
+    // Update thumbnails UI for the new Mega Dropdown
+    document.querySelectorAll('.theme-bg-item').forEach(item => {
+        item.classList.toggle('active', item.getAttribute('data-mode') === mode);
+    });
   },
 
   updateCustomSlotsUI: function () {

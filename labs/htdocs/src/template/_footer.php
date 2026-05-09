@@ -14,7 +14,7 @@
     </div>
     <div class="ms-auto d-flex align-items-center gap-2">
         <span class="text-info ">
-            <i class="bx bx-timer"></i>Page Rendered in <?= Session::getRenderTime() ?>
+            Page Rendered in <?= Session::getRenderTime() ?>
         </span>
         <span class="text-info">
            |  v0.0.1-beta-<?= Session::getVersion() ?>

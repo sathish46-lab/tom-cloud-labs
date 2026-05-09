@@ -106,7 +106,7 @@
             </nav>
         </div>
 
-        <ul class="header-nav ms-auto mb-0 align-items-center">
+        <ul class="header-nav ms-auto mb-0 align-items-center list-unstyled d-flex">
             <?php 
                 $navUser = Session::getUser();
                 $navStats = $navUser ? \TomLabs\Labs\Quiz::getUserStats($navUser->getEmail()) : ['zeal' => 0, 'jolt' => 10];
@@ -124,22 +124,70 @@
                     </div>
                 </div>
             </li>
-        </ul>
-
-        <ul class="header-nav mb-0 align-items-center">
-            <li class="nav-item dropdown">
-                <button class="btn btn-link nav-link py-0 px-2 d-flex align-items-center justify-content-center"
+        
+            <!-- Theme & Background Mega Dropdown -->
+            <li class="nav-item dropdown px-2">
+                <button class="btn btn-link nav-link py-0 d-flex align-items-center justify-content-center theme-selector-btn"
                     type="button" data-coreui-toggle="dropdown" style="height: 40px; width: 40px;">
                     <i class="bx theme-icon-active fs-4" id="currentThemeIcon"></i>
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li><button class="dropdown-item d-flex align-items-center" onclick="changeTheme('light')"><i
-                                class="bx bx-sun me-2"></i> Light</button></li>
-                    <li><button class="dropdown-item d-flex align-items-center" onclick="changeTheme('dark')"><i
-                                class="bx bx-moon me-2"></i> Dark</button></li>
-                    <li><button class="dropdown-item d-flex align-items-center" onclick="changeTheme('auto')"><i
-                                class="bx bx-circle-half me-2"></i> Auto</button></li>
-                </ul>
+                <div class="dropdown-menu dropdown-menu-end theme-mega-container border-0 bg-transparent shadow-none p-0">
+                    <div class="d-flex align-items-start gap-3 p-2 flex-row-reverse">
+                        <!-- Mode Selector Card (Rightmost, under the icon) -->
+                        <div class="mode-selector-card shadow-lg">
+                            <button class="mode-item" onclick="changeTheme('light')" data-coreui-value="light">
+                                <i class='bx bx-sun'></i> <span>Light</span>
+                            </button>
+                            <button class="mode-item" onclick="changeTheme('dark')" data-coreui-value="dark">
+                                <i class='bx bx-moon'></i> <span>Dark</span>
+                            </button>
+                            <button class="mode-item" onclick="changeTheme('auto')" data-coreui-value="auto">
+                                <i class='bx bx-circle-half'></i> <span>Auto</span>
+                            </button>
+                        </div>
+
+                        <!-- Background Selector Card (Reveals to the left) -->
+                        <div class="bg-selector-card shadow-lg">
+                            <div class="theme-bg-grid p-3">
+                                <div class="theme-bg-item" onclick="TomBG.setMode('plain')" data-mode="plain">
+                                    <div class="theme-bg-thumb-wrapper">
+                                        <div style="width:100%; height:100%; background: linear-gradient(45deg, #010d12, #0b1e36);"></div>
+                                    </div>
+                                    <span class="theme-bg-label">Plain</span>
+                                </div>
+                                <div class="theme-bg-item" onclick="TomBG.setMode('ninja')" data-mode="ninja">
+                                    <div class="theme-bg-thumb-wrapper">
+                                        <img src="/assets/Background_Img/ninja/ninja.jpg" class="theme-bg-thumb">
+                                    </div>
+                                    <span class="theme-bg-label">Ninja</span>
+                                </div>
+                                <div class="theme-bg-item" onclick="TomBG.setMode('robo')" data-mode="robo">
+                                    <div class="theme-bg-thumb-wrapper">
+                                        <img src="/assets/Background_Img/robo/robo.jpg" class="theme-bg-thumb">
+                                    </div>
+                                    <span class="theme-bg-label">Robot</span>
+                                </div>
+                                <div class="theme-bg-item" onclick="TomBG.setMode('robotower')" data-mode="robotower">
+                                    <div class="theme-bg-thumb-wrapper">
+                                        <img src="/assets/Background_Img/RoboTower/robo_tower.jpg" class="theme-bg-thumb">
+                                    </div>
+                                    <span class="theme-bg-label">Tower</span>
+                                </div>
+                                <div class="theme-bg-item" onclick="TomBG.setMode('parallax')" data-mode="parallax">
+                                    <div class="theme-bg-thumb-wrapper">
+                                        <img src="/assets/Background_Img/ninja/0.png" class="theme-bg-thumb">
+                                    </div>
+                                    <span class="theme-bg-label">Parallax</span>
+                                </div>
+                            </div>
+                            <div class="dropdown-divider border-white border-opacity-10 my-0"></div>
+                            <a class="dropdown-item d-flex align-items-center justify-content-center py-2 text-secondary hover-text-white transition-all" 
+                               style="font-size: 0.75rem;" data-coreui-toggle="modal" data-coreui-target="#plainColorModal">
+                                <i class="bx bx-color-fill me-1"></i> Custom Theme Designer
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </li>
 
             <li class="nav-item dropdown ms-2">
@@ -188,7 +236,6 @@
                             <i class="bx bx-shield-alt-2 fs-5 me-2 text-secondary"></i>
                             <span class="small fw-semibold">My Account</span>
                         </a>
-
 
                         <a class="dropdown-item d-flex align-items-center px-2 py-2 rounded pointer" 
                             data-coreui-toggle="modal" data-coreui-target="#bgSelectModal">

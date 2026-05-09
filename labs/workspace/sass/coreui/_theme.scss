@@ -1,4 +1,6 @@
 // Light theme glass definitions
+@use "../components/theme_dropdown" as *;
+
 [data-coreui-theme="light"] {
   /* Force global text colors to black */
   --cui-body-color: #000000 !important;
@@ -20,17 +22,29 @@
   --cui-sidebar-nav-link-color: #000000 !important;
 
   /* Specific Heading Lockdown */
-  h1, h2, h3, h4, h5, h6, 
-  .h1, .h2, .h3, 
-  p, span, a, 
-  .card-title, .lab-title {
-    color: #000000; /* Removed !important to allow utility overrides */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  .h1,
+  .h2,
+  .h3,
+  p,
+  span,
+  a,
+  .card-title,
+  .lab-title {
+    color: #000000;
+    /* Removed !important to allow utility overrides */
   }
 
   /* Allow utility classes to override the global light-mode text color */
   .text-white {
     color: #ffffff !important;
   }
+
   .text-white-50 {
     color: rgba(255, 255, 255, 0.5) !important;
   }
@@ -65,41 +79,53 @@
   justify-content: center;
 
   // Primary / Beta
-  &.bg-primary, &.bg-primary-gradient {
+  &.bg-primary,
+  &.bg-primary-gradient {
     background: linear-gradient(135deg, #6c5ce7, #a29bfe) !important;
     color: #fff !important;
   }
 
   // Success / Running
-  &.bg-success, &.bg-success-gradient {
+  &.bg-success,
+  &.bg-success-gradient {
     background: linear-gradient(135deg, #27ae60, #2ecc71) !important;
     color: #fff !important;
   }
 
   // Danger / Offline
-  &.bg-danger, &.bg-danger-gradient {
+  &.bg-danger,
+  &.bg-danger-gradient {
     background: linear-gradient(135deg, #e74c3c, #ff7675) !important;
     color: #fff !important;
   }
 
   // Info
-  &.bg-info, &.bg-info-gradient {
+  &.bg-info,
+  &.bg-info-gradient {
     background: linear-gradient(135deg, #0984e3, #74b9ff) !important;
     color: #fff !important;
   }
 
   // Warning / Public
-  &.bg-warning, &.bg-warning-gradient {
+  &.bg-warning,
+  &.bg-warning-gradient {
     background: linear-gradient(135deg, #f1c40f, #fdcb6e) !important;
     color: #000 !important;
-    [data-coreui-theme="dark"] & { color: #fff !important; }
+
+    [data-coreui-theme="dark"] & {
+      color: #fff !important;
+    }
   }
 
   // Secondary / Reserved
-  &.bg-secondary, &.bg-secondary-gradient {
+  &.bg-secondary,
+  &.bg-secondary-gradient {
     background: linear-gradient(135deg, #a4b0be, #f1f2f6) !important;
     color: #2f3542 !important;
-    [data-coreui-theme="dark"] & { color: #fff !important; }
+
+    [data-coreui-theme="dark"] & {
+      color: #fff !important;
+    }
   }
 }
 
@@ -543,12 +569,12 @@ body::before {
 .glass-card {
   color: var(--glass-text) !important;
   background: var(--cui-card-bg, rgba(255, 255, 255, 0.05));
-  
+
   :root.enable-blur & {
     backdrop-filter: blur(var(--glass-blur, 10px));
     -webkit-backdrop-filter: blur(var(--glass-blur, 10px));
   }
-  
+
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   border-radius: 1.25rem;
   position: relative;

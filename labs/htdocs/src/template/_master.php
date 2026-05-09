@@ -379,6 +379,17 @@ define('PAGE_START_TIME', microtime(true));
     document.addEventListener('DOMContentLoaded', () => {
         const savedTheme = localStorage.getItem('tom-labs-theme') || 'dark';
         updateThemeIcon(savedTheme);
+        
+        // Highlight active mode button
+        document.querySelectorAll('.mode-item').forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-coreui-value') === savedTheme);
+        });
+
+        // Highlight active background thumbnail
+        const savedBG = localStorage.getItem('tom-labs-bg-mode') || 'ninja';
+        document.querySelectorAll('.theme-bg-item').forEach(item => {
+            item.classList.toggle('active', item.getAttribute('data-mode') === savedBG);
+        });
     });
 
     function changeTheme(themeName) {
@@ -391,6 +402,11 @@ define('PAGE_START_TIME', microtime(true));
         document.documentElement.setAttribute('data-coreui-theme', themeToApply);
         localStorage.setItem('tom-labs-theme', themeName);
         updateThemeIcon(themeName);
+
+        // Highlight active button
+        document.querySelectorAll('.mode-item').forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-coreui-value') === themeName);
+        });
 
         // OPTIONAL: Dispatch event for parallax.js or GSAP backgrounds to re-calculate
         window.dispatchEvent(new Event('themeChanged'));

@@ -14211,6 +14211,184 @@ body {
   --cui-footer-bg: var(--cui-body-bg);
 }
 
+/*════════════════════════════════════════════
+  4.  THEME & BACKGROUND SELECTOR CARDS
+  ════════════════════════════════════════════*/
+/* The invisible wrapper that holds both cards */
+.theme-mega-container {
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  margin-top: 10px !important;
+  max-width: 95vw;
+  display: none;
+}
+
+.theme-mega-container.show {
+  display: flex !important;
+}
+
+/* Global Card Base Styling - HEAVY BLUR, LOW TRANSPARENCY */
+.mode-selector-card,
+.bg-selector-card {
+  background: rgba(11, 30, 54, 0.92) !important;
+  /* High opacity, less transparent */
+  backdrop-filter: blur(40px) saturate(180%) !important;
+  /* Heavy blur effect */
+  -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6) !important;
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+/* Light Mode Card Base - Opaque Blurred Panel */
+[data-coreui-theme=light] .mode-selector-card,
+[data-coreui-theme=light] .bg-selector-card {
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(30px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(150%) !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Mode Selector Card (Rightmost) */
+.mode-selector-card {
+  width: 130px !important;
+  border-radius: 18px !important;
+  padding: 6px !important;
+  z-index: 10;
+}
+
+.mode-item {
+  border: none;
+  background: transparent;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(255, 255, 255, 0.75) !important;
+  transition: all 0.2s ease;
+  text-align: left;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.mode-item i {
+  font-size: 1rem;
+  opacity: 0.7;
+}
+
+.mode-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff !important;
+}
+
+.mode-item.active {
+  background: #3498db !important;
+  color: #fff !important;
+}
+
+[data-coreui-theme=light] .mode-item {
+  color: rgba(0, 0, 0, 0.75) !important;
+}
+
+[data-coreui-theme=light] .mode-item:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #000 !important;
+}
+
+/* Background Selector Card (Reveals Left) */
+.bg-selector-card {
+  width: 210px !important;
+  border-radius: 20px !important;
+  padding: 0 !important;
+  overflow: hidden;
+  /* Reveal Logic */
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(20px);
+}
+
+.theme-mega-container:hover .bg-selector-card {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+}
+
+.theme-bg-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  padding: 12px !important;
+}
+
+.theme-bg-item {
+  cursor: pointer;
+  text-align: center;
+}
+
+.theme-bg-thumb-wrapper {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.theme-bg-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.theme-bg-label {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+[data-coreui-theme=light] .theme-bg-label {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.theme-bg-item:hover .theme-bg-thumb {
+  transform: scale(1.1);
+}
+
+.theme-bg-item:hover .theme-bg-thumb-wrapper {
+  border-color: #3498db;
+}
+
+.theme-bg-item.active .theme-bg-thumb-wrapper {
+  border-color: #3498db;
+}
+
+.theme-bg-item.active .theme-bg-label {
+  color: #3498db !important;
+  font-weight: 900;
+}
+
+.dropdown-divider {
+  opacity: 0.08;
+  background-color: #fff;
+  margin: 0 !important;
+}
+
+[data-coreui-theme=light] .dropdown-divider {
+  background-color: #000;
+}
+
 [data-coreui-theme=light] {
   /* Force global text colors to black */
   --cui-body-color: #000000 !important;
@@ -14231,11 +14409,22 @@ body {
   --cui-sidebar-nav-link-color: #000000 !important;
   /* Specific Heading Lockdown */
 }
-[data-coreui-theme=light] h1, [data-coreui-theme=light] h2, [data-coreui-theme=light] h3, [data-coreui-theme=light] h4, [data-coreui-theme=light] h5, [data-coreui-theme=light] h6,
-[data-coreui-theme=light] .h1, [data-coreui-theme=light] .h2, [data-coreui-theme=light] .h3,
-[data-coreui-theme=light] p, [data-coreui-theme=light] span, [data-coreui-theme=light] a,
-[data-coreui-theme=light] .card-title, [data-coreui-theme=light] .lab-title {
-  color: #000000; /* Removed !important to allow utility overrides */
+[data-coreui-theme=light] h1,
+[data-coreui-theme=light] h2,
+[data-coreui-theme=light] h3,
+[data-coreui-theme=light] h4,
+[data-coreui-theme=light] h5,
+[data-coreui-theme=light] h6,
+[data-coreui-theme=light] .h1,
+[data-coreui-theme=light] .h2,
+[data-coreui-theme=light] .h3,
+[data-coreui-theme=light] p,
+[data-coreui-theme=light] span,
+[data-coreui-theme=light] a,
+[data-coreui-theme=light] .card-title,
+[data-coreui-theme=light] .lab-title {
+  color: #000000;
+  /* Removed !important to allow utility overrides */
 }
 [data-coreui-theme=light] {
   /* Allow utility classes to override the global light-mode text color */
