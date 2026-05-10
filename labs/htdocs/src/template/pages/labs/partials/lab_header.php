@@ -75,33 +75,35 @@
             </div>
             
             <!-- Action Buttons -->
-            <div class="btn-group shadow-lg rounded-pill overflow-hidden" role="group">
+            <div class="btn-group shadow-sm rounded-pill overflow-hidden me-5" role="group">
                 <?php if($isRunning): ?>
-                    <button class="btn btn-primary btn-code-lab px-4 py-2 fw-bold hover-scale border-0 d-flex align-items-center gap-2" 
+                    <button class="btn px-3 py-1.5 fw-bold hover-scale border-0 d-flex align-items-center gap-2" 
+                            style="background: #f36d1f; color: #fff;"
                             onclick="launchService(this, '<?= $labType ?>')"
                             data-tooltip="Launch Cloud IDE / Code Server"
                             data-coreui-toggle="loading-button" data-coreui-spinner-type="grow">
-                        <i class='bx bx-code-alt fs-5'></i>
-                        <span><?= $cfg['action'] ?></span>
+                        <i class='bx bx-code-alt fs-6'></i>
+                        <span class="small"><?= $cfg['action'] ?></span>
                     </button>
                 <?php endif; ?>
                 
-                <button class="btn btn-warning btn-redeploy-lab px-4 py-2 fw-bold hover-scale border-0 d-flex align-items-center gap-2 text-dark" 
+                <button class="btn btn-success btn-redeploy-lab px-3 py-1.5 fw-bold hover-scale border-0 d-flex align-items-center gap-2" 
+                        style="background: #34d399; border: none; color: #000;"
                         onclick="handleDeploy(this, '<?= $labType ?>')"
                         data-tooltip="<?= $isRunning ? 'Redeploy for a fresh instance' : 'Deploy this lab' ?>"
                         data-coreui-toggle="loading-button" data-coreui-spinner-type="grow">
-                    <i class='bx <?= $isRunning ? 'bx-refresh' : 'bx-cloud-upload' ?> fs-5 text-dark'></i>
-                    <span><?= $isRunning ? 'Redeploy' : 'Deploy' ?></span>
+                    <i class='bx <?= $isRunning ? 'bx-refresh' : 'bx-cloud-upload' ?> fs-6 text-dark'></i>
+                    <span class="small text-dark"><?= $isRunning ? 'Redeploy' : 'Deploy' ?></span>
                 </button>
 
                 <?php if($isRunning): ?>
-                    <button id="btn-stop-action" class="btn btn-stop-lab-premium px-4 py-2 fw-bold hover-scale border-0 d-flex align-items-center gap-2" 
-                            style="background: linear-gradient(135deg, #e55353 0%, #d93737 100%); color: #fff; box-shadow: 0 4px 15px rgba(229, 83, 83, 0.3);"
+                    <button id="btn-stop-action" class="btn px-3 py-1.5 fw-bold hover-scale border-0 d-flex align-items-center gap-2" 
+                            style="background: #a855f7; color: #fff;"
                             onclick="handleStop()"
                             data-tooltip="Stop Instance Immediately"
                             data-coreui-toggle="loading-button" data-coreui-spinner-type="grow">
-                        <i class='bx bx-stop-circle fs-5' style="filter: brightness(0) invert(1);"></i>
-                        <span>Stop</span>
+                        <i class='bx bx-stop-circle fs-6' style="filter: brightness(0) invert(1);"></i>
+                        <span class="small">Stop</span>
                     </button>
                 <?php endif; ?>
             </div>
