@@ -2,12 +2,13 @@
 /**
  * Main Loader: Handles environment, vendors, and core libraries.
  */
+require_once __DIR__ . '/utils/config.php';
 
 // 1. Start session first (without using any classes yet)
 if (session_status() === PHP_SESSION_NONE) {
-    // Set session to last 24 hours (86400 seconds)
-    ini_set('session.gc_maxlifetime', 86400);
-    ini_set('session.cookie_lifetime', 86400);
+    $lifetime = get_session_lifetime();
+    ini_set('session.gc_maxlifetime', $lifetime);
+    ini_set('session.cookie_lifetime', $lifetime);
     
     // Optional: increase probability to clean up old sessions
     ini_set('session.gc_probability', 1);
@@ -24,14 +25,20 @@ require_once __DIR__ . '/lib/load.php';
 // 3. NOW we can use Constants class - regenerate session cookie
 if (isset($_SESSION['auth_status']) && $_SESSION['auth_status'] === Constants::STATUS_LOGGEDIN) {
     $cookieParams = session_get_cookie_params();
+    $lifetime = get_session_lifetime();
+    $domain = get_session_domain();
+
     setcookie(
         session_name(),
         session_id(),
-        time() + 86400,
-        $cookieParams['path'],
-        $cookieParams['domain'],
-        $cookieParams['secure'],
-        $cookieParams['httponly']
+        [
+            'expires'  => time() + $lifetime,
+            'path'     => $cookieParams['path'],
+            'domain'   => $domain,
+            'secure'   => $cookieParams['secure'],
+            'httponly' => true,
+            'samesite' => 'Lax'
+        ]
     );
 }
 

@@ -59,12 +59,15 @@ public function getUser() {
             $_SESSION['auth_status'] = \Constants::STATUS_LOGGEDIN;
             $_SESSION['username']    = $username;
             
-            // Set cookies with 24-hour expiration to match session lifetime
+            // Set cookies with environment-aware expiration from session.json
+            $lifetime = get_session_lifetime();
+            $domain = get_session_domain();
+
             $isSecure = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on');
             setcookie('username', $username, [
-                'expires'  => time() + 86400, // 24 hours
+                'expires'  => time() + $lifetime,
                 'path'     => '/',
-                'domain'   => '', 
+                'domain'   => $domain, 
                 'secure'   => $isSecure,
                 'httponly' => true,
                 'samesite' => 'Lax'
@@ -79,11 +82,26 @@ public function getUser() {
 }
     public static function logout() {
         Session::$authStatus = null;
+        
+        // Dynamic domain for clearing cookies from session.json
+        $domain = get_session_domain();
+
         $_SESSION = [];
-        // Clear all cookies
-        setcookie('username', '', time() - 3600, "/");
-        setcookie('sessionHash', '', time() - 3600, "/");
-        setcookie('sessionID', '', time() - 3600, "/");
+
+        // Clear all cookies with matching domain
+        $cookieOptions = [
+            'expires' => time() - 3600,
+            'path' => '/',
+            'domain' => $domain,
+            'secure' => (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on'),
+            'httponly' => true,
+            'samesite' => 'Lax'
+        ];
+
+        setcookie('username', '', $cookieOptions);
+        setcookie('sessionHash', '', $cookieOptions);
+        setcookie('sessionID', '', $cookieOptions);
+        
         if (session_status() === PHP_SESSION_ACTIVE) {
             session_destroy();
         }

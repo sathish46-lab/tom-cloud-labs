@@ -114,22 +114,6 @@ function require_from_json(){
 }
 
 
-// Load configurations
-function get_config($key) {
-    // Use the absolute path to your centralized configuration
-    $path = '/var/www/env.json';
-
-    if (!file_exists($path)) {
-        // Log the specific error for debugging
-        error_log("CONFIG ERROR: Cannot find config file at: " . $path);
-        return null; 
-    }
-    
-    $data = file_get_contents($path);
-    $array = json_decode($data, true);
-    return isset($array[$key]) ? $array[$key] : null;
-}
-
 function logit($log, $tag = "system") {
     // Only log if in local mode or it's a fatal error
     if (class_exists('Session') && (Session::$environment == "local" || $tag == 'fatal')) {

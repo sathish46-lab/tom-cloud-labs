@@ -18,6 +18,7 @@ deploy_to_docker_lab:
       - "labs/**/*"
       - "vpn-api/**/*"
       - "opt/**/*"
+      - "session.json"
       
   script:
     - echo "Starting deployment to Docker_lab..."
@@ -34,5 +35,8 @@ deploy_to_docker_lab:
     
     # 3. Sync the 'opt' folder (Labs Control Panel & Orchestrators)
     - rsync -av --delete opt/ /Users/sathish/Downloads/Docker_lab/opt/
+    
+    # 4. Sync the 'session.json' configuration
+    - cp session.json /Users/sathish/Downloads/Docker_lab/session.json
     
     - echo "Deployment of labs, vpn-api, and opt completed successfully!"

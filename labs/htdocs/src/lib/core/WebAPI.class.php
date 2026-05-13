@@ -29,17 +29,20 @@ class WebAPI {
 
     public function initSession() {
     global $__start;
+
+    // Start session if not already started
     if (session_status() === PHP_SESSION_NONE) { 
-        // Sync session cookie parameters with browser security standards
-        session_set_cookie_params([
-            'lifetime' => 0,
-            'path'     => '/',
-            'secure'   => (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on'),
-            'httponly' => true,
-            'samesite' => 'Lax'
-        ]);
         session_start(); 
     }
+
+    // Manual Session Expiration Check (Crucial for Production GC reliability)
+    $lifetime = get_session_lifetime();
+
+    if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > $lifetime)) {
+        UserSession::logout();
+        return; // Stop processing to ensure the user stays logged out for this request
+    }
+    $_SESSION['last_activity'] = time();
 
     // Prioritize active PHP Session, fallback to persistent Cookie
     $username = $_SESSION['username'] ?? $_COOKIE['username'] ?? null;
