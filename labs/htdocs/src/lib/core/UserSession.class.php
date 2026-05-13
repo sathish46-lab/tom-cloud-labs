@@ -94,7 +94,8 @@ public function getUser() {
             'expires' => time() - 3600,
             'path' => '/',
             'domain' => $domain,
-            'secure' => (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on'),
+            'secure' => (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ||
+                        (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https'),
             'httponly' => true,
             'samesite' => 'Lax'
         ];

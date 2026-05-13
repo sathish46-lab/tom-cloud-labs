@@ -17,12 +17,7 @@ class WebAPI {
         if (!extension_loaded('mongodb')) { die("Unable to load mongodb.so"); }
 
         // DYNAMIC ENVIRONMENT DETECTION
-        $host = $_SERVER['HTTP_HOST'] ?? '';
-        if ($host === 'labslocal.tomweb.fun' || $host === 'localhost' || $host === 'dev.awshosting.in') {
-            Session::$environment = 'local';
-        } else {
-            Session::$environment = 'beta';
-        }
+        Session::$environment = is_local() ? 'local' : 'beta';
 
         DatabaseConnection::getClient(); 
     }
