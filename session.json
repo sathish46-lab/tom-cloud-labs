@@ -1,0 +1,6 @@
+{
+    "lifetime_local": 1,
+    "lifetime_production": 20,
+    "domain_local": "dev.awshosting.in",
+    "domain_production": "awshosting.in"
+}
