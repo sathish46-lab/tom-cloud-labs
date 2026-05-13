@@ -63,7 +63,8 @@ public function getUser() {
             $lifetime = get_session_lifetime();
             $domain = get_session_domain();
 
-            $isSecure = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on');
+            $isSecure = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || 
+                        (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
             setcookie('username', $username, [
                 'expires'  => time() + $lifetime,
                 'path'     => '/',

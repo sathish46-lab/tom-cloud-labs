@@ -35,7 +35,8 @@ if (isset($_SESSION['auth_status']) && $_SESSION['auth_status'] === Constants::S
             'expires'  => time() + $lifetime,
             'path'     => $cookieParams['path'],
             'domain'   => $domain,
-            'secure'   => $cookieParams['secure'],
+            'secure'   => (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || 
+                          (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https'),
             'httponly' => true,
             'samesite' => 'Lax'
         ]
