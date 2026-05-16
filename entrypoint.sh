@@ -36,7 +36,7 @@ if [ -f /etc/wireguard/wg0.conf ]; then
 fi
 
 # Detect Docker bridge interface for forwarding rules
-DOCKER_BRIDGE=$(docker network inspect tomlabs_net --format '{{.Id}}' 2>/dev/null | cut -c1-12)
+DOCKER_BRIDGE=$(docker network inspect local_dev_lab_tomlabs_dev_net --format '{{.Id}}' 2>/dev/null | cut -c1-12)
 if [ -n "$DOCKER_BRIDGE" ]; then
     BRIDGE_IF="br-${DOCKER_BRIDGE}"
 else

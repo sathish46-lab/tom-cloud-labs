@@ -2,6 +2,7 @@
 # linkuser.sh - Professional MinIO Lab Setup with SSH Key-Only Enforcement
 # $1=Username, $2=PublicKeys, $3=DockerIP, $4=CodePassword
 # $5=LabPrivateKey, $6=TunnelIP, $7=ServerPublicKey
+# $8=UserEmail, $9=N8nDomain, $10=VPSDockerIP
 
 USER_NAME=$1
 PUB_KEYS=$2
@@ -10,6 +11,7 @@ CODE_PASS=$4
 LAB_PRIV_KEY=$5
 TUNNEL_IP=$6
 SERVER_PUBKEY=$7
+VPS_DOCKER_IP=${10}
 
 # THE SHARED PATH: physically at /home/sathish46/.labs/miniostorage
 S3_DATA_DIR="/home/$USER_NAME/.labs/miniostorage"
@@ -61,7 +63,7 @@ Table = off
 
 [Peer]
 PublicKey = $SERVER_PUBKEY
-Endpoint = 172.30.0.1:51820
+Endpoint = ${VPS_DOCKER_IP:-172.30.0.1}:51820
 AllowedIPs = 172.30.0.0/16
 PersistentKeepalive = 25
 EOF

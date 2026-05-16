@@ -14,7 +14,7 @@ elseif ($hour < 21) $greeting = "Evening, legend";
 else $greeting = "Winding down";
 ?>
 
-<div class="container-fluid min-vh-100 d-flex flex-column align-items-center justify-content-center py-5 position-relative overflow-hidden">
+<div class="container-fluid min-vh-100 d-flex flex-column align-items-center justify-content-center py-2 position-relative overflow-hidden">
     <!-- Premium Ambient Background Orbs -->
     <div class="scenery-orb-1"></div>
     <div class="scenery-orb-2"></div>

@@ -2,6 +2,7 @@
 # linkuser.sh - n8n Version
 # $1=Username, $2=PublicKeys, $3=DockerIP, $4=CodePassword/N8NPassword
 # $5=LabPrivateKey, $6=TunnelIP, $7=ServerPublicKey, $8=UserEmail
+# $9=WebhookDomain, $10=VPSDockerIP
 
 USER_NAME=$1
 PUB_KEYS=$2
@@ -12,6 +13,7 @@ TUNNEL_IP=$6
 SERVER_PUBKEY=$7
 USER_EMAIL=$8
 WEBHOOK_DOMAIN=$9
+VPS_DOCKER_IP=${10}
 
 # Fallback for email if empty (legacy support)
 if [ -z "$USER_EMAIL" ]; then
@@ -64,7 +66,7 @@ MTU = 1420
 Table = off
 [Peer]
 PublicKey = $SERVER_PUBKEY
-Endpoint = 172.30.0.1:51820
+Endpoint = ${VPS_DOCKER_IP:-172.30.0.1}:51820
 AllowedIPs = 172.30.0.0/16
 PersistentKeepalive = 25
 EOF
