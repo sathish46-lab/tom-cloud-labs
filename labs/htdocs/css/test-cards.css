@@ -1,0 +1,224 @@
+/* ========================================================================
+   Test Cards — Premium Glassmorphic Card Grid
+   Scoped with .tc- prefix to avoid conflicts with global styles
+   ======================================================================== */
+
+/* ---------- Layout ---------- */
+.tc-grid-container {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+/* 5-column layout on large screens */
+@media (min-width: 992px) {
+    .tc-grid-container .col-lg-2-4 {
+        flex: 0 0 auto;
+        width: 20%;
+    }
+}
+
+/* ---------- Card ---------- */
+.tc-card {
+    --tc-glass-blur: 14px;
+    --tc-glass-bg: rgba(15, 25, 45, 0.55);
+    position: relative;
+    min-height: 148px;
+    background: var(--tc-glass-bg) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 18px !important;
+    backdrop-filter: blur(var(--tc-glass-blur));
+    -webkit-backdrop-filter: blur(var(--tc-glass-blur));
+    overflow: hidden;
+    will-change: transform, box-shadow;
+    transition: all 0.45s cubic-bezier(0.165, 0.84, 0.44, 1);
+    /* staggered entrance */
+    opacity: 0;
+    animation: tcSlideUp 0.55s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+}
+
+/* subtle glow on hover */
+.tc-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 0.45s ease;
+    background: radial-gradient(
+        ellipse at 50% 0%,
+        var(--tc-accent, rgba(88, 86, 214, 0.15)) 0%,
+        transparent 70%
+    );
+    pointer-events: none;
+}
+
+.tc-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    border-color: rgba(255, 255, 255, 0.16) !important;
+    box-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.55),
+        0 0 0 1px rgba(255, 255, 255, 0.06);
+    background: rgba(25, 40, 65, 0.65) !important;
+}
+
+.tc-card:hover::before {
+    opacity: 1;
+}
+
+/* ---------- Card Body ---------- */
+.tc-card-body {
+    padding: 1.15rem 0.85rem;
+    position: relative;
+    z-index: 1;
+}
+
+/* ---------- Icon Ring ---------- */
+.tc-icon-ring {
+    width: 46px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1),
+                background 0.4s ease;
+}
+
+.tc-card:hover .tc-icon-ring {
+    transform: scale(1.12) translateZ(0);
+    background: rgba(255, 255, 255, 0.07);
+}
+
+/* ---------- Typography ---------- */
+.tc-card-title {
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: #fff;
+    margin-bottom: 0.2rem;
+    letter-spacing: -0.15px;
+    line-height: 1.2;
+}
+
+.tc-card-desc {
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.45);
+    margin: 0;
+    line-height: 1.25;
+    letter-spacing: 0.1px;
+}
+
+/* ---------- Header Section ---------- */
+.tc-avatar-wrapper img {
+    image-rendering: -webkit-optimize-contrast;
+    backface-visibility: hidden;
+}
+
+.tc-plan-badge {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 0.3em 0.8em;
+}
+
+.tc-signout-link {
+    transition: color 0.25s ease;
+}
+
+.tc-signout-link:hover {
+    color: #e74c3c !important;
+}
+
+/* ---------- Entrance Animation ---------- */
+.tc-fade-in {
+    opacity: 0;
+    animation: tcFadeInUp 0.7s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+}
+
+@keyframes tcFadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(18px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes tcSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(22px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* ---------- Light Mode Overrides ---------- */
+[data-coreui-theme="light"] .tc-card {
+    --tc-glass-bg: rgba(255, 255, 255, 0.55);
+    border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+[data-coreui-theme="light"] .tc-card:hover {
+    background: rgba(255, 255, 255, 0.72) !important;
+    border-color: rgba(0, 0, 0, 0.12) !important;
+    box-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.12),
+        0 0 0 1px rgba(0, 0, 0, 0.04);
+}
+
+[data-coreui-theme="light"] .tc-card-title {
+    color: #1a1a2e;
+}
+
+[data-coreui-theme="light"] .tc-card-desc {
+    color: rgba(0, 0, 0, 0.5);
+}
+
+[data-coreui-theme="light"] .tc-icon-ring {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-coreui-theme="light"] .tc-card:hover .tc-icon-ring {
+    background: rgba(0, 0, 0, 0.07);
+}
+
+/* ---------- Plain mode compatibility ---------- */
+:root.mode-plain .tc-card {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+:root.mode-plain[data-coreui-theme="dark"] .tc-card {
+    --tc-glass-bg: rgba(255, 255, 255, 0.04);
+}
+
+/* ---------- Responsive polish ---------- */
+@media (max-width: 575.98px) {
+    .tc-card {
+        min-height: 130px;
+    }
+
+    .tc-icon-ring {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+    }
+
+    .tc-icon-ring i {
+        font-size: 1.35rem !important;
+    }
+
+    .tc-card-title {
+        font-size: 0.82rem;
+    }
+}

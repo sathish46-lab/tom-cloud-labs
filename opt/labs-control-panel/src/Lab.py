@@ -104,11 +104,13 @@ class Lab:
         """Deploy a container with WireGuard mesh networking and Template-based Config"""
         self.log("Deployment initiated (WireGuard Mesh Mode)...", "info")
         
-        # 0. Ensure Physical Docker Network is on 10.30.0.0/16
-        network_check = os.system("docker network inspect local_dev_lab_tomlabs_dev_net > /dev/null 2>&1")
+        # 0. Verify Docker Network exists (created by docker-compose, subnet 172.19.0.0/16)
+        docker_network = self.config.get('docker_network_name', 'local_dev_lab_tomlabs_dev_net')
+        network_check = os.system(f"docker network inspect {docker_network} > /dev/null 2>&1")
         if network_check != 0:
-            self.log("Creating Docker network local_dev_lab_tomlabs_dev_net (10.30.0.0/16)...", "info")
-            os.system("docker network create --driver=bridge --subnet=10.30.0.0/16 --gateway=10.30.0.1 local_dev_lab_tomlabs_dev_net")
+            self.log(f"FATAL: Docker network {docker_network} not found. Is docker-compose up?", "error")
+            self.log("Run: docker-compose up -d  (from local_dev_lab directory)", "error")
+            return
 
         instance_id = self.session_hash
         if not instance_id:
@@ -154,11 +156,23 @@ class Lab:
         ip_parts = base_ip.split('.')
         last_octet = ip_parts[3]
         
-        docker_prefix = self.config.get('docker_ip_prefix', '10.30.0.')
+        docker_prefix = self.config.get('docker_ip_prefix', '172.19.0.')
         tunnel_prefix = self.config.get('tunnel_ip_prefix', '172.30.0.')
 
-        docker_ip = f"{docker_prefix}{last_octet}"      # Physical Docker IP
-        tunnel_ip = f"{tunnel_prefix}{last_octet}"     # Virtual VPN IP
+        docker_ip = f"{docker_prefix}{last_octet}"      # Physical Docker IP (on compose network)
+        tunnel_ip = f"{tunnel_prefix}{last_octet}"     # Virtual VPN IP (WireGuard overlay)
+        
+        # Determine the VPS container's IP on the Docker network (for WireGuard endpoint)
+        docker_network = self.config.get('docker_network_name', 'local_dev_lab_tomlabs_dev_net')
+        vps_docker_ip = os.popen(
+            f"docker inspect docker_tomlabs_vps_dev "
+            f"--format '{{{{.NetworkSettings.Networks.{docker_network}.IPAddress}}}}' 2>/dev/null"
+        ).read().strip()
+        if not vps_docker_ip:
+            vps_docker_ip = f"{docker_prefix}2"  # Fallback: first usable IP after gateway
+            self.log(f"WARNING: Could not detect VPS container IP, using fallback: {vps_docker_ip}", "warn")
+        else:
+            self.log(f"VPS Container IP (WG Endpoint): {vps_docker_ip}", "info")
         
         self.log(f"Assigned Docker IP (eth0): {docker_ip}", "info")
         self.log(f"Assigned Tunnel IP (wg0): {tunnel_ip}", "info")
@@ -329,7 +343,7 @@ class Lab:
         # Pass n8n Domain (9th argument) for Webhook URL
         n8n_domain_arg = selected_n8n_domain if selected_n8n_domain else ""
 
-        link_cmd = f'docker exec {instance_id} {link_script} "{username}" "{auth_content}" "{docker_ip}" "{dynamic_pass}" "{lab_priv_key}" "{tunnel_ip}" "{server_pub_key}" "{user_email}" "{n8n_domain_arg}"'
+        link_cmd = f'docker exec {instance_id} {link_script} "{username}" "{auth_content}" "{docker_ip}" "{dynamic_pass}" "{lab_priv_key}" "{tunnel_ip}" "{server_pub_key}" "{user_email}" "{n8n_domain_arg}" "{vps_docker_ip}"'
         
         if os.system(link_cmd) != 0:
             self.log("linkuser.sh failed", "error")

@@ -1,0 +1,146 @@
+// ========================================================================
+// Launcher & Card — Ultra Compact Grid (One-Screen Layout)
+// ========================================================================
+
+.home-grid-container {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  width: 100% !important;
+  max-width: 1000px !important;
+  margin: 0 auto !important;
+}
+
+// 5-Column Logic
+@media (min-width: 992px) {
+  .home-grid-container>.col-lg-2-4 {
+    flex: 0 0 20% !important;
+    max-width: 20% !important;
+    width: 20% !important;
+    padding: 6px !important; // Ultra tight gaps
+  }
+}
+
+// ---------- Ultra Compact Card ----------
+.launcher-card.card,
+.home-nav-card.card {
+  --glow-color: var(--card-accent, rgba(100, 200, 255, 0.4));
+
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  width: 100% !important;
+  min-height: 110px !important; // Ultra compact height
+
+  /* Background, blur, border, and border-radius are now inherited from _backdrop.scss to support .glass-mode */
+  padding: 12px 8px !important; // Minimal padding
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+  text-decoration: none !important;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: radial-gradient(circle at 50% -5%, var(--glow-color) 0%, transparent 60%);
+    opacity: 0.5;
+    z-index: 1;
+  }
+
+  // Icon Ring
+  .card-icon-ring,
+  .icon-wrapper {
+    width: 36px !important; // Ultra small ring
+    height: 36px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    margin-bottom: 8px !important;
+    z-index: 2;
+
+    i {
+      font-size: 1.3rem !important; // Smaller icons
+      color: var(--glow-color) !important;
+      filter: drop-shadow(0 0 6px var(--glow-color));
+    }
+  }
+
+  // Typography
+  .card-title,
+  h5 {
+    font-weight: 700 !important;
+    font-size: 0.82rem !important; // Compact title
+    color: #fff !important;
+    margin-bottom: 2px !important;
+    letter-spacing: -0.01em !important;
+    z-index: 2;
+    text-align: center !important;
+    width: 100% !important;
+  }
+
+  .card-text,
+  p {
+    font-size: 0.6rem !important; // Tiny text
+    color: rgba(255, 255, 255, 0.4) !important;
+    margin: 0 auto !important;
+    line-height: 1.1 !important;
+    z-index: 2;
+    white-space: nowrap; // Keep it on one line to save vertical space
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 90% !important;
+    text-align: center !important;
+  }
+
+  // ---------- Entrance Animation (Matches Test File) ----------
+  opacity: 0;
+  animation: homeCardSlideUp 0.6s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+  will-change: transform,
+  opacity;
+
+  // Hover Effect
+  &:hover {
+    transform: scale(1.04) translateY(-4px) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25) !important;
+    background-color: var(--glass-bg-hover, rgba(255, 255, 255, 0.05)) !important;
+
+    &::before {
+      opacity: 0.8;
+    }
+  }
+}
+
+@keyframes homeCardSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+
+// Adjust Header to save more space
+.home-fade-in {
+  margin-bottom: 1.5rem !important; // Reduce margin below header
+
+  h1 {
+    font-size: 1.4rem !important;
+  }
+
+  p {
+    margin-bottom: 0.5rem !important;
+  }
+}

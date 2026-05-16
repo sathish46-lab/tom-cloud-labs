@@ -19,15 +19,27 @@ define('PAGE_START_TIME', microtime(true));
 
     <style id="tom-theme-vars">
         /* Server-side default theme (SNA Deep Blue) */
-        :root {
-            --cui-body-bg: #0b1e36 !important;
-            --glass-bg: rgba(11, 30, 54, 0.88) !important;
-            --glass-bg-solid: rgba(11, 30, 54, 0.96) !important;
-            --cui-card-bg: rgba(11, 30, 54, 0.45) !important;
-            --cui-card-bg-solid: rgba(11, 30, 54, 0.95) !important;
-            --cui-primary: #5856d6 !important;
-            --cui-sidebar-bg: rgba(11, 30, 54, 0.97) !important;
-            --cui-header-bg: rgba(11, 30, 54, 0.92) !important;
+        :root, [data-coreui-theme="dark"] {
+            --cui-body-bg: #0b1e36;
+            --glass-bg: rgba(11, 30, 54, 0.88);
+            --glass-bg-solid: rgba(11, 30, 54, 0.96);
+            --cui-card-bg: rgba(11, 30, 54, 0.45);
+            --cui-card-bg-solid: rgba(11, 30, 54, 0.95);
+            --cui-primary: #5856d6;
+            --cui-sidebar-bg: rgba(11, 30, 54, 0.97);
+            --cui-header-bg: rgba(11, 30, 54, 0.92);
+        }
+
+        [data-coreui-theme="light"] {
+            --cui-body-bg: #f4f7f9;
+            --glass-bg: rgba(255, 255, 255, 0.82);
+            --glass-bg-solid: rgba(255, 255, 255, 0.98);
+            --cui-card-bg: rgba(255, 255, 255, 0.5);
+            --cui-card-bg-solid: rgba(255, 255, 255, 0.95);
+            --cui-primary: #5856d6;
+            --cui-sidebar-bg: rgba(255, 255, 255, 0.98);
+            --cui-header-bg: rgba(255, 255, 255, 0.95);
+            --cui-body-color: #2f353a;
         }
     </style>
 
@@ -68,7 +80,7 @@ define('PAGE_START_TIME', microtime(true));
             // Forced state for login page
             <?php if (defined('IS_LOGIN_PAGE') && IS_LOGIN_PAGE === true): ?>
             mode = "ninja";
-            document.documentElement.classList.add('enable-blur');
+            document.documentElement.classList.add('glass-mode');
             window.FORCED_BG_MODE = "ninja";
             <?php endif; ?>
 
@@ -81,7 +93,7 @@ define('PAGE_START_TIME', microtime(true));
             if (isHidden) document.documentElement.classList.add('sidebar-init-hidden');
             
             const savedBlur = localStorage.getItem('tom-labs-visual-blur');
-            if (savedBlur !== 'false') document.documentElement.classList.add('enable-blur');
+            if (savedBlur !== 'false') document.documentElement.classList.add('glass-mode');
         })();
     </script>
 
@@ -408,6 +420,11 @@ define('PAGE_START_TIME', microtime(true));
             btn.classList.toggle('active', btn.getAttribute('data-coreui-value') === themeName);
         });
 
+        // Update background selector grid
+        if (window.TomVisuals) {
+            window.TomVisuals.switchBGTheme(themeName);
+        }
+
         // OPTIONAL: Dispatch event for parallax.js or GSAP backgrounds to re-calculate
         window.dispatchEvent(new Event('themeChanged'));
     }
@@ -499,6 +516,59 @@ define('PAGE_START_TIME', microtime(true));
             ?>
                 TomNotify.show("<?= htmlspecialchars($msg) ?>", "<?= $title ?>", "<?= $key ?>");
             <?php endif; endforeach; ?>
+        });
+
+        /**
+         * TomVisuals - Background and Glassmorphism Controller
+         */
+        window.TomVisuals = {
+            toggleBlur: function(enable) {
+                if (enable) {
+                    document.documentElement.classList.add('glass-mode');
+                    localStorage.setItem('tom-labs-visual-blur', 'true');
+                } else {
+                    document.documentElement.classList.remove('glass-mode');
+                    localStorage.setItem('tom-labs-visual-blur', 'false');
+                }
+            },
+            showRecommendation: function() {
+                TomNotify.show("Visual blur is recommended for the best glassmorphism experience, but can be disabled for better performance.", "Information", "info");
+            },
+            switchBGTheme: function(theme) {
+                const darkGrid = document.getElementById('bg-grid-dark');
+                const lightGrid = document.getElementById('bg-grid-light');
+                
+                if (!darkGrid || !lightGrid) return;
+
+                if (theme === 'light') {
+                    darkGrid.style.display = 'none';
+                    lightGrid.style.display = 'grid';
+                    lightGrid.classList.remove('d-none');
+                } else if (theme === 'dark') {
+                    lightGrid.style.display = 'none';
+                    darkGrid.style.display = 'grid';
+                    darkGrid.classList.remove('d-none');
+                } else if (theme === 'auto') {
+                    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    this.switchBGTheme(isDarkMode ? 'dark' : 'light');
+                }
+            },
+            syncUI: function() {
+                const blurToggle = document.getElementById('visualBlurToggle');
+                if (blurToggle) {
+                    const savedBlur = localStorage.getItem('tom-labs-visual-blur');
+                    blurToggle.checked = (savedBlur !== 'false');
+                }
+                
+                // Sync background grid to current theme
+                const savedTheme = localStorage.getItem('tom-labs-theme') || 'dark';
+                this.switchBGTheme(savedTheme);
+            }
+        };
+
+        // Sync UI on load
+        document.addEventListener('DOMContentLoaded', () => {
+            TomVisuals.syncUI();
         });
     </script>
     <?php endif; ?>

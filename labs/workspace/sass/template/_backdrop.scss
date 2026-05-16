@@ -1,31 +1,144 @@
+/* ========================================================================
+   High-End Glassmorphism Style ('Pro' Apple Vibe)
+   ======================================================================== */
+
+:root {
+    --glass-bg: rgba(15, 25, 40, 0.7);
+    /* Deep, professional glass base */
+    --glass-bg-solid: #0f1928;
+    /* Solid fallback */
+    --glass-border: rgba(255, 255, 255, 0.15);
+}
+
+[data-coreui-theme="light"] {
+    --glass-bg: rgba(255, 255, 255, 0.8);
+    --glass-bg-solid: #ffffff;
+    --glass-border: rgba(0, 0, 0, 0.1);
+}
+
 .lab-header-section,
 .card,
 .sidebar,
 .header,
 .footer,
 .modal-content {
-  background-color: var(--glass-bg) !important;
-  transition:
-    backdrop-filter 0.3s ease,
-    background-color 0.3s ease;
+    background-color: var(--glass-bg) !important;
+    transition:
+        backdrop-filter 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+        background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+        box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+        border 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Use Theme-Aware solid fallback when blur is OFF */
-  html:not(.enable-blur) & {
-    background-color: var(--glass-bg-solid, rgba(255, 255, 255, 0.93)) !important;
-  }
+    /* Overall Polish: Sleek typography and contrast */
+    color: var(--cui-body-color) !important;
+    /* Theme-aware text color */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 
-  html:not(.enable-blur)[data-coreui-theme="dark"] & {
-    background-color: var(--glass-bg-solid, rgba(15, 25, 40, 0.94)) !important;
-  }
+    /* Ensure sidebar links and text are visible */
+    .nav-link,
+    .sidebar-brand,
+    .sidebar-toggler {
+        color: var(--cui-body-color) !important;
+        opacity: 0.85;
+
+        &:hover {
+            color: #fff !important;
+            background-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        &.active {
+            color: #fff !important;
+            background-color: rgba(255, 255, 255, 0.15) !important;
+        }
+
+        i,
+        svg {
+            color: var(--cui-body-color) !important;
+        }
+    }
+
+    /* Fix for Logo/Brand contrast */
+    .sidebar-brand {
+        font-weight: 700;
+        letter-spacing: -0.5px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Use Theme-Aware solid fallback when blur is OFF */
+    html:not(.glass-mode) & {
+        background-color: var(--glass-bg-solid, rgba(255, 255, 255, 0.95)) !important;
+    }
+
+    html:not(.glass-mode)[data-coreui-theme="dark"] & {
+        background-color: var(--glass-bg-solid, rgba(15, 25, 40, 0.96)) !important;
+    }
 }
 
+/* ---------------------------------------------------------
+   Specific Element Overrides (Borders & Border-Radius)
+   --------------------------------------------------------- */
+
+/* Cards & Modals - Floating Elements */
+.card,
+.modal-content {
+    border-radius: 16px !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    /* Depth: Soft, diffused drop shadows for floating effect */
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.12) !important;
+
+    html:not(.glass-mode) & {
+        border: 1px solid rgba(0, 0, 0, 0.05) !important;
+    }
+
+    html:not(.glass-mode)[data-coreui-theme="dark"] & {
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    }
+}
+
+/* Sidebar - Border on Right Only */
+.sidebar {
+    border-right: 1px solid rgba(255, 255, 255, 0.15) !important;
+
+    html:not(.glass-mode) & {
+        border-right: 1px solid rgba(0, 0, 0, 0.05) !important;
+    }
+
+    html:not(.glass-mode)[data-coreui-theme="dark"] & {
+        border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
+    }
+}
+
+/* Headers & Footers - Remove border lines between structural sections */
+.header {
+    padding: 0 1rem !important;
+    border: none !important;
+    box-shadow: none !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.lab-header-section {
+    padding: 2.5rem 24px !important;
+    margin: 0 -24px 2rem -24px !important;
+    border: none !important;
+    box-shadow: none !important;
+    background-color: var(--glass-bg) !important;
+    display: block !important;
+}
+
+.footer {
+    border: none !important;
+}
+
+
 /* Apply the blur ONLY when the user preference class is present */
-html.enable-blur .lab-header-section,
-html.enable-blur .card,
-html.enable-blur .sidebar,
-html.enable-blur .header,
-html.enable-blur .footer,
-html.enable-blur .modal-content {
-  backdrop-filter: blur(var(--glass-blur)) saturate(180%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+html.glass-mode .lab-header-section,
+html.glass-mode .card,
+html.glass-mode .sidebar,
+html.glass-mode .header,
+html.glass-mode .footer,
+html.glass-mode .modal-content {
+    /* The Glass Effect: Strong frosted glass blur */
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
 }

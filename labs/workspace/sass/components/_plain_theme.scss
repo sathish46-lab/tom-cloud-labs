@@ -30,7 +30,7 @@
       background: rgba(255, 255, 255, 0.8) !important;
       border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 
-      :root.enable-blur & {
+      :root.glass-mode & {
         backdrop-filter: blur(12px);
       }
     }
@@ -96,7 +96,7 @@
     .card {
       background: var(--cui-card-bg, rgba(0, 0, 0, 0.35)) !important;
 
-      :root:not(.enable-blur) & {
+      :root:not(.glass-mode) & {
         background: var(--cui-card-bg-solid, rgba(0, 0, 0, 0.95)) !important;
       }
 
@@ -112,7 +112,7 @@
     .header {
       border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 
-      :root.enable-blur & {
+      :root.glass-mode & {
         backdrop-filter: blur(12px);
       }
     }

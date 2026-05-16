@@ -570,7 +570,7 @@ body::before {
   color: var(--glass-text) !important;
   background: var(--cui-card-bg, rgba(255, 255, 255, 0.05));
 
-  :root.enable-blur & {
+  :root.glass-mode & {
     backdrop-filter: blur(var(--glass-blur, 10px));
     -webkit-backdrop-filter: blur(var(--glass-blur, 10px));
   }
@@ -582,7 +582,7 @@ body::before {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Fallback for when Visual Blur is OFF */
-  :root:not(.enable-blur) & {
+  :root:not(.glass-mode) & {
     background: var(--cui-card-bg-solid, #ffffff) !important;
     border-color: rgba(0, 0, 0, 0.08) !important;
     backdrop-filter: none !important;

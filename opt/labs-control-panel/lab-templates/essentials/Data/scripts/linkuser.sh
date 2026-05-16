@@ -2,6 +2,7 @@
 # linkuser.sh - Fixed version with server public key parameter
 # $1=Username, $2=PublicKeys, $3=DockerIP, $4=CodePassword
 # $5=LabPrivateKey, $6=TunnelIP, $7=ServerPublicKey
+# $8=UserEmail, $9=N8nDomain, $10=VPSDockerIP
 
 USER_NAME=$1
 PUB_KEYS=$2
@@ -10,6 +11,7 @@ CODE_PASS=$4
 LAB_PRIV_KEY=$5
 TUNNEL_IP=$6
 SERVER_PUBKEY=$7
+VPS_DOCKER_IP=${10}
 
 SYSTEM_PASS="${USER_NAME}@098"
 
@@ -58,6 +60,10 @@ if [ -n "$LAB_PRIV_KEY" ] && [ -n "$SERVER_PUBKEY" ]; then
     
     mkdir -p /etc/wireguard
     
+    # Use the VPS container's Docker network IP as the WireGuard endpoint
+    # This is reachable from sibling containers on the same Docker bridge network
+    WG_ENDPOINT="${VPS_DOCKER_IP:-172.30.0.1}"
+    
     cat <<EOF > /etc/wireguard/wg0.conf
 [Interface]
 PrivateKey = $LAB_PRIV_KEY
@@ -67,7 +73,7 @@ Table = off
 
 [Peer]
 PublicKey = $SERVER_PUBKEY
-Endpoint = 172.30.0.1:51820
+Endpoint = ${WG_ENDPOINT}:51820
 AllowedIPs = 172.30.0.0/16
 PersistentKeepalive = 25
 EOF

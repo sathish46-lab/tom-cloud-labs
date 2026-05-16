@@ -19,6 +19,7 @@
 @use "components/session_expired";
 @use "components/plain_theme";
 @use "components/theme_dropdown";
+@use "components/card";
 
 
 // 2. Global Performance & Smooth Rendering Optimizations
@@ -48,7 +49,7 @@ body {
   /* 1. Theme Background - Uses Glass effect only when enabled */
   background-color: var(--glass-bg, var(--cui-body-bg));
 
-  :root.enable-blur & {
+  :root.glass-mode & {
     backdrop-filter: blur(var(--glass-blur, 12px));
     -webkit-backdrop-filter: blur(var(--glass-blur, 12px));
   }
@@ -67,7 +68,7 @@ body {
   /* 1. Theme Background - Uses Glass effect only when enabled */
   background-color: var(--glass-bg, var(--cui-body-bg));
 
-  :root.enable-blur & {
+  :root.glass-mode & {
     backdrop-filter: blur(var(--glass-blur, 12px));
     -webkit-backdrop-filter: blur(var(--glass-blur, 12px));
   }

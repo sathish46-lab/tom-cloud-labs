@@ -14911,7 +14911,7 @@ body::before {
   color: var(--glass-text) !important;
   background: var(--cui-card-bg, rgba(255, 255, 255, 0.05));
 }
-:root.enable-blur .glass-card {
+:root.glass-mode .glass-card {
   backdrop-filter: blur(var(--glass-blur, 10px));
   -webkit-backdrop-filter: blur(var(--glass-blur, 10px));
 }
@@ -14923,7 +14923,7 @@ body::before {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   /* Fallback for when Visual Blur is OFF */
 }
-:root:not(.enable-blur) .glass-card {
+:root:not(.glass-mode) .glass-card {
   background: var(--cui-card-bg-solid, #ffffff) !important;
   border-color: rgba(0, 0, 0, 0.08) !important;
   backdrop-filter: none !important;
@@ -15586,6 +15586,23 @@ html[data-coreui-theme=dark] {
   transform: translateZ(0);
 }
 
+/* ========================================================================
+   High-End Glassmorphism Style ('Pro' Apple Vibe)
+   ======================================================================== */
+:root {
+  --glass-bg: rgba(15, 25, 40, 0.7);
+  /* Deep, professional glass base */
+  --glass-bg-solid: #0f1928;
+  /* Solid fallback */
+  --glass-border: rgba(255, 255, 255, 0.15);
+}
+
+[data-coreui-theme=light] {
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-bg-solid: #ffffff;
+  --glass-border: rgba(0, 0, 0, 0.1);
+}
+
 .lab-header-section,
 .card,
 .sidebar,
@@ -15593,35 +15610,220 @@ html[data-coreui-theme=dark] {
 .footer,
 .modal-content {
   background-color: var(--glass-bg) !important;
-  transition: backdrop-filter 0.3s ease, background-color 0.3s ease;
+  transition: backdrop-filter 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1), border 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Overall Polish: Sleek typography and contrast */
+  color: var(--cui-body-color) !important;
+  /* Theme-aware text color */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  /* Ensure sidebar links and text are visible */
+}
+.lab-header-section .nav-link,
+.lab-header-section .sidebar-brand,
+.lab-header-section .sidebar-toggler,
+.card .nav-link,
+.card .sidebar-brand,
+.card .sidebar-toggler,
+.sidebar .nav-link,
+.sidebar .sidebar-brand,
+.sidebar .sidebar-toggler,
+.header .nav-link,
+.header .sidebar-brand,
+.header .sidebar-toggler,
+.footer .nav-link,
+.footer .sidebar-brand,
+.footer .sidebar-toggler,
+.modal-content .nav-link,
+.modal-content .sidebar-brand,
+.modal-content .sidebar-toggler {
+  color: var(--cui-body-color) !important;
+  opacity: 0.85;
+}
+.lab-header-section .nav-link:hover,
+.lab-header-section .sidebar-brand:hover,
+.lab-header-section .sidebar-toggler:hover,
+.card .nav-link:hover,
+.card .sidebar-brand:hover,
+.card .sidebar-toggler:hover,
+.sidebar .nav-link:hover,
+.sidebar .sidebar-brand:hover,
+.sidebar .sidebar-toggler:hover,
+.header .nav-link:hover,
+.header .sidebar-brand:hover,
+.header .sidebar-toggler:hover,
+.footer .nav-link:hover,
+.footer .sidebar-brand:hover,
+.footer .sidebar-toggler:hover,
+.modal-content .nav-link:hover,
+.modal-content .sidebar-brand:hover,
+.modal-content .sidebar-toggler:hover {
+  color: #fff !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+.lab-header-section .nav-link.active,
+.lab-header-section .sidebar-brand.active,
+.lab-header-section .sidebar-toggler.active,
+.card .nav-link.active,
+.card .sidebar-brand.active,
+.card .sidebar-toggler.active,
+.sidebar .nav-link.active,
+.sidebar .sidebar-brand.active,
+.sidebar .sidebar-toggler.active,
+.header .nav-link.active,
+.header .sidebar-brand.active,
+.header .sidebar-toggler.active,
+.footer .nav-link.active,
+.footer .sidebar-brand.active,
+.footer .sidebar-toggler.active,
+.modal-content .nav-link.active,
+.modal-content .sidebar-brand.active,
+.modal-content .sidebar-toggler.active {
+  color: #fff !important;
+  background-color: rgba(255, 255, 255, 0.15) !important;
+}
+.lab-header-section .nav-link i,
+.lab-header-section .nav-link svg,
+.lab-header-section .sidebar-brand i,
+.lab-header-section .sidebar-brand svg,
+.lab-header-section .sidebar-toggler i,
+.lab-header-section .sidebar-toggler svg,
+.card .nav-link i,
+.card .nav-link svg,
+.card .sidebar-brand i,
+.card .sidebar-brand svg,
+.card .sidebar-toggler i,
+.card .sidebar-toggler svg,
+.sidebar .nav-link i,
+.sidebar .nav-link svg,
+.sidebar .sidebar-brand i,
+.sidebar .sidebar-brand svg,
+.sidebar .sidebar-toggler i,
+.sidebar .sidebar-toggler svg,
+.header .nav-link i,
+.header .nav-link svg,
+.header .sidebar-brand i,
+.header .sidebar-brand svg,
+.header .sidebar-toggler i,
+.header .sidebar-toggler svg,
+.footer .nav-link i,
+.footer .nav-link svg,
+.footer .sidebar-brand i,
+.footer .sidebar-brand svg,
+.footer .sidebar-toggler i,
+.footer .sidebar-toggler svg,
+.modal-content .nav-link i,
+.modal-content .nav-link svg,
+.modal-content .sidebar-brand i,
+.modal-content .sidebar-brand svg,
+.modal-content .sidebar-toggler i,
+.modal-content .sidebar-toggler svg {
+  color: var(--cui-body-color) !important;
+}
+.lab-header-section,
+.card,
+.sidebar,
+.header,
+.footer,
+.modal-content {
+  /* Fix for Logo/Brand contrast */
+}
+.lab-header-section .sidebar-brand,
+.card .sidebar-brand,
+.sidebar .sidebar-brand,
+.header .sidebar-brand,
+.footer .sidebar-brand,
+.modal-content .sidebar-brand {
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+.lab-header-section,
+.card,
+.sidebar,
+.header,
+.footer,
+.modal-content {
   /* Use Theme-Aware solid fallback when blur is OFF */
 }
-html:not(.enable-blur) .lab-header-section,
-html:not(.enable-blur) .card,
-html:not(.enable-blur) .sidebar,
-html:not(.enable-blur) .header,
-html:not(.enable-blur) .footer,
-html:not(.enable-blur) .modal-content {
-  background-color: var(--glass-bg-solid, rgba(255, 255, 255, 0.93)) !important;
+html:not(.glass-mode) .lab-header-section,
+html:not(.glass-mode) .card,
+html:not(.glass-mode) .sidebar,
+html:not(.glass-mode) .header,
+html:not(.glass-mode) .footer,
+html:not(.glass-mode) .modal-content {
+  background-color: var(--glass-bg-solid, rgba(255, 255, 255, 0.95)) !important;
 }
-html:not(.enable-blur)[data-coreui-theme=dark] .lab-header-section,
-html:not(.enable-blur)[data-coreui-theme=dark] .card,
-html:not(.enable-blur)[data-coreui-theme=dark] .sidebar,
-html:not(.enable-blur)[data-coreui-theme=dark] .header,
-html:not(.enable-blur)[data-coreui-theme=dark] .footer,
-html:not(.enable-blur)[data-coreui-theme=dark] .modal-content {
-  background-color: var(--glass-bg-solid, rgba(15, 25, 40, 0.94)) !important;
+html:not(.glass-mode)[data-coreui-theme=dark] .lab-header-section,
+html:not(.glass-mode)[data-coreui-theme=dark] .card,
+html:not(.glass-mode)[data-coreui-theme=dark] .sidebar,
+html:not(.glass-mode)[data-coreui-theme=dark] .header,
+html:not(.glass-mode)[data-coreui-theme=dark] .footer,
+html:not(.glass-mode)[data-coreui-theme=dark] .modal-content {
+  background-color: var(--glass-bg-solid, rgba(15, 25, 40, 0.96)) !important;
+}
+
+/* ---------------------------------------------------------
+   Specific Element Overrides (Borders & Border-Radius)
+   --------------------------------------------------------- */
+/* Cards & Modals - Floating Elements */
+.card,
+.modal-content {
+  border-radius: 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  /* Depth: Soft, diffused drop shadows for floating effect */
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.12) !important;
+}
+html:not(.glass-mode) .card,
+html:not(.glass-mode) .modal-content {
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+html:not(.glass-mode)[data-coreui-theme=dark] .card,
+html:not(.glass-mode)[data-coreui-theme=dark] .modal-content {
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Sidebar - Border on Right Only */
+.sidebar {
+  border-right: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+html:not(.glass-mode) .sidebar {
+  border-right: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+html:not(.glass-mode)[data-coreui-theme=dark] .sidebar {
+  border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Headers & Footers - Remove border lines between structural sections */
+.header {
+  padding: 0 1rem !important;
+  border: none !important;
+  box-shadow: none !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.lab-header-section {
+  padding: 2.5rem 24px !important;
+  margin: 0 -24px 2rem -24px !important;
+  border: none !important;
+  box-shadow: none !important;
+  background-color: var(--glass-bg) !important;
+  display: block !important;
+}
+
+.footer {
+  border: none !important;
 }
 
 /* Apply the blur ONLY when the user preference class is present */
-html.enable-blur .lab-header-section,
-html.enable-blur .card,
-html.enable-blur .sidebar,
-html.enable-blur .header,
-html.enable-blur .footer,
-html.enable-blur .modal-content {
-  backdrop-filter: blur(var(--glass-blur)) saturate(180%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+html.glass-mode .lab-header-section,
+html.glass-mode .card,
+html.glass-mode .sidebar,
+html.glass-mode .header,
+html.glass-mode .footer,
+html.glass-mode .modal-content {
+  /* The Glass Effect: Strong frosted glass blur */
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
 }
 
 .terminal-info-wrapper {
@@ -15737,9 +15939,9 @@ html.enable-blur .modal-content {
 }
 
 /* Global Blur support */
-html.enable-blur .server-logs-panel {
-  backdrop-filter: blur(12px) saturate(150%);
-  -webkit-backdrop-filter: blur(12px) saturate(150%);
+html.glass-mode .server-logs-panel {
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
 }
 
 .lab-card {
@@ -16558,7 +16760,7 @@ html.enable-blur .server-logs-panel {
   background: rgba(255, 255, 255, 0.8) !important;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
-:root.enable-blur .mode-plain[data-coreui-theme=light] .header {
+:root.glass-mode .mode-plain[data-coreui-theme=light] .header {
   backdrop-filter: blur(12px);
 }
 .mode-plain[data-coreui-theme=light] .footer {
@@ -16606,7 +16808,7 @@ html.enable-blur .server-logs-panel {
 .mode-plain[data-coreui-theme=dark] .card {
   background: var(--cui-card-bg, rgba(0, 0, 0, 0.35)) !important;
 }
-:root:not(.enable-blur) .mode-plain[data-coreui-theme=dark] .card {
+:root:not(.glass-mode) .mode-plain[data-coreui-theme=dark] .card {
   background: var(--cui-card-bg-solid, rgba(0, 0, 0, 0.95)) !important;
 }
 .mode-plain[data-coreui-theme=dark] .card {
@@ -16619,13 +16821,146 @@ html.enable-blur .server-logs-panel {
 .mode-plain[data-coreui-theme=dark] .header {
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
-:root.enable-blur .mode-plain[data-coreui-theme=dark] .header {
+:root.glass-mode .mode-plain[data-coreui-theme=dark] .header {
   backdrop-filter: blur(12px);
 }
 .mode-plain[data-coreui-theme=dark] .lab-card-main {
   background: var(--cui-card-bg-solid, rgba(0, 0, 0, 0.4)) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   box-shadow: rgba(0, 0, 0, 0.4) 0px 12px 28px, rgba(255, 255, 255, 0.03) 0px 0px 16px !important;
+}
+
+.home-grid-container {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  width: 100% !important;
+  max-width: 1000px !important;
+  margin: 0 auto !important;
+}
+
+@media (min-width: 992px) {
+  .home-grid-container > .col-lg-2-4 {
+    flex: 0 0 20% !important;
+    max-width: 20% !important;
+    width: 20% !important;
+    padding: 6px !important;
+  }
+}
+.launcher-card.card,
+.home-nav-card.card {
+  --glow-color: var(--card-accent, rgba(100, 200, 255, 0.4));
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  min-height: 110px !important;
+  /* Background, blur, border, and border-radius are now inherited from _backdrop.scss to support .glass-mode */
+  padding: 12px 8px !important;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+  text-decoration: none !important;
+}
+.launcher-card.card::before,
+.home-nav-card.card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background: radial-gradient(circle at 50% -5%, var(--glow-color) 0%, transparent 60%);
+  opacity: 0.5;
+  z-index: 1;
+}
+.launcher-card.card .card-icon-ring,
+.launcher-card.card .icon-wrapper,
+.home-nav-card.card .card-icon-ring,
+.home-nav-card.card .icon-wrapper {
+  width: 36px !important;
+  height: 36px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  margin-bottom: 8px !important;
+  z-index: 2;
+}
+.launcher-card.card .card-icon-ring i,
+.launcher-card.card .icon-wrapper i,
+.home-nav-card.card .card-icon-ring i,
+.home-nav-card.card .icon-wrapper i {
+  font-size: 1.3rem !important;
+  color: var(--glow-color) !important;
+  filter: drop-shadow(0 0 6px var(--glow-color));
+}
+.launcher-card.card .card-title,
+.launcher-card.card h5,
+.home-nav-card.card .card-title,
+.home-nav-card.card h5 {
+  font-weight: 700 !important;
+  font-size: 0.82rem !important;
+  color: #fff !important;
+  margin-bottom: 2px !important;
+  letter-spacing: -0.01em !important;
+  z-index: 2;
+  text-align: center !important;
+  width: 100% !important;
+}
+.launcher-card.card .card-text,
+.launcher-card.card p,
+.home-nav-card.card .card-text,
+.home-nav-card.card p {
+  font-size: 0.6rem !important;
+  color: rgba(255, 255, 255, 0.4) !important;
+  margin: 0 auto !important;
+  line-height: 1.1 !important;
+  z-index: 2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 90% !important;
+  text-align: center !important;
+}
+.launcher-card.card,
+.home-nav-card.card {
+  opacity: 0;
+  animation: homeCardSlideUp 0.6s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+  will-change: transform, opacity;
+}
+.launcher-card.card:hover,
+.home-nav-card.card:hover {
+  transform: scale(1.04) translateY(-4px) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25) !important;
+  background-color: var(--glass-bg-hover, rgba(255, 255, 255, 0.05)) !important;
+}
+.launcher-card.card:hover::before,
+.home-nav-card.card:hover::before {
+  opacity: 0.8;
+}
+
+@keyframes homeCardSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.home-fade-in {
+  margin-bottom: 1.5rem !important;
+}
+.home-fade-in h1 {
+  font-size: 1.4rem !important;
+}
+.home-fade-in p {
+  margin-bottom: 0.5rem !important;
 }
 
 html {
@@ -16659,7 +16994,7 @@ body {
   /* 1. Theme Background - Uses Glass effect only when enabled */
   background-color: var(--glass-bg, var(--cui-body-bg));
 }
-:root.enable-blur .lab-header-section {
+:root.glass-mode .lab-header-section {
   backdrop-filter: blur(var(--glass-blur, 12px));
   -webkit-backdrop-filter: blur(var(--glass-blur, 12px));
 }
@@ -16676,7 +17011,7 @@ body {
   /* 1. Theme Background - Uses Glass effect only when enabled */
   background-color: var(--glass-bg, var(--cui-body-bg));
 }
-:root.enable-blur .quiz-container {
+:root.glass-mode .quiz-container {
   backdrop-filter: blur(var(--glass-blur, 12px));
   -webkit-backdrop-filter: blur(var(--glass-blur, 12px));
 }

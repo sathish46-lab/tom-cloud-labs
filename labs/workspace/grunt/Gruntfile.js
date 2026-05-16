@@ -1,4 +1,4 @@
-const sass = require("sass-embedded");
+const sass = require("sass");
 module.exports = function (grunt) {
   grunt.initConfig({
     pkg: grunt.file.readJSON("package.json"),
@@ -56,8 +56,7 @@ module.exports = function (grunt) {
         style: "expanded",
         sourceMap: false,
         implementation: sass,
-        // This tells Sass to look inside the grunt/node_modules folder automatically
-        loadPath: ["node_modules"],
+        includePaths: ["node_modules"],
       },
       dist: {
         files: {
@@ -79,29 +78,38 @@ module.exports = function (grunt) {
     },
 
     watch: {
+      options: {
+        spawn: false,
+        debounceDelay: 300,
+        interval: 100, // Very frequent polling for Docker responsiveness
+      },
       scripts: {
         files: [
           "Gruntfile.js",
-          "../js/**/*.js", // Watches all JS files in any subfolder
+          "../js/**/*.js",
         ],
-        tasks: ["concat", "uglify:build", "obfuscator"], // Updates all 3 JS files on save
-        options: {
-          debounceDelay: 300,
-        },
+        tasks: ["concat", "uglify:build", "obfuscator"],
       },
       css: {
         files: [
-          "../sass/**/*.scss", // Watches app.scss and all @use partials
+          "../sass/**/*.scss",
           "../sass/**/*.sass",
         ],
         tasks: ["sass"],
-        options: {
-          debounceDelay: 300,
-          spawn: false, // Keeps the process running faster
-        },
       },
     },
   });
+
+  // Log whenever sass runs to confirm detection
+  grunt.registerTask("sass-log", function () {
+    grunt.log.writeln(">> Sass change detected, compiling...");
+  });
+
+  // Wrap sass dist to include logging
+  grunt.registerTask("sass-build", ["sass-log", "sass:dist"]);
+
+  // Update default and watch tasks to use the new build
+  grunt.config.set("watch.css.tasks", ["sass-build"]);
 
   grunt.loadNpmTasks("grunt-contrib-watch");
   grunt.loadNpmTasks("grunt-contrib-concat");
@@ -140,7 +148,7 @@ module.exports = function (grunt) {
 
   grunt.registerTask("default", [
     "copy",
-    "sass:dist",
+    "sass-build",
     "concat",
     "stripSourceMaps",
     "uglify",

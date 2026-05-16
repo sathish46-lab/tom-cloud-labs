@@ -135,49 +135,94 @@
                     <div class="d-flex align-items-start gap-3 p-2 flex-row-reverse">
                         <!-- Mode Selector Card (Rightmost, under the icon) -->
                         <div class="mode-selector-card shadow-lg">
-                            <button class="mode-item" onclick="changeTheme('light')" data-coreui-value="light">
+                            <button class="mode-item" onclick="changeTheme('light')" onmouseenter="TomVisuals.switchBGTheme('light')" data-coreui-value="light">
                                 <i class='bx bx-sun'></i> <span>Light</span>
                             </button>
-                            <button class="mode-item" onclick="changeTheme('dark')" data-coreui-value="dark">
+                            <button class="mode-item" onclick="changeTheme('dark')" onmouseenter="TomVisuals.switchBGTheme('dark')" data-coreui-value="dark">
                                 <i class='bx bx-moon'></i> <span>Dark</span>
                             </button>
-                            <button class="mode-item" onclick="changeTheme('auto')" data-coreui-value="auto">
+                            <button class="mode-item" onclick="changeTheme('auto')" onmouseenter="TomVisuals.switchBGTheme('auto')" data-coreui-value="auto">
                                 <i class='bx bx-circle-half'></i> <span>Auto</span>
                             </button>
                         </div>
 
                         <!-- Background Selector Card (Reveals to the left) -->
                         <div class="bg-selector-card shadow-lg">
-                            <div class="theme-bg-grid p-3">
+                            <!-- Dark Mode Backgrounds -->
+                            <div class="theme-bg-grid p-3" id="bg-grid-dark">
                                 <div class="theme-bg-item" onclick="TomBG.setMode('plain')" data-mode="plain">
-                                    <div class="theme-bg-thumb-wrapper">
-                                        <div style="width:100%; height:100%; background: linear-gradient(45deg, #010d12, #0b1e36);"></div>
-                                    </div>
+                                    <div class="theme-bg-thumb-wrapper"><div style="width:100%; height:100%; background: linear-gradient(45deg, #010d12, #0b1e36);"></div></div>
+                                    <span class="theme-bg-label">Plain</span>
+                                </div>
+                                <div class="theme-bg-item" onclick="TomBG.setMode('robo')" data-mode="robo">
+                                    <div class="theme-bg-thumb-wrapper"><img src="/assets/Background_Img/robo/robo.jpg" class="theme-bg-thumb"></div>
+                                    <span class="theme-bg-label">Lab</span>
+                                </div>
+                                <div class="theme-bg-item" onclick="TomBG.setMode('lighthouse')" data-mode="lighthouse">
+                                    <div class="theme-bg-thumb-wrapper"><img src="/assets/Background_Img/ninja/1.png" class="theme-bg-thumb"></div>
+                                    <span class="theme-bg-label">Lighthouse</span>
+                                </div>
+                                <div class="theme-bg-item" onclick="TomBG.setMode('ninja')" data-mode="ninja">
+                                    <div class="theme-bg-thumb-wrapper"><img src="/assets/Background_Img/ninja/ninja.jpg" class="theme-bg-thumb"></div>
+                                    <span class="theme-bg-label">War</span>
+                                </div>
+                                <div class="theme-bg-item" onclick="TomBG.setMode('city')" data-mode="city">
+                                    <div class="theme-bg-thumb-wrapper"><img src="/assets/Background_Img/ninja/2.png" class="theme-bg-thumb"></div>
+                                    <span class="theme-bg-label">City</span>
+                                </div>
+                                <div class="theme-bg-item" onclick="TomBG.setMode('mars-moon')" data-mode="mars-moon">
+                                    <div class="theme-bg-thumb-wrapper"><img src="/assets/Background_Img/RoboTower/robo_tower.jpg" class="theme-bg-thumb"></div>
+                                    <span class="theme-bg-label">Mars Moon</span>
+                                </div>
+                                <div class="theme-bg-item" onclick="TomBG.setMode('metaverse')" data-mode="metaverse">
+                                    <div class="theme-bg-thumb-wrapper"><img src="/assets/Background_Img/ninja/0-1.png" class="theme-bg-thumb"></div>
+                                    <span class="theme-bg-label">Metaverse</span>
+                                </div>
+                                <div class="theme-bg-item" onclick="TomBG.setMode('robot')" data-mode="robot">
+                                    <div class="theme-bg-thumb-wrapper"><img src="/assets/Background_Img/robo/robo.jpg" class="theme-bg-thumb"></div>
+                                    <span class="theme-bg-label">Robot</span>
+                                </div>
+                                <div class="theme-bg-more w-100 text-center mt-2">
+                                    <a href="#" class="text-secondary small text-decoration-none hover-text-white transition-all">More...</a>
+                                </div>
+                            </div>
+
+                            <!-- Light Mode Backgrounds -->
+                            <div class="theme-bg-grid p-3 d-none" id="bg-grid-light">
+                                <div class="theme-bg-item" onclick="TomBG.setMode('plain')" data-mode="plain">
+                                    <div class="theme-bg-thumb-wrapper"><div style="width:100%; height:100%; background: linear-gradient(45deg, #f8f9fa, #e9ecef);"></div></div>
                                     <span class="theme-bg-label">Plain</span>
                                 </div>
                                 <div class="theme-bg-item" onclick="TomBG.setMode('ninja')" data-mode="ninja">
-                                    <div class="theme-bg-thumb-wrapper">
-                                        <img src="/assets/Background_Img/ninja/ninja.jpg" class="theme-bg-thumb">
-                                    </div>
-                                    <span class="theme-bg-label">Ninja</span>
+                                    <div class="theme-bg-thumb-wrapper"><img src="/assets/Background_Img/ninja/ninja.jpg" class="theme-bg-thumb"></div>
+                                    <span class="theme-bg-label">War</span>
                                 </div>
-                                <div class="theme-bg-item" onclick="TomBG.setMode('robo')" data-mode="robo">
-                                    <div class="theme-bg-thumb-wrapper">
-                                        <img src="/assets/Background_Img/robo/robo.jpg" class="theme-bg-thumb">
-                                    </div>
-                                    <span class="theme-bg-label">Robot</span>
+                                <div class="theme-bg-item" onclick="TomBG.setMode('city')" data-mode="city">
+                                    <div class="theme-bg-thumb-wrapper"><img src="/assets/Background_Img/ninja/2.png" class="theme-bg-thumb"></div>
+                                    <span class="theme-bg-label">City</span>
                                 </div>
-                                <div class="theme-bg-item" onclick="TomBG.setMode('robotower')" data-mode="robotower">
-                                    <div class="theme-bg-thumb-wrapper">
-                                        <img src="/assets/Background_Img/RoboTower/robo_tower.jpg" class="theme-bg-thumb">
-                                    </div>
-                                    <span class="theme-bg-label">Tower</span>
+                                <div class="theme-bg-item" onclick="TomBG.setMode('mars-moon')" data-mode="mars-moon">
+                                    <div class="theme-bg-thumb-wrapper"><img src="/assets/Background_Img/RoboTower/robo_tower.jpg" class="theme-bg-thumb"></div>
+                                    <span class="theme-bg-label">Mars Moon</span>
                                 </div>
-                                <div class="theme-bg-item" onclick="TomBG.setMode('parallax')" data-mode="parallax">
-                                    <div class="theme-bg-thumb-wrapper">
-                                        <img src="/assets/Background_Img/ninja/0.png" class="theme-bg-thumb">
-                                    </div>
-                                    <span class="theme-bg-label">Parallax</span>
+                                <div class="theme-bg-item" onclick="TomBG.setMode('mars-sun')" data-mode="mars-sun">
+                                    <div class="theme-bg-thumb-wrapper"><img src="/assets/Background_Img/ninja/0.png" class="theme-bg-thumb"></div>
+                                    <span class="theme-bg-label">Mars Sun</span>
+                                </div>
+                                <div class="theme-bg-item" onclick="TomBG.setMode('rocks')" data-mode="rocks">
+                                    <div class="theme-bg-thumb-wrapper"><img src="/assets/Background_Img/ninja/1.png" class="theme-bg-thumb"></div>
+                                    <span class="theme-bg-label">Rocks</span>
+                                </div>
+                                <div class="theme-bg-item" onclick="TomBG.setMode('laptop')" data-mode="laptop">
+                                    <div class="theme-bg-thumb-wrapper"><img src="/assets/Background_Img/robo/robo.jpg" class="theme-bg-thumb"></div>
+                                    <span class="theme-bg-label">Laptop</span>
+                                </div>
+                                <div class="theme-bg-item" onclick="TomBG.setMode('yukthi')" data-mode="yukthi">
+                                    <div class="theme-bg-thumb-wrapper"><img src="/assets/Background_Img/ninja/1-1.png" class="theme-bg-thumb"></div>
+                                    <span class="theme-bg-label">Yukthi</span>
+                                </div>
+                                <div class="theme-bg-more w-100 text-center mt-2">
+                                    <a href="#" class="text-secondary small text-decoration-none hover-text-white transition-all">More...</a>
                                 </div>
                             </div>
                             <div class="dropdown-divider border-white border-opacity-10 my-0"></div>

@@ -3,132 +3,60 @@ $user = Session::getUser();
 $userName = $user ? $user->getUserName() : "User";
 $avatar = Session::getAvatar();
 
-$gridItems = [
-    ['icon' => 'bx-tachometer', 'title' => 'Dashboard', 'desc' => 'Your control center', 'url' => '/dashboard', 'color' => '#00d2ff'],
-    ['icon' => 'bx-desktop', 'title' => 'Machine Labs', 'desc' => 'Deploy & practice', 'url' => '/labs', 'color' => '#27ae60'],
-    ['icon' => 'bx-shield-quarter', 'title' => 'Challenge Labs', 'desc' => 'CTF & security', 'url' => '/challenges', 'color' => '#e74c3c'],
-    ['icon' => 'bx-check-square', 'title' => 'Spot Quiz', 'desc' => 'Test your knowledge', 'url' => '/quiz', 'color' => '#8e44ad'],
-    ['icon' => 'bx-code-alt', 'title' => 'Code Arena', 'desc' => 'Solve & compete', 'url' => '#', 'color' => '#f1c40f'],
-    ['icon' => 'bx-book-open', 'title' => 'Learn AI', 'desc' => 'AI-powered lessons', 'url' => '/learn', 'color' => '#3498db'],
-    ['icon' => 'bx-map-alt', 'title' => 'Roadmaps', 'desc' => 'Learning paths', 'url' => '#', 'color' => '#16a085'],
-    ['icon' => 'bx-chat', 'title' => 'Discussions', 'desc' => 'Ask & answer', 'url' => '#', 'color' => '#9b59b6'],
-    ['icon' => 'bx-group', 'title' => 'Clubs', 'desc' => 'Find your people', 'url' => '#', 'color' => '#ff4757'],
-    ['icon' => 'bx-calendar-event', 'title' => 'Events', 'desc' => 'Hackathons & more', 'url' => '#', 'color' => '#ffa502'],
-    ['icon' => 'bx-list-ul', 'title' => 'Syllabus AI', 'desc' => 'Exam prep & study', 'url' => '#', 'color' => '#ff6b6b'],
-    ['icon' => 'bx-devices', 'title' => 'My Devices', 'desc' => 'Manage connections', 'url' => '/devices', 'color' => '#1e90ff'],
-    ['icon' => 'bx-bolt-circle', 'title' => 'Feeling Lucky', 'desc' => 'Personalized picks', 'url' => '#', 'color' => '#a55eea'],
-    ['icon' => 'bx-bar-chart-alt-2', 'title' => 'Leaderboard', 'desc' => 'Rankings & stats', 'url' => '#', 'color' => '#f9ca24'],
-    ['icon' => 'bx-flag', 'title' => 'Clans', 'desc' => 'Team up for CTF', 'url' => '#', 'color' => '#ff4757'],
-];
+// Load dynamic navigation items
+$gridItems = include __DIR__ . '/../../config/home_nav.php';
+
+// Greeting logic
+$hour = date('H');
+if ($hour < 12) $greeting = "Morning, legend";
+elseif ($hour < 17) $greeting = "Afternoon, legend";
+elseif ($hour < 21) $greeting = "Evening, legend";
+else $greeting = "Winding down";
 ?>
 
-<div class="container-fluid min-vh-100 d-flex flex-column align-items-center justify-content-center py-5">
+<div class="container-fluid min-vh-100 d-flex flex-column align-items-center justify-content-center py-5 position-relative overflow-hidden">
+    <!-- Premium Ambient Background Orbs -->
+    <div class="scenery-orb-1"></div>
+    <div class="scenery-orb-2"></div>
+
     <!-- User Header Section -->
-    <div class="text-center mb-4 fade-in">
-        <div class="avatar-wrapper mb-2 position-relative d-inline-block">
-            <img src="<?= $avatar ?>" alt="Profile" class="rounded-circle shadow-lg border border-2 border-white border-opacity-10" style="width: 56px; height: 56px; object-fit: cover;">
-            <div class="position-absolute bottom-0 end-0 bg-success rounded-circle border border-2 border-dark" style="width: 12px; height: 12px;"></div>
+    <div class="text-center mb-5 home-fade-in">
+        <div class="home-avatar mb-3 position-relative d-inline-block">
+            <img src="<?= $avatar ?>" alt="Profile" class="rounded-circle shadow-lg border border-2 border-white border-opacity-10" style="width: 64px; height: 64px; object-fit: cover;">
+            <div class="position-absolute bottom-0 end-0 bg-success rounded-circle border border-2 border-dark" style="width: 14px; height: 14px;"></div>
         </div>
         <?php 
         $fullName = $user->getFullName();
         $displayTitle = !empty($fullName) ? $fullName : $user->getUsername();
         ?>
-        <h2 class="fw-bold text-white mb-0" style="font-size: 1.4rem; letter-spacing: -0.2px;">Welcome back, <span class="theme-text text-uppercase"><?= htmlspecialchars($displayTitle) ?></span></h2>
-        <p class="text-white-50 small mb-2" style="font-size: 0.75rem; opacity: 0.8;">State of the art laboratories at the hands and homes of every learner!</p>
-        <a href="/logout" class="btn btn-link text-white-50 text-decoration-none p-0" style="font-size: 0.7rem;">
-            <i class='bx bx-log-out-circle me-1'></i> Sign out
-        </a>
+        <h1 class="fw-bold mb-1" style="font-size: 1.6rem; letter-spacing: -0.5px; color: var(--cui-body-color);">
+            <?= $greeting ?>, <span class="theme-text text-uppercase"><?= htmlspecialchars($displayTitle) ?></span>!
+        </h1>
+        <p class="small mb-3" style="font-size: 0.85rem; opacity: 0.7; color: var(--cui-body-color-muted);">State of the art laboratories at the hands and homes of every learner!</p>
+        <div class="d-flex justify-content-center gap-3 align-items-center">
+            <span class="badge rounded-pill home-plan-badge px-3 py-2">
+                <i class='bx bxs-check-circle me-1' style="color: #f9ca24;"></i> Pro Plan
+            </span>
+            <a href="/logout" class="text-white-50 text-decoration-none home-signout-link small opacity-75">
+                <i class='bx bx-log-out-circle me-1'></i> Sign out
+            </a>
+        </div>
     </div>
 
     <!-- Main Navigation Grid -->
-    <div class="row g-3 g-md-3 w-100 justify-content-center home-grid-container" style="max-width: 1050px;">
-        <?php foreach ($gridItems as $item): ?>
+    <div class="row g-4 w-100 justify-content-center home-grid-container" style="max-width: 1100px;">
+        <?php foreach ($gridItems as $idx => $item): ?>
             <div class="col-6 col-md-4 col-lg-2-4">
-                <a href="<?= $item['url'] ?>" class="card h-100 border-0 glass-card text-decoration-none transition-all home-nav-card">
-                    <div class="card-body p-3 d-flex flex-column align-items-center text-center justify-content-center">
-                        <div class="icon-wrapper mb-2 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
-                            <i class='bx <?= $item['icon'] ?> fs-3' style="color: <?= $item['color'] ?>;"></i>
+                <a href="<?= $item['url'] ?>" class="card home-nav-card border-0 text-decoration-none h-100" style="--card-accent: <?= $item['color'] ?>; animation-delay: <?= $idx * 0.05 ?>s;">
+                    <div class="card-body">
+                        <div class="card-icon-ring">
+                            <i class='bx <?= $item['icon'] ?>' style="color: <?= $item['color'] ?>;"></i>
                         </div>
-                        <h5 class="fw-bold text-white mb-1" style="font-size: 0.9rem; letter-spacing: -0.1px;"><?= $item['title'] ?></h5>
-                        <p class="text-white-50 m-0" style="font-size: 0.65rem; line-height: 1.2; opacity: 0.6;"><?= $item['desc'] ?></p>
+                        <h5 class="card-title"><?= $item['title'] ?></h5>
+                        <p class="card-text text-center"><?= $item['desc'] ?></p>
                     </div>
                 </a>
             </div>
         <?php endforeach; ?>
     </div>
 </div>
-
-<style>
-/* Elite Cross-Browser Performance Optimization */
-:root {
-    --glass-blur: 12px;
-    --glass-opacity: 0.5;
-}
-
-/* Ensure smooth font rendering across all browsers */
-.home-grid-container {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
-}
-
-/* 5-column layout for Large screens */
-@media (min-width: 992px) {
-    .col-lg-2-4 {
-        flex: 0 0 auto;
-        width: 20%;
-    }
-}
-
-.home-nav-card {
-    min-height: 145px;
-    background: rgba(15, 25, 45, var(--glass-opacity)) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    border-radius: 18px !important;
-    backdrop-filter: blur(var(--glass-blur)) !important;
-    -webkit-backdrop-filter: blur(var(--glass-blur)) !important; /* Safari Support */
-    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
-    will-change: transform, box-shadow, background-color; /* Hardware Acceleration */
-    overflow: hidden;
-}
-
-.home-nav-card:hover {
-    background: rgba(255, 255, 255, 0.06) !important;
-    border-color: rgba(100, 200, 255, 0.4) !important;
-    transform: translateY(-6px) translateZ(0); /* Force 3D context */
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6) !important;
-}
-
-.home-nav-card .icon-wrapper {
-    transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-    will-change: transform;
-}
-
-.home-nav-card:hover .icon-wrapper {
-    transform: scale(1.1) translateZ(0);
-}
-
-/* Smooth Fade-in Animation */
-.fade-in {
-    opacity: 0;
-    animation: fadeInUp 0.8s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
-    will-change: transform, opacity;
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(15px) translateZ(0);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) translateZ(0);
-    }
-}
-
-/* Optimize image rendering */
-.avatar-wrapper img {
-    image-rendering: -webkit-optimize-contrast;
-    backface-visibility: hidden;
-}
-</style>
