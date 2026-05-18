@@ -58,6 +58,10 @@ define('PAGE_START_TIME', microtime(true));
          * Matches SNA's 'simple' architectural pattern
          */
         (function() {
+            // 0. Load Background Theme Data
+            <?php require_once $_SERVER['DOCUMENT_ROOT'] . '/src/config/themes.php'; ?>
+            window.TomBGThemes = <?= json_encode($tomThemes) ?>;
+
             // 1. Sync Server Preferences to LocalStorage (Server is Source of Truth)
             const serverTheme = <?= json_encode($serverTheme) ?>;
             if (serverTheme && serverTheme.mode) localStorage.setItem('tom-labs-bg-mode', serverTheme.mode);
@@ -371,67 +375,9 @@ define('PAGE_START_TIME', microtime(true));
     <script src="<?= Session::cacheCDN("/js/app.js") ?>"></script>
 
     <script>
-    /**
-     * Theme & Icon Controller
-     */
-    function updateThemeIcon(theme) {
-        const iconMap = {
-            'light': 'bx-sun',
-            'dark': 'bx-moon',
-            'auto': 'bx-circle-half'
-        };
-        const iconElement = document.getElementById('currentThemeIcon');
-        if (iconElement) {
-            iconElement.classList.remove('bx-sun', 'bx-moon', 'bx-circle-half', 'bx-circle');
-            iconElement.classList.add(iconMap[theme] || 'bx-circle');
-        }
-    }
-
-    // Sync theme icon on load
-    document.addEventListener('DOMContentLoaded', () => {
-        const savedTheme = localStorage.getItem('tom-labs-theme') || 'dark';
-        updateThemeIcon(savedTheme);
-        
-        // Highlight active mode button
-        document.querySelectorAll('.mode-item').forEach(btn => {
-            btn.classList.toggle('active', btn.getAttribute('data-coreui-value') === savedTheme);
-        });
-
-        // Highlight active background thumbnail
-        const savedBG = localStorage.getItem('tom-labs-bg-mode') || 'ninja';
-        document.querySelectorAll('.theme-bg-item').forEach(item => {
-            item.classList.toggle('active', item.getAttribute('data-mode') === savedBG);
-        });
-    });
-
-    function changeTheme(themeName) {
-        let themeToApply = themeName;
-        if (themeName === 'auto') {
-            themeToApply = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        }
-        
-        // Apply theme attribute for SCSS selectors
-        document.documentElement.setAttribute('data-coreui-theme', themeToApply);
-        localStorage.setItem('tom-labs-theme', themeName);
-        updateThemeIcon(themeName);
-
-        // Highlight active button
-        document.querySelectorAll('.mode-item').forEach(btn => {
-            btn.classList.toggle('active', btn.getAttribute('data-coreui-value') === themeName);
-        });
-
-        // Update background selector grid
-        if (window.TomVisuals) {
-            window.TomVisuals.switchBGTheme(themeName);
-        }
-
-        // OPTIONAL: Dispatch event for parallax.js or GSAP backgrounds to re-calculate
-        window.dispatchEvent(new Event('themeChanged'));
-    }
-
     // Initialize all tooltips globally with body container to fix positioning issues
-    document.addEventListener('DOMContentLoaded', () => {
-        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-coreui-toggle="tooltip"]'));
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-coreui-toggle="tooltip"]'));
         tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new coreui.Tooltip(tooltipTriggerEl, {
                 container: 'body',
@@ -518,57 +464,9 @@ define('PAGE_START_TIME', microtime(true));
             <?php endif; endforeach; ?>
         });
 
-        /**
-         * TomVisuals - Background and Glassmorphism Controller
-         */
-        window.TomVisuals = {
-            toggleBlur: function(enable) {
-                if (enable) {
-                    document.documentElement.classList.add('glass-mode');
-                    localStorage.setItem('tom-labs-visual-blur', 'true');
-                } else {
-                    document.documentElement.classList.remove('glass-mode');
-                    localStorage.setItem('tom-labs-visual-blur', 'false');
-                }
-            },
-            showRecommendation: function() {
-                TomNotify.show("Visual blur is recommended for the best glassmorphism experience, but can be disabled for better performance.", "Information", "info");
-            },
-            switchBGTheme: function(theme) {
-                const darkGrid = document.getElementById('bg-grid-dark');
-                const lightGrid = document.getElementById('bg-grid-light');
-                
-                if (!darkGrid || !lightGrid) return;
-
-                if (theme === 'light') {
-                    darkGrid.style.display = 'none';
-                    lightGrid.style.display = 'grid';
-                    lightGrid.classList.remove('d-none');
-                } else if (theme === 'dark') {
-                    lightGrid.style.display = 'none';
-                    darkGrid.style.display = 'grid';
-                    darkGrid.classList.remove('d-none');
-                } else if (theme === 'auto') {
-                    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                    this.switchBGTheme(isDarkMode ? 'dark' : 'light');
-                }
-            },
-            syncUI: function() {
-                const blurToggle = document.getElementById('visualBlurToggle');
-                if (blurToggle) {
-                    const savedBlur = localStorage.getItem('tom-labs-visual-blur');
-                    blurToggle.checked = (savedBlur !== 'false');
-                }
-                
-                // Sync background grid to current theme
-                const savedTheme = localStorage.getItem('tom-labs-theme') || 'dark';
-                this.switchBGTheme(savedTheme);
-            }
-        };
-
         // Sync UI on load
-        document.addEventListener('DOMContentLoaded', () => {
-            TomVisuals.syncUI();
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.TomVisuals) window.TomVisuals.syncUI();
         });
     </script>
     <?php endif; ?>
@@ -583,6 +481,13 @@ define('PAGE_START_TIME', microtime(true));
     <script src="https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.min.js"></script>
     <script src="https://unpkg.com/imagesloaded@5/imagesloaded.pkgd.min.js"></script>
 
+    <!-- SNA Liquid Refraction Filter -->
+    <svg style="display:none;" aria-hidden="true">
+        <filter id="liquid-refraction">
+            <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="3" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="12" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+    </svg>
 </body>
 
 </html>

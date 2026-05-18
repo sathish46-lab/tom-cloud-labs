@@ -22,71 +22,98 @@
 /* Global Card Base Styling - HEAVY BLUR, LOW TRANSPARENCY */
 .mode-selector-card,
 .bg-selector-card {
-    background: rgba(11, 30, 54, 0.92) !important;
-    /* High opacity, less transparent */
-    backdrop-filter: blur(40px) saturate(180%) !important;
-    /* Heavy blur effect */
-    -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6) !important;
-    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    background: rgba(15, 23, 42, 0.95) !important;
+    backdrop-filter: blur(25px) saturate(200%) !important;
+    -webkit-backdrop-filter: blur(25px) saturate(200%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Light Mode Card Base - Opaque Blurred Panel */
+/* Light Mode Card Base */
 [data-coreui-theme="light"] .mode-selector-card,
 [data-coreui-theme="light"] .bg-selector-card {
-    background: rgba(255, 255, 255, 0.95) !important;
-    backdrop-filter: blur(30px) saturate(150%) !important;
-    -webkit-backdrop-filter: blur(30px) saturate(150%) !important;
-    border-color: rgba(0, 0, 0, 0.1) !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+    background: rgba(255, 255, 255, 0.98) !important;
+    backdrop-filter: blur(20px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* Mode Selector Card (Rightmost) */
 .mode-selector-card {
-    width: 130px !important;
-    border-radius: 18px !important;
-    padding: 6px !important;
+    width: 115px !important;
+    border-radius: 16px !important;
+    padding: 5px !important;
     z-index: 10;
 }
 
 .mode-item {
+    position: relative;
     border: none;
     background: transparent;
     width: 100%;
     padding: 8px 10px;
-    border-radius: 10px;
+    border-radius: 11px;
     display: flex;
     align-items: center;
     gap: 10px;
-    color: rgba(255, 255, 255, 0.75) !important;
-    transition: all 0.2s ease;
+    color: rgba(255, 255, 255, 0.6) !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     text-align: left;
-    font-size: 0.8rem;
-    font-weight: 600;
+    font-size: 0.82rem;
+    font-weight: 500;
 }
 
 .mode-item i {
     font-size: 1rem;
-    opacity: 0.7;
+    opacity: 0.6;
+    transition: all 0.2s ease;
 }
 
 .mode-item:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
     color: #fff !important;
+}
+
+.mode-item:hover i {
+    opacity: 1;
 }
 
 .mode-item.active {
-    background: #3498db !important;
+    background: rgba(255, 255, 255, 0.08) !important;
     color: #fff !important;
+    font-weight: 600;
+}
+
+.mode-item.active i {
+    opacity: 1;
+    color: #fff;
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 [data-coreui-theme="light"] .mode-item {
-    color: rgba(0, 0, 0, 0.75) !important;
+    color: rgba(0, 0, 0, 0.6) !important;
 }
 
 [data-coreui-theme="light"] .mode-item:hover {
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(0, 0, 0, 0.04);
+    color: #000 !important;
+}
+
+[data-coreui-theme="light"] .mode-item.active {
+    background: rgba(0, 0, 0, 0.05) !important;
     color: #000 !important;
 }
 

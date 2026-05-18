@@ -40,8 +40,8 @@
         <div class="row g-3 mb-2">
             <!-- Achievement Card 1 -->
             <div class="col-md-3">
-                <div class="card glass-card quiz-glass-card h-100 transition-all">
-                    <div class="card-body p-3">
+                <div class="card p-3 blur h-100 transition-all" style="background-color: rgba(255, 255, 255, 0.3) !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2) !important;">
+                    <div class="card-body p-0">
                         <div class="d-flex align-items-start gap-3 mb-3">
                             <div class="achievement-icon bg-primary bg-opacity-10 rounded-3 p-2">
                                 <i class="bx bxs-trophy text-primary fs-3"></i>
@@ -72,8 +72,8 @@
 
             <!-- Achievement Card 2 (Rare) -->
             <div class="col-md-3">
-                <div class="card glass-card quiz-glass-card h-100 transition-all">
-                    <div class="card-body p-3">
+                <div class="card p-3 blur h-100 transition-all" style="background-color: rgba(255, 255, 255, 0.3) !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2) !important;">
+                    <div class="card-body p-0">
                         <div class="d-flex align-items-start gap-3 mb-3">
                             <div class="achievement-icon bg-info bg-opacity-10 rounded-3 p-2">
                                 <i class="bx bxs-medal text-info fs-3"></i>
@@ -104,8 +104,8 @@
 
             <!-- Overall Stats Card -->
             <div class="col-md-4">
-                <div class="card glass-card quiz-glass-card border-info border-opacity-25 h-100 transition-all">
-                    <div class="card-body d-flex flex-column justify-content-center text-center p-3">
+                <div class="card p-3 blur border-info border-opacity-25 h-100 transition-all" style="background-color: rgba(255, 255, 255, 0.3) !important; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2) !important;">
+                    <div class="card-body p-0 d-flex flex-column justify-content-center text-center">
                         <h2 class="display-6 fw-bold text-info mb-0">62 / 128</h2>
                         <p class="text-body-secondary small mb-3">Collected</p>
                         <div class="px-4 mb-3">
@@ -125,8 +125,8 @@
 
             <!-- Ready to Collect Card -->
             <div class="col-md-2">
-                <div class="card glass-card quiz-glass-card border-warning border-opacity-25 h-100 transition-all">
-                    <div class="card-body d-flex flex-column text-center p-3">
+                <div class="card p-3 blur border-warning border-opacity-25 h-100 transition-all" style="background-color: rgba(255, 255, 255, 0.3) !important; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2) !important;">
+                    <div class="card-body p-0 d-flex flex-column text-center">
                         <h2 class="display-5 fw-bold text-warning mb-0">4</h2>
                         <p class="text-body-secondary small mb-auto">Ready to Collect</p>
                         <div class="mt-3">
@@ -151,10 +151,10 @@
             <div class="row row-cols-1 row-cols-md-3 g-3">
                 <?php foreach ($categories as $cat): ?>
                 <div class="col">
-                    <div class="card glass-card quiz-item-card h-100 transition-all" onclick="startQuiz('<?= $cat['hash'] ?? $cat['_id'] ?>')">
-                        <div class="card-body p-4">
-                            <h5 class="fw-bold mb-2 card-title-text"><?= $cat['title'] ?></h5>
-                            <p class="text-body-secondary small mb-0 opacity-75"><?= $cat['desc'] ?></p>
+                    <div class="card p-4 blur d-flex align-items-stretch hvr-grow" style="background-color: rgba(255, 255, 255, 0.3) !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2) !important; height: 100%; cursor: pointer;" onclick="startQuiz('<?= $cat['hash'] ?? $cat['_id'] ?>')">
+                        <div class="card-body p-0 align-self-start justify-self-start">
+                            <h5 class="card-title fw-bold mb-2"><?= $cat['title'] ?></h5>
+                            <p class="card-text text-body-secondary small mb-0 opacity-75"><?= $cat['desc'] ?></p>
                         </div>
                     </div>
                 </div>

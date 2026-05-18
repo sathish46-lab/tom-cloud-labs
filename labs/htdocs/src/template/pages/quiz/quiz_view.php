@@ -17,7 +17,7 @@ $subtopics = $topic['subtopics'] ?? [];
                     <span class="text-warning fw-bold">Zeal 🔥</span> Explore the Recent, Trending to find what others are playing.
                 </p>
             </div>
-            <div class="col-lg-6 text-lg-end d-flex flex-column justify-content-center align-items-lg-end">
+            <!-- <div class="col-lg-6 text-lg-end d-flex flex-column justify-content-center align-items-lg-end">
                 <div class="d-inline-flex flex-wrap align-items-center gap-2">
                     <div class="performance-modes d-flex rounded-pill overflow-hidden shadow-sm border border-white border-opacity-10">
                         <button class="mode-btn btn-surprise"><i class="bx bxs-bot me-1"></i>Surprise</button>
@@ -27,7 +27,7 @@ $subtopics = $topic['subtopics'] ?? [];
                         <button class="mode-btn btn-marathon"><i class="bx bxs-trophy me-1"></i>Marathon</button>
                     </div>
                 </div>
-            </div>
+            </div> -->
         </div>
 
         <!-- 2. Navigation Tabs -->
@@ -72,10 +72,10 @@ $subtopics = $topic['subtopics'] ?? [];
                 <?php else: ?>
                     <?php foreach ($subtopics as $sub): ?>
                     <div class="col">
-                        <div class="card glass-card subtopic-premium-card h-100 transition-all" onclick="launchQuiz('<?= $sub['hash'] ?? $sub['_id'] ?>')">
-                            <div class="card-body p-4">
-                                <h5 class="fw-bold mb-2 card-title-text"><?= $sub['title'] ?></h5>
-                                <p class="text-body-secondary small mb-0 opacity-75 lh-base"><?= $sub['desc'] ?></p>
+                        <div class="card p-4 blur d-flex align-items-stretch hvr-grow" style="background-color: rgba(255, 255, 255, 0.3) !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2) !important; height: 100%; cursor: pointer;" onclick="launchQuiz('<?= $sub['hash'] ?? $sub['_id'] ?>')">
+                            <div class="card-body p-0 align-self-start justify-self-start">
+                                <h4 class="card-title fw-semibold"><?= $sub['title'] ?></h4>
+                                <p class="card-text text-body-secondary pt-1"><?= $sub['desc'] ?></p>
                             </div>
                         </div>
                     </div>

@@ -73,6 +73,12 @@ body {
     -webkit-backdrop-filter: blur(var(--glass-blur, 12px));
   }
 
+  /* Prevent nested blur bug in Chrome when cards are inside the frosted container */
+  .card {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
   border-bottom: 1px solid var(--cui-card-border-color, rgba(255, 255, 255, 0.1));
 
   /* 2. Spacing - Aligned with screen edges */

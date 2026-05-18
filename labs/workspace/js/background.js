@@ -1,58 +1,24 @@
-const TomBG = {
-  // Theme configuration is now encapsulated here to keep the HTML head clean like SNA
-  themes: {
-    'robo': {
-      'color': '#0b1e36',
-      'assets': [
-        '/assets/Background_Img/robo/0.png',
-        '/assets/Background_Img/robo/1.png',
-        '/assets/Background_Img/robo/2.png'
-      ]
-    },
-    'ninja': {
-      'color': '#010d12',
-      'assets': [
-        '/assets/Background_Img/ninja/0.png',
-        '/assets/Background_Img/ninja/1.png',
-        '/assets/Background_Img/ninja/2.png'
-      ]
-    },
-    'robotower': {
-      'color': '#0b1e36',
-      'assets': [
-        '/assets/Background_Img/RoboTower/0.png',
-        '/assets/Background_Img/RoboTower/1.png',
-        '/assets/Background_Img/RoboTower/2.png',
-        '/assets/Background_Img/RoboTower/3.png'
-      ]
-    },
-    'parallax': {
-      'color': '#0b1e36',
-      'assets': [
-        '/assets/Background_Img/parallax/0.png',
-        '/assets/Background_Img/parallax/1.png',
-        '/assets/Background_Img/parallax/2.png',
-        '/assets/Background_Img/parallax/3.png'
-      ]
-    }
-  },
+var TomBG = {
+  // Theme configuration is now loaded from the server via window.TomBGThemes
+  themes: window.TomBGThemes || {},
 
   init: function () {
     // 1. Check for forced mode (Login Page) before looking at localStorage
-    const saved = localStorage.getItem("tom-labs-bg-mode") || "ninja";
-    const modeToUse = window.FORCED_BG_MODE || saved;
+    var saved = localStorage.getItem("tom-labs-bg-mode") || "ninja";
+    var modeToUse = window.FORCED_BG_MODE || saved;
 
     this.apply(modeToUse);
 
     // Watch for theme changes (Light/Dark mode toggle) to update colors instantly
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
+    var _this = this;
+    var observer = new MutationObserver(function (mutations) {
+      mutations.forEach(function (mutation) {
         if (mutation.attributeName === "data-coreui-theme") {
-          const currentMode =
+          var currentMode =
             window.FORCED_BG_MODE ||
             localStorage.getItem("tom-labs-bg-mode") ||
             "ninja";
-          this.apply(currentMode);
+          _this.apply(currentMode);
         }
       });
     });
@@ -68,14 +34,22 @@ const TomBG = {
     this.initScenery();
 
     // Handle editing state when modal opens/closes
-    const modalEl = document.getElementById("plainColorModal");
+    var modalEl = document.getElementById("plainColorModal");
     if (modalEl) {
-      modalEl.addEventListener("show.bs.modal", () => {
+      modalEl.addEventListener("show.bs.modal", function () {
         // Default to Slot 0 if no specific slot was picked via the wand icon
-        if (this.currentEditingSlot === null) this.currentEditingSlot = 0;
+        if (_this.currentEditingSlot === null) _this.currentEditingSlot = 0;
       });
-      modalEl.addEventListener("hidden.bs.modal", () => {
-        this.currentEditingSlot = null;
+      modalEl.addEventListener("hidden.bs.modal", function () {
+        _this.currentEditingSlot = null;
+      });
+    }
+
+    // Restore theme state if dropdown is closed without selecting
+    var themeToggle = document.querySelector('.theme-selector-btn');
+    if (themeToggle) {
+      themeToggle.addEventListener('hidden.coreui.dropdown', function () {
+        if (window.TomVisuals) window.TomVisuals.syncUI();
       });
     }
   },
@@ -84,13 +58,13 @@ const TomBG = {
 
   openDesignerForSlot: function (index) {
     this.currentEditingSlot = index;
-    const slotColor = localStorage.getItem(`tom-labs-custom-color-${index}`) || "#ffffff";
+    var slotColor = localStorage.getItem(`tom-labs-custom-color-${index}`) || "#ffffff";
     this.setPlainColor(slotColor);
     bootstrap.Modal.getOrCreateInstance(document.getElementById("plainColorModal")).show();
   },
 
   applySlot: function (index) {
-    const slotColor = localStorage.getItem(`tom-labs-custom-color-${index}`);
+    var slotColor = localStorage.getItem(`tom-labs-custom-color-${index}`);
     if (slotColor) {
       this.setPlainColor(slotColor);
     } else {
@@ -99,69 +73,69 @@ const TomBG = {
   },
 
   initWheel: function () {
-    const wheel = document.getElementById("color-wheel");
+    var wheel = document.getElementById("color-wheel");
     if (!wheel) return;
 
-    let isDragging = false;
+    var isDragging = false;
 
-    const updateFromWheel = (e) => {
-      const rect = wheel.getBoundingClientRect();
-      const centerX = rect.width / 2;
-      const centerY = rect.height / 2;
-      const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-      const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-      const x = clientX - rect.left - centerX;
-      const y = clientY - rect.top - centerY;
+    var updateFromWheel = function (e) {
+      var rect = wheel.getBoundingClientRect();
+      var centerX = rect.width / 2;
+      var centerY = rect.height / 2;
+      var clientX = e.clientX || (e.touches && e.touches[0].clientX);
+      var clientY = e.clientY || (e.touches && e.touches[0].clientY);
+      var x = clientX - rect.left - centerX;
+      var y = clientY - rect.top - centerY;
 
       // Calculate Angle (Hue)
-      let angle = Math.atan2(y, x) * (180 / Math.PI) + 90;
+      var angle = Math.atan2(y, x) * (180 / Math.PI) + 90;
       if (angle < 0) angle += 360;
 
       // Calculate Distance (Saturation)
-      const dist = Math.sqrt(x * x + y * y);
-      const radius = rect.width / 2;
-      const s = Math.min(100, (dist / radius) * 100);
-      const v = document.getElementById("brightness-slider") ? document.getElementById("brightness-slider").value : 100;
+      var dist = Math.sqrt(x * x + y * y);
+      var radius = rect.width / 2;
+      var s = Math.min(100, (dist / radius) * 100);
+      var v = document.getElementById("brightness-slider") ? document.getElementById("brightness-slider").value : 100;
 
-      const hex = this.hsvToHex(angle, s, v);
-      this.setPlainColor(hex);
+      var hex = _this.hsvToHex(angle, s, v);
+      _this.setPlainColor(hex);
 
       // Update wheel cursor position
-      const cursor = document.getElementById("wheel-cursor");
+      var cursor = document.getElementById("wheel-cursor");
       if (cursor) {
         cursor.style.left = (centerX + x) + "px";
         cursor.style.top = (centerY + y) + "px";
       }
     };
 
-    wheel.addEventListener("mousedown", (e) => {
+    wheel.addEventListener("mousedown", function (e) {
       isDragging = true;
       updateFromWheel(e);
     });
 
-    window.addEventListener("mousemove", (e) => {
+    window.addEventListener("mousemove", function (e) {
       if (isDragging) updateFromWheel(e);
     });
 
-    window.addEventListener("mouseup", () => {
+    window.addEventListener("mouseup", function () {
       isDragging = false;
     });
   },
 
   updateBrightness: function (val) {
-    const valBright = document.getElementById("val-bright");
+    var valBright = document.getElementById("val-bright");
     if (valBright) valBright.innerText = val + "%";
-    const currentHex = localStorage.getItem("tom-labs-plain-color") || "#010d12";
-    const hsv = this.hexToHsv(currentHex);
-    const newHex = this.hsvToHex(hsv.h, hsv.s, val);
+    var currentHex = localStorage.getItem("tom-labs-plain-color") || "#010d12";
+    var hsv = this.hexToHsv(currentHex);
+    var newHex = this.hsvToHex(hsv.h, hsv.s, val);
     this.setPlainColor(newHex);
   },
 
   hexToHsv: function (hex) {
-    const rgb = hex.match(/[A-Za-z0-9]{2}/g).map(function (x) { return parseInt(x, 16) / 255; });
-    const max = Math.max.apply(Math, rgb), min = Math.min.apply(Math, rgb);
-    const d = max - min;
-    let h, s = max === 0 ? 0 : d / max, v = max;
+    var rgb = hex.match(/[A-Za-z0-9]{2}/g).map(function (x) { return parseInt(x, 16) / 255; });
+    var max = Math.max.apply(Math, rgb), min = Math.min.apply(Math, rgb);
+    var d = max - min;
+    var h, s = max === 0 ? 0 : d / max, v = max;
     if (max === min) h = 0;
     else {
       switch (max) {
@@ -175,20 +149,20 @@ const TomBG = {
   },
 
   initCustomPicker: function () {
-    const specMap = document.getElementById("spectrum-map");
+    var specMap = document.getElementById("spectrum-map");
     if (!specMap) return;
 
-    let isDragging = false;
+    var isDragging = false;
 
-    const updateFromMap = (e) => {
-      const rect = specMap.getBoundingClientRect();
-      const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-      const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-      const x = Math.max(0, Math.min(rect.width, clientX - rect.left));
-      const y = Math.max(0, Math.min(rect.height, clientY - rect.top));
+    var updateFromMap = function (e) {
+      var rect = specMap.getBoundingClientRect();
+      var clientX = e.clientX || (e.touches && e.touches[0].clientX);
+      var clientY = e.clientY || (e.touches && e.touches[0].clientY);
+      var x = Math.max(0, Math.min(rect.width, clientX - rect.left));
+      var y = Math.max(0, Math.min(rect.height, clientY - rect.top));
 
-      const h = (x / rect.width) * 360;
-      let s, v;
+      var h = (x / rect.width) * 360;
+      var s, v;
 
       if (y < rect.height / 2) {
         s = (y / (rect.height / 2)) * 100;
@@ -198,49 +172,49 @@ const TomBG = {
         v = 100 - ((y - rect.height / 2) / (rect.height / 2)) * 100;
       }
 
-      const hex = this.hsvToHex(h, s, v);
-      this.setPlainColor(hex);
+      var hex = _this.hsvToHex(h, s, v);
+      _this.setPlainColor(hex);
 
-      const cursor = document.getElementById("spectrum-cursor");
+      var cursor = document.getElementById("spectrum-cursor");
       if (cursor) {
         cursor.style.left = x + "px";
         cursor.style.top = y + "px";
       }
     };
 
-    specMap.addEventListener("mousedown", (e) => {
+    specMap.addEventListener("mousedown", function (e) {
       isDragging = true;
       updateFromMap(e);
     });
 
-    window.addEventListener("mousemove", (e) => {
+    window.addEventListener("mousemove", function (e) {
       if (isDragging) updateFromMap(e);
     });
 
-    window.addEventListener("mouseup", () => {
+    window.addEventListener("mouseup", function () {
       isDragging = false;
     });
 
     // Palettes
-    document.querySelectorAll(".palette-item").forEach((p) => {
-      p.onclick = () => this.setPlainColor(p.style.backgroundColor);
+    document.querySelectorAll(".palette-item").forEach(function (p) {
+      p.onclick = function () { _this.setPlainColor(p.style.backgroundColor); };
     });
 
     // Pencils
-    document.querySelectorAll(".pencil-item").forEach((p) => {
-      p.onclick = () => this.setPlainColor(p.getAttribute("data-color"));
+    document.querySelectorAll(".pencil-item").forEach(function (p) {
+      p.onclick = function () { _this.setPlainColor(p.getAttribute("data-color")); };
     });
   },
 
   hsvToHex: function (h, s, v) {
     s /= 100;
     v /= 100;
-    const i = Math.floor(h / 60);
-    const f = h / 60 - i;
-    const p = v * (1 - s);
-    const q = v * (1 - f * s);
-    const t = v * (1 - (1 - f) * s);
-    let r, g, b;
+    var i = Math.floor(h / 60);
+    var f = h / 60 - i;
+    var p = v * (1 - s);
+    var q = v * (1 - f * s);
+    var t = v * (1 - (1 - f) * s);
+    var r, g, b;
     switch (i % 6) {
       case 0: r = v, g = t, b = p; break;
       case 1: r = q, g = v, b = p; break;
@@ -249,8 +223,8 @@ const TomBG = {
       case 4: r = t, g = p, b = v; break;
       case 5: r = v, g = p, b = q; break;
     }
-    const toHex = (x) => {
-      const hex = Math.round(x * 255).toString(16);
+    var toHex = function (x) {
+      var hex = Math.round(x * 255).toString(16);
       return hex.length === 1 ? "0" + hex : hex;
     };
     return "#" + toHex(r) + toHex(g) + toHex(b);
@@ -258,9 +232,9 @@ const TomBG = {
 
   switchPickerTab: function (tabId) {
     // Update buttons
-    const tabs = document.querySelectorAll(".designer-tab");
-    tabs.forEach((t) => {
-      const title = t.getAttribute("title").toLowerCase();
+    var tabs = document.querySelectorAll(".designer-tab");
+    tabs.forEach(function (t) {
+      var title = t.getAttribute("title").toLowerCase();
       if (title === tabId) {
         t.classList.add("active");
       } else {
@@ -269,20 +243,20 @@ const TomBG = {
     });
 
     // Update content
-    const modes = document.querySelectorAll(".picker-mode");
-    modes.forEach((m) => {
+    var modes = document.querySelectorAll(".picker-mode");
+    modes.forEach(function (m) {
       m.classList.add("d-none");
       m.classList.remove("active");
     });
 
-    const activeMode = document.getElementById("picker-" + tabId);
+    var activeMode = document.getElementById("picker-" + tabId);
     if (activeMode) {
       activeMode.classList.remove("d-none");
       activeMode.classList.add("active");
     }
 
     // Toggle global brightness slider for visual modes
-    const brightCont = document.getElementById("global-brightness-cont");
+    var brightCont = document.getElementById("global-brightness-cont");
     if (brightCont) {
       if (tabId === "wheel" || tabId === "spectrum") {
         brightCont.classList.remove("d-none");
@@ -293,50 +267,50 @@ const TomBG = {
   },
 
   updateFromSliders: function () {
-    const r = document.querySelector(".rgb-slider.r").value;
-    const g = document.querySelector(".rgb-slider.g").value;
-    const b = document.querySelector(".rgb-slider.b").value;
+    var r = document.querySelector(".rgb-slider.r").value;
+    var g = document.querySelector(".rgb-slider.g").value;
+    var b = document.querySelector(".rgb-slider.b").value;
 
-    const valR = document.getElementById("val-r");
-    const valG = document.getElementById("val-g");
-    const valB = document.getElementById("val-b");
+    var valR = document.getElementById("val-r");
+    var valG = document.getElementById("val-g");
+    var valB = document.getElementById("val-b");
     if (valR) valR.innerText = r;
     if (valG) valG.innerText = g;
     if (valB) valB.innerText = b;
 
-    const toHex = (c) => {
-      const hex = parseInt(c).toString(16);
+    var toHex = function (c) {
+      var hex = parseInt(c).toString(16);
       return hex.length === 1 ? "0" + hex : hex;
     };
-    const hex = "#" + toHex(r) + toHex(g) + toHex(b);
+    var hex = "#" + toHex(r) + toHex(g) + toHex(b);
     this.setPlainColor(hex);
   },
 
   syncPickers: function (hex) {
-    const hsv = this.hexToHsv(hex);
-    const rgb = hex.match(/[A-Za-z0-9]{2}/g).map(function (v) { return parseInt(v, 16); });
+    var hsv = this.hexToHsv(hex);
+    var rgb = hex.match(/[A-Za-z0-9]{2}/g).map(function (v) { return parseInt(v, 16); });
 
     // 1. Sync Sliders
-    const rSlider = document.querySelector(".rgb-slider.r");
+    var rSlider = document.querySelector(".rgb-slider.r");
     if (rSlider) {
       rSlider.value = rgb[0];
       document.querySelector(".rgb-slider.g").value = rgb[1];
       document.querySelector(".rgb-slider.b").value = rgb[2];
-      const valR = document.getElementById("val-r");
-      const valG = document.getElementById("val-g");
-      const valB = document.getElementById("val-b");
+      var valR = document.getElementById("val-r");
+      var valG = document.getElementById("val-g");
+      var valB = document.getElementById("val-b");
       if (valR) valR.innerText = rgb[0];
       if (valG) valG.innerText = rgb[1];
       if (valB) valB.innerText = rgb[2];
     }
 
     // 2. Sync Spectrum Cursor
-    const specMap = document.getElementById("spectrum-map");
-    const specCursor = document.getElementById("spectrum-cursor");
+    var specMap = document.getElementById("spectrum-map");
+    var specCursor = document.getElementById("spectrum-cursor");
     if (specMap && specCursor) {
-      const rect = specMap.getBoundingClientRect();
-      const x = (hsv.h / 360) * rect.width;
-      let y;
+      var rect = specMap.getBoundingClientRect();
+      var x = (hsv.h / 360) * rect.width;
+      var y;
       if (hsv.v === 100) {
         y = (hsv.s / 100) * (rect.height / 2);
       } else {
@@ -347,34 +321,34 @@ const TomBG = {
     }
 
     // 3. Sync Wheel Cursor
-    const wheel = document.getElementById("color-wheel");
-    const wheelCursor = document.getElementById("wheel-cursor");
+    var wheel = document.getElementById("color-wheel");
+    var wheelCursor = document.getElementById("wheel-cursor");
     if (wheel && wheelCursor) {
-      const rect = wheel.getBoundingClientRect();
-      const centerX = rect.width / 2;
-      const centerY = rect.height / 2;
-      const angle = (hsv.h - 90) * (Math.PI / 180);
-      const radius = (hsv.s / 100) * (rect.width / 2);
-      const x = centerX + radius * Math.cos(angle);
-      const y = centerY + radius * Math.sin(angle);
+      var rect = wheel.getBoundingClientRect();
+      var centerX = rect.width / 2;
+      var centerY = rect.height / 2;
+      var angle = (hsv.h - 90) * (Math.PI / 180);
+      var radius = (hsv.s / 100) * (rect.width / 2);
+      var x = centerX + radius * Math.cos(angle);
+      var y = centerY + radius * Math.sin(angle);
       wheelCursor.style.left = x + "px";
       wheelCursor.style.top = y + "px";
     }
 
     // 4. Sync Brightness Slider
-    const bSlider = document.getElementById("brightness-slider");
+    var bSlider = document.getElementById("brightness-slider");
     if (bSlider) {
       bSlider.value = Math.round(hsv.v);
-      const valBright = document.getElementById("val-bright");
+      var valBright = document.getElementById("val-bright");
       if (valBright) valBright.innerText = Math.round(hsv.v) + "%";
     }
   },
 
   setPlainColor: function (color) {
-    const hex = this.toHex(color);
+    var hex = this.toHex(color);
 
     // Default to Slot 0 if no slot is active, ensuring the Designer always has a target
-    const targetSlot = (this.currentEditingSlot !== null) ? this.currentEditingSlot : 0;
+    var targetSlot = (this.currentEditingSlot !== null) ? this.currentEditingSlot : 0;
 
     // Save to the target slot (Real-time update)
     this.saveCustomColor(targetSlot, hex);
@@ -386,49 +360,49 @@ const TomBG = {
     this.syncToServer();
 
     // Sync preview
-    const preview = document.getElementById("hex-preview");
+    var preview = document.getElementById("hex-preview");
     if (preview) {
       preview.innerText = hex.toUpperCase();
       preview.style.color = hex;
     }
 
     // Update active tab icon color ONLY
-    const activeTab = document.querySelector(".designer-tab.active i");
+    var activeTab = document.querySelector(".designer-tab.active i");
     if (activeTab) {
       activeTab.style.color = hex;
     }
 
     // Reset other icons to default opacity
-    document.querySelectorAll(".designer-tab:not(.active) i").forEach((i) => { i.style.color = ""; });
+    document.querySelectorAll(".designer-tab:not(.active) i").forEach(function (i) { i.style.color = ""; });
 
     // Global Sync all other pickers
     this.syncPickers(hex);
   },
 
   apply: function (mode) {
-    const scene = document.getElementById("scene");
+    var scene = document.getElementById("scene");
     if (!scene) return;
 
-    const root = document.documentElement;
-    const isLight = root.getAttribute("data-coreui-theme") === "light";
-    const sc = document.querySelector(".scenery-container");
+    var root = document.documentElement;
+    var isLight = root.getAttribute("data-coreui-theme") === "light";
+    var sc = document.querySelector(".scenery-container");
 
-    let cssVars = "";
-    const setVar = (name, value) => {
-      cssVars += `${name}: ${value} !important; `;
+    var cssVars = "";
+    var setVar = function (name, value) {
+      cssVars += name + ": " + value + " !important; ";
     };
 
     if (mode === "plain") {
-      const color = localStorage.getItem("tom-labs-plain-color") || "#0b1e36";
+      var color = localStorage.getItem("tom-labs-plain-color") || "#0b1e36";
       if (sc) sc.style.display = "none";
       scene.style.display = "none";
       document.body.style.background = "";
       root.classList.add("mode-plain");
 
-      const safeColor = isLight ? this.ensureLightness(color, 0.95) : this.ensureDarkness(color, 0.2);
+      var safeColor = isLight ? this.ensureLightness(color, 0.95) : this.ensureDarkness(color, 0.2);
 
       if (isLight) {
-        const baseLight = this.ensureLightness(color, 0.98);
+        var baseLight = this.ensureLightness(color, 0.98);
         setVar("--c1", "#ffffff");
         setVar("--c2", baseLight);
         setVar("--c3", this.adjustColor(baseLight, -2));
@@ -448,8 +422,8 @@ const TomBG = {
         setVar("--snow-color", "#ffffff");
       }
 
-      const primaryColor = this.adjustColor(color, isLight ? -40 : 40);
-      const pRGB = this.hexToRgbValues(primaryColor);
+      var primaryColor = this.adjustColor(color, isLight ? -40 : 40);
+      var pRGB = this.hexToRgbValues(primaryColor);
 
       setVar("--glass-bg", isLight ? "#ffffff" : this.hexToRgba(safeColor, 0.88));
       setVar("--glass-bg-solid", isLight ? "#ffffff" : this.hexToRgba(safeColor, 0.96));
@@ -471,14 +445,14 @@ const TomBG = {
       }
       root.classList.remove("mode-plain");
 
-      const theme = this.themes[mode] || this.themes["parallax"];
-      const assets = theme.assets || theme;
-      const themeColor = theme.color || "#0b1e36";
+      var theme = this.themes[mode] || this.themes["ninja"];
+      var assets = theme.assets || theme;
+      var themeColor = theme.color || "#0b1e36";
 
       if (themeColor) {
-        const safeColor = isLight ? this.ensureLightness(themeColor, 0.8) : this.ensureDarkness(themeColor, 0.15);
-        const primaryColor = this.adjustColor(themeColor, isLight ? -40 : 40);
-        const pRGB = this.hexToRgbValues(primaryColor);
+        var safeColor = isLight ? this.ensureLightness(themeColor, 0.8) : this.ensureDarkness(themeColor, 0.15);
+        var primaryColor = this.adjustColor(themeColor, isLight ? -40 : 40);
+        var pRGB = this.hexToRgbValues(primaryColor);
 
         setVar("--glass-bg", isLight ? "rgba(255, 255, 255, 0.79)" : this.hexToRgba(safeColor, 0.85));
         setVar("--glass-bg-solid", isLight ? this.hexToRgba(this.ensureLightness(themeColor, 0.92), 0.94) : this.hexToRgba(safeColor, 0.94));
@@ -496,8 +470,8 @@ const TomBG = {
         setVar("--c4", isLight ? "#f0f2f5" : this.adjustColor(safeColor, 10));
       }
 
-      const layers = scene.querySelectorAll(".bg-cover");
-      layers.forEach((layer, index) => {
+      var layers = scene.querySelectorAll(".bg-cover");
+      layers.forEach(function (layer, index) {
         if (assets[index]) {
           layer.style.backgroundImage = "url('" + assets[index] + "')";
           layer.style.display = "block";
@@ -511,7 +485,7 @@ const TomBG = {
     }
 
     // Inject variables into a clean style tag to keep HTML tag simple like SNA
-    let themeStyle = document.getElementById("tom-theme-vars");
+    var themeStyle = document.getElementById("tom-theme-vars");
     if (!themeStyle) {
       themeStyle = document.createElement("style");
       themeStyle.id = "tom-theme-vars";
@@ -524,7 +498,7 @@ const TomBG = {
   },
 
   adjustColor: function (hex, percent) {
-    const num = parseInt(hex.replace("#", ""), 16),
+    var num = parseInt(hex.replace("#", ""), 16),
       amt = Math.round(2.55 * percent),
       R = (num >> 16) + amt,
       B = (num >> 8 & 0x00ff) + amt,
@@ -543,12 +517,12 @@ const TomBG = {
   },
 
   hexToRgba: function (hex, opacity) {
-    const rgb = this.hexToRgbValues(hex);
+    var rgb = this.hexToRgbValues(hex);
     return "rgba(" + rgb + ", " + opacity + ")";
   },
 
   hexToRgbValues: function (hex) {
-    const num = parseInt(hex.replace("#", ""), 16),
+    var num = parseInt(hex.replace("#", ""), 16),
       R = (num >> 16) & 0xff,
       G = (num >> 8) & 0xff,
       B = num & 0xff;
@@ -556,17 +530,17 @@ const TomBG = {
   },
 
   ensureDarkness: function (hex, maxLuminance) {
-    const rgbVal = this.hexToRgbValues(hex);
-    const rgb = rgbVal.split(",").map(Number);
-    const luminance = (0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]) / 255;
+    var rgbVal = this.hexToRgbValues(hex);
+    var rgb = rgbVal.split(",").map(Number);
+    var luminance = (0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]) / 255;
 
     if (luminance > maxLuminance) {
-      const factor = maxLuminance / luminance;
-      const r = Math.round(rgb[0] * factor);
-      const g = Math.round(rgb[1] * factor);
-      const b = Math.round(rgb[2] * factor);
-      const toHexStr = (c) => {
-        const h = c.toString(16);
+      var factor = maxLuminance / luminance;
+      var r = Math.round(rgb[0] * factor);
+      var g = Math.round(rgb[1] * factor);
+      var b = Math.round(rgb[2] * factor);
+      var toHexStr = function (c) {
+        var h = c.toString(16);
         return h.length === 1 ? "0" + h : h;
       };
       return "#" + toHexStr(r) + toHexStr(g) + toHexStr(b);
@@ -575,17 +549,17 @@ const TomBG = {
   },
 
   ensureLightness: function (hex, minLuminance) {
-    const rgbVal = this.hexToRgbValues(hex);
-    const rgb = rgbVal.split(",").map(Number);
-    const luminance = (0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]) / 255;
+    var rgbVal = this.hexToRgbValues(hex);
+    var rgb = rgbVal.split(",").map(Number);
+    var luminance = (0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]) / 255;
 
     if (luminance < minLuminance) {
-      const factor = (1 - minLuminance) / (1 - luminance);
-      const r = Math.round(255 - (255 - rgb[0]) * factor);
-      const g = Math.round(255 - (255 - rgb[1]) * factor);
-      const b = Math.round(255 - (255 - rgb[2]) * factor);
-      const toHexStr = (c) => {
-        const h = c.toString(16);
+      var factor = (1 - minLuminance) / (1 - luminance);
+      var r = Math.round(255 - (255 - rgb[0]) * factor);
+      var g = Math.round(255 - (255 - rgb[1]) * factor);
+      var b = Math.round(255 - (255 - rgb[2]) * factor);
+      var toHexStr = function (c) {
+        var h = c.toString(16);
         return h.length === 1 ? "0" + h : h;
       };
       return "#" + toHexStr(r) + toHexStr(g) + toHexStr(b);
@@ -629,30 +603,44 @@ const TomBG = {
   },
 
   saveCustomColor: function (index, color) {
-    const hex = this.toHex(color);
+    var hex = this.toHex(color);
     localStorage.setItem("tom-labs-custom-color-" + index, hex);
     this.updateCustomSlotsUI();
     this.syncToServer();
   },
 
   setMode: function (mode) {
+    // Auto-switch theme (light/dark) to match the visible background grid
+    // This ensures that selecting a dark wallpaper also switches to dark theme and vice versa
+    var visibleGrid = document.querySelector('.theme-bg-grid[style*="display: grid"], .theme-bg-grid:not(.d-none):not([style*="display: none"])');
+    if (visibleGrid) {
+      var gridTheme = visibleGrid.getAttribute('data-theme');
+      var currentTheme = localStorage.getItem('tom-labs-theme') || 'dark';
+      if (gridTheme && gridTheme !== currentTheme) {
+        // Switch the full theme (colors, sidebar, header, icon) to match the grid
+        if (typeof window.changeTheme === 'function') {
+          window.changeTheme(gridTheme);
+        }
+      }
+    }
+
     localStorage.setItem("tom-labs-bg-mode", mode);
     this.apply(mode);
     this.syncToServer();
 
     // Update thumbnails UI for the new Mega Dropdown
-    document.querySelectorAll('.theme-bg-item').forEach(item => {
+    document.querySelectorAll('.theme-bg-item').forEach(function (item) {
       item.classList.toggle('active', item.getAttribute('data-mode') === mode);
     });
   },
 
   updateCustomSlotsUI: function () {
-    for (let i = 0; i < 4; i++) {
-      const slot = document.getElementById("custom-slot-" + i);
+    for (var i = 0; i < 4; i++) {
+      var slot = document.getElementById("custom-slot-" + i);
       if (slot) {
-        const color = localStorage.getItem("tom-labs-custom-color-" + i);
-        const plus = slot.querySelector(".bx-plus");
-        const edit = slot.querySelector(".edit-icon");
+        var color = localStorage.getItem("tom-labs-custom-color-" + i);
+        var plus = slot.querySelector(".bx-plus");
+        var edit = slot.querySelector(".edit-icon");
 
         if (color) {
           slot.style.background = color;
@@ -672,9 +660,9 @@ const TomBG = {
   toHex: function (color) {
     if (!color) return "#010d12";
     if (color.indexOf("#") === 0) return color;
-    const rgb = color.match(/\d+/g);
+    var rgb = color.match(/\d+/g);
     if (!rgb || rgb.length < 3) return "#010d12";
-    const r = parseInt(rgb[0]),
+    var r = parseInt(rgb[0]),
       g = parseInt(rgb[1]),
       b = parseInt(rgb[2]);
     return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
@@ -682,7 +670,7 @@ const TomBG = {
 
   initScenery: function () {
     if (document.querySelector(".scenery-container")) return;
-    const container = document.createElement("div");
+    var container = document.createElement("div");
     container.className = "scenery-container";
     container.innerHTML = `
       <div class="scenery-snow"></div>
@@ -696,15 +684,15 @@ const TomBG = {
 
   _syncTimer: null,
   syncToServer: function () {
-    const mode = localStorage.getItem("tom-labs-bg-mode");
-    const plainColor = localStorage.getItem("tom-labs-plain-color");
-    const customSlots = [];
-    for (let i = 0; i < 4; i++) {
+    var mode = localStorage.getItem("tom-labs-bg-mode");
+    var plainColor = localStorage.getItem("tom-labs-plain-color");
+    var customSlots = [];
+    for (var i = 0; i < 4; i++) {
       customSlots.push(localStorage.getItem("tom-labs-custom-color-" + i));
     }
 
     if (this._syncTimer) clearTimeout(this._syncTimer);
-    this._syncTimer = setTimeout(() => {
+    this._syncTimer = setTimeout(function () {
       fetch('/api/account/theme_save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -713,9 +701,88 @@ const TomBG = {
           plainColor: plainColor,
           customSlots: customSlots
         })
-      }).catch(err => console.error("Theme sync failed:", err));
+      }).catch(function (err) { console.error("Theme sync failed:", err); });
     }, 500);
   }
 };
 
 document.addEventListener("DOMContentLoaded", function () { TomBG.init(); });
+
+/**
+ * Theme & Visuals Controller (Migrated from _master.php for Grunt Workflow)
+ */
+
+window.updateThemeIcon = function (theme) {
+  var iconMap = {
+    'light': 'bx-sun',
+    'dark': 'bx-moon',
+    'auto': 'bx-circle-half'
+  };
+  var iconElement = document.getElementById('currentThemeIcon');
+  if (iconElement) {
+    iconElement.classList.remove('bx-sun', 'bx-moon', 'bx-circle-half', 'bx-circle');
+    iconElement.classList.add(iconMap[theme] || 'bx-circle');
+  }
+};
+
+window.changeTheme = function (themeName) {
+  var themeToApply = themeName;
+  if (themeName === 'auto') {
+    themeToApply = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+
+  document.documentElement.setAttribute('data-coreui-theme', themeToApply);
+  localStorage.setItem('tom-labs-theme', themeName);
+  window.updateThemeIcon(themeName);
+
+  document.querySelectorAll('.mode-item').forEach(function (btn) {
+    btn.classList.toggle('active', btn.getAttribute('data-coreui-value') === themeName);
+  });
+
+  if (window.TomVisuals) {
+    window.TomVisuals.switchBGTheme(themeName);
+  }
+  window.dispatchEvent(new Event('themeChanged'));
+};
+
+window.TomVisuals = {
+  toggleBlur: function (enable) {
+    if (enable) {
+      document.documentElement.classList.add('glass-mode');
+      localStorage.setItem('tom-labs-visual-blur', 'true');
+    } else {
+      document.documentElement.classList.remove('glass-mode');
+      localStorage.setItem('tom-labs-visual-blur', 'false');
+    }
+  },
+  switchBGTheme: function (theme) {
+    var darkGrid = document.getElementById('bg-grid-dark');
+    var lightGrid = document.getElementById('bg-grid-light');
+    if (!darkGrid || !lightGrid) return;
+
+    var themeToPreview = theme;
+    if (theme === 'auto') {
+      themeToPreview = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    if (themeToPreview === 'light') {
+      darkGrid.style.display = 'none';
+      lightGrid.style.display = 'grid';
+      lightGrid.classList.remove('d-none');
+    } else {
+      lightGrid.style.display = 'none';
+      darkGrid.style.display = 'grid';
+      darkGrid.classList.remove('d-none');
+    }
+  },
+  syncUI: function () {
+    var blurToggle = document.getElementById('visualBlurToggle');
+    if (blurToggle) {
+      var savedBlur = localStorage.getItem('tom-labs-visual-blur');
+      blurToggle.checked = (savedBlur !== 'false');
+    }
+    var savedTheme = localStorage.getItem('tom-labs-theme') || 'dark';
+    this.switchBGTheme(savedTheme);
+    window.updateThemeIcon(savedTheme);
+  }
+};

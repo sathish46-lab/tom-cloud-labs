@@ -43,9 +43,9 @@ $isNew = (isset($q['created_at']) && time() - (int)$q['created_at'] < 86400 * 30
 ?>
 
 <div class="col animate__animated animate__fadeIn quiz-card-item">
-    <div class="card glass-card h-100 position-relative" 
-         style="overflow: visible !important;">
-        <div class="card-body p-3 d-flex flex-column position-relative" style="overflow: visible !important;">
+    <div class="card p-3 blur hvr-grow h-100 position-relative" 
+         style="background-color: rgba(255, 255, 255, 0.1) !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2) !important; overflow: visible !important;">
+        <div class="card-body p-0 d-flex flex-column position-relative" style="overflow: visible !important;">
             
             <!-- Title -->
             <h6 class="card-title fw-bold mb-2 theme-text" style="line-height: 1.4; font-size: 0.95rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.7rem;">

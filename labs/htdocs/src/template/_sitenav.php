@@ -148,82 +148,51 @@
 
                         <!-- Background Selector Card (Reveals to the left) -->
                         <div class="bg-selector-card shadow-lg">
+                            <?php require $_SERVER['DOCUMENT_ROOT'] . '/src/config/themes.php'; ?>
+                            
                             <!-- Dark Mode Backgrounds -->
-                            <div class="theme-bg-grid p-3" id="bg-grid-dark">
+                            <div class="theme-bg-grid p-3" id="bg-grid-dark" data-theme="dark">
                                 <div class="theme-bg-item" onclick="TomBG.setMode('plain')" data-mode="plain">
                                     <div class="theme-bg-thumb-wrapper"><div style="width:100%; height:100%; background: linear-gradient(45deg, #010d12, #0b1e36);"></div></div>
                                     <span class="theme-bg-label">Plain</span>
                                 </div>
-                                <div class="theme-bg-item" onclick="TomBG.setMode('robo')" data-mode="robo">
-                                    <div class="theme-bg-thumb-wrapper"><img src="/assets/Background_Img/robo/robo.jpg" class="theme-bg-thumb"></div>
-                                    <span class="theme-bg-label">Lab</span>
+                                <?php foreach ($tomThemes as $id => $theme): 
+                                    $label = ($id === 'robo') ? 'Lab' : (($id === 'ninja') ? 'War' : (($id === 'robotower') ? 'Tower' : ucfirst($id)));
+                                    $thumb = $theme['assets'][0]; // Use the first layer as thumb
+                                    if (strpos($thumb, '.png') !== false && !strpos($thumb, 'robo.jpg') && !strpos($thumb, 'ninja.jpg')) {
+                                        // If it's a parallax layer, try to use the jpg thumb if it exists, otherwise just the layer
+                                        $jpgThumb = str_replace(['0.png', '1.png', '2.png'], $id.'.jpg', $thumb);
+                                        // This is a bit hacky, but for your specific structure:
+                                        if ($id === 'robo') $thumb = '/assets/Background_Img/robo/robo.jpg';
+                                        if ($id === 'ninja') $thumb = '/assets/Background_Img/ninja/ninja.jpg';
+                                        if ($id === 'robotower') $thumb = '/assets/Background_Img/RoboTower/robo_tower.jpg';
+                                    }
+                                ?>
+                                <div class="theme-bg-item" onclick="TomBG.setMode('<?= $id ?>')" data-mode="<?= $id ?>">
+                                    <div class="theme-bg-thumb-wrapper"><img src="<?= $thumb ?>" class="theme-bg-thumb"></div>
+                                    <span class="theme-bg-label"><?= $label ?></span>
                                 </div>
-                                <div class="theme-bg-item" onclick="TomBG.setMode('lighthouse')" data-mode="lighthouse">
-                                    <div class="theme-bg-thumb-wrapper"><img src="/assets/Background_Img/ninja/1.png" class="theme-bg-thumb"></div>
-                                    <span class="theme-bg-label">Lighthouse</span>
-                                </div>
-                                <div class="theme-bg-item" onclick="TomBG.setMode('ninja')" data-mode="ninja">
-                                    <div class="theme-bg-thumb-wrapper"><img src="/assets/Background_Img/ninja/ninja.jpg" class="theme-bg-thumb"></div>
-                                    <span class="theme-bg-label">War</span>
-                                </div>
-                                <div class="theme-bg-item" onclick="TomBG.setMode('city')" data-mode="city">
-                                    <div class="theme-bg-thumb-wrapper"><img src="/assets/Background_Img/ninja/2.png" class="theme-bg-thumb"></div>
-                                    <span class="theme-bg-label">City</span>
-                                </div>
-                                <div class="theme-bg-item" onclick="TomBG.setMode('mars-moon')" data-mode="mars-moon">
-                                    <div class="theme-bg-thumb-wrapper"><img src="/assets/Background_Img/RoboTower/robo_tower.jpg" class="theme-bg-thumb"></div>
-                                    <span class="theme-bg-label">Mars Moon</span>
-                                </div>
-                                <div class="theme-bg-item" onclick="TomBG.setMode('metaverse')" data-mode="metaverse">
-                                    <div class="theme-bg-thumb-wrapper"><img src="/assets/Background_Img/ninja/0-1.png" class="theme-bg-thumb"></div>
-                                    <span class="theme-bg-label">Metaverse</span>
-                                </div>
-                                <div class="theme-bg-item" onclick="TomBG.setMode('robot')" data-mode="robot">
-                                    <div class="theme-bg-thumb-wrapper"><img src="/assets/Background_Img/robo/robo.jpg" class="theme-bg-thumb"></div>
-                                    <span class="theme-bg-label">Robot</span>
-                                </div>
-                                <div class="theme-bg-more w-100 text-center mt-2">
-                                    <a href="#" class="text-secondary small text-decoration-none hover-text-white transition-all">More...</a>
-                                </div>
+                                <?php endforeach; ?>
                             </div>
 
-                            <!-- Light Mode Backgrounds -->
-                            <div class="theme-bg-grid p-3 d-none" id="bg-grid-light">
+                            <!-- Light Mode Backgrounds (Same list for now as requested) -->
+                            <div class="theme-bg-grid p-3 d-none" id="bg-grid-light" data-theme="light">
                                 <div class="theme-bg-item" onclick="TomBG.setMode('plain')" data-mode="plain">
                                     <div class="theme-bg-thumb-wrapper"><div style="width:100%; height:100%; background: linear-gradient(45deg, #f8f9fa, #e9ecef);"></div></div>
                                     <span class="theme-bg-label">Plain</span>
                                 </div>
-                                <div class="theme-bg-item" onclick="TomBG.setMode('ninja')" data-mode="ninja">
-                                    <div class="theme-bg-thumb-wrapper"><img src="/assets/Background_Img/ninja/ninja.jpg" class="theme-bg-thumb"></div>
-                                    <span class="theme-bg-label">War</span>
+                                <?php foreach ($tomThemes as $id => $theme): 
+                                    $label = ($id === 'robo') ? 'Lab' : (($id === 'ninja') ? 'War' : (($id === 'robotower') ? 'Tower' : ucfirst($id)));
+                                    $thumb = $theme['assets'][0];
+                                    if ($id === 'robo') $thumb = '/assets/Background_Img/robo/robo.jpg';
+                                    if ($id === 'ninja') $thumb = '/assets/Background_Img/ninja/ninja.jpg';
+                                    if ($id === 'robotower') $thumb = '/assets/Background_Img/RoboTower/robo_tower.jpg';
+                                ?>
+                                <div class="theme-bg-item" onclick="TomBG.setMode('<?= $id ?>')" data-mode="<?= $id ?>">
+                                    <div class="theme-bg-thumb-wrapper"><img src="<?= $thumb ?>" class="theme-bg-thumb"></div>
+                                    <span class="theme-bg-label"><?= $label ?></span>
                                 </div>
-                                <div class="theme-bg-item" onclick="TomBG.setMode('city')" data-mode="city">
-                                    <div class="theme-bg-thumb-wrapper"><img src="/assets/Background_Img/ninja/2.png" class="theme-bg-thumb"></div>
-                                    <span class="theme-bg-label">City</span>
-                                </div>
-                                <div class="theme-bg-item" onclick="TomBG.setMode('mars-moon')" data-mode="mars-moon">
-                                    <div class="theme-bg-thumb-wrapper"><img src="/assets/Background_Img/RoboTower/robo_tower.jpg" class="theme-bg-thumb"></div>
-                                    <span class="theme-bg-label">Mars Moon</span>
-                                </div>
-                                <div class="theme-bg-item" onclick="TomBG.setMode('mars-sun')" data-mode="mars-sun">
-                                    <div class="theme-bg-thumb-wrapper"><img src="/assets/Background_Img/ninja/0.png" class="theme-bg-thumb"></div>
-                                    <span class="theme-bg-label">Mars Sun</span>
-                                </div>
-                                <div class="theme-bg-item" onclick="TomBG.setMode('rocks')" data-mode="rocks">
-                                    <div class="theme-bg-thumb-wrapper"><img src="/assets/Background_Img/ninja/1.png" class="theme-bg-thumb"></div>
-                                    <span class="theme-bg-label">Rocks</span>
-                                </div>
-                                <div class="theme-bg-item" onclick="TomBG.setMode('laptop')" data-mode="laptop">
-                                    <div class="theme-bg-thumb-wrapper"><img src="/assets/Background_Img/robo/robo.jpg" class="theme-bg-thumb"></div>
-                                    <span class="theme-bg-label">Laptop</span>
-                                </div>
-                                <div class="theme-bg-item" onclick="TomBG.setMode('yukthi')" data-mode="yukthi">
-                                    <div class="theme-bg-thumb-wrapper"><img src="/assets/Background_Img/ninja/1-1.png" class="theme-bg-thumb"></div>
-                                    <span class="theme-bg-label">Yukthi</span>
-                                </div>
-                                <div class="theme-bg-more w-100 text-center mt-2">
-                                    <a href="#" class="text-secondary small text-decoration-none hover-text-white transition-all">More...</a>
-                                </div>
+                                <?php endforeach; ?>
                             </div>
                             <div class="dropdown-divider border-white border-opacity-10 my-0"></div>
                             <a class="dropdown-item d-flex align-items-center justify-content-center py-2 text-secondary hover-text-white transition-all" 

@@ -25,7 +25,7 @@ $userStats = $user ? Quiz::getUserStats($user->getEmail()) : ['zeal' => 0, 'jolt
 $availableJolt = $userStats['jolt'] ?? 0;
 ?>
 
-<div class="fade-in pb-5 quiz-container">
+<div class="fade-in pb-2 quiz-container">
     <div class="evaluation-bg"></div>
     <div class="container-fluid px-4 pt-2">
         
@@ -33,12 +33,10 @@ $availableJolt = $userStats['jolt'] ?? 0;
         <div class="row g-3 mb-4 position-relative" style="z-index: 2;">
             <div class="col-lg-8">
                 <h1 class="fs-4 fw-bold theme-text mb-0"><?= $parentTopic['title'] ?></h1>
-                <p class="text-body-secondary small mb-2 opacity-75"><?= $parentTopic['desc'] ?></p>
-                <div class="d-flex align-items-center gap-2">
-                    <span class="badge badge-quiz-tag px-2 py-1 fw-bold rounded-pill border border-info border-opacity-10">
-                        Subtopic: <?= $subtopic['title'] ?>
-                    </span>
-                </div>
+                <p class="text-body-secondary mb-3"><?= $parentTopic['desc'] ?></p>
+                <p class="text-body-secondary small">
+                    Quiz based on <strong class="theme-text fw-bold"><?= $subtopic['title'] ?></strong>, <?= $subtopic['desc'] ?? '' ?>
+                </p>
             </div>
             <div class="col-lg-4 text-lg-end d-flex flex-column justify-content-center align-items-lg-end">
                 <div class="d-flex flex-column align-items-end gap-2">
@@ -151,21 +149,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <!-- Empty State (Positioned outside the grid to prevent Masonry layout bugs) -->
         <div id="recent-empty-state" class="<?= ($activeTab === 'recent' && empty($quizzes)) ? '' : 'd-none' ?>">
-             <div class="card border-0 rounded-4 overflow-hidden shadow-lg blur mb-5" 
-                  style="background: rgba(var(--cui-emphasis-color-rgb), 0.05); backdrop-filter: blur(20px); border: 1px solid rgba(var(--cui-emphasis-color-rgb), 0.1) !important;">
-                <div class="card-body p-5 text-center">
-                    <div class="mb-4">
+            <div class="empty-state-container mx-auto mt-4 p-5 text-center position-relative blur" 
+                 style="max-width: 650px; background: rgba(var(--cui-emphasis-color-rgb), 0.03); border: 1px dashed rgba(var(--cui-emphasis-color-rgb), 0.15); border-radius: 24px; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);">
+                <div class="position-absolute top-50 start-50 translate-middle w-100 h-100" style="background: radial-gradient(circle, rgba(46, 184, 87, 0.05) 0%, transparent 60%); z-index: 0; pointer-events: none;"></div>
+                <div class="position-relative" style="z-index: 1;">
+                    <div class="mb-4 position-relative d-inline-block">
+                        <div class="position-absolute top-50 start-50 translate-middle bg-success rounded-circle" style="width: 80px; height: 80px; opacity: 0.1; filter: blur(15px);"></div>
                         <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto border border-success border-opacity-25 shadow-sm" style="width: 80px; height: 80px;">
-                            <i class="bx bxs-bot display-4 text-success opacity-50"></i>
+                            <i class="bx bxs-bot display-4 text-success opacity-75"></i>
                         </div>
                     </div>
-                    <h4 class="fw-bold theme-text mb-2 ls-tight">No Active Intelligence Found</h4>
-                    <p class="text-body-secondary small mb-4 mx-auto" style="max-width: 450px;">
-                        The mission parameters for <span class="fw-bold theme-text"><?= strtolower($subtopic['title'] ?? 'this topic') ?></span> are currently blank. 
-                        Deploy a new **Spot Quiz** using the engine above to begin your training.
+                    <h4 class="fw-bold theme-text mb-3">No Active Intelligence Found</h4>
+                    <p class="text-body-secondary small mb-4 mx-auto lh-base" style="max-width: 450px;">
+                        The mission parameters for <strong class="theme-text fw-bold"><?= strtolower($subtopic['title'] ?? 'this topic') ?></strong> are currently blank. 
+                        Deploy a new <strong class="text-success">Spot Quiz</strong> using the engine above to begin your training.
                     </p>
                     <div class="d-flex justify-content-center gap-3">
-                        <button class="btn btn-outline-secondary rounded-pill px-4 fw-bold" onclick="window.history.back()">Return to Topics</button>
+                        <button class="btn btn-outline-secondary rounded-pill px-4 fw-bold shadow-sm" onclick="window.history.back()">Return to Topics</button>
                         <button class="btn btn-success rounded-pill px-4 fw-bold shadow-sm" style="background: #2eb857 !important; border: none !important;" onclick="triggerGeneration()">Deploy Spot Quiz</button>
                     </div>
                 </div>
@@ -173,12 +173,22 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
 
         <!-- Infinite Scroll Sentinel -->
-        <div id="infinite-scroll-sentinel" class="text-center py-5 opacity-50" style="min-height: 100px;">
-            <div id="scroll-loader" class="spinner-border theme-text d-none" role="status" style="width: 3rem; height: 3rem;">
+        <div id="infinite-scroll-sentinel" class="text-center py-4" style="min-height: 60px;">
+            <div id="scroll-loader" class="spinner-border theme-text d-none" role="status" style="width: 2rem; height: 2rem;">
                 <span class="visually-hidden">Loading...</span>
             </div>
-            <div id="no-more-msg" class="text-body-secondary small d-none mt-3">
-                <i class="bx bx-check-circle me-1"></i> You've explored all challenges for this topic.
+            <div id="no-more-msg" class="text-body-secondary small d-none mt-2">
+                <span class="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill border" 
+                      style="background: rgba(var(--cui-emphasis-color-rgb), 0.05); 
+                             color: var(--cui-secondary-color, rgba(var(--cui-emphasis-color-rgb), 0.7)); 
+                             border-color: rgba(var(--cui-emphasis-color-rgb), 0.12) !important; 
+                             font-size: 0.75rem; 
+                             font-weight: 500;
+                             letter-spacing: 0.3px;
+                             backdrop-filter: blur(8px);
+                             -webkit-backdrop-filter: blur(8px);">
+                    <i class="bx bx-check-circle text-success fs-6"></i> You've explored all challenges for this topic.
+                </span>
             </div>
         </div>
 
@@ -223,18 +233,22 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
     </div>
 </div>
+</div>
+</div>
 
 <!-- Empty State Template for Difficulty Filter -->
 <template id="quiz-empty-state-template">
-    <div class="card border-0 rounded-4 overflow-hidden shadow-lg blur mb-5 animate__animated animate__fadeIn" 
-         style="background: rgba(var(--cui-emphasis-color-rgb), 0.05); backdrop-filter: blur(20px); border: 1px solid rgba(var(--cui-emphasis-color-rgb), 0.1) !important;">
-        <div class="card-body p-5 text-center">
-            <div class="mb-4">
+    <div class="empty-state-container mx-auto mt-4 p-5 text-center position-relative blur animate__animated animate__fadeIn" 
+         style="max-width: 650px; background: rgba(var(--cui-emphasis-color-rgb), 0.03); border: 1px dashed rgba(var(--cui-emphasis-color-rgb), 0.15); border-radius: 24px; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);">
+        <div class="position-absolute top-50 start-50 translate-middle w-100 h-100" style="background: radial-gradient(circle, rgba(46, 184, 87, 0.05) 0%, transparent 60%); z-index: 0; pointer-events: none;"></div>
+        <div class="position-relative" style="z-index: 1;">
+            <div class="mb-4 position-relative d-inline-block">
+                <div class="position-absolute top-50 start-50 translate-middle bg-success rounded-circle" style="width: 80px; height: 80px; opacity: 0.1; filter: blur(15px);"></div>
                 <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto border border-success border-opacity-25 shadow-sm" style="width: 80px; height: 80px;">
-                    <i class="bx bxs-bot display-4 text-success opacity-50"></i>
+                    <i class="bx bxs-bot display-4 text-success opacity-75"></i>
                 </div>
             </div>
-            <h4 class="fw-bold theme-text mb-2">No Quizzes Found</h4>
+            <h4 class="fw-bold theme-text mb-3">No Quizzes Found</h4>
             <p class="text-body-secondary small mb-4 lh-base mx-auto" style="max-width: 420px;">
                 There are currently no challenges for the <strong class="selected-diff-text text-warning"></strong> level in this topic. Be the first to generate a professional AI-powered quiz!
             </p>
@@ -258,7 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <!-- Spot Quiz Modal (Two-Step: Confirm -> Generate) -->
 <div class="modal fade" id="spotQuizModal" tabindex="-1" aria-hidden="true" data-coreui-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content glass-card border-0 shadow-lg overflow-hidden">
+        <div class="modal-content blur border-0 shadow-lg overflow-hidden" style="background-color: rgba(255, 255, 255, 0.1) !important; border: 1px solid rgba(255, 255, 255, 0.08) !important;">
             
             <!-- STEP 1: Confirmation View -->
             <div id="modal-view-confirm" class="modal-body p-4">
@@ -658,41 +672,47 @@ if (window.QuizConfig && window.QuizConfig.subtopicId) {
     window.addEventListener('scroll', () => { if (!isScrollLoading) saveScrollState(); });
 }
 </script>
-
-<style>
-.difficulty-modes {
-    display: flex;
-    background: rgba(var(--cui-emphasis-color-rgb), 0.05);
-    padding: 4px;
-    border-radius: 50px;
-    gap: 4px;
-    border: 1px solid rgba(var(--cui-emphasis-color-rgb), 0.1);
-    backdrop-filter: blur(10px);
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+<style>.difficulty-modes {
+    display: flex !important;
+    padding: 4px !important;
+    border-radius: 50px !important;
+    gap: 4px !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    backdrop-filter: saturate(2.2) brightness(1.1) blur(18px) !important;
+    -webkit-backdrop-filter: saturate(2.2) brightness(1.1) blur(18px) !important;
+    border: none !important;
+    box-shadow: 
+        inset 0 0 0 1px rgba(255, 255, 255, 0.12), 
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.2), 
+        rgba(0, 0, 0, 0.15) 0px 4px 12px 0px !important;
+    transition: all 0.4s ease !important;
 }
 
 .diff-btn {
-    border: none;
-    background: transparent;
-    color: rgba(var(--cui-emphasis-color-rgb), 0.6);
-    padding: 6px 18px;
-    border-radius: 50px;
-    font-size: 0.75rem;
-    font-weight: 800;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    white-space: nowrap;
+    border: none !important;
+    background: transparent !important;
+    color: var(--cui-body-color) !important;
+    opacity: 0.7 !important;
+    padding: 6px 18px !important;
+    border-radius: 50px !important;
+    font-size: 0.75rem !important;
+    font-weight: 800 !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.8px !important;
+    white-space: nowrap !important;
 }
 
 .diff-btn:hover {
-    color: var(--cui-emphasis-color);
-    background: rgba(var(--cui-emphasis-color-rgb), 0.08);
+    color: var(--cui-body-color) !important;
+    opacity: 1 !important;
+    background: rgba(var(--cui-emphasis-color-rgb), 0.08) !important;
 }
 
 .diff-btn.active {
     color: #fff !important;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    opacity: 1 !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
 }
 
 .diff-btn.btn-easy.active { 

@@ -44,7 +44,7 @@ RUN pip3 install --break-system-packages google-generativeai requests pymongo
 
 # Create symlink for labsctl
 RUN ln -sf /opt/labs-control-panel/labsctl.py /usr/local/bin/labsctl && \
-    chmod +x /opt/labs-control-panel/labsctl.py
+    chmod +x /opt/labs-control-panel/labsctl.py 2>/dev/null || true
 
 # 4. Install Traefik
 RUN wget https://github.com/traefik/traefik/releases/download/v2.10.6/traefik_v2.10.6_linux_amd64.tar.gz && \

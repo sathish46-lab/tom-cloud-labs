@@ -1,63 +1,88 @@
 // -----------------------------------------------------------------------------
-// 1. SHARED CARDS & CONTAINERS
+// 1. SHARED CARDS & CONTAINERS (LIQUID GLASS STYLE)
 // -----------------------------------------------------------------------------
 
-// Authority Glass Card - Standardized across Hub, Start, and View
+.liquid-glass-card {
+  // 1. Base Style (Clean & Professional)
+  background: rgba(var(--cui-emphasis-color-rgb, 255, 255, 255), 0.05) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border-radius: 24px !important;
+  position: relative;
+  overflow: hidden !important;
+  transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  border: 1px solid rgba(var(--cui-emphasis-color-rgb, 255, 255, 255), 0.08) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+
+  // 2. Premium Glass Mode (Rich & Deep - Matched to Difficulty Selector)
+  .glass-mode & {
+    background: rgba(255, 255, 255, 0.08) !important;
+    backdrop-filter: saturate(2.2) brightness(1.1) blur(18px) !important;
+    -webkit-backdrop-filter: saturate(2.2) brightness(1.1) blur(18px) !important;
+    border: none !important;
+
+    /* Apple Multi-Layer Crystal Shadow (Perfect Sync) */
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+      /* Sharp inner border */
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
+      /* Top edge shine */
+      rgba(0, 0, 0, 0.35) 0px 10px 25px 0px,
+      /* Depth shadow */
+      rgba(255, 255, 255, 0.04) 0px 0px 20px 0px !important;
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    background: rgba(var(--cui-emphasis-color-rgb, 255, 255, 255), 0.1) !important;
+
+    .glass-mode & {
+      backdrop-filter: saturate(2.4) brightness(1.15) blur(22px) !important;
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+        rgba(0, 0, 0, 0.45) 0px 20px 40px -10px !important;
+    }
+  }
+
+  // Dark Mode Optimization (Ultra Transparency, no dark boxes)
+  [data-coreui-theme="dark"] & {
+    background: rgba(var(--cui-emphasis-color-rgb, 255, 255, 255), 0.03) !important;
+
+    .glass-mode & {
+      background: rgba(0, 0, 0, 0.06) !important;
+      backdrop-filter: saturate(2.6) brightness(1.15) blur(22px) !important;
+    }
+  }
+
+  // Light Mode Adjustments
+  [data-coreui-theme="light"] & {
+    background: rgba(255, 255, 255, 0.45) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+
+    .glass-mode & {
+      background: rgba(255, 255, 255, 0.75) !important;
+      backdrop-filter: saturate(1.8) brightness(1.02) blur(18px) !important;
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.8),
+        rgba(0, 0, 0, 0.05) 0px 10px 25px 0px !important;
+    }
+  }
+
+  .card-body {
+    z-index: 2;
+    position: relative;
+    background: transparent !important;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Legacy Aliases for compatibility
+// -----------------------------------------------------------------------------
 .quiz-glass-card,
 .quiz-challenge-card,
 .subtopic-premium-card,
 .quiz-item-card {
-  background: var(--glass-bg) !important;
-  backdrop-filter: blur(25px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  color: #fff !important;
-
-  &:hover {
-    transform: translateY(-8px);
-    background: var(--glass-bg) !important;
-    filter: brightness(1.1);
-    border-color: rgba(var(--cui-info-rgb), 0.5) !important;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-  }
-
-  .card-body {
-    padding: 0.85rem 0.75rem !important;
-    z-index: 2;
-    position: relative;
-  }
-
-  .card-title-text {
-    font-size: 0.875rem !important;
-    line-height: 1.2 !important;
-    letter-spacing: -0.015em;
-    margin-bottom: 0.2rem !important;
-    color: var(--cui-emphasis-color);
-  }
-
-  p,
-  .text-body-secondary {
-    font-size: 0.725rem !important;
-    line-height: 1.35 !important;
-    opacity: 0.8;
-  }
-
-  // Action Button Refinement - Ensuring perfect fit
-  .btn {
-    font-size: 0.675rem !important;
-    padding: 0.25rem 0.5rem !important;
-    white-space: nowrap !important;
-    letter-spacing: -0.01em;
-    font-weight: 800 !important;
-  }
-
-  // Specific refinement for hub items
-  &.quiz-item-card {
-    cursor: pointer;
-
-    &:hover {
-      transform: translateY(-4px) scale(1.02);
-    }
-  }
+  @extend .liquid-glass-card;
 }
 
 // -----------------------------------------------------------------------------
@@ -100,29 +125,48 @@
 
 .performance-modes,
 .difficulty-modes {
-  background: rgba(var(--cui-emphasis-color-rgb), 0.05);
-  border: 1px solid rgba(var(--cui-emphasis-color-rgb), 0.1);
+  background: rgba(var(--cui-emphasis-color-rgb, 255, 255, 255), 0.05) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
   border-radius: 50px;
   overflow: hidden;
   display: flex;
+  border: 1px solid rgba(var(--cui-emphasis-color-rgb, 255, 255, 255), 0.08) !important;
+  transition: all 0.4s ease;
+
+  .glass-mode & {
+    background: rgba(255, 255, 255, 0.08) !important;
+    backdrop-filter: saturate(2.2) brightness(1.1) blur(18px) !important;
+    border: none !important;
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
+      rgba(0, 0, 0, 0.2) 0px 4px 12px 0px !important;
+  }
 
   .mode-btn,
   .diff-btn {
     border: none;
-    padding: 10px 20px;
-    font-size: 0.85rem;
-    font-weight: 700;
+    padding: 10px 24px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
     background: transparent;
-    color: var(--cui-body-secondary);
-    transition: all 0.2s ease;
+    color: var(--cui-body-color-muted, rgba(255, 255, 255, 0.6));
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    z-index: 1;
 
     &:hover {
       color: var(--cui-emphasis-color);
+      background: rgba(var(--cui-emphasis-color-rgb), 0.05);
     }
 
     &.active {
-      background: rgba(var(--cui-emphasis-color-rgb), 0.1);
-      color: var(--cui-emphasis-color);
+      color: #000;
+      background: var(--cui-emphasis-color);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     }
   }
 
@@ -130,42 +174,65 @@
   .btn-surprise {
     background: #00acee;
     color: #fff;
+
+    &.active {
+      box-shadow: 0 4px 15px rgba(0, 172, 238, 0.4);
+    }
   }
 
   .btn-sprint {
     background: #ffc107;
     color: #000;
+
+    &.active {
+      box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
+    }
   }
 
   .btn-rapid {
     background: #ff4757;
     color: #fff;
+
+    &.active {
+      box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4);
+    }
   }
 
   .btn-blitz {
     background: #3742fa;
     color: #fff;
+
+    &.active {
+      box-shadow: 0 4px 15px rgba(55, 66, 250, 0.4);
+    }
   }
 
   .btn-marathon {
     background: #2ed573;
     color: #fff;
+
+    &.active {
+      box-shadow: 0 4px 15px rgba(46, 213, 115, 0.4);
+    }
   }
 
-  // Difficulty borders
+  // Difficulty Specific Colors
   .btn-easy.active {
-    border-bottom: 2px solid #2eb857;
-    color: #2eb857;
+    background: #2eb857;
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(46, 184, 87, 0.4);
   }
 
   .btn-normal.active {
-    border-bottom: 2px solid #f9b115;
-    color: #f9b115;
+    background: #f9b115;
+    color: #000;
+    box-shadow: 0 4px 15px rgba(249, 177, 21, 0.4);
   }
 
   .btn-hard.active {
-    border-bottom: 2px solid #e55353;
-    color: #e55353;
+    background: #e55353;
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(229, 83, 83, 0.4);
   }
 }
 
