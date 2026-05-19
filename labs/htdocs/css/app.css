@@ -16955,7 +16955,7 @@ html.glass-mode .server-logs-panel {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 12px;
-  margin-bottom: 8px !important;
+  margin: 0 auto 8px auto !important;
   z-index: 2;
 }
 .launcher-card.card .card-icon-ring i,
@@ -17030,6 +17030,22 @@ html.glass-mode .server-logs-panel {
 }
 .home-fade-in p {
   margin-bottom: 0.5rem !important;
+}
+
+.clan-stats-grid {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
+  transition: backdrop-filter 0.4s ease, background-color 0.4s ease;
+}
+html.glass-mode .clan-stats-grid {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+html:not(.glass-mode) .clan-stats-grid {
+  background: rgba(20, 20, 20, 0.82) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 html {

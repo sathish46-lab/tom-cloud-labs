@@ -384,6 +384,17 @@ define('PAGE_START_TIME', microtime(true));
                 trigger: 'hover'
             });
         });
+
+        // Silent Activity Tracker — fire-and-forget for Smart Insights
+        <?php if (Session::getAuthStatus() == Constants::STATUS_LOGGEDIN): ?>
+        try {
+            fetch('/api/dashboard/track_activity', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: 'page=' + encodeURIComponent(window.location.pathname)
+            }).catch(function(){});
+        } catch(e) {}
+        <?php endif; ?>
     });
     </script>
     <?php if (!defined('IS_LOGIN_PAGE') || IS_LOGIN_PAGE === false): ?>
