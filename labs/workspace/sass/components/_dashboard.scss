@@ -7,10 +7,12 @@
     box-shadow: 0 0 0 0 rgba(16, 172, 132, 0.85);
     transform: scale(0.9);
   }
+
   70% {
     box-shadow: 0 0 0 10px rgba(16, 172, 132, 0);
     transform: scale(1.25);
   }
+
   100% {
     box-shadow: 0 0 0 0 rgba(16, 172, 132, 0);
     transform: scale(0.9);
@@ -22,10 +24,12 @@
     box-shadow: 0 0 0 0 rgba(46, 134, 222, 0.85);
     transform: scale(0.9);
   }
+
   70% {
     box-shadow: 0 0 0 10px rgba(46, 134, 222, 0);
     transform: scale(1.25);
   }
+
   100% {
     box-shadow: 0 0 0 0 rgba(46, 134, 222, 0);
     transform: scale(0.9);
@@ -123,17 +127,146 @@
   }
 
   #smart-insights-card {
-    h6, h2, #insights-peak-label {
+
+    h6,
+    h2,
+    #insights-peak-label {
       color: var(--cui-body-color, #2f3542) !important;
     }
+
     #insights-subtitle {
       color: rgba(47, 53, 66, 0.6) !important;
     }
+
     #insights-footer span {
       color: rgba(47, 53, 66, 0.5) !important;
     }
+
     .d-flex.justify-content-between.mt-2.px-0 {
       color: rgba(47, 53, 66, 0.4) !important;
+    }
+  }
+}
+
+// ---------- Clan Card Specific Color Enforcement ----------
+.clan-card {
+
+  // Ensure the card text stays white even in light theme because the banner is dark
+  .text-white,
+  h5,
+  p,
+  span,
+  div,
+  i {
+    color: #ffffff !important;
+  }
+
+  .text-white-50,
+  .text-opacity-40,
+  .text-opacity-45 {
+    color: rgba(255, 255, 255, 0.5) !important;
+  }
+
+  // Force stats grid background & border contrast when visual blur is off
+  .clan-stats-grid {
+    html:not(.glass-mode) & {
+      background: rgba(20, 20, 20, 0.85) !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+  }
+}
+
+// ========================================================================
+// Spiderman Premium Theme Enhancements (Visual Blur Gradient Glow)
+// ========================================================================
+
+// --- DARK MODE SPIDERMAN ---
+html:not([data-coreui-theme="light"]).bg-mode-spiderman {
+  &.glass-mode {
+
+    .card:not(.clan-card),
+    .glass-card:not(.clan-card) {
+      // 1. Gorgeous Dark Gray to Dark Red diagonal glass gradient
+      background: linear-gradient(135deg, rgba(14, 14, 16, 0.82) 0%, rgba(35, 12, 14, 0.78) 100%) !important;
+
+      // 2. High-fidelity thin vibrant red translucent border
+      border: 1px solid rgba(255, 59, 48, 0.28) !important;
+
+      // 3. Luxurious deep shadow blended with a soft ambient red neon glow
+      box-shadow:
+        0 8px 32px 0 rgba(0, 0, 0, 0.45),
+        0 0 20px rgba(255, 59, 48, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+
+      // 4. Hover states to elevate the interactive feel
+      &:hover {
+        border-color: rgba(255, 59, 48, 0.55) !important;
+        box-shadow:
+          0 12px 40px rgba(0, 0, 0, 0.55),
+          0 0 30px rgba(255, 59, 48, 0.28),
+          inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+        transform: translateY(-2px);
+      }
+    }
+  }
+
+  // Fallback state when Visual Blur is OFF
+  &:not(.glass-mode) {
+
+    .card:not(.clan-card),
+    .glass-card:not(.clan-card) {
+      background: rgba(14, 14, 16, 0.98) !important;
+      border: 1px solid rgba(255, 59, 48, 0.2) !important;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+
+      &:hover {
+        border-color: rgba(255, 59, 48, 0.4) !important;
+      }
+    }
+  }
+}
+
+// --- LIGHT MODE SPIDERMAN ---
+html[data-coreui-theme="light"].bg-mode-spiderman {
+  &.glass-mode {
+
+    .card:not(.clan-card),
+    .glass-card:not(.clan-card) {
+      // 1. Sleek light mode frosted glass background
+      background: rgba(255, 255, 255, 0.72) !important;
+
+      // 2. Translucent red border for light theme
+      border: 1px solid rgba(255, 59, 48, 0.22) !important;
+
+      // 3. Soft ambient red shadow
+      box-shadow:
+        0 8px 32px 0 rgba(0, 0, 0, 0.06),
+        0 0 15px rgba(255, 59, 48, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+
+      &:hover {
+        border-color: rgba(255, 59, 48, 0.45) !important;
+        box-shadow:
+          0 12px 40px rgba(0, 0, 0, 0.12),
+          0 0 25px rgba(255, 59, 48, 0.15),
+          inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+        transform: translateY(-2px);
+      }
+    }
+  }
+
+  // Fallback state when Visual Blur is OFF
+  &:not(.glass-mode) {
+
+    .card:not(.clan-card),
+    .glass-card:not(.clan-card) {
+      background: rgba(255, 255, 255, 0.96) !important;
+      border: 1px solid rgba(255, 59, 48, 0.18) !important;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+
+      &:hover {
+        border-color: rgba(255, 59, 48, 0.35) !important;
+      }
     }
   }
 }

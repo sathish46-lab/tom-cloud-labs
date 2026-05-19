@@ -130,16 +130,98 @@ if (!function_exists('formatActivityTime')) {
     }
 }
 
-// Dynamic greeting based on current local hour
+// Premium, highly motivational and situation-based dynamic greetings based on hour of the day
 $hour = (int)date('H');
-if ($hour < 12) {
-    $greeting = "Morning";
-} elseif ($hour < 17) {
-    $greeting = "Afternoon";
+$quotes = [];
+
+if ($hour >= 0 && $hour < 5) {
+    // Late Night / Early Hours (12 AM - 5 AM)
+    $quotes = [
+        "The quiet hours suit you, {$username}!",
+        "Deep focus mode active. Keep grinding, {$username}!",
+        "While the world sleeps, the legends build. Keep it up, {$username}!",
+        "Night owl grind is where the magic happens, {$username}!",
+        "Quiet night, burning screen. Leveling up your craft, {$username}.",
+        "The dark hours reveal the brightest minds. Keep going, {$username}!",
+        "Silence around, brilliant code inside. You've got this, {$username}!",
+        "Pushing boundaries while others dream. Keep building, {$username}!",
+        "Late night commits lead to daylight success. Stay strong, {$username}!",
+        "Under the cover of night, masters refine their craft, {$username}!"
+    ];
+} elseif ($hour >= 5 && $hour < 9) {
+    // Early Morning (5 AM - 9 AM)
+    $quotes = [
+        "Rise and grind, {$username}! A fresh day to conquer.",
+        "The early bird gets the code. Let's make today count, {$username}!",
+        "Fresh mind, clean code. Good morning, {$username}!",
+        "Start your day with intent, {$username}. You've got this!",
+        "A new dawn, a new chance to exceed limits, {$username}!",
+        "Fuel your ambition early today, {$username}!",
+        "Wake up, level up. Today is your day, {$username}!",
+        "Clean slate, infinite potential. Good morning, {$username}!",
+        "Seize the day before it begins. Rise and shine, {$username}!",
+        "Your future is written in the steps you take this morning, {$username}!"
+    ];
+} elseif ($hour >= 9 && $hour < 12) {
+    // Morning (9 AM - 12 PM)
+    $quotes = [
+        "Peak productivity hour! Crush your goals, {$username}!",
+        "Let's build something beautiful today, {$username}!",
+        "Code compiled, goals set. Let's conquer the day, {$username}!",
+        "Stay focused, stay inspired. You're doing amazing, {$username}!",
+        "Hustle mode engaged. Stay sharp, {$username}!",
+        "Success isn't given; it is earned line by line, {$username}!",
+        "Maintain the energy, master your tasks today, {$username}!",
+        "Unlocking peak performance. Let's win, {$username}!",
+        "Your dedication is your superpower. Stay on track, {$username}!",
+        "Focus on progress, not perfection. Keep moving, {$username}!"
+    ];
+} elseif ($hour >= 12 && $hour < 17) {
+    // Afternoon (12 PM - 5 PM)
+    $quotes = [
+        "Keep the momentum going, {$username}! Halfway there.",
+        "Stay fueled, stay sharp. You are doing great, {$username}!",
+        "Afternoon energy check! Ready to crush the rest of the day, {$username}?",
+        "One line of code at a time. Keep building, {$username}!",
+        "No midday slump can stop a true legend. Power through, {$username}!",
+        "Stay persistent. Great things take time and focus, {$username}!",
+        "Unleash your drive. The afternoon is yours to own, {$username}!",
+        "Success is built on afternoon consistency. Keep pushing, {$username}!",
+        "Keep your eyes on the prize. You are closer than you think, {$username}!",
+        "Let your passion drive your productivity this afternoon, {$username}!"
+    ];
+} elseif ($hour >= 17 && $hour < 21) {
+    // Evening (5 PM - 9 PM)
+    $quotes = [
+        "Evening inspiration! Reflect on your wins today, {$username}.",
+        "The day is winding down, but your potential is endless, {$username}!",
+        "Sunset logic. Time to polish your masterworks, {$username}!",
+        "Great work today, {$username}. Keep the flame burning!",
+        "Passion projects come alive in the evening. Enjoy the build, {$username}!",
+        "Relax the mind, but keep the spark alive, {$username}!",
+        "Evening commits are the sweetest. Happy coding, {$username}!",
+        "Reflect on how far you've come today. Proud of you, {$username}!",
+        "Turn the sunset into your canvas. Keep creating, {$username}!",
+        "Consistency in the evening builds character for a lifetime, {$username}!"
+    ];
 } else {
-    $greeting = "Evening";
+    // Night (9 PM - 12 AM)
+    $quotes = [
+        "One more push, {$username}! You're almost there.",
+        "Winding down or leveling up? Either way, you're a legend, {$username}!",
+        "Under the stars, code shines the brightest, {$username}!",
+        "Refining your craft under the night sky, {$username}. Keep going!",
+        "Night mode: ON. Let your focus run free, {$username}.",
+        "The night belongs to the creators. Keep designing, {$username}!",
+        "End your day on a high note. One last check, {$username}!",
+        "Fueling the midnight spark. Keep the dream alive, {$username}!",
+        "Excellence is a habit, even under the night sky, {$username}!",
+        "Rest well soon, but be proud of the grind tonight, {$username}!"
+    ];
 }
-$greetingText = "{$greeting}, legend, {$username}!";
+
+// Select a completely random quote on every page load
+$greetingText = $quotes[array_rand($quotes)];
 ?>
 
 <div class="container-fluid px-0 pt-4">
@@ -212,7 +294,7 @@ $greetingText = "{$greeting}, legend, {$username}!";
                                 <span class="position-absolute bottom-0 end-0 bg-success border border-2 border-dark rounded-circle" style="width: 12px; height: 12px; transform: translate(1px, 1px);"></span>
                             </div>
                             <div>
-                                <h4 class="fw-bold mb-0 text-white" style="letter-spacing: -0.5px; font-size: 1.35rem;"><?= $greetingText ?></h4>
+                                <h5 class="fw-semibold mb-0 text-white-90" style="letter-spacing: -0.3px; font-size: 1.05rem;"><?= $greetingText ?></h5>
                                 <p class="mb-0 text-white text-opacity-50 small mt-0.5" style="font-size: 0.78rem;">5 lessons in progress — keep going!</p>
                             </div>
                         </div>
@@ -288,7 +370,7 @@ $greetingText = "{$greeting}, legend, {$username}!";
 
         <!-- Clan Card -->
         <div class="col-12 col-xl-4">
-            <div class="card border-0 position-relative overflow-hidden h-100" style="background: linear-gradient(180deg, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.8) 100%), url('/assets/Background_Img/clan_zero_byte.png') no-repeat center; background-size: cover; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.08) !important;">
+            <div class="card border-0 position-relative overflow-hidden h-100 clan-card" style="background: linear-gradient(180deg, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.8) 100%), url('/assets/Background_Img/clan_zero_byte.png') no-repeat center; background-size: cover; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.08) !important;">
                 
                 <div class="card-body p-4 d-flex flex-column justify-content-between position-relative" style="z-index: 2;">
                     <div class="d-flex align-items-center gap-3 mb-3">

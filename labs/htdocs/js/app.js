@@ -743,6 +743,17 @@ var TomBG = {
     var isLight = root.getAttribute("data-coreui-theme") === "light";
     var sc = document.querySelector(".scenery-container");
 
+    // Dynamically toggle bg-mode classes on the root HTML element
+    var classesToRemove = [];
+    for (var i = 0; i < root.classList.length; i++) {
+      var cls = root.classList[i];
+      if (cls && cls.indexOf("bg-mode-") === 0) {
+        classesToRemove.push(cls);
+      }
+    }
+    classesToRemove.forEach(function (c) { root.classList.remove(c); });
+    root.classList.add("bg-mode-" + mode);
+
     var cssVars = "";
     var setVar = function (name, value) {
       cssVars += name + ": " + value + " !important; ";
@@ -807,7 +818,7 @@ var TomBG = {
 
       if (themeColor) {
         var safeColor = isLight ? this.ensureLightness(themeColor, 0.8) : this.ensureDarkness(themeColor, 0.15);
-        var primaryColor = this.adjustColor(themeColor, isLight ? -40 : 40);
+        var primaryColor = theme.primary || this.adjustColor(themeColor, isLight ? -40 : 40);
         var pRGB = this.hexToRgbValues(primaryColor);
 
         setVar("--glass-bg", isLight ? "rgba(255, 255, 255, 0.79)" : this.hexToRgba(safeColor, 0.85));
@@ -1295,12 +1306,12 @@ function showToast(message) {
 // Dashboard — Workspace Polling & Insights Animations
 // ========================================================================
 
-(function() {
+(function () {
     let pollingIntervals = {};
 
     function startMetricsPolling(hash) {
         if (pollingIntervals[hash]) return; // Avoid duplicate intervals
-        
+
         function fetchMetrics() {
             fetch(`/api/instance/stats?hash=${hash}`)
                 .then(res => res.json())
@@ -1319,14 +1330,14 @@ function showToast(message) {
                         loadEl.textContent = loadAvg;
                     }
                 })
-                .catch(() => {});
+                .catch(() => { });
         }
         fetchMetrics();
         pollingIntervals[hash] = setInterval(fetchMetrics, 5000);
     }
 
     // Export initialization function globally
-    window.initDashboardPolling = function(hashes) {
+    window.initDashboardPolling = function (hashes) {
         if (Array.isArray(hashes)) {
             hashes.forEach(hash => {
                 startMetricsPolling(hash);
@@ -1335,7 +1346,7 @@ function showToast(message) {
     };
 
     // Initialize Smart Insights activity graph
-    window.initDashboardInsights = function() {
+    window.initDashboardInsights = function () {
         const subtitle = document.getElementById('insights-subtitle');
         const peakLabel = document.getElementById('insights-peak-label');
         const footer = document.getElementById('insights-footer');

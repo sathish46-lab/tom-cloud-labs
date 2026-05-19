@@ -201,6 +201,13 @@ define('PAGE_START_TIME', microtime(true));
                                 <h6 class="fw-bold m-0 text-white">Robo Tower</h6>
                             </div>
                         </div>
+                        <div class="col-md-6">
+                            <div class="bg-preview rounded-3 p-5 text-center pointer border border-white border-opacity-10 transition-all hover-scale" 
+                                onclick="TomBG.setMode('spiderman')" 
+                                style="background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('/assets/Background_Img/spiderman/spiderman.jpg'); background-size: cover; background-position: center; min-height: 140px; display: flex; align-items: center; justify-content: center;">
+                                <h6 class="fw-bold m-0 text-white">Spiderman Mode</h6>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

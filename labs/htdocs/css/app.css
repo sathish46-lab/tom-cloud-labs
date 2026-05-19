@@ -17157,7 +17157,9 @@ html:not(.glass-mode) .clan-stats-grid {
 [data-coreui-theme=light] .text-white.text-opacity-30 {
   color: rgba(47, 53, 66, 0.4) !important;
 }
-[data-coreui-theme=light] #smart-insights-card h6, [data-coreui-theme=light] #smart-insights-card h2, [data-coreui-theme=light] #smart-insights-card #insights-peak-label {
+[data-coreui-theme=light] #smart-insights-card h6,
+[data-coreui-theme=light] #smart-insights-card h2,
+[data-coreui-theme=light] #smart-insights-card #insights-peak-label {
   color: var(--cui-body-color, #2f3542) !important;
 }
 [data-coreui-theme=light] #smart-insights-card #insights-subtitle {
@@ -17168,6 +17170,70 @@ html:not(.glass-mode) .clan-stats-grid {
 }
 [data-coreui-theme=light] #smart-insights-card .d-flex.justify-content-between.mt-2.px-0 {
   color: rgba(47, 53, 66, 0.4) !important;
+}
+
+.clan-card .text-white,
+.clan-card h5,
+.clan-card p,
+.clan-card span,
+.clan-card div,
+.clan-card i {
+  color: #ffffff !important;
+}
+.clan-card .text-white-50,
+.clan-card .text-opacity-40,
+.clan-card .text-opacity-45 {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+html:not(.glass-mode) .clan-card .clan-stats-grid {
+  background: rgba(20, 20, 20, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+html:not([data-coreui-theme=light]).bg-mode-spiderman.glass-mode .card:not(.clan-card),
+html:not([data-coreui-theme=light]).bg-mode-spiderman.glass-mode .glass-card:not(.clan-card) {
+  background: linear-gradient(135deg, rgba(14, 14, 16, 0.82) 0%, rgba(35, 12, 14, 0.78) 100%) !important;
+  border: 1px solid rgba(255, 59, 48, 0.28) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45), 0 0 20px rgba(255, 59, 48, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+}
+html:not([data-coreui-theme=light]).bg-mode-spiderman.glass-mode .card:not(.clan-card):hover,
+html:not([data-coreui-theme=light]).bg-mode-spiderman.glass-mode .glass-card:not(.clan-card):hover {
+  border-color: rgba(255, 59, 48, 0.55) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55), 0 0 30px rgba(255, 59, 48, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+  transform: translateY(-2px);
+}
+html:not([data-coreui-theme=light]).bg-mode-spiderman:not(.glass-mode) .card:not(.clan-card),
+html:not([data-coreui-theme=light]).bg-mode-spiderman:not(.glass-mode) .glass-card:not(.clan-card) {
+  background: rgba(14, 14, 16, 0.98) !important;
+  border: 1px solid rgba(255, 59, 48, 0.2) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+}
+html:not([data-coreui-theme=light]).bg-mode-spiderman:not(.glass-mode) .card:not(.clan-card):hover,
+html:not([data-coreui-theme=light]).bg-mode-spiderman:not(.glass-mode) .glass-card:not(.clan-card):hover {
+  border-color: rgba(255, 59, 48, 0.4) !important;
+}
+
+html[data-coreui-theme=light].bg-mode-spiderman.glass-mode .card:not(.clan-card),
+html[data-coreui-theme=light].bg-mode-spiderman.glass-mode .glass-card:not(.clan-card) {
+  background: rgba(255, 255, 255, 0.72) !important;
+  border: 1px solid rgba(255, 59, 48, 0.22) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.06), 0 0 15px rgba(255, 59, 48, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+}
+html[data-coreui-theme=light].bg-mode-spiderman.glass-mode .card:not(.clan-card):hover,
+html[data-coreui-theme=light].bg-mode-spiderman.glass-mode .glass-card:not(.clan-card):hover {
+  border-color: rgba(255, 59, 48, 0.45) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12), 0 0 25px rgba(255, 59, 48, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+  transform: translateY(-2px);
+}
+html[data-coreui-theme=light].bg-mode-spiderman:not(.glass-mode) .card:not(.clan-card),
+html[data-coreui-theme=light].bg-mode-spiderman:not(.glass-mode) .glass-card:not(.clan-card) {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border: 1px solid rgba(255, 59, 48, 0.18) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+}
+html[data-coreui-theme=light].bg-mode-spiderman:not(.glass-mode) .card:not(.clan-card):hover,
+html[data-coreui-theme=light].bg-mode-spiderman:not(.glass-mode) .glass-card:not(.clan-card):hover {
+  border-color: rgba(255, 59, 48, 0.35) !important;
 }
 
 html {

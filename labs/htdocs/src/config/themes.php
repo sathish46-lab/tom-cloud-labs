@@ -28,5 +28,13 @@ $tomThemes = [
             '/assets/Background_Img/RoboTower/3.png',
             '/assets/Background_Img/RoboTower/4.png'
         ]
+    ],
+    'spiderman' => [
+        'color' => '#0c0c0e',
+        'primary' => '#ff3b30',
+        'assets' => [
+            '/assets/Background_Img/spiderman/0.png',
+            '/assets/Background_Img/spiderman/1.png'
+        ]
     ]
 ];

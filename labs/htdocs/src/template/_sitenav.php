@@ -157,7 +157,7 @@
                                     <span class="theme-bg-label">Plain</span>
                                 </div>
                                 <?php foreach ($tomThemes as $id => $theme): 
-                                    $label = ($id === 'robo') ? 'Lab' : (($id === 'ninja') ? 'War' : (($id === 'robotower') ? 'Tower' : ucfirst($id)));
+                                    $label = ($id === 'robo') ? 'Lab' : (($id === 'ninja') ? 'War' : (($id === 'robotower') ? 'Tower' : (($id === 'spiderman') ? 'Spidey' : ucfirst($id))));
                                     $thumb = $theme['assets'][0]; // Use the first layer as thumb
                                     if (strpos($thumb, '.png') !== false && !strpos($thumb, 'robo.jpg') && !strpos($thumb, 'ninja.jpg')) {
                                         // If it's a parallax layer, try to use the jpg thumb if it exists, otherwise just the layer
@@ -166,6 +166,7 @@
                                         if ($id === 'robo') $thumb = '/assets/Background_Img/robo/robo.jpg';
                                         if ($id === 'ninja') $thumb = '/assets/Background_Img/ninja/ninja.jpg';
                                         if ($id === 'robotower') $thumb = '/assets/Background_Img/RoboTower/robo_tower.jpg';
+                                        if ($id === 'spiderman') $thumb = '/assets/Background_Img/spiderman/spiderman.jpg';
                                     }
                                 ?>
                                 <div class="theme-bg-item" onclick="TomBG.setMode('<?= $id ?>')" data-mode="<?= $id ?>">
@@ -182,11 +183,12 @@
                                     <span class="theme-bg-label">Plain</span>
                                 </div>
                                 <?php foreach ($tomThemes as $id => $theme): 
-                                    $label = ($id === 'robo') ? 'Lab' : (($id === 'ninja') ? 'War' : (($id === 'robotower') ? 'Tower' : ucfirst($id)));
+                                    $label = ($id === 'robo') ? 'Lab' : (($id === 'ninja') ? 'War' : (($id === 'robotower') ? 'Tower' : (($id === 'spiderman') ? 'Spidey' : ucfirst($id))));
                                     $thumb = $theme['assets'][0];
                                     if ($id === 'robo') $thumb = '/assets/Background_Img/robo/robo.jpg';
                                     if ($id === 'ninja') $thumb = '/assets/Background_Img/ninja/ninja.jpg';
                                     if ($id === 'robotower') $thumb = '/assets/Background_Img/RoboTower/robo_tower.jpg';
+                                    if ($id === 'spiderman') $thumb = '/assets/Background_Img/spiderman/spiderman.jpg';
                                 ?>
                                 <div class="theme-bg-item" onclick="TomBG.setMode('<?= $id ?>')" data-mode="<?= $id ?>">
                                     <div class="theme-bg-thumb-wrapper"><img src="<?= $thumb ?>" class="theme-bg-thumb"></div>
