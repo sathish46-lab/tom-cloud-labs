@@ -38,6 +38,98 @@ $jolt = $userStats['jolt'] ?? 0;
 
 $finishedQuizzes = $db->quiz_attempts->countDocuments(['user_email' => $userEmail]);
 
+// 4. Dynamic Recent Activity Aggregator
+$activitiesList = [];
+
+// A. Fetch Quiz Attempts
+$attempts = $db->quiz_attempts->find(
+    ['user_email' => $userEmail],
+    ['sort' => ['attempted_at' => -1], 'limit' => 5]
+);
+foreach ($attempts as $a) {
+    $time = isset($a['attempted_at']) ? (int)$a['attempted_at'] : time();
+    $activitiesList[] = [
+        'timestamp' => $time,
+        'icon' => "bx bx-award fs-6",
+        'color' => "#f1c40f",
+        'bg' => "rgba(241, 196, 15, 0.12)",
+        'border' => "rgba(241, 196, 15, 0.25)",
+        'text' => "Completed Quiz: scored <strong>" . $a['score'] . "/" . $a['total'] . "</strong>"
+    ];
+}
+
+// B. Fetch Deployed Labs
+$labs = $db->deployed_labs->find(
+    ['user_id' => $userId],
+    ['sort' => ['created_at' => -1], 'limit' => 5]
+);
+foreach ($labs as $l) {
+    $time = isset($l['created_at']) ? (int)$l['created_at'] : time();
+    $activitiesList[] = [
+        'timestamp' => $time,
+        'icon' => "bx bx-server fs-6",
+        'color' => "#10ac84",
+        'bg' => "rgba(16, 172, 132, 0.12)",
+        'border' => "rgba(16, 172, 132, 0.25)",
+        'text' => "Deployed <strong>" . ucfirst($l['lab_type'] ?? 'sandbox') . "</strong> Lab"
+    ];
+}
+
+// C. Fetch Domains
+$doms = $db->domains->find(
+    ['user_id' => ['$in' => [(string)$userId, $userId]]],
+    ['sort' => ['created_at' => -1], 'limit' => 5]
+);
+foreach ($doms as $d) {
+    $time = isset($d['created_at']) ? (int)$d['created_at'] : time();
+    $activitiesList[] = [
+        'timestamp' => $time,
+        'icon' => "bx bx-globe fs-6",
+        'color' => "#2e86de",
+        'bg' => "rgba(46, 134, 222, 0.12)",
+        'border' => "rgba(46, 134, 222, 0.25)",
+        'text' => "Mapped domain: <strong>" . htmlspecialchars($d['domain']) . "</strong>"
+    ];
+}
+
+// D. Fetch SSH Keys
+$keys = $db->ssh_keys->find(
+    ['user_id' => ['$in' => [(string)$userId, $userId]]],
+    ['sort' => ['created_at' => -1], 'limit' => 3]
+);
+foreach ($keys as $k) {
+    $time = isset($k['created_at']) ? (int)$k['created_at'] : time();
+    $activitiesList[] = [
+        'timestamp' => $time,
+        'icon' => "bx bx-key fs-6",
+        'color' => "#e74c3c",
+        'bg' => "rgba(231, 76, 60, 0.12)",
+        'border' => "rgba(231, 76, 60, 0.25)",
+        'text' => "Added SSH Key: <strong>" . htmlspecialchars($k['title']) . "</strong>"
+    ];
+}
+
+// Sort all activities by timestamp DESC
+usort($activitiesList, function($a, $b) {
+    return $b['timestamp'] - $a['timestamp'];
+});
+
+// Slice top 5
+$activitiesList = array_slice($activitiesList, 0, 5);
+
+// Helper function to format activity elapsed time
+if (!function_exists('formatActivityTime')) {
+    function formatActivityTime($timestamp) {
+        $diff = time() - $timestamp;
+        if ($diff < 0) return 'Just now';
+        if ($diff < 60) return 'Just now';
+        if ($diff < 3600) return round($diff / 60) . 'm ago';
+        if ($diff < 86400) return round($diff / 3600) . 'h ago';
+        if ($diff < 604800) return round($diff / 86400) . 'd ago';
+        return date('M j', $timestamp);
+    }
+}
+
 // Dynamic greeting based on current local hour
 $hour = (int)date('H');
 if ($hour < 12) {
@@ -51,54 +143,7 @@ $greetingText = "{$greeting}, legend, {$username}!";
 ?>
 
 <div class="container-fluid px-0 pt-4">
-    <style>
-        @keyframes greenPulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(16, 172, 132, 0.85);
-                transform: scale(0.9);
-            }
-            70% {
-                box-shadow: 0 0 0 10px rgba(16, 172, 132, 0);
-                transform: scale(1.25);
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(16, 172, 132, 0);
-                transform: scale(0.9);
-            }
-        }
-        @keyframes bluePulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(46, 134, 222, 0.85);
-                transform: scale(0.9);
-            }
-            70% {
-                box-shadow: 0 0 0 10px rgba(46, 134, 222, 0);
-                transform: scale(1.25);
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(46, 134, 222, 0);
-                transform: scale(0.9);
-            }
-        }
-        .active-indicator-green {
-            width: 7px;
-            height: 7px;
-            display: inline-block;
-            border-radius: 50%;
-            background-color: #10ac84 !important;
-            box-shadow: 0 0 6px rgba(16, 172, 132, 0.6);
-            animation: greenPulse 1.6s infinite ease-in-out;
-        }
-        .active-indicator-blue {
-            width: 7px;
-            height: 7px;
-            display: inline-block;
-            border-radius: 50%;
-            background-color: #2e86de !important;
-            box-shadow: 0 0 6px rgba(46, 134, 222, 0.6);
-            animation: bluePulse 1.6s infinite ease-in-out;
-        }
-    </style>
+
     <!-- Top Row: Profile & Clan Cards -->
     <div class="row g-4 mb-4">
         <!-- Profile Banner -->
@@ -311,7 +356,7 @@ $greetingText = "{$greeting}, legend, {$username}!";
     <!-- Secondary Row: Connected Devices & Domains -->
     <div class="row g-4 mb-4">
     <div class="col-12 col-md-6">
-        <div class="card h-100 border-0 glass-card">
+        <div class="card h-100 border-0 glass-card device-card">
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <div>
@@ -330,7 +375,7 @@ $greetingText = "{$greeting}, legend, {$username}!";
                 <div class="device-list pe-1" style="max-height: 125px; overflow-y: auto;">
                     <?php if (!empty($labsList)): ?>
                         <?php foreach ($labsList as $lab): ?>
-                        <div class="d-flex align-items-center justify-content-between p-2 mb-2 rounded-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05);">
+                        <div class="d-flex align-items-center justify-content-between p-2 mb-2 rounded-3" style="background: var(--list-item-bg, rgba(255, 255, 255, 0.03)) !important; border: 1px solid var(--list-item-border, rgba(255, 255, 255, 0.05)) !important;">
                             <div class="d-flex align-items-center gap-2">
                                 <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; background: rgba(16, 172, 132, 0.12); border: 1px solid rgba(16, 172, 132, 0.2);">
                                     <i class='bx bx-cube-alt text-success' style="font-size: 0.85rem; color: #10ac84 !important;"></i>
@@ -363,7 +408,7 @@ $greetingText = "{$greeting}, legend, {$username}!";
     </div>
 
     <div class="col-12 col-md-6">
-        <div class="card h-100 border-0 glass-card">
+        <div class="card h-100 border-0 glass-card domain-card">
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <div>
@@ -382,7 +427,7 @@ $greetingText = "{$greeting}, legend, {$username}!";
                 <div class="domain-list pe-1" style="max-height: 125px; overflow-y: auto;">
                     <?php if ($domainCount > 0): ?>
                         <?php foreach ($domains as $d): ?>
-                        <div class="d-flex align-items-center justify-content-between p-2 mb-2 rounded-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05);">
+                        <div class="d-flex align-items-center justify-content-between p-2 mb-2 rounded-3" style="background: var(--list-item-bg, rgba(255, 255, 255, 0.03)) !important; border: 1px solid var(--list-item-border, rgba(255, 255, 255, 0.05)) !important;">
                             <div class="d-flex align-items-center gap-2">
                                 <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; background: rgba(46, 134, 222, 0.12); border: 1px solid rgba(46, 134, 222, 0.2);">
                                     <i class='bx bx-globe text-info' style="font-size: 0.85rem; color: #2e86de !important;"></i>
@@ -417,7 +462,7 @@ $greetingText = "{$greeting}, legend, {$username}!";
 
 <div class="row g-4">
     <div class="col-12 col-xl-8">
-        <div class="card border-0 glass-card">
+        <div class="card border-0 glass-card machine-labs-card">
             <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
                 <h6 class="fw-bold mb-0 d-flex align-items-center text-body" style="font-size: 0.95rem;">
                     Machine Labs 
@@ -432,7 +477,7 @@ $greetingText = "{$greeting}, legend, {$username}!";
                 <div id="machine-labs-container" class="d-flex flex-column gap-3">
                     <?php if (!empty($labsList)): ?>
                         <?php foreach ($labsList as $lab): ?>
-                        <div class="lab-row-premium d-flex flex-column flex-lg-row align-items-center p-3 rounded-4 gap-3 border border-white border-opacity-10" style="background: rgba(255,255,255,0.03);">
+                        <div class="lab-row-premium d-flex flex-column flex-lg-row align-items-center p-3 rounded-4 gap-3" style="background: var(--list-item-bg, rgba(255,255,255,0.03)) !important; border: 1px solid var(--list-item-border, rgba(255, 255, 255, 0.05)) !important;">
                             <div class="d-flex align-items-center gap-3 flex-grow-1 w-100">
                                     <div class="d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
                                         <?php 
@@ -499,71 +544,53 @@ $greetingText = "{$greeting}, legend, {$username}!";
             <div class="card-body p-4">
                 <h6 class="fw-bold text-body mb-4" style="font-size: 0.9rem; letter-spacing: 0.5px; text-transform: uppercase;">Recent Activity</h6>
                 <div class="d-flex flex-column gap-3">
-                    <div class="d-flex align-items-start gap-3 small">
-                        <div class="bg-success bg-opacity-10 p-2 rounded-circle mt-1" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;">
-                            <i class='bx bx-check-circle text-success fs-6'></i>
+                    <?php if (!empty($activitiesList)): ?>
+                        <?php foreach ($activitiesList as $act): ?>
+                        <div class="d-flex align-items-start gap-3 small">
+                            <div class="rounded-circle mt-1" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: <?= $act['bg'] ?> !important; border: 1px solid <?= $act['border'] ?> !important; flex-shrink: 0;">
+                                <i class='<?= $act['icon'] ?>' style="color: <?= $act['color'] ?> !important; font-size: 0.85rem;"></i>
+                            </div>
+                            <div>
+                                <span class="text-body fw-medium d-block mb-1" style="line-height: 1.35;"><?= $act['text'] ?></span>
+                                <span class="text-body-secondary opacity-50" style="font-size: 0.7rem;"><?= formatActivityTime($act['timestamp']) ?></span>
+                            </div>
                         </div>
-                        <div>
-                            <span class="text-body fw-medium d-block mb-1">Milestone reached! +53🔥 & +35⚡</span>
-                            <span class="text-body-secondary opacity-50" style="font-size: 0.7rem;">Just now</span>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <div class="text-center py-4 text-white text-opacity-30 small">
+                            <i class="bx bx-history d-block fs-3 mb-1 opacity-20"></i>
+                            No recent activity recorded
                         </div>
-                    </div>
-                    <div class="d-flex align-items-start gap-3 small">
-                        <div class="bg-warning bg-opacity-10 p-2 rounded-circle mt-1" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;">
-                            <i class='bx bx-zap text-warning fs-6'></i>
-                        </div>
-                        <div>
-                            <span class="text-body fw-medium d-block mb-1">Created theme: Ben 10</span>
-                            <span class="text-body-secondary opacity-50" style="font-size: 0.7rem;">1w</span>
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-start gap-3 small">
-                        <div class="bg-warning bg-opacity-10 p-2 rounded-circle mt-1" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;">
-                            <i class='bx bx-zap text-warning fs-6'></i>
-                        </div>
-                        <div>
-                            <span class="text-body fw-medium d-block mb-1">Submitted theme for review: Spiderman</span>
-                            <span class="text-body-secondary opacity-50" style="font-size: 0.7rem;">1w</span>
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-start gap-3 small">
-                        <div class="bg-warning bg-opacity-10 p-2 rounded-circle mt-1" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;">
-                            <i class='bx bx-zap text-warning fs-6'></i>
-                        </div>
-                        <div>
-                            <span class="text-body fw-medium d-block mb-1">Created theme: Spiderman</span>
-                            <span class="text-body-secondary opacity-50" style="font-size: 0.7rem;">1w</span>
-                        </div>
-                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
 
         <!-- Box 2: Smart Insights (Dynamic) -->
         <div class="card border-0 glass-card position-relative overflow-hidden" id="smart-insights-card">
-            <div class="card-body px-4 pt-4 pb-3 position-relative">
-                <h6 class="fw-bold mb-3" style="color: #fff; font-size: 1.05rem; letter-spacing: 0.3px;">Smart Insights</h6>
-                <p class="mb-1" id="insights-subtitle" style="color: rgba(255,255,255,0.55); font-size: 0.82rem;">Analyzing your activity...</p>
-                <h2 class="fw-bold mb-0" id="insights-peak-label" style="color: #fff; font-size: 1.7rem; letter-spacing: -0.5px;">
+            <div class="card-body p-3 pt-3 pb-2 position-relative">
+                <h6 class="fw-bold mb-1.5 text-body" style="font-size: 0.95rem; letter-spacing: 0.3px;">Smart Insights</h6>
+                <p class="mb-1 text-body-secondary" id="insights-subtitle" style="font-size: 0.78rem;">Analyzing your activity...</p>
+                <h2 class="fw-bold mb-0 text-body" id="insights-peak-label" style="font-size: 1.5rem; letter-spacing: -0.5px;">
                     <span class="placeholder-glow"><span class="placeholder col-6 rounded"></span></span>
                 </h2>
                 
                 <!-- Bar Chart -->
-                <div class="d-flex align-items-end gap-1 mt-4" style="height: 90px; padding-bottom: 0;" id="insights-bars-container">
+                <div class="d-flex align-items-end mt-2" style="height: 48px; gap: 1.5px; padding-bottom: 0;" id="insights-bars-container">
                     <?php for ($i = 0; $i < 24; $i++): ?>
-                    <div class="insights-bar" data-hour="<?= $i ?>" style="flex: 1; height: 4%; min-width: 0; background: rgba(255,255,255,0.18); border-radius: 3px 3px 0 0; transition: height 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), background 0.3s ease, box-shadow 0.3s ease;"></div>
+                    <div class="insights-bar" data-hour="<?= $i ?>" style="flex: 1; height: 4%; min-width: 0; background: rgba(255,255,255,0.08); border-radius: 2px 2px 0 0; transition: height 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), background 0.3s ease, box-shadow 0.3s ease;"></div>
                     <?php endfor; ?>
                 </div>
 
                 <!-- Time Labels -->
-                <div class="d-flex justify-content-between mt-2 px-0" style="font-size: 0.65rem; color: rgba(255,255,255,0.3); font-style: italic; font-weight: 500;">
-                    <span>12a</span>
-                    <span style="margin-left: 20%;">6a</span>
-                    <span>12p</span>
-                    <span style="margin-right: 2%;">6p</span>
+                <div class="position-relative mt-1 w-100" style="height: 16px; font-size: 0.62rem; color: rgba(255,255,255,0.35); font-style: italic; font-weight: 500;">
+                    <span class="position-absolute text-body-secondary" style="left: 0;">12a</span>
+                    <span class="position-absolute text-body-secondary" style="left: 25%; transform: translateX(-50%);">6a</span>
+                    <span class="position-absolute text-body-secondary" style="left: 50%; transform: translateX(-50%);">12p</span>
+                    <span class="position-absolute text-body-secondary" style="left: 75%; transform: translateX(-50%);">6p</span>
                 </div>
 
-                <div class="d-flex justify-content-between align-items-center mt-2" id="insights-footer" style="display: none !important;">
+                <div class="d-flex justify-content-between align-items-center mt-1" id="insights-footer" style="display: none !important;">
                     <span class="small" id="insights-active-days" style="font-size: 0.68rem; color: rgba(255,255,255,0.35);"></span>
                     <span class="small" id="insights-last-seen" style="font-size: 0.68rem; color: rgba(255,255,255,0.35);"></span>
                 </div>
@@ -651,89 +678,13 @@ $greetingText = "{$greeting}, legend, {$username}!";
 <script src="workspace/js/lab_code.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    function startMetricsPolling(hash) {
-        function fetchMetrics() {
-            fetch(`/api/instance/stats?hash=${hash}`)
-                .then(res => res.json())
-                .then(stats => {
-                    if (stats.CPUPerc) document.getElementById(`cpu-${hash}`).textContent = stats.CPUPerc;
-                    if (stats.MemUsage) {
-                        const usage = stats.MemUsage.split(' / ')[0];
-                        document.getElementById(`mem-${hash}`).textContent = usage;
-                    }
-                    if (stats.Load1 !== undefined) {
-                        const loadAvg = `${stats.Load1.toFixed(4)}, ${stats.Load5.toFixed(4)}, ${stats.Load15.toFixed(4)}`;
-                        document.getElementById(`load-${hash}`).textContent = loadAvg;
-                    }
-                })
-                .catch(() => {});
-        }
-        fetchMetrics();
-        setInterval(fetchMetrics, 5000); 
+    // Initialize premium lab metrics polling
+    if (typeof window.initDashboardPolling === 'function') {
+        window.initDashboardPolling(<?= json_encode(array_column($labsList, 'hash')) ?>);
     }
-
-    // Initialize polling for all pre-rendered labs
-    <?php foreach ($labsList as $lab): ?>
-    startMetricsPolling('<?= $lab['hash'] ?>');
-    <?php endforeach; ?>
-
-    // ── Smart Insights: Fetch real activity data ──
-    fetch('/api/dashboard/insights')
-        .then(res => res.json())
-        .then(data => {
-            const subtitle = document.getElementById('insights-subtitle');
-            const peakLabel = document.getElementById('insights-peak-label');
-            const footer = document.getElementById('insights-footer');
-            const activeDays = document.getElementById('insights-active-days');
-            const lastSeen = document.getElementById('insights-last-seen');
-
-            if (data.has_data) {
-                subtitle.textContent = "You're most productive between";
-                peakLabel.textContent = data.peak_label;
-
-                // Animate bars with SNA-style colors
-                const bars = document.querySelectorAll('.insights-bar');
-                const barValues = data.bars || [];
-                const maxVal = Math.max(...barValues);
-                bars.forEach((bar, i) => {
-                    const val = barValues[i] || 0;
-                    const minHeight = val > 0 ? Math.max(val, 6) : 3;
-                    setTimeout(() => {
-                        bar.style.height = minHeight + '%';
-                        if (val >= 70) {
-                            // Peak hours — orange
-                            bar.style.background = '#ffa502';
-                            bar.style.boxShadow = '0 0 8px rgba(255, 165, 2, 0.35)';
-                        } else if (val > 0) {
-                            // Active hours — dark gray
-                            bar.style.background = 'rgba(255,255,255,0.22)';
-                            bar.style.boxShadow = 'none';
-                        } else {
-                            // Inactive — very subtle
-                            bar.style.background = 'rgba(255,255,255,0.08)';
-                        }
-                    }, i * 25);
-                });
-
-                // Show footer stats
-                if (data.active_days > 0) {
-                    activeDays.textContent = data.active_days + ' active days';
-                    footer.style.cssText = '';
-                    footer.classList.add('d-flex');
-                }
-                if (data.last_seen) {
-                    lastSeen.textContent = 'Last: ' + data.last_seen;
-                }
-            } else {
-                subtitle.textContent = "Start exploring to see your insights";
-                peakLabel.textContent = "No data yet";
-                peakLabel.style.fontSize = '1.2rem';
-                peakLabel.style.opacity = '0.4';
-            }
-        })
-        .catch(() => {
-            document.getElementById('insights-subtitle').textContent = "Start exploring to see your insights";
-            document.getElementById('insights-peak-label').textContent = "No data yet";
-        });
+    // Initialize Smart Insights activity chart animation
+    if (typeof window.initDashboardInsights === 'function') {
+        window.initDashboardInsights();
+    }
 });
 </script>

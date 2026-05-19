@@ -1,0 +1,107 @@
+// ========================================================================
+// Dashboard — Workspace Polling & Insights Animations
+// ========================================================================
+
+(function () {
+    let pollingIntervals = {};
+
+    function startMetricsPolling(hash) {
+        if (pollingIntervals[hash]) return; // Avoid duplicate intervals
+
+        function fetchMetrics() {
+            fetch(`/api/instance/stats?hash=${hash}`)
+                .then(res => res.json())
+                .then(stats => {
+                    const cpuEl = document.getElementById(`cpu-${hash}`);
+                    const memEl = document.getElementById(`mem-${hash}`);
+                    const loadEl = document.getElementById(`load-${hash}`);
+
+                    if (stats.CPUPerc && cpuEl) cpuEl.textContent = stats.CPUPerc;
+                    if (stats.MemUsage && memEl) {
+                        const usage = stats.MemUsage.split(' / ')[0];
+                        memEl.textContent = usage;
+                    }
+                    if (stats.Load1 !== undefined && loadEl) {
+                        const loadAvg = `${stats.Load1.toFixed(4)}, ${stats.Load5.toFixed(4)}, ${stats.Load15.toFixed(4)}`;
+                        loadEl.textContent = loadAvg;
+                    }
+                })
+                .catch(() => { });
+        }
+        fetchMetrics();
+        pollingIntervals[hash] = setInterval(fetchMetrics, 5000);
+    }
+
+    // Export initialization function globally
+    window.initDashboardPolling = function (hashes) {
+        if (Array.isArray(hashes)) {
+            hashes.forEach(hash => {
+                startMetricsPolling(hash);
+            });
+        }
+    };
+
+    // Initialize Smart Insights activity graph
+    window.initDashboardInsights = function () {
+        const subtitle = document.getElementById('insights-subtitle');
+        const peakLabel = document.getElementById('insights-peak-label');
+        const footer = document.getElementById('insights-footer');
+        const activeDays = document.getElementById('insights-active-days');
+        const lastSeen = document.getElementById('insights-last-seen');
+
+        if (!subtitle || !peakLabel) return;
+
+        fetch('/api/dashboard/insights')
+            .then(res => res.json())
+            .then(data => {
+                if (data.has_data) {
+                    subtitle.textContent = "You're most productive between";
+                    peakLabel.textContent = data.peak_label;
+
+                    // Animate bars with theme-aware colors
+                    const isLight = document.documentElement.getAttribute('data-coreui-theme') === 'light';
+                    const bars = document.querySelectorAll('.insights-bar');
+                    const barValues = data.bars || [];
+                    bars.forEach((bar, i) => {
+                        const val = barValues[i] || 0;
+                        const minHeight = val > 0 ? Math.max(val, 6) : 3;
+                        setTimeout(() => {
+                            bar.style.height = minHeight + '%';
+                            if (val >= 70) {
+                                // Peak hours — orange
+                                bar.style.background = '#ffa502';
+                                bar.style.boxShadow = isLight ? '0 0 6px rgba(255, 165, 2, 0.45)' : '0 0 8px rgba(255, 165, 2, 0.35)';
+                            } else if (val > 0) {
+                                // Active hours
+                                bar.style.background = isLight ? 'rgba(0, 0, 0, 0.16)' : 'rgba(255, 255, 255, 0.22)';
+                                bar.style.boxShadow = 'none';
+                            } else {
+                                // Inactive — very subtle
+                                bar.style.background = isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.08)';
+                                bar.style.boxShadow = 'none';
+                            }
+                        }, i * 25);
+                    });
+
+                    // Show footer stats
+                    if (data.active_days > 0 && activeDays && footer) {
+                        activeDays.textContent = data.active_days + ' active days';
+                        footer.style.cssText = '';
+                        footer.classList.add('d-flex');
+                    }
+                    if (data.last_seen && lastSeen) {
+                        lastSeen.textContent = 'Last: ' + data.last_seen;
+                    }
+                } else {
+                    subtitle.textContent = "Start exploring to see your insights";
+                    peakLabel.textContent = "No data yet";
+                    peakLabel.style.fontSize = '1.2rem';
+                    peakLabel.style.opacity = '0.4';
+                }
+            })
+            .catch(() => {
+                subtitle.textContent = "Start exploring to see your insights";
+                peakLabel.textContent = "No data yet";
+            });
+    };
+})();

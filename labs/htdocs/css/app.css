@@ -15623,7 +15623,7 @@ html[data-coreui-theme=dark] {
 }
 
 [data-coreui-theme=light] {
-  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-bg: rgba(255, 255, 255, 0.4);
   --glass-bg-solid: #ffffff;
   --glass-border: rgba(0, 0, 0, 0.1);
 }
@@ -17046,6 +17046,128 @@ html:not(.glass-mode) .clan-stats-grid {
   background: rgba(20, 20, 20, 0.82) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+}
+
+@keyframes greenPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 172, 132, 0.85);
+    transform: scale(0.9);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(16, 172, 132, 0);
+    transform: scale(1.25);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 172, 132, 0);
+    transform: scale(0.9);
+  }
+}
+@keyframes bluePulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(46, 134, 222, 0.85);
+    transform: scale(0.9);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(46, 134, 222, 0);
+    transform: scale(1.25);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(46, 134, 222, 0);
+    transform: scale(0.9);
+  }
+}
+.active-indicator-green {
+  width: 7px;
+  height: 7px;
+  display: inline-block;
+  border-radius: 50%;
+  background-color: #10ac84 !important;
+  box-shadow: 0 0 6px rgba(16, 172, 132, 0.6);
+  animation: greenPulse 1.6s infinite ease-in-out;
+}
+
+.active-indicator-blue {
+  width: 7px;
+  height: 7px;
+  display: inline-block;
+  border-radius: 50%;
+  background-color: #2e86de !important;
+  box-shadow: 0 0 6px rgba(46, 134, 222, 0.6);
+  animation: bluePulse 1.6s infinite ease-in-out;
+}
+
+/* Direct device and domain glowing outline rules */
+.device-card {
+  border: 1px solid rgba(16, 172, 132, 0.28) !important;
+  box-shadow: 0 4px 20px rgba(16, 172, 132, 0.03) !important;
+  transition: all 0.3s ease !important;
+}
+
+.domain-card {
+  border: 1px solid rgba(46, 134, 222, 0.28) !important;
+  box-shadow: 0 4px 20px rgba(46, 134, 222, 0.03) !important;
+  transition: all 0.3s ease !important;
+}
+
+.machine-labs-card {
+  border: 1px solid rgba(16, 172, 132, 0.28) !important;
+  box-shadow: 0 4px 20px rgba(16, 172, 132, 0.03) !important;
+  transition: all 0.3s ease !important;
+}
+
+#smart-insights-card {
+  border: 1px solid rgba(111, 50, 207, 0.28) !important;
+  box-shadow: 0 4px 20px rgba(111, 50, 207, 0.03) !important;
+  transition: all 0.3s ease !important;
+}
+
+/* Light Theme Contrast & Glow Adjustments */
+[data-coreui-theme=light] .device-card {
+  border: 1px solid rgba(16, 172, 132, 0.6) !important;
+  box-shadow: 0 8px 30px rgba(16, 172, 132, 0.15) !important;
+}
+[data-coreui-theme=light] .domain-card {
+  border: 1px solid rgba(46, 134, 222, 0.6) !important;
+  box-shadow: 0 8px 30px rgba(46, 134, 222, 0.15) !important;
+}
+[data-coreui-theme=light] .machine-labs-card {
+  border: 1px solid rgba(16, 172, 132, 0.6) !important;
+  box-shadow: 0 8px 30px rgba(16, 172, 132, 0.15) !important;
+}
+[data-coreui-theme=light] #smart-insights-card {
+  border: 1px solid rgba(111, 50, 207, 0.6) !important;
+  box-shadow: 0 8px 30px rgba(111, 50, 207, 0.15) !important;
+}
+[data-coreui-theme=light] {
+  --list-item-bg: rgba(255, 255, 255, 0.24);
+  --list-item-border: rgba(255, 255, 255, 0.12);
+}
+[data-coreui-theme=light] .text-white {
+  color: var(--cui-body-color, #2f3542) !important;
+}
+[data-coreui-theme=light] .text-white-50 {
+  color: rgba(47, 53, 66, 0.6) !important;
+}
+[data-coreui-theme=light] .text-white.text-opacity-40 {
+  color: rgba(47, 53, 66, 0.5) !important;
+}
+[data-coreui-theme=light] .text-white.text-opacity-35 {
+  color: rgba(47, 53, 66, 0.45) !important;
+}
+[data-coreui-theme=light] .text-white.text-opacity-30 {
+  color: rgba(47, 53, 66, 0.4) !important;
+}
+[data-coreui-theme=light] #smart-insights-card h6, [data-coreui-theme=light] #smart-insights-card h2, [data-coreui-theme=light] #smart-insights-card #insights-peak-label {
+  color: var(--cui-body-color, #2f3542) !important;
+}
+[data-coreui-theme=light] #smart-insights-card #insights-subtitle {
+  color: rgba(47, 53, 66, 0.6) !important;
+}
+[data-coreui-theme=light] #smart-insights-card #insights-footer span {
+  color: rgba(47, 53, 66, 0.5) !important;
+}
+[data-coreui-theme=light] #smart-insights-card .d-flex.justify-content-between.mt-2.px-0 {
+  color: rgba(47, 53, 66, 0.4) !important;
 }
 
 html {

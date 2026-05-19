@@ -32,9 +32,9 @@ define('PAGE_START_TIME', microtime(true));
 
         [data-coreui-theme="light"] {
             --cui-body-bg: #f4f7f9;
-            --glass-bg: rgba(255, 255, 255, 0.82);
+            --glass-bg: rgba(255, 255, 255, 0.4); /* Premium, transparent frosted glass */
             --glass-bg-solid: rgba(255, 255, 255, 0.98);
-            --cui-card-bg: rgba(255, 255, 255, 0.5);
+            --cui-card-bg: rgba(255, 255, 255, 0.35);
             --cui-card-bg-solid: rgba(255, 255, 255, 0.95);
             --cui-primary: #5856d6;
             --cui-sidebar-bg: rgba(255, 255, 255, 0.98);
