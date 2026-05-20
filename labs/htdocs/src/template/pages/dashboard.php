@@ -230,36 +230,6 @@ $greetingText = $quotes[array_rand($quotes)];
     <div class="row g-4 mb-4">
         <!-- Profile Banner -->
         <div class="col-12 col-xl-8">
-            <style>
-                @keyframes waveFlow {
-                    0% {
-                        transform: translate3d(0, 0, 0);
-                    }
-                    100% {
-                        transform: translate3d(-50%, 0, 0);
-                    }
-                }
-                .wave-wrapper {
-                    position: absolute;
-                    bottom: 0;
-                    left: 0;
-                    width: 200%;
-                    height: 100%;
-                    pointer-events: none;
-                    z-index: 1;
-                }
-                .wave-svg {
-                    width: 100%;
-                    height: 100%;
-                    display: block;
-                }
-                .wave-front {
-                    animation: waveFlow 18s linear infinite;
-                }
-                .wave-back {
-                    animation: waveFlow 12s linear infinite reverse;
-                }
-            </style>
             <div class="card border-0 glass-card position-relative overflow-hidden h-100">
                 <!-- Glowing Layered Liquid Waves (Background Visual Elements) -->
                 <div class="wave-wrapper">
@@ -435,189 +405,598 @@ $greetingText = $quotes[array_rand($quotes)];
         </div>
     </div>
 
-    <!-- Secondary Row: Connected Devices & Domains -->
+    <!-- Continue Learning Mega Console -->
     <div class="row g-4 mb-4">
-    <div class="col-12 col-md-6">
-        <div class="card h-100 border-0 glass-card device-card">
-            <div class="card-body p-4">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div>
-                        <h5 class="fw-bold mb-1 text-white" style="letter-spacing: -0.5px; font-size: 1.05rem;">Connected Devices</h5>
-                        <p class="mb-0 text-white text-opacity-40 small" style="font-size: 0.7rem;">Active sandbox containers</p>
-                    </div>
-                    <div class="text-end">
-                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-20 fw-semibold d-inline-flex align-items-center gap-2" style="font-size: 0.72rem; padding: 4px 10px;">
-                            <span class="rounded-circle active-indicator-green" style="width: 6px; height: 6px;"></span>
-                            <?= $activeLabsCount ?> / <?= $labsLimit ?> Active
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Device List -->
-                <div class="device-list pe-1" style="max-height: 125px; overflow-y: auto;">
-                    <?php if (!empty($labsList)): ?>
-                        <?php foreach ($labsList as $lab): ?>
-                        <div class="d-flex align-items-center justify-content-between p-2 mb-2 rounded-3" style="background: var(--list-item-bg, rgba(255, 255, 255, 0.03)) !important; border: 1px solid var(--list-item-border, rgba(255, 255, 255, 0.05)) !important;">
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; background: rgba(16, 172, 132, 0.12); border: 1px solid rgba(16, 172, 132, 0.2);">
-                                    <i class='bx bx-cube-alt text-success' style="font-size: 0.85rem; color: #10ac84 !important;"></i>
-                                </div>
-                                <div>
-                                    <span class="text-white fw-bold small d-block" style="line-height: 1.2; font-size: 0.78rem;"><?= $lab['name'] ?> Lab</span>
-                                    <span class="text-success fw-bold text-uppercase" style="font-size: 0.55rem; letter-spacing: 0.3px; color: #10ac84 !important;">Online</span>
-                                </div>
-                            </div>
-                            <div class="text-end d-flex align-items-center gap-2">
-                                <div>
-                                    <div class="text-white font-monospace fw-semibold" style="font-size: 0.7rem;"><?= $lab['ip'] ?></div>
-                                    <div class="text-white text-opacity-35 small fw-bold text-uppercase" style="font-size: 0.5rem; letter-spacing: 0.3px;">Internal IP</div>
-                                </div>
-                                <button class="btn btn-sm btn-link p-1 text-white text-opacity-40 hover-text-white transition-all" onclick="navigator.clipboard.writeText('<?= $lab['ip'] ?>'); showToast('IP copied!')">
-                                    <i class="bx bx-copy" style="font-size: 0.8rem;"></i>
-                                </button>
-                            </div>
+        <div class="col-12 col-xl-8">
+            <div class="card border-0 glass-card continue-learning-card">
+                <div class="card-body p-4">
+                    <!-- Title & Switch Tabs -->
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+                        <div>
+                            <h5 class="fw-bold mb-1 text-white" style="letter-spacing: -0.5px; font-size: 1.15rem;">Continue Learning</h5>
+                            <p class="mb-0 text-white text-opacity-40 small" style="font-size: 0.72rem;">Pick up where you left off</p>
                         </div>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <div class="text-center text-white text-opacity-30 py-4 small">
-                            <i class="bx bx-server opacity-20 d-block fs-3 mb-1"></i>
-                            No active nodes currently connected
+                        
+                        <!-- Switch Tabs Selector -->
+                        <div class="d-flex gap-2 flex-wrap continue-tab-switcher-container">
+                            <button class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold continue-tab-btn active" 
+                                    onclick="switchContinueTab('activity')" data-tab="activity">
+                                <i class='bx bx-time-five me-1 align-middle' style="font-size: 0.9rem;"></i> Your Activity
+                            </button>
+                            <button class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold continue-tab-btn" 
+                                    onclick="switchContinueTab('setup')" data-tab="setup">
+                                <i class='bx bx-desktop me-1 align-middle' style="font-size: 0.9rem;"></i> Your Setup
+                            </button>
+                            <button class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold continue-tab-btn" 
+                                    onclick="switchContinueTab('recommended')" data-tab="recommended">
+                                <i class='bx bx-star me-1 align-middle' style="font-size: 0.9rem;"></i> Recommended
+                            </button>
                         </div>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-12 col-md-6">
-        <div class="card h-100 border-0 glass-card domain-card">
-            <div class="card-body p-4">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div>
-                        <h5 class="fw-bold mb-1 text-white" style="letter-spacing: -0.5px; font-size: 1.05rem;">Linked Domains</h5>
-                        <p class="mb-0 text-white text-opacity-40 small" style="font-size: 0.7rem;">Domain mapping & routing</p>
                     </div>
-                    <div class="text-end">
-                        <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-20 fw-semibold d-inline-flex align-items-center gap-2" style="font-size: 0.72rem; padding: 4px 10px;">
-                            <span class="rounded-circle active-indicator-blue" style="width: 6px; height: 6px;"></span>
-                            <?= $domainCount ?> / <?= $domainsLimit ?> Mapped
-                        </span>
-                    </div>
-                </div>
 
-                <!-- Domain List -->
-                <div class="domain-list pe-1" style="max-height: 125px; overflow-y: auto;">
-                    <?php if ($domainCount > 0): ?>
-                        <?php foreach ($domains as $d): ?>
-                        <div class="d-flex align-items-center justify-content-between p-2 mb-2 rounded-3" style="background: var(--list-item-bg, rgba(255, 255, 255, 0.03)) !important; border: 1px solid var(--list-item-border, rgba(255, 255, 255, 0.05)) !important;">
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; background: rgba(46, 134, 222, 0.12); border: 1px solid rgba(46, 134, 222, 0.2);">
-                                    <i class='bx bx-globe text-info' style="font-size: 0.85rem; color: #2e86de !important;"></i>
-                                </div>
-                                <div>
-                                    <span class="text-white fw-bold small d-block" style="line-height: 1.2; font-size: 0.78rem; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><?= $d['domain'] ?></span>
-                                    <span class="text-info fw-bold text-uppercase" style="font-size: 0.55rem; letter-spacing: 0.3px; color: #2e86de !important;">A Record</span>
-                                </div>
-                            </div>
-                            <div class="text-end d-flex align-items-center gap-2">
-                                <div>
-                                    <div class="text-white font-monospace fw-semibold" style="font-size: 0.7rem;"><?= $d['ip_address'] ?? 'Pending' ?></div>
-                                    <div class="text-white text-opacity-35 small fw-bold text-uppercase" style="font-size: 0.5rem; letter-spacing: 0.3px;">Pointer IP</div>
-                                </div>
-                                <button class="btn btn-sm btn-link p-1 text-white text-opacity-40 hover-text-white transition-all" onclick="navigator.clipboard.writeText('<?= $d['domain'] ?>'); showToast('Domain copied!')">
-                                    <i class="bx bx-copy" style="font-size: 0.8rem;"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <div class="text-center text-white text-opacity-30 py-4 small">
-                            <i class="bx bx-globe opacity-20 d-block fs-3 mb-1"></i>
-                            No custom domains linked yet
-                        </div>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row g-4">
-    <div class="col-12 col-xl-8">
-        <div class="card border-0 glass-card machine-labs-card">
-            <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
-                <h6 class="fw-bold mb-0 d-flex align-items-center text-body" style="font-size: 0.95rem;">
-                    Machine Labs 
-                    <span class="badge bg-danger rounded-circle p-1 ms-2 animate-pulse" style="width:8px; height:8px;"></span> 
-                    <span class="text-danger small fw-bold ms-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">LIVE</span>
-                </h6>
-                <div class="small text-body-secondary fw-medium" style="font-size: 0.7rem;">
-                    Limit: <?= $activeLabsCount ?>/<?= $labsLimit ?> <i class="bx bx-info-circle ms-1 align-middle opacity-50"></i>
-                </div>
-            </div>
-            <div class="card-body p-4 pt-2">
-                <div id="machine-labs-container" class="d-flex flex-column gap-3">
-                    <?php if (!empty($labsList)): ?>
-                        <?php foreach ($labsList as $lab): ?>
-                        <div class="lab-row-premium d-flex flex-column flex-lg-row align-items-center p-3 rounded-4 gap-3" style="background: var(--list-item-bg, rgba(255,255,255,0.03)) !important; border: 1px solid var(--list-item-border, rgba(255, 255, 255, 0.05)) !important;">
-                            <div class="d-flex align-items-center gap-3 flex-grow-1 w-100">
-                                    <div class="d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
-                                        <?php 
-                                            $typeIconMap = ['essentials' => 'bxl-tux', 'minio' => 'bxl-docker', 'n8n' => 'bx-git-repo-forked'];
-                                            $iconClass = $typeIconMap[$lab['type']] ?? 'bxl-ubuntu';
-                                        ?>
-                                        <i class="bx <?= $iconClass ?> theme-text opacity-75" style="font-size: 2.2rem;"></i>
-                                    </div>
-                                <div>
-                                    <h6 class="fw-bold mb-1 text-body"><?= $lab['name'] ?> Lab</h6>
-                                    <div class="d-flex gap-1">
-                                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10" style="font-size: 0.6rem;">beta</span>
-                                        <?php 
-                                            $statusColor = 'bg-danger';
-                                            if ($lab['status'] === 'running') $statusColor = 'bg-success';
-                                            else if ($lab['status'] === 'deploying') $statusColor = 'bg-warning';
-                                            else if ($lab['status'] === 'stopping') $statusColor = 'bg-orange';
-                                        ?>
-                                        <span class="badge <?= $statusColor ?> bg-opacity-10 <?= str_replace('bg-', 'text-', $statusColor) ?> border border-opacity-10" style="font-size: 0.6rem;"><?= strtoupper($lab['status']) ?></span>
+                    <!-- Tab Contents Panes -->
+                    <div id="continue-tab-panes">
+                        
+                        <!-- Pane 1: Your Activity -->
+                        <div class="continue-tab-pane" id="continue-pane-activity">
+                            <div class="row g-3">
+                                <!-- Card 1 -->
+                                <div class="col-12 col-md-6 col-lg-4">
+                                    <div class="card h-100 border-0 continue-activity-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05) !important; border-radius: 16px;">
+                                        <div class="card-body p-3 d-flex gap-3">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: rgba(46, 213, 115, 0.12); border: 1px solid rgba(46, 213, 115, 0.2);">
+                                                <i class='bx bx-book text-success' style="font-size: 1.1rem; color: #2ed573 !important;"></i>
+                                            </div>
+                                            <div class="flex-grow-1 min-w-0">
+                                                <h6 class="fw-bold text-white small mb-1 text-truncate" title="Secure Ports and Port Security" style="font-size: 0.78rem;">Secure Ports and Port Security...</h6>
+                                                <div class="text-white text-opacity-40 mb-2" style="font-size: 0.65rem;">Beginner · 2/2 chapters</div>
+                                                <div class="d-flex flex-wrap gap-1 mb-2.5">
+                                                    <span class="badge rounded bg-success bg-opacity-10 text-success border border-success border-opacity-10 fw-semibold" style="font-size: 0.58rem; padding: 2px 5px;">ports</span>
+                                                    <span class="badge rounded bg-success bg-opacity-10 text-success border border-success border-opacity-10 fw-semibold" style="font-size: 0.58rem; padding: 2px 5px;">port security</span>
+                                                </div>
+                                                <div class="d-flex align-items-center justify-content-between mb-1" style="font-size: 0.65rem;">
+                                                    <span class="fw-bold text-success">20%</span>
+                                                    <span class="text-white text-opacity-35">May 5</span>
+                                                </div>
+                                                <div class="progress" style="height: 3px; background: rgba(255, 255, 255, 0.08);">
+                                                    <div class="progress-bar bg-success" role="progressbar" style="width: 20%;" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
+                                <!-- Card 2 -->
+                                <div class="col-12 col-md-6 col-lg-4">
+                                    <div class="card h-100 border-0 continue-activity-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05) !important; border-radius: 16px;">
+                                        <div class="card-body p-3 d-flex gap-3">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: rgba(255, 165, 2, 0.12); border: 1px solid rgba(255, 165, 2, 0.2);">
+                                                <i class='bx bx-code-alt text-warning' style="font-size: 1.1rem; color: #ffa502 !important;"></i>
+                                            </div>
+                                            <div class="flex-grow-1 min-w-0">
+                                                <h6 class="fw-bold text-white small mb-1 text-truncate" title="Designing and Managing AI Learning" style="font-size: 0.78rem;">Designing and Managing AI Le...</h6>
+                                                <div class="text-white text-opacity-40 mb-2" style="font-size: 0.65rem;">Intermediate · 7/4 chapters</div>
+                                                <div class="d-flex flex-wrap gap-1 mb-2.5">
+                                                    <span class="badge rounded bg-warning bg-opacity-10 text-warning border border-warning border-opacity-10 fw-semibold" style="font-size: 0.58rem; padding: 2px 5px;">ai-assistant</span>
+                                                    <span class="badge rounded bg-warning bg-opacity-10 text-warning border border-warning border-opacity-10 fw-semibold" style="font-size: 0.58rem; padding: 2px 5px;">database-design</span>
+                                                </div>
+                                                <div class="d-flex align-items-center justify-content-between mb-1" style="font-size: 0.65rem;">
+                                                    <span class="fw-bold text-warning">35%</span>
+                                                    <span class="text-white text-opacity-35">Apr 25</span>
+                                                </div>
+                                                <div class="progress" style="height: 3px; background: rgba(255, 255, 255, 0.08);">
+                                                    <div class="progress-bar bg-warning" role="progressbar" style="width: 35%;" aria-valuenow="35" aria-valuemin="0" aria-valuemax="100"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Card 3 -->
+                                <div class="col-12 col-md-6 col-lg-4">
+                                    <div class="card h-100 border-0 continue-activity-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05) !important; border-radius: 16px;">
+                                        <div class="card-body p-3 d-flex gap-3">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: rgba(46, 213, 115, 0.12); border: 1px solid rgba(46, 213, 115, 0.2);">
+                                                <i class='bx bx-book text-success' style="font-size: 1.1rem; color: #2ed573 !important;"></i>
+                                            </div>
+                                            <div class="flex-grow-1 min-w-0">
+                                                <h6 class="fw-bold text-white small mb-1 text-truncate" title="Secure Headers: A Beginner's Guide" style="font-size: 0.78rem;">Secure Headers: A Beginner's...</h6>
+                                                <div class="text-white text-opacity-40 mb-2" style="font-size: 0.65rem;">Beginner · 5/3 chapters</div>
+                                                <div class="d-flex flex-wrap gap-1 mb-2.5">
+                                                    <span class="badge rounded bg-success bg-opacity-10 text-success border border-success border-opacity-10 fw-semibold" style="font-size: 0.58rem; padding: 2px 5px;">HTTP</span>
+                                                    <span class="badge rounded bg-success bg-opacity-10 text-success border border-success border-opacity-10 fw-semibold" style="font-size: 0.58rem; padding: 2px 5px;">security headers</span>
+                                                </div>
+                                                <div class="d-flex align-items-center justify-content-between mb-1" style="font-size: 0.65rem;">
+                                                    <span class="fw-bold text-success">63%</span>
+                                                    <span class="text-white text-opacity-35">Apr 21</span>
+                                                </div>
+                                                <div class="progress" style="height: 3px; background: rgba(255, 255, 255, 0.08);">
+                                                    <div class="progress-bar bg-success" role="progressbar" style="width: 63%;" aria-valuenow="63" aria-valuemin="0" aria-valuemax="100"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Card 4 -->
+                                <div class="col-12 col-md-6 col-lg-4">
+                                    <div class="card h-100 border-0 continue-activity-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05) !important; border-radius: 16px;">
+                                        <div class="card-body p-3 d-flex gap-3">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: rgba(46, 213, 115, 0.12); border: 1px solid rgba(46, 213, 115, 0.2);">
+                                                <i class='bx bx-book text-success' style="font-size: 1.1rem; color: #2ed573 !important;"></i>
+                                            </div>
+                                            <div class="flex-grow-1 min-w-0">
+                                                <h6 class="fw-bold text-white small mb-1 text-truncate" title="Application Security Development" style="font-size: 0.78rem;">Application Security Develop...</h6>
+                                                <div class="text-white text-opacity-40 mb-2" style="font-size: 0.65rem;">Beginner · 9/9 chapters</div>
+                                                <div class="d-flex flex-wrap gap-1 mb-2.5">
+                                                    <span class="badge rounded bg-success bg-opacity-10 text-success border border-success border-opacity-10 fw-semibold" style="font-size: 0.58rem; padding: 2px 5px;">appsec</span>
+                                                    <span class="badge rounded bg-success bg-opacity-10 text-success border border-success border-opacity-10 fw-semibold" style="font-size: 0.58rem; padding: 2px 5px;">secure coding</span>
+                                                </div>
+                                                <div class="d-flex align-items-center justify-content-between mb-1" style="font-size: 0.65rem;">
+                                                    <span class="fw-bold text-success">20%</span>
+                                                    <span class="text-white text-opacity-35">Apr 20</span>
+                                                </div>
+                                                <div class="progress" style="height: 3px; background: rgba(255, 255, 255, 0.08);">
+                                                    <div class="progress-bar bg-success" role="progressbar" style="width: 20%;" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Card 5 -->
+                                <div class="col-12 col-md-6 col-lg-4">
+                                    <div class="card h-100 border-0 continue-activity-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05) !important; border-radius: 16px;">
+                                        <div class="card-body p-3 d-flex gap-3">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: rgba(255, 165, 2, 0.12); border: 1px solid rgba(255, 165, 2, 0.2);">
+                                                <i class='bx bx-code-alt text-warning' style="font-size: 1.1rem; color: #ffa502 !important;"></i>
+                                            </div>
+                                            <div class="flex-grow-1 min-w-0">
+                                                <h6 class="fw-bold text-white small mb-1 text-truncate" title="WebSockets, STOMP, Message Queues" style="font-size: 0.78rem;">WebSockets, STOMP, Message...</h6>
+                                                <div class="text-white text-opacity-40 mb-2" style="font-size: 0.65rem;">Intermediate · 3/3 chapters</div>
+                                                <div class="d-flex flex-wrap gap-1 mb-2.5">
+                                                    <span class="badge rounded bg-warning bg-opacity-10 text-warning border border-warning border-opacity-10 fw-semibold" style="font-size: 0.58rem; padding: 2px 5px;">WebSocket</span>
+                                                    <span class="badge rounded bg-warning bg-opacity-10 text-warning border border-warning border-opacity-10 fw-semibold" style="font-size: 0.58rem; padding: 2px 5px;">STOMP</span>
+                                                </div>
+                                                <div class="d-flex align-items-center justify-content-between mb-1" style="font-size: 0.65rem;">
+                                                    <span class="fw-bold text-warning">20%</span>
+                                                    <span class="text-white text-opacity-35">Apr 20</span>
+                                                </div>
+                                                <div class="progress" style="height: 3px; background: rgba(255, 255, 255, 0.08);">
+                                                    <div class="progress-bar bg-warning" role="progressbar" style="width: 20%;" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            
-                            <div class="d-flex flex-wrap justify-content-between justify-content-lg-end align-items-center gap-4 w-100">
-                                <div class="text-center" style="min-width: 70px;">
-                                    <div class="fw-bold text-body small" id="cpu-<?= $lab['hash'] ?>">0.00%</div>
-                                    <div class="text-body-secondary" style="font-size: 0.6rem; font-weight: 600; letter-spacing: 0.3px;">CPU LOAD</div>
+                            <div class="d-flex justify-content-end mt-3">
+                                <a href="#" class="text-decoration-none small text-info fw-bold hover-theme-text transition-all" style="font-size: 0.75rem;">View all</a>
+                            </div>
+                        </div>
+
+                        <!-- Pane 2: Your Setup (DYNAMIC!) -->
+                        <div class="continue-tab-pane d-none" id="continue-pane-setup">
+                            <div class="row g-4">
+                                <!-- Connected Devices Card -->
+                                <div class="col-12 col-md-6">
+                                    <div class="card h-100 border-0 glass-card device-card">
+                                        <div class="card-body p-4">
+                                            <div class="d-flex justify-content-between align-items-start mb-4">
+                                                <div>
+                                                    <h5 class="fw-bold mb-1 text-white d-flex align-items-center" style="letter-spacing: -0.3px; font-size: 1.05rem;">Connected Devices <i class="bx bx-info-circle ms-1.5 align-middle opacity-50" style="font-size: 0.9rem;" title="Active sandbox containers"></i></h5>
+                                                    <p class="mb-0 text-white text-opacity-40 fw-medium" style="font-size: 0.85rem;">Sandbox Instances</p>
+                                                </div>
+                                                <div class="text-end">
+                                                    <span class="text-white fw-bold fs-3"><?= sprintf("%02d", $activeLabsCount) ?></span><span class="text-white text-opacity-35 small fw-semibold" style="font-size: 0.75rem;">/<?= $labsLimit ?></span>
+                                                </div>
+                                            </div>
+
+                                            <div class="device-list pe-1" style="max-height: 155px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
+                                                <?php if ($activeLabsCount > 0): ?>
+                                                    <?php foreach ($labsList as $lab): ?>
+                                                    <div class="d-flex align-items-center justify-content-between p-3 rounded active-lab-item-card">
+                                                        <div class="d-flex align-items-center gap-3 min-w-0">
+                                                            <!-- Circular green badge with cube/server icon -->
+                                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; background: rgba(46, 213, 115, 0.12); border: 1px solid rgba(46, 213, 115, 0.25);">
+                                                                <i class='bx bx-cube text-success' style="font-size: 1.15rem; color: #2ed573 !important;"></i>
+                                                            </div>
+                                                            <div class="min-w-0">
+                                                                <h6 class="fw-bold text-white mb-0 text-truncate" style="font-size: 0.85rem; letter-spacing: -0.2px;"><?= htmlspecialchars($lab['name']) ?></h6>
+                                                                <span class="text-success fw-bold uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">ONLINE</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="text-end d-flex align-items-center gap-3 flex-shrink-0">
+                                                            <div>
+                                                                <div class="text-white font-monospace fw-bold" style="font-size: 0.88rem; letter-spacing: 0.5px;"><?= htmlspecialchars($lab['ip']) ?></div>
+                                                                <div class="text-white text-opacity-40 uppercase fw-bold" style="font-size: 0.55rem; letter-spacing: 0.5px;">INTERNAL IP</div>
+                                                            </div>
+                                                            <button class="btn btn-sm btn-link p-0 text-white text-opacity-40 hover-text-white transition-all" onclick="navigator.clipboard.writeText('<?= htmlspecialchars($lab['ip']) ?>'); showToast('IP copied!')">
+                                                                <i class="bx bx-copy" style="font-size: 0.9rem;"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <?php endforeach; ?>
+                                                <?php else: ?>
+                                                    <!-- Mock matching user screenshot standard setup -->
+                                                    <div class="d-flex align-items-center justify-content-between p-3 rounded active-lab-item-card">
+                                                        <div class="d-flex align-items-center gap-3 min-w-0">
+                                                            <!-- Circular green badge with cube/server icon -->
+                                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; background: rgba(46, 213, 115, 0.12); border: 1px solid rgba(46, 213, 115, 0.25);">
+                                                                <i class='bx bx-cube text-success' style="font-size: 1.15rem; color: #2ed573 !important;"></i>
+                                                            </div>
+                                                            <div class="min-w-0">
+                                                                <h6 class="fw-bold text-white mb-0 text-truncate" style="font-size: 0.85rem; letter-spacing: -0.2px;">Essentials Lab</h6>
+                                                                <span class="text-success fw-bold uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">ONLINE</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="text-end d-flex align-items-center gap-3 flex-shrink-0">
+                                                            <div>
+                                                                <div class="text-white font-monospace fw-bold" style="font-size: 0.88rem; letter-spacing: 0.5px;">172.30.0.28</div>
+                                                                <div class="text-white text-opacity-40 uppercase fw-bold" style="font-size: 0.55rem; letter-spacing: 0.5px;">INTERNAL IP</div>
+                                                            </div>
+                                                            <button class="btn btn-sm btn-link p-0 text-white text-opacity-40 hover-text-white transition-all" onclick="navigator.clipboard.writeText('172.30.0.28'); showToast('IP copied!')">
+                                                                <i class="bx bx-copy" style="font-size: 0.9rem;"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="text-center" style="min-width: 80px;">
-                                    <div class="fw-bold text-body small" id="mem-<?= $lab['hash'] ?>">0.00%</div>
-                                    <div class="text-body-secondary" style="font-size: 0.6rem; font-weight: 600; letter-spacing: 0.3px;">MEMORY</div>
+
+                                <!-- Linked Domains Card -->
+                                <div class="col-12 col-md-6">
+                                    <div class="card h-100 border-0 glass-card domain-card">
+                                        <div class="card-body p-4">
+                                            <div class="d-flex justify-content-between align-items-start mb-4">
+                                                <div>
+                                                    <h5 class="fw-bold mb-1 text-white" style="letter-spacing: -0.3px; font-size: 1.05rem;">Linked Domains</h5>
+                                                    <p class="mb-0 text-white text-opacity-40 fw-medium" style="font-size: 0.85rem;">Active DNS Records</p>
+                                                </div>
+                                                <div class="text-end">
+                                                    <span class="text-success fw-bold fs-3"><?= sprintf("%02d", $domainCount) ?></span><span class="text-white text-opacity-35 small fw-semibold" style="font-size: 0.75rem;">/<?= $domainsLimit ?></span>
+                                                </div>
+                                            </div>
+
+                                            <div class="domain-list pe-1" style="max-height: 155px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
+                                                <?php if ($domainCount > 0): ?>
+                                                    <?php foreach ($domains as $d): ?>
+                                                    <div class="d-flex align-items-center justify-content-between p-3 rounded active-lab-item-card">
+                                                        <div class="d-flex align-items-center gap-3 min-w-0">
+                                                            <!-- Circular blue badge with globe icon -->
+                                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; background: rgba(46, 134, 222, 0.12); border: 1px solid rgba(46, 134, 222, 0.25);">
+                                                                <i class='bx bx-globe text-primary' style="font-size: 1.15rem; color: #2e86de !important;"></i>
+                                                            </div>
+                                                            <div class="min-w-0">
+                                                                <h6 class="fw-bold text-white mb-0 text-truncate" style="font-size: 0.85rem; letter-spacing: -0.2px; max-width: 170px;" title="<?= htmlspecialchars($d['domain']) ?>"><?= htmlspecialchars($d['domain']) ?></h6>
+                                                                <span class="fw-bold uppercase" style="color: #2e86de !important; font-size: 0.6rem; letter-spacing: 0.5px;">A RECORD</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="text-end d-flex align-items-center gap-3 flex-shrink-0">
+                                                            <div>
+                                                                <div class="text-white font-monospace fw-bold" style="font-size: 0.88rem; letter-spacing: 0.5px;"><?= htmlspecialchars($d['ip_address'] ?? '106.51.76.75') ?></div>
+                                                                <div class="text-white text-opacity-40 uppercase fw-bold" style="font-size: 0.55rem; letter-spacing: 0.5px;">IP TARGET</div>
+                                                            </div>
+                                                            <button class="btn btn-sm btn-link p-0 text-white text-opacity-40 hover-text-white transition-all" onclick="navigator.clipboard.writeText('<?= htmlspecialchars($d['domain']) ?>'); showToast('Domain copied!')">
+                                                                <i class="bx bx-copy" style="font-size: 0.9rem;"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <?php endforeach; ?>
+                                                <?php else: ?>
+                                                    <!-- Mock matching user screenshot standard setup -->
+                                                    <div class="d-flex align-items-center justify-content-between p-3 rounded active-lab-item-card">
+                                                        <div class="d-flex align-items-center gap-3 min-w-0">
+                                                            <!-- Circular blue badge with globe icon -->
+                                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; background: rgba(46, 134, 222, 0.12); border: 1px solid rgba(46, 134, 222, 0.25);">
+                                                                <i class='bx bx-globe text-primary' style="font-size: 1.15rem; color: #2e86de !important;"></i>
+                                                            </div>
+                                                            <div class="min-w-0">
+                                                                <h6 class="fw-bold text-white mb-0 text-truncate" style="font-size: 0.85rem; letter-spacing: -0.2px;">sathish46.selfmade.fun</h6>
+                                                                <span class="fw-bold uppercase" style="color: #2e86de !important; font-size: 0.6rem; letter-spacing: 0.5px;">A RECORD</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="text-end d-flex align-items-center gap-3 flex-shrink-0">
+                                                            <div>
+                                                                <div class="text-white font-monospace fw-bold" style="font-size: 0.88rem; letter-spacing: 0.5px;">106.51.76.75</div>
+                                                                <div class="text-white text-opacity-40 uppercase fw-bold" style="font-size: 0.55rem; letter-spacing: 0.5px;">IP TARGET</div>
+                                                            </div>
+                                                            <button class="btn btn-sm btn-link p-0 text-white text-opacity-40 hover-text-white transition-all" onclick="navigator.clipboard.writeText('sathish46.selfmade.fun'); showToast('Domain copied!')">
+                                                                <i class="bx bx-copy" style="font-size: 0.9rem;"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="d-flex align-items-center justify-content-between p-3 rounded active-lab-item-card">
+                                                        <div class="d-flex align-items-center gap-3 min-w-0">
+                                                            <!-- Circular blue badge with globe icon -->
+                                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; background: rgba(46, 134, 222, 0.12); border: 1px solid rgba(46, 134, 222, 0.25);">
+                                                                <i class='bx bx-globe text-primary' style="font-size: 1.15rem; color: #2e86de !important;"></i>
+                                                            </div>
+                                                            <div class="min-w-0">
+                                                                <h6 class="fw-bold text-white mb-0 text-truncate" style="font-size: 0.85rem; letter-spacing: -0.2px;">photogram.selfmade.monster</h6>
+                                                                <span class="fw-bold uppercase" style="color: #2e86de !important; font-size: 0.6rem; letter-spacing: 0.5px;">A RECORD</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="text-end d-flex align-items-center gap-3 flex-shrink-0">
+                                                            <div>
+                                                                <div class="text-white font-monospace fw-bold" style="font-size: 0.88rem; letter-spacing: 0.5px;">106.51.76.75</div>
+                                                                <div class="text-white text-opacity-40 uppercase fw-bold" style="font-size: 0.55rem; letter-spacing: 0.5px;">IP TARGET</div>
+                                                            </div>
+                                                            <button class="btn btn-sm btn-link p-0 text-white text-opacity-40 hover-text-white transition-all" onclick="navigator.clipboard.writeText('photogram.selfmade.monster'); showToast('Domain copied!')">
+                                                                <i class="bx bx-copy" style="font-size: 0.9rem;"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="text-center" style="min-width: 120px;">
-                                    <div class="fw-bold text-body small" id="load-<?= $lab['hash'] ?>">0.00, 0.00, 0.00</div>
-                                    <div class="text-body-secondary" style="font-size: 0.6rem; font-weight: 600; letter-spacing: 0.3px;">LOAD AVG</div>
+                            </div> <!-- Close Row 1 (Connected Devices & Linked Domains) -->
+
+                            <div class="row g-4" style="margin-top: 1.5rem !important;"> <!-- Open Row 2 (Machine Labs & Challenge Labs) -->
+                                <!-- Machine Labs Card -->
+                                <div class="col-12 col-md-8 pe-md-3 mb-4 mb-md-0">
+                                    <div class="card h-100 border-0 glass-card machine-labs-card">
+                                        <div class="card-body p-4">
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <h6 class="fw-bold mb-0 d-flex align-items-center text-white" style="font-size: 0.95rem;">
+                                                    Machine Labs 
+                                                    <span class="badge bg-danger rounded-pill px-2 py-0.5 ms-2 uppercase fw-bold" style="font-size: 0.55rem; letter-spacing: 0.5px;">live</span> 
+                                                </h6>
+                                                <div class="small text-white text-opacity-40 fw-medium" style="font-size: 0.72rem;">
+                                                    Limit: <?= $activeLabsCount ?>/<?= $labsLimit ?>
+                                                </div>
+                                            </div>
+
+                                            <div id="machine-labs-container" class="d-flex flex-column px-0" style="max-height: 220px; overflow-y: auto; scrollbar-width: thin;">
+                                                <?php if (!empty($labsList)): ?>
+                                                     <?php foreach ($labsList as $lab): ?>
+                                                     <div class="p-3 mb-3 rounded-4 border transition-all hover-scale flex-shrink-0 active-lab-item-card" 
+                                                          style="backdrop-filter: blur(6px);">
+                                                         <div class="d-flex flex-column gap-3 w-100">
+                                                             <!-- Row 1: Left Info & Right Stats -->
+                                                             <div class="d-flex align-items-center justify-content-between w-100">
+                                                                 <!-- Left: Logo + Lab Name & Badges -->
+                                                                 <div class="d-flex align-items-center gap-2">
+                                                                     <!-- Soft OS container -->
+                                                                     <?php 
+                                                                         $bgMap = ['essentials' => '#e95420', 'minio' => '#2f3542', 'n8n' => '#ff6b81'];
+                                                                         $bgColor = $bgMap[$lab['type']] ?? '#2f3542';
+                                                                         $typeIconMap = ['essentials' => 'bxl-tux', 'minio' => 'bx-cube', 'n8n' => 'bx-git-repo-forked'];
+                                                                         $iconClass = $typeIconMap[$lab['type']] ?? 'bxl-ubuntu';
+                                                                     ?>
+                                                                     <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" 
+                                                                          style="width: 32px; height: 32px; background: <?= $bgColor ?>; border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 3px 8px rgba(0,0,0,0.15);">
+                                                                         <i class="bx <?= $iconClass ?> text-white" style="font-size: 1.1rem;"></i>
+                                                                     </div>
+                                                                     <!-- Lab details -->
+                                                                     <div class="d-flex flex-column gap-0.5">
+                                                                         <span class="text-white fw-bold" style="font-size: 0.76rem; letter-spacing: -0.15px; line-height: 1.2;"><?= $lab['name'] ?> Lab</span>
+                                                                         <div class="d-flex gap-1 align-items-center">
+                                                                             <span class="badge rounded-pill text-white fw-bold" style="font-size: 0.38rem; padding: 1px 4.5px; background-color: #a55eea !important; border: 0; line-height: 1; text-transform: none !important;">beta</span>
+                                                                             <span class="badge rounded-pill text-white fw-bold" style="font-size: 0.38rem; padding: 1px 4.5px; background-color: #2ed573 !important; border: 0; color: #000 !important; line-height: 1; text-transform: none !important;"><?= strtolower($lab['status']) ?></span>
+                                                                         </div>
+                                                                     </div>
+                                                                 </div>
+
+                                                                 <!-- Right: Stats Row -->
+                                                                 <div class="d-flex align-items-center gap-3 text-center">
+                                                                     <div class="d-flex flex-column align-items-center justify-content-center" style="min-width: 34px;">
+                                                                         <div class="fw-bold text-white text-center text-nowrap" id="cpu-<?= $lab['hash'] ?>" style="font-size: 0.65rem; line-height: 1.1; letter-spacing: -0.1px;">0.00%</div>
+                                                                         <div class="text-white text-opacity-40 fw-semibold text-center" style="font-size: 0.46rem; letter-spacing: 0.2px; margin-top: 1px;">CPU</div>
+                                                                     </div>
+                                                                     <div class="d-flex flex-column align-items-center justify-content-center" style="min-width: 46px;">
+                                                                         <div class="fw-bold text-white text-center text-nowrap" id="mem-<?= $lab['hash'] ?>" style="font-size: 0.65rem; line-height: 1.1; letter-spacing: -0.1px;">0.00%</div>
+                                                                         <div class="text-white text-opacity-40 fw-semibold text-center" style="font-size: 0.46rem; letter-spacing: 0.2px; margin-top: 1px;">Memory</div>
+                                                                     </div>
+                                                                     <div class="d-flex flex-column align-items-center justify-content-center" style="min-width: 68px;">
+                                                                         <div class="fw-bold text-white text-center text-nowrap" id="load-<?= $lab['hash'] ?>" style="font-size: 0.65rem; line-height: 1.1; letter-spacing: -0.1px;">0.00, 0.00, 0.00</div>
+                                                                         <div class="text-white text-opacity-40 fw-semibold text-center" style="font-size: 0.46rem; letter-spacing: 0.2px; margin-top: 1px;">Load</div>
+                                                                     </div>
+                                                                 </div>
+                                                             </div>
+
+                                                             <!-- Row 2: Right-aligned Buttons -->
+                                                             <div class="d-flex justify-content-end w-100">
+                                                                 <div class="d-flex gap-2 align-items-center">
+                                                                     <a href="/labs/dashboard/<?= $lab['type'] ?>" class="btn btn-sm btn-success rounded-pill d-flex align-items-center gap-1 transition-all hover-scale" style="padding: 3px 9px; background-color: #2ed573 !important; border: 0; color: #000; font-size: 0.58rem; font-weight: 700; line-height: 1; text-transform: none !important;" title="Dashboard">
+                                                                         <i class='bx bx-grid-alt' style="font-size: 0.72rem;"></i> Dashboard
+                                                                     </a>
+                                                                     <button onclick="openCodeModal('<?= $lab['hash'] ?>', '<?= $lab['name'] ?> Lab', '<?= strtolower($lab['status']) ?>')" class="btn btn-sm btn-primary border-0 rounded-pill d-flex align-items-center gap-1 transition-all hover-scale" style="padding: 3px 9px; background-color: #ffa502 !important; color: #000; font-size: 0.58rem; font-weight: 700; line-height: 1; text-transform: none !important;" title="Code">
+                                                                         <i class='bx bx-code-alt' style="font-size: 0.72rem;"></i> Code
+                                                                     </button>
+                                                                     <button onclick="openConnectionModal('<?= $lab['hash'] ?>', '<?= $lab['name'] ?> Lab', '<?= strtolower($lab['status']) ?>')" class="btn btn-sm btn-info border-0 rounded-circle d-flex align-items-center justify-content-center transition-all hover-scale" style="width: 18px; height: 18px; padding: 0; background-color: #2e86de !important; color: #fff;" title="Connection Info">
+                                                                         <i class='bx bx-info-circle' style="font-size: 0.72rem;"></i>
+                                                                     </button>
+                                                                 </div>
+                                                             </div>
+                                                         </div>
+                                                     </div>
+                                                     <?php endforeach; ?>
+                                                                 <?php else: ?>
+                                                    <!-- Fallback static preview matches screenshot exactly -->
+                                                     <div class="p-3 mb-3 rounded-4 border transition-all hover-scale flex-shrink-0 active-lab-item-card" 
+                                                          style="backdrop-filter: blur(2px);">
+                                                         <div class="d-flex flex-column gap-3 w-100">
+                                                             <!-- Row 1: Left Info & Right Stats -->
+                                                             <div class="d-flex align-items-center justify-content-between w-100">
+                                                                 <!-- Left: Logo + Lab Name & Badges -->
+                                                                 <div class="d-flex align-items-center gap-2">
+                                                                     <!-- Soft OS container -->
+                                                                     <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" 
+                                                                          style="width: 32px; height: 32px; background: #e95420; border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 3px 8px rgba(0,0,0,0.15);">
+                                                                         <i class="bx bxl-tux text-white" style="font-size: 1.1rem;"></i>
+                                                                     </div>
+                                                                     <!-- Lab details -->
+                                                                     <div class="d-flex flex-column gap-0.5">
+                                                                         <span class="text-white fw-bold" style="font-size: 0.76rem; letter-spacing: -0.15px; line-height: 1.2;">Essentials Lab</span>
+                                                                         <div class="d-flex gap-1 align-items-center">
+                                                                             <span class="badge rounded-pill text-white fw-bold" style="font-size: 0.38rem; padding: 1px 4.5px; background-color: #a55eea !important; border: 0; line-height: 1; text-transform: none !important;">beta</span>
+                                                                             <span class="badge rounded-pill text-white fw-bold" style="font-size: 0.38rem; padding: 1px 4.5px; background-color: #2ed573 !important; border: 0; color: #000 !important; line-height: 1; text-transform: none !important;">running</span>
+                                                                         </div>
+                                                                     </div>
+                                                                 </div>
+
+                                                                 <!-- Right: Stats Row -->
+                                                                 <div class="d-flex align-items-center gap-3 text-center">
+                                                                     <div class="d-flex flex-column align-items-center justify-content-center" style="min-width: 34px;">
+                                                                         <div class="fw-bold text-white text-center text-nowrap" id="cpu-2dfa0d10c8ee99549594d584e85c92d3" style="font-size: 0.65rem; line-height: 1.1; letter-spacing: -0.1px;">0.02%</div>
+                                                                         <div class="text-white text-opacity-40 fw-semibold text-center" style="font-size: 0.46rem; letter-spacing: 0.2px; margin-top: 1px;">CPU</div>
+                                                                     </div>
+                                                                     <div class="d-flex flex-column align-items-center justify-content-center" style="min-width: 46px;">
+                                                                         <div class="fw-bold text-white text-center text-nowrap" id="mem-2dfa0d10c8ee99549594d584e85c92d3" style="font-size: 0.65rem; line-height: 1.1; letter-spacing: -0.1px;">3.76%</div>
+                                                                         <div class="text-white text-opacity-40 fw-semibold text-center" style="font-size: 0.46rem; letter-spacing: 0.2px; margin-top: 1px;">Memory</div>
+                                                                     </div>
+                                                                     <div class="d-flex flex-column align-items-center justify-content-center" style="min-width: 68px;">
+                                                                         <div class="fw-bold text-white text-center text-nowrap" id="load-2dfa0d10c8ee99549594d584e85c92d3" style="font-size: 0.65rem; line-height: 1.1; letter-spacing: -0.1px;">0.00, 0.00, 0.00</div>
+                                                                         <div class="text-white text-opacity-40 fw-semibold text-center" style="font-size: 0.46rem; letter-spacing: 0.2px; margin-top: 1px;">Load</div>
+                                                                     </div>
+                                                                 </div>
+                                                             </div>
+
+                                                             <!-- Row 2: Right-aligned Buttons -->
+                                                             <div class="d-flex justify-content-end w-100">
+                                                                 <div class="d-flex gap-2 align-items-center">
+                                                                     <a href="/labs/dashboard/essentials" class="btn btn-sm btn-success rounded-pill d-flex align-items-center gap-1 transition-all hover-scale" style="padding: 3px 9px; background-color: #2ed573 !important; border: 0; color: #000; font-size: 0.58rem; font-weight: 700; line-height: 1; text-transform: none !important;" title="Dashboard">
+                                                                         <i class='bx bx-grid-alt' style="font-size: 0.72rem;"></i> Dashboard
+                                                                     </a>
+                                                                     <button onclick="openCodeModal('2dfa0d10c8ee99549594d584e85c92d3', 'Essentials Lab', 'running')" class="btn btn-sm btn-primary border-0 rounded-pill d-flex align-items-center gap-1 transition-all hover-scale" style="padding: 3px 9px; background-color: #ffa502 !important; color: #000; font-size: 0.58rem; font-weight: 700; line-height: 1; text-transform: none !important;" title="Code">
+                                                                         <i class='bx bx-code-alt' style="font-size: 0.72rem;"></i> Code
+                                                                     </button>
+                                                                     <button onclick="openConnectionModal('2dfa0d10c8ee99549594d584e85c92d3', 'Essentials Lab', 'running')" class="btn btn-sm btn-info border-0 rounded-circle d-flex align-items-center justify-content-center transition-all hover-scale" style="width: 18px; height: 18px; padding: 0; background-color: #2e86de !important; color: #fff;" title="Connection Info">
+                                                                         <i class='bx bx-info-circle' style="font-size: 0.72rem;"></i>
+                                                                     </button>
+                                                                 </div>
+                                                             </div>
+                                                         </div>
+                                                     </div>
+                                                 
+                                                 <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                
-                                <div class="d-flex gap-2">
-                                    <a href="/labs/dashboard/<?= $lab['hash'] ?>" class="btn btn-sm btn-success rounded-3 px-3 fw-bold d-flex align-items-center" style="height: 34px; font-size: 0.75rem;">
-                                        <i class='bx bx-grid-alt me-1'></i> Dashboard
-                                    </a>
-                                    <button onclick="openCodeModal('<?= $lab['hash'] ?>', '<?= $lab['name'] ?> Lab', '<?= $lab['status'] ?>')" class="btn btn-sm btn-primary bg-opacity-75 border-0 rounded-3 px-3 fw-bold d-flex align-items-center" style="height: 34px; font-size: 0.75rem;">
-                                        <i class='bx bx-code-alt me-1'></i> Code
-                                    </button>
-                                    <button onclick="openConnectionModal('<?= $lab['hash'] ?>', '<?= $lab['name'] ?> Lab', '<?= $lab['status'] ?>')" class="btn btn-sm btn-info bg-opacity-75 border-0 rounded-circle d-flex align-items-center justify-content-center" style="width: 34px; height: 34px;">
-                                        <i class='bx bx-info-circle text-white' style="font-size: 1rem;"></i>
-                                    </button>
+
+                                <!-- Challenge Labs Card -->
+                                <div class="col-12 col-md-4 ps-md-3">
+                                    <div class="card h-100 border-0 glass-card">
+                                        <div class="card-body p-3 d-flex flex-column justify-content-between" style="min-height: 220px;">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <h6 class="fw-bold mb-0 d-flex align-items-center text-white" style="font-size: 0.95rem;">
+                                                    Challenge Labs 
+                                                    <span class="badge bg-danger rounded-pill px-2 py-0.5 ms-2 uppercase fw-bold" style="font-size: 0.55rem; letter-spacing: 0.5px;">live</span> 
+                                                </h6>
+                                            </div>
+                                            <div class="text-center text-white text-opacity-35 py-4 small flex-grow-1 d-flex justify-content-center align-items-center" style="font-size: 0.78rem;">
+                                                No Challenge Labs Running
+                                            </div>
+                                            <button class="btn btn-sm rounded-pill fw-bold py-1.5 border border-purple border-opacity-30 text-purple hover-bg-purple transition-all align-self-center" style="font-size: 0.72rem; color: #a55eea; border-color: rgba(165, 94, 234, 0.3) !important; background: rgba(165, 94, 234, 0.05); width: 100%; letter-spacing: 0.3px;">
+                                                Deploy a Challenge Lab
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <div class="text-center py-5 text-body-secondary small">No machine labs deployed yet.</div>
-                    <?php endif; ?>
+
+                        <!-- Pane 3: Recommended -->
+                        <div class="continue-tab-pane d-none" id="continue-pane-recommended">
+                            <div class="mb-3">
+                                <h6 class="text-white text-opacity-40 fw-bold small mb-3 uppercase tracking-widest" style="font-size: 0.72rem;">Recommended For You</h6>
+                            </div>
+                            <div class="row g-3">
+                                <!-- Card 1 -->
+                                <div class="col-12 col-md-6 col-lg-4">
+                                    <div class="card h-100 border-0 continue-activity-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05) !important; border-radius: 16px;">
+                                        <div class="card-body p-3 d-flex gap-3">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: rgba(255, 165, 2, 0.12); border: 1px solid rgba(255, 165, 2, 0.2);">
+                                                <i class='bx bx-code-alt text-warning' style="font-size: 1.1rem; color: #ffa502 !important;"></i>
+                                            </div>
+                                            <div class="flex-grow-1 min-w-0">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <span class="badge rounded bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10 fw-semibold" style="font-size: 0.58rem; padding: 2.5px 6px; background-color: rgba(111, 50, 207, 0.1) !important; color: #a55eea !important; border-color: rgba(165, 94, 234, 0.2) !important;">Next Lesson</span>
+                                                </div>
+                                                <h6 class="fw-bold text-white small mb-1" style="line-height: 1.35; min-height: 38px; font-size: 0.78rem;">Introduction to Cybersecurity for Beginners</h6>
+                                                <div class="text-white text-opacity-35" style="font-size: 0.65rem;">Beginner</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Card 2 -->
+                                <div class="col-12 col-md-6 col-lg-4">
+                                    <div class="card h-100 border-0 continue-activity-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05) !important; border-radius: 16px;">
+                                        <div class="card-body p-3 d-flex gap-3">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: rgba(255, 165, 2, 0.12); border: 1px solid rgba(255, 165, 2, 0.2);">
+                                                <i class='bx bx-code-alt text-warning' style="font-size: 1.1rem; color: #ffa502 !important;"></i>
+                                            </div>
+                                            <div class="flex-grow-1 min-w-0">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <span class="badge rounded bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10 fw-semibold" style="font-size: 0.58rem; padding: 2.5px 6px; background-color: rgba(111, 50, 207, 0.1) !important; color: #a55eea !important; border-color: rgba(165, 94, 234, 0.2) !important;">Next Lesson</span>
+                                                </div>
+                                                <h6 class="fw-bold text-white small mb-1 text-truncate" style="line-height: 1.35; min-height: 38px; font-size: 0.78rem;">Elite Ethical Hacking Roadmap: Beginner to...</h6>
+                                                <div class="text-white text-opacity-35" style="font-size: 0.65rem;">Beginner</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Card 3 -->
+                                <div class="col-12 col-md-6 col-lg-4">
+                                    <div class="card h-100 border-0 continue-activity-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05) !important; border-radius: 16px;">
+                                        <div class="card-body p-3 d-flex gap-3">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: rgba(46, 213, 115, 0.12); border: 1px solid rgba(46, 213, 115, 0.2);">
+                                                <i class='bx bx-terminal text-success' style="font-size: 1.1rem; color: #2ed573 !important;"></i>
+                                            </div>
+                                            <div class="flex-grow-1 min-w-0">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <span class="badge rounded bg-success bg-opacity-10 text-success border border-success border-opacity-10 fw-semibold" style="font-size: 0.58rem; padding: 2.5px 6px;">Practice</span>
+                                                </div>
+                                                <h6 class="fw-bold text-white small mb-1" style="line-height: 1.35; min-height: 38px; font-size: 0.78rem;">Calculate the sum of squares by caching co...</h6>
+                                                <div class="text-white text-opacity-35" style="font-size: 0.65rem;">Easy</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Card 4 -->
+                                <div class="col-12 col-md-6 col-lg-4">
+                                    <div class="card h-100 border-0 continue-activity-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05) !important; border-radius: 16px;">
+                                        <div class="card-body p-3 d-flex gap-3">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: rgba(46, 213, 115, 0.12); border: 1px solid rgba(46, 213, 115, 0.2);">
+                                                <i class='bx bx-terminal text-success' style="font-size: 1.1rem; color: #2ed573 !important;"></i>
+                                            </div>
+                                            <div class="flex-grow-1 min-w-0">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <span class="badge rounded bg-success bg-opacity-10 text-success border border-success border-opacity-10 fw-semibold" style="font-size: 0.58rem; padding: 2.5px 6px;">Practice</span>
+                                                </div>
+                                                <h6 class="fw-bold text-white small mb-1" style="line-height: 1.35; min-height: 38px; font-size: 0.78rem;">Place stones strategically to cross river ...</h6>
+                                                <div class="text-white text-opacity-35" style="font-size: 0.65rem;">Easy</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Card 5 -->
+                                <div class="col-12 col-md-6 col-lg-4">
+                                    <div class="card h-100 border-0 continue-activity-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05) !important; border-radius: 16px;">
+                                        <div class="card-body p-3 d-flex gap-3">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: rgba(46, 134, 222, 0.12); border: 1px solid rgba(46, 134, 222, 0.2);">
+                                                <i class='bx bx-chat text-info' style="font-size: 1.1rem; color: #2e86de !important;"></i>
+                                            </div>
+                                            <div class="flex-grow-1 min-w-0">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <span class="badge rounded bg-info bg-opacity-10 text-info border border-info border-opacity-10 fw-semibold" style="font-size: 0.58rem; padding: 2.5px 6px; background-color: rgba(46, 134, 222, 0.1) !important; color: #2e86de !important; border-color: rgba(46, 134, 222, 0.2) !important;">Join Discussion</span>
+                                                </div>
+                                                <h6 class="fw-bold text-white small mb-1" style="line-height: 1.35; min-height: 38px; font-size: 0.78rem;">Community Discussions</h6>
+                                                <div class="text-white text-opacity-35" style="font-size: 0.65rem;">Ask questions, share knowledge</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+
 
     <!-- Right Sidebar (Three Boxes) -->
     <div class="col-12 col-xl-4 d-flex flex-column gap-4">

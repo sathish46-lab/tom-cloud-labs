@@ -36,5 +36,13 @@ $tomThemes = [
             '/assets/Background_Img/spiderman/0.png',
             '/assets/Background_Img/spiderman/1.png'
         ]
+    ],
+    'ironman' => [
+        'color' => '#150303',
+        'primary' => '#ffcc00',
+        'assets' => [
+            '/assets/Background_Img/IronMan/0.jpg',
+            '/assets/Background_Img/IronMan/1.png'
+        ]
     ]
 ];

@@ -22,7 +22,7 @@
                         memEl.textContent = usage;
                     }
                     if (stats.Load1 !== undefined && loadEl) {
-                        const loadAvg = `${stats.Load1.toFixed(4)}, ${stats.Load5.toFixed(4)}, ${stats.Load15.toFixed(4)}`;
+                        const loadAvg = `${stats.Load1.toFixed(2)}, ${stats.Load5.toFixed(2)}, ${stats.Load15.toFixed(2)}`;
                         loadEl.textContent = loadAvg;
                     }
                 })
@@ -104,4 +104,50 @@
                 peakLabel.textContent = "No data yet";
             });
     };
+
+    // Tab Switcher and selection persistence
+    window.switchContinueTab = function (tabId) {
+        // 1. Update buttons by toggling active class cleanly
+        const buttons = document.querySelectorAll('.continue-tab-btn');
+        buttons.forEach(btn => {
+            if (btn.getAttribute('data-tab') === tabId) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        // 2. Toggle panes
+        const panes = document.querySelectorAll('.continue-tab-pane');
+        panes.forEach(pane => {
+            if (pane.id === 'continue-pane-' + tabId) {
+                pane.classList.remove('d-none');
+            } else {
+                pane.classList.add('d-none');
+            }
+        });
+
+        // 3. Persist the active tab in localStorage
+        try {
+            localStorage.setItem('active_continue_tab', tabId);
+        } catch (e) {
+            console.error('Failed to persist active tab:', e);
+        }
+    };
+
+    // Restore previously active tab on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        try {
+            const savedTab = localStorage.getItem('active_continue_tab');
+            if (savedTab) {
+                const pane = document.getElementById('continue-pane-' + savedTab);
+                if (pane) {
+                    window.switchContinueTab(savedTab);
+                }
+            }
+        } catch (e) {
+            console.error('Failed to restore active tab:', e);
+        }
+    });
 })();
+
