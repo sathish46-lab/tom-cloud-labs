@@ -35,13 +35,14 @@ if (preg_match('/^[a-f0-9]{32}$/', $segment)) {
     
     // If not in instance data, reconstruct from known labs
     if (!$labId) {
-        // List of known lab IDs (Slugs) to check against
-        $knownLabs = ['zombie-breakout', 'shadow-partner', 'backrooms', 'block-with-buster', 'operation-warehouse', 'proxy-pipeline'];
+        // Dynamically load known lab IDs (Slugs) from the challenge configuration keys
+        $readmesConfig = require __DIR__ . '/../../src/config/challenge_readmes.php';
+        $knownLabs = array_keys($readmesConfig);
         
         // Also check DB for any other challenges
         $challengesCursor = $db->challenges->find([]);
         foreach ($challengesCursor as $c) {
-            if (!in_array($c['lab_id'], $knownLabs)) {
+            if (!empty($c['lab_id']) && !in_array($c['lab_id'], $knownLabs)) {
                 $knownLabs[] = $c['lab_id'];
             }
         }
@@ -75,6 +76,32 @@ if (preg_match('/^[a-f0-9]{32}$/', $segment)) {
     // Redirect to canonical hash URL
     header("Location: /challenges/{$activeTab}/{$instanceHash}");
     exit;
+}
+
+// Prevent unauthorized manual URL navigation to locked/unreleased challenges
+$jsonPath = __DIR__ . '/../../src/config/challenges.json';
+if (file_exists($jsonPath)) {
+    $challengesList = json_decode(file_get_contents($jsonPath), true) ?? [];
+    foreach ($challengesList as $cItem) {
+        if ($cItem['lab_id'] === $labId) {
+            $releaseDateStr = isset($cItem['release_date']) ? $cItem['release_date'] : '';
+            $releaseTimeStr = isset($cItem['release_time']) ? $cItem['release_time'] : '12:00 AM';
+            $releaseTime = strtotime($releaseDateStr . ' ' . $releaseTimeStr);
+            if ($releaseTime === false) {
+                $releaseTime = 0;
+            }
+            
+            $isReleased = ($releaseTime <= time());
+            $isChallengeActive = isset($cItem['challenge']) ? (bool)$cItem['challenge'] : true;
+            $isUnlocked = ($isReleased && $isChallengeActive);
+            
+            if (!$isUnlocked) {
+                header("Location: /challenges");
+                exit;
+            }
+            break;
+        }
+    }
 }
 
 $status    = $instanceData['status'] ?? 'not_deployed';

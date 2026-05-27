@@ -22,6 +22,10 @@ $lbRank              = $userProgress['leaderboard_rank'] ?? '--';
 $creds     = $userProgress['credentials'] ?? null;
 $hasConn   = $isRunning && $creds;
 
+// Dynamic Lab Information Readme loading
+$readmes = require __DIR__ . '/../../../config/challenge_readmes.php';
+$labReadme = $readmes[$labId] ?? 'Engage in real-world hacking scenarios and penetration testing.';
+
 include __DIR__ . '/partials/challenge_header.php';
 ?>
 
@@ -76,27 +80,14 @@ include __DIR__ . '/partials/challenge_header.php';
 
     <div class="row g-4">
         <div class="col-lg-7">
-            <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100" style="background: #080c16;">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05) !important;">
                 <div class="card-header bg-dark bg-opacity-50 border-0 py-3 px-4 d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center gap-2">
-                        <div class="d-flex gap-1 me-2">
-                            <span class="rounded-circle bg-danger" style="width:10px;height:10px;"></span>
-                            <span class="rounded-circle bg-warning" style="width:10px;height:10px;"></span>
-                            <span class="rounded-circle bg-success" style="width:10px;height:10px;"></span>
-                        </div>
-                        <h6 class="fw-bold mb-0 text-white-50 small">SERVER LOGS</h6>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-link btn-sm p-0 text-secondary" onclick="clearTerminal()"><i class='bx bx-trash'></i></button>
-                        <span class="badge bg-success rounded-pill px-2" style="font-size: 0.6rem;">CONNECTED</span>
+                        <h6 class="fw-bold mb-0 text-white small">Lab Information <span class="text-secondary ms-1 fw-normal" style="font-size: 0.75rem;">Readme</span></h6>
                     </div>
                 </div>
-                <div class="card-body p-0">
-                    <div id="terminal-container" class="p-3 font-monospace small" style="height: 400px; overflow-y: auto; background: #080c16; color: #a9b7c6; line-height: 1.4;">
-                        <div class="text-success mb-1">[SYSTEM] Connected to challenge instance: <?= $instanceHash ?></div>
-                        <div class="text-secondary mb-1">[INFO] Initializing security protocols...</div>
-                        <div class="text-secondary mb-1">[INFO] Waiting for incoming logs...</div>
-                    </div>
+                <div class="card-body p-4" style="line-height: 1.7; font-size: 0.85rem;">
+                    <?= nl2br(htmlspecialchars($labReadme)) ?>
                 </div>
             </div>
         </div>
@@ -132,27 +123,95 @@ include __DIR__ . '/partials/challenge_header.php';
                 </div>
             </div>
 
-            <div class="card border-0 shadow-sm rounded-4 blur" style="background:rgba(255,255,255,0.03);">
+            <!-- Container Load (Live) Card -->
+            <div class="card mb-4 border-0 shadow-sm blur rounded-4" style="background:rgba(255,255,255,0.03);">
                 <div class="card-header bg-transparent border-0 pt-4 px-4">
-                    <h6 class="fw-bold mb-0">Container Health</h6>
+                    <h6 class="fw-bold mb-0">
+                        Container Load
+                        <?php if ($isRunning): ?>
+                            <span class="badge bg-success rounded-pill ms-2 pulse" style="font-size: 0.6rem;">Live</span>
+                        <?php else: ?>
+                            <span class="badge bg-secondary rounded-pill ms-2" style="font-size: 0.6rem;">Offline</span>
+                        <?php endif; ?>
+                    </h6>
                 </div>
                 <div class="card-body p-4">
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between mb-1">
-                            <span class="small fw-bold text-white-50 text-uppercase" style="font-size: 0.6rem;">CPU Usage</span>
-                            <span class="small fw-bold text-white" id="ch-cpu-pct">0.00%</span>
+                    <div class="row g-3 mb-4">
+                        <div class="col-6">
+                            <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 text-start stat-card-inner">
+                                <div class="mb-1">
+                                    <span class="small fw-bold text-white text-start">
+                                        <span id="stat-cpu-usage"></span> <small class="text-muted text-uppercase ms-1">CPU Load</small>
+                                    </span>
+                                </div>
+                                <div class="progress" style="height: 4px; background: rgba(255,255,255,0.1);">
+                                    <div class="progress-bar bg-info" id="stat-cpu-bar" style="width: 0%"></div>
+                                </div>
+                                <div class="small text-muted mt-2 text-start" id="stat-pid-container" style="display: <?= $isRunning ? 'block' : 'none' ?>;">PID Count: <span id="stat-pid-count">0</span></div>
+                            </div>
                         </div>
-                        <div class="progress" style="height:4px;background:rgba(255,255,255,0.05);">
-                            <div class="progress-bar bg-info" id="ch-cpu-bar" style="width:0%"></div>
+                        <div class="col-6">
+                            <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 text-start stat-card-inner">
+                                <div class="mb-1">
+                                    <span class="small fw-bold text-white text-start">
+                                        <span id="stat-mem-perc"></span> <small class="text-muted text-uppercase ms-1">Memory Usage</small>
+                                    </span>
+                                </div>
+                                <div class="progress" style="height: 4px; background: rgba(255,255,255,0.1);">
+                                    <div class="progress-bar bg-warning" id="stat-mem-bar" style="width: 0%"></div>
+                                </div>
+                                <div class="small text-muted mt-2 text-start" id="stat-mem-info"> </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="mb-0">
-                        <div class="d-flex justify-content-between mb-1">
-                            <span class="small fw-bold text-white-50 text-uppercase" style="font-size: 0.6rem;">Memory Usage</span>
-                            <span class="small fw-bold text-white" id="ch-mem-pct">0%</span>
+                    
+                    <div class="row g-2">
+                        <div class="col-4">
+                            <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100 text-center stat-card-inner">
+                                <div class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 9px;">1 Min Avg</div>
+                                <div class="fw-bold text-white small" id="stat-load-1">0</div>
+                            </div>
                         </div>
-                        <div class="progress" style="height:4px;background:rgba(255,255,255,0.05);">
-                            <div class="progress-bar bg-warning" id="ch-mem-bar" style="width:0%"></div>
+                        <div class="col-4">
+                            <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100 text-center stat-card-inner">
+                                <div class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 9px;">5 Min Avg</div>
+                                <div class="fw-bold text-white small" id="stat-load-5">0</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100 text-center stat-card-inner">
+                                <div class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 9px;">15 Min Avg</div>
+                                <div class="fw-bold text-white small" id="stat-load-15">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Load History Card -->
+            <div class="card border-0 shadow-sm blur rounded-4" style="background:rgba(255,255,255,0.03);">
+                <div class="card-header bg-transparent border-0 pt-4 px-4">
+                    <h6 class="fw-bold mb-0">Load History <span class="text-secondary ms-1 fw-normal" style="font-size: 0.75rem;">One Hour</span></h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-4 text-center">
+                            <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100 text-center stat-card-inner">
+                                <div class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 9px;">CPU Peak</div>
+                                <div class="fw-bold text-white" id="stat-peak-cpu"></div>
+                            </div>
+                        </div>
+                        <div class="col-4 text-center">
+                            <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100 text-center stat-card-inner">
+                                <div class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 9px;">PID Max</div>
+                                <div class="fw-bold text-white" id="stat-max-pid"></div>
+                            </div>
+                        </div>
+                        <div class="col-4 text-center">
+                            <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100 text-center stat-card-inner">
+                                <div class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 9px;">Memory High</div>
+                                <div class="fw-bold text-white" id="stat-high-mem"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -160,10 +219,30 @@ include __DIR__ . '/partials/challenge_header.php';
         </div>
     </div>
 </div>
+<div class="server-logs-panel shadow-lg">
+    <div class="logs-header">
+        <div class="logs-title d-flex align-items-center gap-2">
+            <i class='bx bx-terminal fs-5'></i>
+            <i class="bx bxs-circle" id="mq-status-dot" style="font-size: 8px;"></i>
+            <span class="small fw-bold ls-1 opacity-75">Server Logs</span>
+            
+            <div class="terminal-info-wrapper ms-1">
+                <i class='bx bx-info-circle opacity-50' style="font-size: 14px;"></i>
+                <div class="terminal-tooltip">
+                    You cannot type anything here, this is a terminal to watch server logs
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="logs-body" id="terminal-viewport" style="overflow-y: auto;">
+        <div id="live-logs-container" class="small"></div>
+    </div>
+</div>
 
 <script>
 function clearTerminal() {
-    document.getElementById('terminal-container').innerHTML = '<div class="text-secondary small">[INFO] Terminal cleared.</div>';
+    const container = document.getElementById('live-logs-container');
+    if (container) container.innerHTML = '<div class="text-secondary small">[INFO] Terminal cleared.</div>';
 }
 
 (function(){
@@ -172,13 +251,89 @@ function clearTerminal() {
         try {
             const r = await fetch(`/api/instance/stats?hash=${HASH}`);
             const d = await r.json();
-            if (d.status === 'offline') return;
-            document.getElementById('ch-cpu-pct').textContent = (d.cpu_percent || 0).toFixed(2) + '%';
-            document.getElementById('ch-cpu-bar').style.width = Math.min(d.cpu_percent || 0, 100) + '%';
-            document.getElementById('ch-mem-pct').textContent = (d.mem_percent || 0).toFixed(0) + '%';
-            document.getElementById('ch-mem-bar').style.width = Math.min(d.mem_percent || 0, 100) + '%';
+            if (d.status === 'offline' || d.status === 'initializing') {
+                updateUIIdle();
+                return;
+            }
+            
+            // CPU Load
+            const cpuVal = d.CPUPerc || (d.cpu_percent !== undefined ? d.cpu_percent.toFixed(2) + '%' : '');
+            const cpuBarVal = d.CPUPerc || (d.cpu_percent !== undefined ? Math.min(d.cpu_percent, 100) + '%' : '0%');
+            const cpuEl = document.getElementById('stat-cpu-usage');
+            if (cpuEl) cpuEl.textContent = cpuVal;
+            const cpuBar = document.getElementById('stat-cpu-bar');
+            if (cpuBar) cpuBar.style.width = cpuBarVal;
+            
+            // Memory Usage
+            const memVal = d.MemPerc || (d.mem_percent !== undefined ? d.mem_percent.toFixed(0) + '%' : '');
+            const memBarVal = d.MemPerc || (d.mem_percent !== undefined ? Math.min(d.mem_percent, 100) + '%' : '0%');
+            const memEl = document.getElementById('stat-mem-perc');
+            if (memEl) memEl.textContent = memVal;
+            const memBar = document.getElementById('stat-mem-bar');
+            if (memBar) memBar.style.width = memBarVal;
+
+            const memInfo = document.getElementById('stat-mem-info');
+            if (memInfo) memInfo.textContent = d.MemUsage || '';
+
+            // PID Count
+            const pidContainer = document.getElementById('stat-pid-container');
+            if (pidContainer) pidContainer.style.display = 'block';
+            const pidEl = document.getElementById('stat-pid-count');
+            if (pidEl) pidEl.textContent = d.PIDs || d.pid_count || '0';
+
+            // Load averages
+            const l1 = d.Load1 !== undefined ? parseFloat(d.Load1).toFixed(4) : (d.load_1 !== undefined ? parseFloat(d.load_1).toFixed(4) : '0');
+            const l5 = d.Load5 !== undefined ? parseFloat(d.Load5).toFixed(4) : (d.load_5 !== undefined ? parseFloat(d.load_5).toFixed(4) : '0');
+            const l15 = d.Load15 !== undefined ? parseFloat(d.Load15).toFixed(4) : (d.load_15 !== undefined ? parseFloat(d.load_15).toFixed(4) : '0');
+            
+            const l1El = document.getElementById('stat-load-1');
+            if (l1El) l1El.textContent = l1;
+            const l5El = document.getElementById('stat-load-5');
+            if (l5El) l5El.textContent = l5;
+            const l15El = document.getElementById('stat-load-15');
+            if (l15El) l15El.textContent = l15;
+
+            // History Peaks
+            const peakCpu = d.PeakCPU || (d.cpu_peak !== undefined ? d.cpu_peak.toFixed(2) + '%' : '');
+            const maxPid = d.MaxPID || d.pid_max || '';
+            const highMem = d.HighMem || (d.mem_high !== undefined ? d.mem_high.toFixed(2) + ' MB' : '');
+
+            const peakCpuEl = document.getElementById('stat-peak-cpu');
+            if (peakCpuEl) peakCpuEl.textContent = peakCpu;
+            const maxPidEl = document.getElementById('stat-max-pid');
+            if (maxPidEl) maxPidEl.textContent = maxPid;
+            const highMemEl = document.getElementById('stat-high-mem');
+            if (highMemEl) highMemEl.textContent = highMem;
+
         } catch(e) {}
     }
+
+    function updateUIIdle() {
+        const resets = {
+            "stat-cpu-usage": "",
+            "stat-mem-perc": "",
+            "stat-load-1": "0",
+            "stat-load-5": "0",
+            "stat-load-15": "0",
+            "stat-peak-cpu": "",
+            "stat-max-pid": "",
+            "stat-high-mem": "",
+            "stat-pid-count": "0"
+        };
+        for (let id in resets) {
+            const el = document.getElementById(id);
+            if (el) el.innerText = resets[id];
+        }
+        ["stat-cpu-bar", "stat-mem-bar"].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.width = "0%";
+        });
+        const memInfo = document.getElementById("stat-mem-info");
+        if (memInfo) memInfo.innerText = "";
+        const pidContainer = document.getElementById("stat-pid-container");
+        if (pidContainer) pidContainer.style.display = "none";
+    }
+
     setInterval(fetchStats, 5000);
     fetchStats();
 })();

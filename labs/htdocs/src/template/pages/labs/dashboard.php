@@ -197,7 +197,7 @@
                                     <div class="progress" style="height: 4px; background: rgba(255,255,255,0.1);">
                                         <div class="progress-bar bg-info" id="stat-cpu-bar" style="width: 0%"></div>
                                     </div>
-                                    <div class="small text-muted mt-2 text-start">PID Count: <span id="stat-pid-count">0</span></div>
+                                    <div class="small text-muted mt-2 text-start" id="stat-pid-container" style="display: <?= $isRunning ? 'block' : 'none' ?>;">PID Count: <span id="stat-pid-count">0</span></div>
                                 </div>
                             </div>
                             <div class="col-6">

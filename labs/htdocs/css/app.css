@@ -15974,7 +15974,8 @@ html.glass-mode .server-logs-panel {
   position: relative;
   border: none;
   border-radius: 12px;
-  overflow: hidden;
+  overflow: visible !important;
+  container-type: normal !important;
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(25px);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -15986,10 +15987,11 @@ html.glass-mode .server-logs-panel {
   backdrop-filter: blur(30px);
 }
 .lab-card .labs-index-cover {
-  height: 140px;
+  height: 100%;
   width: 100%;
   object-fit: cover;
   filter: brightness(0.6);
+  border-radius: 12px 12px 0 0;
 }
 .lab-card .card-img-overlay {
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.8) 100%);
@@ -16020,49 +16022,143 @@ html.glass-mode .server-logs-panel {
   font-weight: 600;
 }
 .lab-card .badge {
-  padding: 0.3em 0.7em;
-  font-size: 0.6rem;
+  padding: 2px 6px !important;
+  font-size: 9px !important;
   font-weight: 700;
   text-transform: lowercase;
   border-radius: 50rem;
   margin-right: 3px;
-  margin-bottom: 2px;
-}
-.lab-card .event-ended-ribbon,
-.lab-card .event-retired-ribbon {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 80px;
-  height: 35px;
-  color: white;
-  font-weight: 800;
-  font-size: 0.7rem;
-  line-height: 1;
-  text-align: center;
-  border-radius: 0 0 0 10px;
-  z-index: 10;
-}
-.lab-card .event-ended-ribbon > span,
-.lab-card .event-retired-ribbon > span {
-  position: absolute;
-  top: -4px;
-  left: 0;
-  right: 0;
-  text-align: center;
-  padding-top: 8px;
-}
-.lab-card .event-ended-ribbon small,
-.lab-card .event-retired-ribbon small {
-  font-size: 0.55rem;
-  font-weight: 600;
+  margin-bottom: 0;
+  display: inline-block;
   white-space: nowrap;
 }
-.lab-card .event-ended-ribbon {
-  background: #e55353;
+.lab-card .event-ended-ribbon,
+.lab-card .event-retired-ribbon,
+.lab-card .retired-ribbon,
+.lab-card .upcoming-ribbon,
+.lab-card .live-ribbon,
+.lab-card .event-ribbon,
+.lab-card .sample-ribbon {
+  position: absolute;
+  top: -6px;
+  right: 15px;
+  z-index: 10;
+  display: block;
+  width: auto;
+  height: auto;
+  box-shadow: none !important;
 }
-.lab-card .event-retired-ribbon {
-  background: #f47923;
+.lab-card .event-ended-ribbon span,
+.lab-card .event-retired-ribbon span,
+.lab-card .retired-ribbon span,
+.lab-card .upcoming-ribbon span,
+.lab-card .live-ribbon span,
+.lab-card .event-ribbon span,
+.lab-card .sample-ribbon span {
+  position: relative;
+  display: block;
+  text-align: center;
+  font-size: 8px;
+  font-weight: 800;
+  color: #fff !important;
+  line-height: 1.15;
+  padding: 5px 8px 6px;
+  border-top-right-radius: 8px;
+  width: 90px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.lab-card .event-ended-ribbon span small,
+.lab-card .event-retired-ribbon span small,
+.lab-card .retired-ribbon span small,
+.lab-card .upcoming-ribbon span small,
+.lab-card .live-ribbon span small,
+.lab-card .event-ribbon span small,
+.lab-card .sample-ribbon span small {
+  display: block;
+  font-size: 11px !important;
+  font-weight: 600;
+  white-space: nowrap;
+  text-transform: none;
+  letter-spacing: 0px;
+  margin-top: 1px;
+}
+.lab-card .event-ended-ribbon span:before, .lab-card .event-ended-ribbon span:after,
+.lab-card .event-retired-ribbon span:before,
+.lab-card .event-retired-ribbon span:after,
+.lab-card .retired-ribbon span:before,
+.lab-card .retired-ribbon span:after,
+.lab-card .upcoming-ribbon span:before,
+.lab-card .upcoming-ribbon span:after,
+.lab-card .live-ribbon span:before,
+.lab-card .live-ribbon span:after,
+.lab-card .event-ribbon span:before,
+.lab-card .event-ribbon span:after,
+.lab-card .sample-ribbon span:before,
+.lab-card .sample-ribbon span:after {
+  position: absolute;
+  content: "";
+  height: 6px;
+}
+.lab-card .event-ended-ribbon span:before,
+.lab-card .event-retired-ribbon span:before,
+.lab-card .retired-ribbon span:before,
+.lab-card .upcoming-ribbon span:before,
+.lab-card .live-ribbon span:before,
+.lab-card .event-ribbon span:before,
+.lab-card .sample-ribbon span:before {
+  width: 6px;
+  left: -6px;
+  top: 0;
+}
+.lab-card .event-ended-ribbon span:after,
+.lab-card .event-retired-ribbon span:after,
+.lab-card .retired-ribbon span:after,
+.lab-card .upcoming-ribbon span:after,
+.lab-card .live-ribbon span:after,
+.lab-card .event-ribbon span:after,
+.lab-card .sample-ribbon span:after {
+  width: 8px;
+  left: -8px;
+  top: 0;
+  border-radius: 8px 8px 0 0;
+}
+.lab-card .event-ended-ribbon span,
+.lab-card .event-ribbon span {
+  background: #ff5252 !important;
+}
+.lab-card .event-ended-ribbon span:before, .lab-card .event-ended-ribbon span:after,
+.lab-card .event-ribbon span:before,
+.lab-card .event-ribbon span:after {
+  background: #b32420 !important;
+}
+.lab-card .event-retired-ribbon span,
+.lab-card .retired-ribbon span {
+  background: #ff9f43 !important;
+}
+.lab-card .event-retired-ribbon span:before, .lab-card .event-retired-ribbon span:after,
+.lab-card .retired-ribbon span:before,
+.lab-card .retired-ribbon span:after {
+  background: #b3630f !important;
+}
+.lab-card .upcoming-ribbon span {
+  background: #3399ff !important;
+}
+.lab-card .upcoming-ribbon span:before, .lab-card .upcoming-ribbon span:after {
+  background: #0f52b3 !important;
+}
+.lab-card .live-ribbon span {
+  background: #00d084 !important;
+}
+.lab-card .live-ribbon span:before, .lab-card .live-ribbon span:after {
+  background: #007c4e !important;
+}
+.lab-card .sample-ribbon span {
+  background: #6261cc !important;
+}
+.lab-card .sample-ribbon span:before, .lab-card .sample-ribbon span:after {
+  background: #3e3da3 !important;
 }
 .lab-card .points-display i {
   font-size: 1.3rem;
@@ -16078,6 +16174,7 @@ html.glass-mode .server-logs-panel {
   padding: 10px;
   background: rgba(0, 0, 0, 0.4);
   border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0 0 12px 12px;
 }
 .lab-card .card-footer .btn-group {
   gap: 1px;

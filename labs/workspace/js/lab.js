@@ -387,6 +387,8 @@ const Dashboard = {
    */
   updateUI: function (data) {
     // Update text stats
+    const pidContainer = document.getElementById("stat-pid-container");
+    if (pidContainer) pidContainer.style.display = "block";
     document.getElementById("stat-cpu-usage").innerText = data.CPUPerc;
     document.getElementById("stat-cpu-bar").style.width = data.CPUPerc;
     document.getElementById("stat-pid-count").innerText = data.PIDs;
@@ -492,6 +494,9 @@ const Dashboard = {
     if (badgeArea) {
       badgeArea.innerHTML = `<span class="badge text-bg-danger border-0 px-2 py-1 small">Offline</span>`;
     }
+
+    const pidContainer = document.getElementById("stat-pid-container");
+    if (pidContainer) pidContainer.style.display = "none";
 
     // Reset charts
     Object.values(this.charts).forEach((chart) => {

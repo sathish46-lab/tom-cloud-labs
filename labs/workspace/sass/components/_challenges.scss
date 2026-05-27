@@ -5,9 +5,10 @@
   position: relative;
   border: none;
   border-radius: 12px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.03); // Ultra transparent for better blur
-  backdrop-filter: blur(25px); // Stronger blur
+  overflow: visible !important;
+  container-type: normal !important;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(25px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   height: auto;
@@ -18,10 +19,11 @@
   }
 
   .labs-index-cover {
-    height: 140px; // REDUCED HEIGHT for rectangle shape
+    height: 100%;
     width: 100%;
     object-fit: cover;
     filter: brightness(0.6);
+    border-radius: 12px 12px 0 0;
   }
 
   .card-img-overlay {
@@ -54,53 +56,128 @@
   }
 
   .badge {
-    padding: 0.3em 0.7em;
-    font-size: 0.6rem;
+    padding: 2px 6px !important;
+    font-size: 9px !important;
     font-weight: 700;
     text-transform: lowercase;
     border-radius: 50rem;
     margin-right: 3px;
-    margin-bottom: 2px;
+    margin-bottom: 0;
+    display: inline-block;
+    white-space: nowrap;
   }
 
-  // Ribbons - Tighter Fit
+  // Ribbons - 3D Folded Ribbon Effect floating outside card boundaries
   .event-ended-ribbon,
-  .event-retired-ribbon {
+  .event-retired-ribbon,
+  .retired-ribbon,
+  .upcoming-ribbon,
+  .live-ribbon,
+  .event-ribbon,
+  .sample-ribbon {
     position: absolute;
-    top: 0;
-    right: 0;
-    width: 80px;
-    height: 35px;
-    color: white;
-    font-weight: 800;
-    font-size: 0.7rem;
-    line-height: 1;
-    text-align: center;
-    border-radius: 0 0 0 10px;
+    top: -6px; // Standard top offset for fold overlap
+    right: 15px; // Inset from card right edge
     z-index: 10;
+    display: block;
+    width: auto;
+    height: auto;
+    box-shadow: none !important;
 
-    >span {
-      position: absolute;
-      top: -4px;
-      left: 0;
-      right: 0;
+    span {
+      position: relative;
+      display: block;
       text-align: center;
-      padding-top: 8px;
-    }
+      font-size: 8px;
+      font-weight: 800;
+      color: #fff !important;
+      line-height: 1.15;
+      padding: 5px 8px 6px;
+      border-top-right-radius: 8px;
+      width: 90px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
 
-    small {
-      font-size: 0.55rem;
-      font-weight: 600;
-      white-space: nowrap;
+      small {
+        display: block;
+        font-size: 11px !important;
+        font-weight: 600;
+        white-space: nowrap;
+        text-transform: none;
+        letter-spacing: 0px;
+        margin-top: 1px;
+      }
+
+      // The left side fold pseudo-elements wrapping around the card edge
+      &:before,
+      &:after {
+        position: absolute;
+        content: "";
+        height: 6px;
+      }
+
+      &:before {
+        width: 6px;
+        left: -6px;
+        top: 0;
+      }
+
+      &:after {
+        width: 8px;
+        left: -8px;
+        top: 0;
+        border-radius: 8px 8px 0 0;
+      }
     }
   }
 
-  .event-ended-ribbon {
-    background: #e55353;
+  // Color mappings for modern premium aesthetics
+  .event-ended-ribbon span,
+  .event-ribbon span {
+    background: #ff5252 !important; // Vibrant red/coral
+    
+    &:before,
+    &:after {
+      background: #b32420 !important; // Darker red fold depth
+    }
   }
 
-  .event-retired-ribbon {
-    background: #f47923;
+  .event-retired-ribbon span,
+  .retired-ribbon span {
+    background: #ff9f43 !important; // Vibrant orange
+    
+    &:before,
+    &:after {
+      background: #b3630f !important; // Darker orange fold depth
+    }
+  }
+
+  .upcoming-ribbon span {
+    background: #3399ff !important; // Premium blue
+    
+    &:before,
+    &:after {
+      background: #0f52b3 !important; // Darker blue fold depth
+    }
+  }
+
+  .live-ribbon span {
+    background: #00d084 !important; // Premium green
+    
+    &:before,
+    &:after {
+      background: #007c4e !important; // Darker green fold depth
+    }
+  }
+
+  .sample-ribbon span {
+    background: #6261cc !important; // Premium purple
+    
+    &:before,
+    &:after {
+      background: #3e3da3 !important; // Darker purple fold depth
+    }
   }
 
   // Points Display - More Compact
@@ -122,6 +199,7 @@
     padding: 10px;
     background: rgba(0, 0, 0, 0.4);
     border-top: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 0 0 12px 12px; // Matching 12px rounded curves at bottom
 
     .btn-group {
       gap: 1px; // Tiny gap for visual separation

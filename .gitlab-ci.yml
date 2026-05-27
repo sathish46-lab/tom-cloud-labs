@@ -19,7 +19,6 @@ deploy_to_docker_lab:
       - "vpn-api/**/*"
       - "opt/**/*"
       - "session.json"
-      
   script:
     - echo "Starting deployment to Docker_lab..."
     

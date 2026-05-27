@@ -1,0 +1,106 @@
+[
+    {
+        "lab_id": "zombie-breakout",
+        "name": "Zombie Breakout",
+        "points": 3258,
+        "image": "/assets/img/challenges/zombie.png",
+        "ribbon_text2": "Yukthi Final",
+        "card": true,
+        "challenge": true,
+        "release_date": "2026-05-20",
+        "release_time": "10:00 AM",
+        "tags": [
+            {"text": "team", "class": "bg-warning-gradient"},
+            {"text": "medium", "class": "bg-warning-gradient"},
+            {"text": "beta", "class": "bg-primary-gradient"},
+            {"text": "not running", "class": "bg-danger-gradient"}
+        ]
+    },
+    {
+        "lab_id": "shadow-partner",
+        "name": "The Shadow Partner",
+        "points": 2232,
+        "image": "/assets/img/challenges/shadow.png",
+        "ribbon_text2": "Yukthi Final",
+        "card": true,
+        "challenge": true,
+        "release_date": "2026-05-22",
+        "release_time": "10:00 AM",
+        "tags": [
+            {"text": "team", "class": "bg-warning-gradient"},
+            {"text": "hard", "class": "bg-danger-gradient"},
+            {"text": "beta", "class": "bg-primary-gradient"},
+            {"text": "not running", "class": "bg-danger-gradient"}
+        ]
+    },
+    {
+        "lab_id": "backrooms",
+        "name": "Backrooms",
+        "points": 1702,
+        "image": "/assets/img/challenges/backrooms.png",
+        "ribbon_text2": "Yukthi Prelims",
+        "card": true,
+        "challenge": true,
+        "release_date": "2026-05-24",
+        "release_time": "10:00 AM",
+        "tags": [
+            {"text": "team", "class": "bg-warning-gradient"},
+            {"text": "free", "class": "bg-info-gradient"},
+            {"text": "medium", "class": "bg-warning-gradient"},
+            {"text": "beta", "class": "bg-primary-gradient"},
+            {"text": "not running", "class": "bg-danger-gradient"}
+        ]
+    },
+    {
+        "lab_id": "block-with-buster",
+        "name": "Block With Buster",
+        "points": 3144,
+        "image": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop",
+        "ribbon_text2": "Yukthi Final",
+        "card": true,
+        "challenge": true,
+        "release_date": "2026-05-25",
+        "release_time": "10:00 AM",
+        "tags": [
+            {"text": "team", "class": "bg-warning-gradient"},
+            {"text": "hard", "class": "bg-danger-gradient"},
+            {"text": "beta", "class": "bg-primary-gradient"},
+            {"text": "not running", "class": "bg-danger-gradient"}
+        ]
+    },
+    {
+        "lab_id": "operation-warehouse",
+        "name": "Operation Warehouse",
+        "points": 1990,
+        "image": "https://images.unsplash.com/photo-1542744094-24638eff58bb?q=80&w=2070&auto=format&fit=crop",
+        "ribbon_text2": "Yukthi Prelims",
+        "card": true,
+        "challenge": true,
+        "release_date": "2026-05-27",
+        "release_time": "10:00 PM",
+        "tags": [
+            {"text": "team", "class": "bg-warning-gradient"},
+            {"text": "free", "class": "bg-info-gradient"},
+            {"text": "medium", "class": "bg-warning-gradient"},
+            {"text": "beta", "class": "bg-primary-gradient"},
+            {"text": "not running", "class": "bg-danger-gradient"}
+        ]
+    },
+    {
+        "lab_id": "proxy-pipeline",
+        "name": "Proxy Pipeline",
+        "points": 1961,
+        "image": "https://images.unsplash.com/photo-1563986768609-322da13575f3?q=80&w=2070&auto=format&fit=crop",
+        "ribbon_text2": "Yukthi Prelims",
+        "card": false,
+        "challenge": false,
+        "release_date": "2026-06-20",
+        "release_time": "12:00 PM",
+        "tags": [
+            {"text": "team", "class": "bg-warning-gradient"},
+            {"text": "easy", "class": "bg-success-gradient"},
+            {"text": "beta", "class": "bg-primary-gradient"},
+            {"text": "not running", "class": "bg-danger-gradient"}
+        ]
+    }
+]

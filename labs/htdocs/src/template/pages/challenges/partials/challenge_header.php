@@ -18,7 +18,7 @@ $isRunning    = ($status === 'running');
 $host      = $_SERVER['HTTP_HOST'] ?? 'labs.selfmade.ninja';
 $shareUrl  = "https://{$host}/challenges/challenges/{$labId}"; 
 ?>
-<div class="lab-header mb-0">
+<div class="lab-header-section mb-0">
     <div class="container-fluid p-0">
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
 
