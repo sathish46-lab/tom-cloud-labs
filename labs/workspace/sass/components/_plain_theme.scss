@@ -9,8 +9,8 @@
   // Light mode: white elevated cards on warm cream bg
   &[data-coreui-theme="light"] {
 
-    .card,
-    .glass-card,
+    .card:not(.clan-card),
+    .glass-card:not(.clan-card),
     .lab-card-main {
       background: #ffffff !important;
       backdrop-filter: none !important;

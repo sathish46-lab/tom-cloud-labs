@@ -10,7 +10,7 @@
 
 return [
     // Server IP for A Records
-    'server_ip' => '72.62.241.13',
+    'server_ip' => '106.51.76.75',
     
     // Available domain patterns
     'domains' => [

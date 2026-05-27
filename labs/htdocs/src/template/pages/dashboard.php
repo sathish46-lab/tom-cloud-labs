@@ -659,70 +659,61 @@ $greetingText = $quotes[array_rand($quotes)];
                                             <div class="domain-list pe-1" style="max-height: 155px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
                                                 <?php if ($domainCount > 0): ?>
                                                     <?php foreach ($domains as $d): ?>
-                                                    <div class="d-flex align-items-center justify-content-between p-3 rounded active-lab-item-card">
-                                                        <div class="d-flex align-items-center gap-3 min-w-0">
-                                                            <!-- Circular blue badge with globe icon -->
-                                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; background: rgba(46, 134, 222, 0.12); border: 1px solid rgba(46, 134, 222, 0.25);">
-                                                                <i class='bx bx-globe text-primary' style="font-size: 1.15rem; color: #2e86de !important;"></i>
+                                                    <div class="d-flex align-items-center justify-content-between p-2 px-3 rounded active-lab-item-card" style="gap: 8px;">
+                                                        <div class="d-flex align-items-center gap-2 min-w-0" style="flex: 1; overflow: hidden;">
+                                                            <!-- Circular blue badge with globe icon (reduced) -->
+                                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 28px; height: 28px; background: rgba(46, 134, 222, 0.12); border: 1px solid rgba(46, 134, 222, 0.25);">
+                                                                <i class='bx bx-globe' style="font-size: 0.85rem; color: #2e86de !important;"></i>
                                                             </div>
-                                                            <div class="min-w-0">
-                                                                <h6 class="fw-bold text-white mb-0 text-truncate" style="font-size: 0.85rem; letter-spacing: -0.2px; max-width: 170px;" title="<?= htmlspecialchars($d['domain']) ?>"><?= htmlspecialchars($d['domain']) ?></h6>
-                                                                <span class="fw-bold uppercase" style="color: #2e86de !important; font-size: 0.6rem; letter-spacing: 0.5px;">A RECORD</span>
+                                                            <div class="min-w-0" style="overflow: hidden;">
+                                                                <div style="overflow-x: auto; white-space: nowrap; scrollbar-width: none; -ms-overflow-style: none;" title="<?= htmlspecialchars($d['domain']) ?>">
+                                                                    <h6 class="fw-bold text-white mb-0" style="font-size: 0.75rem; letter-spacing: -0.2px; display: inline;"><?= htmlspecialchars($d['domain']) ?></h6>
+                                                                </div>
+                                                                <span class="fw-bold uppercase" style="color: #2e86de !important; font-size: 0.55rem; letter-spacing: 0.5px;">A RECORD</span>
                                                             </div>
                                                         </div>
-                                                        <div class="text-end d-flex align-items-center gap-3 flex-shrink-0">
-                                                            <div>
-                                                                <div class="text-white font-monospace fw-bold" style="font-size: 0.88rem; letter-spacing: 0.5px;"><?= htmlspecialchars($d['ip_address'] ?? '106.51.76.75') ?></div>
-                                                                <div class="text-white text-opacity-40 uppercase fw-bold" style="font-size: 0.55rem; letter-spacing: 0.5px;">IP TARGET</div>
-                                                            </div>
-                                                            <button class="btn btn-sm btn-link p-0 text-white text-opacity-40 hover-text-white transition-all" onclick="navigator.clipboard.writeText('<?= htmlspecialchars($d['domain']) ?>'); showToast('Domain copied!')">
-                                                                <i class="bx bx-copy" style="font-size: 0.9rem;"></i>
-                                                            </button>
+                                                        <div class="text-end flex-shrink-0">
+                                                            <div class="text-white font-monospace fw-bold" style="font-size: 0.78rem; letter-spacing: 0.3px;"><?= htmlspecialchars($d['ip_address'] ?? '106.51.76.75') ?></div>
+                                                            <div class="text-white text-opacity-40 uppercase fw-bold" style="font-size: 0.5rem; letter-spacing: 0.5px;">IP TARGET</div>
                                                         </div>
                                                     </div>
                                                     <?php endforeach; ?>
                                                 <?php else: ?>
                                                     <!-- Mock matching user screenshot standard setup -->
-                                                    <div class="d-flex align-items-center justify-content-between p-3 rounded active-lab-item-card">
-                                                        <div class="d-flex align-items-center gap-3 min-w-0">
-                                                            <!-- Circular blue badge with globe icon -->
-                                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; background: rgba(46, 134, 222, 0.12); border: 1px solid rgba(46, 134, 222, 0.25);">
-                                                                <i class='bx bx-globe text-primary' style="font-size: 1.15rem; color: #2e86de !important;"></i>
+                                                    <div class="d-flex align-items-center justify-content-between p-2 px-3 rounded active-lab-item-card" style="gap: 8px;">
+                                                        <div class="d-flex align-items-center gap-2 min-w-0" style="flex: 1; overflow: hidden;">
+                                                            <!-- Circular blue badge with globe icon (reduced) -->
+                                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 28px; height: 28px; background: rgba(46, 134, 222, 0.12); border: 1px solid rgba(46, 134, 222, 0.25);">
+                                                                <i class='bx bx-globe' style="font-size: 0.85rem; color: #2e86de !important;"></i>
                                                             </div>
-                                                            <div class="min-w-0">
-                                                                <h6 class="fw-bold text-white mb-0 text-truncate" style="font-size: 0.85rem; letter-spacing: -0.2px;">sathish46.selfmade.fun</h6>
-                                                                <span class="fw-bold uppercase" style="color: #2e86de !important; font-size: 0.6rem; letter-spacing: 0.5px;">A RECORD</span>
+                                                            <div class="min-w-0" style="overflow: hidden;">
+                                                                <div style="overflow-x: auto; white-space: nowrap; scrollbar-width: none; -ms-overflow-style: none;" title="sathish46.selfmade.fun">
+                                                                    <h6 class="fw-bold text-white mb-0" style="font-size: 0.75rem; letter-spacing: -0.2px; display: inline;">sathish46.selfmade.fun</h6>
+                                                                </div>
+                                                                <span class="fw-bold uppercase" style="color: #2e86de !important; font-size: 0.55rem; letter-spacing: 0.5px;">A RECORD</span>
                                                             </div>
                                                         </div>
-                                                        <div class="text-end d-flex align-items-center gap-3 flex-shrink-0">
-                                                            <div>
-                                                                <div class="text-white font-monospace fw-bold" style="font-size: 0.88rem; letter-spacing: 0.5px;">106.51.76.75</div>
-                                                                <div class="text-white text-opacity-40 uppercase fw-bold" style="font-size: 0.55rem; letter-spacing: 0.5px;">IP TARGET</div>
-                                                            </div>
-                                                            <button class="btn btn-sm btn-link p-0 text-white text-opacity-40 hover-text-white transition-all" onclick="navigator.clipboard.writeText('sathish46.selfmade.fun'); showToast('Domain copied!')">
-                                                                <i class="bx bx-copy" style="font-size: 0.9rem;"></i>
-                                                            </button>
+                                                        <div class="text-end flex-shrink-0">
+                                                            <div class="text-white font-monospace fw-bold" style="font-size: 0.78rem; letter-spacing: 0.3px;">106.51.76.75</div>
+                                                            <div class="text-white text-opacity-40 uppercase fw-bold" style="font-size: 0.5rem; letter-spacing: 0.5px;">IP TARGET</div>
                                                         </div>
                                                     </div>
-                                                    <div class="d-flex align-items-center justify-content-between p-3 rounded active-lab-item-card">
-                                                        <div class="d-flex align-items-center gap-3 min-w-0">
-                                                            <!-- Circular blue badge with globe icon -->
-                                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; background: rgba(46, 134, 222, 0.12); border: 1px solid rgba(46, 134, 222, 0.25);">
-                                                                <i class='bx bx-globe text-primary' style="font-size: 1.15rem; color: #2e86de !important;"></i>
+                                                    <div class="d-flex align-items-center justify-content-between p-2 px-3 rounded active-lab-item-card" style="gap: 8px;">
+                                                        <div class="d-flex align-items-center gap-2 min-w-0" style="flex: 1; overflow: hidden;">
+                                                            <!-- Circular blue badge with globe icon (reduced) -->
+                                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 28px; height: 28px; background: rgba(46, 134, 222, 0.12); border: 1px solid rgba(46, 134, 222, 0.25);">
+                                                                <i class='bx bx-globe' style="font-size: 0.85rem; color: #2e86de !important;"></i>
                                                             </div>
-                                                            <div class="min-w-0">
-                                                                <h6 class="fw-bold text-white mb-0 text-truncate" style="font-size: 0.85rem; letter-spacing: -0.2px;">photogram.selfmade.monster</h6>
-                                                                <span class="fw-bold uppercase" style="color: #2e86de !important; font-size: 0.6rem; letter-spacing: 0.5px;">A RECORD</span>
+                                                            <div class="min-w-0" style="overflow: hidden;">
+                                                                <div style="overflow-x: auto; white-space: nowrap; scrollbar-width: none; -ms-overflow-style: none;" title="photogram.selfmade.monster">
+                                                                    <h6 class="fw-bold text-white mb-0" style="font-size: 0.75rem; letter-spacing: -0.2px; display: inline;">photogram.selfmade.monster</h6>
+                                                                </div>
+                                                                <span class="fw-bold uppercase" style="color: #2e86de !important; font-size: 0.55rem; letter-spacing: 0.5px;">A RECORD</span>
                                                             </div>
                                                         </div>
-                                                        <div class="text-end d-flex align-items-center gap-3 flex-shrink-0">
-                                                            <div>
-                                                                <div class="text-white font-monospace fw-bold" style="font-size: 0.88rem; letter-spacing: 0.5px;">106.51.76.75</div>
-                                                                <div class="text-white text-opacity-40 uppercase fw-bold" style="font-size: 0.55rem; letter-spacing: 0.5px;">IP TARGET</div>
-                                                            </div>
-                                                            <button class="btn btn-sm btn-link p-0 text-white text-opacity-40 hover-text-white transition-all" onclick="navigator.clipboard.writeText('photogram.selfmade.monster'); showToast('Domain copied!')">
-                                                                <i class="bx bx-copy" style="font-size: 0.9rem;"></i>
-                                                            </button>
+                                                        <div class="text-end flex-shrink-0">
+                                                            <div class="text-white font-monospace fw-bold" style="font-size: 0.78rem; letter-spacing: 0.3px;">106.51.76.75</div>
+                                                            <div class="text-white text-opacity-40 uppercase fw-bold" style="font-size: 0.5rem; letter-spacing: 0.5px;">IP TARGET</div>
                                                         </div>
                                                     </div>
                                                 <?php endif; ?>
@@ -747,7 +738,7 @@ $greetingText = $quotes[array_rand($quotes)];
                                                 </div>
                                             </div>
 
-                                            <div id="machine-labs-container" class="d-flex flex-column px-0" style="max-height: 220px; overflow-y: auto; scrollbar-width: thin;">
+                                            <div id="machine-labs-container" class="d-flex flex-column px-0" style="max-height: 220px; overflow-y: auto;">
                                                 <?php if (!empty($labsList)): ?>
                                                      <?php foreach ($labsList as $lab): ?>
                                                      <div class="p-3 mb-3 rounded-4 border transition-all hover-scale flex-shrink-0 active-lab-item-card" 

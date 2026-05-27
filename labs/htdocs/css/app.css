@@ -16811,8 +16811,8 @@ html.glass-mode .server-logs-panel {
     transform: translateY(0) scale(1);
   }
 }
-.mode-plain[data-coreui-theme=light] .card,
-.mode-plain[data-coreui-theme=light] .glass-card,
+.mode-plain[data-coreui-theme=light] .card:not(.clan-card),
+.mode-plain[data-coreui-theme=light] .glass-card:not(.clan-card),
 .mode-plain[data-coreui-theme=light] .lab-card-main {
   background: #ffffff !important;
   backdrop-filter: none !important;
@@ -17170,22 +17170,32 @@ html[data-coreui-theme=light] #smart-insights-card .d-flex.justify-content-betwe
   color: rgba(47, 53, 66, 0.4) !important;
 }
 
-.clan-card .text-white,
-.clan-card h5,
-.clan-card p,
-.clan-card span,
-.clan-card div,
-.clan-card i {
+html[data-coreui-theme] .clan-card, html .clan-card {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.8) 100%), url("/assets/Background_Img/clan_zero_byte.png") no-repeat center !important;
+  background-size: cover !important;
+}
+html[data-coreui-theme] .clan-card, html[data-coreui-theme] .clan-card *, html .clan-card, html .clan-card * {
   color: #ffffff !important;
 }
-.clan-card .text-white-50,
-.clan-card .text-opacity-40,
-.clan-card .text-opacity-45 {
-  color: rgba(255, 255, 255, 0.5) !important;
+html[data-coreui-theme] .clan-card.text-white, html[data-coreui-theme] .clan-card *.text-white, html .clan-card.text-white, html .clan-card *.text-white {
+  color: #ffffff !important;
 }
-html:not(.glass-mode) .clan-card .clan-stats-grid {
-  background: rgba(20, 20, 20, 0.85) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+html[data-coreui-theme] .clan-card.text-white-50, html[data-coreui-theme] .clan-card.text-opacity-40, html[data-coreui-theme] .clan-card.text-opacity-45, html[data-coreui-theme] .clan-card.text-opacity-50, html[data-coreui-theme] .clan-card *.text-white-50, html[data-coreui-theme] .clan-card *.text-opacity-40, html[data-coreui-theme] .clan-card *.text-opacity-45, html[data-coreui-theme] .clan-card *.text-opacity-50, html .clan-card.text-white-50, html .clan-card.text-opacity-40, html .clan-card.text-opacity-45, html .clan-card.text-opacity-50, html .clan-card *.text-white-50, html .clan-card *.text-opacity-40, html .clan-card *.text-opacity-45, html .clan-card *.text-opacity-50 {
+  color: rgba(255, 255, 255, 0.5) !important;
+  opacity: 1 !important;
+}
+html[data-coreui-theme] .clan-card.text-muted, html[data-coreui-theme] .clan-card *.text-muted, html .clan-card.text-muted, html .clan-card *.text-muted {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+html[data-coreui-theme] .clan-card .clan-stats-grid, html .clan-card .clan-stats-grid {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+html[data-coreui-theme] .clan-card .clan-stats-grid div, html[data-coreui-theme] .clan-card .clan-stats-grid span, html[data-coreui-theme] .clan-card .clan-stats-grid i, html .clan-card .clan-stats-grid div, html .clan-card .clan-stats-grid span, html .clan-card .clan-stats-grid i {
+  color: #ffffff !important;
 }
 
 html:not([data-coreui-theme=light]).bg-mode-spiderman.glass-mode .card:not(.clan-card),
@@ -17466,6 +17476,20 @@ html[data-coreui-theme=light] .active-lab-item-card:hover {
 
 .wave-back {
   animation: waveFlow 12s linear infinite reverse;
+}
+
+/* Hide scrollbars completely while keeping scroll functionality */
+.device-list::-webkit-scrollbar,
+.domain-list::-webkit-scrollbar,
+#machine-labs-container::-webkit-scrollbar {
+  display: none !important;
+}
+
+.device-list,
+.domain-list,
+#machine-labs-container {
+  -ms-overflow-style: none !important; /* IE and Edge */
+  scrollbar-width: none !important; /* Firefox */
 }
 
 html {
