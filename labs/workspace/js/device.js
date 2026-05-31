@@ -161,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const pill = card.querySelector('.status-pill');
                     const icon = live.status === 'Online' ? 'bx-wifi' : (live.status === 'Unreachable' ? 'bx-time-five' : 'bx-wifi-off');
 
-                    pill.innerHTML = `<i class='bx ${icon} me-1'></i> ${live.status.toUpperCase()}`;
+                    pill.innerHTML = `<i class='bx ${icon} me-1'></i> ${live.status}`;
                     pill.className = `badge rounded-pill status-pill bg-${live.color} fw-bold d-flex align-items-center`;
 
                     // Update Stats
