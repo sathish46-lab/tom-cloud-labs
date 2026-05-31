@@ -182,10 +182,12 @@ class Lab:
         # 4. Cleanup existing container (FIXED - don't prune networks!)
         self.log("Checking for conflicting containers...", "info")
         if self.docker.container_exists(instance_id):
-            self.log(f"Removing existing container {instance_id}...", "warn")
-            # Disconnect from network first
-            os.system(f"docker network disconnect -f local_dev_lab_tomlabs_dev_net {instance_id} 2>/dev/null")
-            # Stop and remove container
+            docker_network = self.config.get('docker_network_name', 'bridge')
+            try:
+                self.log(f"Disconnecting {instance_id} from {docker_network}...", "info")
+                os.system(f"docker network disconnect -f {docker_network} {instance_id} 2>/dev/null")
+            except Exception as e:
+                pass
             os.system(f"docker stop {instance_id} 2>/dev/null && docker rm -f {instance_id} 2>/dev/null")
             self.log("Container removed.", "success")
             self.log("Container removed.", "success")
@@ -249,7 +251,8 @@ class Lab:
             "user": username, 
             "image": f"{template_name}:lab", 
             "ip": docker_ip, 
-            "host_name": lab_spec.get('network', {}).get('hostname', 'essentials')
+            "host_name": lab_spec.get('network', {}).get('hostname', 'essentials'),
+            'network_name': self.config.get('docker_network_name', 'bridge')
         }
         
         self.docker.run_command(self.config.get('docker_run'), mapping)
@@ -263,10 +266,21 @@ class Lab:
         
         # 11. Configure Host Routing
         self.log("Configuring network routing and firewall...", "info")
+        docker_network = self.config.get('docker_network_name', 'local_dev_lab_tomlabs_dev_net')
         bridge_id = os.popen(
-            "docker network inspect local_dev_lab_tomlabs_dev_net -f '{{index .Options \"com.docker.network.bridge.name\"}}' 2>/dev/null || "
-            "echo br-$(docker network inspect local_dev_lab_tomlabs_dev_net -f '{{.Id}}' | cut -c1-12)"
+            f"docker network inspect {docker_network} -f '{{{{index .Options \"com.docker.network.bridge.name\"}}}}' 2>/dev/null"
         ).read().strip()
+        
+        if not bridge_id or bridge_id == "<no value>":
+            bridge_id = os.popen(
+                f"echo br-$(docker network inspect {docker_network} -f '{{{{.Id}}}}' 2>/dev/null | cut -c1-12)"
+            ).read().strip()
+
+        # In a local docker environment, the bridge might not exist inside the vps_dev namespace.
+        # Fallback to eth0 which is the standard outbound interface to the docker network.
+        if not bridge_id or bridge_id == "br-" or os.system(f"ip link show {bridge_id} > /dev/null 2>&1") != 0:
+            self.log(f"Bridge '{bridge_id}' not found in current namespace, falling back to eth0", "warn")
+            bridge_id = "eth0"
         
         os.system("sysctl -w net.ipv4.ip_forward=1")
         os.system(f"ip route del {tunnel_ip}/32 2>/dev/null || true")
@@ -448,7 +462,7 @@ class Lab:
       tls: {{certResolver: myresolver}}
 """
             traefik_config += f"""    router-{instance_id}-s3-api:
-      rule: "Host(`{s3_api_domain}`)"`
+      rule: "Host(`{s3_api_domain}`)"
       service: service-{instance_id}-s3-api
       entryPoints: [websecure]
       tls: {{certResolver: myresolver}}

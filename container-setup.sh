@@ -88,8 +88,13 @@ fi
 # 6. Re-apply Host Routing for Existing Lab Peers
 echo "[INFO] Recovering host routes for deployed labs..."
 
-# Detect the local_dev_lab_tomlabs_dev_net bridge interface
-BRIDGE_ID=$(docker network inspect local_dev_lab_tomlabs_dev_net -f '{{.Id}}' 2>/dev/null | cut -c1-12)
+# Detect the bridge interface from config
+DOCKER_NETWORK=$(jq -r '.docker_network_name' /etc/labs-control-panel/config.json 2>/dev/null)
+if [ -z "$DOCKER_NETWORK" ] || [ "$DOCKER_NETWORK" = "null" ]; then
+    DOCKER_NETWORK="local_dev_lab_tomlabs_dev_net"
+fi
+
+BRIDGE_ID=$(docker network inspect "$DOCKER_NETWORK" -f '{{.Id}}' 2>/dev/null | cut -c1-12)
 if [ -n "$BRIDGE_ID" ]; then
     BRIDGE_IF="br-${BRIDGE_ID}"
     
@@ -115,7 +120,7 @@ if [ -n "$BRIDGE_ID" ]; then
                 docker_ip="172.19.0.${last_octet}"
                 
                 # Check if the container with this Docker IP exists and is running
-                if docker network inspect local_dev_lab_tomlabs_dev_net --format '{{range .Containers}}{{.IPv4Address}} {{end}}' 2>/dev/null | grep -q "$docker_ip"; then
+                if docker network inspect "$DOCKER_NETWORK" --format '{{range .Containers}}{{.IPv4Address}} {{end}}' 2>/dev/null | grep -q "$docker_ip"; then
                     ip route del "$tunnel_ip/32" 2>/dev/null || true
                     ip route add "$tunnel_ip/32" via "$docker_ip" dev "$BRIDGE_IF" 2>/dev/null || true
                     echo "[INFO] Route restored: $tunnel_ip -> $docker_ip via $BRIDGE_IF"
@@ -126,7 +131,7 @@ if [ -n "$BRIDGE_ID" ]; then
         done
     fi
 else
-    echo "[WARN] local_dev_lab_tomlabs_dev_net bridge not found. Lab routes will be created at deploy time."
+    echo "[WARN] $DOCKER_NETWORK bridge not found. Lab routes will be created at deploy time."
 fi
 
 # 7. Reload Traefik
