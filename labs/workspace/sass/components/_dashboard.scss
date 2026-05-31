@@ -478,14 +478,32 @@ html[data-coreui-theme="light"] .continue-tab-switcher-container {
 .continue-activity-card {
   transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
   cursor: pointer;
+  
+  // Enforce background and border to differentiate from outer parent
+  background: rgba(255, 255, 255, 0.035) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
 
   &:hover {
     transform: translateY(-4px) scale(1.015);
-    background: rgba(255, 255, 255, 0.06) !important;
-    border-color: rgba(255, 255, 255, 0.15) !important;
+    background: rgba(255, 255, 255, 0.065) !important;
+    border-color: rgba(255, 255, 255, 0.18) !important;
     box-shadow:
       0 12px 30px rgba(0, 0, 0, 0.35),
       0 0 15px rgba(255, 255, 255, 0.02) !important;
+  }
+
+  // Light theme overrides to ensure premium look on white background too
+  html[data-coreui-theme="light"] & {
+    background: rgba(0, 0, 0, 0.02) !important;
+    border: 1px solid rgba(0, 0, 0, 0.06) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02) !important;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.04) !important;
+      border-color: rgba(0, 0, 0, 0.1) !important;
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.04) !important;
+    }
   }
 
   .progress {

@@ -94,15 +94,15 @@
   // Dark mode: dark semi-transparent cards with subtle glow
   &[data-coreui-theme="dark"] {
     .card {
-      background: var(--cui-card-bg, rgba(0, 0, 0, 0.35)) !important;
+      background: var(--cui-card-bg, rgba(255, 255, 255, 0.03)) !important;
 
       :root:not(.glass-mode) & {
-        background: var(--cui-card-bg-solid, rgba(0, 0, 0, 0.95)) !important;
+        background: var(--cui-card-bg-solid, #0d121b) !important; // Premium elevated dark grey instead of pitch black
       }
 
-      border: 1px solid rgba(255, 255, 255, 0.06) !important;
-      box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 24px,
-      rgba(255, 255, 255, 0.02) 0px 0px 12px !important;
+      border: 1px solid rgba(255, 255, 255, 0.12) !important; // Vibrant, beautiful border to define boundaries
+      box-shadow: rgba(0, 0, 0, 0.4) 0px 8px 24px,
+      rgba(255, 255, 255, 0.03) 0px 0px 12px !important;
     }
 
     .sidebar {

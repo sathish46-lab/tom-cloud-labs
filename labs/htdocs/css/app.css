@@ -16972,14 +16972,14 @@ html.glass-mode .server-logs-panel {
   filter: invert(0.3);
 }
 .mode-plain[data-coreui-theme=dark] .card {
-  background: var(--cui-card-bg, rgba(0, 0, 0, 0.35)) !important;
+  background: var(--cui-card-bg, rgba(255, 255, 255, 0.03)) !important;
 }
 :root:not(.glass-mode) .mode-plain[data-coreui-theme=dark] .card {
-  background: var(--cui-card-bg-solid, rgba(0, 0, 0, 0.95)) !important;
+  background: var(--cui-card-bg-solid, #0d121b) !important;
 }
 .mode-plain[data-coreui-theme=dark] .card {
-  border: 1px solid rgba(255, 255, 255, 0.06) !important;
-  box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 24px, rgba(255, 255, 255, 0.02) 0px 0px 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: rgba(0, 0, 0, 0.4) 0px 8px 24px, rgba(255, 255, 255, 0.03) 0px 0px 12px !important;
 }
 .mode-plain[data-coreui-theme=dark] .sidebar {
   border-right: 1px solid rgba(255, 255, 255, 0.04);
@@ -17143,6 +17143,227 @@ html:not(.glass-mode) .clan-stats-grid {
   background: rgba(20, 20, 20, 0.82) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+}
+
+[data-coreui-theme=light] .home-nav-card.card,
+[data-coreui-theme=light] .launcher-card.card {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.02) !important;
+}
+[data-coreui-theme=light] .home-nav-card.card:hover,
+[data-coreui-theme=light] .launcher-card.card:hover {
+  border-color: rgba(0, 0, 0, 0.15) !important;
+  background-color: rgba(0, 0, 0, 0.02) !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08) !important;
+}
+[data-coreui-theme=light] .home-nav-card.card .card-title,
+[data-coreui-theme=light] .home-nav-card.card h5,
+[data-coreui-theme=light] .launcher-card.card .card-title,
+[data-coreui-theme=light] .launcher-card.card h5 {
+  color: #1a1a2e !important;
+}
+[data-coreui-theme=light] .home-nav-card.card .card-text,
+[data-coreui-theme=light] .home-nav-card.card p,
+[data-coreui-theme=light] .launcher-card.card .card-text,
+[data-coreui-theme=light] .launcher-card.card p {
+  color: rgba(26, 26, 46, 0.6) !important;
+}
+[data-coreui-theme=light] .home-nav-card.card .card-icon-ring,
+[data-coreui-theme=light] .home-nav-card.card .icon-wrapper,
+[data-coreui-theme=light] .launcher-card.card .card-icon-ring,
+[data-coreui-theme=light] .launcher-card.card .icon-wrapper {
+  background: rgba(0, 0, 0, 0.03) !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+[data-coreui-theme=light] .home-plan-badge {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+  color: #1a1a2e !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+[data-coreui-theme=light] .home-signout-link {
+  color: #c0392b !important;
+  opacity: 0.85 !important;
+  font-weight: 500 !important;
+  transition: opacity 0.2s ease !important;
+}
+[data-coreui-theme=light] .home-signout-link:hover {
+  opacity: 1 !important;
+  color: #e74c3c !important;
+}
+
+.swatch-sphere-wrap {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.swatch-sphere-wrap .edit-theme-btn {
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.swatch-sphere-wrap:hover {
+  transform: translateY(-3px);
+}
+.swatch-sphere-wrap:hover .swatch-sphere {
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45), inset 0 -4px 8px rgba(0, 0, 0, 0.3), inset 0 2px 6px rgba(255, 255, 255, 0.3) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  transform: scale(1.08);
+}
+.swatch-sphere-wrap:hover .edit-theme-btn {
+  opacity: 1;
+  transform: scale(1);
+}
+.swatch-sphere-wrap:active .swatch-sphere {
+  transform: scale(0.95);
+}
+
+.swatch-sphere {
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#bgModalTabs .nav-link {
+  transition: all 0.25s ease;
+  border: 1px solid transparent;
+}
+#bgModalTabs .nav-link:not(.active):hover {
+  opacity: 1 !important;
+  background: rgba(var(--cui-emphasis-color-rgb), 0.06);
+}
+#bgModalTabs .nav-link.active {
+  background: rgba(var(--cui-primary-rgb), 0.15) !important;
+  color: var(--cui-primary) !important;
+  border-color: rgba(var(--cui-primary-rgb), 0.25) !important;
+  opacity: 1 !important;
+}
+
+.dual-sphere {
+  position: relative;
+}
+
+.dual-sphere-dot {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.swatch-sphere-wrap:hover .dual-sphere-dot {
+  transform: translate(-50%, -50%) scale(1.15);
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.picker-target-toggle {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.picker-target-btn {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.picker-target-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.75);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+.picker-target-btn.active {
+  background: rgba(var(--cui-primary-rgb, 139, 145, 249), 0.2);
+  color: var(--cui-primary, #8b91f9);
+  border-color: rgba(var(--cui-primary-rgb, 139, 145, 249), 0.35);
+  box-shadow: 0 0 12px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.15);
+}
+
+.contrast-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.contrast-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #22c55e, #22c55e);
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.contrast-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  min-width: 32px;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-block;
+}
+
+.badge-aaa {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.badge-aa {
+  background: rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.badge-fail {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.enhance-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.45rem 1.2rem;
+  border-radius: 50px;
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #1a1a2e;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+}
+.enhance-btn:hover {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4);
+  transform: translateY(-1px);
+}
+.enhance-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.25);
+}
+
+.designer-preview-sphere {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.designer-preview-sphere:hover {
+  transform: scale(1.06);
 }
 
 @keyframes greenPulse {
@@ -17479,12 +17700,25 @@ html[data-coreui-theme=light] .continue-tab-switcher-container {
 .continue-activity-card {
   transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
   cursor: pointer;
+  background: rgba(255, 255, 255, 0.035) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
 }
 .continue-activity-card:hover {
   transform: translateY(-4px) scale(1.015);
-  background: rgba(255, 255, 255, 0.06) !important;
-  border-color: rgba(255, 255, 255, 0.15) !important;
+  background: rgba(255, 255, 255, 0.065) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35), 0 0 15px rgba(255, 255, 255, 0.02) !important;
+}
+html[data-coreui-theme=light] .continue-activity-card {
+  background: rgba(0, 0, 0, 0.02) !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02) !important;
+}
+html[data-coreui-theme=light] .continue-activity-card:hover {
+  background: rgba(0, 0, 0, 0.04) !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.04) !important;
 }
 .continue-activity-card .progress {
   overflow: visible;

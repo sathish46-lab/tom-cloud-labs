@@ -2,6 +2,9 @@ var TomBG = {
   // Theme configuration is now loaded from the server via window.TomBGThemes
   themes: window.TomBGThemes || {},
 
+  // Current picker target: 'background' or 'accent'
+  pickerTarget: 'background',
+
   init: function () {
     // 1. Check for forced mode (Login Page) before looking at localStorage
     var saved = localStorage.getItem("tom-labs-bg-mode") || "ninja";
@@ -29,9 +32,30 @@ var TomBG = {
     });
 
     this.updateCustomSlotsUI();
+    this.initAccent();
     this.initCustomPicker();
     this.initWheel();
     this.initScenery();
+
+    // Attach click handlers to preview spheres in plainColorModal
+    var bgSphere = document.getElementById('designer-sphere-bg');
+    var accentSphere = document.getElementById('designer-sphere-accent');
+    var previewSphere = document.getElementById('designer-sphere-preview');
+    
+    if (bgSphere) {
+      bgSphere.style.cursor = 'pointer';
+      bgSphere.addEventListener('click', function() { TomBG.switchPickerTarget('background'); });
+    }
+    if (accentSphere) {
+      accentSphere.style.cursor = 'pointer';
+      accentSphere.addEventListener('click', function() { TomBG.switchPickerTarget('accent'); });
+    }
+    if (previewSphere) {
+      previewSphere.style.cursor = 'pointer';
+      previewSphere.addEventListener('click', function() { 
+        TomBG.switchPickerTarget(TomBG.pickerTarget === 'background' ? 'accent' : 'background'); 
+      });
+    }
 
     // Handle editing state when modal opens/closes
     var modalEl = document.getElementById("plainColorModal");
@@ -56,19 +80,322 @@ var TomBG = {
 
   currentEditingSlot: null,
 
+  // ========================================================================
+  // Accent Color System
+  // ========================================================================
+  initAccent: function () {
+    var savedAccent = localStorage.getItem('tom-labs-accent-color');
+    if (!savedAccent) {
+      // Default accent if none saved
+      savedAccent = '#8b91f9';
+      localStorage.setItem('tom-labs-accent-color', savedAccent);
+    }
+    this.updateDesignerPreviews();
+    this.updateContrastScores();
+  },
+
+  switchPickerTarget: function (target) {
+    this.pickerTarget = target;
+    var bgBtn = document.getElementById('picker-target-bg');
+    var accentBtn = document.getElementById('picker-target-accent');
+    if (bgBtn) bgBtn.classList.toggle('active', target === 'background');
+    if (accentBtn) accentBtn.classList.toggle('active', target === 'accent');
+
+    // Sync pickers to the currently-editing color
+    var color = target === 'accent'
+      ? (localStorage.getItem('tom-labs-accent-color') || '#8b91f9')
+      : (localStorage.getItem('tom-labs-plain-color') || '#010d12');
+    this.syncPickers(color);
+
+    var preview = document.getElementById('hex-preview');
+    if (preview) {
+      preview.innerText = color.toUpperCase();
+      preview.style.color = color;
+    }
+  },
+
+  setAccentColor: function (hex) {
+    hex = this.toHex(hex);
+    localStorage.setItem('tom-labs-accent-color', hex);
+
+    // Apply accent as --cui-primary immediately
+    var pRGB = this.hexToRgbValues(hex);
+    var themeStyle = document.getElementById('tom-theme-vars');
+    if (themeStyle) {
+      var current = themeStyle.innerHTML;
+      // Replace or append accent vars
+      current = current.replace(/--cui-primary:\s*[^;]+!important;/g, '--cui-primary: ' + hex + ' !important;');
+      current = current.replace(/--cui-primary-rgb:\s*[^;]+!important;/g, '--cui-primary-rgb: ' + pRGB + ' !important;');
+      themeStyle.innerHTML = current;
+    }
+
+    this.updateDesignerPreviews();
+    this.updateContrastScores();
+    this.syncToServer();
+  },
+
+  // WCAG contrast ratio calculation
+  getRelativeLuminance: function (hex) {
+    var rgb = hex.match(/[A-Za-z0-9]{2}/g).map(function (x) {
+      var c = parseInt(x, 16) / 255;
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
+  },
+
+  getContrastRatio: function (hex1, hex2) {
+    var l1 = this.getRelativeLuminance(hex1);
+    var l2 = this.getRelativeLuminance(hex2);
+    var lighter = Math.max(l1, l2);
+    var darker = Math.min(l1, l2);
+    return (lighter + 0.05) / (darker + 0.05);
+  },
+
+  updateContrastScores: function () {
+    var bg = localStorage.getItem('tom-labs-plain-color') || '#010d12';
+    var accent = localStorage.getItem('tom-labs-accent-color') || '#8b91f9';
+
+    var bgLum = this.getRelativeLuminance(bg);
+    var isDarkBg = bgLum < 0.5;
+
+    var textRatio = isDarkBg ? this.getContrastRatio(bg, '#ffffff') : this.getContrastRatio(bg, '#000000');
+    var accentRatio = this.getContrastRatio(bg, accent);
+
+    var scores = [
+      { id: 'contrast-text', ratio: textRatio, label: isDarkBg ? 'White on bg' : 'Black on bg' },
+      { id: 'contrast-accent', ratio: accentRatio, label: 'Accent on bg' }
+    ];
+
+    scores.forEach(function (s) {
+      var valEl = document.getElementById(s.id + '-val');
+      var barEl = document.getElementById(s.id + '-bar');
+      var badgeEl = document.getElementById(s.id + '-badge');
+      var labelEl = document.getElementById(s.id + '-label');
+      
+      if (labelEl) labelEl.textContent = s.label;
+      if (!valEl) return;
+
+      var ratio = Math.round(s.ratio * 10) / 10;
+      valEl.textContent = ratio.toFixed(1);
+
+      var pct = Math.min(100, (ratio / 21) * 100);
+      if (barEl) barEl.style.width = pct + '%';
+
+      if (badgeEl) {
+        if (ratio >= 7) {
+          badgeEl.textContent = 'AAA';
+          badgeEl.className = 'contrast-badge badge-aaa';
+        } else if (ratio >= 4.5) {
+          badgeEl.textContent = 'AA';
+          badgeEl.className = 'contrast-badge badge-aa';
+        } else {
+          badgeEl.textContent = 'Fail';
+          badgeEl.className = 'contrast-badge badge-fail';
+        }
+      }
+    });
+
+    // Update overall score header (uses the weakest link)
+    var minRatio = Math.min(textRatio, accentRatio);
+    var overallScore = document.getElementById('contrast-overall-score');
+    var overallLabel = document.getElementById('contrast-overall-label');
+    var stars = document.getElementById('contrast-stars');
+
+    if (overallScore && overallLabel && stars) {
+      overallScore.textContent = minRatio.toFixed(1);
+      
+      var starCount = 1;
+      if (minRatio >= 7) {
+        overallLabel.textContent = 'Excellent';
+        overallLabel.className = 'fw-semibold text-success';
+        starCount = 5;
+      } else if (minRatio >= 4.5) {
+        overallLabel.textContent = 'Good';
+        overallLabel.className = 'fw-semibold text-success';
+        starCount = 4;
+      } else if (minRatio >= 3.0) {
+        overallLabel.textContent = 'Poor';
+        overallLabel.className = 'fw-semibold text-warning';
+        starCount = 2;
+      } else {
+        overallLabel.textContent = 'Terrible';
+        overallLabel.className = 'fw-semibold text-danger';
+        starCount = 1;
+      }
+
+      var starHtml = '';
+      for (var i = 0; i < 5; i++) {
+        if (i < starCount) {
+          starHtml += `<i class='bx bxs-star' style="font-size: 0.7rem; color: #fbbf24;"></i>`;
+        } else {
+          starHtml += `<i class='bx bx-star' style="font-size: 0.7rem; color: rgba(255,255,255,0.2);"></i>`;
+        }
+      }
+      stars.innerHTML = starHtml;
+    }
+  },
+
+  enhanceAccent: function () {
+    var bg = localStorage.getItem('tom-labs-plain-color') || '#010d12';
+    var accent = localStorage.getItem('tom-labs-accent-color') || '#8b91f9';
+    var ratio = this.getContrastRatio(bg, accent);
+
+    if (ratio >= 4.5) {
+      if (typeof TomNotify !== 'undefined') {
+        TomNotify.show('Accent already passes AA contrast!', 'Enhance', 'success', 3000);
+      }
+      return;
+    }
+
+    // Determine if we need to lighten or darken accent
+    var bgLum = this.getRelativeLuminance(bg);
+    var step = bgLum > 0.5 ? -5 : 5;
+    var enhanced = accent;
+    var maxIter = 60;
+
+    for (var i = 0; i < maxIter; i++) {
+      enhanced = this.adjustColor(enhanced, step);
+      var newRatio = this.getContrastRatio(bg, enhanced);
+      if (newRatio >= 4.5) break;
+    }
+
+    this.setAccentColor(enhanced);
+    this.syncPickers(enhanced);
+    this.updateContrastScores(bg, enhanced);
+
+    var preview = document.getElementById('hex-preview');
+    if (preview && this.pickerTarget === 'accent') {
+      preview.innerText = enhanced.toUpperCase();
+      preview.style.color = enhanced;
+    }
+
+    if (typeof TomNotify !== 'undefined') {
+      var finalRatio = this.getContrastRatio(bg, enhanced);
+      TomNotify.show('Accent enhanced to ' + (Math.round(finalRatio * 10) / 10) + ':1 contrast ratio', 'Enhance', 'success', 3000);
+    }
+  },
+
+  updateDesignerPreviews: function () {
+    var bg = localStorage.getItem('tom-labs-plain-color') || '#010d12';
+    var accent = localStorage.getItem('tom-labs-accent-color') || '#8b91f9';
+
+    // Background sphere
+    var bgSphere = document.getElementById('designer-sphere-bg');
+    if (bgSphere) bgSphere.style.background = 'radial-gradient(circle at 35% 30%, ' + this.adjustColor(bg, 25) + ', ' + bg + ' 70%)';
+
+    // Accent sphere
+    var accentSphere = document.getElementById('designer-sphere-accent');
+    if (accentSphere) accentSphere.style.background = 'radial-gradient(circle at 35% 30%, ' + this.adjustColor(accent, 25) + ', ' + accent + ' 70%)';
+
+    // Preview combined sphere
+    var previewSphere = document.getElementById('designer-sphere-preview');
+    var previewDot = document.getElementById('designer-sphere-preview-dot');
+    if (previewSphere) previewSphere.style.background = 'radial-gradient(circle at 35% 30%, ' + this.adjustColor(bg, 20) + ', ' + bg + ' 70%)';
+    if (previewDot) previewDot.style.background = accent;
+  },
+
+  // Save custom theme with both bg + accent
+  saveCustomTheme: function (index) {
+    var bg = localStorage.getItem('tom-labs-plain-color') || '#010d12';
+    var accent = localStorage.getItem('tom-labs-accent-color') || '#8b91f9';
+    var theme = JSON.stringify({ bg: bg, accent: accent });
+    localStorage.setItem('tom-labs-custom-theme-' + index, theme);
+    // Also keep legacy single-color for backward compat
+    localStorage.setItem('tom-labs-custom-color-' + index, bg);
+    this.updateCustomSlotsUI();
+    this.syncToServer();
+
+    if (typeof TomNotify !== 'undefined') {
+      TomNotify.show('Custom theme saved to slot ' + (index + 1), 'Saved', 'success', 3000);
+    }
+  },
+
+  applyCustomTheme: function (index) {
+    var themeStr = localStorage.getItem('tom-labs-custom-theme-' + index);
+    if (themeStr) {
+      try {
+        var theme = JSON.parse(themeStr);
+        this.setPlainColor(theme.bg);
+        this.setAccentColor(theme.accent);
+        this.setMode('plain');
+        return;
+      } catch (e) {}
+    }
+    // Fallback to legacy single color
+    var slotColor = localStorage.getItem('tom-labs-custom-color-' + index);
+    if (slotColor) {
+      this.setPlainColor(slotColor);
+      this.setMode('plain');
+    }
+  },
+
+  deleteCustomTheme: function (index) {
+    // We want to delete the slot at `index`, but since custom slots are populated 0..N,
+    // we should shift the higher index themes down by 1 so there are no empty gaps.
+    var maxSlots = 10;
+    for (var i = index; i < maxSlots - 1; i++) {
+      var nextTheme = localStorage.getItem('tom-labs-custom-theme-' + (i + 1));
+      var nextColor = localStorage.getItem('tom-labs-custom-color-' + (i + 1));
+      
+      if (nextTheme) {
+        localStorage.setItem('tom-labs-custom-theme-' + i, nextTheme);
+      } else {
+        localStorage.removeItem('tom-labs-custom-theme-' + i);
+      }
+      
+      if (nextColor) {
+        localStorage.setItem('tom-labs-custom-color-' + i, nextColor);
+      } else {
+        localStorage.removeItem('tom-labs-custom-color-' + i);
+      }
+    }
+    
+    // Clear the very last slot
+    localStorage.removeItem('tom-labs-custom-theme-' + (maxSlots - 1));
+    localStorage.removeItem('tom-labs-custom-color-' + (maxSlots - 1));
+    
+    this.updateCustomSlotsUI();
+    this.syncToServer();
+    
+    if (typeof TomNotify !== 'undefined') {
+      TomNotify.show('Custom theme deleted', 'Deleted', 'warning', 3000);
+    }
+  },
+
   openDesignerForSlot: function (index) {
     this.currentEditingSlot = index;
-    var slotColor = localStorage.getItem(`tom-labs-custom-color-${index}`) || "#ffffff";
-    this.setPlainColor(slotColor);
-    bootstrap.Modal.getOrCreateInstance(document.getElementById("plainColorModal")).show();
+    // Load existing theme data
+    var themeStr = localStorage.getItem('tom-labs-custom-theme-' + index);
+    if (themeStr) {
+      try {
+        var theme = JSON.parse(themeStr);
+        this.setPlainColor(theme.bg);
+        this.setAccentColor(theme.accent);
+      } catch (e) {
+        var slotColor = localStorage.getItem('tom-labs-custom-color-' + index) || '#ffffff';
+        this.setPlainColor(slotColor);
+      }
+    } else {
+      var slotColor = localStorage.getItem('tom-labs-custom-color-' + index) || '#ffffff';
+      this.setPlainColor(slotColor);
+    }
+    this.switchPickerTarget('background');
+    var mEl = document.getElementById('plainColorModal');
+    var m = coreui.Modal.getInstance(mEl) || new coreui.Modal(mEl);
+    m.show();
   },
 
   applySlot: function (index) {
-    var slotColor = localStorage.getItem(`tom-labs-custom-color-${index}`);
-    if (slotColor) {
-      this.setPlainColor(slotColor);
+    var themeStr = localStorage.getItem('tom-labs-custom-theme-' + index);
+    if (themeStr) {
+      this.applyCustomTheme(index);
     } else {
-      this.openDesignerForSlot(index);
+      var slotColor = localStorage.getItem('tom-labs-custom-color-' + index);
+      if (slotColor) {
+        this.setPlainColor(slotColor);
+      } else {
+        this.openDesignerForSlot(index);
+      }
     }
   },
 
@@ -97,8 +424,8 @@ var TomBG = {
       var s = Math.min(100, (dist / radius) * 100);
       var v = document.getElementById("brightness-slider") ? document.getElementById("brightness-slider").value : 100;
 
-      var hex = _this.hsvToHex(angle, s, v);
-      _this.setPlainColor(hex);
+      var hex = TomBG.hsvToHex(angle, s, v);
+      TomBG.setPlainColor(hex);
 
       // Update wheel cursor position
       var cursor = document.getElementById("wheel-cursor");
@@ -172,8 +499,8 @@ var TomBG = {
         v = 100 - ((y - rect.height / 2) / (rect.height / 2)) * 100;
       }
 
-      var hex = _this.hsvToHex(h, s, v);
-      _this.setPlainColor(hex);
+      var hex = TomBG.hsvToHex(h, s, v);
+      TomBG.setPlainColor(hex);
 
       var cursor = document.getElementById("spectrum-cursor");
       if (cursor) {
@@ -197,12 +524,12 @@ var TomBG = {
 
     // Palettes
     document.querySelectorAll(".palette-item").forEach(function (p) {
-      p.onclick = function () { _this.setPlainColor(p.style.backgroundColor); };
+      p.onclick = function () { TomBG.setPlainColor(p.style.backgroundColor); };
     });
 
     // Pencils
     document.querySelectorAll(".pencil-item").forEach(function (p) {
-      p.onclick = function () { _this.setPlainColor(p.getAttribute("data-color")); };
+      p.onclick = function () { TomBG.setPlainColor(p.getAttribute("data-color")); };
     });
   },
 
@@ -347,6 +674,19 @@ var TomBG = {
   setPlainColor: function (color) {
     var hex = this.toHex(color);
 
+    // If pickerTarget is 'accent', route to accent color instead
+    if (this.pickerTarget === 'accent') {
+      this.setAccentColor(hex);
+      // Sync preview
+      var preview = document.getElementById('hex-preview');
+      if (preview) {
+        preview.innerText = hex.toUpperCase();
+        preview.style.color = hex;
+      }
+      this.syncPickers(hex);
+      return;
+    }
+
     // Default to Slot 0 if no slot is active, ensuring the Designer always has a target
     var targetSlot = (this.currentEditingSlot !== null) ? this.currentEditingSlot : 0;
 
@@ -374,6 +714,10 @@ var TomBG = {
 
     // Reset other icons to default opacity
     document.querySelectorAll(".designer-tab:not(.active) i").forEach(function (i) { i.style.color = ""; });
+
+    // Update designer previews + contrast
+    this.updateDesignerPreviews();
+    this.updateContrastScores();
 
     // Global Sync all other pickers
     this.syncPickers(hex);
@@ -433,7 +777,9 @@ var TomBG = {
         setVar("--snow-color", "#ffffff");
       }
 
-      var primaryColor = this.adjustColor(color, isLight ? -40 : 40);
+      // Use stored accent color instead of auto-deriving from background
+      var savedAccent = localStorage.getItem('tom-labs-accent-color');
+      var primaryColor = savedAccent || this.adjustColor(color, isLight ? -40 : 40);
       var pRGB = this.hexToRgbValues(primaryColor);
 
       setVar("--glass-bg", isLight ? "#ffffff" : this.hexToRgba(safeColor, 0.88));
@@ -505,6 +851,7 @@ var TomBG = {
     themeStyle.innerHTML = `:root { ${cssVars} }`;
 
     // Remove all style attributes from root to keep it clean like SNA
+    this.updateActiveSwatchUI();
     root.removeAttribute("style");
   },
 
@@ -646,26 +993,124 @@ var TomBG = {
   },
 
   updateCustomSlotsUI: function () {
-    for (var i = 0; i < 4; i++) {
-      var slot = document.getElementById("custom-slot-" + i);
-      if (slot) {
-        var color = localStorage.getItem("tom-labs-custom-color-" + i);
-        var plus = slot.querySelector(".bx-plus");
-        var edit = slot.querySelector(".edit-icon");
+    var container = document.getElementById('dynamic-custom-slots');
+    if (!container) return;
 
-        if (color) {
-          slot.style.background = color;
-          slot.classList.add("has-color");
-          if (plus) plus.classList.add("d-none");
-          if (edit) edit.style.opacity = "1";
-        } else {
-          slot.style.background = "rgba(255,255,255,0.05)";
-          slot.classList.remove("has-color");
-          if (plus) plus.classList.remove("d-none");
-          if (edit) edit.style.opacity = "0";
+    // Clear existing dynamically added slots
+    var existingSlots = container.querySelectorAll('.dynamic-slot');
+    existingSlots.forEach(function(slot) { slot.remove(); });
+
+    var slotCount = 0;
+    var maxSlots = 10;
+    var html = '';
+
+    for (var i = 0; i < maxSlots; i++) {
+      var themeStr = localStorage.getItem('tom-labs-custom-theme-' + i);
+      var colorStr = localStorage.getItem("tom-labs-custom-color-" + i);
+      
+      if (themeStr || colorStr) {
+        slotCount++;
+        var bg = "rgba(255,255,255,0.05)";
+        var accent = "";
+        var hasAccent = false;
+
+        if (themeStr) {
+          try {
+            var theme = JSON.parse(themeStr);
+            bg = theme.bg;
+            accent = theme.accent;
+            hasAccent = true;
+          } catch(e){}
+        } else if (colorStr) {
+          bg = colorStr;
         }
+
+        var gradient = 'radial-gradient(circle at 35% 30%, ' + this.adjustColor(bg, 25) + ', ' + bg + ' 70%)';
+
+        html += `
+          <div class="text-center dynamic-slot position-relative swatch-sphere-wrap swatch-item" style="width: 72px;" data-bg="${bg}" data-accent="${accent}" onmouseenter="this.querySelector('.action-btns').style.opacity='1'" onmouseleave="this.querySelector('.action-btns').style.opacity='0'">
+              <div class="rounded-circle mx-auto mb-2 swatch-sphere dual-sphere d-flex align-items-center justify-content-center position-relative pointer" 
+                   onclick="TomBG.applyCustomTheme(${i})"
+                   style="width: 52px; height: 52px; border: 2px solid ${bg}; padding: 3px; background: transparent; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);">
+                  <div class="w-100 h-100 rounded-circle position-relative" style="background: linear-gradient(to bottom, #1e293b 50%, #ffffff 50%); box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
+                      ${hasAccent ? `<span class="dual-sphere-dot" style="background: ${accent}; border: 2px solid rgba(255,255,255,0.8); width: 14px; height: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 50%;"></span>` : ''}
+                  </div>
+                  <div class="active-badge position-absolute shadow-sm" style="top: -4px; right: -4px; width: 16px; height: 16px; background: #22c55e; border-radius: 50%; color: white; display: none; align-items: center; justify-content: center; font-size: 11px; border: 2px solid var(--cui-body-bg); z-index: 2;">
+                      <i class='bx bx-check fw-bold'></i>
+                  </div>
+              </div>
+              <span class="d-block text-body-secondary" style="font-size: 0.65rem; font-weight: 500; line-height: 1.2;">Custom ${i + 1}</span>
+              
+              <div class="action-btns position-absolute w-100 d-flex justify-content-between" style="top: -5px; padding: 0 2px; opacity: 0; transition: opacity 0.2s ease; pointer-events: none; z-index: 5;">
+                  <button class="btn btn-sm btn-success rounded-circle shadow-sm d-flex align-items-center justify-content-center p-0 action-btn" 
+                          onclick="TomBG.openDesignerForSlot(${i}); event.stopPropagation();"
+                          style="width: 20px; height: 20px; border: 1px solid rgba(255,255,255,0.5); pointer-events: auto; background-color: #22c55e;" title="Edit">
+                      <i class='bx bxs-pencil' style="font-size: 10px; color: #fff;"></i>
+                  </button>
+                  <button class="btn btn-sm btn-danger rounded-circle shadow-sm d-flex align-items-center justify-content-center p-0 action-btn" 
+                          onclick="TomBG.deleteCustomTheme(${i}); event.stopPropagation();"
+                          style="width: 20px; height: 20px; border: 1px solid rgba(255,255,255,0.5); pointer-events: auto; background-color: #ef4444;" title="Delete">
+                      <i class='bx bx-x' style="font-size: 14px; color: #fff;"></i>
+                  </button>
+              </div>
+          </div>
+        `;
       }
     }
+
+    // Insert before the 'Create New' button
+    var createNewBtn = container.querySelector('.create-new-slot');
+    if (createNewBtn) {
+      createNewBtn.insertAdjacentHTML('beforebegin', html);
+      // Hide Create New button if we reached the max limit
+      createNewBtn.style.display = slotCount >= maxSlots ? 'none' : 'block';
+      
+      // Update onclick to use the next available slot index
+      var nextIndex = -1;
+      for (var i = 0; i < maxSlots; i++) {
+        if (!localStorage.getItem('tom-labs-custom-theme-' + i) && !localStorage.getItem('tom-labs-custom-color-' + i)) {
+          nextIndex = i;
+          break;
+        }
+      }
+      
+      if (nextIndex !== -1) {
+        createNewBtn.setAttribute('onclick', "TomBG.openDesignerForSlot(" + nextIndex + "); var m = coreui.Modal.getInstance(document.getElementById('bgSelectModal')); if(m)m.hide();");
+      }
+    }
+    
+    this.updateActiveSwatchUI();
+  },
+
+  updateActiveSwatchUI: function () {
+    var currentBg = localStorage.getItem('tom-labs-plain-color') || '#010d12';
+    var currentAccent = localStorage.getItem('tom-labs-accent-color') || '#8b91f9';
+    var mode = localStorage.getItem('tom-labs-bg-mode') || 'ninja';
+    
+    document.querySelectorAll('.swatch-item').forEach(function(item) {
+      var badge = item.querySelector('.active-badge');
+      if (!badge) return;
+      
+      var itemBg = item.getAttribute('data-bg');
+      var itemAccent = item.getAttribute('data-accent');
+      
+      var bgMatches = itemBg && itemBg.toLowerCase() === currentBg.toLowerCase();
+      var accentMatches = (!itemAccent) || (itemAccent.toLowerCase() === currentAccent.toLowerCase());
+      
+      if (mode === 'plain' && bgMatches && accentMatches) {
+        badge.style.display = 'flex';
+      } else {
+        badge.style.display = 'none';
+      }
+    });
+  },
+
+  // Set both background + accent from a swatch preset
+  applySwatchPreset: function (bg, accent) {
+    localStorage.setItem('tom-labs-accent-color', accent);
+    this.setPlainColor(bg);
+    this.setAccentColor(accent);
+    this.setMode('plain');
   },
 
   toHex: function (color) {
@@ -697,9 +1142,12 @@ var TomBG = {
   syncToServer: function () {
     var mode = localStorage.getItem("tom-labs-bg-mode");
     var plainColor = localStorage.getItem("tom-labs-plain-color");
+    var accentColor = localStorage.getItem("tom-labs-accent-color");
     var customSlots = [];
-    for (var i = 0; i < 4; i++) {
+    var customThemes = [];
+    for (var i = 0; i < 10; i++) {
       customSlots.push(localStorage.getItem("tom-labs-custom-color-" + i));
+      customThemes.push(localStorage.getItem("tom-labs-custom-theme-" + i));
     }
 
     if (this._syncTimer) clearTimeout(this._syncTimer);
@@ -710,7 +1158,9 @@ var TomBG = {
         body: JSON.stringify({
           mode: mode,
           plainColor: plainColor,
-          customSlots: customSlots
+          accentColor: accentColor,
+          customSlots: customSlots,
+          customThemes: customThemes
         })
       }).catch(function (err) { console.error("Theme sync failed:", err); });
     }, 500);

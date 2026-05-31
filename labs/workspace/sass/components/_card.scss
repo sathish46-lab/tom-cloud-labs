@@ -163,3 +163,262 @@
     -webkit-backdrop-filter: none !important;
   }
 }
+
+// ========================================================================
+// Light Theme Custom Overrides for Dashboard Home Page
+// ========================================================================
+[data-coreui-theme="light"] {
+  .home-nav-card.card,
+  .launcher-card.card {
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.02) !important;
+
+    &:hover {
+      border-color: rgba(0, 0, 0, 0.15) !important;
+      background-color: rgba(0, 0, 0, 0.02) !important;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08) !important;
+    }
+
+    .card-title,
+    h5 {
+      color: #1a1a2e !important;
+    }
+
+    .card-text,
+    p {
+      color: rgba(26, 26, 46, 0.6) !important;
+    }
+
+    .card-icon-ring,
+    .icon-wrapper {
+      background: rgba(0, 0, 0, 0.03) !important;
+      border: 1px solid rgba(0, 0, 0, 0.06) !important;
+    }
+  }
+
+  .home-plan-badge {
+    background-color: rgba(0, 0, 0, 0.04) !important;
+    color: #1a1a2e !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  }
+
+  .home-signout-link {
+    color: #c0392b !important;
+    opacity: 0.85 !important;
+    font-weight: 500 !important;
+    transition: opacity 0.2s ease !important;
+
+    &:hover {
+      opacity: 1 !important;
+      color: #e74c3c !important;
+    }
+  }
+}
+
+// ========================================================================
+// Swatch Spheres – Change Background Modal (Reference Style)
+// ========================================================================
+.swatch-sphere-wrap {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  .edit-theme-btn {
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  &:hover {
+    transform: translateY(-3px);
+    
+    .swatch-sphere {
+      box-shadow: 0 10px 24px rgba(0,0,0,0.45), inset 0 -4px 8px rgba(0,0,0,0.3), inset 0 2px 6px rgba(255,255,255,0.3) !important;
+      border-color: rgba(255,255,255,0.3) !important;
+      transform: scale(1.08);
+    }
+
+    .edit-theme-btn {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  &:active .swatch-sphere {
+    transform: scale(0.95);
+  }
+}
+
+.swatch-sphere {
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// Tab styling for bgSelectModal
+#bgModalTabs {
+  .nav-link {
+    transition: all 0.25s ease;
+    border: 1px solid transparent;
+
+    &:not(.active):hover {
+      opacity: 1 !important;
+      background: rgba(var(--cui-emphasis-color-rgb), 0.06);
+    }
+    
+    &.active {
+      background: rgba(var(--cui-primary-rgb), 0.15) !important;
+      color: var(--cui-primary) !important;
+      border-color: rgba(var(--cui-primary-rgb), 0.25) !important;
+      opacity: 1 !important;
+    }
+  }
+}
+
+// ========================================================================
+// Dual-Color Spheres (Background outer + Accent inner dot)
+// ========================================================================
+.dual-sphere {
+  position: relative;
+}
+
+.dual-sphere-dot {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.swatch-sphere-wrap:hover .dual-sphere-dot {
+  transform: translate(-50%, -50%) scale(1.15);
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+// ========================================================================
+// Picker Target Toggle (Background / Accent)
+// ========================================================================
+.picker-target-toggle {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.picker-target-btn {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.75);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  &.active {
+    background: rgba(var(--cui-primary-rgb, 139, 145, 249), 0.2);
+    color: var(--cui-primary, #8b91f9);
+    border-color: rgba(var(--cui-primary-rgb, 139, 145, 249), 0.35);
+    box-shadow: 0 0 12px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.15);
+  }
+}
+
+// ========================================================================
+// Contrast Score Panel
+// ========================================================================
+.contrast-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.contrast-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #22c55e, #22c55e);
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.contrast-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  min-width: 32px;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-block;
+}
+
+.badge-aaa {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.badge-aa {
+  background: rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.badge-fail {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+// ========================================================================
+// Enhance Button (Golden Gradient)
+// ========================================================================
+.enhance-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.45rem 1.2rem;
+  border-radius: 50px;
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #1a1a2e;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+
+  &:hover {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(251, 191, 36, 0.25);
+  }
+}
+
+// ========================================================================
+// Designer Preview Spheres (Background / Preview / Accent)
+// ========================================================================
+.designer-preview-sphere {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    transform: scale(1.06);
+  }
+}
