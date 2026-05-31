@@ -103,7 +103,7 @@ $defaultIp = !empty($resources) ? end($resources)['ip_addr'] : "";
                         elseif ($type === 'server') { $typeClass = 'bg-dark border border-secondary'; $typeIcon = 'bx-server'; }
                         elseif ($type === 'iot') { $typeClass = 'bg-danger'; $typeIcon = 'bx-chip'; }
                     ?>
-                    <span class="badge rounded-pill <?= $typeClass ?> fw-bold" style="font-size: 10px; padding: 3px 8px;">
+                    <span class="badge rounded-pill <?= $typeClass ?> fw-bold" style="font-size: 8px; padding: 2px 6px;">
                         <i class='bx <?= $typeIcon ?> me-1'></i> <?= strtoupper($type) ?>
                     </span>
                     <?php 
@@ -111,7 +111,7 @@ $defaultIp = !empty($resources) ? end($resources)['ip_addr'] : "";
                         $statusClass = ($status === 'online') ? 'bg-success' : 'bg-danger';
                         $statusIcon = ($status === 'online') ? 'bx-wifi' : 'bx-wifi-off';
                     ?>
-                    <span class="badge rounded-pill <?= $statusClass ?> fw-bold" style="font-size: 10px; padding: 3px 8px;">
+                    <span class="badge rounded-pill status-pill <?= $statusClass ?> fw-bold" style="font-size: 8px; padding: 2px 6px;">
                         <i class='bx <?= $statusIcon ?> me-1'></i> <?= strtoupper($status) ?>
                     </span>
                 </div>
