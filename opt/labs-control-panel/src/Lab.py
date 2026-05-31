@@ -743,3 +743,31 @@ class Lab:
             status = "✅ Built" if self.docker.image_exists(tag) else "❌ Missing"
             print(f"{t:<20} | {tag:<15} | {status}")
         print("-" * 50 + "\n")
+    
+    def get_workers(self):
+        """Check how many Python worker processes are currently alive via systemd."""
+        self.log("Querying systemd for active labs-worker instances...", "info")
+        try:
+            # Query systemctl specifically for running instances of your worker
+            cmd = "systemctl list-units --type=service --state=running | grep 'labs-worker' | awk '{print $1}'"
+            output = os.popen(cmd).read().strip()
+            
+            if not output:
+                self.log("No active workers found. (Check if 'systemctl start labs-worker@1' was run)", "warn")
+                return
+
+            workers = output.split('\n')
+            count = len(workers)
+            
+            self.log(f"Total Active Workers: {count}", "success")
+            
+            # Print a clean, CLI-friendly list matching your list_images format
+            print("-" * 40)
+            print(f"{'Worker Instance Name':<25} | {'Status'}")
+            print("-" * 40)
+            for w in workers:
+                print(f"{w:<25} | 🟢 Alive")
+            print("-" * 40 + "\n")
+            
+        except Exception as e:
+            self.log(f"Failed to check workers: {e}", "error")

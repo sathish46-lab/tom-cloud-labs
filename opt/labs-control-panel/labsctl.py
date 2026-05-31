@@ -26,6 +26,7 @@ def print_help():
     print("  ensure-codeserver   Check VS Code.    Ex: labsctl ensure-codeserver --hash=HASH")
     print("  quiz generate       AI Quiz Gen.      Ex: labsctl quiz generate --topic=ID --subtopic=ID --diff=hard")
     print("  list-images         List built labs.  Ex: labsctl list-images\n")
+    print("  get-workers         Check active.     Ex: labsctl get-workers\n")
 
 def main():
     args = Arguments(sys.argv)
@@ -95,6 +96,8 @@ def main():
                  print("Usage: labsctl quiz generate --topic=ID --subtopic=ID --diff=normal")
         elif cmd == 'list-images':
              lab_manager.list_images()
+        elif cmd == 'get-workers':
+             lab_manager.get_workers()
         else:
             print(f"❌ Unknown command: {cmd}")
         
