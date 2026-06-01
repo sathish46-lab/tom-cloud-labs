@@ -98,7 +98,7 @@
 
                 <?php if($isRunning): ?>
                     <button id="btn-stop-action" class="btn px-3 py-1.5 fw-bold hover-scale border-0 d-flex align-items-center gap-2" 
-                            style="background: #a855f7; color: #fff;"
+                            style="background: #ef4444; color: #fff;"
                             onclick="handleStop()"
                             data-tooltip="Stop Instance Immediately"
                             data-coreui-toggle="loading-button" data-coreui-spinner-type="grow">

@@ -99,17 +99,29 @@ $initS = str_pad($timeLeft % 60, 2, "0", STR_PAD_LEFT);
                         <i class='bx bx-time-five text-warning mb-0'></i>
                         <span id="challenge-countdown" class="fw-bold ms-1" style="font-family: monospace; font-size: 1.1rem; color: #ffc107;" data-expires="<?= $expiresAt ?>"><?= $initM ?>:<?= $initS ?></span>
                     </div>
-                    <button class="btn btn-danger px-4 py-2 fw-bold rounded-pill shadow d-flex align-items-center gap-2" onclick="stopChallenge(this, '<?= htmlspecialchars($labId) ?>')">
-                        <i class='bx bx-stop-circle'></i> Stop
-                    </button>
                 <?php endif; ?>
-                <button class="btn btn-success px-5 py-2 fw-bold rounded-pill shadow d-flex align-items-center gap-2" data-coreui-toggle="modal" data-coreui-target="#confirmDeployModal">
-                    <i class='bx <?= $isRunning ? "bx-refresh" : "bx-cloud-upload" ?>'></i>
-                    <?= $isRunning ? 'Redeploy' : 'Deploy' ?>
+                
+                <div class="btn-group shadow-sm rounded-pill overflow-hidden me-4" role="group">
+                    <button class="btn btn-sm btn-success btn-redeploy-lab px-3 py-1 fw-bold hover-scale border-0 d-flex align-items-center gap-2" 
+                            style="background: #34d399; border: none; color: #000;"
+                            data-coreui-toggle="modal" data-coreui-target="#confirmDeployModal"
+                            data-tooltip="<?= $isRunning ? 'Redeploy for a fresh instance' : 'Deploy this challenge' ?>"
+                            data-coreui-spinner-type="grow">
+                        <i class='bx <?= $isRunning ? 'bx-refresh' : 'bx-cloud-upload' ?> fs-6 text-dark'></i>
+                        <span class="text-dark"><?= $isRunning ? 'Redeploy' : 'Deploy' ?></span>
+                    </button>
+
                     <?php if ($isRunning): ?>
-                        <span class="rounded-circle ms-1 pulse" style="background:rgba(255,255,255,0.5);width:8px;height:8px;display:inline-block;"></span>
+                        <button id="btn-stop-action" class="btn btn-sm px-3 py-1 fw-bold hover-scale border-0 d-flex align-items-center gap-2" 
+                                style="background: #ef4444; color: #fff;"
+                                onclick="stopChallenge(this, '<?= htmlspecialchars($labId) ?>')"
+                                data-tooltip="Stop Challenge Immediately"
+                                data-coreui-toggle="loading-button" data-coreui-spinner-type="grow">
+                            <i class='bx bx-stop-circle fs-6' style="filter: brightness(0) invert(1);"></i>
+                            <span>Stop</span>
+                        </button>
                     <?php endif; ?>
-                </button>
+                </div>
             </div>
         </div>
 
@@ -159,13 +171,15 @@ $initS = str_pad($timeLeft % 60, 2, "0", STR_PAD_LEFT);
             
             if(!confirm("Are you sure you want to stop this challenge? The container will be shut down and your progress will be paused.")) return;
             
-            const originalHTML = btn.innerHTML;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Stopping...';
-            btn.disabled = true;
-            
             if(typeof Dashboard !== 'undefined') {
+                Dashboard.toggleLoading(btn, true);
                 Dashboard.isProcessing = true;
                 Dashboard.appendLog("[*] Stop task queued. Waiting for worker to shut down...");
+                Dashboard.resetTerminal();
+                Dashboard.appendCommand(`labsctl challenge stop --user=${window.LAB_USER || 'tom'} --hash=${window.SESSION_HASH} --challenge=${challengeId}`);
+            } else {
+                btn.innerHTML = '<span class="spinner-grow spinner-grow-sm me-2" role="status" aria-hidden="true"></span> Stopping...';
+                btn.disabled = true;
             }
             
             try {
