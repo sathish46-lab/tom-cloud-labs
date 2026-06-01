@@ -310,6 +310,35 @@ class Challenge:
 
         self.log("Routing and firewall configured.", "success")
 
+        # 10.5 Find duration from challenges.json
+        duration_minutes = 15
+        try:
+            challenges_json_path = '/var/www/labs/htdocs/src/config/challenges.json'
+            if os.path.exists(challenges_json_path):
+                with open(challenges_json_path, 'r') as f:
+                    challenges_list = json.load(f)
+                    for item in challenges_list:
+                        if item.get('lab_id') == challenge_id or item.get('lab_id') == challenge_id.replace('_', '-'):
+                            # Find difficulty from tags
+                            difficulty = 'easy'
+                            tags = item.get('tags', [])
+                            if isinstance(tags, list):
+                                for tag in tags:
+                                    if isinstance(tag, dict):
+                                        t_text = str(tag.get('text', '')).lower()
+                                        if t_text in ['easy', 'medium', 'hard']:
+                                            difficulty = t_text
+                                            break
+                            duration_map = {
+                                'easy': 15,
+                                'medium': 30,
+                                'hard': 45
+                            }
+                            duration_minutes = int(item.get('duration', duration_map.get(difficulty, 15)))
+                            break
+        except Exception as e:
+            self.log(f"Error reading challenges.json for duration: {e}", "warn")
+
         # 11. Update Database
         self.db.challenge_instances.update_one(
             {"instance_hash": instance_id},
@@ -322,6 +351,8 @@ class Challenge:
                     "access_url": f"http://{tunnel_ip}"
                 },
                 "mission_started": False,
+                "duration": duration_minutes,
+                "expires_at": time.time() + (duration_minutes * 60),
                 "created_at": time.time(),
                 "updated_at": time.time()
             }}
@@ -362,7 +393,7 @@ class Challenge:
                     os.system(f"iptables -t nat -D OUTPUT -d {tunnel_ip} -j DNAT --to-destination {docker_ip} 2>/dev/null || true")
 
         if self.docker.container_exists(container_name):
-            os.system(f"docker stop {container_name} && docker rm -f {container_name}")
+            os.system(f"docker rm -f {container_name}")
 
             if self.db:
                 self.db.challenge_instances.update_one(

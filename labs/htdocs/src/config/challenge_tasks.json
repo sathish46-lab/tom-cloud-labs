@@ -1,0 +1,26 @@
+{
+    "sql-injection": [
+        {
+            "task_id": "task_1",
+            "title": "SQL Injection Exploitation",
+            "description": "Bypass the login portal without valid credentials. Analyze the input fields, craft a payload that manipulates the backend database query, and extract the secret flag.",
+            "zeal": 500,
+            "jolt": 10,
+            "difficulty": "Easy",
+            "completed": false,
+            "tags": ["Web", "SQLi"]
+        }
+    ],
+    "flask-server-side-injection": [
+        {
+            "task_id": "task_1",
+            "title": "Digital Elysium: Shadows Over Flaskhaven",
+            "description": "Help the JINJA SENTINALS to seal back their secrets of the Ciper Stone.",
+            "zeal": 100,
+            "jolt": 5,
+            "difficulty": "Medium",
+            "completed": false,
+            "tags": ["Web", "SSTI"]
+        }
+    ]
+}

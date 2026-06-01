@@ -32,7 +32,8 @@ try {
         exit;
     }
     
-    if (($instance['status'] ?? '') !== 'running') {
+    $status = $instance['status'] ?? '';
+    if ($status !== 'running' && $status !== 'completed') {
         echo json_encode(['status' => 'error', 'error' => 'Challenge is not currently running. Deploy it first.']); exit;
     }
 

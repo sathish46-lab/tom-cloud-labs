@@ -41,5 +41,15 @@ Expose the proxy chain, exploit the transit routing vulnerability, and extract t
 
 Your mission is to bypass the login portal without having valid credentials. Analyze the input fields, craft a payload that manipulates the backend database query, and extract the secret flag from the admin dashboard.
 
+Note: This challenge container is intentionally isolated from the internet and can only be accessed via the WireGuard VPN.',
+
+    'flask-server-side-injection' => 'The ancient digital realm of Flaskhaven has been compromised. The Cipher Stone — a sacred artifact that protects the realm\'s secrets — has been hidden deep within the server\'s file system by a rogue sorcerer.
+
+The Binary Sentinels have called upon you to infiltrate the Flaskhaven Gateway Terminal. The gateway accepts a codename through its transmission interface, but the sorcerer\'s arrogance left the temple unguarded — the gateway renders your input directly into its magical templates without any protection.
+
+Your mission: Exploit the Server-Side Template Injection (SSTI) vulnerability to traverse the server\'s internals and locate the Cipher Stone flag hidden where the password file is stored in this folder.
+
+Hint: Check whether there is any name parameter and find the flag "where the password file is stored in this folder".
+
 Note: This challenge container is intentionally isolated from the internet and can only be accessed via the WireGuard VPN.'
 ];

@@ -13,7 +13,7 @@ $tags         = Session::get('challenge_tags');
 $eventName    = Session::get('challenge_event_name');
 $isEnded      = Session::get('challenge_is_ended');
 $isRetired    = Session::get('challenge_is_retired');
-$isRunning    = ($status === 'running');
+$isRunning    = ($status === 'running' || $status === 'completed');
 
 $host      = $_SERVER['HTTP_HOST'] ?? 'labs.selfmade.ninja';
 $shareUrl  = "https://{$host}/challenges/challenges/{$labId}"; 
@@ -21,9 +21,18 @@ $shareUrl  = "https://{$host}/challenges/challenges/{$labId}";
 $dbInstance = DatabaseConnection::getDefaultDatabase();
 $userProgress = $dbInstance->challenge_instances->findOne(['instance_hash' => $instanceHash]) ?? [];
 $createdAt = $userProgress['created_at'] ?? time();
-$expiresAt = $createdAt + (15 * 60);
-$timeLeft = max(0, $expiresAt - time());
-$isExpired = $timeLeft <= 0;
+$durationMinutes = Session::get('challenge_duration') ?? 15;
+
+if ($isRunning) {
+    // Use DB's stored expires_at as single source of truth when running
+    $expiresAt = $userProgress['expires_at'] ?? ($createdAt + ($durationMinutes * 60));
+    $timeLeft = max(0, $expiresAt - time());
+} else {
+    // If not running, show the full available duration
+    $timeLeft = $durationMinutes * 60;
+}
+
+$isExpired = ($isRunning && $timeLeft <= 0);
 
 $initM = str_pad(floor($timeLeft / 60), 2, "0", STR_PAD_LEFT);
 $initS = str_pad($timeLeft % 60, 2, "0", STR_PAD_LEFT);
@@ -55,8 +64,8 @@ $initS = str_pad($timeLeft % 60, 2, "0", STR_PAD_LEFT);
                             </button>
                         </div>
 
-                        <div class="d-flex align-items-center text-secondary opacity-75">
-                            <button class="btn btn-link btn-sm p-0 clipboard text-decoration-none d-flex align-items-center gap-1" data-clipboard-text="<?= htmlspecialchars($shareUrl) ?>" data-coreui-toggle="tooltip" title="Copy Shareable URL">
+                        <div class="d-flex align-items-center opacity-75">
+                            <button class="btn btn-sm p-0 clipboard text-primary text-decoration-none d-flex align-items-center gap-1" data-clipboard-text="<?= htmlspecialchars($shareUrl) ?>" data-coreui-toggle="tooltip" title="Copy Shareable URL">
                                 <i class='bx bx-share-alt'></i>
                                 <span style="font-size:10px;">Share</span>
                             </button>
@@ -73,8 +82,11 @@ $initS = str_pad($timeLeft % 60, 2, "0", STR_PAD_LEFT);
                         <?php elseif ($isRetired): ?>
                             <span class="badge bg-warning-gradient border border-white border-opacity-10 rounded-pill px-2 py-1"><?= htmlspecialchars($eventName) ?></span>
                         <?php endif; ?>
-                        <?php foreach (($tags ?? []) as $tag): ?>
-                            <span class="badge bg-secondary border border-white border-opacity-10 rounded-pill px-2 py-1"><?= htmlspecialchars($tag) ?></span>
+                        <?php foreach (($tags ?? []) as $tag): 
+                            $tagColors = ['bg-primary', 'bg-success', 'bg-info', 'bg-warning text-dark', 'bg-danger', 'bg-indigo', 'bg-teal'];
+                            $colorClass = $tagColors[abs(crc32($tag)) % count($tagColors)];
+                        ?>
+                            <span class="badge <?= $colorClass ?> bg-opacity-75 border border-white border-opacity-10 rounded-pill px-2 py-1 shadow-sm"><?= htmlspecialchars(strtoupper($tag)) ?></span>
                         <?php endforeach; ?>
                     </div>
                 </div>
@@ -91,7 +103,7 @@ $initS = str_pad($timeLeft % 60, 2, "0", STR_PAD_LEFT);
                         <i class='bx bx-stop-circle'></i> Stop
                     </button>
                 <?php endif; ?>
-                <button class="btn btn-success px-5 py-2 fw-bold rounded-pill shadow d-flex align-items-center gap-2" onclick="handleChallengeDeploy(this, '<?= htmlspecialchars($labId) ?>')">
+                <button class="btn btn-success px-5 py-2 fw-bold rounded-pill shadow d-flex align-items-center gap-2" data-coreui-toggle="modal" data-coreui-target="#confirmDeployModal">
                     <i class='bx <?= $isRunning ? "bx-refresh" : "bx-cloud-upload" ?>'></i>
                     <?= $isRunning ? 'Redeploy' : 'Deploy' ?>
                     <?php if ($isRunning): ?>
@@ -199,8 +211,24 @@ $initS = str_pad($timeLeft % 60, 2, "0", STR_PAD_LEFT);
                     clearInterval(interval);
                     timerEl.innerHTML = '<span class="text-danger">EXPIRED</span>';
                     timerEl.parentElement.classList.add('border-danger');
-                    // Stop polling and force reload after 3s
-                    setTimeout(() => window.location.reload(), 3000);
+                    
+                    // Actively stop the container via API (don't rely on background reaper)
+                    (async function() {
+                        try {
+                            const formData = new URLSearchParams();
+                            formData.append('challenge_id', <?= json_encode($labId) ?>);
+                            formData.append('hash', <?= json_encode($instanceHash) ?>);
+                            
+                            await fetch('/api/challenges/stop_mission', {
+                                method: 'POST',
+                                body: formData
+                            });
+                        } catch(e) {
+                            console.error('Auto-stop on expiry failed:', e);
+                        }
+                        // Reload after a short delay to let the stop job queue
+                        setTimeout(() => window.location.reload(), 2000);
+                    })();
                     return;
                 }
                 
@@ -236,3 +264,40 @@ $initS = str_pad($timeLeft % 60, 2, "0", STR_PAD_LEFT);
         </div>
     </div>
 </div>
+
+<!-- Confirm Deploy Modal -->
+<div class="modal fade" id="confirmDeployModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg" style="background: rgba(18, 18, 18, 0.95); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.08) !important;">
+            <div class="modal-header border-0 pt-4 px-4 pb-0 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold m-0 text-white" style="font-size: 1.35rem; letter-spacing: -0.3px;">Confirm Deploy?</h5>
+                <button type="button" class="btn-close btn-close-white" data-coreui-dismiss="modal" style="font-size: 0.8rem; filter: var(--cui-btn-close-white-filter, none);"></button>
+            </div>
+            <div class="modal-body px-4 pb-3 pt-3">
+                <div class="mb-3">
+                    <h5 class="fw-bold text-danger mb-2" style="font-size: 1.15rem;">You are deploying a Challenge Lab</h5>
+                    <p class="text-white-50 small" style="font-size: 0.88rem; line-height: 1.5;">
+                        If you stop/redeploy or the lab expires while on a mission, all your ongoing missions will be considered as failed.
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer border-0 px-4 pb-4 pt-2 d-flex justify-content-end gap-2">
+                <button type="button" class="btn rounded-pill px-4 py-2 fw-bold text-white" onclick="triggerActualDeploy(this)" style="background: #2ecc71; border: none; font-size: 0.82rem; transition: all 0.2s;">Confirm Deploy</button>
+                <button type="button" class="btn rounded-pill px-4 py-2 fw-bold text-white" data-coreui-dismiss="modal" style="background: #3c4b64; border: none; font-size: 0.82rem;">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function triggerActualDeploy(btn) {
+    const modalEl = document.getElementById('confirmDeployModal');
+    if (modalEl) {
+        const modalInstance = coreui.Modal.getInstance(modalEl) || new coreui.Modal(modalEl);
+        modalInstance.hide();
+    }
+    const deployBtn = document.querySelector('[data-coreui-target="#confirmDeployModal"]');
+    handleChallengeDeploy(deployBtn, <?= json_encode($labId) ?>);
+}
+</script>
+

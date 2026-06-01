@@ -15,13 +15,34 @@ $totalTasks   = Session::get('challenge_total_tasks');
 $db           = DatabaseConnection::getDefaultDatabase();
 $userProgress = $db->challenge_instances->findOne(['instance_hash' => $instanceHash]) ?? [];
 $challengesCompleted = $userProgress['challenges_completed'] ?? 0;
-$zealAcquired        = $userProgress['zeal'] ?? 0;
-$timeSpent           = $userProgress['time_spent_seconds'] ?? 0;
-$lbRank              = $userProgress['leaderboard_rank'] ?? '--';
+$zealAcquired        = $userProgress['zeal_earned'] ?? 0;
+
+// Total time spent is only calculated from mission start to completion
+$missionStartTime = $userProgress['mission_start_time'] ?? 0;
+$completedAt = $userProgress['completed_at'] ?? 0;
+$timeSpent = 0;
+if ($missionStartTime > 0) {
+    if ($completedAt > 0) {
+        $timeSpent = $completedAt - $missionStartTime;
+    } else {
+        $timeSpent = time() - $missionStartTime;
+    }
+}
+$timeSpent = max(0, $timeSpent);
+
+// Attempts logic
+$failedAttempts = $userProgress['failed_attempts'] ?? 0;
+$completedOnAttempt = $userProgress['completed_on_attempt'] ?? null;
+$attemptsShow = ($challengesCompleted > 0 && $completedOnAttempt !== null) ? $completedOnAttempt : $failedAttempts;
 
 $creds     = $userProgress['credentials'] ?? null;
 $hasConn   = $isRunning && $creds;
 $missionStarted = $userProgress['mission_started'] ?? false;
+
+// Format values for professional display (no 0 defaults)
+$timeDisplay = $timeSpent > 0 ? gmdate('H:i:s', $timeSpent) : '00:00:00';
+$zealDisplay = $zealAcquired > 0 ? number_format($zealAcquired) : '0000';
+$attemptsDisplay = $attemptsShow > 0 ? $attemptsShow : '00';
 
 // Dynamic Lab Information Readme loading
 $readmes = require __DIR__ . '/../../../config/challenge_readmes.php';
@@ -36,44 +57,44 @@ include __DIR__ . '/partials/challenge_header.php';
         <div class="col-6 col-md-3">
             <div class="card border-0 shadow-sm rounded-4 h-100 blur" style="background:rgba(255,255,255,0.03);">
                 <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <span class="small text-muted fw-bold text-uppercase" style="font-size:0.6rem;letter-spacing:0.05em;">CHALLENGES COMPLETED</span>
-                        <i class="bx bx-flag text-secondary" style="font-size:1.4rem;opacity:0.6;"></i>
+                    <div class="position-relative d-flex justify-content-center mb-3">
+                        <span class="small text-muted fw-bold text-uppercase text-center" style="font-size:0.6rem;letter-spacing:0.05em;">CHALLENGES COMPLETED</span>
+                        <i class="bx bx-flag text-secondary position-absolute end-0" style="font-size:1.4rem;opacity:0.6;"></i>
                     </div>
-                    <div class="fw-bold text-white" style="font-size:1.8rem;line-height:1;"><?= "{$challengesCompleted}/{$totalTasks}" ?></div>
+                    <div class="fw-bold text-white text-center" style="font-size:1.8rem;line-height:1;"><?= "{$challengesCompleted}/{$totalTasks}" ?></div>
                 </div>
             </div>
         </div>
         <div class="col-6 col-md-3">
             <div class="card border-0 shadow-sm rounded-4 h-100 blur" style="background:rgba(255,255,255,0.03);">
                 <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <span class="small text-muted fw-bold text-uppercase" style="font-size:0.6rem;letter-spacing:0.05em;">ZEAL ACQUIRED</span>
-                        <i class="bx bxs-hot text-warning" style="font-size:1.4rem;opacity:0.6;"></i>
+                    <div class="position-relative d-flex justify-content-center mb-3">
+                        <span class="small text-muted fw-bold text-uppercase text-center" style="font-size:0.6rem;letter-spacing:0.05em;">ZEAL ACQUIRED</span>
+                        <i class="bx bxs-hot text-warning position-absolute end-0" style="font-size:1.4rem;opacity:0.6;"></i>
                     </div>
-                    <div class="fw-bold text-white" style="font-size:1.8rem;line-height:1;"><?= number_format($zealAcquired) ?> <span class="fs-6 opacity-50">/ <?= number_format($maxZeal) ?></span></div>
+                    <div class="fw-bold text-white text-center" style="font-size:1.8rem;line-height:1;"><?= $zealDisplay ?></div>
                 </div>
             </div>
         </div>
         <div class="col-6 col-md-3">
             <div class="card border-0 shadow-sm rounded-4 h-100 blur" style="background:rgba(255,255,255,0.03);">
                 <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <span class="small text-muted fw-bold text-uppercase" style="font-size:0.6rem;letter-spacing:0.05em;">TOTAL TIME SPENT</span>
-                        <i class="bx bx-time text-info" style="font-size:1.4rem;opacity:0.6;"></i>
+                    <div class="position-relative d-flex justify-content-center mb-3">
+                        <span class="small text-muted fw-bold text-uppercase text-center" style="font-size:0.6rem;letter-spacing:0.05em;">TOTAL TIME SPENT</span>
+                        <i class="bx bx-time text-info position-absolute end-0" style="font-size:1.4rem;opacity:0.6;"></i>
                     </div>
-                    <div class="fw-bold text-white" style="font-size:1.8rem;line-height:1;"><?= gmdate('H:i:s', $timeSpent) ?></div>
+                    <div class="fw-bold text-white text-center" style="font-size:1.8rem;line-height:1;"><?= $timeDisplay ?></div>
                 </div>
             </div>
         </div>
         <div class="col-6 col-md-3">
             <div class="card border-0 shadow-sm rounded-4 h-100 blur" style="background:rgba(255,255,255,0.03);">
                 <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <span class="small text-muted fw-bold text-uppercase" style="font-size:0.6rem;letter-spacing:0.05em;">LEADERBOARD RANK</span>
-                        <i class="bx bx-user text-white" style="font-size:1.4rem;opacity:0.6;"></i>
+                    <div class="position-relative d-flex justify-content-center mb-3">
+                        <span class="small text-muted fw-bold text-uppercase text-center" style="font-size:0.6rem;letter-spacing:0.05em;">ATTEMPTS</span>
+                        <i class="bx bx-target-lock text-white position-absolute end-0" style="font-size:1.4rem;opacity:0.6;"></i>
                     </div>
-                    <div class="fw-bold text-white" style="font-size:1.8rem;line-height:1;"><?= $lbRank ?></div>
+                    <div class="fw-bold text-white text-center" style="font-size:1.8rem;line-height:1;"><?= $attemptsDisplay ?></div>
                 </div>
             </div>
         </div>
@@ -243,6 +264,39 @@ include __DIR__ . '/partials/challenge_header.php';
                                 <div class="fw-bold text-white" id="stat-high-mem"></div>
                                 <div class="mt-2" style="height:40px;">
                                     <canvas id="chart-high-mem"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- IO Stats Card -->
+            <div class="card mt-4 border-0 shadow-sm blur rounded-4" style="background:rgba(255,255,255,0.03);">
+                <div class="card-header bg-transparent border-0 pt-4 px-4">
+                    <h6 class="fw-bold mb-0">IO Stats <span class="text-secondary ms-1 fw-normal" style="font-size: 0.75rem;">Net and Block</span></h6>
+                </div>
+                <div class="card-body px-4 pb-4 pt-2">
+                    <div class="row g-2">
+                        <div class="col-6 text-center">
+                            <div class="p-2 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100 text-center stat-card-inner">
+                                <div class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 9px;">NET IO</div>
+                                <div class="fw-bold text-white mb-0 d-flex justify-content-center gap-3" style="font-size: 0.85rem;">
+                                    <span id="stat-net-io">0B / 0B</span>
+                                </div>
+                                <div class="mt-1" style="height:30px;">
+                                    <canvas id="chart-net-io"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 text-center">
+                            <div class="p-2 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100 text-center stat-card-inner">
+                                <div class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 9px;">BLOCK IO</div>
+                                <div class="fw-bold text-white mb-0 d-flex justify-content-center gap-3" style="font-size: 0.85rem;">
+                                    <span id="stat-block-io">0B / 0B</span>
+                                </div>
+                                <div class="mt-1" style="height:30px;">
+                                    <canvas id="chart-block-io"></canvas>
                                 </div>
                             </div>
                         </div>

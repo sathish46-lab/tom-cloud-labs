@@ -1,0 +1,18 @@
+{
+  "lab_name": "Flask SSTI Challenge - Digital Elysium",
+  "lab_id": "flask_server_side_injection",
+  "version": 1.0,
+  "stability": "beta",
+  "type": "challenge",
+  "resources": {
+    "memory": "128m",
+    "cpus": "0.1"
+  },
+  "network": {
+    "hostname": "ctf-ssti",
+    "exposed_ports": [80]
+  },
+  "storage": {
+    "mount_target": "/var/www/html/flags"
+  }
+}

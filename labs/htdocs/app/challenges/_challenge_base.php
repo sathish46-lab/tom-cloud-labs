@@ -78,12 +78,34 @@ if (preg_match('/^[a-f0-9]{32}$/', $segment)) {
     exit;
 }
 
+$durationMinutes = 15; // default
+$challengePoints = 2232; // default
 // Prevent unauthorized manual URL navigation to locked/unreleased challenges
 $jsonPath = __DIR__ . '/../../src/config/challenges.json';
 if (file_exists($jsonPath)) {
     $challengesList = json_decode(file_get_contents($jsonPath), true) ?? [];
     foreach ($challengesList as $cItem) {
         if ($cItem['lab_id'] === $labId) {
+            $challengePoints = isset($cItem['points']) ? (int)$cItem['points'] : 2232;
+            
+            // Determine default duration based on difficulty tags
+            $difficulty = 'easy';
+            if (isset($cItem['tags']) && is_array($cItem['tags'])) {
+                foreach ($cItem['tags'] as $tag) {
+                    $tText = strtolower($tag['text'] ?? '');
+                    if ($tText === 'easy' || $tText === 'medium' || $tText === 'hard') {
+                        $difficulty = $tText;
+                        break;
+                    }
+                }
+            }
+            $durationMap = [
+                'easy' => 15,
+                'medium' => 30,
+                'hard' => 45
+            ];
+            $durationMinutes = isset($cItem['duration']) ? (int)$cItem['duration'] : ($durationMap[$difficulty] ?? 15);
+
             $releaseDateStr = isset($cItem['release_date']) ? $cItem['release_date'] : '';
             $releaseTimeStr = isset($cItem['release_time']) ? $cItem['release_time'] : '12:00 AM';
             $releaseTime = strtotime($releaseDateStr . ' ' . $releaseTimeStr);
@@ -105,7 +127,18 @@ if (file_exists($jsonPath)) {
 }
 
 $status    = $instanceData['status'] ?? 'not_deployed';
-$isRunning = ($status === 'running');
+$createdAt = $instanceData['created_at'] ?? time();
+// Use the DB's stored expires_at (set by the deployer) as the single source of truth
+$expiresAt = $instanceData['expires_at'] ?? ($createdAt + ($durationMinutes * 60));
+if ($status === 'running' && time() >= $expiresAt) {
+    $status = 'stopped';
+    // Proactively update DB so the state is consistent even before the reaper runs
+    $db->challenge_instances->updateOne(
+        ['instance_hash' => $instanceHash],
+        ['$set' => ['status' => 'stopped', 'mission_started' => false, 'updated_at' => time()]]
+    );
+}
+$isRunning = ($status === 'running' || $status === 'completed');
 
 // ── Metadata Resolution ───────────────────────────────────────────
 $challengeMeta = $db->challenges->findOne(['lab_id' => $labId]) ?? [];
@@ -114,10 +147,11 @@ $challengeMeta = $db->challenges->findOne(['lab_id' => $labId]) ?? [];
 Session::set('challenge_instance_hash', $instanceHash);
 Session::set('challenge_lab_id',        $labId);
 Session::set('challenge_status',        $status);
+Session::set('challenge_duration',      $durationMinutes);
 Session::set('challenge_title',         $challengeMeta['title']        ?? ucwords(str_replace('-', ' ', $labId)));
 Session::set('challenge_desc',          $challengeMeta['description']  ?? 'Engage in real-world hacking scenarios and penetration testing.');
 Session::set('challenge_image',         $challengeMeta['image_url']    ?? '/assets/img/challenges/shadow.png');
-Session::set('challenge_max_zeal',      (int)($challengeMeta['max_zeal'] ?? 2232));
+Session::set('challenge_max_zeal',      $challengePoints);
 Session::set('challenge_tags',          $challengeMeta['tags']         ?? ['team', 'beta', 'not running']);
 Session::set('challenge_event_name',    $challengeMeta['event_name']   ?? 'Yukthi Finale');
 Session::set('challenge_is_ended',      (bool)($challengeMeta['is_ended']   ?? true));

@@ -33,25 +33,42 @@ def reap_expired_challenges():
                 
             db = client.tom_labs_db
             
-            # Find running instances older than 15 mins
-            expired_time = time.time() - (15 * 60)
-            expired_instances = db.challenge_instances.find({
-                "status": "running", 
-                "created_at": {"$lt": expired_time}
+            # Find running or completed instances older than their custom expires_at or duration lease
+            now_time = time.time()
+            all_running = db.challenge_instances.find({
+                "status": {"$in": ["running", "completed"]}
             })
             
-            for inst in expired_instances:
+            for inst in all_running:
                 hash_id = inst['instance_hash']
                 user = inst['username']
-                print(f" [Reaper] Stopping expired challenge for {user} ({hash_id})")
-                subprocess.run([
-                    'sudo', '/usr/bin/python3', '/opt/labs-control-panel/labsctl.py', 
-                    'challenge', 'stop', f'--user={user}', f'--hash={hash_id}'
-                ])
+                created_at = inst.get('created_at', now_time)
+                
+                # Check for dynamic expires_at
+                expires_at = inst.get('expires_at')
+                if not expires_at:
+                    # Fallback to dynamic duration or default 15 minutes
+                    duration_minutes = inst.get('duration', 15)
+                    expires_at = created_at + (duration_minutes * 60)
+                
+                if now_time >= expires_at:
+                    print(f" [Reaper] Stopping expired challenge for {user} ({hash_id})")
+                    subprocess.run([
+                        'sudo', '/usr/bin/python3', '/opt/labs-control-panel/labsctl.py', 
+                        'challenge', 'stop', f'--user={user}', f'--hash={hash_id}'
+                    ])
+                    # Also mark mission as not started so UI is consistent
+                    try:
+                        db.challenge_instances.update_one(
+                            {"instance_hash": hash_id},
+                            {"$set": {"mission_started": False}}
+                        )
+                    except Exception:
+                        pass
         except Exception as e:
             print(f" [Reaper Error] {e}")
             
-        time.sleep(60)
+        time.sleep(15)  # Check every 15 seconds for faster cleanup
 
 def get_db_connection():
     # Placeholder if DB access is needed directly in worker

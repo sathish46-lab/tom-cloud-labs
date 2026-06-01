@@ -43,10 +43,10 @@ try {
 
     $rabbit->sendToQueue('labs_jobs', $work);
     
-    // Also reset mission_started just in case
+    // Immediately mark as stopped in DB so UI reflects it before the worker finishes
     $db->challenge_instances->updateOne(
         ['instance_hash' => $instanceHash],
-        ['$set' => ['mission_started' => false]]
+        ['$set' => ['status' => 'stopped', 'mission_started' => false, 'updated_at' => time()]]
     );
     
     echo json_encode([
