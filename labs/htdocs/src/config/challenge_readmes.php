@@ -35,5 +35,11 @@ Perform reconnaissance, enumerate the database services, and retrieve the contra
 
     'proxy-pipeline' => 'A series of multi-layered proxy servers is masking illegal transaction endpoints. To trace the funds, you need to dissect the pipeline traffic and trace it hop-by-hop.
 
-Expose the proxy chain, exploit the transit routing vulnerability, and extract the transaction receipts from the root ledger.'
+Expose the proxy chain, exploit the transit routing vulnerability, and extract the transaction receipts from the root ledger.',
+
+    'sql-injection' => 'The internal portal for the target organization is suspected of having a vulnerability in its authentication mechanism. They rely on an old, unpatched database to store administrative credentials.
+
+Your mission is to bypass the login portal without having valid credentials. Analyze the input fields, craft a payload that manipulates the backend database query, and extract the secret flag from the admin dashboard.
+
+Note: This challenge container is intentionally isolated from the internet and can only be accessed via the WireGuard VPN.'
 ];

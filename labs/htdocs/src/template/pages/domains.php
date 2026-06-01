@@ -50,15 +50,15 @@ function timeAgo($timestamp) {
 
                     <div style="margin-bottom: 14px;" class="d-flex gap-1 flex-wrap">
                         <?php if (strtolower($d['type']) == 'custom'): ?>
-                            <span class="badge bg-info rounded-pill fw-bold" style="font-size: 10px; padding: 2.5px 10px; letter-spacing: 0.5px; background-color: #3498db !important;">custom</span>
+                            <span class="badge bg-info text-dark rounded-pill fw-bold" style="font-size: 8px; padding: 2px 6px; text-transform: capitalize;">Custom</span>
                         <?php else: ?>
-                            <span class="badge bg-primary rounded-pill fw-bold" style="font-size: 10px; padding: 2.5px 10px; letter-spacing: 0.5px; background-color: #6c5ce7 !important;"><?= $d['type'] ?></span>
+                            <span class="badge bg-primary rounded-pill fw-bold" style="font-size: 8px; padding: 2px 6px; text-transform: capitalize;"><?= $d['type'] ?></span>
                         <?php endif; ?>
                         
                         <?php if ($d['verified']): ?>
-                            <span class="badge bg-success rounded-pill" style="font-size: 10px; padding: 2.5px 10px; letter-spacing: 0.5px; background-color: #27ae60 !important;">verified</span>
+                            <span class="badge bg-success rounded-pill fw-bold" style="font-size: 8px; padding: 2px 6px; text-transform: capitalize;">Verified</span>
                         <?php else: ?>
-                            <span class="badge bg-warning text-dark rounded-pill" style="font-size: 10px; padding: 2.5px 10px; letter-spacing: 0.5px; background-color: #f1c40f !important;">dns pending</span>
+                            <span class="badge bg-warning text-dark rounded-pill fw-bold" style="font-size: 8px; padding: 2px 6px; text-transform: capitalize;">DNS Pending</span>
                         <?php endif; ?>
                         
                         <?php 
@@ -67,9 +67,9 @@ function timeAgo($timestamp) {
                             $usageInfo = $dm->getDomainUsage(Session::getUser()->getUserId(), $d['domain']);
                             if ($usageInfo): 
                         ?>
-                            <span class="badge bg-danger text-white rounded-pill" style="font-size: 10px; padding: 2.5px 10px; letter-spacing: 0.5px; background-color: #e74c3c !important;">in use</span>
+                            <span class="badge bg-danger text-white rounded-pill fw-bold" style="font-size: 8px; padding: 2px 6px; text-transform: capitalize;">In Use</span>
                         <?php else: ?>
-                            <span class="badge bg-info text-white rounded-pill" style="font-size: 10px; padding: 2.5px 10px; letter-spacing: 0.5px; background-color: #00cec9 !important;">available</span>
+                            <span class="badge bg-info text-dark rounded-pill fw-bold" style="font-size: 8px; padding: 2px 6px; text-transform: capitalize;">Available</span>
                         <?php endif; ?>
                     </div>
 

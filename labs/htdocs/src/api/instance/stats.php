@@ -13,6 +13,8 @@ if (file_exists($cacheFile)) {
     
     if (isset($allStats[$labHash])) {
         echo json_encode($allStats[$labHash]);
+    } else if (isset($allStats['ctf-' . $labHash])) {
+        echo json_encode($allStats['ctf-' . $labHash]);
     } else {
         echo json_encode(['status' => 'offline']);
     }

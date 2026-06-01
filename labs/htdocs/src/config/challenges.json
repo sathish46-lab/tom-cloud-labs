@@ -102,5 +102,24 @@
             {"text": "beta", "class": "bg-primary-gradient"},
             {"text": "not running", "class": "bg-danger-gradient"}
         ]
+    },
+    {
+        "lab_id": "sql-injection",
+        "name": "SQL Injection Lab",
+        "points": 1500,
+        "image": "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=2070&auto=format&fit=crop",
+        "ribbon_text1": "Active",
+        "ribbon_text2": "CTF Web",
+        "card": true,
+        "challenge": true,
+        "release_date": "2026-06-01",
+        "release_time": "12:00 AM",
+        "challenge_template": "sql_injection",
+        "tags": [
+            {"text": "solo", "class": "bg-info-gradient"},
+            {"text": "easy", "class": "bg-success-gradient"},
+            {"text": "web", "class": "bg-primary-gradient"},
+            {"text": "sqli", "class": "bg-danger-gradient"}
+        ]
     }
 ]

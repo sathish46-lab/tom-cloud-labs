@@ -27,24 +27,28 @@ sleep(2);
 $python = "/usr/bin/python3";
 $script = "/opt/labs-control-panel/labsctl.py";
 
-// SIMPLIFIED PRODUCTION COMMAND
-// We hide the complex "docker run" string inside the Python core
-// $cmd = "sudo $python $script $action essentials:lab --user=$username --hash=$instanceHash 2>&1";
+$isChallenge = !empty($taskData['is_challenge']);
 
-$labImage = ($taskData['lab'] ?? 'essentials') . ":lab";
-$cmd = "sudo $python $script $action $labImage --user=$username --hash=$instanceHash";
+if ($isChallenge) {
+    $challengeId = $taskData['challenge_id'] ?? 'unknown';
+    $cmd = "sudo $python $script challenge $action --user=$username --hash=$instanceHash --challenge=$challengeId";
+} else {
+    $labImage = ($taskData['lab'] ?? 'essentials') . ":lab";
+    $cmd = "sudo $python $script $action $labImage --user=$username --hash=$instanceHash";
 
-// Append MinIO flags if present
-if (!empty($taskData['minio_console_domain'])) {
-    $cmd .= " --minio-console-domain=" . escapeshellarg($taskData['minio_console_domain']);
-}
-if (!empty($taskData['minio_api_domain'])) {
-    $cmd .= " --minio-api-domain=" . escapeshellarg($taskData['minio_api_domain']);
+    // Append MinIO flags if present
+    if (!empty($taskData['minio_console_domain'])) {
+        $cmd .= " --minio-console-domain=" . escapeshellarg($taskData['minio_console_domain']);
+    }
+    if (!empty($taskData['minio_api_domain'])) {
+        $cmd .= " --minio-api-domain=" . escapeshellarg($taskData['minio_api_domain']);
+    }
+
+    if (!empty($taskData['n8n_domain'])) {
+        $cmd .= " --n8n-domain=" . escapeshellarg($taskData['n8n_domain']);
+    }
 }
 
-if (!empty($taskData['n8n_domain'])) {
-    $cmd .= " --n8n-domain=" . escapeshellarg($taskData['n8n_domain']);
-}
 
 // Redirect stderr to stdout
 $cmd .= " 2>&1";

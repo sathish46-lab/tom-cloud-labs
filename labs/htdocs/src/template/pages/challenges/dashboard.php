@@ -21,6 +21,7 @@ $lbRank              = $userProgress['leaderboard_rank'] ?? '--';
 
 $creds     = $userProgress['credentials'] ?? null;
 $hasConn   = $isRunning && $creds;
+$missionStarted = $userProgress['mission_started'] ?? false;
 
 // Dynamic Lab Information Readme loading
 $readmes = require __DIR__ . '/../../../config/challenge_readmes.php';
@@ -100,15 +101,29 @@ include __DIR__ . '/partials/challenge_header.php';
                 <div class="card-body px-4 pb-4">
                     <?php if ($hasConn): ?>
                         <div class="d-flex flex-column gap-3">
-                            <?php foreach ($creds as $key => $val): ?>
+                            <?php 
+                            foreach ($creds as $key => $val): 
+                                $displayVal = $val;
+                                $isMasked = false;
+                                if (!$missionStarted && (strpos(strtolower($key), 'ip') !== false || strpos(strtolower($key), 'url') !== false)) {
+                                    $displayVal = '***.***.***.*** (Start Mission to view)';
+                                    $isMasked = true;
+                                }
+                            ?>
                             <div class="row align-items-center">
                                 <div class="col-4 text-secondary small fw-bold text-uppercase"><?= str_replace('_', ' ', $key) ?></div>
                                 <div class="col-8">
                                     <div class="input-group input-group-sm">
-                                        <input type="text" class="form-control rounded-pill border-white border-opacity-10 bg-dark bg-opacity-50 text-white px-3 font-monospace" value="<?= htmlspecialchars($val) ?>" readonly>
+                                        <input type="text" class="form-control rounded-pill border-white border-opacity-10 bg-dark bg-opacity-50 text-white px-3 font-monospace <?= $isMasked ? 'text-muted' : '' ?>" value="<?= htmlspecialchars($displayVal) ?>" readonly>
+                                        <?php if (!$isMasked): ?>
                                         <button class="btn btn-outline-secondary ms-2 rounded-circle p-0 d-flex align-items-center justify-content-center clipboard" data-clipboard-text="<?= htmlspecialchars($val) ?>" style="width:28px;height:28px;">
                                             <i class='bx bx-copy' style="font-size:0.8rem;"></i>
                                         </button>
+                                        <?php else: ?>
+                                        <button class="btn btn-outline-secondary ms-2 rounded-circle p-0 d-flex align-items-center justify-content-center" disabled style="width:28px;height:28px; opacity:0.3;">
+                                            <i class='bx bx-lock' style="font-size:0.8rem;"></i>
+                                        </button>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </div>
@@ -170,18 +185,27 @@ include __DIR__ . '/partials/challenge_header.php';
                             <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100 text-center stat-card-inner">
                                 <div class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 9px;">1 Min Avg</div>
                                 <div class="fw-bold text-white small" id="stat-load-1">0</div>
+                                <div style="height:35px;">
+                                    <canvas id="chart-avg-1"></canvas>
+                                </div>
                             </div>
                         </div>
                         <div class="col-4">
                             <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100 text-center stat-card-inner">
                                 <div class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 9px;">5 Min Avg</div>
                                 <div class="fw-bold text-white small" id="stat-load-5">0</div>
+                                <div style="height:35px;">
+                                    <canvas id="chart-avg-5"></canvas>
+                                </div>
                             </div>
                         </div>
                         <div class="col-4">
                             <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100 text-center stat-card-inner">
                                 <div class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 9px;">15 Min Avg</div>
                                 <div class="fw-bold text-white small" id="stat-load-15">0</div>
+                                <div style="height:35px;">
+                                    <canvas id="chart-avg-15"></canvas>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -199,18 +223,27 @@ include __DIR__ . '/partials/challenge_header.php';
                             <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100 text-center stat-card-inner">
                                 <div class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 9px;">CPU Peak</div>
                                 <div class="fw-bold text-white" id="stat-peak-cpu"></div>
+                                <div class="mt-2" style="height:40px;">
+                                    <canvas id="chart-peak-cpu"></canvas>
+                                </div>
                             </div>
                         </div>
                         <div class="col-4 text-center">
                             <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100 text-center stat-card-inner">
                                 <div class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 9px;">PID Max</div>
                                 <div class="fw-bold text-white" id="stat-max-pid"></div>
+                                <div class="mt-2" style="height:40px;">
+                                    <canvas id="chart-max-pid"></canvas>
+                                </div>
                             </div>
                         </div>
                         <div class="col-4 text-center">
                             <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100 text-center stat-card-inner">
                                 <div class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 9px;">Memory High</div>
                                 <div class="fw-bold text-white" id="stat-high-mem"></div>
+                                <div class="mt-2" style="height:40px;">
+                                    <canvas id="chart-high-mem"></canvas>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -244,97 +277,4 @@ function clearTerminal() {
     const container = document.getElementById('live-logs-container');
     if (container) container.innerHTML = '<div class="text-secondary small">[INFO] Terminal cleared.</div>';
 }
-
-(function(){
-    const HASH = <?= json_encode($instanceHash) ?>;
-    async function fetchStats() {
-        try {
-            const r = await fetch(`/api/instance/stats?hash=${HASH}`);
-            const d = await r.json();
-            if (d.status === 'offline' || d.status === 'initializing') {
-                updateUIIdle();
-                return;
-            }
-            
-            // CPU Load
-            const cpuVal = d.CPUPerc || (d.cpu_percent !== undefined ? d.cpu_percent.toFixed(2) + '%' : '');
-            const cpuBarVal = d.CPUPerc || (d.cpu_percent !== undefined ? Math.min(d.cpu_percent, 100) + '%' : '0%');
-            const cpuEl = document.getElementById('stat-cpu-usage');
-            if (cpuEl) cpuEl.textContent = cpuVal;
-            const cpuBar = document.getElementById('stat-cpu-bar');
-            if (cpuBar) cpuBar.style.width = cpuBarVal;
-            
-            // Memory Usage
-            const memVal = d.MemPerc || (d.mem_percent !== undefined ? d.mem_percent.toFixed(0) + '%' : '');
-            const memBarVal = d.MemPerc || (d.mem_percent !== undefined ? Math.min(d.mem_percent, 100) + '%' : '0%');
-            const memEl = document.getElementById('stat-mem-perc');
-            if (memEl) memEl.textContent = memVal;
-            const memBar = document.getElementById('stat-mem-bar');
-            if (memBar) memBar.style.width = memBarVal;
-
-            const memInfo = document.getElementById('stat-mem-info');
-            if (memInfo) memInfo.textContent = d.MemUsage || '';
-
-            // PID Count
-            const pidContainer = document.getElementById('stat-pid-container');
-            if (pidContainer) pidContainer.style.display = 'block';
-            const pidEl = document.getElementById('stat-pid-count');
-            if (pidEl) pidEl.textContent = d.PIDs || d.pid_count || '0';
-
-            // Load averages
-            const l1 = d.Load1 !== undefined ? parseFloat(d.Load1).toFixed(4) : (d.load_1 !== undefined ? parseFloat(d.load_1).toFixed(4) : '0');
-            const l5 = d.Load5 !== undefined ? parseFloat(d.Load5).toFixed(4) : (d.load_5 !== undefined ? parseFloat(d.load_5).toFixed(4) : '0');
-            const l15 = d.Load15 !== undefined ? parseFloat(d.Load15).toFixed(4) : (d.load_15 !== undefined ? parseFloat(d.load_15).toFixed(4) : '0');
-            
-            const l1El = document.getElementById('stat-load-1');
-            if (l1El) l1El.textContent = l1;
-            const l5El = document.getElementById('stat-load-5');
-            if (l5El) l5El.textContent = l5;
-            const l15El = document.getElementById('stat-load-15');
-            if (l15El) l15El.textContent = l15;
-
-            // History Peaks
-            const peakCpu = d.PeakCPU || (d.cpu_peak !== undefined ? d.cpu_peak.toFixed(2) + '%' : '');
-            const maxPid = d.MaxPID || d.pid_max || '';
-            const highMem = d.HighMem || (d.mem_high !== undefined ? d.mem_high.toFixed(2) + ' MB' : '');
-
-            const peakCpuEl = document.getElementById('stat-peak-cpu');
-            if (peakCpuEl) peakCpuEl.textContent = peakCpu;
-            const maxPidEl = document.getElementById('stat-max-pid');
-            if (maxPidEl) maxPidEl.textContent = maxPid;
-            const highMemEl = document.getElementById('stat-high-mem');
-            if (highMemEl) highMemEl.textContent = highMem;
-
-        } catch(e) {}
-    }
-
-    function updateUIIdle() {
-        const resets = {
-            "stat-cpu-usage": "",
-            "stat-mem-perc": "",
-            "stat-load-1": "0",
-            "stat-load-5": "0",
-            "stat-load-15": "0",
-            "stat-peak-cpu": "",
-            "stat-max-pid": "",
-            "stat-high-mem": "",
-            "stat-pid-count": "0"
-        };
-        for (let id in resets) {
-            const el = document.getElementById(id);
-            if (el) el.innerText = resets[id];
-        }
-        ["stat-cpu-bar", "stat-mem-bar"].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.style.width = "0%";
-        });
-        const memInfo = document.getElementById("stat-mem-info");
-        if (memInfo) memInfo.innerText = "";
-        const pidContainer = document.getElementById("stat-pid-container");
-        if (pidContainer) pidContainer.style.display = "none";
-    }
-
-    setInterval(fetchStats, 5000);
-    fetchStats();
-})();
 </script>

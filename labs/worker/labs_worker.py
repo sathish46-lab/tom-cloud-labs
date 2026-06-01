@@ -4,6 +4,8 @@ import subprocess
 import os
 import sys
 import time
+import threading
+import pymongo
 
 # Configuration
 AMQP_HOST = '127.0.0.1'
@@ -11,6 +13,45 @@ AMQP_PORT = 5672
 AMQP_USER = 'admin'
 AMQP_PASS = 'RootTom@46'
 QUEUE_NAME = 'labs_jobs'
+
+def reap_expired_challenges():
+    print(" [Reaper] Started background thread to clean up expired challenges.")
+    while True:
+        try:
+            client = pymongo.MongoClient(
+                "mongodb://admin:Tombootroot@127.0.0.1:27018/?authSource=admin",
+                serverSelectionTimeoutMS=2000
+            )
+            # Try to ping, if fails, fallback to docker network
+            try:
+                client.admin.command('ping')
+            except Exception:
+                client = pymongo.MongoClient(
+                    "mongodb://admin:Tombootroot@docker_tomlabs_mongodb:27017/?authSource=admin",
+                    serverSelectionTimeoutMS=2000
+                )
+                
+            db = client.tom_labs_db
+            
+            # Find running instances older than 15 mins
+            expired_time = time.time() - (15 * 60)
+            expired_instances = db.challenge_instances.find({
+                "status": "running", 
+                "created_at": {"$lt": expired_time}
+            })
+            
+            for inst in expired_instances:
+                hash_id = inst['instance_hash']
+                user = inst['username']
+                print(f" [Reaper] Stopping expired challenge for {user} ({hash_id})")
+                subprocess.run([
+                    'sudo', '/usr/bin/python3', '/opt/labs-control-panel/labsctl.py', 
+                    'challenge', 'stop', f'--user={user}', f'--hash={hash_id}'
+                ])
+        except Exception as e:
+            print(f" [Reaper Error] {e}")
+            
+        time.sleep(60)
 
 def get_db_connection():
     # Placeholder if DB access is needed directly in worker
@@ -42,22 +83,27 @@ def execute_job(ch, method, properties, body):
         log_to_user(ch, "amq.topic", routing_key, f"[Queue] Job accepted. Worker assigned.")
         
         # 2. Construct Command
-        # Using the same logic as DeployLog.worker.php but in Python
-        # cmd = "sudo /usr/bin/python3 /opt/labs-control-panel/labsctl.py <action> <lab>:lab --user=<user> --hash=<hash>"
-        
-        cmd = [
-            'sudo', '/usr/bin/python3', '/opt/labs-control-panel/labsctl.py',
-            action, f"{lab}:lab",
-            f"--user={user}", f"--hash={instance_hash}"
-        ]
-        
-        # Append extra flags
-        if 'minio_console_domain' in job:
-            cmd.append(f"--minio-console-domain={job['minio_console_domain']}")
-        if 'minio_api_domain' in job:
-            cmd.append(f"--minio-api-domain={job['minio_api_domain']}")
-        if 'n8n_domain' in job:
-            cmd.append(f"--n8n-domain={job['n8n_domain']}")
+        if job.get('is_challenge'):
+            challenge_id = job.get('challenge_id')
+            cmd = [
+                'sudo', '/usr/bin/python3', '/opt/labs-control-panel/labsctl.py',
+                'challenge', action,
+                f"--user={user}", f"--hash={instance_hash}", f"--challenge={challenge_id}"
+            ]
+        else:
+            cmd = [
+                'sudo', '/usr/bin/python3', '/opt/labs-control-panel/labsctl.py',
+                action, f"{lab}:lab",
+                f"--user={user}", f"--hash={instance_hash}"
+            ]
+            
+            # Append extra flags for normal labs
+            if 'minio_console_domain' in job:
+                cmd.append(f"--minio-console-domain={job['minio_console_domain']}")
+            if 'minio_api_domain' in job:
+                cmd.append(f"--minio-api-domain={job['minio_api_domain']}")
+            if 'n8n_domain' in job:
+                cmd.append(f"--n8n-domain={job['n8n_domain']}")
 
         # TEST MODE (For stress testing without killing the server)
         if job.get('test_mode'):
@@ -114,6 +160,9 @@ def execute_job(ch, method, properties, body):
         print(" [x] Job Done")
 
 def main():
+    t = threading.Thread(target=reap_expired_challenges, daemon=True)
+    t.start()
+    
     while True:
         try:
             credentials = pika.PlainCredentials(AMQP_USER, AMQP_PASS)

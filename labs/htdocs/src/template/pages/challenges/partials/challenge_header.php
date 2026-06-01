@@ -17,6 +17,16 @@ $isRunning    = ($status === 'running');
 
 $host      = $_SERVER['HTTP_HOST'] ?? 'labs.selfmade.ninja';
 $shareUrl  = "https://{$host}/challenges/challenges/{$labId}"; 
+
+$dbInstance = DatabaseConnection::getDefaultDatabase();
+$userProgress = $dbInstance->challenge_instances->findOne(['instance_hash' => $instanceHash]) ?? [];
+$createdAt = $userProgress['created_at'] ?? time();
+$expiresAt = $createdAt + (15 * 60);
+$timeLeft = max(0, $expiresAt - time());
+$isExpired = $timeLeft <= 0;
+
+$initM = str_pad(floor($timeLeft / 60), 2, "0", STR_PAD_LEFT);
+$initS = str_pad($timeLeft % 60, 2, "0", STR_PAD_LEFT);
 ?>
 <div class="lab-header-section mb-0">
     <div class="container-fluid p-0">
@@ -70,9 +80,18 @@ $shareUrl  = "https://{$host}/challenges/challenges/{$labId}";
                 </div>
             </div>
 
-            <!-- Deploy Button -->
-            <div>
-                <button class="btn btn-success px-5 py-2 fw-bold rounded-pill shadow d-flex align-items-center gap-2" onclick="">
+            <!-- Deploy Button & Timer -->
+            <div class="d-flex align-items-center gap-3">
+                <?php if ($isRunning): ?>
+                    <div class="timer-container text-center bg-dark bg-opacity-50 rounded-pill px-3 py-2 border border-white border-opacity-10 shadow-sm" id="challenge-timer-wrapper">
+                        <i class='bx bx-time-five text-warning mb-0'></i>
+                        <span id="challenge-countdown" class="fw-bold ms-1" style="font-family: monospace; font-size: 1.1rem; color: #ffc107;" data-expires="<?= $expiresAt ?>"><?= $initM ?>:<?= $initS ?></span>
+                    </div>
+                    <button class="btn btn-danger px-4 py-2 fw-bold rounded-pill shadow d-flex align-items-center gap-2" onclick="stopChallenge(this, '<?= htmlspecialchars($labId) ?>')">
+                        <i class='bx bx-stop-circle'></i> Stop
+                    </button>
+                <?php endif; ?>
+                <button class="btn btn-success px-5 py-2 fw-bold rounded-pill shadow d-flex align-items-center gap-2" onclick="handleChallengeDeploy(this, '<?= htmlspecialchars($labId) ?>')">
                     <i class='bx <?= $isRunning ? "bx-refresh" : "bx-cloud-upload" ?>'></i>
                     <?= $isRunning ? 'Redeploy' : 'Deploy' ?>
                     <?php if ($isRunning): ?>
@@ -81,6 +100,122 @@ $shareUrl  = "https://{$host}/challenges/challenges/{$labId}";
                 </button>
             </div>
         </div>
+
+        <script>
+        window.SESSION_HASH = <?= json_encode($instanceHash) ?>;
+        
+        async function handleChallengeDeploy(btn, challengeId) {
+            if(typeof Dashboard !== 'undefined' && Dashboard.isProcessing) return;
+            
+            if(typeof Dashboard !== 'undefined') {
+                Dashboard.toggleLoading(btn, true);
+                Dashboard.isProcessing = true;
+                Dashboard.resetTerminal();
+                Dashboard.appendCommand(`labsctl challenge deploy --user=${window.LAB_USER || 'tom'} --hash=${window.SESSION_HASH} --challenge=${challengeId}`);
+            }
+
+            try {
+                const formData = new URLSearchParams();
+                formData.append('challenge_id', challengeId);
+                formData.append('hash', window.SESSION_HASH);
+                
+                const response = await fetch('/api/challenges/deploy', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                if(data.status === 'success') {
+                    if(typeof Dashboard !== 'undefined') Dashboard.appendLog("[*] Deployment task queued. Waiting for worker...");
+                } else {
+                    if(typeof Dashboard !== 'undefined') Dashboard.appendLog(`[!] Error: ${data.error || 'Deploy request failed'}`);
+                    if(typeof Dashboard !== 'undefined') Dashboard.isProcessing = false;
+                    if(typeof Dashboard !== 'undefined') Dashboard.toggleLoading(btn, false);
+                }
+            } catch(e) {
+                console.error("Deploy Error:", e);
+                if(typeof Dashboard !== 'undefined') {
+                    Dashboard.appendLog(`[!] Critical Error: ${e.message}`);
+                    Dashboard.isProcessing = false;
+                    Dashboard.toggleLoading(btn, false);
+                }
+            }
+        }
+        
+        async function stopChallenge(btn, challengeId) {
+            if(typeof Dashboard !== 'undefined' && Dashboard.isProcessing) return;
+            
+            if(!confirm("Are you sure you want to stop this challenge? The container will be shut down and your progress will be paused.")) return;
+            
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Stopping...';
+            btn.disabled = true;
+            
+            if(typeof Dashboard !== 'undefined') {
+                Dashboard.isProcessing = true;
+                Dashboard.appendLog("[*] Stop task queued. Waiting for worker to shut down...");
+            }
+            
+            try {
+                const formData = new URLSearchParams();
+                formData.append('challenge_id', challengeId);
+                formData.append('hash', window.SESSION_HASH);
+                
+                const response = await fetch('/api/challenges/stop_mission', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                if (data.status === 'success') {
+                    // UI will listen to RMQ via _challenge_base or reload
+                    setTimeout(() => window.location.reload(), 2000);
+                } else {
+                    alert("Error: " + data.error);
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                    if(typeof Dashboard !== 'undefined') Dashboard.isProcessing = false;
+                }
+            } catch (e) {
+                alert("Error stopping challenge: " + e.message);
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+                if(typeof Dashboard !== 'undefined') Dashboard.isProcessing = false;
+            }
+        }
+        
+        <?php if ($isRunning && !$isExpired): ?>
+        // Countdown Logic
+        (function(){
+            const timerEl = document.getElementById('challenge-countdown');
+            if(!timerEl) return;
+            const expires = parseInt(timerEl.getAttribute('data-expires')) * 1000;
+            
+            const interval = setInterval(() => {
+                const now = new Date().getTime();
+                const distance = expires - now;
+                
+                if (distance <= 0) {
+                    clearInterval(interval);
+                    timerEl.innerHTML = '<span class="text-danger">EXPIRED</span>';
+                    timerEl.parentElement.classList.add('border-danger');
+                    // Stop polling and force reload after 3s
+                    setTimeout(() => window.location.reload(), 3000);
+                    return;
+                }
+                
+                const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((distance % (1000 * 60)) / 1000);
+                timerEl.innerText = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+                
+                if (distance < 60000) { // last minute
+                    timerEl.style.color = '#dc3545';
+                    timerEl.parentElement.classList.add('pulse-danger');
+                }
+            }, 1000);
+        })();
+        <?php endif; ?>
+        </script>
 
         <!-- Nav Tabs -->
         <div class="row m-0 p-0 mt-3">

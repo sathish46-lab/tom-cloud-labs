@@ -2699,31 +2699,29 @@ const Dashboard = {
    * @param {object} data - Stats from API
    */
   updateUI: function (data) {
+    const safeSetText = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; };
+    const safeSetWidth = (id, width) => { const el = document.getElementById(id); if (el) el.style.width = width; };
+
     // Update text stats
     const pidContainer = document.getElementById("stat-pid-container");
     if (pidContainer) pidContainer.style.display = "block";
-    document.getElementById("stat-cpu-usage").innerText = data.CPUPerc;
-    document.getElementById("stat-cpu-bar").style.width = data.CPUPerc;
-    document.getElementById("stat-pid-count").innerText = data.PIDs;
-    document.getElementById("stat-mem-perc").innerText = data.MemPerc;
-    document.getElementById("stat-mem-bar").style.width = data.MemPerc;
-    document.getElementById("stat-mem-info").innerText = data.MemUsage;
+    
+    safeSetText("stat-cpu-usage", data.CPUPerc);
+    safeSetWidth("stat-cpu-bar", data.CPUPerc);
+    safeSetText("stat-pid-count", data.PIDs);
+    safeSetText("stat-mem-perc", data.MemPerc);
+    safeSetWidth("stat-mem-bar", data.MemPerc);
+    safeSetText("stat-mem-info", data.MemUsage);
 
-    document.getElementById("stat-load-1").innerText = parseFloat(
-      data.Load1,
-    ).toFixed(4);
-    document.getElementById("stat-load-5").innerText = parseFloat(
-      data.Load5,
-    ).toFixed(4);
-    document.getElementById("stat-load-15").innerText = parseFloat(
-      data.Load15,
-    ).toFixed(4);
+    safeSetText("stat-load-1", parseFloat(data.Load1).toFixed(4));
+    safeSetText("stat-load-5", parseFloat(data.Load5).toFixed(4));
+    safeSetText("stat-load-15", parseFloat(data.Load15).toFixed(4));
 
-    document.getElementById("stat-peak-cpu").innerText = data.PeakCPU;
-    document.getElementById("stat-max-pid").innerText = data.MaxPID;
-    document.getElementById("stat-high-mem").innerText = data.HighMem;
-    document.getElementById("stat-net-io").innerText = data.NetIO;
-    document.getElementById("stat-block-io").innerText = data.BlockIO;
+    safeSetText("stat-peak-cpu", data.PeakCPU);
+    safeSetText("stat-max-pid", data.MaxPID);
+    safeSetText("stat-high-mem", data.HighMem);
+    safeSetText("stat-net-io", data.NetIO);
+    safeSetText("stat-block-io", data.BlockIO);
 
     // Update charts (first load vs. incremental)
     if (this.isFirstLoad && data.cpu_h) {

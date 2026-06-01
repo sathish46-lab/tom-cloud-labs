@@ -21,41 +21,47 @@ $tasks       = $tasksCursor ? $tasksCursor->toArray() : [];
 // User Progress for progress ring
 $userProgress = $db->challenge_instances->findOne(['instance_hash' => $instanceHash]) ?? [];
 $challengesCompleted = $userProgress['challenges_completed'] ?? 0;
+$missionStarted = $userProgress['mission_started'] ?? false;
 
 // Mock data if empty
 if (empty($tasks)) {
-    $tasks = [
-        [
-            'task_id'     => 'task_1',
-            'title'       => 'Initial Infiltration',
-            'description' => 'Find the vulnerability in the public-facing web application and gain initial access to the system.',
-            'zeal'        => 500,
-            'difficulty'  => 'Easy',
-            'multiplier'  => 1.0,
-            'completed'   => false,
-            'tags'        => ['Web', 'SQLi']
-        ],
-        [
-            'task_id'     => 'task_2',
-            'title'       => 'Privilege Escalation',
-            'description' => 'Locate the sensitive files in the home directory and escalate your privileges to root.',
-            'zeal'        => 1200,
-            'difficulty'  => 'Medium',
-            'multiplier'  => 1.2,
-            'completed'   => false,
-            'tags'        => ['System', 'PrivEsc']
-        ],
-        [
-            'task_id'     => 'task_3',
-            'title'       => 'The Final Flag',
-            'description' => 'Exfiltrate the master keys from the secure vault located in the internal network.',
-            'zeal'        => 2500,
-            'difficulty'  => 'Hard',
-            'multiplier'  => 1.5,
-            'completed'   => false,
-            'tags'        => ['Network', 'Pivoting']
-        ]
-    ];
+    if ($labId === 'sql_injection') {
+        $tasks = [
+            [
+                'task_id'     => 'task_1',
+                'title'       => 'SQL Injection Exploitation',
+                'description' => 'Bypass the login portal without valid credentials. Analyze the input fields, craft a payload that manipulates the backend database query, and extract the secret flag.',
+                'zeal'        => 500,
+                'difficulty'  => 'Easy',
+                'multiplier'  => 1.0,
+                'completed'   => false,
+                'tags'        => ['Web', 'SQLi']
+            ]
+        ];
+    } else {
+        $tasks = [
+            [
+                'task_id'     => 'task_1',
+                'title'       => 'Initial Infiltration',
+                'description' => 'Find the vulnerability in the public-facing web application and gain initial access to the system.',
+                'zeal'        => 500,
+                'difficulty'  => 'Easy',
+                'multiplier'  => 1.0,
+                'completed'   => false,
+                'tags'        => ['Web', 'SQLi']
+            ],
+            [
+                'task_id'     => 'task_2',
+                'title'       => 'Privilege Escalation',
+                'description' => 'Locate the sensitive files in the home directory and escalate your privileges to root.',
+                'zeal'        => 1200,
+                'difficulty'  => 'Medium',
+                'multiplier'  => 1.2,
+                'completed'   => false,
+                'tags'        => ['System', 'PrivEsc']
+            ]
+        ];
+    }
 }
 
 include __DIR__ . '/partials/challenge_header.php';
@@ -96,7 +102,11 @@ include __DIR__ . '/partials/challenge_header.php';
                                 </div>
                                 <div class="d-flex gap-2">
                                     <button class="btn btn-dark bg-opacity-50 btn-sm rounded-pill px-3 fw-bold text-white-50" style="font-size: 0.7rem;">MISSION BRIEF</button>
-                                    <button class="btn btn-success btn-sm rounded-pill px-3 fw-bold" style="font-size: 0.7rem;">START MISSION</button>
+                                    <?php if ($missionStarted): ?>
+                                        <button class="btn btn-secondary btn-sm rounded-pill px-3 fw-bold" style="font-size: 0.7rem;" disabled>MISSION IN PROGRESS</button>
+                                    <?php else: ?>
+                                        <button class="btn btn-success btn-sm rounded-pill px-3 fw-bold" style="font-size: 0.7rem;" onclick="startMission(this, '<?= htmlspecialchars($task['task_id']) ?>')">START MISSION</button>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
@@ -167,3 +177,38 @@ include __DIR__ . '/partials/challenge_header.php';
         <div id="live-logs-container" class="small"></div>
     </div>
 </div>
+
+<script>
+async function startMission(btn, taskId) {
+    if (typeof Dashboard !== 'undefined' && Dashboard.isProcessing) return;
+    
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> STARTING...';
+    btn.disabled = true;
+    
+    try {
+        const formData = new URLSearchParams();
+        formData.append('challenge_id', '<?= htmlspecialchars($labId) ?>');
+        formData.append('hash', '<?= htmlspecialchars($instanceHash) ?>');
+        formData.append('task_id', taskId);
+        
+        const response = await fetch('/api/challenges/start_mission', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        if (data.status === 'success') {
+            window.location.reload(); // Reload to unmask IPs and update button
+        } else {
+            alert("Error: " + data.error);
+            btn.innerHTML = 'START MISSION';
+            btn.disabled = false;
+        }
+    } catch (e) {
+        alert("Error starting mission: " + e.message);
+        btn.innerHTML = 'START MISSION';
+        btn.disabled = false;
+    }
+}
+
+</script>

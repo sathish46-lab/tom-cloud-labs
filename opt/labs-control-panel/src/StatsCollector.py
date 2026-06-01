@@ -66,8 +66,9 @@ def collect_all_stats():
                 all_stats[name] = data
 
             # Atomic write to prevent half-read JSON files
-            with open('/dev/shm/docker_stats.json.tmp', 'w') as f: json.dump(all_stats, f)
-            os.rename('/dev/shm/docker_stats.json.tmp', '/dev/shm/docker_stats.json')
+            if all_stats:
+                with open('/dev/shm/docker_stats.json.tmp', 'w') as f: json.dump(all_stats, f)
+                os.rename('/dev/shm/docker_stats.json.tmp', '/dev/shm/docker_stats.json')
         except Exception as e: print(f"Error: {e}")
         time.sleep(5)
 

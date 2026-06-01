@@ -25,8 +25,15 @@ def print_help():
     print("  syncuser <user>     Fix permissions.  Ex: labsctl syncuser sathish")
     print("  ensure-codeserver   Check VS Code.    Ex: labsctl ensure-codeserver --hash=HASH")
     print("  quiz generate       AI Quiz Gen.      Ex: labsctl quiz generate --topic=ID --subtopic=ID --diff=hard")
-    print("  list-images         List built labs.  Ex: labsctl list-images\n")
-    print("  get-workers         Check active.     Ex: labsctl get-workers\n")
+    print("  list-images         List built labs.  Ex: labsctl list-images")
+    print("  get-workers         Check active.     Ex: labsctl get-workers")
+    print("")
+    print("Challenge Commands:")
+    print("  challenge build     Build CTF image.  Ex: labsctl challenge build sql_injection:lab")
+    print("  challenge deploy    Deploy CTF lab.   Ex: labsctl challenge deploy --user=sathish --hash=HASH --challenge=sql_injection")
+    print("  challenge stop      Stop CTF lab.     Ex: labsctl challenge stop --hash=HASH")
+    print("  challenge start     Start CTF lab.    Ex: labsctl challenge start --hash=HASH")
+    print("  challenge remove    Remove CTF lab.   Ex: labsctl challenge remove --hash=HASH\n")
 
 def main():
     args = Arguments(sys.argv)
@@ -94,6 +101,26 @@ def main():
                  print(json.dumps(result))
              else:
                  print("Usage: labsctl quiz generate --topic=ID --subtopic=ID --diff=normal")
+        elif cmd == 'challenge':
+            # Challenge CTF Lab Routing
+            from src.Challenge import Challenge
+            challenge_mgr = Challenge(args, session_hash)
+            subcmd = sys.argv[2] if len(sys.argv) > 2 else ""
+
+            if subcmd == 'build':
+                challenge_mgr.build()
+            elif subcmd == 'deploy':
+                challenge_mgr.deploy()
+            elif subcmd == 'stop':
+                challenge_mgr.stop()
+            elif subcmd == 'start':
+                challenge_mgr.start()
+            elif subcmd == 'remove':
+                challenge_mgr.remove()
+            else:
+                print("Usage: labsctl challenge <build|deploy|stop|start|remove> [options]")
+                print("  Ex:  labsctl challenge build sql_injection:lab")
+                print("  Ex:  labsctl challenge deploy --user=sathish --hash=HASH --challenge=sql_injection")
         elif cmd == 'list-images':
              lab_manager.list_images()
         elif cmd == 'get-workers':
