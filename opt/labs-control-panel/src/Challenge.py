@@ -456,11 +456,11 @@ class Challenge:
     def _allocate_challenge_ip(self, vpn_db, username, challenge_id):
         """
         Allocate a unique IP address for a challenge from the VPN network pool.
-        Challenge IPs use the 172.30.1.x range to separate them from device VPN IPs (172.30.0.x).
+        Challenge IPs use the 10.20.0.x range to separate them from device VPN IPs (172.30.0.x).
         """
         tunnel_prefix = self.config.get('tunnel_ip_prefix', '172.30.0.')
 
-        # Use a challenge-specific sub-range: 172.30.1.x (start at .10 to leave room)
+        # Use a challenge-specific sub-range: 10.20.0.x (start at .10 to leave room)
         # Check existing allocations to find the next free IP
         existing = list(vpn_db.networks.find({
             "service_type": "challenge",
@@ -486,8 +486,8 @@ class Challenge:
             self.log("No IPs available in challenge pool!", "error")
             return None
 
-        # Build the challenge tunnel IP: 172.30.1.<octet>
-        challenge_ip = f"172.30.1.{next_octet}"
+        # Build the challenge tunnel IP: 10.20.0.<octet>
+        challenge_ip = f"10.20.0.{next_octet}"
 
         # Register in the VPN network pool
         vpn_db.networks.insert_one({
