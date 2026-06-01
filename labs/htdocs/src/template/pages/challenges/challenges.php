@@ -203,13 +203,12 @@ include __DIR__ . '/partials/challenge_header.php';
                                                             <?= (int)round($task['zeal'] * $task['multiplier']) ?>
                                                         <?php endif; ?>
                                                     </td>
-                                                    <td class="text-white">
-                                                        <?php
-                                                        $userObj = Session::getUser();
-                                                        $userStats = $userObj ? \TomLabs\Labs\Quiz::getUserStats($userObj->getEmail()) : ['zeal' => 0];
-                                                        $userTotalZeal = $userStats['zeal'] ?? 0;
-                                                        echo number_format($userTotalZeal);
-                                                        ?>
+                                                    <td class="text-white fw-bold">
+                                                        <?php if ($task['completed']): ?>
+                                                            <?= number_format($userProgress['zeal_earned'] ?? 0) ?>
+                                                        <?php else: ?>
+                                                            0
+                                                        <?php endif; ?>
                                                     </td>
                                                 </tr>
                                             </tbody>
