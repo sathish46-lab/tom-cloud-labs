@@ -1,3 +1,15 @@
+# Labs Repository
+
+If you want the latest updated code, visit this repository:
+
+🔗 https://git.selfmade.ninja/sathish46/labs.git
+
+## Clone the Repository
+
+```bash
+git clone https://git.selfmade.ninja/sathish46/labs.git
+```
+
 # Labs Infrastructure Migration Guide
 
 Professional deployment and orchestration suite for the Labs environment. Use this guide to safely migrate your environment to a fresh server.
