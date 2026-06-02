@@ -15,6 +15,7 @@ $username = $user->getUsername() ?? 'User';
 // Generate 6-digit OTP
 $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 $expires = time() + 60; // strictly 60 seconds
+$context = $_GET['action'] ?? 'enable';
 
 try {
     $db->users->updateOne(
@@ -26,7 +27,7 @@ try {
     );
 
     // Send Email
-    $sent = send_2fa_otp_email($email, $username, $otp);
+    $sent = send_2fa_otp_email($email, $username, $otp, $context);
     
     if ($sent) {
         echo json_encode(['status' => 'success']);

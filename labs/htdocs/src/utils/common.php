@@ -109,7 +109,13 @@ function send_2fa_otp_email($email, $username, $otp, $context = 'enable') {
         $mail->setFrom('sathishp3223@gmail.com', 'Tom Labs Security');
         $mail->addAddress($email, $username);
         
-        $actionText = $context === 'login' ? 'verify your login to' : 'enable';
+        if ($context === 'login') {
+            $actionText = 'verify your login to';
+        } elseif ($context === 'disable') {
+            $actionText = 'disable';
+        } else {
+            $actionText = 'enable';
+        }
 
         $mail->isHTML(true);
         $mail->Subject = 'Your 2FA Security Code';

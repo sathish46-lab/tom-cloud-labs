@@ -130,7 +130,10 @@ $is2faEnabled = $user?->getTwoFactorEnabled() ?? false;
                                 <div class="small text-secondary" style="font-size: 0.75rem;">Add an extra layer of security</div>
                             </div>
                             <?php if ($is2faEnabled): ?>
-                                <span class="badge bg-success text-white rounded-pill px-3 py-2 shadow-sm"><i class='bx bx-check-shield me-1'></i> Enabled</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-success text-white rounded-pill px-3 py-2 shadow-sm"><i class='bx bx-check-shield me-1'></i> Enabled</span>
+                                    <button class="btn btn-sm btn-outline-danger rounded-pill fw-bold px-3 transition-all" id="btn-disable-2fa">Disable</button>
+                                </div>
                             <?php else: ?>
                                 <button class="btn btn-sm btn-outline-secondary rounded-pill fw-bold px-3 transition-all" id="btn-enable-2fa">Enable 2FA</button>
                             <?php endif; ?>
@@ -462,6 +465,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // TWO-FACTOR AUTHENTICATION LOGIC
     const btnEnable2fa = document.getElementById('btn-enable-2fa');
+    const btnDisable2fa = document.getElementById('btn-disable-2fa');
     const section2fa = document.getElementById('section-2fa-otp');
     const timerDisplay = document.getElementById('timer-2fa');
     const form2fa = document.getElementById('form-2fa-verify');
@@ -470,6 +474,58 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputOtp = document.getElementById('input-otp-2fa');
 
     let countdownInterval;
+    let isDisabling = false;
+
+    if (btnDisable2fa) {
+        btnDisable2fa.onclick = async () => {
+            if (confirm("Are you sure you want to disable Two-Factor Authentication? This will make your account less secure. We will send an OTP to verify it's you.")) {
+                btnDisable2fa.disabled = true;
+                btnDisable2fa.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+                isDisabling = true;
+                try {
+                    const res = await fetch('/api/account/send_2fa_otp?action=disable');
+                    const result = await res.json();
+                    if (result.status === 'success') {
+                        btnDisable2fa.classList.add('d-none');
+                        section2fa.classList.remove('d-none');
+                        inputOtp.focus();
+                        
+                        // Start 60 second timer
+                        let timeLeft = 60;
+                        timerDisplay.innerText = "01:00";
+                        timerDisplay.classList.replace('bg-danger', 'bg-warning');
+                        
+                        clearInterval(countdownInterval);
+                        countdownInterval = setInterval(() => {
+                            timeLeft--;
+                            let secs = timeLeft < 10 ? '0' + timeLeft : timeLeft;
+                            timerDisplay.innerText = "00:" + secs;
+                            
+                            if (timeLeft <= 10) {
+                                timerDisplay.classList.replace('bg-warning', 'bg-danger');
+                            }
+                            
+                            if (timeLeft <= 0) {
+                                clearInterval(countdownInterval);
+                                inputOtp.disabled = true;
+                                btnVerify2fa.disabled = true;
+                                msg2faError.innerText = "OTP Expired! Refresh the page to try again.";
+                                msg2faError.classList.remove('d-none');
+                            }
+                        }, 1000);
+                    } else {
+                        alert('Error: ' + result.error);
+                        btnDisable2fa.disabled = false;
+                        btnDisable2fa.innerText = 'Disable';
+                    }
+                } catch (err) {
+                    alert('Failed to send OTP.');
+                    btnDisable2fa.disabled = false;
+                    btnDisable2fa.innerText = 'Disable';
+                }
+            }
+        };
+    }
 
     if (btnEnable2fa) {
         btnEnable2fa.onclick = async () => {
@@ -529,8 +585,9 @@ document.addEventListener('DOMContentLoaded', () => {
             msg2faError.classList.add('d-none');
             
             const formData = new FormData(form2fa);
+            const endpoint = isDisabling ? '/api/account/disable_2fa' : '/api/account/verify_2fa';
             try {
-                const res = await fetch('/api/account/verify_2fa', { method: 'POST', body: formData });
+                const res = await fetch(endpoint, { method: 'POST', body: formData });
                 const result = await res.json();
                 
                 if (result.status === 'success') {
