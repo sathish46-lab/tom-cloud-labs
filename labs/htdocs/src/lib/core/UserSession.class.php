@@ -55,6 +55,27 @@ public function getUser() {
                 return false;
             }
             
+            // 2FA CHECK INTERCEPT
+            if (isset($user['two_factor_enabled']) && $user['two_factor_enabled'] === true) {
+                $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+                $expires = time() + 60;
+                
+                $instance->usersCollection->updateOne(
+                    ['email' => $email],
+                    ['$set' => [
+                        'two_factor_otp' => $otp,
+                        'two_factor_expires' => $expires
+                    ]]
+                );
+                
+                $username = $user['username'] ?? 'User';
+                send_2fa_otp_email($email, $username, $otp, 'login');
+                
+                $_SESSION['2fa_pending_email'] = $email;
+                return "2fa_required";
+            }
+            
+            // Standard Login Logic
             $username = $user['username']; 
             $_SESSION['auth_status'] = \Constants::STATUS_LOGGEDIN;
             $_SESSION['username']    = $username;

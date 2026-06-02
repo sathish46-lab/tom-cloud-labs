@@ -84,3 +84,45 @@ function send_verification_email($email, $username, $token) {
         return false;
     }
 }
+
+/**
+ * Send 2FA OTP Email
+ */
+function send_2fa_otp_email($email, $username, $otp, $context = 'enable') {
+    $config = get_config('smtp'); 
+    if (!$config) {
+        error_log("SMTP Error: Config 'smtp' missing in config.json");
+        return false;
+    }
+
+    $mail = new PHPMailer(true);
+
+    try {
+        $mail->isSMTP();
+        $mail->Host       = $config['host'];
+        $mail->SMTPAuth   = true;
+        $mail->Username   = $config['user'];
+        $mail->Password   = $config['pass'];
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        $mail->Port       = $config['port'];
+
+        $mail->setFrom('sathishp3223@gmail.com', 'Tom Labs Security');
+        $mail->addAddress($email, $username);
+        
+        $actionText = $context === 'login' ? 'verify your login to' : 'enable';
+
+        $mail->isHTML(true);
+        $mail->Subject = 'Your 2FA Security Code';
+        $mail->Body    = "<h2>Security Verification</h2>
+                          <p>Hi $username,</p>
+                          <p>Your 6-digit verification code to $actionText Two-Factor Authentication is:</p>
+                          <div style='background:#f4f4f4; padding:15px; border-radius:8px; font-size:24px; font-weight:bold; letter-spacing:5px; text-align:center; margin:20px 0;'>$otp</div>
+                          <p style='color:#e74c3c; font-weight:bold;'>This code expires in exactly 1 minute.</p>
+                          <p>If you did not request this, please secure your account immediately.</p>";
+        
+        return $mail->send();
+    } catch (Exception $e) {
+        error_log("PHPMailer Error: " . $mail->ErrorInfo);
+        return false;
+    }
+}

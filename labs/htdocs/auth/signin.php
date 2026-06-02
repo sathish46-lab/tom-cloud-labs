@@ -21,10 +21,16 @@ if (isset($_GET['code'])) {
 }
 
 // Handle Standard Login
+$show2faForm = false;
 if (isset($_POST['email']) && isset($_POST['password'])) {
-    if (UserSession::authenticate($_POST['email'], $_POST['password'])) {
+    $authResult = UserSession::authenticate($_POST['email'], $_POST['password']);
+    if ($authResult === "2fa_required") {
+        $show2faForm = true;
+    } elseif ($authResult === true) {
         header("Location: /home");
         exit;
+    } else {
+        $loginError = Session::get('login_error') ?: "Invalid credentials";
     }
 }
 
@@ -57,39 +63,119 @@ ob_start();
                         
                         <h3 class="fw-bold mb-4 text-body">Sign in</h3>
 
-                        <form method="POST">
-                            <div class="mb-3">
-                                <label class="small fw-bold text-secondary mb-1">USERNAME OR EMAIL</label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-transparent border-end-0">
-                                        <i class="bx bx-user"></i>
-                                    </span>
-                                    <input type="text" name="email" class="form-control border-start-0 ps-0" required>
-                                </div>
-                            </div>
+                        <?php if (isset($loginError)): ?>
+                            <div class="alert alert-danger small py-2"><?= htmlspecialchars($loginError) ?></div>
+                        <?php endif; ?>
 
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between">
-                                    <label class="small fw-bold text-secondary mb-1">PASSWORD</label>
-                                    <a href="#" class="small text-warning text-decoration-none">Forgot?</a>
+                        <?php if ($show2faForm): ?>
+                            <!-- 2FA OTP Form -->
+                            <div class="text-center mb-4">
+                                <div class="d-inline-flex align-items-center justify-content-center bg-warning bg-opacity-10 text-warning rounded-circle mb-3" style="width:60px; height:60px;">
+                                    <i class='bx bx-check-shield fs-1'></i>
                                 </div>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-transparent border-end-0">
-                                        <i class="bx bx-lock-alt"></i>
-                                    </span>
-                                    <input type="password" name="password" class="form-control border-start-0 ps-0" required>
+                                <h5 class="fw-bold">Two-Factor Authentication</h5>
+                                <p class="small text-secondary mb-0">A 6-digit code has been sent to your email.</p>
+                                <span class="badge bg-danger rounded-pill mt-2 fs-6 px-3" id="login-timer-2fa">01:00</span>
+                            </div>
+                            
+                            <form id="login-2fa-form">
+                                <div class="mb-4">
+                                    <input type="text" name="otp" id="login-otp-input" class="form-control form-control-lg text-center fw-bold fs-3 tracking-widest" maxlength="6" placeholder="------" required autocomplete="off" style="letter-spacing: 10px;">
                                 </div>
-                            </div>
+                                <div id="login-2fa-error" class="text-danger small text-center mb-3 d-none fw-bold"></div>
+                                <button type="submit" id="login-verify-btn" class="btn btn-warning btn-lg w-100 fw-bold">Verify & Sign In</button>
+                            </form>
+                            
+                            <script>
+                                document.addEventListener('DOMContentLoaded', () => {
+                                    const timerDisplay = document.getElementById('login-timer-2fa');
+                                    const form = document.getElementById('login-2fa-form');
+                                    const errorDiv = document.getElementById('login-2fa-error');
+                                    const verifyBtn = document.getElementById('login-verify-btn');
+                                    const inputOtp = document.getElementById('login-otp-input');
+                                    
+                                    inputOtp.focus();
+                                    
+                                    let timeLeft = 60;
+                                    const countdown = setInterval(() => {
+                                        timeLeft--;
+                                        let secs = timeLeft < 10 ? '0' + timeLeft : timeLeft;
+                                        timerDisplay.innerText = "00:" + secs;
+                                        if (timeLeft <= 0) {
+                                            clearInterval(countdown);
+                                            inputOtp.disabled = true;
+                                            verifyBtn.disabled = true;
+                                            errorDiv.innerText = "OTP Expired. Please refresh to try again.";
+                                            errorDiv.classList.remove('d-none');
+                                        }
+                                    }, 1000);
+                                    
+                                    form.onsubmit = async (e) => {
+                                        e.preventDefault();
+                                        verifyBtn.disabled = true;
+                                        verifyBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Checking...';
+                                        errorDiv.classList.add('d-none');
+                                        
+                                        const formData = new FormData(form);
+                                        try {
+                                            const res = await fetch('/api/auth/verify_login_2fa', { method: 'POST', body: formData });
+                                            const result = await res.json();
+                                            if (result.status === 'success') {
+                                                clearInterval(countdown);
+                                                timerDisplay.classList.replace('bg-danger', 'bg-success');
+                                                timerDisplay.innerText = "Verified!";
+                                                window.location.href = '/home';
+                                            } else {
+                                                errorDiv.innerText = result.error;
+                                                errorDiv.classList.remove('d-none');
+                                                verifyBtn.disabled = false;
+                                                verifyBtn.innerText = 'Verify & Sign In';
+                                            }
+                                        } catch (err) {
+                                            errorDiv.innerText = "Server Error.";
+                                            errorDiv.classList.remove('d-none');
+                                            verifyBtn.disabled = false;
+                                            verifyBtn.innerText = 'Verify & Sign In';
+                                        }
+                                    };
+                                });
+                            </script>
+                        <?php else: ?>
+                            <!-- Standard Login Form -->
+                            <form method="POST">
+                                <div class="mb-3">
+                                    <label class="small fw-bold text-secondary mb-1">USERNAME OR EMAIL</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-transparent border-end-0">
+                                            <i class="bx bx-user"></i>
+                                        </span>
+                                        <input type="text" name="email" class="form-control border-start-0 ps-0" required>
+                                    </div>
+                                </div>
 
-                            <div class="form-check form-switch mb-4">
-                                <input class="form-check-input" type="checkbox" id="remember">
-                                <label class="form-check-label small text-warning" for="remember">Remember me</label>
-                            </div>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <label class="small fw-bold text-secondary mb-1">PASSWORD</label>
+                                        <a href="#" class="small text-warning text-decoration-none">Forgot?</a>
+                                    </div>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-transparent border-end-0">
+                                            <i class="bx bx-lock-alt"></i>
+                                        </span>
+                                        <input type="password" name="password" class="form-control border-start-0 ps-0" required>
+                                    </div>
+                                </div>
 
-                            <button type="submit" class="btn btn-warning btn-lg w-100 mb-3 fw-bold">
-                                Sign in
-                            </button>
-                        </form>
+                                <div class="form-check form-switch mb-4">
+                                    <input class="form-check-input" type="checkbox" id="remember">
+                                    <label class="form-check-label small text-warning" for="remember">Remember me</label>
+                                </div>
+
+                                <button type="submit" class="btn btn-warning btn-lg w-100 mb-3 fw-bold">
+                                    Sign in
+                                </button>
+                            </form>
+                        <?php endif; ?>
 
                         <div class="d-flex align-items-center my-4">
                             <hr class="flex-grow-1 opacity-25">
