@@ -40,6 +40,11 @@ labs/**/.env
 labs/**/storage/
 labs/**/cache/
 labs/**/logs/
+
+# Ignore user uploads but keep the directory tracked
+labs/htdocs/uploads/users/*
+!labs/htdocs/uploads/users/.gitkeep
+
 # labs/htdocs/js/
 # labs/htdocs/js/app.min.js
 # labs/htdocs/js/app.js
