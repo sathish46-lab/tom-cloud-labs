@@ -222,6 +222,7 @@ if ($hour >= 0 && $hour < 5) {
 
 // Select a completely random quote on every page load
 $greetingText = $quotes[array_rand($quotes)];
+$greetingText = str_replace($username, '<span class="text-primary">' . htmlspecialchars($username) . '</span>', $greetingText);
 ?>
 
 <div class="container-fluid px-0 pt-4">
@@ -419,13 +420,13 @@ $greetingText = $quotes[array_rand($quotes)];
                         
                         <!-- Switch Tabs Selector -->
                         <div class="d-flex gap-2 flex-wrap continue-tab-switcher-container">
-                            <button class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold continue-tab-btn active" 
-                                    onclick="switchContinueTab('activity')" data-tab="activity">
-                                <i class='bx bx-time-five me-1 align-middle' style="font-size: 0.9rem;"></i> Your Activity
-                            </button>
                             <button class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold continue-tab-btn" 
                                     onclick="switchContinueTab('setup')" data-tab="setup">
                                 <i class='bx bx-desktop me-1 align-middle' style="font-size: 0.9rem;"></i> Your Setup
+                            </button>
+                            <button class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold continue-tab-btn active" 
+                                    onclick="switchContinueTab('activity')" data-tab="activity">
+                                <i class='bx bx-time-five me-1 align-middle' style="font-size: 0.9rem;"></i> Your Activity
                             </button>
                             <button class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold continue-tab-btn" 
                                     onclick="switchContinueTab('recommended')" data-tab="recommended">
