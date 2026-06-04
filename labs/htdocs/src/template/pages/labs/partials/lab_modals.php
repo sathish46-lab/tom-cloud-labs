@@ -155,7 +155,7 @@
                     <div class="col-sm-8">
                         <select id="vsc_domain_selector" class="form-select bg-body-tertiary border-0 shadow-none" onchange="updateDomainAvailability()">
                             <?php 
-                                $fullHash = $labData['instance_hash'];
+                                $fullHash = $labData['instance_hash'] ?? $fullHash;
                                 $currentCodeDomain = $labData['code_domain'] ?? ($fullHash . '.tomweb.shop');
                                 $isDefaultSelected = ($currentCodeDomain === ($fullHash . '.tomweb.shop'));
                             ?>
@@ -201,7 +201,7 @@
                         }
 
                         $creds = $labData['credentials'] ?? [];
-                        $hash = $labData['instance_hash'];
+                        $hash = $labData['instance_hash'] ?? $fullHash;
 
                         // 1. Define SYSTEM DEFAULTS
                         $sysConsole = "s3-{$hash}.tomweb.shop";

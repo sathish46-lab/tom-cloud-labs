@@ -327,9 +327,20 @@ class Lab:
         except Exception as e:
             self.log(f"Warning: Could not fetch VPN IPs for restriction: {e}", "warn")
 
+        # ALSO query user's client device VPN IPs (from tom_labs_db.devices)
+        if 'user_id' in lab_data:
+            try:
+                user_devices = self.db.devices.find({'user_id': lab_data['user_id']})
+                for d in user_devices:
+                    if 'assigned_ip' in d:
+                        user_vpn_ips.append(d['assigned_ip'])
+            except Exception as e:
+                self.log(f"Warning: Could not fetch client device IPs: {e}", "warn")
+
         # Format restriction string (e.g., from="172.30.0.12,172.30.0.13")
         restriction = ""
         if user_vpn_ips:
+            user_vpn_ips = sorted(list(set(user_vpn_ips)))
             restriction = f'from="{",".join(user_vpn_ips)}" '
             self.log(f"Restricting SSH access to: {', '.join(user_vpn_ips)}", "info")
         else:
@@ -356,8 +367,8 @@ class Lab:
         
         # Pass n8n Domain (9th argument) for Webhook URL
         n8n_domain_arg = selected_n8n_domain if selected_n8n_domain else ""
-
-        link_cmd = f'docker exec {instance_id} {link_script} "{username}" "{auth_content}" "{docker_ip}" "{dynamic_pass}" "{lab_priv_key}" "{tunnel_ip}" "{server_pub_key}" "{user_email}" "{n8n_domain_arg}" "{vps_docker_ip}"'
+        escaped_auth_content = auth_content.replace('"', '\\"')
+        link_cmd = f'docker exec {instance_id} {link_script} "{username}" "{escaped_auth_content}" "{docker_ip}" "{dynamic_pass}" "{lab_priv_key}" "{tunnel_ip}" "{server_pub_key}" "{user_email}" "{n8n_domain_arg}" "{vps_docker_ip}"'
         
         if os.system(link_cmd) != 0:
             self.log("linkuser.sh failed", "error")
@@ -635,6 +646,16 @@ class Lab:
                     user_vpn_ips.append(alloc['ip_addr'])
         except Exception as e:
             self.log(f"Warning: Could not fetch VPN IPs: {e}", "warn")
+
+        # ALSO query user's client device VPN IPs (from tom_labs_db.devices)
+        if user_profile and 'user_id' in user_profile:
+            try:
+                user_devices = self.db.devices.find({'user_id': user_profile['user_id']})
+                for d in user_devices:
+                    if 'assigned_ip' in d:
+                        user_vpn_ips.append(d['assigned_ip'])
+            except Exception as e:
+                self.log(f"Warning: Could not fetch client device IPs: {e}", "warn")
 
         # 3. Construct Restriction String
         restriction = "" 
