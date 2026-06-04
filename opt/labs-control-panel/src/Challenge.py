@@ -194,7 +194,7 @@ class Challenge:
                 "status": "deploying",
                 "flag": flag,
                 "credentials": {
-                    "docker_ip": f"{self.config.get('docker_ip_prefix', '172.19.0.')}{challenge_ip.split('.')[3]}",
+                    "docker_ip": f"{self.config.get('docker_ip_prefix', '10.19.0.')}{challenge_ip.split('.')[3]}",
                     "tunnel_ip": challenge_ip,
                     "access_url": f"http://{challenge_ip}"
                 },
@@ -211,7 +211,7 @@ class Challenge:
         ip_parts = challenge_ip.split('.')
         last_octet = ip_parts[3]
 
-        docker_prefix = self.config.get('docker_ip_prefix', '172.19.0.')
+        docker_prefix = self.config.get('docker_ip_prefix', '10.19.0.')
         tunnel_prefix = self.config.get('tunnel_ip_prefix', '172.30.0.')
 
         docker_ip = f"{docker_prefix}{last_octet}"
@@ -299,7 +299,7 @@ class Challenge:
         # Route cleaning (just in case)
         os.system(f"ip route del {tunnel_ip}/32 2>/dev/null || true")
         
-        # Add DNAT so traffic to 172.30.1.x gets translated to the real Docker IP (172.19.0.x)
+        # Add DNAT so traffic to 172.30.1.x gets translated to the real Docker IP (10.19.0.x)
         os.system(f"iptables -t nat -A PREROUTING -d {tunnel_ip} -j DNAT --to-destination {docker_ip} 2>/dev/null || true")
         os.system(f"iptables -t nat -A OUTPUT -d {tunnel_ip} -j DNAT --to-destination {docker_ip} 2>/dev/null || true")
         

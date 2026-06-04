@@ -104,7 +104,7 @@ class Lab:
         """Deploy a container with WireGuard mesh networking and Template-based Config"""
         self.log("Deployment initiated (WireGuard Mesh Mode)...", "info")
         
-        # 0. Verify Docker Network exists (created by docker-compose, subnet 172.19.0.0/16)
+        # 0. Verify Docker Network exists (created by docker-compose, subnet 10.19.0.0/16)
         docker_network = self.config.get('docker_network_name', 'local_dev_lab_tomlabs_dev_net')
         network_check = os.system(f"docker network inspect {docker_network} > /dev/null 2>&1")
         if network_check != 0:
@@ -156,7 +156,7 @@ class Lab:
         ip_parts = base_ip.split('.')
         last_octet = ip_parts[3]
         
-        docker_prefix = self.config.get('docker_ip_prefix', '172.19.0.')
+        docker_prefix = self.config.get('docker_ip_prefix', '10.19.0.')
         tunnel_prefix = self.config.get('tunnel_ip_prefix', '172.30.0.')
 
         docker_ip = f"{docker_prefix}{last_octet}"      # Physical Docker IP (on compose network)
@@ -313,42 +313,13 @@ class Lab:
         # 13. Configure User Environment
         self.log(f"Configuring user environment for {username}...", "info")
         
-        # Security: Fetch User's VPN IPs to restrict SSH access
-        user_vpn_ips = []
-        try:
-            vpn_db_name = self.env.get('vpn_db', 'tom_labs_vpn')
-            vpn_db = self.mongo_client[vpn_db_name]
-            # In tom_labs_vpn, the 'networks' collection contains 1 document PER IP allocation
-            # The 'email' field holds the username
-            allocations = vpn_db.networks.find({'email': username})
-            for alloc in allocations:
-                if 'ip_addr' in alloc:
-                    user_vpn_ips.append(alloc['ip_addr'])
-        except Exception as e:
-            self.log(f"Warning: Could not fetch VPN IPs for restriction: {e}", "warn")
-
-        # ALSO query user's client device VPN IPs (from tom_labs_db.devices)
-        if 'user_id' in lab_data:
-            try:
-                user_devices = self.db.devices.find({'user_id': lab_data['user_id']})
-                for d in user_devices:
-                    if 'assigned_ip' in d:
-                        user_vpn_ips.append(d['assigned_ip'])
-            except Exception as e:
-                self.log(f"Warning: Could not fetch client device IPs: {e}", "warn")
-
-        # Format restriction string (e.g., from="172.30.0.12,172.30.0.13")
-        restriction = ""
-        if user_vpn_ips:
-            user_vpn_ips = sorted(list(set(user_vpn_ips)))
-            restriction = f'from="{",".join(user_vpn_ips)}" '
-            self.log(f"Restricting SSH access to: {', '.join(user_vpn_ips)}", "info")
-        else:
-            self.log("No VPN IPs found for user. SSH will be unrestricted (internal-only).", "warn")
+        # NOTE: SSH from= IP restrictions are NOT used because iptables MASQUERADE
+        # on the VPS rewrites the client's source IP before packets reach the container.
+        # The container always sees the VPS bridge IP, never the client VPN IP.
+        # Security is enforced at the network layer (WireGuard VPN + Docker isolation).
 
         user_keys = list(self.db.ssh_keys.find({"username": username}))
-        # Prepend restriction to each key
-        auth_content = "\\n".join([f"{restriction}{k['public_key']}" for k in user_keys if 'public_key' in k])
+        auth_content = "\\n".join([k['public_key'] for k in user_keys if 'public_key' in k])
 
         dynamic_pass = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(12))
         
@@ -635,45 +606,17 @@ class Lab:
             search_emails.append(user_profile['email'])
             self.log(f"Linked email found: {user_profile['email']}", "info")
 
-        # 2. Fetch User's VPN IPs (by username OR email)
-        user_vpn_ips = []
-        try:
-            vpn_db_name = self.env.get('vpn_db', 'tom_labs_vpn')
-            vpn_db = self.mongo_client[vpn_db_name]
-            allocations = vpn_db.networks.find({'email': {'$in': search_emails}})
-            for alloc in allocations:
-                if 'ip_addr' in alloc:
-                    user_vpn_ips.append(alloc['ip_addr'])
-        except Exception as e:
-            self.log(f"Warning: Could not fetch VPN IPs: {e}", "warn")
+        # NOTE: SSH from= IP restrictions are NOT used because iptables MASQUERADE
+        # on the VPS rewrites the client's source IP before packets reach the container.
+        # Security is enforced at the network layer (WireGuard VPN + Docker isolation).
 
-        # ALSO query user's client device VPN IPs (from tom_labs_db.devices)
-        if user_profile and 'user_id' in user_profile:
-            try:
-                user_devices = self.db.devices.find({'user_id': user_profile['user_id']})
-                for d in user_devices:
-                    if 'assigned_ip' in d:
-                        user_vpn_ips.append(d['assigned_ip'])
-            except Exception as e:
-                self.log(f"Warning: Could not fetch client device IPs: {e}", "warn")
-
-        # 3. Construct Restriction String
-        restriction = "" 
-        if user_vpn_ips:
-            # unique sorted list
-            user_vpn_ips = sorted(list(set(user_vpn_ips)))
-            restriction = f'from="{",".join(user_vpn_ips)}" '
-            self.log(f"Active VPN IPs: {', '.join(user_vpn_ips)}", "info")
-        else:
-             self.log("No VPN IPs found. SSH will be unrestricted (internal-only).", "warn")
-
-        # 4. Fetch User's SSH Keys
+        # 2. Fetch User's SSH Keys
         user_keys = list(self.db.ssh_keys.find({"username": username}))
         if not user_keys:
             self.log(f"No SSH keys found for {username}", "warn")
             
-        # 4. Generate Authorized Keys Content
-        auth_content = "\n".join([f"{restriction}{k['public_key']}" for k in user_keys if 'public_key' in k])
+        # 3. Generate Authorized Keys Content (no from= restriction)
+        auth_content = "\n".join([k['public_key'] for k in user_keys if 'public_key' in k])
         
         # 5. Update Storage for All Deployments
         # We update the central storage location for the user, which is mounted into containers
