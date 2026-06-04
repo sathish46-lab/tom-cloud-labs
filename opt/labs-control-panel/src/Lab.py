@@ -104,7 +104,7 @@ class Lab:
         """Deploy a container with WireGuard mesh networking and Template-based Config"""
         self.log("Deployment initiated (WireGuard Mesh Mode)...", "info")
         
-        # 0. Verify Docker Network exists (created by docker-compose, subnet 10.19.0.0/16)
+        # 0. Verify Docker Network exists (created by docker-compose, subnet 172.19.0.0/16)
         docker_network = self.config.get('docker_network_name', 'local_dev_lab_tomlabs_dev_net')
         network_check = os.system(f"docker network inspect {docker_network} > /dev/null 2>&1")
         if network_check != 0:
@@ -156,7 +156,7 @@ class Lab:
         ip_parts = base_ip.split('.')
         last_octet = ip_parts[3]
         
-        docker_prefix = self.config.get('docker_ip_prefix', '10.19.0.')
+        docker_prefix = self.config.get('docker_ip_prefix', '172.19.0.')
         tunnel_prefix = self.config.get('tunnel_ip_prefix', '172.30.0.')
 
         docker_ip = f"{docker_prefix}{last_octet}"      # Physical Docker IP (on compose network)

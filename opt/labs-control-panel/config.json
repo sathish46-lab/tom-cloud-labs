@@ -4,7 +4,7 @@
   "storage_path": "/var/tomlabs/storage/{user}",
   "app_log": "/var/log/labs/labctl.log",
   "config_path": "/etc/labs-control-panel/config.json",
-  "docker_ip_prefix": "10.19.0.",
+  "docker_ip_prefix": "172.19.0.",
   "tunnel_ip_prefix": "172.30.0.",
   "docker_network_name": "local_dev_lab_tomlabs_dev_net",
   "docker_build": "docker build -t {image_tag} {path}",
