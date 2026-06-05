@@ -20,7 +20,9 @@ echo "[*] Initializing Professional MinIO Environment for $USER_NAME..."
 
 # 1. User Setup & SSH Key Injection
 if ! id "$USER_NAME" &>/dev/null; then
-    useradd -m -s /bin/bash "$USER_NAME"
+    # Delete default ubuntu user that steals UID 1000 in newer Ubuntu images
+    if id -u ubuntu >/dev/null 2>&1; then userdel -r ubuntu || true; fi
+    useradd -m -s /bin/bash -u 1000 "$USER_NAME" 2>/dev/null || useradd -m -s /bin/bash "$USER_NAME"
     usermod -aG sudo "$USER_NAME"
 fi
 
@@ -39,6 +41,11 @@ if [ -n "$PUB_KEYS" ]; then
     chmod 700 "$USER_SSH_DIR"
     chmod 600 "$USER_SSH_DIR/authorized_keys"
     chown -R "$USER_NAME":"$USER_NAME" "$USER_SSH_DIR"
+    
+    # Disable StrictModes for shared volume mounts and restart SSH
+    sed -i 's/^#\?StrictModes .*/StrictModes no/' /etc/ssh/sshd_config
+    service ssh restart || systemctl restart ssh || /etc/init.d/ssh restart || true
+    
     echo "[✓] SSH Public Keys deployed."
 else
     echo "[!] WARNING: No SSH keys provided. Key-only login will fail!"

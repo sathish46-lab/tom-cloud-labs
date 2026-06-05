@@ -28,7 +28,9 @@ echo "    Email: $USER_EMAIL"
 
 # 1. User Setup
 if ! id "$USER_NAME" &>/dev/null; then
-    useradd -m -s /bin/bash "$USER_NAME"
+    # Delete default ubuntu user that steals UID 1000 in newer Ubuntu images
+    if id -u ubuntu >/dev/null 2>&1; then userdel -r ubuntu || true; fi
+    useradd -m -s /bin/bash -u 1000 "$USER_NAME" 2>/dev/null || useradd -m -s /bin/bash "$USER_NAME"
     usermod -aG sudo "$USER_NAME"
     echo "[*] User $USER_NAME created"
 else
@@ -44,6 +46,10 @@ printf "%b" "$PUB_KEYS" > "$USER_HOME/.ssh/authorized_keys"
 chmod 700 "$USER_HOME/.ssh"
 chmod 600 "$USER_HOME/.ssh/authorized_keys"
 chown -R "$USER_NAME":"$USER_NAME" "$USER_HOME"
+
+# Disable StrictModes for shared volume mounts and restart SSH
+sed -i 's/^#\?StrictModes .*/StrictModes no/' /etc/ssh/sshd_config
+service ssh restart || systemctl restart ssh || /etc/init.d/ssh restart || true
 
 # 3. Bash Configuration
 cat << 'BASHRC_EOF' > "$USER_HOME/.bashrc"

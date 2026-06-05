@@ -118,9 +118,6 @@ class Lab:
             raise ValueError("session_hash is required for deployment")
         username = self.args.getFlagValue('user')
         
-        self.log(f"Starting deployment for user: {username}", "info")
-        self.log(f"Instance ID: {instance_id}", "info")
-        
         if self.db is None:
             self.log("Database connection failed. Aborting.", "error")
             return
@@ -132,6 +129,15 @@ class Lab:
         if not lab_data:
             self.log(f"Metadata missing for {instance_id}", "error")
             return
+
+        if not username:
+            username = lab_data.get('username')
+            if not username:
+                self.log("FATAL: --user flag missing and no user found in database.", "error")
+                return
+
+        self.log(f"Starting deployment for user: {username}", "info")
+        self.log(f"Instance ID: {instance_id}", "info")
 
         # 2. Load the specific Lab Template Configuration (Dynamic Allocation)
         template_name = lab_data['lab_type']  # e.g., 'essentials'
