@@ -18,6 +18,26 @@ Before running the migration, you **must** update the default security credentia
 
 ---
 
+## ⚙️ Control Panel Configuration
+
+The Labs Control Panel relies on a `config.json` file to dictate networking and Docker subnets. Since this file is uniquely tied to your local or production environment, it is excluded from Git tracking.
+
+Before proceeding, you **must** create your configuration file:
+
+1. Navigate to the configuration directory:
+```bash
+cd opt/labs-control-panel/
+```
+2. Copy the example configuration:
+```bash
+cp config.example.json config.json
+```
+3. Open `config.json` and adjust the variables based on your target environment:
+   * **Production:** Use the production subnet (`10.20.128.`) and Docker network (`docker_tomlabs_net`).
+   * **Local Development:** Match your local `docker-compose.yml` settings (e.g., `10.20.144.` and `local_dev_lab_tomlabs_dev_net`).
+
+---
+
 ## 🚀 Migration Process
 
 We provide two distinct migration paths. Choose the one that fits your environment.
