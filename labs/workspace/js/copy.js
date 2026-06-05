@@ -6,13 +6,16 @@ function copyText(text, toastMsg = "Text copied to clipboard!") {
         showToast(toastMsg);
     };
 
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(notifySuccess).catch(() => {
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(notifySuccess).catch((err) => {
+            console.error("Clipboard API failed: ", err);
+            // If it still fails, try fallback synchronously (though it may be blocked)
             if (fallbackCopyText(text)) {
                 notifySuccess();
             }
         });
     } else {
+        // In insecure contexts, run fallback synchronously immediately during the click event!
         if (fallbackCopyText(text)) {
             notifySuccess();
         }
@@ -26,16 +29,24 @@ function fallbackCopyText(text) {
     textArea.style.left = "0";
     textArea.style.position = "fixed";
     textArea.style.opacity = "0";
-    document.body.appendChild(textArea);
+    
+    // Prevent Modal Focus Trap from stealing focus!
+    // Append the hidden textarea to the active modal if one is open, otherwise use body.
+    const activeModal = document.querySelector('.modal.show');
+    const container = activeModal ? activeModal : document.body;
+    
+    container.appendChild(textArea);
     textArea.focus();
     textArea.select();
+    
     let successful = false;
     try {
         successful = document.execCommand('copy');
     } catch (err) {
         console.error('Fallback copy failed', err);
     }
-    document.body.removeChild(textArea);
+    
+    container.removeChild(textArea);
     return successful;
 }
 

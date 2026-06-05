@@ -72,8 +72,7 @@ function showConfig(name, configRaw) {
 }
 
 function copyConfig() {
-    navigator.clipboard.writeText(activeConfigRaw);
-    alert("Config Copied!");
+    copyText(activeConfigRaw, "Config Copied!");
 }
 
 async function downloadTunnel(name, deviceId) {

@@ -69,9 +69,10 @@ function renderConnectionFields(fields, container) {
                     ${field.value} <i class='bx bx-link-external ms-1'></i>
                 </a>`;
         } else {
+            const escapedValue = field.value.replace(/'/g, "\\'");
             const copyBtn = field.copy ? `
                 <button class="btn btn-outline-secondary ms-2 rounded-pill px-3" 
-                        onclick="navigator.clipboard.writeText('${field.value}')">
+                        onclick="copyText('${escapedValue}', '${field.label} copied!')">
                     <i class='bx bx-copy'></i>
                 </button>` : '';
 

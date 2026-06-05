@@ -651,9 +651,15 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                     <?php foreach ($labsList as $lab): ?>
                                                     <div class="d-flex align-items-center justify-content-between p-3 rounded active-lab-item-card">
                                                         <div class="d-flex align-items-center gap-3 min-w-0">
-                                                            <!-- Circular green badge with cube/server icon -->
-                                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; background: rgba(46, 213, 115, 0.12); border: 1px solid rgba(46, 213, 115, 0.25);">
-                                                                <i class='bx bx-cube text-success' style="font-size: 1.15rem; color: #2ed573 !important;"></i>
+                                                            <!-- Circular badge with dynamic server icon -->
+                                                            <?php 
+                                                                $bgMap = ['essentials' => '#e95420', 'minio' => '#2f3542', 'n8n' => '#ff6b81'];
+                                                                $bgColor = $bgMap[$lab['type']] ?? '#2f3542';
+                                                                $typeIconMap = ['essentials' => 'bxl-tux', 'minio' => 'bx-cube', 'n8n' => 'bx-git-repo-forked'];
+                                                                $iconClass = $typeIconMap[$lab['type']] ?? 'bxl-ubuntu';
+                                                            ?>
+                                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; background: <?= $bgColor ?>; border: 1px solid rgba(255, 255, 255, 0.25); box-shadow: 0 3px 8px rgba(0,0,0,0.15);">
+                                                                <i class='bx <?= $iconClass ?> text-white' style="font-size: 1.15rem;"></i>
                                                             </div>
                                                             <div class="min-w-0">
                                                                 <h6 class="fw-bold text-white mb-0 text-truncate" style="font-size: 0.85rem; letter-spacing: -0.2px;"><?= htmlspecialchars($lab['name']) ?></h6>
@@ -665,7 +671,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                                 <div class="text-white font-monospace fw-bold" style="font-size: 0.88rem; letter-spacing: 0.5px;"><?= htmlspecialchars($lab['ip']) ?></div>
                                                                 <div class="text-white text-opacity-40 uppercase fw-bold" style="font-size: 0.55rem; letter-spacing: 0.5px;">INTERNAL IP</div>
                                                             </div>
-                                                            <button class="btn btn-sm btn-link p-0 text-white text-opacity-40 hover-text-white transition-all" onclick="navigator.clipboard.writeText('<?= htmlspecialchars($lab['ip']) ?>'); showToast('IP copied!')">
+                                                            <button class="btn btn-sm btn-link p-0 text-white text-opacity-40 hover-text-white transition-all" onclick="copyText('<?= htmlspecialchars(addslashes($lab['ip'])) ?>', 'IP copied!')">
                                                                 <i class="bx bx-copy" style="font-size: 0.9rem;"></i>
                                                             </button>
                                                         </div>
@@ -675,9 +681,9 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                     <!-- Mock matching user screenshot standard setup -->
                                                     <div class="d-flex align-items-center justify-content-between p-3 rounded active-lab-item-card">
                                                         <div class="d-flex align-items-center gap-3 min-w-0">
-                                                            <!-- Circular green badge with cube/server icon -->
-                                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; background: rgba(46, 213, 115, 0.12); border: 1px solid rgba(46, 213, 115, 0.25);">
-                                                                <i class='bx bx-cube text-success' style="font-size: 1.15rem; color: #2ed573 !important;"></i>
+                                                            <!-- Circular badge with dynamic server icon -->
+                                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; background: #e95420; border: 1px solid rgba(255, 255, 255, 0.25); box-shadow: 0 3px 8px rgba(0,0,0,0.15);">
+                                                                <i class='bx bxl-tux text-white' style="font-size: 1.15rem;"></i>
                                                             </div>
                                                             <div class="min-w-0">
                                                                 <h6 class="fw-bold text-white mb-0 text-truncate" style="font-size: 0.85rem; letter-spacing: -0.2px;">Essentials Lab</h6>
@@ -689,7 +695,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                                 <div class="text-white font-monospace fw-bold" style="font-size: 0.88rem; letter-spacing: 0.5px;">172.30.0.28</div>
                                                                 <div class="text-white text-opacity-40 uppercase fw-bold" style="font-size: 0.55rem; letter-spacing: 0.5px;">INTERNAL IP</div>
                                                             </div>
-                                                            <button class="btn btn-sm btn-link p-0 text-white text-opacity-40 hover-text-white transition-all" onclick="navigator.clipboard.writeText('172.30.0.28'); showToast('IP copied!')">
+                                                            <button class="btn btn-sm btn-link p-0 text-white text-opacity-40 hover-text-white transition-all" onclick="copyText('172.30.0.28', 'IP copied!')">
                                                                 <i class="bx bx-copy" style="font-size: 0.9rem;"></i>
                                                             </button>
                                                         </div>
