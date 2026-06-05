@@ -171,10 +171,12 @@ class Lab:
         # Determine the VPS container's IP on the Docker network (for WireGuard endpoint)
         docker_network = self.config.get('docker_network_name', 'local_dev_lab_tomlabs_dev_net')
         vps_docker_ip = os.popen(
+            f"docker inspect docker_tomlabs_vps "
+            f"--format '{{{{.NetworkSettings.Networks.{docker_network}.IPAddress}}}}' 2>/dev/null || "
             f"docker inspect docker_tomlabs_vps_dev "
             f"--format '{{{{.NetworkSettings.Networks.{docker_network}.IPAddress}}}}' 2>/dev/null"
         ).read().strip()
-        if not vps_docker_ip:
+        if not vps_docker_ip or vps_docker_ip == "<no value>":
             vps_docker_ip = f"{docker_prefix}2"  # Fallback: first usable IP after gateway
             self.log(f"WARNING: Could not detect VPS container IP, using fallback: {vps_docker_ip}", "warn")
         else:
