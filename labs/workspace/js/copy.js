@@ -54,7 +54,7 @@ function copyValue(elementId) {
  */
 function showToast(message) {
     if (window.TomNotify && typeof window.TomNotify.show === 'function') {
-        window.TomNotify.show(message, "Notice", "info", 3000);
+        window.TomNotify.show(message, "Success", "success", 3000);
     } else {
         const toastEl = document.getElementById('copyToast');
         const messageEl = document.getElementById('toast-message');

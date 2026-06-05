@@ -59,9 +59,19 @@ foreach ($challengeLabs as $clab) {
         }
     }
 
+    // Map difficulty to a specific color
+    $diffColor = '#2ed573'; // default green
+    switch (strtolower($cDiff)) {
+        case 'medium': $diffColor = '#ffa502'; break; // orange
+        case 'hard':   $diffColor = '#ff4757'; break; // red
+        case 'extreme':$diffColor = '#2f3542'; break; // dark
+    }
+
     $challengeLabsList[] = [
         'name' => $cName,
         'difficulty' => $cDiff,
+        'diffColor' => $diffColor,
+        'image' => $cMeta['image'] ?? '/assets/Background_Img/challenges/shadow.png',
         'ip' => $clab['internal_ip'] ?? 'Unknown',
         'status' => $clab['status'] ?? 'unknown',
         'hash' => $clab['instance_hash'] ?? '',
@@ -918,31 +928,31 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                 <!-- Challenge Labs Card -->
                                 <div class="col-12 col-md-5 ps-md-1">
                                     <div class="card h-100 border-0 glass-card">
-                                        <div class="card-body p-3 d-flex flex-column" style="min-height: 220px;">
+                                        <div class="card-body p-2 px-3 d-flex flex-column" style="min-height: 220px;">
                                             <div class="d-flex justify-content-between align-items-center mb-3">
                                                 <h6 class="fw-bold mb-0 d-flex align-items-center text-white" style="font-size: 0.95rem;">
                                                     Challenge Labs 
                                                     <span class="badge bg-danger rounded-pill px-2 py-0.5 ms-2 uppercase fw-bold" style="font-size: 0.55rem; letter-spacing: 0.5px;">live</span> 
                                                 </h6>
                                             </div>
-                                            <div class="d-flex flex-column gap-2 flex-grow-1" style="max-height: 280px; overflow-y: auto; padding-right: 4px;">
+                                            <div class="d-flex flex-column gap-2 flex-grow-1" style="max-height: 380px; overflow-y: auto; padding-right: 4px;">
                                                 <?php if (!empty($challengeLabsList)): ?>
                                                     <?php foreach ($challengeLabsList as $clab): ?>
-                                                        <div class="p-2 mb-3 border transition-all hover-scale flex-shrink-0 active-lab-item-card d-flex align-items-center justify-content-between" style="backdrop-filter: blur(6px); border-radius: 50px; background: rgba(255, 255, 255, 0.05); padding-right: 8px !important;">
+                                                        <div class="p-3 py-2 mb-3 border transition-all hover-scale flex-shrink-0 active-lab-item-card d-flex align-items-center justify-content-between" style="backdrop-filter: blur(6px); border-radius: 50px; background: rgba(255, 255, 255, 0.05); padding-right: 8px !important;">
                                                             
                                                             <!-- Left: Image and Info -->
                                                             <div class="d-flex align-items-center gap-2" style="min-width: 0;">
                                                                 <!-- Avatar/Image -->
-                                                                <div class="rounded-circle overflow-hidden flex-shrink-0" style="width: 34px; height: 34px; border: 2px solid rgba(255,255,255,0.1);">
-                                                                    <img src="/assets/Background_Img/challenges/shadow.png" alt="Challenge" class="w-100 h-100 object-fit-cover" onerror="this.src='/assets/Background_Img/challenges/mystery.png';">
+                                                                <div class="rounded-circle overflow-hidden flex-shrink-0" style="width: 36px; height: 36px; border: 2px solid rgba(255,255,255,0.1);">
+                                                                    <img src="<?= htmlspecialchars($clab['image']) ?>" alt="Challenge" class="w-100 h-100 object-fit-cover" onerror="this.src='/assets/Background_Img/challenges/mystery.png';">
                                                                 </div>
                                                                 
                                                                 <!-- Info -->
                                                                 <div class="d-flex flex-column justify-content-center" style="min-width: 0;">
                                                                     <span class="text-white fw-bold" style="font-size: 0.72rem; letter-spacing: -0.15px; line-height: 1.15; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" title="<?= htmlspecialchars($clab['name']) ?>"><?= htmlspecialchars($clab['name']) ?></span>
-                                                                    <div class="d-flex gap-1 align-items-center mt-1">
-                                                                        <span class="badge rounded-pill text-white fw-bold" style="font-size: 0.5rem; padding: 2px 6px; background-color: #2ed573 !important; color: #fff !important; line-height: 1; text-transform: lowercase !important; letter-spacing: 0.3px;"><?= htmlspecialchars(strtolower($clab['difficulty'])) ?></span>
-                                                                        <span class="badge rounded-pill text-white fw-bold" style="font-size: 0.5rem; padding: 2px 6px; background-color: #2ed573 !important; color: #fff !important; line-height: 1; text-transform: lowercase !important; letter-spacing: 0.3px;"><?= htmlspecialchars(strtolower($clab['status'])) ?></span>
+                                                                    <div class="d-flex gap-1 align-items-center mt-1 flex-nowrap" style="white-space: nowrap;">
+                                                                        <span class="badge rounded-pill text-white fw-bold" style="font-size: 0.45rem; padding: 2px 5px; background-color: <?= $clab['diffColor'] ?> !important; color: #fff !important; line-height: 1; text-transform: lowercase !important; letter-spacing: 0.2px;"><?= htmlspecialchars(strtolower($clab['difficulty'])) ?></span>
+                                                                        <span class="badge rounded-pill text-white fw-bold" style="font-size: 0.45rem; padding: 2px 5px; background-color: #2ed573 !important; color: #fff !important; line-height: 1; text-transform: lowercase !important; letter-spacing: 0.2px;"><?= htmlspecialchars(strtolower($clab['status'])) ?></span>
                                                                     </div>
                                                                 </div>
                                                             </div>

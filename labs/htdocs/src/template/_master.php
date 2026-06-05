@@ -560,19 +560,19 @@ define('PAGE_START_TIME', microtime(true));
 
                 const html = `
                     <div id="${toastId}" class="toast border-0 rounded-4 overflow-hidden shadow-lg mb-3" role="alert" aria-live="assertive" aria-atomic="true" data-coreui-autohide="true" data-coreui-delay="${duration}"
-                        style="background: rgba(1, 13, 18, 0.85); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.08) !important; min-width: 320px;">
-                        <div class="toast-header border-0 bg-transparent text-white pt-3 px-3 d-flex align-items-center">
-                            <strong class="me-auto d-flex align-items-center gap-2 fs-6">
+                        style="background: var(--glass-bg, rgba(11, 30, 54, 0.88)); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(var(--cui-emphasis-color-rgb, 255, 255, 255), 0.1) !important; min-width: 320px;">
+                        <div class="toast-header border-0 bg-transparent pt-3 px-3 d-flex align-items-center">
+                            <strong class="me-auto d-flex align-items-center gap-2 fs-6 text-body-emphasis">
                                 <i class="bx ${icon}"></i> 
                                 <span class="ls-tight">${title}</span>
                             </strong>
-                            <small class="opacity-50 fw-light" style="font-size: 10px;">now</small>
-                            <button type="button" class="btn-close btn-close-white ms-3 mb-1" style="font-size: 9px;" data-coreui-dismiss="toast"></button>
+                            <small class="text-body-secondary fw-light" style="font-size: 10px;">now</small>
+                            <button type="button" class="btn-close ms-3 mb-1" style="font-size: 9px; filter: var(--cui-btn-close-white-filter, none);" data-coreui-dismiss="toast"></button>
                         </div>
-                        <div class="toast-body text-white opacity-80 px-3 pb-3 pt-1">
-                            <span class="small" style="line-height: 1.5;">${message}</span>
+                        <div class="toast-body text-body px-3 pb-3 pt-1">
+                            <span class="small" style="line-height: 1.5; opacity: 0.85;">${message}</span>
                         </div>
-                        <div class="toast-progress-container" style="height: 3px; background: rgba(255,255,255,0.05); width: 100%;">
+                        <div class="toast-progress-container" style="height: 3px; background: rgba(var(--cui-emphasis-color-rgb, 255,255,255), 0.05); width: 100%;">
                             <div class="toast-progress-bar" style="height: 100%; width: 100%; background: ${progressColor}; transition: width ${duration}ms linear;"></div>
                         </div>
                     </div>

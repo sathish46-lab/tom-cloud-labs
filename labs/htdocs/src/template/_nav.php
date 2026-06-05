@@ -96,7 +96,7 @@ $current = Session::getCurrentFile();
                 }
                 ?>
             </div>
-            <div id="sidebar-load-val" class="stat-subtext mt-1">Load Avg: 0.00, 0.00, 0.00</div>
+            <div id="sidebar-load-val" class="stat-subtext mt-1">Loading...</div>
         </div>
 
         <div class="stat-group mb-2">
@@ -105,7 +105,7 @@ $current = Session::getCurrentFile();
                 <div id="sidebar-mem-bar" class="progress-bar bg-warning"
                     style="width: 0%; transition: width 0.4s ease;"></div>
             </div>
-            <div id="sidebar-mem-details" class="stat-subtext mt-1">0 GiB / 0 GiB Avail: 0 GiB</div>
+            <div id="sidebar-mem-details" class="stat-subtext mt-1">Loading...</div>
         </div>
 
         <div class="stat-group mb-2">
@@ -114,7 +114,7 @@ $current = Session::getCurrentFile();
                 <div id="sidebar-swap-bar" class="progress-bar bg-danger"
                     style="width: 0%; transition: width 0.4s ease;"></div>
             </div>
-            <div id="sidebar-swap-details" class="stat-subtext mt-1">0 MiB / 0 GiB Free: 0 GiB</div>
+            <div id="sidebar-swap-details" class="stat-subtext mt-1">Loading...</div>
         </div>
     </div>
 

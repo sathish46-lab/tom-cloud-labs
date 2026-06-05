@@ -24,15 +24,31 @@ if (file_exists($jsonPath)) {
         </div>
         <div class="col-auto">
             <div class="d-flex flex-column align-items-center justify-content-center text-center" style="min-width: 140px;">
-                <div class="d-flex align-items-center justify-content-center mb-1">
-                    <span class="fw-bold theme-text" style="font-size: 2.2rem; line-height: 1;">2</span>
-                    <span class="text-secondary opacity-50 ms-2" style="font-size: 1.1rem; font-weight: 500; margin-top: 8px;">/ <?= count($challenges) ?></span>
-                </div>
                 <?php 
                     $total = count($challenges);
-                    $running = 2; // Specific to challenges context
-                    $percent = ($running / $total) * 100;
+                    
+                    // Fetch actual running challenge labs from database
+                    $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
+                    $username = $user->getUsername();
+                    
+                    // Fetch running challenges to correctly label "Running" vs "Instance Down"
+                    $runningInstancesCursor = $db->challenge_instances->find(['username' => $username, 'status' => 'running']);
+                    $runningInstances = [];
+                    $runningHashes = [];
+                    foreach ($runningInstancesCursor as $ri) {
+                        // The database saves "flask_server_side_injection", so we normalize it to match "flask-server-side-injection" from the config
+                        $key = str_replace('_', '-', $ri['challenge_id']);
+                        $runningInstances[] = $key;
+                        $runningHashes[$key] = $ri['instance_hash'] ?? 'N/A';
+                    }
+                    
+                    $running = count($runningInstances);
+                    $percent = $total > 0 ? ($running / $total) * 100 : 0;
                 ?>
+                <div class="d-flex align-items-center justify-content-center mb-1">
+                    <span class="fw-bold theme-text" style="font-size: 2.2rem; line-height: 1;"><?= $running ?></span>
+                    <span class="text-secondary opacity-50 ms-2" style="font-size: 1.1rem; font-weight: 500; margin-top: 8px;">/ <?= $total ?></span>
+                </div>
                 <div class="progress bg-secondary bg-opacity-10 rounded-pill mb-2 w-100" style="height: 6px; max-width: 120px;">
                     <div class="progress-bar bg-success rounded-pill" role="progressbar" style="width: <?= $percent ?>%" aria-valuenow="<?= $percent ?>" aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
@@ -81,7 +97,10 @@ if (file_exists($jsonPath)) {
             // Grayscale layout if locked
             $cardLockedClass = $isUnlocked ? '' : 'opacity-75 grayscale-locked';
             
-            $statusText = $isUnlocked ? 'Instance Down' : (!$isReleased ? 'Coming Soon' : 'Not Active');
+            $isRunning = in_array($c['lab_id'], $runningInstances);
+            $instanceHash = $isRunning ? ($runningHashes[$c['lab_id']] ?? 'N/A') : 'Not Running';
+            $statusText = $isUnlocked ? ($isRunning ? 'Running' : 'Instance Down') : (!$isReleased ? 'Coming Soon' : 'Not Active');
+            $statusColorClass = $isRunning ? 'text-success' : 'text-white-50';
         ?>
         <div class="col-12 col-md-6 col-xl-4">
             <div class="card lab-card blur mb-2 shadow-sm <?= $cardLockedClass ?>">
@@ -107,11 +126,11 @@ if (file_exists($jsonPath)) {
                             <!-- Row 2: Status (Left) + Points (Right) aligned horizontally -->
                             <div class="d-flex justify-content-between align-items-center w-100 mt-1">
                                 <div class="d-flex align-items-center gap-2">
-                                    <span class="text-white-50 small fw-bold" style="font-size: 0.8rem;"><?= $statusText ?></span>
+                                    <span class="<?= $statusColorClass ?> small fw-bold" style="font-size: 0.8rem;"><?= $statusText ?></span>
                                     <div class="d-flex gap-2 ms-1">
-                                        <i class='bx bx-info-circle text-white-50 pointer' style="font-size: 0.9rem;" data-coreui-toggle="tooltip" title="View Details"></i>
-                                        <i class='bx bx-copy text-white-50 pointer' style="font-size: 0.9rem;" data-coreui-toggle="tooltip" title="Copy Lab ID"></i>
-                                        <i class='bx bx-share-alt text-white-50 pointer' style="font-size: 0.9rem;" data-coreui-toggle="tooltip" title="Share Lab"></i>
+                                        <i class='bx bx-info-circle text-white-50 pointer transition-all hover-text-white' style="font-size: 0.9rem;" data-coreui-toggle="tooltip" title="<?= $isRunning ? 'Hash: ' . htmlspecialchars($instanceHash) : 'Instance Not Running' ?>" onclick="<?= $isRunning ? "copyText('".htmlspecialchars(addslashes($instanceHash))."', 'Instance Hash Copied!');" : "TomNotify.show('Start the lab to view its hash.', 'Notice', 'warning');" ?>"></i>
+                                        <i class='bx bx-copy text-white-50 pointer transition-all hover-text-white' style="font-size: 0.9rem;" data-coreui-toggle="tooltip" title="Copy Lab ID" onclick="copyText('<?= htmlspecialchars(addslashes($c['lab_id'])) ?>', 'Lab ID Copied!');"></i>
+                                        <i class='bx bx-share-alt text-white-50 pointer transition-all hover-text-white' style="font-size: 0.9rem;" data-coreui-toggle="tooltip" title="Share Lab" onclick="copyText(window.location.origin + '/challenges/dashboard/<?= htmlspecialchars(addslashes($c['lab_id'])) ?>', 'Share Link Copied!');"></i>
                                     </div>
                                 </div>
                                 
@@ -207,3 +226,5 @@ if (file_exists($jsonPath)) {
     filter: grayscale(0.85) opacity(0.6) blur(0.5px);
 }
 </style>
+
+
