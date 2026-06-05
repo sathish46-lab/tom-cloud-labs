@@ -22,6 +22,53 @@ foreach ($deployedLabs as $lab) {
     ];
 }
 
+// 1.5 Fetch Challenge Labs
+$username = $user->getUsername();
+$challengeLabs = $db->challenge_instances->find(['username' => $username, 'status' => 'running'], ['sort' => ['created_at' => -1]]);
+
+$challengesConfig = [];
+$challengesConfigPath = __DIR__ . '/../../config/challenges.json';
+if (file_exists($challengesConfigPath)) {
+    $challengesConfig = json_decode(file_get_contents($challengesConfigPath), true) ?? [];
+}
+
+$challengeLabsList = [];
+foreach ($challengeLabs as $clab) {
+    $cId = $clab['challenge_id'] ?? '';
+    $configKey = str_replace('_', '-', $cId);
+    
+    $cMeta = null;
+    foreach ($challengesConfig as $c) {
+        if (($c['lab_id'] ?? '') === $configKey) {
+            $cMeta = $c;
+            break;
+        }
+    }
+
+    $cName = $cMeta['name'] ?? ucwords(str_replace('-', ' ', $configKey));
+    
+    // Find difficulty from tags
+    $cDiff = 'Unknown';
+    if (!empty($cMeta['tags']) && is_array($cMeta['tags'])) {
+        foreach ($cMeta['tags'] as $tag) {
+            $tText = strtolower($tag['text'] ?? '');
+            if (in_array($tText, ['easy', 'medium', 'hard', 'extreme'])) {
+                $cDiff = $tText;
+                break;
+            }
+        }
+    }
+
+    $challengeLabsList[] = [
+        'name' => $cName,
+        'difficulty' => $cDiff,
+        'ip' => $clab['internal_ip'] ?? 'Unknown',
+        'status' => $clab['status'] ?? 'unknown',
+        'hash' => $clab['instance_hash'] ?? '',
+        'type' => $cId
+    ];
+}
+
 // 2. Fetch Domains
 $domainCount = $db->domains->countDocuments(['user_id' => ['$in' => [(string)$userId, $userId]]]);
 $domainsLimit = 10;
@@ -724,9 +771,9 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                 </div>
                             </div> <!-- Close Row 1 (Connected Devices & Linked Domains) -->
 
-                            <div class="row g-4" style="margin-top: 1.5rem !important;"> <!-- Open Row 2 (Machine Labs & Challenge Labs) -->
+                            <div class="row g-3" style="margin-top: 1.5rem !important;"> <!-- Open Row 2 (Machine Labs & Challenge Labs) -->
                                 <!-- Machine Labs Card -->
-                                <div class="col-12 col-md-8 pe-md-3 mb-4 mb-md-0">
+                                <div class="col-12 col-md-7 pe-md-1 mb-4 mb-md-0">
                                     <div class="card h-100 border-0 glass-card machine-labs-card">
                                         <div class="card-body p-4">
                                             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -790,7 +837,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                              <!-- Row 2: Right-aligned Buttons -->
                                                              <div class="d-flex justify-content-end w-100">
                                                                  <div class="d-flex gap-2 align-items-center">
-                                                                     <a href="/labs/dashboard/<?= $lab['type'] ?>" class="btn btn-sm btn-success rounded-pill d-flex align-items-center gap-1 transition-all hover-scale" style="padding: 3px 9px; background-color: #2ed573 !important; border: 0; color: #000; font-size: 0.58rem; font-weight: 700; line-height: 1; text-transform: none !important;" title="Dashboard">
+                                                                     <a href="/labs/dashboard/<?= $lab['hash'] ?>" class="btn btn-sm btn-success rounded-pill d-flex align-items-center gap-1 transition-all hover-scale" style="padding: 3px 9px; background-color: #2ed573 !important; border: 0; color: #000; font-size: 0.58rem; font-weight: 700; line-height: 1; text-transform: none !important;" title="Dashboard">
                                                                          <i class='bx bx-grid-alt' style="font-size: 0.72rem;"></i> Dashboard
                                                                      </a>
                                                                      <button onclick="openCodeModal('<?= $lab['hash'] ?>', '<?= $lab['name'] ?> Lab', '<?= strtolower($lab['status']) ?>')" class="btn btn-sm btn-primary border-0 rounded-pill d-flex align-items-center gap-1 transition-all hover-scale" style="padding: 3px 9px; background-color: #ffa502 !important; color: #000; font-size: 0.58rem; font-weight: 700; line-height: 1; text-transform: none !important;" title="Code">
@@ -848,7 +895,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                              <!-- Row 2: Right-aligned Buttons -->
                                                              <div class="d-flex justify-content-end w-100">
                                                                  <div class="d-flex gap-2 align-items-center">
-                                                                     <a href="/labs/dashboard/essentials" class="btn btn-sm btn-success rounded-pill d-flex align-items-center gap-1 transition-all hover-scale" style="padding: 3px 9px; background-color: #2ed573 !important; border: 0; color: #000; font-size: 0.58rem; font-weight: 700; line-height: 1; text-transform: none !important;" title="Dashboard">
+                                                                     <a href="/labs/dashboard/2dfa0d10c8ee99549594d584e85c92d3" class="btn btn-sm btn-success rounded-pill d-flex align-items-center gap-1 transition-all hover-scale" style="padding: 3px 9px; background-color: #2ed573 !important; border: 0; color: #000; font-size: 0.58rem; font-weight: 700; line-height: 1; text-transform: none !important;" title="Dashboard">
                                                                          <i class='bx bx-grid-alt' style="font-size: 0.72rem;"></i> Dashboard
                                                                      </a>
                                                                      <button onclick="openCodeModal('2dfa0d10c8ee99549594d584e85c92d3', 'Essentials Lab', 'running')" class="btn btn-sm btn-primary border-0 rounded-pill d-flex align-items-center gap-1 transition-all hover-scale" style="padding: 3px 9px; background-color: #ffa502 !important; color: #000; font-size: 0.58rem; font-weight: 700; line-height: 1; text-transform: none !important;" title="Code">
@@ -869,21 +916,63 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                 </div>
 
                                 <!-- Challenge Labs Card -->
-                                <div class="col-12 col-md-4 ps-md-3">
+                                <div class="col-12 col-md-5 ps-md-1">
                                     <div class="card h-100 border-0 glass-card">
-                                        <div class="card-body p-3 d-flex flex-column justify-content-between" style="min-height: 220px;">
-                                            <div class="d-flex justify-content-between align-items-center">
+                                        <div class="card-body p-3 d-flex flex-column" style="min-height: 220px;">
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
                                                 <h6 class="fw-bold mb-0 d-flex align-items-center text-white" style="font-size: 0.95rem;">
                                                     Challenge Labs 
                                                     <span class="badge bg-danger rounded-pill px-2 py-0.5 ms-2 uppercase fw-bold" style="font-size: 0.55rem; letter-spacing: 0.5px;">live</span> 
                                                 </h6>
                                             </div>
-                                            <div class="text-center text-white text-opacity-35 py-4 small flex-grow-1 d-flex justify-content-center align-items-center" style="font-size: 0.78rem;">
-                                                No Challenge Labs Running
+                                            <div class="d-flex flex-column gap-2 flex-grow-1" style="max-height: 280px; overflow-y: auto; padding-right: 4px;">
+                                                <?php if (!empty($challengeLabsList)): ?>
+                                                    <?php foreach ($challengeLabsList as $clab): ?>
+                                                        <div class="p-2 mb-3 border transition-all hover-scale flex-shrink-0 active-lab-item-card d-flex align-items-center justify-content-between" style="backdrop-filter: blur(6px); border-radius: 50px; background: rgba(255, 255, 255, 0.05); padding-right: 8px !important;">
+                                                            
+                                                            <!-- Left: Image and Info -->
+                                                            <div class="d-flex align-items-center gap-2" style="min-width: 0;">
+                                                                <!-- Avatar/Image -->
+                                                                <div class="rounded-circle overflow-hidden flex-shrink-0" style="width: 34px; height: 34px; border: 2px solid rgba(255,255,255,0.1);">
+                                                                    <img src="/assets/Background_Img/challenges/shadow.png" alt="Challenge" class="w-100 h-100 object-fit-cover" onerror="this.src='/assets/Background_Img/challenges/mystery.png';">
+                                                                </div>
+                                                                
+                                                                <!-- Info -->
+                                                                <div class="d-flex flex-column justify-content-center" style="min-width: 0;">
+                                                                    <span class="text-white fw-bold" style="font-size: 0.72rem; letter-spacing: -0.15px; line-height: 1.15; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" title="<?= htmlspecialchars($clab['name']) ?>"><?= htmlspecialchars($clab['name']) ?></span>
+                                                                    <div class="d-flex gap-1 align-items-center mt-1">
+                                                                        <span class="badge rounded-pill text-white fw-bold" style="font-size: 0.5rem; padding: 2px 6px; background-color: #2ed573 !important; color: #fff !important; line-height: 1; text-transform: lowercase !important; letter-spacing: 0.3px;"><?= htmlspecialchars(strtolower($clab['difficulty'])) ?></span>
+                                                                        <span class="badge rounded-pill text-white fw-bold" style="font-size: 0.5rem; padding: 2px 6px; background-color: #2ed573 !important; color: #fff !important; line-height: 1; text-transform: lowercase !important; letter-spacing: 0.3px;"><?= htmlspecialchars(strtolower($clab['status'])) ?></span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            <!-- Right: Buttons -->
+                                                            <div class="d-flex gap-1 align-items-center flex-shrink-0 ms-1">
+                                                                <!-- Dashboard Button (Green) -->
+                                                                <a href="/challenges/dashboard/<?= $clab['hash'] ?>" class="btn rounded-circle d-flex align-items-center justify-content-center transition-all hover-scale border-0" style="width: 30px; height: 30px; background-color: #2ed573 !important; color: #1e272e; padding: 0;" title="Dashboard">
+                                                                    <i class='bx bxs-grid-alt' style="font-size: 1.1rem;"></i>
+                                                                </a>
+                                                                <!-- Challenge Button (Purple) -->
+                                                                <a href="/challenges/challenges/<?= $clab['hash'] ?>" class="btn rounded-circle d-flex align-items-center justify-content-center transition-all hover-scale border-0" style="width: 30px; height: 30px; background-color: #a55eea !important; color: #fff; padding: 0;" title="Challenge">
+                                                                    <i class='bx bx-target-lock' style="font-size: 1.1rem;"></i>
+                                                                </a>
+                                                                <!-- Leaderboard Button (Blue) -->
+                                                                <a href="/challenges/leaderboard/<?= $clab['hash'] ?>" class="btn rounded-circle d-flex align-items-center justify-content-center transition-all hover-scale border-0" style="width: 30px; height: 30px; background-color: #0abde3 !important; color: #1e272e; padding: 0;" title="Leaderboard">
+                                                                    <i class='bx bxs-trophy' style="font-size: 1.1rem;"></i>
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    <?php endforeach; ?>
+                                                <?php else: ?>
+                                                    <div class="text-center text-white text-opacity-35 py-4 small flex-grow-1 d-flex justify-content-center align-items-center" style="font-size: 0.78rem;">
+                                                        No Challenge Labs Running
+                                                    </div>
+                                                    <button class="btn btn-sm rounded-pill fw-bold py-1.5 border border-purple border-opacity-30 text-purple hover-bg-purple transition-all align-self-center mt-auto" style="font-size: 0.72rem; color: #a55eea; border-color: rgba(165, 94, 234, 0.3) !important; background: rgba(165, 94, 234, 0.05); width: 100%; letter-spacing: 0.3px;">
+                                                        Deploy a Challenge Lab
+                                                    </button>
+                                                <?php endif; ?>
                                             </div>
-                                            <button class="btn btn-sm rounded-pill fw-bold py-1.5 border border-purple border-opacity-30 text-purple hover-bg-purple transition-all align-self-center" style="font-size: 0.72rem; color: #a55eea; border-color: rgba(165, 94, 234, 0.3) !important; background: rgba(165, 94, 234, 0.05); width: 100%; letter-spacing: 0.3px;">
-                                                Deploy a Challenge Lab
-                                            </button>
                                         </div>
                                     </div>
                                 </div>

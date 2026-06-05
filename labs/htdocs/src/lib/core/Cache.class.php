@@ -23,7 +23,7 @@ class Cache {
             chown($cacheDir, 'www-data'); 
         }
 
-        $tmpDir = "/tmp/labs";
+        $tmpDir = rtrim($cacheDir, '/') . "/.tmp";
         if (!is_dir($tmpDir)) { mkdir($tmpDir, 0775, true); }
 
         $tmp = "$tmpDir/$key." . md5(uniqid('', true)) . ".tmp";

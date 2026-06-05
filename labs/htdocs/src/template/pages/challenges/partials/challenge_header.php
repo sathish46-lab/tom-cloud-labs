@@ -83,10 +83,17 @@ $initS = str_pad($timeLeft % 60, 2, "0", STR_PAD_LEFT);
                             <span class="badge bg-warning-gradient border border-white border-opacity-10 rounded-pill px-2 py-1"><?= htmlspecialchars($eventName) ?></span>
                         <?php endif; ?>
                         <?php foreach (($tags ?? []) as $tag): 
-                            $tagColors = ['bg-primary', 'bg-success', 'bg-info', 'bg-warning text-dark', 'bg-danger', 'bg-indigo', 'bg-teal'];
-                            $colorClass = $tagColors[abs(crc32($tag)) % count($tagColors)];
+                            if (is_array($tag)) {
+                                $tagText = $tag['text'] ?? '';
+                                $colorClass = $tag['class'] ?? 'bg-primary';
+                            } else {
+                                $tagText = $tag;
+                                $tagColors = ['bg-primary', 'bg-success', 'bg-info', 'bg-warning text-dark', 'bg-danger', 'bg-indigo', 'bg-teal'];
+                                $colorClass = $tagColors[abs(crc32($tagText)) % count($tagColors)];
+                            }
+                            if (empty($tagText)) continue;
                         ?>
-                            <span class="badge <?= $colorClass ?> bg-opacity-75 border border-white border-opacity-10 rounded-pill px-2 py-1 shadow-sm"><?= htmlspecialchars(strtoupper($tag)) ?></span>
+                            <span class="badge <?= $colorClass ?> bg-opacity-75 border border-white border-opacity-10 rounded-pill px-2 py-1 shadow-sm"><?= htmlspecialchars(strtoupper($tagText)) ?></span>
                         <?php endforeach; ?>
                     </div>
                 </div>

@@ -80,12 +80,15 @@ if (preg_match('/^[a-f0-9]{32}$/', $segment)) {
 
 $durationMinutes = 15; // default
 $challengePoints = 2232; // default
+$jsonMeta = [];
+
 // Prevent unauthorized manual URL navigation to locked/unreleased challenges
 $jsonPath = __DIR__ . '/../../src/config/challenges.json';
 if (file_exists($jsonPath)) {
     $challengesList = json_decode(file_get_contents($jsonPath), true) ?? [];
     foreach ($challengesList as $cItem) {
         if ($cItem['lab_id'] === $labId) {
+            $jsonMeta = $cItem;
             $challengePoints = isset($cItem['points']) ? (int)$cItem['points'] : 2232;
             
             // Determine default duration based on difficulty tags
@@ -143,17 +146,25 @@ $isRunning = ($status === 'running' || $status === 'completed');
 // ── Metadata Resolution ───────────────────────────────────────────
 $challengeMeta = $db->challenges->findOne(['lab_id' => $labId]) ?? [];
 
+// Load extra task metadata from challenge_tasks.json if exists
+$challengeTasksMeta = [];
+$tasksJsonPath = __DIR__ . '/../../src/config/challenge_tasks.json';
+if (file_exists($tasksJsonPath)) {
+    $tasksConfig = json_decode(file_get_contents($tasksJsonPath), true) ?? [];
+    $challengeTasksMeta = $tasksConfig[$labId][0] ?? [];
+}
+
 // Store in Session for template access
 Session::set('challenge_instance_hash', $instanceHash);
 Session::set('challenge_lab_id',        $labId);
 Session::set('challenge_status',        $status);
 Session::set('challenge_duration',      $durationMinutes);
-Session::set('challenge_title',         $challengeMeta['title']        ?? ucwords(str_replace('-', ' ', $labId)));
-Session::set('challenge_desc',          $challengeMeta['description']  ?? 'Engage in real-world hacking scenarios and penetration testing.');
-Session::set('challenge_image',         $challengeMeta['image_url']    ?? '/assets/img/challenges/shadow.png');
+Session::set('challenge_title',         $challengeMeta['title']        ?? $jsonMeta['name'] ?? $challengeTasksMeta['title'] ?? ucwords(str_replace('-', ' ', $labId)));
+Session::set('challenge_desc',          $challengeMeta['description']  ?? $challengeTasksMeta['description'] ?? 'Engage in real-world hacking scenarios and penetration testing.');
+Session::set('challenge_image',         $challengeMeta['image_url']    ?? $jsonMeta['image'] ?? '/assets/img/challenges/shadow.png');
 Session::set('challenge_max_zeal',      $challengePoints);
-Session::set('challenge_tags',          $challengeMeta['tags']         ?? ['team', 'beta', 'not running']);
-Session::set('challenge_event_name',    $challengeMeta['event_name']   ?? 'Yukthi Finale');
+Session::set('challenge_tags',          $challengeMeta['tags']         ?? $jsonMeta['tags'] ?? ['team', 'beta', 'not running']);
+Session::set('challenge_event_name',    $challengeMeta['event_name']   ?? $jsonMeta['ribbon_text2'] ?? 'Yukthi Finale');
 Session::set('challenge_is_ended',      (bool)($challengeMeta['is_ended']   ?? true));
 Session::set('challenge_is_retired',    (bool)($challengeMeta['is_retired']  ?? false));
 Session::set('challenge_total_tasks',   (int)($challengeMeta['total_tasks']  ?? 1));
