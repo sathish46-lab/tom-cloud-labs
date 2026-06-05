@@ -338,7 +338,8 @@ class Lab:
             # Sanitize inputs
             if custom_n8n and (custom_n8n == 'default_n8n' or 'default' in custom_n8n):
                 custom_n8n = None
-            selected_n8n_domain = custom_n8n if custom_n8n else f"n8n-{instance_id}.tomweb.shop"
+            base_domain = os.environ.get('CODE_DOMAIN', 'tomweb.fun')
+            selected_n8n_domain = custom_n8n if custom_n8n else f"n8n-{instance_id}.{base_domain}"
 
         # Pass email to linkuser.sh (8th argument)
         user_profile = self.db.users.find_one({"username": username})
@@ -361,7 +362,8 @@ class Lab:
         db_domain = lab_data.get('code_domain')
         self.log(f"DEBUG: Found domain in DB: {db_domain}", "info")
         
-        selected_code_domain = self.args.getFlagValue('vsc_domain') or db_domain or f"{instance_id}.tomweb.shop"
+        base_domain = os.environ.get('CODE_DOMAIN', 'tomweb.fun')
+        selected_code_domain = self.args.getFlagValue('vsc_domain') or db_domain or f"{instance_id}.{base_domain}"
         code_server_url = f"https://{selected_code_domain}"
 
         # Calculate MinIO Domains early for DB storage
@@ -376,8 +378,8 @@ class Lab:
         if custom_api and (custom_api == 'default_api' or 'default' in custom_api):
             custom_api = None
 
-        s3_ui_domain = custom_console if custom_console else f"s3-{instance_id}.tomweb.shop"
-        s3_api_domain = custom_api if custom_api else f"api-{instance_id}.tomweb.shop"
+        s3_ui_domain = custom_console if custom_console else f"s3-{instance_id}.{base_domain}"
+        s3_api_domain = custom_api if custom_api else f"api-{instance_id}.{base_domain}"
         
         credentials = {
             "ssh": f"ssh {username}@{tunnel_ip}",
