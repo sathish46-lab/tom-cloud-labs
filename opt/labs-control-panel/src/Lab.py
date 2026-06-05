@@ -440,7 +440,7 @@ class Lab:
         traefik_config += f"""    router-{instance_id}-code:
       rule: "Host(`{selected_code_domain}`)"
       service: service-{instance_id}-code
-      entryPoints: [websecure]
+      entryPoints: [web, websecure]
       middlewares: [code-headers@file]
       tls: {{certResolver: myresolver}}
 """
@@ -450,13 +450,13 @@ class Lab:
             traefik_config += f"""    router-{instance_id}-s3-ui:
       rule: "Host(`{s3_ui_domain}`)"
       service: service-{instance_id}-s3-ui
-      entryPoints: [websecure]
+      entryPoints: [web, websecure]
       tls: {{certResolver: myresolver}}
 """
             traefik_config += f"""    router-{instance_id}-s3-api:
       rule: "Host(`{s3_api_domain}`)"
       service: service-{instance_id}-s3-api
-      entryPoints: [websecure]
+      entryPoints: [web, websecure]
       tls: {{certResolver: myresolver}}
 """
 
@@ -468,14 +468,14 @@ class Lab:
                 traefik_config += f"""    router-{instance_id}-custom-{idx}:
       rule: "Host(`{domain}`)"
       service: service-{instance_id}-web
-      entryPoints: [websecure]
+      entryPoints: [web, websecure]
       tls: {{certResolver: myresolver}}\n"""
       
         if template_name == 'n8n':
             traefik_config += f"""    router-{instance_id}-n8n:
       rule: "Host(`{selected_n8n_domain}`)"
       service: service-{instance_id}-n8n
-      entryPoints: [websecure]
+      entryPoints: [web, websecure]
       tls: {{certResolver: myresolver}}
 """
 
