@@ -33,7 +33,8 @@ deploy_to_docker_lab:
     - rsync -av --delete --exclude 'vendor' --exclude 'node_modules' vpn-api/ /Users/sathish/Downloads/Docker_lab/vpn-api/
     
     # 3. Sync the 'opt' folder (Labs Control Panel & Orchestrators)
-    - rsync -av --delete opt/ /Users/sathish/Downloads/Docker_lab/opt/
+    # We exclude 'labs-control-panel/config.json' so rsync doesn't delete the production config
+    - rsync -av --delete --exclude 'labs-control-panel/config.json' opt/ /Users/sathish/Downloads/Docker_lab/opt/
     
     # 4. Sync the 'session.json' configuration
     - cp session.json /Users/sathish/Downloads/Docker_lab/session.json
