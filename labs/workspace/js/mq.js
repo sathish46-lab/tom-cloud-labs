@@ -52,7 +52,8 @@ const TomSocketClient = function () {
       }
       
       const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
-      const wsUrl = `${wsProtocol}://${mqDomain}/ws`;
+      const port = window.location.port ? ":" + window.location.port : "";
+      const wsUrl = `${wsProtocol}://${mqDomain}${port}/ws`;
       
       console.log(`[MQ] Connecting to WebSocket: ${wsUrl}`);
       const ws = new WebSocket(wsUrl);
