@@ -117,6 +117,8 @@ fi
 
 if [ ! -d "$HTCONFIG" ]; then
     mkdir -p "$HTCONFIG"
+    # Update DocumentRoot before copying
+    sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www|g' /etc/apache2/sites-available/000-default.conf 2>/dev/null || true
     # Move current active configs to persistent storage to "save" them
     cp /etc/apache2/sites-available/*.conf "$HTCONFIG/"
 fi
@@ -145,6 +147,9 @@ ln -sfn "$HTCONFIG" /etc/apache2/sites-available
 chown -R "$USER_NAME:$USER_NAME" "$HTDOCS" "$HTCONFIG"
 chmod -R 755 "$HTDOCS"
 chmod -R 755 "$HTCONFIG"
+
+# Reload Apache to apply any config changes
+service apache2 reload || true
 
 # 5. Code-Server Setup
 echo "[*] Setting up Code-Server..."
