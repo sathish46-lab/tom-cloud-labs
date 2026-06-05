@@ -4195,7 +4195,33 @@ const TomSocketClient = function () {
    */
   this.connect = function (exchange, callback, ui = null) {
     try {
-      const ws = new WebSocket("wss://mq.awshosting.in/ws");
+      // Dynamically resolve MQS domain based on the current hostname
+      const currentHost = window.location.hostname;
+      let mqDomain = "mq.awshosting.in"; // Default fallback
+      
+      if (currentHost.includes("dev.awshosting.in")) {
+        mqDomain = "mq.dev.awshosting.in";
+      } else if (currentHost === "localhost" || currentHost === "127.0.0.1") {
+        // When running locally on localhost, the Stomp port is usually 15674
+        mqDomain = "localhost:15674"; 
+      } else if (currentHost.includes("awshosting.in")) {
+        mqDomain = "mq.awshosting.in";
+      } else {
+        // Generic fallback: swap the first subdomain with 'mq'
+        const parts = currentHost.split('.');
+        if (parts.length > 2) {
+          parts[0] = 'mq';
+          mqDomain = parts.join('.');
+        } else {
+          mqDomain = 'mq.' + currentHost;
+        }
+      }
+      
+      const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+      const wsUrl = `${wsProtocol}://${mqDomain}/ws`;
+      
+      console.log(`[MQ] Connecting to WebSocket: ${wsUrl}`);
+      const ws = new WebSocket(wsUrl);
       this.client = Stomp.over(ws);
       this.client.debug = null; // Set to console.log for debugging
 
