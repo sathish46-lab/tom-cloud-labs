@@ -442,7 +442,6 @@ class Lab:
       service: service-{instance_id}-code
       entryPoints: [web, websecure]
       middlewares: [code-headers@file]
-      tls: {{certResolver: myresolver}}
 """
         # B. MinIO UI Router (Only if template is minio)
         if template_name == 'minio':
@@ -451,13 +450,11 @@ class Lab:
       rule: "Host(`{s3_ui_domain}`)"
       service: service-{instance_id}-s3-ui
       entryPoints: [web, websecure]
-      tls: {{certResolver: myresolver}}
 """
             traefik_config += f"""    router-{instance_id}-s3-api:
       rule: "Host(`{s3_api_domain}`)"
       service: service-{instance_id}-s3-api
       entryPoints: [web, websecure]
-      tls: {{certResolver: myresolver}}
 """
 
         # C. SERVICES SECTION
@@ -468,15 +465,13 @@ class Lab:
                 traefik_config += f"""    router-{instance_id}-custom-{idx}:
       rule: "Host(`{domain}`)"
       service: service-{instance_id}-web
-      entryPoints: [web, websecure]
-      tls: {{certResolver: myresolver}}\n"""
+      entryPoints: [web, websecure]\n"""
       
         if template_name == 'n8n':
             traefik_config += f"""    router-{instance_id}-n8n:
       rule: "Host(`{selected_n8n_domain}`)"
       service: service-{instance_id}-n8n
       entryPoints: [web, websecure]
-      tls: {{certResolver: myresolver}}
 """
 
         traefik_config += "\n  services:\n"
