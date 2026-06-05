@@ -207,7 +207,7 @@ if ($hour >= 0 && $hour < 5) {
 } else {
     // Night (9 PM - 12 AM)
     $quotes = [
-        "One more push, {$username}! You're almost there.",
+        "One more pus, {$username}! You're almost there.",
         "Winding down or leveling up? Either way, you're a legend, {$username}!",
         "Under the stars, code shines the brightest, {$username}!",
         "Refining your craft under the night sky, {$username}. Keep going!",
