@@ -92,4 +92,4 @@ scratch/
 traefik-conf/
 wireguard-conf/
 # opt/
-work/
+work/opt/labs-control-panel/config.json
