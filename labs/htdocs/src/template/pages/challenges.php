@@ -12,8 +12,52 @@ $challenges = [];
 if (file_exists($jsonPath)) {
     $challenges = json_decode(file_get_contents($jsonPath), true) ?? [];
 }
+$total = count($challenges);
+
+// Fetch actual running challenge labs from database
+$db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
+$username = $user->getUsername();
+
+// Fetch running challenges to correctly label "Running" vs "Instance Down"
+$runningInstancesCursor = $db->challenge_instances->find(['username' => $username, 'status' => 'running']);
+$runningInstances = [];
+$runningHashes = [];
+foreach ($runningInstancesCursor as $ri) {
+    // The database saves "flask_server_side_injection", so we normalize it to match "flask-server-side-injection" from the config
+    $key = str_replace('_', '-', $ri['challenge_id']);
+    $runningInstances[] = $key;
+    $runningHashes[$key] = $ri['instance_hash'] ?? 'N/A';
+}
+
+// Fetch ALL challenge instances for this user to get max completed tasks
+$allInstancesCursor = $db->challenge_instances->find(['username' => $username]);
+$challengeProgress = [];
+foreach ($allInstancesCursor as $instance) {
+    $key = str_replace('_', '-', $instance['challenge_id'] ?? '');
+    if (!$key) continue;
+    $completed = $instance['challenges_completed'] ?? 0;
+    if (!isset($challengeProgress[$key]) || $completed > $challengeProgress[$key]) {
+        $challengeProgress[$key] = $completed;
+    }
+}
+
+// Pre-load tasks data for progress calculation
+$tasksData = [];
+$tasksJsonPath = __DIR__ . '/../../config/challenge_tasks.json';
+if (file_exists($tasksJsonPath)) {
+    $tasksData = json_decode(file_get_contents($tasksJsonPath), true) ?? [];
+}
+
+$running = count($runningInstances);
+$percent = $total > 0 ? ($running / $total) * 100 : 0;
 ?>
 
+<?php if (isset($_GET['ajax'])) {
+    while (ob_get_level()) ob_end_clean();
+} ?>
+<script>window.savedChallengeFilters = <?= json_encode($_SESSION['challenge_filters'] ?? []) ?>;</script>
+
+<?php if (!isset($_GET['ajax'])): ?>
 <div class="lab-header-section mb-4 px-4">
     <div class="row align-items-start">
         <div class="col">
@@ -24,27 +68,6 @@ if (file_exists($jsonPath)) {
         </div>
         <div class="col-auto">
             <div class="d-flex flex-column align-items-center justify-content-center text-center" style="min-width: 140px;">
-                <?php 
-                    $total = count($challenges);
-                    
-                    // Fetch actual running challenge labs from database
-                    $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
-                    $username = $user->getUsername();
-                    
-                    // Fetch running challenges to correctly label "Running" vs "Instance Down"
-                    $runningInstancesCursor = $db->challenge_instances->find(['username' => $username, 'status' => 'running']);
-                    $runningInstances = [];
-                    $runningHashes = [];
-                    foreach ($runningInstancesCursor as $ri) {
-                        // The database saves "flask_server_side_injection", so we normalize it to match "flask-server-side-injection" from the config
-                        $key = str_replace('_', '-', $ri['challenge_id']);
-                        $runningInstances[] = $key;
-                        $runningHashes[$key] = $ri['instance_hash'] ?? 'N/A';
-                    }
-                    
-                    $running = count($runningInstances);
-                    $percent = $total > 0 ? ($running / $total) * 100 : 0;
-                ?>
                 <div class="d-flex align-items-center justify-content-center mb-1">
                     <span class="fw-bold theme-text" style="font-size: 2.2rem; line-height: 1;"><?= $running ?></span>
                     <span class="text-secondary opacity-50 ms-2" style="font-size: 1.1rem; font-weight: 500; margin-top: 8px;">/ <?= $total ?></span>
@@ -52,22 +75,116 @@ if (file_exists($jsonPath)) {
                 <div class="progress bg-secondary bg-opacity-10 rounded-pill mb-2 w-100" style="height: 6px; max-width: 120px;">
                     <div class="progress-bar bg-success rounded-pill" role="progressbar" style="width: <?= $percent ?>%" aria-valuenow="<?= $percent ?>" aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
-                <div class="text-secondary opacity-50 text-uppercase fw-bold ls-1" style="font-size: 9px; letter-spacing: 0.8px;">Running Labs</div>
+                <div class="text-secondary opacity-50 text-uppercase fw-bold ls-1 mb-2" style="font-size: 9px; letter-spacing: 0.8px;">Running Labs</div>
+                <button class="btn w-100 rounded-3 d-flex align-items-center justify-content-center gap-2 transition-all mt-1" 
+                        data-coreui-toggle="modal" 
+                        data-coreui-target="#badgeExplanationModal"
+                        style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); padding: 6px 10px; color: rgba(255, 255, 255, 0.8);"
+                        onmouseover="this.style.background='rgba(255, 255, 255, 0.1)'; this.style.color='#fff';"
+                        onmouseout="this.style.background='rgba(255, 255, 255, 0.05)'; this.style.color='rgba(255, 255, 255, 0.8)';">
+                    <i class='bx bx-info-circle text-info' style="font-size: 1.05rem;"></i>
+                    <span class="fw-bold" style="font-size: 0.75rem; letter-spacing: 0.2px;">Badge Guide</span>
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-<div class="d-flex justify-content-center mb-4">
-    <div class="search-container position-relative" style="width: 100%; max-width: 400px;">
-        <input type="text" class="form-control rounded-pill px-5 text-center py-2 bg-dark bg-opacity-50 border-white border-opacity-10 text-white" placeholder="Search Challenges...">
-        <i class='bx bx-search position-absolute top-50 start-0 translate-middle-y ms-3 text-white-50'></i>
+<div class="d-flex justify-content-center mb-4 position-relative z-3">
+    <!-- The expandable search wrapper -->
+    <div id="expandableSearchContainer" class="dropdown position-relative">
+        
+        <!-- Floating Clear / Close Badge (Hidden initially) -->
+        <button id="searchCloseBtn" type="button" class="btn p-0 d-none align-items-center justify-content-center rounded-circle border-0 text-white shadow-sm position-absolute">
+            <i class='bx bx-x'></i>
+        </button>
+
+        <!-- The visual search bar -->
+        <div id="searchBarUI" class="d-flex align-items-center rounded-pill w-100">
+            <div class="ps-3 pe-2 text-white-50 d-flex align-items-center justify-content-center">
+                <i class='bx bx-search fs-5 text-white'></i>
+            </div>
+            
+            <input type="text" id="challengeSearchInput" class="form-control bg-transparent border-0 text-white shadow-none p-0 h-100" placeholder="Search" style="display: none;">
+            <span id="searchLabel" class="text-white fw-bold w-100">Search</span>
+            
+            <!-- Filter Button (Hidden initially) -->
+            <button id="filterToggleBtn" class="btn btn-link text-decoration-none border-0 p-0 pe-3 ps-2 d-none align-items-center justify-content-center h-100 shadow-none ms-auto" type="button" data-coreui-toggle="dropdown" aria-expanded="false" data-coreui-auto-close="outside">
+                <i class='bx bx-list-ul' style="color: #ff9f43; font-size: 1.5rem;"></i>
+            </button>
+            
+            <!-- Filter Dropdown Menu -->
+            <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 custom-search-dropdown p-0 mt-2" style="background-color: #1e1e1e; width: 220px;">
+                <div class="p-4" style="max-height: 400px; overflow-y: auto;">
+                    
+                    <h6>Plan</h6>
+                    <div class="form-check form-switch custom-switch-dark mb-2">
+                        <input class="form-check-input" type="checkbox" id="filterPremium">
+                        <label class="form-check-label text-white small" for="filterPremium">Premium</label>
+                    </div>
+                    <div class="form-check form-switch custom-switch-dark mb-3">
+                        <input class="form-check-input" type="checkbox" id="filterFree">
+                        <label class="form-check-label text-white small" for="filterFree">Free</label>
+                    </div>
+
+                    <h6>Filter</h6>
+                    <div class="form-check form-switch custom-switch-dark mb-2">
+                        <input class="form-check-input" type="checkbox" id="filterTeam">
+                        <label class="form-check-label text-white small" for="filterTeam">Team</label>
+                    </div>
+                    <div class="form-check form-switch custom-switch-dark mb-2">
+                        <input class="form-check-input" type="checkbox" id="filterEvent">
+                        <label class="form-check-label text-white small" for="filterEvent">Event</label>
+                    </div>
+                    <div class="form-check form-switch custom-switch-dark mb-2">
+                        <input class="form-check-input" type="checkbox" id="filterSolo">
+                        <label class="form-check-label text-white small" for="filterSolo">Solo</label>
+                    </div>
+                    <div class="form-check form-switch custom-switch-dark mb-3">
+                        <input class="form-check-input" type="checkbox" id="filterRetired">
+                        <label class="form-check-label text-white small" for="filterRetired">Retired</label>
+                    </div>
+
+                    <h6>Sort</h6>
+                    <div class="form-check form-switch custom-switch-dark mb-2">
+                        <input class="form-check-input" type="checkbox" id="sortNew">
+                        <label class="form-check-label text-white small" for="sortNew">New</label>
+                    </div>
+                    <div class="form-check form-switch custom-switch-dark mb-2">
+                        <input class="form-check-input" type="checkbox" id="sortPartial">
+                        <label class="form-check-label text-white small" for="sortPartial">Partial</label>
+                    </div>
+                    <div class="form-check form-switch custom-switch-dark mb-3">
+                        <input class="form-check-input" type="checkbox" id="sortCompleted">
+                        <label class="form-check-label text-white small" for="sortCompleted">Completed</label>
+                    </div>
+
+                    <h6>Level</h6>
+                    <div class="form-check form-switch custom-switch-dark mb-2">
+                        <input class="form-check-input" type="checkbox" id="levelEasy">
+                        <label class="form-check-label text-white small" for="levelEasy">Easy</label>
+                    </div>
+                    <div class="form-check form-switch custom-switch-dark mb-2">
+                        <input class="form-check-input" type="checkbox" id="levelMedium">
+                        <label class="form-check-label text-white small" for="levelMedium">Medium</label>
+                    </div>
+                    <div class="form-check form-switch custom-switch-dark mb-2">
+                        <input class="form-check-input" type="checkbox" id="levelHard">
+                        <label class="form-check-label text-white small" for="levelHard">Hard</label>
+                    </div>
+
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
+<?php endif; ?>
+
+
 <div class="container-fluid px-0">
-    <div class="row g-3 pb-5">
-        <?php foreach ($challenges as $c): ?>
+    <div id="challengesGrid" class="row g-3 pb-5 position-relative">
+        <?php $cardIndex = 0; foreach ($challenges as $c): ?>
         <?php
             // STEP 1: Visibility - If 'card' parameter is false, hide the card completely
             $isVisible = isset($c['card']) ? (bool)$c['card'] : true;
@@ -89,9 +206,40 @@ if (file_exists($jsonPath)) {
             // Fully unlocked / deployable only if the release time has passed AND challenge flag is enabled
             $isUnlocked = ($isReleased && $isChallengeActive);
 
+            $labId = $c['lab_id'];
+            $normalizedId = str_replace('_', '-', $labId);
+            $completedTasks = $challengeProgress[$normalizedId] ?? 0;
+            
+            // Get total tasks for this challenge from DB or JSON
+            $tasksCursor = $db->challenge_tasks->find(['lab_id' => $labId]);
+            $totalTasksForLab = count($tasksCursor ? $tasksCursor->toArray() : []);
+            if ($totalTasksForLab === 0) {
+                $totalTasksForLab = count($tasksData[$labId] ?? $tasksData[$normalizedId] ?? []);
+            }
+            if ($totalTasksForLab === 0) {
+                $totalTasksForLab = 1; // Default to 1 to avoid division by zero
+            }
+
+            $isCompleted = ($completedTasks >= $totalTasksForLab && $totalTasksForLab > 0);
+            $isPartial = ($completedTasks > 0 && $completedTasks < $totalTasksForLab);
+
             // Compute ribbon styles dynamically
-            $ribbonText1 = $c['ribbon_text1'] ?? ($isUnlocked ? 'Active' : (!$isReleased ? 'Upcoming' : 'Not Active'));
-            $ribbonClass = $c['ribbon_class'] ?? ($isUnlocked ? 'event-ended-ribbon' : 'event-retired-ribbon');
+            if ($isUnlocked) {
+                if ($isCompleted) {
+                    $ribbonText1 = $c['ribbon_text1'] ?? 'FINISHED';
+                    $ribbonClass = 'live-ribbon'; // Green
+                } else if ($isPartial) {
+                    $ribbonText1 = $c['ribbon_text1'] ?? 'PARTIAL';
+                    $ribbonClass = 'event-retired-ribbon'; // Orange
+                } else {
+                    $ribbonText1 = $c['ribbon_text1'] ?? 'ACTIVE';
+                    $ribbonClass = $c['ribbon_class'] ?? 'event-ended-ribbon'; // Red
+                }
+            } else {
+                $ribbonText1 = $c['ribbon_text1'] ?? (!$isReleased ? 'Upcoming' : 'Not Active');
+                $ribbonClass = $c['ribbon_class'] ?? 'event-retired-ribbon';
+            }
+            
             $ribbonText2 = $c['ribbon_text2'] ?? 'Yukthi';
             
             // Grayscale layout if locked
@@ -101,8 +249,64 @@ if (file_exists($jsonPath)) {
             $instanceHash = $isRunning ? ($runningHashes[$c['lab_id']] ?? 'N/A') : 'Not Running';
             $statusText = $isUnlocked ? ($isRunning ? 'Running' : 'Instance Down') : (!$isReleased ? 'Coming Soon' : 'Not Active');
             $statusColorClass = $isRunning ? 'text-success' : 'text-white-50';
+
+            $cardTitle = strtolower(htmlspecialchars($c['name'] ?? ''));
+            $cardTagsArray = array_map(function($t){ return strtolower($t['text']); }, $c['tags'] ?? []);
+            $cardTags = htmlspecialchars(implode(' ', $cardTagsArray));
+            $cardStatus = $isCompleted ? 'completed' : ($isPartial ? 'partial' : 'new');
+            $cardPlan = (isset($c['points']) && $c['points'] > 0) ? 'premium' : 'free';
+            $cardIsRetired = $isUnlocked ? 'false' : 'true';
+
+            // Server-Side Filtering Logic
+            $sessFilters = $_SESSION['challenge_filters'] ?? [];
+            $qSearch = strtolower(trim($sessFilters['q'] ?? ''));
+            $fPlans = !empty($sessFilters['plan']) ? explode(',', $sessFilters['plan']) : [];
+            $fFilters = !empty($sessFilters['filter']) ? explode(',', $sessFilters['filter']) : [];
+            $fSorts = !empty($sessFilters['sort']) ? explode(',', $sessFilters['sort']) : [];
+            $fLevels = !empty($sessFilters['level']) ? explode(',', $sessFilters['level']) : [];
+
+
+            $showCard = true;
+            
+            if ($qSearch !== '') {
+                if (strpos($cardTitle, $qSearch) === false && strpos($cardTags, $qSearch) === false) {
+                    $showCard = false;
+                }
+            }
+            if ($showCard && !empty($fPlans) && !in_array($cardPlan, $fPlans)) {
+                $showCard = false;
+            }
+            if ($showCard && !empty($fFilters)) {
+                $filterMatch = false;
+                foreach ($fFilters as $ff) {
+                    if ($ff === 'retired' && $cardIsRetired === 'true') $filterMatch = true;
+                    if (strpos($cardTags, $ff) !== false) $filterMatch = true;
+                }
+                if (!$filterMatch) $showCard = false;
+            }
+            if ($showCard && !empty($fSorts) && !in_array($cardStatus, $fSorts)) {
+                $showCard = false;
+            }
+            if ($showCard && !empty($fLevels)) {
+                $levelMatch = false;
+                foreach ($fLevels as $fl) {
+                    if (strpos($cardTags, $fl) !== false) $levelMatch = true;
+                }
+                if (!$levelMatch) $showCard = false;
+            }
+
+            if (!$showCard) continue;
+            
+            $delay = $cardIndex * 0.1; // 100ms stagger between cards
+            $cardIndex++;
         ?>
-        <div class="col-12 col-md-6 col-xl-4">
+        <div class="col-12 col-md-6 col-xl-4 challenge-card-wrapper card-assemble"
+             style="animation-delay: <?= $delay ?>s;"
+             data-title="<?= $cardTitle ?>"
+             data-tags="<?= $cardTags ?>"
+             data-status="<?= $cardStatus ?>"
+             data-plan="<?= $cardPlan ?>"
+             data-is-retired="<?= $cardIsRetired ?>">
             <div class="card lab-card blur mb-2 shadow-sm <?= $cardLockedClass ?>">
                 <!-- Ribbon (3D Folded Layout) -->
                 <span class="<?= $ribbonClass ?> shadow-lg">
@@ -200,31 +404,61 @@ if (file_exists($jsonPath)) {
     </div>
 </div>
 
-<style>
-.shadow-text {
-    text-shadow: 0 2px 10px rgba(0,0,0,1);
-}
-.fused-btn-group {
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-.fused-btn-group .btn {
-    flex: 1;
-    border-radius: 0 !important;
-    transition: all 0.2s ease;
-}
-.fused-btn-group .btn:hover {
-    filter: brightness(1.2);
-}
-.pointer {
-    cursor: pointer;
-}
-.grayscale-locked img {
-    filter: grayscale(1) opacity(0.5) blur(1px);
-    transition: all 0.3s ease;
-}
-.grayscale-locked:hover img {
-    filter: grayscale(0.85) opacity(0.6) blur(0.5px);
-}
-</style>
+<?php if (isset($_GET['ajax'])) exit; ?>
+
+<!-- Badge Explanation Modal -->
+<div class="modal fade" id="badgeExplanationModal" tabindex="-1" aria-labelledby="badgeExplanationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg" style="background: rgba(18, 18, 18, 0.95); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.08) !important;">
+            <div class="modal-header border-0 pt-4 px-4 pb-0 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold m-0 text-white" id="badgeExplanationModalLabel">Challenge Progress Badges</h5>
+                <button type="button" class="btn-close btn-close-white" data-coreui-dismiss="modal" aria-label="Close" style="filter: var(--cui-btn-close-white-filter, none);"></button>
+            </div>
+            <div class="modal-body px-4 py-4">
+                <p class="text-white-50 small mb-4">
+                    As you progress through your journey, the colored badges on each Challenge Lab card will automatically update to reflect your current completion status.
+                </p>
+                
+                <div class="d-flex flex-column gap-3">
+                    <!-- Active Badge -->
+                    <div class="d-flex align-items-center gap-3 p-3 rounded-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05);">
+                        <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width: 80px;">
+                            <span class="badge rounded-pill text-white shadow-sm" style="background: #ff5252; padding: 6px 12px; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.5px;">ACTIVE</span>
+                        </div>
+                        <div>
+                            <h6 class="text-white fw-bold mb-1" style="font-size: 0.95rem;">Active / Unstarted</h6>
+                            <p class="text-white-50 small mb-0" style="font-size: 0.8rem; line-height: 1.4;">The challenge is unlocked and ready for you to dive in, but you haven't completed any of its tasks yet.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Partial Badge -->
+                    <div class="d-flex align-items-center gap-3 p-3 rounded-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05);">
+                        <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width: 80px;">
+                            <span class="badge rounded-pill text-white shadow-sm" style="background: #ff9f43; padding: 6px 12px; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.5px;">PARTIAL</span>
+                        </div>
+                        <div>
+                            <h6 class="text-white fw-bold mb-1" style="font-size: 0.95rem;">Partially Completed</h6>
+                            <p class="text-white-50 small mb-0" style="font-size: 0.8rem; line-height: 1.4;">You have successfully conquered some of the tasks inside this challenge, but there are still more objectives remaining.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Finished Badge -->
+                    <div class="d-flex align-items-center gap-3 p-3 rounded-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05);">
+                        <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width: 80px;">
+                            <span class="badge rounded-pill text-white shadow-sm" style="background: #00d084; padding: 6px 12px; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.5px;">FINISHED</span>
+                        </div>
+                        <div>
+                            <h6 class="text-white fw-bold mb-1" style="font-size: 0.95rem;">Fully Mastered</h6>
+                            <p class="text-white-50 small mb-0" style="font-size: 0.8rem; line-height: 1.4;">Incredible work! You have found all the flags and completed every task within this challenge.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                <button type="button" class="btn rounded-pill px-4 py-2 fw-bold text-white w-100" data-coreui-dismiss="modal" style="background: rgba(255, 255, 255, 0.1); border: none; font-size: 0.85rem; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">Got it, thanks!</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 

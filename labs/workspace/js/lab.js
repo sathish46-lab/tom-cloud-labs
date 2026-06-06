@@ -806,14 +806,14 @@ async function executeStop() {
  * Launch Code-Server IDE
  * @param {Event} event
  */
-async function launchCodeIDE(event) {
+async function launchCodeIDE(event, targetUrl = null) {
   // 1. Determine Target URL & Mode
   // If we are in MinIO mode, the button might be different?
   // Actually MinIO launch is separate in the modal. 
   // This function is for the main "Code" or "Launch" button on dashboard.
 
   const type = window.LAB_TYPE || 'essentials';
-  let url = window.CODE_SERVER_URL;
+  let url = targetUrl || window.CODE_SERVER_URL;
   let actionName = "Code-Server";
   let ensureAction = "ensure-codeserver";
 
@@ -823,7 +823,7 @@ async function launchCodeIDE(event) {
     // But we can still "ensure" the container is running if we want.
     // However currently MinIO doesn't have an "idle timeout" feature planned yet.
     // So we just open the URL.
-    if (window.LAB_CONFIG && window.LAB_CONFIG.fields) {
+    if (!targetUrl && window.LAB_CONFIG && window.LAB_CONFIG.fields) {
       const consoleField = window.LAB_CONFIG.fields.find(f => f.label === 'MinIO Console Endpoint');
       if (consoleField) url = consoleField.value;
     }
@@ -1425,3 +1425,190 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
+// --- Challenge Labs Search & Filter Logic ---
+function initChallengeSearch() {
+    const searchContainer = document.getElementById('expandableSearchContainer');
+    const searchInput = document.getElementById('challengeSearchInput');
+    
+    // Only execute on pages that have the challenge search UI
+    if (!searchContainer || !searchInput) return;
+
+    const searchBarUI = document.getElementById('searchBarUI');
+    const searchLabel = document.getElementById('searchLabel');
+    const filterBtn = document.getElementById('filterToggleBtn');
+    const closeBtn = document.getElementById('searchCloseBtn');
+    const gridContainer = document.getElementById('challengesGrid');
+    
+    // Parse saved filters from PHP session object on load
+    const savedFilters = window.savedChallengeFilters || {};
+    if(savedFilters['q']) {
+        searchInput.value = savedFilters['q'];
+    }
+    const setChecks = (paramName, ids) => {
+        if(savedFilters[paramName]) {
+            const valStr = String(savedFilters[paramName]);
+            const vals = valStr.split(',');
+            vals.forEach(val => {
+                const map = ids[val];
+                if(map && document.getElementById(map)) document.getElementById(map).checked = true;
+            });
+        }
+    };
+    setChecks('plan', { 'premium': 'filterPremium', 'free': 'filterFree' });
+    setChecks('filter', { 'team': 'filterTeam', 'event': 'filterEvent', 'solo': 'filterSolo', 'retired': 'filterRetired' });
+    setChecks('sort', { 'new': 'sortNew', 'partial': 'sortPartial', 'completed': 'sortCompleted' });
+    setChecks('level', { 'easy': 'levelEasy', 'medium': 'levelMedium', 'hard': 'levelHard' });
+
+    // Check if there's any active filter or search text
+    const hasSearchQuery = savedFilters['q'] && savedFilters['q'].trim() !== '';
+    const hasAnyFilter = Object.keys(savedFilters).some(k => ['q','plan','filter','sort','level'].includes(k));
+    
+    // Always show floating close button if any filter/search is active
+    if (hasAnyFilter && closeBtn) {
+        closeBtn.classList.remove('d-none');
+        closeBtn.classList.add('d-flex');
+    }
+
+    // Expand search if there's a text query
+    if (hasSearchQuery && searchContainer) {
+        searchContainer.classList.add('expanded');
+        searchLabel.style.display = 'none';
+        searchInput.style.display = 'block';
+        filterBtn.classList.remove('d-none');
+        filterBtn.classList.add('d-flex');
+        searchBarUI.style.cursor = 'text';
+    }
+
+    if(searchBarUI) {
+        searchBarUI.addEventListener('click', function(e) {
+            if (e.target.closest('#filterToggleBtn') || e.target.closest('#searchCloseBtn') || e.target.closest('.dropdown-menu')) {
+                return;
+            }
+            if (!searchContainer.classList.contains('expanded')) {
+                searchContainer.classList.add('expanded');
+                searchLabel.style.display = 'none';
+                searchInput.style.display = 'block';
+                filterBtn.classList.remove('d-none');
+                filterBtn.classList.add('d-flex');
+                searchBarUI.style.cursor = 'text';
+                searchInput.focus();
+            } else {
+                // If it is already expanded, clicking anywhere on the bar should focus the input
+                searchInput.focus();
+            }
+        });
+    }
+
+    // Collapse ONLY if input is empty. Close badge stays if filters are active.
+    document.addEventListener('click', function(e) {
+        if (!searchContainer) return;
+        if (!searchContainer.contains(e.target) && searchInput.value.trim() === '') {
+            searchContainer.classList.remove('expanded');
+            searchLabel.style.display = 'block';
+            searchInput.style.display = 'none';
+            filterBtn.classList.add('d-none');
+            filterBtn.classList.remove('d-flex');
+            searchBarUI.style.cursor = 'pointer';
+        }
+    });
+
+    // Close Button logic: clears everything
+    if(closeBtn) {
+        closeBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            searchInput.value = '';
+            document.querySelectorAll('.custom-search-dropdown .form-check-input').forEach(cb => cb.checked = false);
+            
+            searchContainer.classList.remove('expanded');
+            searchLabel.style.display = 'block';
+            searchInput.style.display = 'none';
+            filterBtn.classList.add('d-none');
+            filterBtn.classList.remove('d-flex');
+            closeBtn.classList.add('d-none');
+            closeBtn.classList.remove('d-flex');
+            searchBarUI.style.cursor = 'pointer';
+            
+            triggerAjaxFetch();
+        });
+    }
+
+    // Fetch update logic
+    let debounceTimer;
+    const triggerAjaxFetch = () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            const currentParams = new URLSearchParams(window.location.search);
+            
+            // Collect new params
+            const q = searchInput.value.trim();
+            const getChecked = (ids) => Object.entries(ids).filter(([val, id]) => document.getElementById(id).checked).map(([val, id]) => val);
+            
+            const plans = getChecked({'premium': 'filterPremium', 'free': 'filterFree'});
+            const filters = getChecked({'team': 'filterTeam', 'event': 'filterEvent', 'solo': 'filterSolo', 'retired': 'filterRetired'});
+            const sorts = getChecked({'new': 'sortNew', 'partial': 'sortPartial', 'completed': 'sortCompleted'});
+            const levels = getChecked({'easy': 'levelEasy', 'medium': 'levelMedium', 'hard': 'levelHard'});
+            
+            if(q) currentParams.set('q', q); else currentParams.delete('q');
+            if(plans.length) currentParams.set('plan', plans.join(',')); else currentParams.delete('plan');
+            if(filters.length) currentParams.set('filter', filters.join(',')); else currentParams.delete('filter');
+            if(sorts.length) currentParams.set('sort', sorts.join(',')); else currentParams.delete('sort');
+            if(levels.length) currentParams.set('level', levels.join(',')); else currentParams.delete('level');
+            
+            const newUrl = window.location.pathname + '?';
+            // URL history.pushState is deliberately omitted so the URL in the address bar never changes.
+
+            // Dynamically show/hide close button based on new params
+            if (currentParams.toString() !== '' && closeBtn) {
+                closeBtn.classList.remove('d-none');
+                closeBtn.classList.add('d-flex');
+            } else if (closeBtn) {
+                closeBtn.classList.add('d-none');
+                closeBtn.classList.remove('d-flex');
+            }
+
+            // Fetch URL with ajax flag to get only partial HTML
+            const fetchUrl = newUrl + (currentParams.toString() ? currentParams.toString() + '&ajax=1' : 'ajax=1');
+
+            // Show loader
+            if(gridContainer) {
+                gridContainer.style.opacity = '0.4';
+                gridContainer.style.pointerEvents = 'none';
+            }
+
+            fetch(fetchUrl)
+                .then(res => res.text())
+                .then(html => {
+                    const doc = new DOMParser().parseFromString(html, 'text/html');
+                    const newGrid = doc.getElementById('challengesGrid');
+                    if(gridContainer && newGrid) {
+                        gridContainer.innerHTML = newGrid.innerHTML;
+                        gridContainer.style.opacity = '1';
+                        gridContainer.style.pointerEvents = 'auto';
+                    }
+                })
+                .catch(err => {
+                    console.error('Fetch error:', err);
+                    if(gridContainer) {
+                        gridContainer.style.opacity = '1';
+                        gridContainer.style.pointerEvents = 'auto';
+                    }
+                });
+        }, 400); // 400ms debounce
+    };
+
+    // Attach listeners
+    if (searchInput) {
+        searchInput.addEventListener('input', triggerAjaxFetch);
+    }
+    const checkboxes = document.querySelectorAll('.custom-search-dropdown .form-check-input');
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', triggerAjaxFetch);
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initChallengeSearch);
+} else {
+    initChallengeSearch();
+}

@@ -72,11 +72,14 @@ class LabTemplateConfig {
 
             case 'essentials':
             default:
+                $codeServerUrl = $creds['code_server_url'] ?? "https://{$labData['instance_hash']}.tomweb.shop";
                 $fields = [
                     ['label' => 'Device IP', 'value' => $tunnelIp, 'type' => 'text', 'copy' => true],
                     ['label' => 'SSH Command', 'value' => $sshCommand, 'type' => 'text', 'copy' => true, 'mono' => true],
                     ['label' => 'Username', 'value' => $currentUser, 'type' => 'text', 'copy' => true],
-                    ['label' => 'su Password', 'value' => $password, 'type' => 'password', 'copy' => true]
+                    ['label' => 'su Password', 'value' => $password, 'type' => 'password', 'copy' => true],
+                    ['label' => 'Code-Server URL', 'value' => $codeServerUrl, 'type' => 'text', 'copy' => true],
+                    ['label' => 'Code-Server Password', 'value' => $password, 'type' => 'password', 'copy' => true],
                 ];
                 break;
         }

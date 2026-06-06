@@ -73,19 +73,35 @@
                 <?php 
                     // Extract specific MinIO fields from the config for the modal
                     $minioFields = [];
-                    $minioConsoleUrl = '#'; // Default
                     
                     if(isset($labConfig['fields'])) {
                         foreach($labConfig['fields'] as $f) {
                             if($f['label'] === 'MinIO Access Key' || $f['label'] === 'Minio Secret Key') {
                                 $minioFields[] = $f;
                             }
-                            // The label in LabTemplateConfig is "MinIO Console Endpoint"
-                            if($f['label'] === 'MinIO Console Endpoint') {
-                                $minioConsoleUrl = $f['value'];
-                            }
                         }
                     }
+
+                    // Helper to clean domains
+                    if (!function_exists('cleanDomain')) {
+                        function cleanDomain($url) {
+                            $d = str_replace(['https://', 'http://'], '', $url);
+                            return rtrim($d, '/');
+                        }
+                    }
+
+                    $creds = $labData['credentials'] ?? [];
+                    $hash = $labData['instance_hash'] ?? $fullHash;
+
+                    // 1. Define SYSTEM DEFAULTS
+                    $sysConsole = "s3-{$hash}.tomweb.shop";
+                    $sysApi = "api-{$hash}.tomweb.shop";
+
+                    // 2. Determine CURRENT CONFIGURATION
+                    $currConsole = cleanDomain($creds['minio_url_console'] ?? $sysConsole);
+                    $currApi = cleanDomain($creds['minio_url_api'] ?? $sysApi);
+                    
+                    $correctMinioConsoleUrl = "https://" . $currConsole;
                 ?>
 
                 <div class="d-flex flex-column gap-3 mb-4">
@@ -109,11 +125,12 @@
                 </div>
             </div>
             <div class="modal-footer border-0 pb-4 px-4 gap-2">
-                <a href="<?= htmlspecialchars($minioConsoleUrl ?? '#') ?>" target="_blank" 
-                   class="btn btn-primary rounded-pill px-4 fw-bold text-dark d-flex align-items-center gap-2"
-                   style="background-color: #00a6e0 !important; border: none;">
+                <button type="button" 
+                        class="btn btn-primary rounded-pill px-4 fw-bold text-dark d-flex align-items-center gap-2"
+                        style="background-color: #00a6e0 !important; border: none;"
+                        onclick="launchCodeIDE(event, '<?= htmlspecialchars($correctMinioConsoleUrl) ?>')">
                     <i class='bx bx-window-open'></i> Open Console
-                </a>
+                </button>
                 <button type="button" class="btn btn-secondary rounded-pill px-4" data-coreui-dismiss="modal">Close</button>
             </div>
         </div>
@@ -192,24 +209,7 @@
                     <p class="small fw-bold text-info mb-3"><i class='bx bx-server me-1'></i> MinIO Configuration</p>
                     
                     <?php
-                        // Helper to clean domains
-                        if (!function_exists('cleanDomain')) {
-                            function cleanDomain($url) {
-                                $d = str_replace(['https://', 'http://'], '', $url);
-                                return rtrim($d, '/');
-                            }
-                        }
-
-                        $creds = $labData['credentials'] ?? [];
-                        $hash = $labData['instance_hash'] ?? $fullHash;
-
-                        // 1. Define SYSTEM DEFAULTS
-                        $sysConsole = "s3-{$hash}.tomweb.shop";
-                        $sysApi = "api-{$hash}.tomweb.shop";
-
-                        // 2. Determine CURRENT CONFIGURATION
-                        $currConsole = cleanDomain($creds['minio_url_console'] ?? $sysConsole);
-                        $currApi = cleanDomain($creds['minio_url_api'] ?? $sysApi);
+                        // Logic moved to the top of the modal file
                     ?>
 
                     <div class="row mb-3 align-items-center">
