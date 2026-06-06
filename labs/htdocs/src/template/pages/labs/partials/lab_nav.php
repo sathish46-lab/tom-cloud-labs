@@ -23,12 +23,12 @@ $tabs = [
 ?>
 
 <div class="row m-0 p-0">
-    <ul class="nav nav-tabs labs-banner-tabs">
+    <ul class="nav nav-tabs">
         <?php foreach($tabs as $key => $tab): 
             $isActive = (strpos($currentUri, $tab['matcher']) !== false);
         ?>
         <li class="nav-item">
-            <a class="nav-link labs-banner-tab <?= $isActive ? 'active' : '' ?>" 
+            <a class="nav-link <?= $isActive ? 'active' : '' ?>" 
                href="<?= $tab['url'] ?>">
                 <?= $tab['label'] ?>
             </a>
