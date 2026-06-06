@@ -86,7 +86,18 @@ public function getUser() {
 
             $isSecure = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || 
                         (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
-            setcookie('username', $username, [
+            
+            // GENERATE SECURE SESSION TOKEN
+            $sessionToken = bin2hex(random_bytes(32));
+            
+            // STORE TOKEN IN DATABASE (Supports multi-device login)
+            $instance->usersCollection->updateOne(
+                ['email' => $email],
+                ['$push' => ['session_tokens' => $sessionToken]]
+            );
+
+            // SET THE NEW SECURE TOKEN COOKIE
+            setcookie('session_token', $sessionToken, [
                 'expires'  => time() + $lifetime,
                 'path'     => '/',
                 'domain'   => $domain, 
@@ -110,20 +121,40 @@ public function getUser() {
 
         $_SESSION = [];
 
-        // Clear all cookies with matching domain
-        $cookieOptions = [
-            'expires' => time() - 3600,
-            'path' => '/',
-            'domain' => $domain,
-            'secure' => (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ||
-                        (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https'),
-            'httponly' => true,
-            'samesite' => 'Lax'
-        ];
+        // FORCE DELETE TOKEN FROM DATABASE IF PRESENT
+        $sessionToken = $_COOKIE['session_token'] ?? null;
+        if ($sessionToken) {
+            try {
+                $instance = new self();
+                $instance->usersCollection->updateOne(
+                    ['session_tokens' => $sessionToken],
+                    ['$pull' => ['session_tokens' => $sessionToken]]
+                );
+            } catch (Exception $e) {
+                error_log("Logout Token Clear Error: " . $e->getMessage());
+            }
+        }
 
-        setcookie('username', '', $cookieOptions);
-        setcookie('sessionHash', '', $cookieOptions);
-        setcookie('sessionID', '', $cookieOptions);
+        // DYNAMIC COOKIE SWEEPER (Obliterates old broken cookies)
+        $past = time() - 3600;
+        $domainsToClear = [$domain, '', $_SERVER['HTTP_HOST'] ?? ''];
+        $isSecure = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ||
+                    (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+
+        foreach ($domainsToClear as $d) {
+            $cookieOptions = [
+                'expires' => $past,
+                'path' => '/',
+                'domain' => $d,
+                'secure' => $isSecure,
+                'httponly' => true,
+                'samesite' => 'Lax'
+            ];
+            setcookie('username', '', $cookieOptions);
+            setcookie('session_token', '', $cookieOptions);
+            setcookie('sessionHash', '', $cookieOptions);
+            setcookie('sessionID', '', $cookieOptions);
+        }
         
         if (session_status() === PHP_SESSION_ACTIVE) {
             session_destroy();

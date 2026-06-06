@@ -39,15 +39,33 @@ class WebAPI {
     }
     $_SESSION['last_activity'] = time();
 
-    // Prioritize active PHP Session, fallback to persistent Cookie
-    $username = $_SESSION['username'] ?? $_COOKIE['username'] ?? null;
+    // Prioritize active PHP Session
+    $username = $_SESSION['username'] ?? null;
+    $sessionToken = $_COOKIE['session_token'] ?? null;
 
     if ($username) {
+        // Already active in current session
         Session::$userSession = new UserSession($username);
         if (Session::getUser() !== null) {
             Session::$authStatus = \Constants::STATUS_LOGGEDIN;
         } else {
             UserSession::logout(); 
+        }
+    } elseif ($sessionToken) {
+        // Attempt Token Auto-Login
+        $db = DatabaseConnection::getDefaultDatabase();
+        $user = $db->users->findOne(['session_tokens' => $sessionToken]);
+        
+        if ($user && isset($user['username'])) {
+            // Token is valid, rebuild session
+            $_SESSION['username'] = $user['username'];
+            $_SESSION['auth_status'] = \Constants::STATUS_LOGGEDIN;
+            
+            Session::$userSession = new UserSession($user['username']);
+            Session::$authStatus = \Constants::STATUS_LOGGEDIN;
+        } else {
+            // Token is invalid or revoked, forcefully log out
+            UserSession::logout();
         }
     } else {
         Session::$authStatus = \Constants::STATUS_DEFAULT;
