@@ -680,8 +680,8 @@ class Lab:
         config_file = f"{user_home}/.config/code-server/config.yaml"
         log_file = f"{user_home}/.code-server.log"
         
-        # Command to run as user inside container
-        start_cmd = f"nohup code-server --config {config_file} > {log_file} 2>&1 &"
+        # Command to run as user inside container (optimized for speed)
+        start_cmd = f"nohup code-server --disable-telemetry --disable-update-check --config {config_file} > {log_file} 2>&1 &"
         
         # Wrap in docker exec as user
         docker_cmd = f"docker exec -u {username} {lab_name} bash -c '{start_cmd}'"
