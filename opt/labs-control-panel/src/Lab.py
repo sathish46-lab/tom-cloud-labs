@@ -441,7 +441,7 @@ class Lab:
       rule: "Host(`{selected_code_domain}`)"
       service: service-{instance_id}-code
       entryPoints: [web, websecure]
-      middlewares: [code-headers@file]
+      middlewares: [code-headers@file, compress-responses@file]
 """
         # B. MinIO UI Router (Only if template is minio)
         if template_name == 'minio':
