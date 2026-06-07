@@ -1,6 +1,6 @@
 {
-    "lifetime_local": 30,
-    "lifetime_production": 30,
+    "lifetime_local": 8400,
+    "lifetime_production": 86400,
     "domain_local": "dev.awshosting.in",
     "domain_production": "awshosting.in"
 }
