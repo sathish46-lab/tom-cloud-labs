@@ -190,8 +190,8 @@ const Dashboard = {
       tension: 0.4,
       limit: 30,
       datasets: [
-        { label: 'Download', borderColor: "#8b91f9", data: new Array(30).fill(0), borderWidth: 2, pointRadius: 0, tension: 0.4 },
-        { label: 'Upload', borderColor: "#50c7f6", data: new Array(30).fill(0), borderWidth: 2, pointRadius: 0, tension: 0.4 }
+        { label: 'Download', borderColor: "#8b91f9", data: [], borderWidth: 2, pointRadius: 0, tension: 0.4 },
+        { label: 'Upload', borderColor: "#50c7f6", data: [], borderWidth: 2, pointRadius: 0, tension: 0.4 }
       ]
     });
 
@@ -200,8 +200,8 @@ const Dashboard = {
       tension: 0.4,
       limit: 30,
       datasets: [
-        { label: 'Read', borderColor: "#f2b90d", data: new Array(30).fill(0), borderWidth: 2, pointRadius: 0, tension: 0.4 },
-        { label: 'Write', borderColor: "#55b16e", data: new Array(30).fill(0), borderWidth: 2, pointRadius: 0, tension: 0.4 }
+        { label: 'Read', borderColor: "#f2b90d", data: [], borderWidth: 2, pointRadius: 0, tension: 0.4 },
+        { label: 'Write', borderColor: "#55b16e", data: [], borderWidth: 2, pointRadius: 0, tension: 0.4 }
       ]
     });
 
@@ -498,7 +498,9 @@ const Dashboard = {
 
     // Reset charts
     Object.values(this.charts).forEach((chart) => {
-      chart.data.datasets[0].data = new Array(this.historyLimit).fill(null);
+      chart.data.datasets.forEach((dataset) => {
+        dataset.data = new Array(this.historyLimit).fill(null);
+      });
       chart.update();
     });
   },

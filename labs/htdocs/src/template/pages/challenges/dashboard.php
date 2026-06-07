@@ -274,7 +274,11 @@ include __DIR__ . '/partials/challenge_header.php';
             <!-- IO Stats Card -->
             <div class="card mt-4 border-0 shadow-sm blur rounded-4" style="background:rgba(255,255,255,0.03);">
                 <div class="card-header bg-transparent border-0 pt-4 px-4">
-                    <h6 class="fw-bold mb-0">IO Stats <span class="text-secondary ms-1 fw-normal" style="font-size: 0.75rem;">Net and Block</span></h6>
+                    <h6 class="fw-bold mb-0">IO Stats <span class="text-secondary ms-1 fw-normal" style="font-size: 0.75rem;">Net and Block</span>
+                    <?php if (!$isRunning): ?>
+                        <span class="badge bg-secondary rounded-pill ms-2" style="font-size: 0.6rem;">Offline</span>
+                    <?php endif; ?>
+                    </h6>
                 </div>
                 <div class="card-body px-4 pb-4 pt-2">
                     <div class="row g-2">
