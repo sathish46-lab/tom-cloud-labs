@@ -5,6 +5,8 @@ require_once 'src/load.php';
 
 // 2. Set Page Metadata
 Session::$pageTitle = "Tom Labs | Automated Lab Environments";
+Session::set('seo_description', 'Tom Labs is an advanced virtual innovation hub created by Sathish, offering automated cloud environments, VPS, and VPN for developers.');
+Session::set('seo_keywords', 'Automated Lab Environments, Tom Labs, Virtual Lab System, Cloud IDE, Sathish');
 define('IS_LANDING_PAGE', true);
 Session::addCustomCss('/css/landing.css');
 

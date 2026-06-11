@@ -44,6 +44,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email'], $_POST['pass
 
 define('IS_LOGIN_PAGE', true);
 Session::$pageTitle = "Register";
+Session::set('seo_description', 'Create a free Tom Labs account to start deploying your own automated lab environments today.');
+Session::set('seo_keywords', 'Register, Sign Up, Tom Labs, Create Account');
 ob_start();
 ?>
 
@@ -148,7 +150,7 @@ ob_start();
 
                             <a href="<?= $google_url ?>" 
                                class="btn btn-outline-secondary btn-lg w-100 d-flex align-items-center justify-content-center fw-semibold">
-                                <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="18" class="me-2">
+                                <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="18" class="me-2" alt="Google Logo">
                                 Google
                             </a>
                         <?php endif; ?>

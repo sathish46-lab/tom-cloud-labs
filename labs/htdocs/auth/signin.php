@@ -37,6 +37,8 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
 $google_url = $google->getAuthUrl($metadata);
 define('IS_LOGIN_PAGE', true);
 Session::$pageTitle = "Sign In";
+Session::set('seo_description', 'Sign in to Tom Labs to access your isolated environments and deploy scalable database services.');
+Session::set('seo_keywords', 'Sign In, Tom Labs Login, Virtual Labs, Secure Access');
 ob_start();
 ?>
 
@@ -58,7 +60,7 @@ ob_start();
                 <div class="card shadow-lg border-0 rounded-4 p-4">
                     <div class="card-body">
                         <div class="text-center mb-4 d-lg-none">
-                            <img src="/assets/logo/logo.png" width="50" class="mb-3">
+                            <img src="/assets/logo/logo.png" width="50" class="mb-3" alt="Tom Labs Logo">
                         </div>
                         
                         <h3 class="fw-bold mb-4 text-body">Sign in</h3>
@@ -184,7 +186,7 @@ ob_start();
                         </div>
 
                         <a href="<?= $google_url ?>" class="btn btn-outline-secondary btn-lg w-100 d-flex align-items-center justify-content-center fw-semibold">
-                            <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="18" class="me-2">
+                            <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="18" class="me-2" alt="Google Logo">
                             Google
                         </a>
 

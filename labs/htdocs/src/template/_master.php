@@ -16,7 +16,7 @@ define('PAGE_START_TIME', microtime(true));
     $seoTitle = Session::$pageTitle ?? 'Tom Labs - Advanced Development Environment';
     $seoDesc = Session::get('seo_description', 'Experience the ultimate cloud development environment. Tom Labs provides a highly secure, fast, and feature-rich development workspace, VPS, and VPN tailored for professionals.');
     $seoKeywords = Session::get('seo_keywords', 'Advanced Development Environment, Cloud IDE, VPS Hosting, Secure VPN, Docker Labs, Tom Labs, Coding Workspace');
-    $seoAuthor = Session::get('seo_author', 'Tom Labs');
+    $seoAuthor = Session::get('seo_author', 'Sathish');
     $seoUrl = "https://" . ($_SERVER['HTTP_HOST'] ?? 'awshosting.in') . ($_SERVER['REQUEST_URI'] ?? '/');
     $seoImage = Session::get('seo_image', "https://" . ($_SERVER['HTTP_HOST'] ?? 'awshosting.in') . "/assets/images/og-image.jpg");
     ?>
@@ -24,6 +24,23 @@ define('PAGE_START_TIME', microtime(true));
     <meta name="keywords" content="<?= htmlspecialchars($seoKeywords) ?>">
     <meta name="author" content="<?= htmlspecialchars($seoAuthor) ?>">
     <link rel="canonical" href="<?= htmlspecialchars($seoUrl) ?>">
+
+    <!-- JSON-LD Structured Data for Google -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Tom Labs",
+      "operatingSystem": "Web, Windows, macOS, Linux",
+      "applicationCategory": "DeveloperApplication",
+      "creator": {
+        "@type": "Person",
+        "name": "Sathish"
+      },
+      "description": "<?= htmlspecialchars($seoDesc) ?>",
+      "url": "<?= htmlspecialchars($seoUrl) ?>"
+    }
+    </script>
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
