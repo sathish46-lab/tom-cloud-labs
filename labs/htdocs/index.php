@@ -26,7 +26,7 @@ ob_start();
 
 <header class="portfolio-header" style="border-radius: 20px; display: flex; align-items: center; width: 95%; max-width: 1400px;">
     <a href="/" class="header-logo" style="display: flex; align-items: center; gap: 12px; text-decoration: none; flex-shrink: 0;">
-        <img src="/assets/logo/favicon.png" width="44" height="44" alt="Tom Labs Icon" style="border-radius: 8px; object-fit: contain;">
+        <img src="/assets/logo/favicon.png?v=2.1" width="44" height="44" alt="Tom Labs Icon" style="border-radius: 8px; object-fit: contain;">
         <div style="display: flex; flex-direction: column; line-height: 1.1;">
             <span style="font-size: 1.2rem; font-weight: 800; color: white; text-transform: uppercase; letter-spacing: 0.5px;">Tom <span style="color: var(--primary-color);">Labs</span></span>
             <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 500;">Virtual Innovation Hub</span>

@@ -10,8 +10,8 @@ define('PAGE_START_TIME', microtime(true));
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
     <title><?= Session::$pageTitle ?></title>
-    <link rel="icon" type="image/png" href="/assets/logo/favicon.png">
-    <link rel="shortcut icon" type="image/png" href="/assets/logo/favicon.png">
+    <link rel="icon" type="image/png" href="/assets/logo/favicon.png?v=2.1">
+    <link rel="shortcut icon" type="image/png" href="/assets/logo/favicon.png?v=2.1">
 
     <!-- Professional SEO Meta Tags -->
     <?php
