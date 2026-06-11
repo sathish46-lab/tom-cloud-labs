@@ -10,51 +10,66 @@ Session::set('seo_keywords', 'Automated Lab Environments, Tom Labs, Virtual Lab 
 define('IS_LANDING_PAGE', true);
 Session::addCustomCss('/css/landing.css');
 
+// Initialize random quote for SEO rendering
+$heroQuotes = [
+    [ "p1" => "Innovate Fearlessly", "p2" => "Your Virtual Innovation Hub" ],
+    [ "p1" => "Code Without Limits", "p2" => "The Ultimate Cloud IDE" ],
+    [ "p1" => "Deploy in Seconds", "p2" => "Next-Gen Infrastructure" ],
+    [ "p1" => "Secure by Design", "p2" => "Isolated Lab Environments" ],
+    [ "p1" => "Master the Cloud", "p2" => "Your Technical Playground" ]
+];
+$initialQuote = $heroQuotes[array_rand($heroQuotes)];
+
 ob_start();
 ?>
 <body class="page-portfolio"> 
 
-<!-- <header class="portfolio-header">
-    <a href="/auth/signin.php" class="header-logo">
-        Tom Labs
+<header class="portfolio-header" style="border-radius: 20px; display: flex; align-items: center; width: 95%; max-width: 1400px;">
+    <a href="/" class="header-logo" style="display: flex; align-items: center; gap: 12px; text-decoration: none; flex-shrink: 0;">
+        <img src="/assets/logo/favicon.png" width="44" height="44" alt="Tom Labs Icon" style="border-radius: 8px; object-fit: contain;">
+        <div style="display: flex; flex-direction: column; line-height: 1.1;">
+            <span style="font-size: 1.2rem; font-weight: 800; color: white; text-transform: uppercase; letter-spacing: 0.5px;">Tom <span style="color: var(--primary-color);">Labs</span></span>
+            <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 500;">Virtual Innovation Hub</span>
+        </div>
     </a>
     
     <button class="nav-toggle-button" id="navToggle">
-        </button>
+        <i class='bx bx-menu'></i>
+    </button>
 
-    <div class="header-nav-container" id="navContainer">
-        <nav class="header-nav">
-            <a href="/" class="nav-link">Home</a>
-            <a href="#features" class="nav-link">About us</a>
-            <a href="https://blog.tomweb.fun/" class="nav-link">Blog</a>
+    <div class="header-nav-container" id="navContainer" style="flex: 1; display: flex; justify-content: center;">
+        <nav class="header-nav" style="display: flex; gap: 2.5rem; align-items: center;">
+            <a href="/" class="nav-link active" style="font-weight: 600;">Home</a>
+            <a href="#features" class="nav-link" style="font-weight: 600;">About us</a>
+            <a href="/dashboard" class="nav-link" style="font-weight: 600;">Lab Listing</a>
+            <a href="#contact" class="nav-link" style="font-weight: 600;">Contact us</a>
+            <a href="https://blog.tomweb.fun/" class="nav-link" style="font-weight: 600;">Blog</a>
         </nav>
-        </div> 
+    </div> 
     
-    <div class="header-right-actions">
+    <div class="header-right-actions" style="flex-shrink: 0;">
         <?php if (isset($_SESSION['user_id'])): 
-            // Logic to set avatar path (must be available here)
             $userAvatar = (!empty($_SESSION['user_avatar'])) ? htmlspecialchars($_SESSION['user_avatar']) : '/assets/avatars/default.png';
         ?>
-            <div class="user-profile logged-in-public" id="userProfileToggle">
-                
-                <div class="avatar-container">
-                    <img src="<?= $userAvatar; ?>" alt="User Avatar" class="avatar">
+            <div class="user-profile logged-in-public" id="userProfileToggle" style="cursor: pointer; position: relative;">
+                <div class="avatar-container" style="background: rgba(255, 255, 255, 0.08); border-radius: 999px; padding: 4px 12px 4px 4px; display: flex; align-items: center; gap: 8px; border: 1px solid rgba(255, 255, 255, 0.05); transition: background 0.3s;" onmouseover="this.style.background='rgba(255, 255, 255, 0.15)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.08)'">
+                    <img src="<?= $userAvatar; ?>" alt="User Avatar" class="avatar" style="width: 32px; height: 32px; border-radius: 50%; border: none; object-fit: cover;">
+                    <i class='bx bx-chevron-down' style="color: #cbd5e1; font-size: 1.2rem;"></i>
                 </div>
                 
                 <div class="profile-dropdown" id="profileDropdown">
-                    <div class="dropdown-header">
-                        <h4><?php echo htmlspecialchars($_SESSION['user_name'] ?? 'User'); ?></h4>
+                    <div class="dropdown-header" style="padding: 10px 15px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 5px;">
+                        <h4 style="margin: 0; font-size: 0.9rem; color: white; text-align: left;"><?php echo htmlspecialchars($_SESSION['user_name'] ?? 'User'); ?></h4>
                     </div>
-                    <ul class="dropdown-menu-list">
+                    <ul class="dropdown-menu-list" style="list-style: none; padding: 5px; margin: 0;">
                         <li>
-                            <a href="/dashboard">
+                            <a href="/dashboard" style="color: #cbd5e1; display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 6px; text-decoration: none; transition: all 0.2s;" onmouseover="this.style.color='#f97316'; this.style.background='rgba(255,255,255,0.05)';" onmouseout="this.style.color='#cbd5e1'; this.style.background='transparent';">
                                 <i class='bx bxs-dashboard'></i> 
                                 <span>Labs</span>
                             </a>
                         </li>
-                        
                         <li>
-                            <a href="/logout">
+                            <a href="/logout" style="color: #cbd5e1; display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 6px; text-decoration: none; transition: all 0.2s;" onmouseover="this.style.color='#ef4444'; this.style.background='rgba(255,255,255,0.05)';" onmouseout="this.style.color='#cbd5e1'; this.style.background='transparent';">
                                 <i class='bx bx-log-out'></i>
                                 <span>Logout</span>
                             </a>
@@ -64,14 +79,14 @@ ob_start();
             </div>
 
         <?php else: ?>
-            <a href="/auth/signin.php" class="login-button">
+            <a href="/auth/signin.php" class="login-button" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 999px; padding: 0.5rem 1.5rem; transition: all 0.3s; color: white; text-decoration: none; font-weight: 600;" onmouseover="this.style.background='rgba(255, 255, 255, 0.2)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.1)'">
                 Login
             </a>
         <?php endif; ?>
     </div>
-</header> -->
+</header>
 
-<header class="portfolio-header">
+<!-- <header class="portfolio-header">
     <a href="/" class="header-logo" style="gap: 12px;">
         <img src="/assets/logo/logo.png" width="44" height="44" alt="Tom Labs Icon" style="border-radius: 8px;">
         <span style="font-size: 1.5rem;">Tom Labs</span>
@@ -111,7 +126,7 @@ ob_start();
             
         <?php endif; ?>
     </div>
-</header>
+</header> -->
 
 
     <section class="hero-section-wrapper position-relative overflow-hidden">
@@ -123,20 +138,27 @@ ob_start();
             
         <div class="hero-container">
             <div class="hero-content-left">
-                <h1 class="hero-heading">
-                    Innovate Fearlessly - <span style="color:var(--primary-color);">Your Virtual Innovation Hub</span>
+                <h1 class="hero-heading" id="dynamic-hero-heading" style="transition: opacity 0.3s ease-in-out;">
+                    <span id="hero-part1"><?= htmlspecialchars($initialQuote['p1']) ?></span> - <span id="hero-part2" style="color:var(--primary-color);"><?= htmlspecialchars($initialQuote['p2']) ?></span>
                 </h1>
                 <p class="hero-lead">
                     ⭐ Empowering developers and innovators with a world-class digital lab experience.
                 </p>
-                <p class="hero-lead">
-                    Credit goes to:
-                    <span
-                        id="multi-link"
-                        style="color: Orange; cursor: pointer;">
-                        SELFMADE NINJA ACADEMY again over
-                    </span>
-                </p>
+                <div class="hero-credits-container" style="display: flex; flex-direction: column; gap: 12px; margin: 0.5rem 0 1.5rem 0;">
+                    <!-- Creator Badge -->
+                    <a href="https://sathish46.in" target="_blank" style="text-decoration: none; display: inline-flex; align-items: center; gap: 10px; background: rgba(56, 189, 248, 0.1); padding: 8px 20px; border-radius: 50px; border: 1px solid rgba(56, 189, 248, 0.2); width: fit-content; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(56, 189, 248, 0.2)'; this.style.transform='translateY(-2px)';" onmouseout="this.style.background='rgba(56, 189, 248, 0.1)'; this.style.transform='translateY(0)';">
+                        <i class='bx bx-code-alt' style="color: #38bdf8; font-size: 1.3rem;"></i>
+                        <span style="color: #cbd5e1; font-size: 0.95rem;">Engineered by</span>
+                        <span style="color: #38bdf8; font-weight: 700; font-family: 'Inter', 'Ubuntu', sans-serif; letter-spacing: 0.5px; font-size: 1.05rem;">Sathish</span>
+                    </a>
+
+                    <!-- Credit Badge -->
+                    <div id="multi-link" style="display: inline-flex; align-items: center; gap: 10px; background: rgba(245, 158, 11, 0.08); padding: 8px 20px; border-radius: 50px; border: 1px solid rgba(245, 158, 11, 0.2); width: fit-content; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(245, 158, 11, 0.18)'; this.style.transform='translateY(-2px)';" onmouseout="this.style.background='rgba(245, 158, 11, 0.08)'; this.style.transform='translateY(0)';">
+                        <i class='bx bxs-graduation' style="color: #facc15; font-size: 1.3rem;"></i>
+                        <span style="color: #cbd5e1; font-size: 0.95rem;">Credits to</span>
+                        <span style="color: #facc15; font-weight: 700; font-family: 'Inter', 'Ubuntu', sans-serif; letter-spacing: 0.5px; font-size: 1.05rem;">Selfmade Ninja Academy</span>
+                    </div>
+                </div>
                 <div class="hero-button-group">
                     <a href="/feature" class="btn btn-primary">
                         Learn More
@@ -669,6 +691,60 @@ ob_start();
     // Opens both sites in new tabs
     window.open("https://labs.selfmade.ninja/", "_blank");
     window.open("https://selfmade.ninja/", "_blank");
+  });
+
+  // --- DYNAMIC HERO QUOTES VIA API ---
+  const headingContainer = document.getElementById("dynamic-hero-heading");
+  const part1Element = document.getElementById("hero-part1");
+  const part2Element = document.getElementById("hero-part2");
+
+  if (headingContainer && part1Element && part2Element) {
+      // Fetch new quote every 2 seconds without exposing array in JS
+      setInterval(() => {
+          fetch('/api_quote.php')
+              .then(response => response.json())
+              .then(data => {
+                  // Fade out
+                  headingContainer.style.opacity = 0;
+                  
+                  setTimeout(() => {
+                      part1Element.textContent = data.p1;
+                      part2Element.textContent = data.p2;
+                      
+                      // Fade in
+                      headingContainer.style.opacity = 1;
+                  }, 300); // Wait for fade out to complete
+              })
+              .catch(err => console.error("Error fetching quote:", err));
+      }, 2000);
+  }
+
+  // --- SCROLL SPY FOR NAVIGATION ---
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.header-nav .nav-link');
+
+  window.addEventListener('scroll', () => {
+      let current = '';
+      const scrollY = window.pageYOffset;
+
+      sections.forEach(section => {
+          const sectionHeight = section.offsetHeight;
+          const sectionTop = section.offsetTop - 150; // offset for fixed header
+          if (scrollY > sectionTop && scrollY <= sectionTop + sectionHeight) {
+              current = section.getAttribute('id');
+          }
+      });
+
+      if (scrollY < 100) {
+          current = 'home'; // Default to home at very top
+      }
+
+      navLinks.forEach(link => {
+          link.classList.remove('active');
+          if (link.getAttribute('href') === '#' + current || (current === 'home' && link.getAttribute('href') === '/')) {
+              link.classList.add('active');
+          }
+      });
   });
 </script>
 <?php
