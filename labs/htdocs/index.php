@@ -1,11 +1,7 @@
 <?php
 require_once 'src/load.php';
 
-// 1. If already logged in, go straight to home
-if (Session::getAuthStatus() == Constants::STATUS_LOGGEDIN) {
-    header("Location: /home");
-    exit;
-}
+// Allow both logged-in and guest users to view the landing page.
 
 // 2. Set Page Metadata
 Session::$pageTitle = "Tom Labs | Automated Lab Environments";
@@ -74,7 +70,10 @@ ob_start();
 </header> -->
 
 <header class="portfolio-header">
-    <a href="/" class="header-logo">Tom Labs</a>
+    <a href="/" class="header-logo" style="gap: 12px;">
+        <img src="/assets/logo/logo.png" width="44" height="44" alt="Tom Labs Icon" style="border-radius: 8px;">
+        <span style="font-size: 1.5rem;">Tom Labs</span>
+    </a>
     
     <div class="header-nav-container">
         <nav class="header-nav">
@@ -91,12 +90,17 @@ ob_start();
             $userAvatar = $user ? $user->getAvatarUrl() : '/assets/avatars/default.png';
         ?>
             <div class="user-profile">
-                <div class="avatar-container">
-                    <img src="<?= $userAvatar ?>" alt="Profile" class="avatar">
+                <div class="avatar-container d-flex align-items-center" style="background: rgba(255, 255, 255, 0.1); border-radius: 999px; padding: 4px 12px 4px 4px; gap: 8px;">
+                    <img src="<?= $userAvatar ?>" alt="Profile" class="avatar" style="width: 32px; height: 32px; border: none;">
+                    <i class='bx bx-chevron-down text-white' style="font-size: 1.2rem; opacity: 0.8;"></i>
                 </div>
                 <div class="profile-dropdown">
-                    <a href="<?= Session::url('dashboard') ?>">Dashboard</a>
-                    <a href="<?= Session::url('logout') ?>">Logout</a>
+                    <div class="dropdown-header d-flex align-items-center justify-content-center" style="padding: 0 16px 8px 16px; margin-bottom: 4px;">
+                        <span class="fw-bold text-white" style="letter-spacing: 0.5px; font-size: 0.85rem;"><?= htmlspecialchars($user->getUserName()) ?></span>
+                    </div>
+                    <a href="<?= Session::url('dashboard') ?>"><i class='bx bx-tachometer'></i> Labs</a>
+                    <a href="#"><i class='bx bx-shield-alt-2'></i> My Account</a>
+                    <a href="<?= Session::url('logout') ?>"><i class='bx bx-log-in-circle' style="transform: scaleX(-1);"></i> Logout</a>
                 </div>
             </div>
 
@@ -108,7 +112,10 @@ ob_start();
 </header>
 
 
-    <section class="hero-section-wrapper">
+    <section class="hero-section-wrapper position-relative overflow-hidden">
+        <!-- Premium Ambient Background Orbs -->
+        <div class="scenery-orb-1"></div>
+        <div class="scenery-orb-2"></div>
         <div class="hero-bg"></div>
         
             
@@ -215,12 +222,12 @@ ob_start();
                         <img src="/assets/images/portfolio/lab.svg" alt="Code Arena Interface">
                     </div>
                     <h3 class="feature-card-title">Virtual Lab</h3>
-                    <p class="feature-description">The Virtual Cloud Lab is a secure, cloud-based development
+                    <p class="feature-description" style="opacity: 0.8;">The Virtual Cloud Lab is a secure, cloud-based development
                          and testing environment that allows users to access their workspaces 
                         from anywhere through an encrypted VPN connection. It is designed for developers, students, 
                         and cybersecurity learners who need a 
                         flexible, always-available virtual lab with high-level data protection and isolation.</p>
-                    <a href="/signin" class="btn btn-primary" style="align-self: flex-start;">Explore</a>
+                    <a href="/signin" class="btn btn-primary" style="align-self: flex-start;">Explore <i class='bx bx-right-arrow-alt'></i></a>
                 </div>
             </div>
         </div>
@@ -232,12 +239,12 @@ ob_start();
                         <img src="/assets/images/portfolio/domain.svg" alt="Spot Quiz Interface">
                     </div>
                     <h3 class="feature-card-title">🌍 Domain Development</h3>
-                    <p class="feature-description">
+                    <p class="feature-description" style="opacity: 0.8;">
                         This module enables users to develop, host, and publish their own web 
                         applications with fully customizable domains directly from the virtual lab environment. 
                         It integrates a secure backend with automated deployment tools to simplify domain 
                         configuration, SSL setup, and live hosting — all managed within a private cloud infrastructure.</p>
-                    <a href="/portfolio" class="btn btn-primary" style="align-self: flex-start;">Explore</a>
+                    <a href="/portfolio" class="btn btn-primary" style="align-self: flex-start;">Explore <i class='bx bx-right-arrow-alt'></i></a>
                 </div>
             </div>
             
@@ -282,12 +289,12 @@ ob_start();
                         <img src="/assets/images/portfolio/services.svg" alt="Spot Quiz Interface">
                     </div>
                     <h3 class="feature-card-title">Database Services & Management</h3>
-                    <p class="feature-description">
+                    <p class="feature-description" style="opacity: 0.8;">
                         Launch and manage dedicated database instances including MySQL and PostgreSQL 
                         with integrated <b>Adminer</b> access for real-time administration. 
                         Seamlessly create, configure, and monitor databases — all secured within the virtual lab environment.
                     </p>
-                    <a href="#" class="btn btn-primary" style="align-self: flex-start;">Explore</a>
+                    <a href="#" class="btn btn-primary" style="align-self: flex-start;">Explore <i class='bx bx-right-arrow-alt'></i></a>
                 </div>
             </div>
             
@@ -637,6 +644,23 @@ ob_start();
 
         if (confettiTriggerElement) {
             observer.observe(confettiTriggerElement);
+        }
+
+        // --- PROFILE DROPDOWN CLICK TOGGLE ---
+        const userProfile = document.querySelector('.user-profile');
+        if (userProfile) {
+            userProfile.addEventListener('click', function(e) {
+                // If the user is clicking a link inside the dropdown, don't stop it
+                if (e.target.closest('.profile-dropdown')) return;
+                this.classList.toggle('active');
+            });
+            
+            // Close dropdown if clicking outside
+            document.addEventListener('click', function(e) {
+                if (!userProfile.contains(e.target)) {
+                    userProfile.classList.remove('active');
+                }
+            });
         }
     });
     document.getElementById("multi-link").addEventListener("click", function () {

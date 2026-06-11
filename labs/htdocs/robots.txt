@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+Disallow: /src/
+Disallow: /vendor/
+Disallow: /config/
+Disallow: /tmp/
+
+Sitemap: https://awshosting.in/sitemap.xml

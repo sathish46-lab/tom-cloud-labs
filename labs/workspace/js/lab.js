@@ -90,7 +90,7 @@ const Dashboard = {
 
     // 1. Connect to Global Sidebar Stats (Overview)
     try {
-      if (!OverviewSocket.isConnected) {
+      if (!OverviewSocket.isConnected && document.getElementById("sidebar-stats-container") && !document.getElementById("session-expired-overlay")) {
         OverviewSocket.connect("labs_overview", (data) =>
           this.updateSidebar(data),
         );
@@ -99,9 +99,9 @@ const Dashboard = {
       console.error("[Dashboard] OverviewSocket connection failed:", e);
     }
 
-    // 2. Connect to Instance Logs (Only if session exists)
+    // 2. Connect to Instance Logs (Only if session exists and not expired)
     try {
-      if (window.SESSION_HASH && !LogSocket.isConnected) {
+      if (window.SESSION_HASH && !LogSocket.isConnected && !document.getElementById("session-expired-overlay")) {
         const dot = document.getElementById("mq-status-dot");
         // Only connect if the UI element exists or we handle the null UI gracefully
         const ui = dot ? { dot: dot } : null;

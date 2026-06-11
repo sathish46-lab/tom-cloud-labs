@@ -17,8 +17,8 @@
                 <i class='bx bx-log-in-circle' style="margin-right: 8px; vertical-align: middle; font-size: 20px;"></i>
                 SIGN IN NOW
             </a>
-            <a href="/home" class="btn-home">
-                Return to home
+            <a href="/" class="btn-home">
+                Return to Lobby
             </a>
         </div>
     </div>

@@ -95,23 +95,32 @@ body {
 */
 .portfolio-header {
   position: fixed;
-  top: 0;
+  top: 1.5rem;
   left: 0;
-  width: 100%;
-  padding: 1rem 2rem;
+  right: 0;
+  margin: 0 auto;
+  width: 90%;
+  max-width: var(--container-max-width);
+  padding: 0.8rem 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
   z-index: 999;
-  background: rgba(9, 23, 35, 0.9);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-  display: flex;
-  justify-content: space-between;
-  /* CORRECT: Puts space between Logo and Right side */
-  align-items: center;
-  /* Ensure padding is wide enough for desktop: */
-  padding: 1rem 2rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Pseudo-element for header blur to prevent breaking child backdrop-filters */
+.portfolio-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: -1;
 }
 
 /* --- NEW CSS ADDITION --- */
@@ -212,58 +221,51 @@ body {
   position: absolute;
   top: 120%;
   right: 0;
-  width: 200px;
-  /* Adjusted size */
-  background-color: var(--dark-bg);
+  width: 140px;
+  background: rgba(15, 23, 42, 0.25);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-  padding: 10px 0;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  padding: 6px 0;
   z-index: 100;
   opacity: 0;
   visibility: hidden;
   transform: translateY(10px);
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .profile-dropdown h4 {
   text-align: center;
 }
 
-.profile-dropdown.show {
+.user-profile:hover .profile-dropdown,
+.user-profile.active .profile-dropdown {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
 }
 
-.dropdown-menu-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.dropdown-menu-list li {
-  padding: 0;
-}
-
-.dropdown-menu-list a {
+.profile-dropdown a {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 15px;
+  padding: 6px 12px;
   text-decoration: none;
   color: white;
   font-weight: 500;
+  font-size: 0.85rem;
   transition: background-color 0.2s;
 }
 
-.dropdown-menu-list a:hover {
+.profile-dropdown a:hover {
   background-color: rgba(255, 255, 255, 0.05);
   color: var(--primary-color);
 }
 
-.dropdown-menu-list i {
-  font-size: 20px;
+.profile-dropdown i {
+  font-size: 16px;
 }
 
 /* Ensure the profile shows correctly in the header nav container */
@@ -324,12 +326,14 @@ main {
 }
 
 .service-card {
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(5px);
-  border-radius: 1rem;
+  background: rgba(15, 159, 248, 0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 1.25rem;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.3s;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   /* MASONRY FLOW + INTERNAL FLEX */
   display: block;
@@ -340,10 +344,7 @@ main {
   box-sizing: border-box;
 }
 
-.service-card:hover {
-  border-color: rgba(255, 255, 255, 0.3);
-  transform: scale(1.02);
-}
+
 
 .service-image {
   position: relative;
@@ -599,12 +600,26 @@ main {
 .btn-primary {
   color: white;
   background-color: var(--primary-color);
+  box-shadow: 0 4px 15px rgba(15, 159, 248, 0.4);
+}
+
+.btn-primary:hover {
+  background-color: #22d3ee;
+  box-shadow: 0 6px 20px rgba(34, 211, 238, 0.6);
+  transform: translateY(-2px);
 }
 
 .btn-secondary {
   color: var(--primary-color);
-  border: 2px solid #024974ff;
-  background-color: transparent;
+  border: 2px solid rgba(15, 159, 248, 0.5);
+  background-color: rgba(15, 159, 248, 0.05);
+  backdrop-filter: blur(4px);
+}
+
+.btn-secondary:hover {
+  background-color: rgba(15, 159, 248, 0.15);
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
 }
 
 /* --- Glass Cards (Portfolio) --- */
@@ -718,14 +733,20 @@ main {
 }
 
 .feature-card {
-  background-color: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(5px);
+  background-color: rgba(15, 159, 248, 0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   padding: 1.5rem;
-  border-radius: 1rem;
+  border-radius: 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+
 
 .feature-card-title {
   font-size: 1.5rem;
@@ -1416,26 +1437,25 @@ main {
 
 /* --- Card Styling --- */
 .ticker-card {
-  flex: 0 0 400px;
-  /* Fixed width for cards */
-  background: rgba(20, 30, 45, 0.6);
-  /* Slightly lighter than dark-bg */
+  flex: 0 0 auto;
+  width: 320px;
+  background: rgba(15, 159, 248, 0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  padding: 2rem;
+  border-radius: 1.25rem;
+  padding: 1.5rem;
+  color: white;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  backdrop-filter: blur(10px);
-  transition:
-    transform 0.3s ease,
-    border-color 0.3s ease;
+  gap: 1rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
-.ticker-card:hover {
-  border-color: var(--primary-color);
-  background: rgba(255, 255, 255, 0.05);
-}
+
 
 /* Card Internal Typography */
 .card-icon {

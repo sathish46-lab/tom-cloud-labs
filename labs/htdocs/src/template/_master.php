@@ -11,6 +11,34 @@ define('PAGE_START_TIME', microtime(true));
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
     <title><?= Session::$pageTitle ?></title>
 
+    <!-- Professional SEO Meta Tags -->
+    <?php
+    $seoTitle = Session::$pageTitle ?? 'Tom Labs - Advanced Development Environment';
+    $seoDesc = Session::get('seo_description', 'Experience the ultimate cloud development environment. Tom Labs provides a highly secure, fast, and feature-rich development workspace, VPS, and VPN tailored for professionals.');
+    $seoKeywords = Session::get('seo_keywords', 'Advanced Development Environment, Cloud IDE, VPS Hosting, Secure VPN, Docker Labs, Tom Labs, Coding Workspace');
+    $seoAuthor = Session::get('seo_author', 'Tom Labs');
+    $seoUrl = "https://" . ($_SERVER['HTTP_HOST'] ?? 'awshosting.in') . ($_SERVER['REQUEST_URI'] ?? '/');
+    $seoImage = Session::get('seo_image', "https://" . ($_SERVER['HTTP_HOST'] ?? 'awshosting.in') . "/assets/images/og-image.jpg");
+    ?>
+    <meta name="description" content="<?= htmlspecialchars($seoDesc) ?>">
+    <meta name="keywords" content="<?= htmlspecialchars($seoKeywords) ?>">
+    <meta name="author" content="<?= htmlspecialchars($seoAuthor) ?>">
+    <link rel="canonical" href="<?= htmlspecialchars($seoUrl) ?>">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="<?= htmlspecialchars($seoUrl) ?>">
+    <meta property="og:title" content="<?= htmlspecialchars($seoTitle) ?>">
+    <meta property="og:description" content="<?= htmlspecialchars($seoDesc) ?>">
+    <meta property="og:image" content="<?= htmlspecialchars($seoImage) ?>">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="<?= htmlspecialchars($seoUrl) ?>">
+    <meta property="twitter:title" content="<?= htmlspecialchars($seoTitle) ?>">
+    <meta property="twitter:description" content="<?= htmlspecialchars($seoDesc) ?>">
+    <meta property="twitter:image" content="<?= htmlspecialchars($seoImage) ?>">
+
     <!-- Professional Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
