@@ -21,7 +21,7 @@
   "database_file": "mongodb://admin:Tombootroot@127.0.0.1:27017/tom_labs_db?authSource=admin",
   "main_db": "tom_labs_db",
   "vpn_db": "tom_labs_vpn",
-  "vpn_url": "https://vpn.awshosting.in/api",
+  "vpn_url": "https://vpn.tomweb.in/api",
   "api_secret": "your-super-secret-token-here",
   "wireguard": {
     "conf_path": "/etc/wireguard/",

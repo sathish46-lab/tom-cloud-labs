@@ -4,9 +4,9 @@
 # This script is executed by systemd after MongoDB and RabbitMQ start.
 
 # Default values if not set
-export MAIN_DOMAIN=${MAIN_DOMAIN:-awshosting.in}
-export VPN_DOMAIN=${VPN_DOMAIN:-vpn.awshosting.in}
-export MQS_DOMAIN=${MQS_DOMAIN:-mq.awshosting.in}
+export MAIN_DOMAIN=${MAIN_DOMAIN:-tomweb.in}
+export VPN_DOMAIN=${VPN_DOMAIN:-vpn.tomweb.in}
+export MQS_DOMAIN=${MQS_DOMAIN:-mq.tomweb.in}
 
 echo "[INFO] Running post-boot container setup..."
 

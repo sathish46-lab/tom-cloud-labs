@@ -118,9 +118,9 @@ Upon successful completion, the script will output the following confirmation:
 [INFO]  Migration Complete! 
 [INFO] ==================================================
 Verify URLs:
-  https://awshosting.in
-  https://vpn.awshosting.in
-  https://mq.awshosting.in
+  https://tomweb.in
+  https://vpn.tomweb.in
+  https://mq.tomweb.in
 
 ```
 
@@ -139,7 +139,7 @@ After migration, you must verify and update the environment configuration file l
   "google_oauth": {
     "client_id": "*****************.apps.googleusercontent.com",
     "client_secret": "********************",
-    "redirect_uri": "https://awshosting.in/signin",
+    "redirect_uri": "https://tomweb.in/signin",
     "metadata_url": "https://accounts.google.com/.well-known/openid-configuration"
   },
   "smtp": {
@@ -154,7 +154,7 @@ After migration, you must verify and update the environment configuration file l
   "database_file": "mongodb://admin:Tombootroot@127.0.0.1:27017/tom_labs_db?authSource=admin",
   "main_db": "tom_labs_db",
   "vpn_db": "tom_labs_vpn",
-  "vpn_url": "https://vpn.awshosting.in/api",
+  "vpn_url": "https://vpn.tomweb.in/api",
   "api_secret": "your-super-secret-token-here",
   "wireguard": {
     "conf_path": "/etc/wireguard/",
@@ -169,7 +169,7 @@ After migration, you must verify and update the environment configuration file l
     "use_path_style": true
   },
   "allowed_hosts": [
-    "awshosting.in"
+    "tomweb.in"
   ]
 }
 

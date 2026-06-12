@@ -28,7 +28,7 @@ if (!$device || (string)$device['user_id'] !== (string)Session::getUser()->getUs
 // Build the Professional WireGuard Config
 $serverPubKey = get_config('wireguard_public_key');
 $port = get_config('wireguard_endpoint_port') ?? 51820;
-$endpoint = "vpn.awshosting.in:$port";
+$endpoint = "vpn.tomweb.in:$port";
 
 $config = "[Interface]\n";
 $config .= "PrivateKey = " . ($device['private_key'] ?: '<PASTE_PRIVATE_KEY>') . "\n";

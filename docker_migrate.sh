@@ -37,14 +37,14 @@ echo "=================================================="
 echo "      Interactive Configuration Setup"
 echo "=================================================="
 
-read -p "Enter Main Domain (default: awshosting.in): " MAIN_DOMAIN
-MAIN_DOMAIN=${MAIN_DOMAIN:-awshosting.in}
+read -p "Enter Main Domain (default: tomweb.in): " MAIN_DOMAIN
+MAIN_DOMAIN=${MAIN_DOMAIN:-tomweb.in}
 
-read -p "Enter VPN API Domain (default: vpn.awshosting.in): " VPN_DOMAIN
-VPN_DOMAIN=${VPN_DOMAIN:-vpn.awshosting.in}
+read -p "Enter VPN API Domain (default: vpn.tomweb.in): " VPN_DOMAIN
+VPN_DOMAIN=${VPN_DOMAIN:-vpn.tomweb.in}
 
-read -p "Enter RabbitMQ Domain (default: mq.awshosting.in): " MQS_DOMAIN
-MQS_DOMAIN=${MQS_DOMAIN:-mq.awshosting.in}
+read -p "Enter RabbitMQ Domain (default: mq.tomweb.in): " MQS_DOMAIN
+MQS_DOMAIN=${MQS_DOMAIN:-mq.tomweb.in}
 
 read -p "Enter Code Server Domain (default: tomweb.shop): " CODE_DOMAIN
 CODE_DOMAIN=${CODE_DOMAIN:-tomweb.shop}

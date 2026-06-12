@@ -31,15 +31,15 @@ const TomSocketClient = function () {
     try {
       // Dynamically resolve MQS domain based on the current hostname
       const currentHost = window.location.hostname;
-      let mqDomain = "mq.awshosting.in"; // Default fallback
+      let mqDomain = "mq.tomweb.in"; // Default fallback
       
-      if (currentHost.includes("dev.awshosting.in")) {
-        mqDomain = "mq.dev.awshosting.in";
+      if (currentHost.includes("dev.tomweb.in")) {
+        mqDomain = "mq.dev.tomweb.in";
       } else if (currentHost === "localhost" || currentHost === "127.0.0.1") {
         // When running locally on localhost, the Stomp port is usually 15674
         mqDomain = "localhost:15674"; 
-      } else if (currentHost.includes("awshosting.in")) {
-        mqDomain = "mq.awshosting.in";
+      } else if (currentHost.includes("tomweb.in")) {
+        mqDomain = "mq.tomweb.in";
       } else {
         // Generic fallback: swap the first subdomain with 'mq'
         const parts = currentHost.split('.');

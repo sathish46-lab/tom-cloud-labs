@@ -40,7 +40,7 @@ try {
 
     $serverPubKey = get_config('wireguard_public_key');
     $port = get_config('wireguard_endpoint_port') ?? 51820;
-    $endpoint = "vpn.awshosting.in:$port";
+    $endpoint = "vpn.tomweb.in:$port";
     $assignedIp = $deviceData['assigned_ip'];
     $privKey = $deviceData['private_key'] ?? '';
     

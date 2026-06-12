@@ -7,4 +7,4 @@ Disallow: /vendor/
 Disallow: /config/
 Disallow: /tmp/
 
-Sitemap: https://awshosting.in/sitemap.xml
+Sitemap: https://tomweb.in/sitemap.xml

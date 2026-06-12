@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Configuration settings (Defaults or from ENV)
-export MAIN_DOMAIN=${MAIN_DOMAIN:-awshosting.in}
-export VPN_DOMAIN=${VPN_DOMAIN:-vpn.awshosting.in}
-export MQS_DOMAIN=${MQS_DOMAIN:-mq.awshosting.in}
+export MAIN_DOMAIN=${MAIN_DOMAIN:-tomweb.in}
+export VPN_DOMAIN=${VPN_DOMAIN:-vpn.tomweb.in}
+export MQS_DOMAIN=${MQS_DOMAIN:-mq.tomweb.in}
 export CODE_DOMAIN=${CODE_DOMAIN:-tomweb.shop}
-export WORK_DOMAIN=${WORK_DOMAIN:-work.awshosting.in}
+export WORK_DOMAIN=${WORK_DOMAIN:-work.tomweb.in}
 export SSL_EMAIL=${SSL_EMAIL:-admin@example.com}
 
 echo "[INFO] Running Pre-boot Initialization in Entrypoint..."

@@ -51,7 +51,7 @@ function get_session_config($key) {
  */
 function is_local() {
     $host = explode(':', $_SERVER['HTTP_HOST'] ?? '')[0];
-    $local_hosts = ['localhost', '127.0.0.1', 'dev.awshosting.in'];
+    $local_hosts = ['localhost', '127.0.0.1', 'dev.tomweb.in'];
     return in_array($host, $local_hosts);
 }
 
