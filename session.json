@@ -1,6 +1,6 @@
 {
     "lifetime_local": 8400,
     "lifetime_production": 86400,
-    "domain_local": "dev.labs.tomweb.in",
+    "domain_local": "dev.tomweb.in",
     "domain_production": "labs.tomweb.in"
 }

@@ -26,7 +26,7 @@ ob_start();
 
 <header class="portfolio-header" style="border-radius: 20px; display: flex; align-items: center; width: 95%; max-width: 1400px;">
     <a href="/" class="header-logo" style="display: flex; align-items: center; gap: 12px; text-decoration: none; flex-shrink: 0;">
-        <img src="<?= Session::cacheCDN('/assets/logo/favicon.png') ?>" width="44" height="44" alt="Tom Labs Icon" style="border-radius: 8px; object-fit: contain;">
+        <img src="<?= Session::cdn3('logo/favicon.png') ?>" width="44" height="44" alt="Tom Labs Icon" style="border-radius: 8px; object-fit: contain;">
         <div style="display: flex; flex-direction: column; line-height: 1.1;">
             <span style="font-size: 1.2rem; font-weight: 800; color: white; text-transform: uppercase; letter-spacing: 0.5px;">Tom <span style="color: var(--primary-color);">Labs</span></span>
             <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 500;">Virtual Innovation Hub</span>
@@ -243,7 +243,7 @@ ob_start();
             <div class="feature-cards-column">
                 <div class="feature-card">
                     <div class="feature-card-image">
-                        <img src="/assets/images/portfolio/lab.svg" alt="Code Arena Interface">
+                        <img src="<?= Session::cdn3('main/lab.svg') ?>" alt="Code Arena Interface">
                     </div>
                     <h3 class="feature-card-title">Virtual Lab</h3>
                     <p class="feature-description" style="opacity: 0.8;">The Virtual Cloud Lab is a secure, cloud-based development
@@ -260,7 +260,7 @@ ob_start();
             <div class="feature-cards-column">
                 <div class="feature-card">
                     <div class="feature-card-image">
-                        <img src="/assets/images/portfolio/domain.svg" alt="Spot Quiz Interface">
+                        <img src="<?= Session::cdn3('main/domain.svg') ?>" alt="Spot Quiz Interface">
                     </div>
                     <h3 class="feature-card-title">🌍 Domain Development</h3>
                     <p class="feature-description" style="opacity: 0.8;">
@@ -310,7 +310,7 @@ ob_start();
             <div class="feature-cards-column">
                 <div class="feature-card" id="confetti-target">
                     <div class="feature-card-image">
-                        <img src="/assets/images/portfolio/services.svg" alt="Spot Quiz Interface">
+                        <img src="<?= Session::cdn3('main/services.svg') ?>" alt="Spot Quiz Interface">
                     </div>
                     <h3 class="feature-card-title">Database Services & Management</h3>
                     <p class="feature-description" style="opacity: 0.8;">
@@ -394,7 +394,7 @@ ob_start();
                     <div class="card-icon">
                         <i class='bx bxs-bulb' style="color: #facc15;"></i> 
                         <h3>The Visionary</h3>
-                        <img src="/assets/images/portfolio/ticker/Sibidharan.png" alt="Sibidharan" class="card-img-avatar">
+                        <img src="<?= Session::cdn3('main/ticker/Sibidharan.png') ?>" alt="Sibidharan" class="card-img-avatar">
                     </div>
 
                     <h4>Sibidharan Nandhakumar</h4>
@@ -430,7 +430,7 @@ ob_start();
                         <i class='bx bxs-buoy' style="color: #38bdf8;"></i>
                         <h3>The Solver</h3>
                         
-                        <img src="/assets/images/portfolio/ticker/Anish.jpeg" alt="AnishKumar" class="card-img-avatar">
+                        <img src="<?= Session::cdn3('main/ticker/Anish.jpeg') ?>" alt="AnishKumar" class="card-img-avatar">
                     </div>
                     <h4>Anish Kumar</h4>
                     <p>The pillar of support who never ignores a doubt. From complex logic to the smallest questions, he is always there to help.</p>
@@ -458,7 +458,7 @@ ob_start();
                     <div class="card-icon">
                         <i class='bx bxs-graduation' style="color: #a78bfa;"></i>
                         <h3>The Forge</h3>
-                        <img src="/assets/images/portfolio/ticker/Sna.jpeg" alt="Selfmade Ninja Academy" class="card-img-avatar">
+                        <img src="<?= Session::cdn3('main/ticker/Sna.jpeg') ?>" alt="Selfmade Ninja Academy" class="card-img-avatar">
                     </div>
                     <h4>Selfmade Ninja Academy</h4>
                     <p>The training ground where I learned everything. A community that transforms curiosity into elite engineering skills.</p>
@@ -486,7 +486,7 @@ ob_start();
                     <div class="card-icon">
                         <i class='bx bxs-rocket' style="color: #4ade80;"></i>
                         <h3>The Result</h3>
-                        <img src="/assets/images/portfolio/ticker/TomLabs.png" alt="Tom Labs" class="card-img-avatar">
+                        <img src="<?= Session::cdn3('main/ticker/TomLabs.png') ?>" alt="Tom Labs" class="card-img-avatar">
                     </div>
                     <h4>Tom Labs</h4>
                     <p>The outcome of excellent mentorship and learning. A virtual innovation hub built to empower the next generation.</p>

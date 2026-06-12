@@ -485,9 +485,11 @@ class Session
         
         // 1. Professional default pool
         $defaultAvatars = [
-            '/assets/avatars/avatar1.png', '/assets/avatars/avatar2.png',
-            '/assets/avatars/avatar3.png', '/assets/avatars/avatar4.png',
-            '/assets/avatars/avatar5.png'
+            self::cdn3('avatars/avatar1.png'), self::cdn3('avatars/avatar2.png'),
+            self::cdn3('avatars/avatar3.png'), self::cdn3('avatars/avatar4.png'),
+            self::cdn3('avatars/avatar5.png'), self::cdn3('avatars/avatar6.png'),
+            self::cdn3('avatars/avatar7.png'), self::cdn3('avatars/avatar8.png'),
+            self::cdn3('avatars/avatar9.png'), self::cdn3('avatars/avatar10.png')
         ];
 
         // 2. Load the actual user profile link

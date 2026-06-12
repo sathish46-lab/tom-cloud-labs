@@ -151,7 +151,7 @@ class Wireguard{
         // 1. Check if auth exists
         $authCount = $this->db->auth->countDocuments(['active' => 1]);
         if ($authCount < 1) {
-            new Signup("tom_labs_vpn", $token, "admin@dev.labs.tomweb.in", 1);
+            new Signup("tom_labs_vpn", $token, "admin@dev.tomweb.in", 1);
         }
 
         // 2. Check if networks are already synced

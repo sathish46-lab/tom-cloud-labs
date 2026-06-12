@@ -37,7 +37,7 @@
         'minio' => [
             'title'   => 'MinIO S3 Storage',
             'desc'    => 'MinIO is a high-performance, S3-compatible object storage solution for machine learning, analytics, and application data workloads, released under the GNU AGPL v3.0.',
-            'icon'    => Session::cdn3('icons/minio_avatar_small.png'),
+            'icon'    => Session::cdn3('logo/logo.png'),
             // 'icon' => 'bxl-docker',
             'color'   => '#00a6e0',
             'action'  => ' Launch',
