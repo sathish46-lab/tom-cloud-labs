@@ -132,13 +132,13 @@ define('PAGE_START_TIME', microtime(true));
                 savedTheme;
             document.documentElement.setAttribute('data-coreui-theme', themeToApply);
 
-            let mode = localStorage.getItem("tom-labs-bg-mode") || "ninja";
+            let mode = localStorage.getItem("tom-labs-bg-mode") || "spiderman";
             
             // Forced state for login page
             <?php if (defined('IS_LOGIN_PAGE') && IS_LOGIN_PAGE === true): ?>
-            mode = "ninja";
+            mode = "spiderman";
             document.documentElement.classList.add('glass-mode');
-            window.FORCED_BG_MODE = "ninja";
+            window.FORCED_BG_MODE = "spiderman";
             <?php endif; ?>
 
             document.documentElement.classList.toggle("mode-plain", mode === "plain");

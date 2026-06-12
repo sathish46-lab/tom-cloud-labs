@@ -55,15 +55,48 @@ ob_start();
     <div class="container">
         <div class="row justify-content-center align-items-center">
             
-            <div class="col-lg-5 d-none d-lg-block pe-lg-5">
-                <img src="/assets/logo/logo.png" width="60" class="mb-4" alt="Logo">
-                <h1 class="display-5 fw-bold mb-3 text-body">Join the Hub.</h1>
-                <p class="lead text-secondary">
-                    Create an account to start deploying your own automated
-                    lab environments today. Join a community of modern engineers
-                    at Tom Labs.
-                </p>
+            <div class="col-lg-5 d-none d-lg-block pe-lg-5 text-white" style="text-shadow: 0 2px 10px rgba(0,0,0,0.5);">
+                <img src="<?= Session::cdn3('logo/logo.png') ?>" width="80" class="mb-4" alt="Logo" style="filter: drop-shadow(0 0 10px rgba(56,189,248,0.5));">
+                <h1 id="animated-heading" class="display-4 fw-bolder mb-4" style="line-height: 1.1; letter-spacing: -1px; transition: opacity 0.5s ease-in-out;">
+                    Join the <span style="color: #fb923c;">Hub.</span><br>
+                    Ignite <span style="color: #38bdf8;">Innovation.</span>
+                </h1>
+                
+                <div class="p-4 rounded-4" style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                    <i class='bx bxs-quote-alt-left fs-2 mb-3 opacity-75' style="color: #fb923c;"></i>
+                    <p class="fs-5 fst-italic text-white mb-4" style="line-height: 1.6; text-shadow: 0 1px 2px rgba(0,0,0,0.8);">
+                        "The learning environment provided here is unparalleled. It empowers true engineers to securely test, break, and build the systems of tomorrow."
+                    </p>
+                    <a href="#" onclick="event.preventDefault(); window.open('https://sathish46.in', '_blank'); setTimeout(() => { window.open('https://sathish46.selfmade.fun', '_blank'); }, 800);" class="d-flex align-items-center gap-3 text-decoration-none text-light" style="transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                        <img src="<?= Session::cdn3('author/sathish.png') ?>" width="50" height="50" class="rounded-circle border border-2" style="border-color: #9ca3af; object-fit: cover;" alt="Avatar">
+                        <div>
+                            <div class="fw-bold fs-6 text-white" style="text-shadow: 0 1px 2px rgba(0,0,0,0.8);">Sathish46 🔥</div>
+                            <div class="small" style="color: rgba(255, 255, 255, 0.9); text-shadow: 0 1px 2px rgba(0,0,0,0.8);">CEO & Founder, Tom Labs 😎</div>
+                        </div>
+                    </a>
+                </div>
             </div>
+
+            <script>
+                document.addEventListener("DOMContentLoaded", function() {
+                    const headings = [
+                        { line1: 'Join the <span style="color: #fb923c;">Hub.</span>', line2: 'Ignite <span style="color: #38bdf8;">Innovation.</span>' },
+                        { line1: 'Empower <span style="color: #fb923c;">Engineers.</span>', line2: 'Build the <span style="color: #38bdf8;">Future.</span>' },
+                        { line1: 'Master <span style="color: #fb923c;">DevOps.</span>', line2: 'Deploy <span style="color: #38bdf8;">Securely.</span>' }
+                    ];
+                    let currentIndex = 0;
+                    const headingBlock = document.getElementById("animated-heading");
+                    
+                    setInterval(() => {
+                        headingBlock.style.opacity = 0;
+                        setTimeout(() => {
+                            currentIndex = (currentIndex + 1) % headings.length;
+                            headingBlock.innerHTML = headings[currentIndex].line1 + '<br>' + headings[currentIndex].line2;
+                            headingBlock.style.opacity = 1;
+                        }, 500);
+                    }, 3000);
+                });
+            </script>
 
             <div class="col-md-8 col-lg-4">
                 <div class="card shadow-lg border-0 rounded-4 p-4">

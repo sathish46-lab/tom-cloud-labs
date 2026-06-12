@@ -7,7 +7,7 @@ var TomBG = {
 
   init: function () {
     // 1. Check for forced mode (Login Page) before looking at localStorage
-    var saved = localStorage.getItem("tom-labs-bg-mode") || "ninja";
+    var saved = localStorage.getItem("tom-labs-bg-mode") || "spiderman";
     var modeToUse = window.FORCED_BG_MODE || saved;
 
     this.apply(modeToUse);
@@ -20,7 +20,7 @@ var TomBG = {
           var currentMode =
             window.FORCED_BG_MODE ||
             localStorage.getItem("tom-labs-bg-mode") ||
-            "ninja";
+            "spiderman";
           _this.apply(currentMode);
         }
       });
@@ -802,7 +802,7 @@ var TomBG = {
       }
       root.classList.remove("mode-plain");
 
-      var theme = this.themes[mode] || this.themes["ninja"];
+      var theme = this.themes[mode] || this.themes["spiderman"];
       var assets = theme.assets || theme;
       var themeColor = theme.color || "#0b1e36";
 
@@ -1085,7 +1085,7 @@ var TomBG = {
   updateActiveSwatchUI: function () {
     var currentBg = localStorage.getItem('tom-labs-plain-color') || '#010d12';
     var currentAccent = localStorage.getItem('tom-labs-accent-color') || '#8b91f9';
-    var mode = localStorage.getItem('tom-labs-bg-mode') || 'ninja';
+    var mode = localStorage.getItem('tom-labs-bg-mode') || 'spiderman';
     
     document.querySelectorAll('.swatch-item').forEach(function(item) {
       var badge = item.querySelector('.active-badge');
