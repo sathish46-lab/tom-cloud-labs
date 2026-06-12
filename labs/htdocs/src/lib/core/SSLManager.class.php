@@ -335,11 +335,11 @@ class SSLManager {
             return [];
         }
         
-        // Group domains by their base (e.g., *.selfmade.fun group)
+        // Group domains by their base (e.g., *.Tom.fun group)
         $groups = [];
         foreach ($allDomains as $domain) {
             $parts = explode('.', $domain);
-            // Use last two parts as group key (e.g., selfmade.fun)
+            // Use last two parts as group key (e.g., Tom.fun)
             if (count($parts) >= 2) {
                 $baseKey = implode('.', array_slice($parts, -2));
             } else {
@@ -383,7 +383,7 @@ class SSLManager {
             }
             
             // Create badge labels from usage
-            $badges = ['selfmade'];
+            $badges = ['Tom'];
             $badges[] = 'valid';
             if ($usedByInfo) {
                 $badges[] = 'in use - ' . $usedByInfo['lab_type'];

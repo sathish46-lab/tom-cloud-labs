@@ -84,7 +84,7 @@ $serverIP = $dm->getServerIP();
                             $textClass = 'text-white';
                             $badgeLabel = htmlspecialchars($badge);
                             
-                            if (stripos($badge, 'selfmade') !== false) {
+                            if (stripos($badge, 'Tom') !== false) {
                                 $badgeClass = 'bg-purple';
                                 $textClass = 'text-white';
                             } elseif (stripos($badge, 'valid') !== false) {

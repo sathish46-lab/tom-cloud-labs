@@ -5,6 +5,8 @@ $user = Session::getUser();
 if ($user) {
     $domainManager->refreshUserDomains($user->getUserId());
 }
+$certs = Session::get('ssl_certificates') ?: [];
+$serverIP = $domainManager->getServerIP();
 
 // Helper function to show time ago
 function timeAgo($timestamp) {
@@ -52,7 +54,7 @@ function timeAgo($timestamp) {
                         <?php if (strtolower($d['type']) == 'custom'): ?>
                             <span class="badge bg-info text-dark rounded-pill fw-bold" style="font-size: 8px; padding: 2px 6px; text-transform: capitalize;">Custom</span>
                         <?php else: ?>
-                            <span class="badge bg-primary rounded-pill fw-bold" style="font-size: 8px; padding: 2px 6px; text-transform: capitalize;"><?= $d['type'] ?></span>
+                            <span class="badge bg-primary rounded-pill fw-bold" style="font-size: 8px; padding: 2px 6px; text-transform: capitalize;"><?= strtolower($d['type']) == 'Tom' ? 'Tom' : $d['type'] ?></span>
                         <?php endif; ?>
                         
                         <?php if ($d['verified']): ?>
@@ -70,6 +72,24 @@ function timeAgo($timestamp) {
                             <span class="badge bg-danger text-white rounded-pill fw-bold" style="font-size: 8px; padding: 2px 6px; text-transform: capitalize;">In Use</span>
                         <?php else: ?>
                             <span class="badge bg-info text-dark rounded-pill fw-bold" style="font-size: 8px; padding: 2px 6px; text-transform: capitalize;">Available</span>
+                        <?php endif; ?>
+                        
+                        <?php
+                            // Check if this domain has a valid SSL certificate
+                            $certIndex = -1;
+                            $hasValidSsl = false;
+                            foreach ($certs as $idx => $cert) {
+                                if (in_array($d['domain'], $cert['sans'])) {
+                                    $certIndex = $idx;
+                                    $hasValidSsl = $cert['is_valid'];
+                                    break;
+                                }
+                            }
+                            if ($certIndex >= 0):
+                        ?>
+                            <a href="/ssl" class="badge text-white rounded-pill fw-bold border border-secondary text-decoration-none" style="background-color: #1a1b1e; font-size: 8px; padding: 2px 6px; transition: all 0.2s;">
+                                SSL <?= $hasValidSsl ? 'valid' : 'invalid' ?>
+                            </a>
                         <?php endif; ?>
                     </div>
 
