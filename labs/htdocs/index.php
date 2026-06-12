@@ -48,18 +48,16 @@ ob_start();
     </div> 
     
     <div class="header-right-actions" style="flex-shrink: 0;">
-        <?php if (isset($_SESSION['user_id'])): 
-            $userAvatar = (!empty($_SESSION['user_avatar'])) ? htmlspecialchars($_SESSION['user_avatar']) : '/assets/avatars/default.png';
-        ?>
+        <?php if (Session::getAuthStatus() == Constants::STATUS_LOGGEDIN): ?>
             <div class="user-profile logged-in-public" id="userProfileToggle" style="cursor: pointer; position: relative;">
                 <div class="avatar-container" style="background: rgba(255, 255, 255, 0.08); border-radius: 999px; padding: 4px 12px 4px 4px; display: flex; align-items: center; gap: 8px; border: 1px solid rgba(255, 255, 255, 0.05); transition: background 0.3s;" onmouseover="this.style.background='rgba(255, 255, 255, 0.15)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.08)'">
-                    <img src="<?= $userAvatar; ?>" alt="User Avatar" class="avatar" style="width: 32px; height: 32px; border-radius: 50%; border: none; object-fit: cover;">
+                    <img src="<?= Session::getAvatar(); ?>" alt="User Avatar" class="avatar" style="width: 32px; height: 32px; border-radius: 50%; border: none; object-fit: cover; <?= Session::getAvatarStyle(); ?>">
                     <i class='bx bx-chevron-down' style="color: #cbd5e1; font-size: 1.2rem;"></i>
                 </div>
                 
                 <div class="profile-dropdown" id="profileDropdown">
                     <div class="dropdown-header" style="padding: 10px 15px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 5px;">
-                        <h4 style="margin: 0; font-size: 0.9rem; color: white; text-align: left;"><?php echo htmlspecialchars($_SESSION['user_name'] ?? 'User'); ?></h4>
+                        <h4 style="margin: 0; font-size: 0.9rem; color: white; text-align: left;"><?php echo htmlspecialchars(Session::getUser()?->getUsername() ?? 'Guest'); ?></h4>
                     </div>
                     <ul class="dropdown-menu-list" style="list-style: none; padding: 5px; margin: 0;">
                         <li>
@@ -79,7 +77,7 @@ ob_start();
             </div>
 
         <?php else: ?>
-            <a href="/auth/signin.php" class="login-button" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 999px; padding: 0.5rem 1.5rem; transition: all 0.3s; color: white; text-decoration: none; font-weight: 600;" onmouseover="this.style.background='rgba(255, 255, 255, 0.2)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.1)'">
+            <a href="/signin" class="login-button" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 999px; padding: 0.5rem 1.5rem; transition: all 0.3s; color: white; text-decoration: none; font-weight: 600;" onmouseover="this.style.background='rgba(255, 255, 255, 0.2)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.1)'">
                 Login
             </a>
         <?php endif; ?>
