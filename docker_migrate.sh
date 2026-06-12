@@ -37,7 +37,7 @@ echo "=================================================="
 echo "      Interactive Configuration Setup"
 echo "=================================================="
 
-read -p "Enter Main Domain (default: tomweb.in): " MAIN_DOMAIN
+read -p "Enter Main Domain (default: labs.tomweb.in): " MAIN_DOMAIN
 MAIN_DOMAIN=${MAIN_DOMAIN:-tomweb.in}
 
 read -p "Enter VPN API Domain (default: vpn.tomweb.in): " VPN_DOMAIN

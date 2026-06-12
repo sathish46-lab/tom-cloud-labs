@@ -4,9 +4,9 @@ require_once 'src/load.php';
 // Allow both logged-in and guest users to view the landing page.
 
 // 2. Set Page Metadata
-Session::$pageTitle = "Tom Labs | Automated Lab Environments";
-Session::set('seo_description', 'Tom Labs is an advanced virtual innovation hub created by Sathish, offering automated cloud environments, VPS, and VPN for developers.');
-Session::set('seo_keywords', 'Automated Lab Environments, Tom Labs, Virtual Lab System, Cloud IDE, Sathish');
+Session::$pageTitle = "Tom Labs | Virtual Innovation Hub";
+Session::set('seo_description', 'Tom Labs is a premier virtual innovation hub offering advanced cloud environments, scalable VPS, and secure VPN workspaces for elite developers and engineers.');
+Session::set('seo_keywords', 'Virtual Innovation Hub, Tom Labs, Advanced Cloud Infrastructure, Digital Workspace, VPS, Developer Environment');
 define('IS_LANDING_PAGE', true);
 Session::addCustomCss('/css/landing.css');
 

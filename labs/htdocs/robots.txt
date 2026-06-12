@@ -7,4 +7,4 @@ Disallow: /vendor/
 Disallow: /config/
 Disallow: /tmp/
 
-Sitemap: https://tomweb.in/sitemap.xml
+Sitemap: https://labs.tomweb.in/sitemap.xml

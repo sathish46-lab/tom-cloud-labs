@@ -118,7 +118,7 @@ Upon successful completion, the script will output the following confirmation:
 [INFO]  Migration Complete! 
 [INFO] ==================================================
 Verify URLs:
-  https://tomweb.in
+  https://labs.tomweb.in
   https://vpn.tomweb.in
   https://mq.tomweb.in
 
@@ -139,7 +139,7 @@ After migration, you must verify and update the environment configuration file l
   "google_oauth": {
     "client_id": "*****************.apps.googleusercontent.com",
     "client_secret": "********************",
-    "redirect_uri": "https://tomweb.in/signin",
+    "redirect_uri": "https://labs.tomweb.in/signin",
     "metadata_url": "https://accounts.google.com/.well-known/openid-configuration"
   },
   "smtp": {
@@ -169,7 +169,7 @@ After migration, you must verify and update the environment configuration file l
     "use_path_style": true
   },
   "allowed_hosts": [
-    "tomweb.in"
+    "labs.tomweb.in"
   ]
 }
 

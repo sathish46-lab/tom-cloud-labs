@@ -19,8 +19,8 @@ define('PAGE_START_TIME', microtime(true));
     $seoDesc = Session::get('seo_description', 'Experience the ultimate cloud development environment. Tom Labs provides a highly secure, fast, and feature-rich development workspace, VPS, and VPN tailored for professionals.');
     $seoKeywords = Session::get('seo_keywords', 'Advanced Development Environment, Cloud IDE, VPS Hosting, Secure VPN, Docker Labs, Tom Labs, Coding Workspace');
     $seoAuthor = Session::get('seo_author', 'Sathish');
-    $seoUrl = "https://" . ($_SERVER['HTTP_HOST'] ?? 'tomweb.in') . ($_SERVER['REQUEST_URI'] ?? '/');
-    $seoImage = Session::get('seo_image', "https://" . ($_SERVER['HTTP_HOST'] ?? 'tomweb.in') . "/assets/images/og-image.jpg");
+    $seoUrl = "https://" . ($_SERVER['HTTP_HOST'] ?? 'labs.tomweb.in') . ($_SERVER['REQUEST_URI'] ?? '/');
+    $seoImage = Session::get('seo_image', "https://" . ($_SERVER['HTTP_HOST'] ?? 'labs.tomweb.in') . "/assets/images/og-image.jpg");
     ?>
     <meta name="description" content="<?= htmlspecialchars($seoDesc) ?>">
     <meta name="keywords" content="<?= htmlspecialchars($seoKeywords) ?>">

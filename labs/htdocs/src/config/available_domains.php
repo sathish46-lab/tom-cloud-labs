@@ -16,7 +16,7 @@ return [
     'domains' => [
         '*.tomweb.shop',
         '*.tomweb.fun',
-        '*.tomweb.in',
+        '*.awshosting.in',
         // Add more domains here as needed
     ],
 ];
