@@ -33,7 +33,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email'], $_POST['pass
             'is_verified' => false,
             'state' => 'pending',
             'created_at' => time(),
-            'ip_address' => $_SERVER['REMOTE_ADDR']
+            'ip_address' => $_SERVER['REMOTE_ADDR'],
+            'theme_preferences' => [
+                'mode' => 'spiderman',
+                'plain_color' => '#010d12',
+                'accent_color' => '#8b91f9',
+                'custom_slots' => [],
+                'custom_themes' => []
+            ]
         ]);
 
         if (send_verification_email($email, $username, $token)) {

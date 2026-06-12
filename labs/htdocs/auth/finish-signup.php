@@ -32,7 +32,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username'])) {
             'state'         => 'active',
             'created_at'    => time(),
             'last_login'    => time(),
-            'ip_address'    => $_SERVER['REMOTE_ADDR']
+            'ip_address'    => $_SERVER['REMOTE_ADDR'],
+            'theme_preferences' => [
+                'mode' => 'spiderman',
+                'plain_color' => '#010d12',
+                'accent_color' => '#8b91f9',
+                'custom_slots' => [],
+                'custom_themes' => []
+            ]
         ]);
 
         // Clean up and Log in
