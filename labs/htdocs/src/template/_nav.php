@@ -62,6 +62,9 @@ $current = Session::getCurrentFile();
             <a class="nav-link <?= $current == 'domains' ? 'active' : '' ?>" href="/domains">
                 <i class="nav-icon bx bx-globe"></i> Domains
             </a>
+            <a class="nav-link <?= $current == 'ssl' ? 'active' : '' ?>" href="/ssl">
+                <i class="nav-icon bx bx-lock-alt"></i> SSL Manager
+            </a>
             <a class="nav-link <?= (str_contains($current, 'labs')) ? 'active' : '' ?>" href="/labs">
                 <svg class="nav-icon">
                     <use xlink:href="/assets/icons/sprites/free.svg#cil-memory"></use>

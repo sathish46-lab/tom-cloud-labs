@@ -87,6 +87,8 @@
                             $url = "/labs/preferences/$labHash";
                         } elseif (stripos($lowerPart, 'account') !== false) {
                             $url = '/account';
+                        } elseif (stripos($lowerPart, 'ssl') !== false) {
+                            $url = '/ssl';
                         } elseif (stripos($lowerPart, 'achieve') !== false && $challengeHash) {
                             $url = "/challenges/achievements/$challengeHash";
                         } elseif (stripos($lowerPart, 'leader') !== false && $challengeHash) {
