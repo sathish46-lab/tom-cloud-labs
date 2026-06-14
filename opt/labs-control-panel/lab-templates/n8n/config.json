@@ -23,5 +23,16 @@
     "scripts": {
         "linkuser": "/var/labsdata/scripts/linkuser.sh",
         "entry": "/var/labsdata/scripts/entry.sh"
+    },
+    "services": {
+        "code": { "port": 8080, "middlewares": ["code-headers@file"] },
+        "web":  { "port": 80 },
+        "n8n":  { "port": 5678, "domain_flag": "n8n-domain", "domain_prefix": "n8n-" }
+    },
+    "credentials_template": {
+        "n8n_username": "{email}",
+        "n8n_password": "{password}",
+        "n8n_url": "https://{n8n_domain}",
+        "n8n_port": 5678
     }
 }

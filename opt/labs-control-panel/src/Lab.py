@@ -1,74 +1,19 @@
 import os
 import json
-import pymongo
-import sys
 import time
 import secrets
 import string
-from src.DockerHelper import DockerHelper
+import sys
+from src.BaseOrchestrator import BaseOrchestrator
 
-class Lab:
+class Lab(BaseOrchestrator):
     def __init__(self, args, session_hash=None):
-        self.args = args 
-        self.session_hash = session_hash
-        self.docker = DockerHelper()
-        self.config = self._load_global_config()
-        self.env = self._load_env_config()
-        
-        # 1. Prioritize Connection from env.json (Source of Truth)
-        mongo_uri = self.env.get('database_file')
-        db_name = self.env.get('main_db', 'tom_labs_db')
-        
-        if mongo_uri:
-            try:
-                self.mongo_client = pymongo.MongoClient(mongo_uri, serverSelectionTimeoutMS=2000)
-                self.mongo_client.admin.command('ping')
-                self.db = self.mongo_client[db_name]
-                return # Connection Successful
-            except Exception as e:
-                print(f"[DEBUG] Env Connection Failed: {e}")
-
-        # 2. Fallback Logic for local development/bootstrapping
-        try:
-            # Try Docker Internal Network
-            self.mongo_client = pymongo.MongoClient("mongodb://admin:Tombootroot@docker_tomlabs_mongodb:27017/?authSource=admin", serverSelectionTimeoutMS=2000)
-            self.mongo_client.admin.command('ping')
-            self.db = self.mongo_client.tom_labs_db 
-        except Exception:
-            try:
-                # Try Local Host (Mapped Port)
-                self.mongo_client = pymongo.MongoClient("mongodb://admin:Tombootroot@localhost:27018/?authSource=admin", serverSelectionTimeoutMS=2000)
-                self.mongo_client.admin.command('ping')
-                self.db = self.mongo_client.tom_labs_db
-            except Exception:
-                self.db = None
-
-    def _load_env_config(self):
-        """Load the global environment configuration (env.json)"""
-        paths = ['/var/www/env.json', '/Users/sathish/Development/local_dev_lab/env.json', 'env.json']
-        for path in paths:
-            if os.path.exists(path):
-                try:
-                    with open(path, 'r') as f:
-                        return json.load(f)
-                except:
-                    continue
-        return {}
-
-    def _load_global_config(self):
-        config_path = '/opt/labs-control-panel/config.json'
-        return json.load(open(config_path)) if os.path.exists(config_path) else {}
-
-    def log(self, message, level="info"):
-        prefixes = {"info": "[*]", "success": "[✓]", "error": "[!]", "warn": "[!]"}
-        full_message = f"{prefixes.get(level, '[*]')} {message}"
-        print(full_message)
-        sys.stdout.flush()
+        super().__init__(args, session_hash)
 
     def build(self):
         """Build a Docker image from a specified template"""
         if len(sys.argv) < 3:
-            self.log("Usage: labsctl build <template:tag>", "error")
+            self.log("Usage: labsctl build <template:tag>", "error", "init")
             return
 
         image_tag = sys.argv[2]
@@ -78,10 +23,10 @@ class Lab:
         template_path = os.path.join(templates_dir, template_name)
         
         if not os.path.exists(template_path):
-            self.log(f"Template path not found: {template_path}", "error")
+            self.log(f"Template path not found: {template_path}", "error", "init")
             return
 
-        self.log(f"Building image {image_tag}...", "info")
+        self.log(f"Building image {image_tag}...", "info", "build")
         build_cmd = self.config.get('docker_build', "docker build -t {image_tag} {path}")
         
         # Enable BuildKit for performance
@@ -91,60 +36,130 @@ class Lab:
             build_cmd = build_cmd.replace("docker build", "docker build --no-cache")
 
         mapping = {"image_tag": image_tag, "path": template_path}
-        exit_status = os.system(build_cmd.format(**mapping))
+        exit_status, _ = self.run(build_cmd.format(**mapping))
         
         if exit_status == 0:
-            self.log(f"Image {image_tag} built successfully.", "success")
-            self.log("Cleaning up old image layers...", "info")
-            os.system("docker image prune -f")
+            self.log(f"Image {image_tag} built successfully.", "success", "done")
+            self.log("Cleaning up old image layers...", "info", "cleanup")
+            self.run("docker image prune -f")
         else:
-            self.log(f"Build failed with exit code {exit_status}", "error")
+            self.log(f"Build failed with exit code {exit_status}", "error", "done")
+
+    def generate_traefik_config(self, instance_id, docker_ip, lab_spec, lab_data):
+        """Build Traefik config from template services definition."""
+        services_spec = lab_spec.get('services', {})
+        base_domain = os.environ.get('CODE_DOMAIN', 'tomweb.fun')
+        
+        routers = ""
+        services = ""
+        
+        # A. Always add VS Code if 'code' is in services_spec
+        for svc_name, svc_spec in services_spec.items():
+            port = svc_spec['port']
+            
+            # Determine domain
+            domain_flag = svc_spec.get('domain_flag')
+            domain_prefix = svc_spec.get('domain_prefix', '')
+            
+            if domain_flag:
+                custom = self.args.getFlagValue(domain_flag)
+                # Sanitize inputs (prevent "default" strings from UI bugs)
+                if custom and ('default' in custom):
+                    custom = None
+                domain = custom if custom else f"{domain_prefix}{instance_id}.{base_domain}"
+            elif svc_name == 'code':
+                # Code domain logic from arguments or DB
+                db_domain = lab_data.get('code_domain')
+                selected_code_domain = self.args.getFlagValue('vsc_domain') or db_domain or f"{instance_id}.{base_domain}"
+                domain = selected_code_domain
+            elif svc_name == 'web':
+                # Web domains are handled separately below from 'domains' array
+                continue
+            else:
+                domain = f"{svc_name}-{instance_id}.{base_domain}"
+            
+            router_key = f"router-{instance_id}-{svc_name}"
+            service_key = f"service-{instance_id}-{svc_name}"
+            
+            routers += f"    {router_key}:\n"
+            routers += f"      rule: \"Host(`{domain}`)\"\n"
+            routers += f"      service: {service_key}\n"
+            routers += f"      entryPoints: [web, websecure]\n"
+            routers += f"      priority: 100\n"
+            routers += f"      tls: {{certResolver: myresolver}}\n"
+            if svc_spec.get('middlewares'):
+                mws = ", ".join(svc_spec['middlewares'])
+                routers += f"      middlewares: [{mws}]\n"
+            
+            services += f"    {service_key}:\n"
+            services += f"      loadBalancer:\n"
+            services += f"        servers: [{{url: \"http://{docker_ip}:{port}\"}}]\n"
+        
+        # B. Handle custom domains (expose_web)
+        user_domains = lab_data.get('domains', [])
+        is_exposed = lab_data.get('expose_web', False)
+        if is_exposed and user_domains and 'web' in services_spec:
+            web_service_key = f"service-{instance_id}-web"
+            web_port = services_spec.get('web', {}).get('port', 80)
+            
+            services += f"    {web_service_key}:\n"
+            services += f"      loadBalancer:\n"
+            services += f"        servers: [{{url: \"http://{docker_ip}:{web_port}\"}}]\n"
+            
+            for idx, domain in enumerate(user_domains):
+                routers += f"    router-{instance_id}-custom-{idx}:\n"
+                routers += f"      rule: \"Host(`{domain}`)\"\n"
+                routers += f"      service: {web_service_key}\n"
+                routers += f"      entryPoints: [web, websecure]\n"
+                routers += f"      priority: 100\n"
+                routers += f"      tls: {{certResolver: myresolver}}\n"
+        
+        yaml_str = "http:\n  routers:\n" + routers + "\n  services:\n" + services
+        return yaml_str
 
     def deploy(self):
         """Deploy a container with WireGuard mesh networking and Template-based Config"""
-        self.log("Deployment initiated (WireGuard Mesh Mode)...", "info")
+        self.log("Deployment initiated (WireGuard Mesh Mode)...", "info", "init")
         
-        # 0. Verify Docker Network exists (created by docker-compose, subnet 172.19.0.0/16)
+        # Phase 1: INIT
         docker_network = self.config.get('docker_network_name', 'local_dev_lab_tomlabs_dev_net')
-        network_check = os.system(f"docker network inspect {docker_network} > /dev/null 2>&1")
-        if network_check != 0:
-            self.log(f"FATAL: Docker network {docker_network} not found. Is docker-compose up?", "error")
-            self.log("Run: docker-compose up -d  (from local_dev_lab directory)", "error")
+        code, _ = self.run(f"docker network inspect {docker_network} > /dev/null 2>&1", capture=True)
+        if code != 0:
+            self.log(f"FATAL: Docker network {docker_network} not found. Is docker-compose up?", "error", "init")
             return
 
         instance_id = self.session_hash
         if not instance_id:
-            self.log("FATAL: session_hash is empty. Cannot deploy without a valid instance hash.", "error")
+            self.log("FATAL: session_hash is empty. Cannot deploy without a valid instance hash.", "error", "init")
             raise ValueError("session_hash is required for deployment")
         username = self.args.getFlagValue('user')
         
         if self.db is None:
-            self.log("Database connection failed. Aborting.", "error")
+            self.log("Database connection failed. Aborting.", "error", "init")
             return
 
-        # 1. Fetch Metadata
-        self.log("Fetching lab metadata from database...", "info")
+        self.log("Fetching lab metadata from database...", "info", "init")
         lab_data = self.db.deployed_labs.find_one({"instance_hash": instance_id})
         
         if not lab_data:
-            self.log(f"Metadata missing for {instance_id}", "error")
+            self.log(f"Metadata missing for {instance_id}", "error", "init")
             return
 
         if not username:
             username = lab_data.get('username')
             if not username:
-                self.log("FATAL: --user flag missing and no user found in database.", "error")
+                self.log("FATAL: --user flag missing and no user found in database.", "error", "init")
                 return
 
-        self.log(f"Starting deployment for user: {username}", "info")
-        self.log(f"Instance ID: {instance_id}", "info")
+        self.log(f"Starting deployment for user: {username}", "info", "init")
+        self.log(f"Instance ID: {instance_id}", "info", "init")
 
-        # 2. Load the specific Lab Template Configuration (Dynamic Allocation)
-        template_name = lab_data['lab_type']  # e.g., 'essentials'
+        # Load the specific Lab Template Configuration
+        template_name = lab_data['lab_type']
         template_config_path = os.path.join(self.config.get('templates_dir'), template_name, 'config.json')
         
         if not os.path.exists(template_config_path):
-            self.log(f"Template config missing: {template_config_path}", "error")
+            self.log(f"Template config missing: {template_config_path}", "error", "init")
             return
 
         with open(template_config_path, 'r') as f:
@@ -152,7 +167,7 @@ class Lab:
 
         link_script = lab_spec.get('scripts', {}).get('linkuser', '/var/labsdata/scripts/linkuser.sh')
 
-        # 3. Extract Resources & IPs
+        # Extract Resources & IPs
         res = lab_spec.get('resources', {})
         mem = res.get('memory', '512m')
         cpu = res.get('cpus', '0.2')
@@ -165,91 +180,73 @@ class Lab:
         docker_prefix = self.config.get('docker_ip_prefix', '172.19.0.')
         tunnel_prefix = self.config.get('tunnel_ip_prefix', '172.30.0.')
 
-        docker_ip = f"{docker_prefix}{last_octet}"      # Physical Docker IP (on compose network)
-        tunnel_ip = f"{tunnel_prefix}{last_octet}"     # Virtual VPN IP (WireGuard overlay)
+        docker_ip = f"{docker_prefix}{last_octet}"
+        tunnel_ip = f"{tunnel_prefix}{last_octet}"
         
-        # Determine the VPS container's IP on the Docker network (for WireGuard endpoint)
-        docker_network = self.config.get('docker_network_name', 'local_dev_lab_tomlabs_dev_net')
-        vps_docker_ip = os.popen(
-            f"docker inspect docker_tomlabs_vps "
-            f"--format '{{{{.NetworkSettings.Networks.{docker_network}.IPAddress}}}}' 2>/dev/null || "
-            f"docker inspect docker_tomlabs_vps_dev "
-            f"--format '{{{{.NetworkSettings.Networks.{docker_network}.IPAddress}}}}' 2>/dev/null"
-        ).read().strip()
+        code, vps_docker_ip = self.run(
+            f"docker inspect docker_tomlabs_vps --format '{{{{.NetworkSettings.Networks.{docker_network}.IPAddress}}}}' 2>/dev/null || "
+            f"docker inspect docker_tomlabs_vps_dev --format '{{{{.NetworkSettings.Networks.{docker_network}.IPAddress}}}}' 2>/dev/null", capture=True
+        )
         if not vps_docker_ip or vps_docker_ip == "<no value>":
-            vps_docker_ip = f"{docker_prefix}2"  # Fallback: first usable IP after gateway
-            self.log(f"WARNING: Could not detect VPS container IP, using fallback: {vps_docker_ip}", "warn")
-        else:
-            self.log(f"VPS Container IP (WG Endpoint): {vps_docker_ip}", "info")
+            vps_docker_ip = f"{docker_prefix}2"
+            self.log(f"WARNING: Could not detect VPS container IP, using fallback: {vps_docker_ip}", "warn", "network")
         
-        self.log(f"Assigned Docker IP (eth0): {docker_ip}", "info")
-        self.log(f"Assigned Tunnel IP (wg0): {tunnel_ip}", "info")
+        self.log(f"Assigned Docker IP (eth0): {docker_ip}", "info", "network")
+        self.log(f"Assigned Tunnel IP (wg0): {tunnel_ip}", "info", "network")
         
         storage_path = lab_data['storage_path']
         
-        # 4. Cleanup existing container (FIXED - don't prune networks!)
-        self.log("Checking for conflicting containers...", "info")
-        if self.docker.container_exists(instance_id):
-            docker_network = self.config.get('docker_network_name', 'bridge')
-            try:
-                self.log(f"Disconnecting {instance_id} from {docker_network}...", "info")
-                os.system(f"docker network disconnect -f {docker_network} {instance_id} 2>/dev/null")
-            except Exception as e:
-                pass
-            os.system(f"docker stop {instance_id} 2>/dev/null && docker rm -f {instance_id} 2>/dev/null")
-            self.log("Container removed.", "success")
-            self.log("Container removed.", "success")
+        # Phase 2: CLEANUP
+        self.log("Checking for conflicting containers...", "info", "cleanup")
+        if self.cleanup_container(instance_id, self.config.get('docker_network_name', 'bridge')):
+            self.log("Container removed.", "success", "cleanup")
         else:
-            self.log("No existing container found.", "info")
+            self.log("No existing container found.", "info", "cleanup")
         
-        # 5. Verify storage
+        # Phase 3: STORAGE
         if not os.path.exists(storage_path):
-            self.log("Setting up storage...", "info")
+            self.log("Setting up storage...", "info", "storage")
             os.makedirs(storage_path, exist_ok=True)
         else:
-            self.log("Volume verified.", "success")
+            self.log("Volume verified.", "success", "storage")
         
-        # 6. Clean up stale WireGuard peer
-        self.log(f"Clearing stale VPN sessions for {tunnel_ip}...", "info")
+        # Phase 4: NETWORK
+        self.log(f"Clearing stale VPN sessions for {tunnel_ip}...", "info", "network")
         wgfree_script = os.path.join(self.config.get('templates_dir'), template_name, "Data/scripts/wgfree.sh")
         if os.path.exists(wgfree_script):
-            os.system(f"bash {wgfree_script} {tunnel_ip}")
+            self.run(f"bash {wgfree_script} {tunnel_ip}")
         
-        # 7. Generate or Reuse WireGuard Keys
         credentials = lab_data.get('credentials', {})
         lab_pub_key = credentials.get('wg_pubkey')
         lab_priv_key = credentials.get('wg_privkey')
 
         if not lab_priv_key or not lab_pub_key:
-            self.log("Generating fresh WireGuard keys...", "info")
+            self.log("Generating fresh WireGuard keys...", "info", "network")
             wg_script = os.path.join(self.config.get('templates_dir'), template_name, "Data/scripts/wgconfig.py")
             try:
-                wg_output = os.popen(f"python3 {wg_script} {tunnel_ip}").read().strip()
+                code, wg_output = self.run(f"python3 {wg_script} {tunnel_ip}", capture=True)
                 lab_priv_key, lab_pub_key = wg_output.split('|')
             except Exception as e:
-                self.log("WireGuard key generation failed", "error")
+                self.log("WireGuard key generation failed", "error", "network")
                 return
         else:
-            self.log("Reusing existing keys for stable connection...", "info")
-            # Remove any stale peer using this IP first
-            os.system(f"wg show wg0 allowed-ips | grep '{tunnel_ip}/32' | awk '{{print $1}}' | xargs -I{{}} wg set wg0 peer {{}} remove 2>/dev/null || true")
-            # Re-register the peer with its existing public key
-            os.system(f"wg set wg0 peer {lab_pub_key} allowed-ips {tunnel_ip}/32")
-            # Verify registration
-            check = os.popen(f"wg show wg0 allowed-ips | grep '{lab_pub_key}'").read().strip()
-            if check:
-                self.log(f"Peer re-registered: {tunnel_ip}", "success")
-            else:
-                self.log(f"WARNING: Peer registration may have failed for {tunnel_ip}", "warn")
+            self.log("Reusing existing keys for stable connection...", "info", "network")
+            self.run(f"wg show wg0 allowed-ips | grep '{tunnel_ip}/32' | awk '{{print $1}}' | xargs -I{{}} wg set wg0 peer {{}} remove 2>/dev/null || true")
+            self.run(f"wg set wg0 peer {lab_pub_key} allowed-ips {tunnel_ip}/32")
             
-        # 8. Get server WireGuard public key
-        server_pub_key = os.popen("wg show wg0 public-key 2>/dev/null").read().strip()
+            code, check = self.run(f"wg show wg0 allowed-ips | grep '{lab_pub_key}'", capture=True)
+            if check:
+                self.log(f"Peer re-registered: {tunnel_ip}", "success", "network")
+            else:
+                self.log(f"WARNING: Peer registration may have failed for {tunnel_ip}", "warn", "network")
+            
+        code, server_pub_key = self.run("wg show wg0 public-key 2>/dev/null", capture=True)
         if not server_pub_key:
-            self.log("WARNING: Could not get server WireGuard public key", "warn")
-            server_pub_key = "d5fV23F8CsH603vBs+z70c/q7iN9ZK6dWU5vsdh5SDE="
+            self.log("WARNING: Could not get server WireGuard public key", "warn", "network")
+            server_pub_key = "" # It will fail in linkuser without this, let's keep going but it will likely fail.
 
-        # 9. Start Container with Template-based Mapping
-        self.log(f"Provisioning {lab_spec.get('lab_name', template_name)}: {mem} RAM, {cpu} CPU", "info")
+        # Phase 5: CONTAINER
+        self.log(f"Provisioning {lab_spec.get('lab_name', template_name)}: {mem} RAM, {cpu} CPU", "info", "container")
         mapping = {
             "lab_name": instance_id, 
             "memory": mem,
@@ -265,61 +262,37 @@ class Lab:
         
         self.docker.run_command(self.config.get('docker_run'), mapping)
         
-        # 10. Wait for container initialization (Smart Polling)
-        self.log("Waiting for container services to initialize...", "info")
+        self.log("Waiting for container services to initialize...", "info", "container")
         for i in range(10):
             if self.docker.is_container_running(instance_id):
                 break
             time.sleep(0.5)
         
-        # 11. Configure Host Routing
-        self.log("Configuring network routing and firewall...", "info")
-        docker_network = self.config.get('docker_network_name', 'local_dev_lab_tomlabs_dev_net')
-        bridge_id = os.popen(
-            f"docker network inspect {docker_network} -f '{{{{index .Options \"com.docker.network.bridge.name\"}}}}' 2>/dev/null"
-        ).read().strip()
+        # Phase 6: ROUTING
+        self.log("Configuring network routing and firewall...", "info", "routing")
+        bridge_id = self.detect_bridge(docker_network)
+        self.configure_routing(tunnel_ip, docker_ip, bridge_id)
+        self.log("Routing and firewall configured.", "success", "routing")
         
-        if not bridge_id or bridge_id == "<no value>":
-            bridge_id = os.popen(
-                f"echo br-$(docker network inspect {docker_network} -f '{{{{.Id}}}}' 2>/dev/null | cut -c1-12)"
-            ).read().strip()
-
-        # In a local docker environment, the bridge might not exist inside the vps_dev namespace.
-        # Fallback to eth0 which is the standard outbound interface to the docker network.
-        if not bridge_id or bridge_id == "br-" or os.system(f"ip link show {bridge_id} > /dev/null 2>&1") != 0:
-            self.log(f"Bridge '{bridge_id}' not found in current namespace, falling back to eth0", "warn")
-            bridge_id = "eth0"
-        
-        os.system("sysctl -w net.ipv4.ip_forward=1")
-        os.system(f"ip route del {tunnel_ip}/32 2>/dev/null || true")
-        os.system(f"ip route add {tunnel_ip}/32 via {docker_ip} dev {bridge_id} 2>/dev/null || true")
-        os.system("iptables -A FORWARD -i wg0 -o wg0 -j ACCEPT 2>/dev/null || true")
-        os.system(f"iptables -A FORWARD -i wg0 -o {bridge_id} -j ACCEPT 2>/dev/null || true")
-        os.system(f"iptables -A FORWARD -i {bridge_id} -o wg0 -j ACCEPT 2>/dev/null || true")
-        os.system("iptables -t nat -A POSTROUTING -s 172.30.0.0/16 -o eth0 -j MASQUERADE 2>/dev/null || true")
-        
-        self.log("Routing and firewall configured.", "success")
-        
-        # 12. Configure Apache Optimization (Low Memory/PID Footprint)
-        self.log("Optimizing Apache for single-user environment...", "info")
+        # Phase 7: CONFIGURE
+        self.log("Optimizing Apache for single-user environment...", "info", "configure")
         apache_opt_cmd = (
             f"docker exec {instance_id} bash -c \""
-            "cat <<EOF > /etc/apache2/mods-available/mpm_event.conf\\n"
-            "<IfModule mpm_event_module>\\n"
-            "        StartServers             1\\n"
-            "        MinSpareThreads          2\\n"
-            "        MaxSpareThreads          5\\n"
-            "        ThreadsPerChild          10\\n"
-            "        MaxRequestWorkers        20\\n"
-            "        MaxConnectionsPerChild   0\\n"
-            "</IfModule>\\n"
-            "EOF\\n"
-            "&& service apache2 reload\"" # Reload to apply
+            "cat <<EOF > /etc/apache2/mods-available/mpm_event.conf\n"
+            "<IfModule mpm_event_module>\n"
+            "        StartServers             1\n"
+            "        MinSpareThreads          2\n"
+            "        MaxSpareThreads          5\n"
+            "        ThreadsPerChild          10\n"
+            "        MaxRequestWorkers        20\n"
+            "        MaxConnectionsPerChild   0\n"
+            "</IfModule>\n"
+            "EOF\n"
+            "&& service apache2 reload\""
         )
-        os.system(apache_opt_cmd)
+        self.run(apache_opt_cmd)
 
-        # 13. Configure User Environment
-        self.log(f"Configuring user environment for {username}...", "info")
+        self.log(f"Configuring user environment for {username}...", "info", "configure")
         
         # NOTE: SSH from= IP restrictions are NOT used because iptables MASQUERADE
         # on the VPS rewrites the client's source IP before packets reach the container.
@@ -350,36 +323,23 @@ class Lab:
         escaped_auth_content = auth_content.replace('"', '\\"')
         link_cmd = f'docker exec {instance_id} {link_script} "{username}" "{escaped_auth_content}" "{docker_ip}" "{dynamic_pass}" "{lab_priv_key}" "{tunnel_ip}" "{server_pub_key}" "{user_email}" "{n8n_domain_arg}" "{vps_docker_ip}"'
         
-        if os.system(link_cmd) != 0:
-            self.log("linkuser.sh failed", "error")
+        code, _ = self.run(link_cmd)
+        if code != 0:
+            self.log("linkuser.sh failed", "error", "configure")
             return
         
-        # 13. Update Metadata
-        self.log("[*] Finalizing routing metadata...", "info")
-        self.log("[*] Finalizing routing metadata...", "info")
-        
-        lab_data = self.db.deployed_labs.find_one({"instance_hash": instance_id})
-        db_domain = lab_data.get('code_domain')
-        self.log(f"DEBUG: Found domain in DB: {db_domain}", "info")
+        # Phase 8: TRAEFIK
+        self.log("[*] Finalizing Traefik routing...", "info", "traefik")
+        traefik_dict = self.generate_traefik_config(instance_id, docker_ip, lab_spec, lab_data)
+        self.write_traefik_config(instance_id, traefik_dict)
+
+        # Phase 9: METADATA
+        self.log("[*] Finalizing routing metadata...", "info", "metadata")
         
         base_domain = os.environ.get('CODE_DOMAIN', 'tomweb.fun')
+        db_domain = lab_data.get('code_domain')
         selected_code_domain = self.args.getFlagValue('vsc_domain') or db_domain or f"{instance_id}.{base_domain}"
         code_server_url = f"https://{selected_code_domain}"
-
-        # Calculate MinIO Domains early for DB storage
-        # User requested: Console -> s3-..., API -> api-...
-        # Check for overrides from CLI flags
-        custom_console = self.args.getFlagValue('minio-console-domain')
-        custom_api = self.args.getFlagValue('minio-api-domain')
-
-        # Sanitize inputs (prevent "default" strings from UI bugs)
-        if custom_console and (custom_console == 'default_console' or 'default' in custom_console):
-            custom_console = None
-        if custom_api and (custom_api == 'default_api' or 'default' in custom_api):
-            custom_api = None
-
-        s3_ui_domain = custom_console if custom_console else f"s3-{instance_id}.{base_domain}"
-        s3_api_domain = custom_api if custom_api else f"api-{instance_id}.{base_domain}"
         
         credentials = {
             "ssh": f"ssh {username}@{tunnel_ip}",
@@ -393,25 +353,33 @@ class Lab:
             "wg_privkey": lab_priv_key
         }
 
-        # Add MinIO Specifics if applicable
-        if template_name == 'minio':
-            credentials.update({
-                "minio_access_key": username,
-                "minio_secret_key": dynamic_pass,
-                "minio_url_console": f"https://{s3_ui_domain}",
-                "minio_url_api": f"https://{s3_api_domain}",
-                "minio_port_console": 9001,
-                "minio_port_api": 9000
-            })
-        
-        # Add n8n Specifics if applicable
-        if template_name == 'n8n':
-            credentials.update({
-                "n8n_username": user_email,
-                "n8n_password": dynamic_pass,
-                "n8n_url": f"https://{selected_n8n_domain}",
-                "n8n_port": 5678
-            })
+        # Dynamically build credentials from template
+        cred_template = lab_spec.get('credentials_template', {})
+        if cred_template:
+            # Prepare format string args
+            fmt_args = {
+                "username": username,
+                "password": dynamic_pass,
+                "email": user_email
+            }
+            # Dynamically pull domain values
+            for svc_name, svc_spec in lab_spec.get('services', {}).items():
+                domain_flag = svc_spec.get('domain_flag')
+                domain_prefix = svc_spec.get('domain_prefix', '')
+                if domain_flag:
+                    custom = self.args.getFlagValue(domain_flag)
+                    if custom and ('default' in custom): custom = None
+                    domain = custom if custom else f"{domain_prefix}{instance_id}.{base_domain}"
+                    # e.g., if domain_flag is "n8n-domain", key is "n8n_domain"
+                    fmt_args[domain_flag.replace('-', '_')] = domain
+                    # e.g., if service is "s3-ui", allow replacing "{s3-ui_domain}"
+                    fmt_args[f"{svc_name}_domain"] = domain
+            
+            for key, val in cred_template.items():
+                if isinstance(val, str):
+                    credentials[key] = val.format(**fmt_args)
+                else:
+                    credentials[key] = val
 
         self.db.deployed_labs.update_one(
             {"instance_hash": instance_id}, 
@@ -421,154 +389,89 @@ class Lab:
                 "updated_at": time.time()
             }}
         )
-
-       # 14. Configure Traefik 
-        self.log("[*] Finalizing Traefik routing...", "info")
-
-        # FORCE RE-FETCH to ensure PHP updates for domains/expose_web are present
-        lab_data = self.db.deployed_labs.find_one({"instance_hash": instance_id})
-
-        user_domains = lab_data.get('domains', [])
-        is_exposed = lab_data.get('expose_web', False)
-
-        # DEBUG LOG: Verify these values in your terminal logs!
-        self.log(f"DEBUG: expose_web={is_exposed}, domains={user_domains}", "info")
         
-        traefik_config = "http:\n  routers:\n"
-
-        # A. VS Code Router (Always needed)
-        traefik_config += f"""    router-{instance_id}-code:
-      rule: "Host(`{selected_code_domain}`)"
-      service: service-{instance_id}-code
-      entryPoints: [web, websecure]
-      middlewares: [code-headers@file, compress-responses@file]
-"""
-        # B. MinIO UI Router (Only if template is minio)
-        if template_name == 'minio':
-            # Domains already defined above
-            traefik_config += f"""    router-{instance_id}-s3-ui:
-      rule: "Host(`{s3_ui_domain}`)"
-      service: service-{instance_id}-s3-ui
-      entryPoints: [web, websecure]
-"""
-            traefik_config += f"""    router-{instance_id}-s3-api:
-      rule: "Host(`{s3_api_domain}`)"
-      service: service-{instance_id}-s3-api
-      entryPoints: [web, websecure]
-"""
-
-        # C. SERVICES SECTION
-        # CUSTOM DOMAINS (Web Exposure)
-        if is_exposed and user_domains:
-            for idx, domain in enumerate(user_domains):
-                # Use lstrip() or adjust indentation to be exactly 4 spaces
-                traefik_config += f"""    router-{instance_id}-custom-{idx}:
-      rule: "Host(`{domain}`)"
-      service: service-{instance_id}-web
-      entryPoints: [web, websecure]\n"""
-      
-        if template_name == 'n8n':
-            traefik_config += f"""    router-{instance_id}-n8n:
-      rule: "Host(`{selected_n8n_domain}`)"
-      service: service-{instance_id}-n8n
-      entryPoints: [web, websecure]
-"""
-
-        traefik_config += "\n  services:\n"
-        traefik_config += f"""    service-{instance_id}-code:
-      loadBalancer:
-        servers: [{{url: "http://{docker_ip}:8080"}}]
-    service-{instance_id}-web:
-      loadBalancer:
-        servers: [{{url: "http://{docker_ip}:80"}}]
-"""
-
-        if template_name == 'minio':
-            traefik_config += f"""    service-{instance_id}-s3-ui:
-      loadBalancer:
-        servers: [{{url: "http://{docker_ip}:9001"}}]
-    service-{instance_id}-s3-api:
-      loadBalancer:
-        servers: [{{url: "http://{docker_ip}:9000"}}]
-"""
-
-        if template_name == 'n8n':
-
-            traefik_config += f"""    service-{instance_id}-n8n:
-      loadBalancer:
-        servers: [{{url: "http://{docker_ip}:5678"}}]
-"""
-
-        # D. WRITE THE FILE
-        traefik_file_path = f"/etc/traefik/dynamic_conf/{instance_id}.yml"
-        try:
-            with open(traefik_file_path, "w") as f:
-                f.write(traefik_config)
-            self.log(f"[✓] Traefik configuration applied", "success")
-        except Exception as e:
-            self.log(f"[!] Traefik config failed: {str(e)}", "error")
-        
-        self.log("Deployment Complete. Ready for connections.", "success")
-        self.log(f"Access URL: {code_server_url}", "info")
-        self.log(f"VPN Access: ssh {username}@{tunnel_ip}", "info")
+        # Phase 10: DONE
+        self.log("Deployment Complete. Ready for connections.", "success", "done")
+        self.log(f"Access URL: {code_server_url}", "info", "done")
+        self.log(f"VPN Access: ssh {username}@{tunnel_ip}", "info", "done")
 
     def stop(self):
         """Stop container and clean up runtime networking without releasing the IP pool."""
         lab_name = self.session_hash
-        self.log(f"Initiating graceful shutdown for: {lab_name}", "info")
+        self.log(f"Initiating graceful shutdown for: {lab_name}", "info", "init")
         
-        # 1. Fetch metadata to find IPs for cleanup
         lab_data = self.db.deployed_labs.find_one({"instance_hash": lab_name})
         
         if lab_data:
             credentials = lab_data.get('credentials', {})
             tunnel_ip = credentials.get('tunnel_ip')
             
-            # 2. Remove Host-Side Routing for this specific lab
             if tunnel_ip:
-                self.log(f"[*] Cleaning host route: {tunnel_ip}", "info")
-                os.system(f"ip route del {tunnel_ip}/32 2>/dev/null || true")
+                self.log(f"Cleaning host route: {tunnel_ip}", "info", "routing")
+                self.run(f"ip route del {tunnel_ip}/32 2>/dev/null || true")
 
-        # 3. Terminate Docker Container
         if self.docker.container_exists(lab_name):
-            self.log(f"[*] Stopping Docker container...", "warn")
-            # We are already root, so no need for sudo
-            os.system(f"docker stop {lab_name} && docker rm -f {lab_name}")
+            self.log(f"Stopping Docker container...", "warn", "cleanup")
+            self.run(f"docker stop {lab_name} && docker rm -f {lab_name}")
             
-            # 4. Update Status
             self.db.deployed_labs.update_one(
                 {"instance_hash": lab_name}, 
                 {"$set": {"status": "stopped"}}
             )
-            self.log("[✓] Container and process-space cleared.", "success")
+            self.log("Container and process-space cleared.", "success", "cleanup")
 
-        # 5. Purge Traefik Configuration
-        traefik_file = f"/etc/traefik/dynamic_conf/{lab_name}.yml"
-        if os.path.exists(traefik_file):
-            try:
-                os.remove(traefik_file)
-                self.log(f"[✓] Traefik route removed for {lab_name}", "success")
-            except Exception as e:
-                self.log(f"[!] Traefik cleanup error: {str(e)}", "warn")
-
-        self.log(f"[✓] Lab {lab_name} is now offline. IP remains reserved.", "success")
+        self.remove_traefik_config(lab_name)
+        self.log(f"Lab {lab_name} is now offline. IP remains reserved.", "success", "done")
 
     def start(self):
-        """Start a stopped container"""
+        """Start a stopped container and re-apply routing & Traefik."""
         lab_name = self.session_hash
-        self.log(f"Starting container: {lab_name}", "info")
+        self.log(f"Starting container: {lab_name}", "info", "init")
         
         if self.docker.container_exists(lab_name):
-            os.system(f"docker start {lab_name}")
-            self.log("Container started.", "success")
+            self.run(f"docker start {lab_name}")
+            self.log("Container started.", "success", "container")
             
             if self.db is not None:
                 self.db.deployed_labs.update_one(
                     {"instance_hash": lab_name}, 
                     {"$set": {"status": "running"}}
                 )
+                
+            lab_data = self.db.deployed_labs.find_one({"instance_hash": lab_name})
+            if lab_data:
+                credentials = lab_data.get('credentials', {})
+                tunnel_ip = credentials.get('tunnel_ip')
+                docker_ip = credentials.get('docker_ip')
+                lab_pub_key = credentials.get('wg_pubkey')
+                template_name = lab_data.get('lab_type')
+                
+                # Re-apply WireGuard
+                if tunnel_ip and lab_pub_key:
+                    self.log("Re-applying WireGuard peer...", "info", "network")
+                    self.run(f"wg show wg0 allowed-ips | grep '{tunnel_ip}/32' | awk '{{print $1}}' | xargs -I{{}} wg set wg0 peer {{}} remove 2>/dev/null || true")
+                    self.run(f"wg set wg0 peer {lab_pub_key} allowed-ips {tunnel_ip}/32")
+
+                # Re-apply Routing
+                if tunnel_ip and docker_ip:
+                    self.log("Re-applying network routes...", "info", "routing")
+                    docker_network = self.config.get('docker_network_name', 'local_dev_lab_tomlabs_dev_net')
+                    bridge_id = self.detect_bridge(docker_network)
+                    self.configure_routing(tunnel_ip, docker_ip, bridge_id)
+                
+                # Re-apply Traefik
+                if template_name:
+                    self.log("Re-applying Traefik configuration...", "info", "traefik")
+                    template_config_path = os.path.join(self.config.get('templates_dir'), template_name, 'config.json')
+                    if os.path.exists(template_config_path):
+                        with open(template_config_path, 'r') as f:
+                            lab_spec = json.load(f)
+                        traefik_dict = self.generate_traefik_config(lab_name, docker_ip, lab_spec, lab_data)
+                        self.write_traefik_config(lab_name, traefik_dict)
+            
+            self.log("Lab start sequence complete.", "success", "done")
         else:
-            self.log(f"Container {lab_name} not found", "error")
+            self.log(f"Container {lab_name} not found", "error", "init")
 
     def remove(self):
         """Remove a container completely"""
@@ -649,64 +552,60 @@ class Lab:
                 with open(auth_file, "w") as f:
                     f.write(auth_content)
                 os.chmod(auth_file, 0o600)
-                self.log(f"[✓] Updated {auth_file}", "success")
+                self.log(f"Updated {auth_file}", "success", "system")
             except Exception as e:
-                self.log(f"[!] Failed to write authorized_keys: {e}", "error")
+                self.log(f"Failed to write authorized_keys: {e}", "error", "system")
         else:
-             self.log(f"Storage path {storage_path} does not exist. No labs deployed?", "warn")
+             self.log(f"Storage path {storage_path} does not exist. No labs deployed?", "warn", "system")
 
     def ensure_codeserver(self):
         """Ensure code-server is running inside the container"""
         lab_name = self.session_hash
         username = self.args.getFlagValue('user')
         
-        self.log(f"Ensuring code-server is running for {lab_name}...", "info")
+        self.log(f"Ensuring code-server is running for {lab_name}...", "info", "system")
         
         if not self.docker.container_exists(lab_name):
-            self.log(f"Container {lab_name} not found", "error")
+            self.log(f"Container {lab_name} not found", "error", "system")
             return
 
-        # Check if code-server is already running
         check_cmd = f"docker exec {lab_name} pgrep -u {username} -f code-server"
-        if os.system(check_cmd) == 0:
-            self.log("Code-server is already running.", "success")
+        code, _ = self.run(check_cmd, capture=True)
+        if code == 0:
+            self.log("Code-server is already running.", "success", "done")
             return
 
-        self.log("Starting code-server...", "info")
+        self.log("Starting code-server...", "info", "system")
         
-        # Construct startup command matching linkuser.sh
-        # We use strict paths to avoid environment issues
         user_home = f"/home/{username}"
         config_file = f"{user_home}/.config/code-server/config.yaml"
         log_file = f"{user_home}/.code-server.log"
         
-        # Command to run as user inside container (optimized for speed)
         start_cmd = f"nohup code-server --disable-telemetry --disable-update-check --config {config_file} > {log_file} 2>&1 &"
-        
-        # Wrap in docker exec as user
         docker_cmd = f"docker exec -u {username} {lab_name} bash -c '{start_cmd}'"
         
-        if os.system(docker_cmd) == 0:
-            time.sleep(2) # Wait for startup
-            if os.system(check_cmd) == 0:
-                self.log("Code-server started successfully.", "success")
+        code, _ = self.run(docker_cmd)
+        if code == 0:
+            time.sleep(2) 
+            code, _ = self.run(check_cmd, capture=True)
+            if code == 0:
+                self.log("Code-server started successfully.", "success", "done")
                 
-                # ALSO ensure the monitor is running
-                self.log("Ensuring idle monitor is active...", "info")
+                self.log("Ensuring idle monitor is active...", "info", "system")
                 monitor_check = f"docker exec {lab_name} pgrep -f monitor_codeserver"
-                if os.system(monitor_check) != 0:
-                    # Start monitor as root (it handles switching to user for checks)
+                mcode, _ = self.run(monitor_check, capture=True)
+                if mcode != 0:
                     monitor_start = f"nohup /var/labsdata/scripts/monitor_codeserver.sh {username} > /var/log/code-monitor.log 2>&1 &"
                     docker_monitor = f"docker exec {lab_name} bash -c '{monitor_start}'"
-                    os.system(docker_monitor)
-                    self.log("Idle monitor started.", "success")
+                    self.run(docker_monitor)
+                    self.log("Idle monitor started.", "success", "system")
                 else:
-                    self.log("Idle monitor already running.", "info")
+                    self.log("Idle monitor already running.", "info", "system")
 
             else:
-                self.log("Failed to verify code-server startup.", "error")
+                self.log("Failed to verify code-server startup.", "error", "system")
         else:
-            self.log("Failed to execute startup command.", "error")
+            self.log("Failed to execute startup command.", "error", "system")
     def list_images(self):
         """List all lab templates and their build status"""
         templates_dir = self.config.get('templates_dir', '/opt/labs-control-panel/lab-templates')
@@ -729,22 +628,20 @@ class Lab:
     
     def get_workers(self):
         """Check how many Python worker processes are currently alive via systemd."""
-        self.log("Querying systemd for active labs-worker instances...", "info")
+        self.log("Querying systemd for active labs-worker instances...", "info", "system")
         try:
-            # Query systemctl specifically for running instances of your worker
             cmd = "systemctl list-units --type=service --state=running | grep 'labs-worker' | awk '{print $1}'"
-            output = os.popen(cmd).read().strip()
+            code, output = self.run(cmd, capture=True)
             
             if not output:
-                self.log("No active workers found. (Check if 'systemctl start labs-worker@1' was run)", "warn")
+                self.log("No active workers found. (Check if 'systemctl start labs-worker@1' was run)", "warn", "system")
                 return
 
             workers = output.split('\n')
             count = len(workers)
             
-            self.log(f"Total Active Workers: {count}", "success")
+            self.log(f"Total Active Workers: {count}", "success", "system")
             
-            # Print a clean, CLI-friendly list matching your list_images format
             print("-" * 40)
             print(f"{'Worker Instance Name':<25} | {'Status'}")
             print("-" * 40)
@@ -753,4 +650,4 @@ class Lab:
             print("-" * 40 + "\n")
             
         except Exception as e:
-            self.log(f"Failed to check workers: {e}", "error")
+            self.log(f"Failed to check workers: {e}", "error", "system")

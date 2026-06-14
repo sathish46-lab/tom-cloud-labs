@@ -14,5 +14,19 @@
   },
   "scripts": {
     "linkuser": "/var/labsdata/scripts/linkuser.sh"
+  },
+  "services": {
+    "code":   { "port": 8080, "middlewares": ["code-headers@file"] },
+    "web":    { "port": 80 },
+    "s3-ui":  { "port": 9001, "domain_prefix": "s3-", "domain_flag": "minio-console-domain" },
+    "s3-api": { "port": 9000, "domain_prefix": "api-", "domain_flag": "minio-api-domain" }
+  },
+  "credentials_template": {
+    "minio_access_key": "{username}",
+    "minio_secret_key": "{password}",
+    "minio_url_console": "https://{s3-ui_domain}",
+    "minio_url_api": "https://{s3-api_domain}",
+    "minio_port_console": 9001,
+    "minio_port_api": 9000
   }
 }

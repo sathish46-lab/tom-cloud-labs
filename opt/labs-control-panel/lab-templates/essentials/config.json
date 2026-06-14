@@ -18,5 +18,10 @@
   "scripts": {
     "linkuser": "/var/labsdata/scripts/linkuser.sh",
     "entry": "/var/labsdata/scripts/entry.sh"
-  }
+  },
+  "services": {
+    "code": { "port": 8080, "middlewares": ["code-headers@file", "compress-responses@file"] },
+    "web":  { "port": 80 }
+  },
+  "credentials_template": {}
 }

@@ -4,83 +4,16 @@ import time
 import secrets
 import string
 import sys
-from src.DockerHelper import DockerHelper
+from src.BaseOrchestrator import BaseOrchestrator
 
-
-class Challenge:
+class Challenge(BaseOrchestrator):
     """
     Challenge Manager for CTF-style challenge deployments.
     Handles build, deploy, remove, stop, and start for challenge containers.
     Challenges are lightweight containers accessible only via WireGuard VPN overlay.
     """
-
     def __init__(self, args, session_hash=None):
-        self.args = args
-        self.session_hash = session_hash
-        self.docker = DockerHelper()
-        self.config = self._load_global_config()
-        self.env = self._load_env_config()
-        self.db = None
-
-        # Connect to MongoDB (same pattern as Lab.py)
-        self._connect_db()
-
-    def _load_env_config(self):
-        """Load the global environment configuration (env.json)"""
-        paths = ['/var/www/env.json', '/Users/sathish/Development/local_dev_lab/env.json', 'env.json']
-        for path in paths:
-            if os.path.exists(path):
-                try:
-                    with open(path, 'r') as f:
-                        return json.load(f)
-                except Exception:
-                    continue
-        return {}
-
-    def _load_global_config(self):
-        config_path = '/opt/labs-control-panel/config.json'
-        return json.load(open(config_path)) if os.path.exists(config_path) else {}
-
-    def _connect_db(self):
-        """Establish MongoDB connection using env.json or fallback."""
-        import pymongo
-
-        mongo_uri = self.env.get('database_file')
-        db_name = self.env.get('main_db', 'tom_labs_db')
-
-        if mongo_uri:
-            try:
-                self.mongo_client = pymongo.MongoClient(mongo_uri, serverSelectionTimeoutMS=2000)
-                self.mongo_client.admin.command('ping')
-                self.db = self.mongo_client[db_name]
-                return
-            except Exception as e:
-                self.log(f"Env DB connection failed: {e}", "warn")
-
-        # Fallback: Docker internal network
-        try:
-            self.mongo_client = pymongo.MongoClient(
-                "mongodb://admin:Tombootroot@docker_tomlabs_mongodb:27017/?authSource=admin",
-                serverSelectionTimeoutMS=2000
-            )
-            self.mongo_client.admin.command('ping')
-            self.db = self.mongo_client.tom_labs_db
-        except Exception:
-            try:
-                self.mongo_client = pymongo.MongoClient(
-                    "mongodb://admin:Tombootroot@localhost:27018/?authSource=admin",
-                    serverSelectionTimeoutMS=2000
-                )
-                self.mongo_client.admin.command('ping')
-                self.db = self.mongo_client.tom_labs_db
-            except Exception:
-                self.db = None
-
-    def log(self, message, level="info"):
-        prefixes = {"info": "[*]", "success": "[✓]", "error": "[!]", "warn": "[!]"}
-        full_message = f"{prefixes.get(level, '[*]')} {message}"
-        print(full_message)
-        sys.stdout.flush()
+        super().__init__(args, session_hash)
 
     # ─────────────────────────────────────────────
     # BUILD
@@ -102,7 +35,7 @@ class Challenge:
             self.log(f"Template path not found: {template_path}", "error")
             return
 
-        self.log(f"Building challenge image {image_tag}...", "info")
+        self.log(f"Building challenge image {image_tag}...", "info", "build")
         build_cmd = self.config.get('docker_build', "docker build -t {image_tag} {path}")
 
         # Enable BuildKit for performance
@@ -112,48 +45,48 @@ class Challenge:
             build_cmd = build_cmd.replace("docker build", "docker build --no-cache")
 
         mapping = {"image_tag": image_tag, "path": template_path}
-        exit_status = os.system(build_cmd.format(**mapping))
+        exit_status, _ = self.run(build_cmd.format(**mapping))
 
         if exit_status == 0:
-            self.log(f"Challenge image {image_tag} built successfully.", "success")
-            os.system("docker image prune -f")
+            self.log(f"Challenge image {image_tag} built successfully.", "success", "done")
+            self.run("docker image prune -f")
         else:
-            self.log(f"Build failed with exit code {exit_status}", "error")
+            self.log(f"Build failed with exit code {exit_status}", "error", "done")
 
     # ─────────────────────────────────────────────
     # DEPLOY
     # ─────────────────────────────────────────────
     def deploy(self):
         """Deploy a challenge container with WireGuard VPN networking."""
-        self.log("Challenge deployment initiated...", "info")
+        self.log("Challenge deployment initiated...", "info", "init")
 
         # 0. Verify Docker Network exists
         docker_network = self.config.get('docker_network_name', 'local_dev_lab_tomlabs_dev_net')
-        network_check = os.system(f"docker network inspect {docker_network} > /dev/null 2>&1")
-        if network_check != 0:
-            self.log(f"FATAL: Docker network {docker_network} not found. Is docker-compose up?", "error")
+        code, _ = self.run(f"docker network inspect {docker_network} > /dev/null 2>&1", capture=True)
+        if code != 0:
+            self.log(f"FATAL: Docker network {docker_network} not found. Is docker-compose up?", "error", "init")
             return
 
         instance_id = self.session_hash
         if not instance_id:
-            self.log("FATAL: --hash is required. Cannot deploy without a valid instance hash.", "error")
+            self.log("FATAL: --hash is required. Cannot deploy without a valid instance hash.", "error", "init")
             return
 
         username = self.args.getFlagValue('user')
         if not username:
-            self.log("FATAL: --user is required.", "error")
+            self.log("FATAL: --user is required.", "error", "init")
             return
 
         challenge_id = self.args.getFlagValue('challenge')
         if not challenge_id:
-            self.log("FATAL: --challenge is required. Example: --challenge=sql_injection", "error")
+            self.log("FATAL: --challenge is required. Example: --challenge=sql_injection", "error", "init")
             return
 
-        self.log(f"Deploying challenge '{challenge_id}' for user: {username}", "info")
-        self.log(f"Instance ID: {instance_id}", "info")
+        self.log(f"Deploying challenge '{challenge_id}' for user: {username}", "info", "init")
+        self.log(f"Instance ID: {instance_id}", "info", "init")
 
         if self.db is None:
-            self.log("Database connection failed. Aborting.", "error")
+            self.log("Database connection failed. Aborting.", "error", "init")
             return
 
         # 1. Load Challenge Template Config
@@ -161,7 +94,7 @@ class Challenge:
         template_config_path = os.path.join(templates_dir, challenge_id, 'config.json')
 
         if not os.path.exists(template_config_path):
-            self.log(f"Challenge template config missing: {template_config_path}", "error")
+            self.log(f"Challenge template config missing: {template_config_path}", "error", "init")
             return
 
         with open(template_config_path, 'r') as f:
@@ -171,7 +104,7 @@ class Challenge:
         challenge_data = self.db.challenge_instances.find_one({"instance_hash": instance_id})
 
         if not challenge_data:
-            self.log("No existing assignment found. Creating new challenge assignment...", "info")
+            self.log("No existing assignment found. Creating new challenge assignment...", "info", "init")
 
             # Allocate an IP from the VPN network pool
             vpn_db_name = self.env.get('vpn_db', 'tom_labs_vpn')
@@ -180,7 +113,7 @@ class Challenge:
             # Find next available IP in the challenge IP range (172.30.1.x)
             challenge_ip = self._allocate_challenge_ip(vpn_db, username, challenge_id)
             if not challenge_ip:
-                self.log("FATAL: Could not allocate IP for challenge.", "error")
+                self.log("FATAL: Could not allocate IP for challenge.", "error", "init")
                 return
 
             # Generate a unique flag for this user's challenge instance
@@ -202,9 +135,9 @@ class Challenge:
                 "updated_at": time.time()
             }
             self.db.challenge_instances.insert_one(challenge_data)
-            self.log(f"Challenge assigned. IP: {challenge_ip}", "success")
+            self.log(f"Challenge assigned. IP: {challenge_ip}", "success", "network")
         else:
-            self.log("Reusing existing challenge assignment.", "info")
+            self.log("Reusing existing challenge assignment.", "info", "init")
             challenge_ip = challenge_data['internal_ip']
 
         # 3. Calculate Docker and Tunnel IPs
@@ -217,30 +150,22 @@ class Challenge:
         docker_ip = f"{docker_prefix}{last_octet}"
         tunnel_ip = challenge_ip  # Already a tunnel IP (172.30.x.x)
 
-        self.log(f"Docker IP (eth0): {docker_ip}", "info")
-        self.log(f"Tunnel IP (wg0):  {tunnel_ip}", "info")
+        self.log(f"Docker IP (eth0): {docker_ip}", "info", "network")
+        self.log(f"Tunnel IP (wg0):  {tunnel_ip}", "info", "network")
 
         # 4. Determine VPS container IP for WireGuard endpoint
-        vps_docker_ip = os.popen(
-            f"docker inspect docker_tomlabs_vps_dev "
-            f"--format '{{{{.NetworkSettings.Networks.{docker_network}.IPAddress}}}}' 2>/dev/null"
-        ).read().strip()
+        code, vps_docker_ip = self.run(
+            f"docker inspect docker_tomlabs_vps_dev --format '{{{{.NetworkSettings.Networks.{docker_network}.IPAddress}}}}' 2>/dev/null", capture=True
+        )
         if not vps_docker_ip:
             vps_docker_ip = f"{docker_prefix}2"
-            self.log(f"WARNING: Using fallback VPS IP: {vps_docker_ip}", "warn")
-        else:
-            self.log(f"VPS Container IP: {vps_docker_ip}", "info")
+            self.log(f"WARNING: Using fallback VPS IP: {vps_docker_ip}", "warn", "network")
 
         # 5. Cleanup existing container
-        self.log("Checking for conflicting containers...", "info")
+        self.log("Checking for conflicting containers...", "info", "cleanup")
         container_name = f"ctf-{instance_id}"
-        if self.docker.container_exists(container_name):
-            try:
-                os.system(f"docker network disconnect -f {docker_network} {container_name} 2>/dev/null")
-            except Exception:
-                pass
-            os.system(f"docker stop {container_name} 2>/dev/null && docker rm -f {container_name} 2>/dev/null")
-            self.log("Old challenge container removed.", "success")
+        if self.cleanup_container(container_name, docker_network):
+            self.log("Old challenge container removed.", "success", "cleanup")
 
         # 6. Generate the unique flag file content
         flag = challenge_data.get('flag', f"CTF{{{secrets.token_hex(16)}}}")
@@ -259,56 +184,30 @@ class Challenge:
             f"{challenge_id}:lab"
         )
 
-        self.log(f"Provisioning {challenge_spec.get('lab_name', challenge_id)}: {mem} RAM, {cpu} CPU", "info")
-        self.log(f"Executing: {run_cmd}", "info")
-        exit_code = os.system(run_cmd)
+        self.log(f"Provisioning {challenge_spec.get('lab_name', challenge_id)}: {mem} RAM, {cpu} CPU", "info", "container")
+        code, _ = self.run(run_cmd)
 
-        if exit_code != 0:
-            self.log("Container failed to start.", "error")
+        if code != 0:
+            self.log("Container failed to start.", "error", "container")
             return
 
         # 8. Wait for container initialization
-        self.log("Waiting for container to start...", "info")
+        self.log("Waiting for container to start...", "info", "container")
         for _ in range(10):
             if self.docker.is_container_running(container_name):
                 break
             time.sleep(0.5)
 
         # 9. Inject the unique flag into the container
-        self.log("Injecting unique flag into challenge...", "info")
-        os.system(f"docker exec {container_name} bash -c 'echo \"{flag}\" > /var/www/html/flag.txt'")
-        os.system(f"docker exec {container_name} chown www-data:www-data /var/www/html/flag.txt")
+        self.log("Injecting unique flag into challenge...", "info", "configure")
+        self.run(f"docker exec {container_name} bash -c 'echo \"{flag}\" > /var/www/html/flag.txt'")
+        self.run(f"docker exec {container_name} chown www-data:www-data /var/www/html/flag.txt")
 
         # 10. Configure Host-Side Routing (WireGuard → Docker)
-        self.log("Configuring WireGuard routing...", "info")
-        bridge_id = os.popen(
-            f"docker network inspect {docker_network} -f '{{{{index .Options \"com.docker.network.bridge.name\"}}}}' 2>/dev/null"
-        ).read().strip()
-
-        if not bridge_id or bridge_id == "<no value>":
-            bridge_id = os.popen(
-                f"echo br-$(docker network inspect {docker_network} -f '{{{{.Id}}}}' 2>/dev/null | cut -c1-12)"
-            ).read().strip()
-
-        # Fallback to eth0 inside the VPS container
-        if not bridge_id or bridge_id == "br-" or os.system(f"ip link show {bridge_id} > /dev/null 2>&1") != 0:
-            self.log(f"Bridge '{bridge_id}' not found, falling back to eth0", "warn")
-            bridge_id = "eth0"
-
-        os.system("sysctl -w net.ipv4.ip_forward=1")
-        # Route cleaning (just in case)
-        os.system(f"ip route del {tunnel_ip}/32 2>/dev/null || true")
-        
-        # Add DNAT so traffic to 172.30.1.x gets translated to the real Docker IP (172.19.0.x)
-        os.system(f"iptables -t nat -A PREROUTING -d {tunnel_ip} -j DNAT --to-destination {docker_ip} 2>/dev/null || true")
-        os.system(f"iptables -t nat -A OUTPUT -d {tunnel_ip} -j DNAT --to-destination {docker_ip} 2>/dev/null || true")
-        
-        os.system("iptables -A FORWARD -i wg0 -o wg0 -j ACCEPT 2>/dev/null || true")
-        os.system(f"iptables -A FORWARD -i wg0 -o {bridge_id} -j ACCEPT 2>/dev/null || true")
-        os.system(f"iptables -A FORWARD -i {bridge_id} -o wg0 -j ACCEPT 2>/dev/null || true")
-        os.system("iptables -t nat -A POSTROUTING -s 172.30.0.0/16 -o eth0 -j MASQUERADE 2>/dev/null || true")
-
-        self.log("Routing and firewall configured.", "success")
+        self.log("Configuring WireGuard routing...", "info", "routing")
+        bridge_id = self.detect_bridge(docker_network)
+        self.configure_routing(tunnel_ip, docker_ip, bridge_id, dnat=True)
+        self.log("Routing and firewall configured.", "success", "routing")
 
         # 10.5 Find duration from challenges.json
         duration_minutes = 15
@@ -358,13 +257,11 @@ class Challenge:
             }}
         )
 
-        self.log("═" * 50, "info")
-        self.log("Challenge Deployment Complete!", "success")
-        self.log(f"  Challenge:  {challenge_spec.get('lab_name', challenge_id)}", "info")
-        self.log(f"  VPN Access: http://{tunnel_ip}", "info")
-        self.log(f"  Docker IP:  {docker_ip} (internal)", "info")
-        self.log(f"  Container:  {container_name}", "info")
-        self.log("═" * 50, "info")
+        self.log("Challenge Deployment Complete!", "success", "done")
+        self.log(f"  Challenge:  {challenge_spec.get('lab_name', challenge_id)}", "info", "done")
+        self.log(f"  VPN Access: http://{tunnel_ip}", "info", "done")
+        self.log(f"  Docker IP:  {docker_ip} (internal)", "info", "done")
+        self.log(f"  Container:  {container_name}", "info", "done")
 
     # ─────────────────────────────────────────────
     # STOP
@@ -373,11 +270,11 @@ class Challenge:
         """Stop a challenge container and clean up runtime networking."""
         instance_id = self.session_hash
         if not instance_id:
-            self.log("FATAL: --hash is required.", "error")
+            self.log("FATAL: --hash is required.", "error", "init")
             return
 
         container_name = f"ctf-{instance_id}"
-        self.log(f"Stopping challenge: {container_name}", "info")
+        self.log(f"Stopping challenge: {container_name}", "info", "init")
 
         # Fetch metadata
         challenge_data = self.db.challenge_instances.find_one({"instance_hash": instance_id}) if self.db else None
@@ -386,23 +283,23 @@ class Challenge:
             tunnel_ip = challenge_data.get('credentials', {}).get('tunnel_ip') or challenge_data.get('tunnel_ip')
             docker_ip = challenge_data.get('credentials', {}).get('docker_ip')
             if tunnel_ip:
-                self.log(f"Cleaning host route: {tunnel_ip}", "info")
-                os.system(f"ip route del {tunnel_ip}/32 2>/dev/null || true")
+                self.log(f"Cleaning host route: {tunnel_ip}", "info", "routing")
+                self.run(f"ip route del {tunnel_ip}/32 2>/dev/null || true")
                 if docker_ip:
-                    os.system(f"iptables -t nat -D PREROUTING -d {tunnel_ip} -j DNAT --to-destination {docker_ip} 2>/dev/null || true")
-                    os.system(f"iptables -t nat -D OUTPUT -d {tunnel_ip} -j DNAT --to-destination {docker_ip} 2>/dev/null || true")
+                    self.run(f"iptables -t nat -D PREROUTING -d {tunnel_ip} -j DNAT --to-destination {docker_ip} 2>/dev/null || true")
+                    self.run(f"iptables -t nat -D OUTPUT -d {tunnel_ip} -j DNAT --to-destination {docker_ip} 2>/dev/null || true")
 
         if self.docker.container_exists(container_name):
-            os.system(f"docker rm -f {container_name}")
+            self.run(f"docker rm -f {container_name}")
 
             if self.db:
                 self.db.challenge_instances.update_one(
                     {"instance_hash": instance_id},
                     {"$set": {"status": "stopped", "updated_at": time.time()}}
                 )
-            self.log("Challenge container stopped and removed.", "success")
+            self.log("Challenge container stopped and removed.", "success", "done")
         else:
-            self.log(f"Container {container_name} not found.", "warn")
+            self.log(f"Container {container_name} not found.", "warn", "done")
 
     # ─────────────────────────────────────────────
     # START
@@ -411,23 +308,35 @@ class Challenge:
         """Start a stopped challenge container."""
         instance_id = self.session_hash
         if not instance_id:
-            self.log("FATAL: --hash is required.", "error")
+            self.log("FATAL: --hash is required.", "error", "init")
             return
 
         container_name = f"ctf-{instance_id}"
-        self.log(f"Starting challenge: {container_name}", "info")
+        self.log(f"Starting challenge: {container_name}", "info", "init")
 
         if self.docker.container_exists(container_name):
-            os.system(f"docker start {container_name}")
-            self.log("Challenge container started.", "success")
+            self.run(f"docker start {container_name}")
+            self.log("Challenge container started.", "success", "container")
+            
+            # Re-apply routing rules on start
+            challenge_data = self.db.challenge_instances.find_one({"instance_hash": instance_id}) if self.db else None
+            if challenge_data:
+                tunnel_ip = challenge_data.get('credentials', {}).get('tunnel_ip')
+                docker_ip = challenge_data.get('credentials', {}).get('docker_ip')
+                if tunnel_ip and docker_ip:
+                    self.log("Re-applying WireGuard routing...", "info", "routing")
+                    docker_network = self.config.get('docker_network_name', 'local_dev_lab_tomlabs_dev_net')
+                    bridge_id = self.detect_bridge(docker_network)
+                    self.configure_routing(tunnel_ip, docker_ip, bridge_id, dnat=True)
 
             if self.db:
                 self.db.challenge_instances.update_one(
                     {"instance_hash": instance_id},
                     {"$set": {"status": "running", "updated_at": time.time()}}
                 )
+            self.log("Challenge start sequence complete.", "success", "done")
         else:
-            self.log(f"Container {container_name} not found. Deploy first.", "error")
+            self.log(f"Container {container_name} not found. Deploy first.", "error", "init")
 
     # ─────────────────────────────────────────────
     # REMOVE
@@ -436,7 +345,7 @@ class Challenge:
         """Fully remove a challenge container and its DB record."""
         instance_id = self.session_hash
         if not instance_id:
-            self.log("FATAL: --hash is required.", "error")
+            self.log("FATAL: --hash is required.", "error", "init")
             return
 
         self.stop()
@@ -444,11 +353,11 @@ class Challenge:
         if self.db:
             result = self.db.challenge_instances.delete_one({"instance_hash": instance_id})
             if result.deleted_count > 0:
-                self.log("Challenge assignment removed from database.", "success")
+                self.log("Challenge assignment removed from database.", "success", "done")
             else:
-                self.log("No challenge record found in database.", "warn")
+                self.log("No challenge record found in database.", "warn", "done")
 
-        self.log("Challenge fully removed.", "success")
+        self.log("Challenge fully removed.", "success", "done")
 
     # ─────────────────────────────────────────────
     # HELPERS
@@ -483,7 +392,7 @@ class Challenge:
                 break
 
         if next_octet is None:
-            self.log("No IPs available in challenge pool!", "error")
+            self.log("No IPs available in challenge pool!", "error", "network")
             return None
 
         # Build the challenge tunnel IP: 10.20.0.<octet>
@@ -499,5 +408,5 @@ class Challenge:
             "created_at": time.time()
         })
 
-        self.log(f"Allocated challenge IP: {challenge_ip}", "success")
+        self.log(f"Allocated challenge IP: {challenge_ip}", "success", "network")
         return challenge_ip

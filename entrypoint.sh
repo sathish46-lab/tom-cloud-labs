@@ -229,6 +229,9 @@ http:
       service: apache-service
       entryPoints:
         - web
+        - websecure
+      tls:
+        certResolver: myresolver
 
     vpns-router:
       rule: "Host(\`$VPN_DOMAIN\`)"
@@ -237,12 +240,18 @@ http:
         - vpn-headers
       entryPoints:
         - web
+        - websecure
+      tls:
+        certResolver: myresolver
 
     mqs-router:
       rule: "Host(\`$MQS_DOMAIN\`)"
       service: mqs-service
       entryPoints:
         - web
+        - websecure
+      tls:
+        certResolver: myresolver
 
     code-server-router:
       rule: "HostRegexp(\`{subdomain:.+}.$CODE_DOMAIN\`)"
@@ -251,12 +260,18 @@ http:
         - code-headers
       entryPoints:
         - web
+        - websecure
+      tls:
+        certResolver: myresolver
 
     work-router:
       rule: "Host(\`$WORK_DOMAIN\`)"
       service: apache-service
       entryPoints:
         - web
+        - websecure
+      tls:
+        certResolver: myresolver
 
   services:
     apache-service:

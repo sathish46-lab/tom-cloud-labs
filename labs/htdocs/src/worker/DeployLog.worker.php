@@ -61,13 +61,33 @@ if (is_resource($handle)) {
         $line = fgets($handle); 
         if ($line) {
             $trimmed = trim($line);
-            $rabbit->sendMessage(['log' => $trimmed]);
             
-            // Check for success marker from Python
-            if (strpos($trimmed, '[✓] Deployment Complete') !== false || 
-                strpos($trimmed, '[✓] Code-server started successfully') !== false ||
-                strpos($trimmed, '[✓] Code-server is already running') !== false) {
-                $success = true;
+            // Attempt to parse as JSON from our structured logger
+            $decoded = json_decode($trimmed, true);
+            if (is_array($decoded) && isset($decoded['msg'])) {
+                // It's structured
+                $msgText = $decoded['msg'];
+                $level = $decoded['level'] ?? 'info';
+                
+                // Add legacy prefixes for the UI if it expects them
+                $prefixes = ["info" => "[*]", "success" => "[✓]", "error" => "[!]", "warn" => "[!]"];
+                $prefix = $prefixes[$level] ?? "[*]";
+                $rabbit->sendMessage(['log' => "$prefix $msgText"]);
+                
+                if (strpos($msgText, 'Deployment Complete') !== false || 
+                    strpos($msgText, 'Code-server started successfully') !== false ||
+                    strpos($msgText, 'Code-server is already running') !== false) {
+                    $success = true;
+                }
+            } else {
+                // Fallback for raw output (e.g., docker build output, raw errors)
+                $rabbit->sendMessage(['log' => $trimmed]);
+                
+                if (strpos($trimmed, '[✓] Deployment Complete') !== false || 
+                    strpos($trimmed, 'Deployment Complete') !== false ||
+                    strpos($trimmed, 'Code-server started successfully') !== false) {
+                    $success = true;
+                }
             }
         }
     }
