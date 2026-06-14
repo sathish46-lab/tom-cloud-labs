@@ -196,12 +196,24 @@ const ActivityTracker = {
       }
     });
 
+    // Flag to track if we disconnected due to being idle
+    this.isIdleDisconnected = false;
+
     // 2. Listen for Mouse/Keyboard Activity
     const resetTimer = () => {
       clearTimeout(this.idleTimer);
+      
+      // Wake up if we were previously idle
+      if (this.isIdleDisconnected) {
+        console.log("Activity detected: Reconnecting sockets...");
+        this.reconnectSockets();
+        this.isIdleDisconnected = false;
+      }
+
       this.idleTimer = setTimeout(() => {
         console.warn("User idle: Disconnecting sockets.");
         this.stopAllSockets();
+        this.isIdleDisconnected = true;
       }, this.idleTimeout);
     };
 
