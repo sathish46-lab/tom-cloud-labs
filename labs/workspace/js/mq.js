@@ -29,25 +29,19 @@ const TomSocketClient = function () {
    */
   this.connect = function (exchange, callback, ui = null) {
     try {
-      // Dynamically resolve MQS domain based on the current hostname
-      const currentHost = window.location.hostname;
-      let mqDomain = "mq.tomweb.in"; // Default fallback
+      // Read MQ domain from server-injected config (env.json → PHP → window.TOM_CONFIG)
+      // Each environment (dev/prod) has its own mq_domain in env.json
+      let mqDomain = (window.TOM_CONFIG && window.TOM_CONFIG.mq_domain) ? window.TOM_CONFIG.mq_domain : null;
       
-      if (currentHost.includes("dev.tomweb.in")) {
-        mqDomain = "mq.dev.tomweb.in";
-      } else if (currentHost === "localhost" || currentHost === "127.0.0.1") {
-        // When running locally on localhost, the Stomp port is usually 15674
-        mqDomain = "localhost:15674"; 
-      } else if (currentHost.includes("labs.tomweb.in")) {
-        mqDomain = "mq.tomweb.in";
-      } else {
-        // Generic fallback: swap the first subdomain with 'mq'
-        const parts = currentHost.split('.');
-        if (parts.length > 2) {
-          parts[0] = 'mq';
-          mqDomain = parts.join('.');
+      if (!mqDomain) {
+        // Fallback: dynamically resolve if TOM_CONFIG is not available
+        const currentHost = window.location.hostname;
+        if (currentHost.includes("dev.tomweb.in")) {
+          mqDomain = "mq.dev.tomweb.in";
+        } else if (currentHost === "localhost" || currentHost === "127.0.0.1") {
+          mqDomain = "localhost:15674"; 
         } else {
-          mqDomain = 'mq.' + currentHost;
+          mqDomain = "mq.tomweb.in";
         }
       }
       

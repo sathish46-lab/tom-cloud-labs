@@ -559,6 +559,11 @@ define('PAGE_START_TIME', microtime(true));
 
     <?php endif; ?>
 
+    <script>
+    window.TOM_CONFIG = {
+        mq_domain: <?= json_encode(get_config('mq_domain') ?: '') ?>
+    };
+    </script>
     <script src="<?= Session::cacheCDN("/js/app.js") ?>"></script>
 
     <script>
