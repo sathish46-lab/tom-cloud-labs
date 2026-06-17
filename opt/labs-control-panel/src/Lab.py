@@ -359,7 +359,8 @@ class Lab(BaseOrchestrator):
             fmt_args = {
                 "username": username,
                 "password": dynamic_pass,
-                "email": user_email
+                "email": user_email,
+                "su_pass": f"{username}@098"
             }
             # Dynamically pull domain values
             for svc_name, svc_spec in lab_spec.get('services', {}).items():

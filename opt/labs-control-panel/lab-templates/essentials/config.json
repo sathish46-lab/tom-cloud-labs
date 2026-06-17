@@ -23,5 +23,8 @@
     "code": { "port": 8080, "middlewares": ["code-headers@file"] },
     "web":  { "port": 80 }
   },
-  "credentials_template": {}
+  "credentials_template": {
+    "code_server_pass": "{password}",
+    "su_pass": "{su_pass}"
+  }
 }
