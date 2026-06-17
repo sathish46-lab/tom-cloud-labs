@@ -27,6 +27,8 @@
     "minio_url_console": "https://{s3-ui_domain}",
     "minio_url_api": "https://{s3-api_domain}",
     "minio_port_console": 9001,
-    "minio_port_api": 9000
+    "minio_port_api": 9000,
+    "code_server_pass": "{password}",
+    "su_pass": "{su_pass}"
   }
 }

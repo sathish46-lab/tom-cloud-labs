@@ -33,6 +33,8 @@
         "n8n_username": "{email}",
         "n8n_password": "{password}",
         "n8n_url": "https://{n8n_domain}",
-        "n8n_port": 5678
+        "n8n_port": 5678,
+        "code_server_pass": "{password}",
+        "su_pass": "{su_pass}"
     }
 }

@@ -23,6 +23,8 @@ class LabTemplateConfig {
         $internalIp = $labData['internal_ip'] ?? '0.0.0.0';
         $tunnelIp = $creds['tunnel_ip'] ?? $internalIp;
         $password = $creds['password'] ?? '********';
+        $suPassword = $creds['su_pass'] ?? $password;
+        $codeServerPass = $creds['code_server_pass'] ?? $password;
         
         // Common Values
         $sshCommand = (isset($creds['tunnel_ip'])) ? "ssh " . $currentUser . "@" . $creds['tunnel_ip'] : "#";
@@ -51,7 +53,7 @@ class LabTemplateConfig {
                     ['label' => 'S3 API Endpoint', 'value' => $minioApiUrl, 'type' => 'text', 'copy' => true],
                     ['label' => 'Internal IP', 'value' => $internalIp, 'type' => 'text', 'copy' => true],
                     ['label' => 'SSH Command', 'value' => $sshCommand, 'type' => 'text', 'copy' => true, 'mono' => true],
-                    ['label' => 'su Password', 'value' => $password, 'type' => 'password', 'copy' => true]
+                    ['label' => 'su Password', 'value' => $suPassword, 'type' => 'password', 'copy' => true]
                 ];
                 break;
 
@@ -66,7 +68,7 @@ class LabTemplateConfig {
                     ['label' => 'Public URL', 'value' => $n8nUrl, 'type' => 'text', 'copy' => true],
                     ['label' => 'Device IP', 'value' => $tunnelIp, 'type' => 'text', 'copy' => true],
                     ['label' => 'SSH Command', 'value' => $sshCommand, 'type' => 'text', 'copy' => true, 'mono' => true],
-                    ['label' => 'su Password', 'value' => $password, 'type' => 'password', 'copy' => true]
+                    ['label' => 'su Password', 'value' => $suPassword, 'type' => 'password', 'copy' => true]
                 ];
                 break;
 
@@ -77,9 +79,9 @@ class LabTemplateConfig {
                     ['label' => 'Device IP', 'value' => $tunnelIp, 'type' => 'text', 'copy' => true],
                     ['label' => 'SSH Command', 'value' => $sshCommand, 'type' => 'text', 'copy' => true, 'mono' => true],
                     ['label' => 'Username', 'value' => $currentUser, 'type' => 'text', 'copy' => true],
-                    ['label' => 'su Password', 'value' => $password, 'type' => 'password', 'copy' => true],
+                    ['label' => 'su Password', 'value' => $suPassword, 'type' => 'password', 'copy' => true],
                     ['label' => 'Code-Server URL', 'value' => $codeServerUrl, 'type' => 'text', 'copy' => true],
-                    ['label' => 'Code-Server Password', 'value' => $password, 'type' => 'password', 'copy' => true],
+                    ['label' => 'Code-Server Password', 'value' => $codeServerPass, 'type' => 'password', 'copy' => true],
                 ];
                 break;
         }
