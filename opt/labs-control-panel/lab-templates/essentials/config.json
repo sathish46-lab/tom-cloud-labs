@@ -20,7 +20,7 @@
     "entry": "/var/labsdata/scripts/entry.sh"
   },
   "services": {
-    "code": { "port": 8080, "middlewares": ["code-headers@file", "compress-responses@file"] },
+    "code": { "port": 8080, "middlewares": ["code-headers@file"] },
     "web":  { "port": 80 }
   },
   "credentials_template": {}
