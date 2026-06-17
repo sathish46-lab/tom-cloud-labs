@@ -117,11 +117,12 @@ fi
 
 if [ ! -d "$HTCONFIG" ]; then
     mkdir -p "$HTCONFIG"
-    # Update DocumentRoot before copying
-    sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www|g' /etc/apache2/sites-available/000-default.conf 2>/dev/null || true
     # Move current active configs to persistent storage to "save" them
-    cp /etc/apache2/sites-available/*.conf "$HTCONFIG/"
 fi
+
+# ALWAYS ensure the default config points to /var/www (which is symlinked to htdocs)
+# We do this on the persistent HTCONFIG folder directly since it might already exist
+sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www|g' "$HTCONFIG/000-default.conf" 2>/dev/null || true
 
 # 2. SYMLINK: Professional Web Root Persistence
 echo "[*] Linking htdocs directly to /var/www..."
