@@ -19,7 +19,7 @@ class DomainManager {
         } else {
             // Fallback config
             $this->config = [
-                'server_ip' => '106.51.76.75',
+                'server_ip' => \TomLabs\Core\Env::get('SERVER_IP', '106.51.76.75'),
                 'domains' => ['*.tomweb.shop']
             ];
         }
@@ -45,7 +45,7 @@ class DomainManager {
      * @return string Server IP address
      */
     public function getServerIP() {
-        return $this->config['server_ip'] ?? '106.51.76.75';
+        return $this->config['server_ip'] ?? \TomLabs\Core\Env::get('SERVER_IP', '106.51.76.75');
     }
     
     /**

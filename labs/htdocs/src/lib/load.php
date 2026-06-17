@@ -5,7 +5,8 @@
  * This file is responsible for including all the core classes.
  */
 
-// 1. Load Constants (Session depends on this)
+// 1. Load Constants and Env
+require_once __DIR__ . '/core/Env.class.php';
 require_once __DIR__ . '/core/Constants.class.php';
 
 // 2. Load Exceptions (Cache depends on this)

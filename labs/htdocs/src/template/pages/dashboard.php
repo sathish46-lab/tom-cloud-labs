@@ -737,7 +737,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                             </div>
                                                         </div>
                                                         <div class="text-end flex-shrink-0">
-                                                            <div class="text-white font-monospace fw-bold" style="font-size: 0.78rem; letter-spacing: 0.3px;"><?= htmlspecialchars($d['ip_address'] ?? '106.51.76.75') ?></div>
+                                                            <div class="text-white font-monospace fw-bold" style="font-size: 0.78rem; letter-spacing: 0.3px;"><?= htmlspecialchars($d['ip_address'] ?? \TomLabs\Core\Env::get('SERVER_IP')) ?></div>
                                                             <div class="text-white text-opacity-40 uppercase fw-bold" style="font-size: 0.5rem; letter-spacing: 0.5px;">IP TARGET</div>
                                                         </div>
                                                     </div>
@@ -758,7 +758,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                             </div>
                                                         </div>
                                                         <div class="text-end flex-shrink-0">
-                                                            <div class="text-white font-monospace fw-bold" style="font-size: 0.78rem; letter-spacing: 0.3px;">106.51.76.75</div>
+                                                            <div class="text-white font-monospace fw-bold" style="font-size: 0.78rem; letter-spacing: 0.3px;"><?= htmlspecialchars(\TomLabs\Core\Env::get('SERVER_IP')) ?></div>
                                                             <div class="text-white text-opacity-40 uppercase fw-bold" style="font-size: 0.5rem; letter-spacing: 0.5px;">IP TARGET</div>
                                                         </div>
                                                     </div>
@@ -776,7 +776,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                             </div>
                                                         </div>
                                                         <div class="text-end flex-shrink-0">
-                                                            <div class="text-white font-monospace fw-bold" style="font-size: 0.78rem; letter-spacing: 0.3px;">106.51.76.75</div>
+                                                            <div class="text-white font-monospace fw-bold" style="font-size: 0.78rem; letter-spacing: 0.3px;"><?= htmlspecialchars(\TomLabs\Core\Env::get('SERVER_IP')) ?></div>
                                                             <div class="text-white text-opacity-40 uppercase fw-bold" style="font-size: 0.5rem; letter-spacing: 0.5px;">IP TARGET</div>
                                                         </div>
                                                     </div>

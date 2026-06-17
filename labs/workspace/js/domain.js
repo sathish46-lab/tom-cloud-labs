@@ -27,7 +27,7 @@ async function addDomain() {
         alert(`✅ Success! ${finalDomain} has been verified and added.`);
       } else {
         alert(
-          `⚠️ Domain added but NOT verified yet.\n\nPlease point the A record to: 106.51.76.75\n\nThen click "Verify DNS" to check again.`,
+          `⚠️ Domain added but NOT verified yet.\n\nPlease point the A record to: ${window.SERVER_IP}\n\nThen click "Verify DNS" to check again.`,
         );
       }
       location.reload();
@@ -84,7 +84,7 @@ async function verifyDomain(domainId) {
         alert("✅ Domain verified successfully!");
       } else {
         alert(
-          "❌ Domain NOT verified. Please ensure A record points to: 106.51.76.75",
+          `❌ Domain NOT verified. Please ensure A record points to: ${window.SERVER_IP}`,
         );
       }
       location.reload();

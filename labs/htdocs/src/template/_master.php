@@ -105,6 +105,9 @@ define('PAGE_START_TIME', microtime(true));
          * Matches SNA's 'simple' architectural pattern
          */
         (function() {
+            // Global Environment Configuration
+            window.SERVER_IP = "<?= \TomLabs\Core\Env::get('SERVER_IP') ?>";
+
             // 0. Load Background Theme Data
             <?php require_once $_SERVER['DOCUMENT_ROOT'] . '/src/config/themes.php'; ?>
             window.TomBGThemes = <?= json_encode($tomThemes) ?>;

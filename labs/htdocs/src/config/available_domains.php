@@ -9,8 +9,8 @@
  */
 
 return [
-    // Server IP for A Records
-    'server_ip' => '106.51.76.75',
+    // Server IP for A Records (Loaded dynamically)
+    'server_ip' => \TomLabs\Core\Env::get('SERVER_IP', '106.51.76.75'),
     
     // Available domain patterns
     'domains' => [
