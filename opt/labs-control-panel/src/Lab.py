@@ -86,7 +86,6 @@ class Lab(BaseOrchestrator):
             routers += f"      service: {service_key}\n"
             routers += f"      entryPoints: [web, websecure]\n"
             routers += f"      priority: 100\n"
-            routers += f"      tls: {{certResolver: myresolver}}\n"
             if svc_spec.get('middlewares'):
                 mws = ", ".join(svc_spec['middlewares'])
                 routers += f"      middlewares: [{mws}]\n"
@@ -112,7 +111,6 @@ class Lab(BaseOrchestrator):
                 routers += f"      service: {web_service_key}\n"
                 routers += f"      entryPoints: [web, websecure]\n"
                 routers += f"      priority: 100\n"
-                routers += f"      tls: {{certResolver: myresolver}}\n"
         
         yaml_str = "http:\n  routers:\n" + routers + "\n  services:\n" + services
         return yaml_str
