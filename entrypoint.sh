@@ -413,6 +413,7 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=/var/www/labs/worker
+ExecStartPre=/usr/bin/npm install
 ExecStart=/usr/bin/node /var/www/labs/worker/stats-daemon.js
 Restart=always
 RestartSec=3
