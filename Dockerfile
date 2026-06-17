@@ -81,8 +81,8 @@ RUN echo "[Unit]\nDescription=Traefik Edge Router\nAfter=network-online.target\n
 RUN systemctl enable traefik
 
 # Container Setup Systemd Service (runs after DB & RabbitMQ)
-RUN echo "[Unit]\nDescription=Container Setup Script\nAfter=mongod.service rabbitmq-server.service network.target\n[Service]\nType=oneshot\nExecStart=/usr/local/bin/container-setup.sh\nRemainAfterExit=yes\n[Install]\nWantedBy=multi-user.target" > /etc/systemd/system/container-setup.service
-RUN systemctl enable mongod.service rabbitmq-server.service container-setup.service
+RUN echo "[Unit]\nDescription=Container Setup Script\nAfter=mongod.service rabbitmq-server.service network.target\n[Service]\nType=oneshot\nExecStart=/usr/local/bin/init-services.sh\nRemainAfterExit=yes\n[Install]\nWantedBy=multi-user.target" > /etc/systemd/system/init-services.service
+RUN systemctl enable mongod.service rabbitmq-server.service init-services.service
 
 # Sudoers & Git config
 RUN echo "www-data ALL=(ALL) NOPASSWD: /usr/bin/python3 /opt/labs-control-panel/labsctl.py *" > /etc/sudoers.d/labs-www-data && \
@@ -104,8 +104,8 @@ RUN systemctl mask docker.service docker.socket && \
     echo "L+ /run/docker.sock - - - - /var/docker.sock" > /etc/tmpfiles.d/docker-socket.conf
 
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-COPY container-setup.sh /usr/local/bin/container-setup.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/container-setup.sh
+COPY init-services.sh /usr/local/bin/init-services.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/init-services.sh
 
 VOLUME [ "/sys/fs/cgroup" ]
 

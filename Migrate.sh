@@ -237,8 +237,8 @@ RUN touch /etc/apache2/code_server_map.txt
 RUN echo "[Unit]\nDescription=Traefik Edge Router\nAfter=network-online.target\n[Service]\nRestart=on-failure\nExecStart=/usr/local/bin/traefik --configFile=/etc/traefik/traefik.yml\nLimitNOFILE=65536\n[Install]\nWantedBy=multi-user.target" > /etc/systemd/system/traefik.service
 RUN systemctl enable traefik
 
-RUN echo "[Unit]\nDescription=Container Setup Script\nAfter=mongod.service rabbitmq-server.service network.target\n[Service]\nType=oneshot\nExecStart=/usr/local/bin/container-setup.sh\nRemainAfterExit=yes\n[Install]\nWantedBy=multi-user.target" > /etc/systemd/system/container-setup.service
-RUN systemctl enable mongod.service rabbitmq-server.service container-setup.service
+RUN echo "[Unit]\nDescription=Container Setup Script\nAfter=mongod.service rabbitmq-server.service network.target\n[Service]\nType=oneshot\nExecStart=/usr/local/bin/init-services.sh\nRemainAfterExit=yes\n[Install]\nWantedBy=multi-user.target" > /etc/systemd/system/init-services.service
+RUN systemctl enable mongod.service rabbitmq-server.service init-services.service
 
 RUN echo "www-data ALL=(ALL) NOPASSWD: /usr/bin/python3 /opt/labs-control-panel/labsctl.py *" > /etc/sudoers.d/labs-www-data && \
     echo "www-data ALL=(ALL) NOPASSWD: /usr/local/bin/labsctl *" >> /etc/sudoers.d/labs-www-data && \
@@ -257,8 +257,8 @@ RUN systemctl mask docker.service docker.socket && \
     echo "L+ /run/docker.sock - - - - /var/docker.sock" > /etc/tmpfiles.d/docker-socket.conf
 
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-COPY container-setup.sh /usr/local/bin/container-setup.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/container-setup.sh
+COPY init-services.sh /usr/local/bin/init-services.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/init-services.sh
 
 VOLUME [ "/sys/fs/cgroup" ]
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
@@ -631,8 +631,8 @@ OUTER_EOF_ENTRYPOINT
         sed -i "s/admin@example.com/$SSL_EMAIL/g" entrypoint.sh
     fi
 
-    log "Generating container-setup.sh..."
-    cat <<'OUTER_EOF_SETUP' > container-setup.sh
+    log "Generating init-services.sh..."
+    cat <<'OUTER_EOF_SETUP' > init-services.sh
 #!/bin/bash
 export MAIN_DOMAIN=${MAIN_DOMAIN:-awshosting.in}
 export VPN_DOMAIN=${VPN_DOMAIN:-vpn.awshosting.in}
@@ -692,13 +692,13 @@ OUTER_EOF_SETUP
     
     # Inject variables
     if [[ "$OSTYPE" == "darwin"* ]]; then
-        sed -i '' "s/awshosting.in/$MAIN_DOMAIN/g" container-setup.sh
-        sed -i '' "s/vpn.awshosting.in/$VPN_DOMAIN/g" container-setup.sh
-        sed -i '' "s/mq.awshosting.in/$MQS_DOMAIN/g" container-setup.sh
+        sed -i '' "s/awshosting.in/$MAIN_DOMAIN/g" init-services.sh
+        sed -i '' "s/vpn.awshosting.in/$VPN_DOMAIN/g" init-services.sh
+        sed -i '' "s/mq.awshosting.in/$MQS_DOMAIN/g" init-services.sh
     else
-        sed -i "s/awshosting.in/$MAIN_DOMAIN/g" container-setup.sh
-        sed -i "s/vpn.awshosting.in/$VPN_DOMAIN/g" container-setup.sh
-        sed -i "s/mq.awshosting.in/$MQS_DOMAIN/g" container-setup.sh
+        sed -i "s/awshosting.in/$MAIN_DOMAIN/g" init-services.sh
+        sed -i "s/vpn.awshosting.in/$VPN_DOMAIN/g" init-services.sh
+        sed -i "s/mq.awshosting.in/$MQS_DOMAIN/g" init-services.sh
     fi
 
     log "Generating .env for Docker Compose..."
@@ -780,7 +780,7 @@ OUTER_EOF_COMPOSE
     # Fix ownership of all extracted/generated files so the user can edit them in their IDE
     if [ -n "$SUDO_USER" ]; then
         log "Fixing file ownership for user $SUDO_USER..."
-        chown -R "$SUDO_USER" ./var ./opt ./traefik-conf ./wireguard-conf ./rabbitmq-data ./mongo-data ./apache-logs docker-compose.yml Dockerfile entrypoint.sh container-setup.sh 2>/dev/null || true
+        chown -R "$SUDO_USER" ./var ./opt ./traefik-conf ./wireguard-conf ./rabbitmq-data ./mongo-data ./apache-logs docker-compose.yml Dockerfile entrypoint.sh init-services.sh 2>/dev/null || true
     fi
 
     log "Bringing up Docker Container..."
