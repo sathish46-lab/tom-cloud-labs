@@ -105,7 +105,11 @@ cat <<EOF > /etc/apache2/sites-available/mqs.conf
     ProxyRequests Off
     ProxyPreserveHost On
 
-    # 1. Handle the STOMP WebSocket for the Overview Stats
+    # 1. Handle the Native WebSocket for Overview Stats
+    ProxyPass /stats-ws ws://127.0.0.1:8085/
+    ProxyPassReverse /stats-ws ws://127.0.0.1:8085/
+
+    # 1.5 Handle the STOMP WebSocket for Deployment Logs
     ProxyPass /ws ws://127.0.0.1:15674/ws
     ProxyPassReverse /ws ws://127.0.0.1:15674/ws
 
@@ -398,6 +402,27 @@ StandardError=append:/var/www/labs/worker/ai_worker.log
 WantedBy=multi-user.target
 EOF
 systemctl enable ai-worker.service || true
+
+# 9. Setup Native Stats Worker Service
+echo "[INFO] Setting up Native Stats Worker systemd service..."
+cat <<EOF > /etc/systemd/system/stats-worker.service
+[Unit]
+Description=Tom Labs Native Stats WebSocket Worker
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/var/www/labs/worker
+ExecStart=/usr/bin/node /var/www/labs/worker/stats-daemon.js
+Restart=always
+RestartSec=3
+StandardOutput=append:/var/log/stats-worker.log
+StandardError=append:/var/log/stats-worker.log
+
+[Install]
+WantedBy=multi-user.target
+EOF
+systemctl enable stats-worker.service || true
 
 echo "[INFO] Handing over control to systemd!"
 exec /lib/systemd/systemd

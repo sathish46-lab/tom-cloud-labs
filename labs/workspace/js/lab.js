@@ -91,7 +91,7 @@ const Dashboard = {
     // 1. Connect to Global Sidebar Stats (Overview)
     try {
       if (!OverviewSocket.isConnected && document.getElementById("sidebar-stats-container") && !document.getElementById("session-expired-overlay")) {
-        OverviewSocket.connect("labs_overview", (data) =>
+        OverviewSocket.connect("/stats-ws", (data) =>
           this.updateSidebar(data),
         );
       }

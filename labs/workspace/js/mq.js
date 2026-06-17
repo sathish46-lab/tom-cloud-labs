@@ -163,11 +163,79 @@ const TomSocketClient = function () {
 };
 
 /**
- * Global Socket Instances
- * - OverviewSocket: System-wide stats (CPU, RAM, etc.)
- * - LogSocket: Instance-specific deployment logs
+ * Lightweight Native WebSocket Client for Overview Stats
  */
-const OverviewSocket = new TomSocketClient();
+const NativeSocketClient = function () {
+  this.ws = null;
+  this.isConnected = false;
+  this.reconnectTimer = null;
+
+  this.connect = function (path, callback, ui = null) {
+    try {
+      let mqDomain = (window.TOM_CONFIG && window.TOM_CONFIG.mq_domain) ? window.TOM_CONFIG.mq_domain : null;
+      if (!mqDomain) {
+        const currentHost = window.location.hostname;
+        mqDomain = currentHost.includes("dev.tomweb.in") ? "mq.dev.tomweb.in" : 
+                   (currentHost === "localhost" || currentHost === "127.0.0.1") ? "localhost:15674" : "mq.tomweb.in";
+      }
+
+      const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+      const port = window.location.port ? ":" + window.location.port : "";
+      const wsUrl = `${wsProtocol}://${mqDomain}${port}${path}`;
+
+      console.log(`[MQ Native] Connecting to WebSocket: ${wsUrl}`);
+      this.ws = new WebSocket(wsUrl);
+
+      this.ws.onopen = () => {
+        this.isConnected = true;
+        if (ui && ui.dot) ui.dot.style.color = "#a6e3a1"; // Green
+        console.log(`[✓] Native Socket connected to ${path}`);
+      };
+
+      this.ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          callback(data);
+        } catch (e) {
+          console.error("Native Socket JSON parse error:", e);
+        }
+      };
+
+      this.ws.onclose = () => {
+        this.isConnected = false;
+        if (ui && ui.dot) ui.dot.style.color = "#f38ba8"; // Red
+        console.warn(`[!] Native Socket closed. Reconnecting in 2s...`);
+        clearTimeout(this.reconnectTimer);
+        this.reconnectTimer = setTimeout(() => this.connect(path, callback, ui), 2000);
+      };
+
+      this.ws.onerror = (err) => {
+        console.error("Native Socket Error:", err);
+      };
+
+    } catch (e) {
+      console.error("Native Socket Error:", e);
+    }
+  };
+
+  this.disconnect = function () {
+    if (this.ws && this.isConnected) {
+      clearTimeout(this.reconnectTimer);
+      // Remove onclose handler so it doesn't auto-reconnect when manually disconnected
+      this.ws.onclose = null;
+      this.ws.close();
+      this.isConnected = false;
+      console.log("Native Socket gracefully disconnected to save resources.");
+    }
+  };
+};
+
+/**
+ * Global Socket Instances
+ * - OverviewSocket: System-wide stats (Native WebSocket to stats-daemon)
+ * - LogSocket: Instance-specific deployment logs (STOMP via RabbitMQ)
+ */
+const OverviewSocket = new NativeSocketClient();
 const LogSocket = new TomSocketClient();
 
 /**
