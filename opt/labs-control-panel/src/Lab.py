@@ -300,7 +300,8 @@ class Lab(BaseOrchestrator):
         user_keys = list(self.db.ssh_keys.find({"username": username}))
         auth_content = "\\n".join([k['public_key'] for k in user_keys if 'public_key' in k])
 
-        dynamic_pass = f"{username}@098"
+        import string, secrets
+        dynamic_pass = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(12))
         
         # Custom Domain Logic for n8n
         selected_n8n_domain = None
