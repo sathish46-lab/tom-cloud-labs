@@ -560,8 +560,12 @@ define('PAGE_START_TIME', microtime(true));
     <?php endif; ?>
 
     <script>
+    <?php
+    $domains = get_config('domains') ?: [];
+    $mq_domain = $domains['mqs'] ?? '';
+    ?>
     window.TOM_CONFIG = {
-        mq_domain: <?= json_encode(get_config('mq_domain') ?: '') ?>
+        mq_domain: <?= json_encode($mq_domain) ?>
     };
     </script>
     <script src="<?= Session::cacheCDN("/js/app.js") ?>"></script>

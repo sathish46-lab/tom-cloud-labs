@@ -172,16 +172,20 @@ const NativeSocketClient = function () {
 
   this.connect = function (path, callback, ui = null) {
     try {
-      let mqDomain = (window.TOM_CONFIG && window.TOM_CONFIG.mq_domain) ? window.TOM_CONFIG.mq_domain : null;
+      // Strictly use the domain injected by the PHP backend via env.json
+      let mqDomain = (window.TOM_CONFIG && window.TOM_CONFIG.mq_domain) ? window.TOM_CONFIG.mq_domain : "mq.tomweb.in";
+      
       if (!mqDomain) {
-        const currentHost = window.location.hostname;
-        mqDomain = currentHost.includes("dev.tomweb.in") ? "mq.dev.tomweb.in" : 
-                   (currentHost === "localhost" || currentHost === "127.0.0.1") ? "localhost:15674" : "mq.tomweb.in";
+          console.error("[MQ Native] CRITICAL: mq_domain not provided by backend config!");
+          return;
       }
 
       const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
       const port = window.location.port ? ":" + window.location.port : "";
-      const wsUrl = `${wsProtocol}://${mqDomain}${port}${path}`;
+      
+      // If the backend injected a full localhost string (e.g. localhost:15674), don't append the window port
+      const finalDomain = mqDomain.includes(":") ? mqDomain : `${mqDomain}${port}`;
+      const wsUrl = `${wsProtocol}://${finalDomain}${path}`;
 
       console.log(`[MQ Native] Connecting to WebSocket: ${wsUrl}`);
       this.ws = new WebSocket(wsUrl);
