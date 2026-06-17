@@ -1231,9 +1231,6 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
         </div>
     </div>
 </div>
-
-<script src="workspace/js/connection_info.js"></script>
-<script src="workspace/js/lab_code.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize premium lab metrics polling
