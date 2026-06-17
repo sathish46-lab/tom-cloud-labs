@@ -11,11 +11,11 @@ class Env {
     private static $variables = null;
 
     /**
-     * Load the env.json file if it hasn't been loaded yet
+     * Load the ip.json file if it hasn't been loaded yet
      */
     private static function load() {
         if (self::$variables === null) {
-            $envPath = __DIR__ . '/../../../env.json'; // From src/lib/core/ to htdocs/
+            $envPath = __DIR__ . '/../../../ip.json'; // From src/lib/core/ to htdocs/
             if (file_exists($envPath)) {
                 self::$variables = json_decode(file_get_contents($envPath), true);
             } else {
