@@ -22,7 +22,7 @@
 @use "components/card";
 @use "components/dashboard";
 @use "components/sidebar";
-
+@use "components/devices";
 // 2. Global Performance & Smooth Rendering Optimizations
 html {
   scroll-behavior: smooth;

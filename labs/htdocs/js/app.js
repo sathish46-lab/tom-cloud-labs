@@ -401,30 +401,8 @@ var TomBG = {
 
     this.updateCustomSlotsUI();
     this.initAccent();
-    this.initCustomPicker();
-    this.initWheel();
     this.initScenery();
     this.initModalLoader();
-
-    // Attach click handlers to preview spheres in plainColorModal
-    var bgSphere = document.getElementById('designer-sphere-bg');
-    var accentSphere = document.getElementById('designer-sphere-accent');
-    var previewSphere = document.getElementById('designer-sphere-preview');
-    
-    if (bgSphere) {
-      bgSphere.style.cursor = 'pointer';
-      bgSphere.addEventListener('click', function() { TomBG.switchPickerTarget('background'); });
-    }
-    if (accentSphere) {
-      accentSphere.style.cursor = 'pointer';
-      accentSphere.addEventListener('click', function() { TomBG.switchPickerTarget('accent'); });
-    }
-    if (previewSphere) {
-      previewSphere.style.cursor = 'pointer';
-      previewSphere.addEventListener('click', function() { 
-        TomBG.switchPickerTarget(TomBG.pickerTarget === 'background' ? 'accent' : 'background'); 
-      });
-    }
 
     // Handle editing state when modal opens/closes
     var modalEl = document.getElementById("plainColorModal");
@@ -459,7 +437,6 @@ var TomBG = {
           .then(function(html) {
             contentDiv.innerHTML = html;
             contentDiv.setAttribute('data-loaded', 'true');
-            // Re-initialize dynamic custom slots UI
             if (typeof TomBG.updateCustomSlotsUI === 'function') {
               TomBG.updateCustomSlotsUI();
             }
@@ -467,6 +444,54 @@ var TomBG = {
           .catch(function(err) {
             console.error("Failed to load background modal", err);
             contentDiv.innerHTML = '<div class="p-4 text-danger text-center">Failed to load backgrounds. Please try again.</div>';
+          });
+      });
+    }
+
+    var plainModal = document.getElementById('plainColorModal');
+    if (plainModal) {
+      plainModal.addEventListener('show.coreui.modal', function () {
+        var contentDiv = document.getElementById('plainColorModalContent');
+        if (!contentDiv) return;
+        
+        if (contentDiv.getAttribute('data-loaded') === 'true') {
+          setTimeout(function() {
+            var target = TomBG.pickerTarget === 'accent'
+              ? (localStorage.getItem('tom-labs-accent-color') || '#8b91f9')
+              : (localStorage.getItem('tom-labs-plain-color') || '#010d12');
+            TomBG.syncPickers(target);
+          }, 50);
+          return;
+        }
+
+        fetch('/api/user/plain_theme')
+          .then(function(res) { return res.text(); })
+          .then(function(html) {
+            contentDiv.innerHTML = html;
+            contentDiv.setAttribute('data-loaded', 'true');
+            
+            TomBG.initCustomPicker();
+            TomBG.initWheel();
+            
+            var bgSphere = document.getElementById('designer-sphere-bg');
+            var accentSphere = document.getElementById('designer-sphere-accent');
+            var previewSphere = document.getElementById('designer-sphere-preview');
+            if (bgSphere) { bgSphere.style.cursor = 'pointer'; bgSphere.addEventListener('click', function() { TomBG.switchPickerTarget('background'); }); }
+            if (accentSphere) { accentSphere.style.cursor = 'pointer'; accentSphere.addEventListener('click', function() { TomBG.switchPickerTarget('accent'); }); }
+            if (previewSphere) { previewSphere.style.cursor = 'pointer'; previewSphere.addEventListener('click', function() { TomBG.switchPickerTarget(TomBG.pickerTarget === 'background' ? 'accent' : 'background'); }); }
+
+            setTimeout(function() {
+              var target = TomBG.pickerTarget === 'accent'
+                ? (localStorage.getItem('tom-labs-accent-color') || '#8b91f9')
+                : (localStorage.getItem('tom-labs-plain-color') || '#010d12');
+              TomBG.syncPickers(target);
+              TomBG.updateDesignerPreviews();
+              TomBG.updateContrastScores();
+            }, 50);
+          })
+          .catch(function(err) {
+            console.error("Failed to load plain theme modal", err);
+            contentDiv.innerHTML = '<div class="p-4 text-danger text-center">Failed to load designer. Please try again.</div>';
           });
       });
     }

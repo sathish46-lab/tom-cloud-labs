@@ -10,37 +10,7 @@ $defaultIp = !empty($resources) ? end($resources)['ip_addr'] : "";
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl/1.0.3/nacl-fast.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-<style>
 
-
-.bg-success {
-    background-color: #2eb85c !important;
-    color: #fff !important;
-}
-
-.config-view {
-    background: #000;
-    border: 1px solid #363131;
-    padding: 22px;
-    border-radius: 12px;
-    font-family: monospace;
-    color: #fff;
-}
-
-.config-header {
-    color: #50fa7b;
-}
-
-.config-label {
-    color: #00d4ff;
-}
-
-.config-value {
-    color: #ffcc00;
-}
-
-
-</style>
 
 <div class="lab-header-section mb-4 px-4">
     <div class="row align-items-center">
