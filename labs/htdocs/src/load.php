@@ -10,6 +10,13 @@ if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.gc_maxlifetime', $lifetime);
     ini_set('session.cookie_lifetime', $lifetime);
     
+    // Fix Ubuntu Cron Job Session Deletion Bug
+    $sessionPath = '/var/cache/labs/sessions';
+    if (!is_dir($sessionPath)) {
+        @mkdir($sessionPath, 0755, true);
+    }
+    ini_set('session.save_path', $sessionPath);
+    
     // Optional: increase probability to clean up old sessions
     ini_set('session.gc_probability', 1);
     ini_set('session.gc_divisor', 100);
