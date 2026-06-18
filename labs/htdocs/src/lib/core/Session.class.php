@@ -241,6 +241,15 @@ class Session
 
     public static function loadMaster()
     {
+        if (self::get('master_rendered', false)) {
+            // Master layout already started rendering.
+            // If we are called again, just output the error directly if needed.
+            if (self::get('brokenPage', false)) {
+                self::loadTemplate('_error');
+            }
+            return;
+        }
+        self::set('master_rendered', true);
         // This was the specific line causing your error
         include __DIR__ . '/../../template/_master.php';
     }
@@ -333,33 +342,44 @@ class Session
         $relPath = str_replace(['/app/', '.php'], '', $self);
         $templateRoot = __DIR__ . '/../../template/pages/'; 
 
-        if (self::getAuthStatus() == Constants::STATUS_LOGGEDIN) {
-            // Try specific file first
-            $file = $templateRoot . $relPath . '.php';
-            if (file_exists($file)) {
-                include $file;
-                return;
-            }
-            
-            // Try category fallback (e.g., if on quiz/quiz_hub, try quiz.php)
-            if (strpos($relPath, '/') !== false) {
-                $parts = explode('/', $relPath);
-                $catFile = $templateRoot . $parts[0] . '.php';
-                if (file_exists($catFile)) {
-                    include $catFile;
+        try {
+            if (self::getAuthStatus() == Constants::STATUS_LOGGEDIN) {
+                // Try specific file first
+                $file = $templateRoot . $relPath . '.php';
+                if (file_exists($file)) {
+                    include $file;
                     return;
                 }
-            }
+                
+                // Try category fallback (e.g., if on quiz/quiz_hub, try quiz.php)
+                if (strpos($relPath, '/') !== false) {
+                    $parts = explode('/', $relPath);
+                    $catFile = $templateRoot . $parts[0] . '.php';
+                    if (file_exists($catFile)) {
+                        include $catFile;
+                        return;
+                    }
+                }
 
-            // Fallback to dashboard
-            if (file_exists($templateRoot . 'dashboard.php')) {
-                include $templateRoot . 'dashboard.php';
+                // Fallback to dashboard
+                if (file_exists($templateRoot . 'dashboard.php')) {
+                    include $templateRoot . 'dashboard.php';
+                } else {
+                    echo '<div class="alert alert-danger">Error: Template not found for ' . htmlspecialchars($relPath) . '</div>';
+                }
             } else {
-                echo '<div class="alert alert-danger">Error: Template not found for ' . htmlspecialchars($relPath) . '</div>';
+                // Not logged in: Trigger the global professional popup
+                self::set('show_session_expired', true);
+                if (file_exists($templateRoot . 'dashboard.php')) {
+                    include $templateRoot . 'dashboard.php';
+                }
             }
-        } else {
-            // Not logged in: Trigger the global professional popup
-            Session::set('show_session_expired', true);
+        } catch (Throwable $e) {
+            // Gracefully catch any exceptions/errors thrown during page rendering
+            // and display the error card inline without breaking the master layout!
+            self::set('error_exception', $e);
+            self::set('brokenPage', true);
+            self::loadTemplate('_error');
         }
     }
 

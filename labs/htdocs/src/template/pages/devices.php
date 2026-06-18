@@ -1,4 +1,7 @@
 <?php
+// Force an exception for testing the global error handler
+throw new Exception("Test Exception for Error Page UI");
+
 // Retrieve active devices and reserved resources from the session
 $devices = Session::get('devices', []); 
 $resources = Session::get('network_resources', []); 

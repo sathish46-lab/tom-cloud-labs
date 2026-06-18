@@ -70,9 +70,32 @@ if (!function_exists('require_ui_component')) {
 if (isset($_SESSION['auth_status'])) {
     Session::$authStatus = $_SESSION['auth_status'];
 }
+// 4. Global Exception and Error Handlers
+if (!function_exists('global_exception_handler')) {
+    function global_exception_handler($e) {
+        // Only handle if Session class is available to render the beautiful page
+        if (class_exists('Session')) {
+            Session::set('error_exception', $e);
+            Session::loadErrorPage();
+            exit;
+        } else {
+            // Fallback for extremely early fatal errors
+            echo "Fatal Error: " . htmlspecialchars($e->getMessage());
+            exit;
+        }
+    }
+}
+set_exception_handler('global_exception_handler');
 
-
-
+register_shutdown_function(function() {
+    $error = error_get_last();
+    // Catch fatal errors (E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR)
+    if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        // Convert to ErrorException to pass to our handler
+        $e = new ErrorException($error['message'], 0, $error['type'], $error['file'], $error['line']);
+        global_exception_handler($e);
+    }
+});
 if (!function_exists('cdn')) {
     function cdn($url) {
         return $url;
