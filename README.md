@@ -82,8 +82,8 @@ sudo ./Migrate.sh
 **Cloudflare Tunnel Configuration:**
 To make your local Docker lab accessible via your domains, configure your Cloudflare Zero Trust tunnel as follows:
 
-![Cloudflare Tunnel Setup Example](https://minio-a02ab8bbbdb025421c498cbf7d4047c5.selfmade.codes/api/v1/download-shared-object/aHR0cHM6Ly9zM3MuemVhbC5uaW5qYS90b20tbGFicy1hc3NldHMvZ2l0L1NjcmVlbnNob3QlMjAyMDI2LTA2LTE4JTIwYXQlMjAxMi4xMC4xMSVFMiU4MCVBRlBNLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPURPVVdUSDFBTldZMzZaSFNQR0wwJTJGMjAyNjA2MTglMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjYwNjE4VDA3MjIwNFomWC1BbXotRXhwaXJlcz00MzIwMCZYLUFtei1TZWN1cml0eS1Ub2tlbj1leUpoYkdjaU9pSklVelV4TWlJc0luUjVjQ0k2SWtwWFZDSjkuZXlKaFkyTmxjM05MWlhraU9pSkVUMVZYVkVneFFVNVhXVE0yV2toVFVFZE1NQ0lzSW1WNGNDSTZNVGM0TVRneE1ETXpPU3dpY0dGeVpXNTBJam9pYzJGMGFHbHphRFEySW4wLldYd1FTdVJpWkRhVl80Z09Wek1XUHVER3gyUHlNaEl1OGZFX1p5MmZvNU93OUdvTTZHRDlxQ0t4TTJOYklMVWtTaGJjeTlialFkRWZGNkJxaXBuanJ3JlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCZ2ZXJzaW9uSWQ9bnVsbCZYLUFtei1TaWduYXR1cmU9YWMzMzRiZDk2ZjMzMTA3YWNkOTMyYmViZTAyMzUzODdhMGViNzQ2ZjY3NjNhY2M3NWM3ZWZhMjUzZTAyNTgwNw)
-*(Example Image: Cloudflare Tunnel Routing Table)*
+![Cloudflare Tunnel Setup Example](docs/images/cloudflare-tunnel-setup.png)
+*(Example Image: Cloudflare Tunnel Dashboard)*
 
 1. In the Cloudflare Zero Trust Dashboard, go to **Access > Tunnels** and configure your tunnel.
 2. Under **Public Hostnames**, create entries for ALL your domains (`labs.yourdomain.com`, `vpn.yourdomain.com`, `mq.yourdomain.com`, `work.yourdomain.com`).
