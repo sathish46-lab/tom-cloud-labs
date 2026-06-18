@@ -8,6 +8,14 @@ if ($user) {
 $certs = Session::get('ssl_certificates') ?: [];
 $serverIP = $domainManager->getServerIP();
 
+// Calculate domain limits
+$db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
+$tomDomainCount = $db->domains->countDocuments([
+    'user_id' => $user->getUserId(),
+    'type' => ['$ne' => 'custom']
+]);
+$tomDomainLimit = 20;
+
 // Helper function to show time ago
 function timeAgo($timestamp) {
     if (empty($timestamp)) return 'Never';
@@ -31,9 +39,15 @@ function timeAgo($timestamp) {
             </p>
         </div>
         <div class="col-auto text-end">
-            <button class="btn btn-success fw-bold px-4 rounded-pill shadow-sm" style="font-size: 0.8rem; height: 38px; white-space: nowrap;" data-coreui-toggle="modal" data-coreui-target="#addDomainModal">
-                <i class="bx bx-plus"></i> Add New Domain
-            </button>
+            <div class="mb-2">
+                <button class="btn btn-success fw-bold px-4 rounded-pill shadow-sm" style="font-size: 0.8rem; height: 38px; white-space: nowrap;" data-coreui-toggle="modal" data-coreui-target="#addDomainModal">
+                    <i class="bx bx-plus"></i> Add New Domain
+                </button>
+            </div>
+            <div class="text-start d-inline-block text-white" style="font-size: 0.85rem;">
+                <div class="mb-1">Limit for Tom Domains: <?= $tomDomainCount ?>/<?= $tomDomainLimit ?></div>
+                <div>Limit for Custom Domains: Unlimited 🎰</div>
+            </div>
         </div>
     </div>
 </div>

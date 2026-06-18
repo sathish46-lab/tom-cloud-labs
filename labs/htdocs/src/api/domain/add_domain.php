@@ -21,6 +21,21 @@ if (empty($domain)) {
 }
 
 try {
+    $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
+    
+    // Enforce limits: 20 for Selfmade/Tom domains, Unlimited for Custom domains
+    if (strtolower($type) !== 'custom') {
+        $tomDomainCount = $db->domains->countDocuments([
+            'user_id' => $user->getUserId(),
+            'type' => ['$ne' => 'custom']
+        ]);
+        
+        if ($tomDomainCount >= 20) {
+            echo json_encode(['success' => false, 'error' => 'Domain limit reached. You can only create up to 20 Tom domains. Custom domains are unlimited.']);
+            exit;
+        }
+    }
+
     $dm = new DomainManager();
     
     // Use the DomainManager's addDomain method which handles everything

@@ -81,7 +81,7 @@ foreach ($challengeLabs as $clab) {
 
 // 2. Fetch Domains
 $domainCount = $db->domains->countDocuments(['user_id' => ['$in' => [(string)$userId, $userId]]]);
-$domainsLimit = 10;
+$domainsLimit = 20;
 $domains = $db->domains->find(['user_id' => ['$in' => [(string)$userId, $userId]]], ['sort' => ['created_at' => -1]]);
 
 // 3. Fetch User profile and stats dynamically
