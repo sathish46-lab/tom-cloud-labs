@@ -8,12 +8,31 @@ header('Content-Type: application/json');
 if (Session::getUser()) {
     $userEmail = Session::getUser()->getEmail();
     $quizHash = $_POST['hash'] ?? null;
-    $score = $_POST['score'] ?? 0;
-    $total = $_POST['total'] ?? 0;
+    $answersJson = $_POST['answers'] ?? '[]';
+    $status = $_POST['status'] ?? 'completed';
 
     if ($quizHash && $userEmail) {
-        $status = $_POST['status'] ?? 'completed';
         $db = DatabaseConnection::getDefaultDatabase();
+        
+        // SECURE QUIZ FIX: Calculate score entirely on the server
+        $score = 0;
+        $total = 0;
+        $quiz = Quiz::getByHash($quizHash);
+        
+        if ($quiz) {
+            $quizData = $quiz['questions'] ?? $quiz['content'] ?? [];
+            $total = count($quizData);
+            $userAnswers = json_decode($answersJson, true) ?? [];
+            
+            foreach ($quizData as $idx => $q) {
+                if (isset($userAnswers[$idx]) && (int)$userAnswers[$idx] === (int)($q['correct'] ?? -1)) {
+                    $score++;
+                }
+            }
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Quiz not found']);
+            exit;
+        }
 
         // Check if user has ever COMPLETED this quiz before
         $hasCompletedBefore = $db->quiz_attempts->findOne([
@@ -30,8 +49,7 @@ if (Session::getUser()) {
         $joltEarned = 0;
 
         // Perfect score on the VERY FIRST completion gets rewards
-        if (!$hasCompletedBefore && $status === 'completed' && (int)$score === (int)$total) {
-            $quiz = Quiz::getByHash($quizHash);
+        if (!$hasCompletedBefore && $status === 'completed' && (int)$score === (int)$total && $total > 0) {
             if ($quiz) {
                 $diff = strtolower($quiz['difficulty'] ?? 'normal');
                 

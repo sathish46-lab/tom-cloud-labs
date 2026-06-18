@@ -188,7 +188,7 @@ ob_start();
     <section class="feature-section" id="features">
         <div class="feature-heading-group">
             <h2 class="feature-heading">
-                🚀 Explore <span style="color:var(--primary-color);">Next-Gen</span> Capabilities
+                Explore <span style="color:var(--primary-color);">Next-Gen</span> Capabilities
             </h2>
             <p class="feature-lead">
                Unlock a powerful set of tools designed for effortless development 

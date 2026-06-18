@@ -1,16 +1,28 @@
 var TomBG = {
-  // Theme configuration is now loaded from the server via window.TomBGThemes
-  themes: window.TomBGThemes || {},
+  // Theme configuration is now loaded securely from the server via API
+  themes: {},
 
   // Current picker target: 'background' or 'accent'
   pickerTarget: 'background',
 
   init: function () {
-    // 1. Check for forced mode (Login Page) before looking at localStorage
-    var saved = localStorage.getItem("tom-labs-bg-mode") || "spiderman";
-    var modeToUse = window.FORCED_BG_MODE || saved;
+    var _this = this;
 
-    this.apply(modeToUse);
+    // Fetch dynamic theme config securely
+    fetch('/api/user/get_themes')
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        _this.themes = data;
+        
+        // Check for forced mode (Login Page) before looking at localStorage
+        var saved = localStorage.getItem("tom-labs-bg-mode") || "spiderman";
+        var modeToUse = window.FORCED_BG_MODE || saved;
+
+        _this.apply(modeToUse);
+      })
+      .catch(function(err) {
+        console.error("Failed to load background themes dynamically", err);
+      });
 
     // Watch for theme changes (Light/Dark mode toggle) to update colors instantly
     var _this = this;
@@ -36,6 +48,7 @@ var TomBG = {
     this.initCustomPicker();
     this.initWheel();
     this.initScenery();
+    this.initModalLoader();
 
     // Attach click handlers to preview spheres in plainColorModal
     var bgSphere = document.getElementById('designer-sphere-bg');
@@ -74,6 +87,31 @@ var TomBG = {
     if (themeToggle) {
       themeToggle.addEventListener('hidden.coreui.dropdown', function () {
         if (window.TomVisuals) window.TomVisuals.syncUI();
+      });
+    }
+  },
+
+  initModalLoader: function () {
+    var bgModal = document.getElementById('bgSelectModal');
+    if (bgModal) {
+      bgModal.addEventListener('show.coreui.modal', function () {
+        var contentDiv = document.getElementById('bgSelectModalContent');
+        if (!contentDiv || contentDiv.getAttribute('data-loaded') === 'true') return;
+
+        fetch('/api/user/change_bg')
+          .then(function(res) { return res.text(); })
+          .then(function(html) {
+            contentDiv.innerHTML = html;
+            contentDiv.setAttribute('data-loaded', 'true');
+            // Re-initialize dynamic custom slots UI
+            if (typeof TomBG.updateCustomSlotsUI === 'function') {
+              TomBG.updateCustomSlotsUI();
+            }
+          })
+          .catch(function(err) {
+            console.error("Failed to load background modal", err);
+            contentDiv.innerHTML = '<div class="p-4 text-danger text-center">Failed to load backgrounds. Please try again.</div>';
+          });
       });
     }
   },

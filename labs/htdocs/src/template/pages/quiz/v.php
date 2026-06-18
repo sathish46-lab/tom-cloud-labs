@@ -17,6 +17,9 @@ $points = $quiz['points_per_correct'] ?? $basePoints;
 
 // Extract quiz questions for the frontend engine
 $quizData = $quiz['questions'] ?? $quiz['content'] ?? [];
+
+
+
 $pointsPerCorrect = $points;
 $qCount = count($quizData);
 $totalRewards = $points * $qCount;
@@ -25,46 +28,25 @@ $joltReward = 2; // Default Normal
 if ($difficulty === 'easy') $joltReward = 1;
 elseif ($difficulty === 'hard') $joltReward = 5;
 
-// Premium Motivational Library
-$correctMessages = [
-    "Outstanding! Your technical intuition is razor-sharp! ⚡",
-    "Brilliant! You've successfully decoded that complexity. 🧠",
-    "Legendary! That's how a true Ninja approaches a challenge. 🥷",
-    "Exceptional work! You're dominating this topic. 🔥",
-    "Perfect! Your understanding of this domain is impressive. 💎",
-    "Boom! Knowledge is power, and you've got plenty of it! 🚀",
-    "Spot on! You make even the toughest problems look easy. ✨",
-    "Incredible! Your skills are evolving at a rapid pace. 📈",
-    "Absolute mastery! Keep this momentum going. 👑",
-    "Phenomenal! That's another milestone conquered. 🚩",
-    "Great job! You're building a formidable expertise here. 🛡️",
-    "Fantastic! Your attention to detail is your superpower. 🔍",
-    "Superb! You've got the logic of a high-performance machine. 🤖",
-    "Magnificent! Your technical growth is inspiring to watch. 🌟",
-    "Top-tier performance! You're reaching new heights today. 🏔️",
-    "Majestic! Your progress is a testament to your dedication. 🏛️",
-    "Victory! You've claimed another triumph in this arena. ⚔️"
-];
+// Check if user has already completed this quiz to prevent double rewards UI
+$hasCompletedBefore = false;
+$user = Session::getUser();
+if ($user && isset($quiz['hash'])) {
+    $db = DatabaseConnection::getDefaultDatabase();
+    $hasCompletedBefore = $db->quiz_attempts->findOne([
+        'user_email' => $user->getEmail(),
+        'quiz_hash' => $quiz['hash'],
+        'status' => 'completed'
+    ]) !== null;
+}
 
-$wrongMessages = [
-    "Not quite, but every mistake is a step toward mastery! 📚",
-    "Close! Re-analyze the logic and you'll crush it next time. 🔄",
-    "Don't stop now! Even the best Ninjas fail before they succeed. 🥷",
-    "A tough one, but your persistence is what counts. Keep going! 💪",
-    "Mistakes are just data points for your future success. 📊",
-    "Keep your head up! You're learning things most people don't. 🎓",
-    "Almost there! Refine your approach and try again. 🛠️",
-    "That was a tricky one. Take a breath and dive back in! 🌊",
-    "Failure is the mother of success. Stay hungry! 🍕",
-    "Every wrong answer is an opportunity to strengthen your mind. 🧠",
-    "Consistency is key! You'll get it on the next attempt. 🔑",
-    "Don't be discouraged. The path to expert is paved with errors. 🛣️",
-    "Stay focused! You're much closer than you think. 🎯",
-    "It's a learning curve, and you're already halfway up! 🎢",
-    "Analyze, adapt, and overcome. You've got this! 🦾",
-    "Keep swinging! Each miss makes you stronger for the hit. ⚾",
-    "Persistence is your ally. One more try might be the one! 🔄"
-];
+if ($hasCompletedBefore) {
+    $totalRewards = 0;
+    $joltReward = 0;
+}
+
+
+
 ?>
 
 <div class="quiz-evaluation-view fade-in">
@@ -197,310 +179,9 @@ $wrongMessages = [
 
 <script>
 window.QuizEngineConfig = {
-    quizData: <?= json_encode($quizData) ?>,
+    totalQuestions: <?= $qCount ?>,
     pointsPerCorrect: <?= $pointsPerCorrect ?>,
     difficulty: "<?= $difficulty ?>",
-    hash: "<?= $quiz['hash'] ?>",
-    motivation: {
-        correct: <?= json_encode($correctMessages) ?>,
-        wrong: <?= json_encode($wrongMessages) ?>
-    }
+    hash: "<?= $quiz['hash'] ?>"
 };
-
-/**
- * Quiz Engine Module (Restored to Template for Stability)
- * Handles dynamic question loading, state management, and scoring
- */
-
-let currentStep = 0;
-let selectedOption = null;
-let score = 0;
-let timeLeft = 0;
-let timerInterval = null;
-
-/**
- * Initialize Dynamic Progress Bar
- */
-function initProgressBar() {
-    if (!window.QuizEngineConfig || !window.QuizEngineConfig.quizData) return;
-    const quizData = window.QuizEngineConfig.quizData;
-    const container = document.getElementById('evaluation-progress-container');
-    if (!container) return;
-    container.innerHTML = '';
-    
-    quizData.forEach((_, idx) => {
-        const step = document.createElement('div');
-        step.className = 'step-item' + (idx === 0 ? ' active' : '');
-        step.setAttribute('data-step', idx + 1);
-        step.innerHTML = `<span>${idx + 1}</span>`;
-        container.appendChild(step);
-        
-        if (idx < quizData.length - 1) {
-            const segment = document.createElement('div');
-            segment.className = 'progress-segment';
-            segment.setAttribute('data-segment', idx + 1);
-            container.appendChild(segment);
-        }
-    });
-}
-
-/**
- * Unified Button Management
- */
-function toggleButton(id, show) {
-    const btn = document.getElementById(id);
-    if (!btn) return;
-    if (show) {
-        btn.classList.remove('d-none');
-        btn.style.setProperty('display', 'inline-block', 'important');
-    } else {
-        btn.classList.add('d-none');
-        btn.style.setProperty('display', 'none', 'important');
-    }
-}
-
-function resetButtons() {
-    toggleButton('submit-btn', false);
-    toggleButton('next-btn', false);
-    toggleButton('result-btn', false);
-}
-
-window.startQuiz = function() {
-    console.log("[Quiz Engine] Starting Quiz...");
-    const startView = document.getElementById('quiz-start-view');
-    const questionView = document.getElementById('quiz-question-view');
-    
-    if (!startView || !questionView) {
-        console.error("[Quiz Engine] UI Views not found!");
-        return;
-    }
-
-    // Record an initial attempt with 'started' status
-    const quizHash = window.QuizEngineConfig.hash;
-    const formData = new FormData();
-    formData.append('hash', quizHash);
-    formData.append('score', 0);
-    formData.append('status', 'started');
-    formData.append('total', window.QuizEngineConfig.quizData.length);
-    fetch('/api/quiz/record_attempt', {
-        method: 'POST',
-        body: formData
-    });
-
-    startView.classList.add('d-none');
-    questionView.classList.remove('d-none');
-    
-    initTimer();
-    loadQuestion();
-};
-
-function initTimer() {
-    timerInterval = setInterval(() => {
-        timeLeft--;
-        updateTimerDisplay();
-        if (timeLeft <= 0) {
-            clearInterval(timerInterval);
-            alert("Time is up! Let's see your results.");
-            showResult();
-        }
-    }, 1000);
-}
-
-function preInitTimer() {
-    const config = window.QuizEngineConfig;
-    if (!config || !config.quizData) return;
-    
-    const qCount = config.quizData.length;
-    let timePerQuestion = 45; // Default Normal
-
-    if (config.difficulty === "easy") timePerQuestion = 30;
-    else if (config.difficulty === "hard") timePerQuestion = 60;
-
-    timeLeft = qCount * timePerQuestion;
-    updateTimerDisplay();
-}
-
-function updateTimerDisplay() {
-    const display = document.getElementById('timer-display');
-    if (!display) return;
-    
-    const mins = Math.floor(timeLeft / 60);
-    const secs = timeLeft % 60;
-    const timeStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    display.innerHTML = `${timeStr} <i class="bx bx-time-five text-body-secondary ms-1"></i>`;
-    
-    if (timeLeft <= 30) {
-        display.classList.add('text-danger');
-        display.classList.remove('text-body-emphasis');
-    }
-}
-
-function loadQuestion() {
-    if (!window.QuizEngineConfig || !window.QuizEngineConfig.quizData || window.QuizEngineConfig.quizData.length === 0) {
-        console.error("[Quiz Engine] Quiz data missing or empty!");
-        alert("Sorry, the quiz questions could not be loaded. Please try generating a new quiz.");
-        return;
-    }
-    const quizData = window.QuizEngineConfig.quizData;
-    const q = quizData[currentStep];
-    if (!q) return;
-
-    const qText = document.getElementById('question-text');
-    if (qText) {
-        let rawText = q.text || q.question || "Unknown Question";
-        // Parse backticks into beautifully styled inline code blocks
-        rawText = rawText.replace(/`([^`]+)`/g, '<code class="text-info bg-info bg-opacity-10 px-2 py-1 rounded mx-1" style="font-family: var(--cui-font-monospace, monospace); font-weight: 600;">$1</code>');
-        qText.innerHTML = rawText;
-    }
-
-    const btns = document.querySelectorAll('.quiz-option-btn');
-    btns.forEach((btn, idx) => {
-        const optText = btn.querySelector('.option-text');
-        const optionsArray = q.options || q.answers || [];
-        if (optText) {
-            let optStr = optionsArray[idx] || "";
-            optStr = optStr.replace(/`/g, ''); // Remove backticks since options are already styled as code
-            optText.innerText = optStr;
-        }
-        btn.classList.remove('correct', 'wrong', 'selected');
-        btn.disabled = false;
-    });
-    
-    resetButtons();
-    selectedOption = null;
-    
-    const steps = document.querySelectorAll('.step-item');
-    steps.forEach((step, idx) => {
-        if(idx === currentStep) step.classList.add('active');
-        else if(idx > currentStep) step.classList.remove('active', 'completed-correct', 'completed-wrong');
-    });
-}
-
-window.selectOption = function(idx) {
-    selectedOption = idx;
-    const btns = document.querySelectorAll('.quiz-option-btn');
-    btns.forEach((btn, i) => {
-        if(i === idx) btn.classList.add('selected');
-        else btn.classList.remove('selected');
-    });
-    toggleButton('submit-btn', true);
-};
-
-window.submitAnswer = function() {
-    if (!window.QuizEngineConfig || !window.QuizEngineConfig.quizData) return;
-    const quizData = window.QuizEngineConfig.quizData;
-    const q = quizData[currentStep];
-    const btns = document.querySelectorAll('.quiz-option-btn');
-    const steps = document.querySelectorAll('.step-item');
-    const segments = document.querySelectorAll('.progress-segment');
-    const currentStepItem = steps[currentStep];
-    
-    btns.forEach(btn => btn.disabled = true);
-    resetButtons();
-
-    let isCorrect = selectedOption === q.correct;
-    if(isCorrect) {
-        btns[selectedOption].classList.add('correct');
-        currentStepItem.classList.add('completed-correct');
-        score++;
-        // Motivational Toast for Correct Answer
-        const motivation = window.QuizEngineConfig.motivation.correct;
-        const randomMsg = motivation[Math.floor(Math.random() * motivation.length)];
-        if (window.TomNotify) TomNotify.show(randomMsg, "Correct Answer", "success", 2500);
-
-    } else {
-        btns[selectedOption].classList.add('wrong');
-        currentStepItem.classList.add('completed-wrong');
-        if (segments[currentStep]) segments[currentStep].classList.add('wrong');
-
-        // Encouragement Toast for Wrong Answer
-        const encouragement = window.QuizEngineConfig.motivation.wrong;
-        const randomMsg = encouragement[Math.floor(Math.random() * encouragement.length)];
-        if (window.TomNotify) TomNotify.show(randomMsg, "Keep Going", "warning", 2500);
-    }
-
-    const isLastQuestion = (currentStep >= quizData.length - 1);
-    if (isLastQuestion) {
-        if (timerInterval) clearInterval(timerInterval);
-        toggleButton('result-btn', true);
-    } else {
-        toggleButton('next-btn', true);
-    }
-};
-
-window.nextQuestion = function() {
-    currentStep++;
-    loadQuestion();
-};
-
-window.showResult = function() {
-    if (timerInterval) clearInterval(timerInterval);
-    if (!window.QuizEngineConfig || !window.QuizEngineConfig.quizData) return;
-    const quizData = window.QuizEngineConfig.quizData;
-    const pointsPerCorrect = window.QuizEngineConfig.pointsPerCorrect;
-    const quizHash = window.QuizEngineConfig.hash;
-
-    const formData = new FormData();
-    formData.append('hash', quizHash);
-    formData.append('score', score);
-    formData.append('status', 'completed');
-    formData.append('total', quizData.length);
-
-    fetch('/api/quiz/record_attempt', {
-        method: 'POST',
-        body: formData
-    }).then(res => res.json())
-      .then(data => {
-          // Always update global header points from source of truth
-          const globalZeal = document.getElementById('header-zeal');
-          const globalJolt = document.getElementById('header-jolt');
-          if (globalZeal && typeof data.total_zeal !== 'undefined') globalZeal.innerText = data.total_zeal.toLocaleString();
-          if (globalJolt && typeof data.total_jolt !== 'undefined') globalJolt.innerText = data.total_jolt.toLocaleString();
-
-          if (data.rewarded) {
-              const rewardMsg = document.getElementById('reward-msg');
-              const zealVal = document.getElementById('zeal-earned');
-              const joltVal = document.getElementById('jolt-earned');
-              if (rewardMsg) rewardMsg.classList.remove('d-none');
-              if (zealVal) zealVal.innerText = data.zeal;
-              if (joltVal) joltVal.innerText = data.jolt;
-          }
-      });
-
-    const qView = document.getElementById('quiz-question-view');
-    const rView = document.getElementById('quiz-result-view');
-    if (qView) qView.classList.add('d-none');
-    if (rView) rView.classList.remove('d-none');
-    
-    const resultScoreContainer = document.querySelector('.result-score');
-    if (resultScoreContainer) {
-        resultScoreContainer.innerHTML = `<span id="score-val">${score}</span>/${quizData.length}`;
-    }
-    
-    const totalPoints = score * pointsPerCorrect;
-    const ratio = score / quizData.length;
-    let msg = "";
-    if(ratio === 1) msg = `Outstanding! 💎 Perfect command of the subject.`;
-    else if(ratio >= 0.6) msg = `Great job! ⚡️ Solid grasp of the concepts.`;
-    else msg = `Keep learning! 🔥 Practice makes perfect.`;
-    
-    const resultMsg = document.getElementById('result-msg');
-    if (resultMsg) resultMsg.innerText = msg;
-};
-
-document.addEventListener('DOMContentLoaded', () => {
-    initProgressBar();
-    preInitTimer();
-
-    // Record unique view
-    const quizHash = window.QuizEngineConfig.hash;
-    if (quizHash) {
-        const formData = new FormData();
-        formData.append('hash', quizHash);
-        fetch('/api/quiz/record_view', {
-            method: 'POST',
-            body: formData
-        });
-    }
-});
 </script>
