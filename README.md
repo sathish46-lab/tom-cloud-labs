@@ -6,7 +6,8 @@ Professional deployment and orchestration suite for the Labs environment. Use th
 
 ## ⚠️ Pre-Installation Security
 
-Before running the migration, you **must** update the default security credentials within the script to protect your environment.
+> [!CAUTION]
+> **CRITICAL:** Before running the migration, you **must** update the default security credentials within the script to protect your environment!
 
 1. Open `Migrate.sh` in a text editor.
 2. Locate and modify the default passwords if necessary (they will also be prompted during installation).
@@ -80,6 +81,10 @@ sudo ./Migrate.sh
 
 **Cloudflare Tunnel Configuration:**
 To make your local Docker lab accessible via your domains, configure your Cloudflare Zero Trust tunnel as follows:
+
+![Cloudflare Tunnel Setup Example](https://developers.cloudflare.com/images/cloudflare-one/connections/connect-apps/routing-table.png)
+*(Example Image: Cloudflare Tunnel Routing Table)*
+
 1. In the Cloudflare Zero Trust Dashboard, go to **Access > Tunnels** and configure your tunnel.
 2. Under **Public Hostnames**, create entries for ALL your domains (`labs.yourdomain.com`, `vpn.yourdomain.com`, `mq.yourdomain.com`, `work.yourdomain.com`).
 3. For the **Service**, set the Type to `HTTP` and the URL to point to port 80 of your local machine (e.g., `localhost:8080` if mapped, or `localhost:80` depending on your setup).
