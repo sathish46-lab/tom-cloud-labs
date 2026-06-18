@@ -95,3 +95,24 @@ async function verifyDomain(domainId) {
     alert("Connection error: " + e.message);
   }
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+  const modal = document.getElementById('addDomainModal');
+  if (modal) {
+    modal.addEventListener('show.coreui.modal', function() {
+      const content = document.getElementById('addDomainModalContent');
+      if (!content || content.getAttribute('data-loaded') === 'true') return;
+      
+      fetch('/api/domain/add')
+        .then(res => res.text())
+        .then(html => {
+          content.innerHTML = html;
+          content.setAttribute('data-loaded', 'true');
+        })
+        .catch(err => {
+          console.error(err);
+          content.innerHTML = '<div class="p-4 text-danger text-center">Failed to load form.</div>';
+        });
+    });
+  }
+});
