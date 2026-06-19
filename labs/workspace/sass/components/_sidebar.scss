@@ -2,15 +2,71 @@
 .sidebar {
     display: flex !important;
     flex-direction: column !important;
+    /* Outer layer uses dynamic theme glass variable */
+    background: var(--glass-bg-solid, rgba(30, 30, 32, 0.85)) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-right: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08)) !important;
+}
+
+/* Inner curved layer holding all the content */
+.sidebar-inner-layer {
+    flex: 1 !important; /* Allow it to fill the height properly without overflowing */
+    width: 100% !important; /* Prevent from stretching wider than the sidebar */
+    min-width: 0 !important;
+    margin: 0.75rem !important; /* Slightly smaller margin to maximize inner space */
+    width: calc(100% - 1.5rem) !important; /* Factor in margin */
+    
+    /* Inner layer uses card variable so it blends perfectly in both themes */
+    background: var(--cui-card-bg, rgba(0, 0, 0, 0.05)) !important;
+    border-radius: 1rem !important;
+    box-shadow: inset 0 0 0 1px var(--glass-border, rgba(255, 255, 255, 0.06)), 0 4px 15px rgba(0, 0, 0, 0.15) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    overflow: hidden !important; /* Apple-style macOS Sidebar Links (Double Layer Look) */
+}
+
+.sidebar-nav .nav-link, 
+.sidebar .nav-link {
+    border-radius: 8px !important;
+    margin: 2px 8px !important; /* Tighter margins */
+    padding: 0.4rem 0.8rem !important; /* Tighter padding */
+    font-size: 0.85rem !important; /* Scaled down font size */
+    color: var(--glass-text, rgba(255, 255, 255, 0.85)) !important;
+    transition: all 0.15s ease-in-out !important;
+    
+    /* Override CoreUI Variables to match macOS but adapt to themes */
+    --cui-sidebar-nav-link-hover-bg: var(--glass-highlight, rgba(255, 255, 255, 0.12));
+    --cui-sidebar-nav-link-active-bg: #007aff;
+    --cui-sidebar-nav-link-active-color: #ffffff;
+}
+
+.sidebar .nav-icon {
+    width: 1rem !important; /* Smaller icons to match smaller font */
+    height: 1rem !important;
 }
 
 .sidebar-nav {
     flex: 1 1 auto !important;
     overflow-y: auto !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
 }
 
 #sidebar-stats-container, .sidebar-footer {
     flex: 0 0 auto !important;
+    padding: 0.5rem !important; /* Tighter padding for stats and footer */
+}
+
+.stat-label {
+    font-size: 0.65rem; /* Scaled down */
+    font-weight: 700;
+    color: var(--glass-text, #fff);
+}
+
+.stat-subtext {
+    font-size: 0.6rem; /* Scaled down */
+    color: var(--glass-text-muted, rgba(255, 255, 255, 0.7));
 }
 
 /* 0. IMMEDIATE HIDE FOR RECOVERY (Prevents UI Flicker) */
@@ -18,10 +74,60 @@
     display: none !important;
 }
 
-/* 1. HIDE STATS ON COLLAPSE */
+#sidebar.no-transition-on-load,
+#sidebar.no-transition-on-load * {
+    transition: none !important;
+}
+
+/* 1. FOLDED SIDEBAR FIXES */
+/* Hide stats */
 .sidebar-narrow #sidebar-stats-container,
 .sidebar-narrow-unfoldable:not(:hover) #sidebar-stats-container {
     display: none !important;
+}
+
+/* Shrink inner layer margin to fit the 4rem width */
+.sidebar-narrow .sidebar-inner-layer,
+.sidebar-narrow-unfoldable:not(:hover) .sidebar-inner-layer {
+    width: calc(100% - 0.5rem) !important; /* Constrain width when folded */
+    margin: 0.25rem !important;
+    border-radius: 0.5rem !important;
+}
+
+/* Center icons and fix link margins when folded */
+.sidebar-narrow .sidebar-nav .nav-link, 
+.sidebar-narrow-unfoldable:not(:hover) .sidebar-nav .nav-link {
+    margin: 2px 4px !important;
+    padding: 0.6rem 0 !important;
+    justify-content: center !important;
+    color: transparent !important; /* Hide text */
+    font-size: 0 !important;       /* Collapse text space */
+}
+
+/* Make sure the icon is centered and visible */
+.sidebar-narrow .sidebar-nav .nav-link .nav-icon, 
+.sidebar-narrow-unfoldable:not(:hover) .sidebar-nav .nav-link .nav-icon {
+    margin: 0 auto !important;
+    width: 1.25rem !important; /* Slightly larger icon when folded */
+    height: 1.25rem !important;
+    color: var(--glass-text, rgba(255, 255, 255, 0.85)) !important;
+}
+
+/* Fix brand logo centering when folded */
+.sidebar-narrow .sidebar-header,
+.sidebar-narrow-unfoldable:not(:hover) .sidebar-header {
+    padding: 1rem 0 !important;
+}
+
+.sidebar-narrow .sidebar-brand-full,
+.sidebar-narrow-unfoldable:not(:hover) .sidebar-brand-full {
+    display: none !important;
+}
+
+.sidebar-narrow .sidebar-brand-narrow,
+.sidebar-narrow-unfoldable:not(:hover) .sidebar-brand-narrow {
+    display: flex !important;
+    margin: 0 auto !important;
 }
 
 /* 2. PROGRESS BAR STYLING */
@@ -29,17 +135,6 @@
     height: 6px;
     background: rgba(0, 0, 0, 0.2);
     overflow: hidden;
-}
-
-.stat-label {
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: var(--glass-text, #fff);
-}
-
-.stat-subtext {
-    font-size: 0.7rem;
-    color: var(--glass-text-muted, rgba(255, 255, 255, 0.7));
 }
 
 /* 3. PER-CORE STYLING */

@@ -1,7 +1,16 @@
 <header class="header header-sticky mb-0" style="border-bottom: none; height: 4rem; min-height: 4rem;">
     <div class="container-fluid px-4 d-flex align-items-center h-100">
 
-        <div class="d-flex align-items-center gap-3">
+        <div class="d-flex align-items-center gap-2">
+            <!-- Mobile Sidebar Toggle -->
+            <button class="btn btn-link p-0 text-secondary hover-text-white d-flex d-md-none align-items-center justify-content-center rounded-circle border border-white border-opacity-10 text-decoration-none shadow-none" 
+                    type="button" 
+                    onclick="coreui.Sidebar.getInstance(document.querySelector('#sidebar')).toggle()"
+                    style="width: 32px; height: 32px; transition: all 0.2s;">
+                <i class="bx bx-menu fs-4"></i>
+            </button>
+
+            <!-- Back Button -->
             <button class="btn btn-link p-0 text-secondary hover-text-white d-flex align-items-center justify-content-center rounded-circle border border-white border-opacity-10 text-decoration-none shadow-none" 
                     onclick="history.back()" 
                     style="width: 32px; height: 32px; transition: all 0.2s;">

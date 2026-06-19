@@ -3,6 +3,16 @@
 $current = Session::getCurrentFile(); 
 ?>
 <div class="sidebar sidebar-fixed border-end-0" id="sidebar">
+    <!-- ANTI-FLICKER SCRIPT: Instantly apply narrow state before browser paints -->
+    <script>
+        if (document.documentElement.classList.contains('sidebar-init-narrow')) {
+            const sb = document.getElementById('sidebar');
+            sb.classList.add('sidebar-narrow-unfoldable', 'no-transition-on-load');
+            // Remove the transition lock shortly after initial render
+            setTimeout(() => sb.classList.remove('no-transition-on-load'), 50);
+        }
+    </script>
+    <div class="sidebar-inner-layer d-flex flex-column">
     <div class="sidebar-header border-opacity-10 py-3">
         <div class="sidebar-brand text-decoration-none">
             <div class="sidebar-brand-full">
@@ -127,5 +137,5 @@ $current = Session::getCurrentFile();
         <button class="sidebar-toggler ms-auto me-2" type="button" data-coreui-toggle="unfoldable"
             data-coreui-target="#sidebar"></button>
     </div>
-
+    </div>
 </div>
