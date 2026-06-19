@@ -18014,6 +18014,7 @@ html.glass-mode[data-coreui-theme=light] .sidebar-inner-layer {
 }
 
 .sidebar-nav .nav-link,
+.sidebar-nav .nav-group-toggle,
 .sidebar .nav-link {
   border-radius: 8px !important;
   margin: 2px 8px !important; /* Tighter margins */
@@ -18026,13 +18027,20 @@ html.glass-mode[data-coreui-theme=light] .sidebar-inner-layer {
   --cui-sidebar-nav-link-active-color: #ffffff;
 }
 
+/* Fix nested item indentation (e.g. Evaluate -> Spot Quiz) so icons don't clip and are visibly indented */
+.sidebar-nav .nav-group-items .nav-link {
+  padding-left: 4rem !important; /* Heavily increased to push nested items to the right/center */
+}
+
 /* Hover background adapting to light/dark themes */
 [data-coreui-theme=dark] .sidebar-nav .nav-link:hover,
+[data-coreui-theme=dark] .sidebar-nav .nav-group-toggle:hover,
 [data-coreui-theme=dark] .sidebar .nav-link:hover {
   background: rgba(255, 255, 255, 0.12) !important;
 }
 
 [data-coreui-theme=light] .sidebar-nav .nav-link:hover,
+[data-coreui-theme=light] .sidebar-nav .nav-group-toggle:hover,
 [data-coreui-theme=light] .sidebar .nav-link:hover {
   background: rgba(0, 0, 0, 0.08) !important;
 }
@@ -18099,7 +18107,9 @@ html.glass-mode[data-coreui-theme=light] .sidebar-inner-layer {
 
 /* Center icons and fix link margins when folded */
 .sidebar-narrow .sidebar-nav .nav-link,
-.sidebar-narrow-unfoldable:not(:hover) .sidebar-nav .nav-link {
+.sidebar-narrow .sidebar-nav .nav-group-toggle,
+.sidebar-narrow-unfoldable:not(:hover) .sidebar-nav .nav-link,
+.sidebar-narrow-unfoldable:not(:hover) .sidebar-nav .nav-group-toggle {
   margin: 2px 4px !important;
   padding: 0.6rem 0 !important;
   justify-content: center !important;
@@ -18109,11 +18119,32 @@ html.glass-mode[data-coreui-theme=light] .sidebar-inner-layer {
 
 /* Make sure the icon is centered and visible */
 .sidebar-narrow .sidebar-nav .nav-link .nav-icon,
-.sidebar-narrow-unfoldable:not(:hover) .sidebar-nav .nav-link .nav-icon {
+.sidebar-narrow .sidebar-nav .nav-group-toggle .nav-icon,
+.sidebar-narrow-unfoldable:not(:hover) .sidebar-nav .nav-link .nav-icon,
+.sidebar-narrow-unfoldable:not(:hover) .sidebar-nav .nav-group-toggle .nav-icon {
   margin: 0 auto !important;
   width: 1.25rem !important; /* Slightly larger icon when folded */
   height: 1.25rem !important;
-  /* Color handled by inherit/active rules above */
+  font-size: 1.25rem !important; /* Override parent's font-size: 0 */
+  color: var(--glass-text, rgba(255, 255, 255, 0.85)) !important; /* Override parent's transparent color */
+}
+
+/* Ensure active icons stay bright white when folded */
+.sidebar-narrow .sidebar-nav .nav-link.active .nav-icon,
+.sidebar-narrow-unfoldable:not(:hover) .sidebar-nav .nav-link.active .nav-icon {
+  color: #ffffff !important;
+}
+
+/* Hide the dropdown arrow when collapsed */
+.sidebar-narrow .sidebar-nav .nav-group-toggle::after,
+.sidebar-narrow-unfoldable:not(:hover) .sidebar-nav .nav-group-toggle::after {
+  display: none !important;
+}
+
+/* Reset the heavy left padding for nested items when collapsed so their icons fit inside 4rem */
+.sidebar-narrow .sidebar-nav .nav-group-items .nav-link,
+.sidebar-narrow-unfoldable:not(:hover) .sidebar-nav .nav-group-items .nav-link {
+  padding-left: 0 !important;
 }
 
 /* Fix brand logo centering when folded */
