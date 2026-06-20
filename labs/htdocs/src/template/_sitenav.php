@@ -82,6 +82,12 @@
                         } elseif ($lowerPart === 'challenge' || $lowerPart === 'challenges') {
                             $url = '/challenges';
                             $displayPart = 'Challenges';
+                        } elseif ($lowerPart === 'service' || $lowerPart === 'services') {
+                            $url = '/services';
+                            $displayPart = 'Services';
+                        } elseif (stripos($lowerPart, 'mysql server') !== false) {
+                            $url = '/services/mysql';
+                            $displayPart = 'MySQL Server';
                         } elseif (stripos($lowerPart, 'device') !== false) {
                             $url = '/devices';
                         } elseif (stripos($lowerPart, 'network') !== false) {

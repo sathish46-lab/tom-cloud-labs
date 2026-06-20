@@ -182,8 +182,8 @@ class Lab(BaseOrchestrator):
         tunnel_ip = f"{tunnel_prefix}{last_octet}"
         
         code, vps_docker_ip = self.run(
-            f"docker inspect docker_tomlabs_vps --format '{{{{.NetworkSettings.Networks.{docker_network}.IPAddress}}}}' 2>/dev/null || "
-            f"docker inspect docker_tomlabs_vps_dev --format '{{{{.NetworkSettings.Networks.{docker_network}.IPAddress}}}}' 2>/dev/null", capture=True
+            f"docker inspect docker_tomlabs_vps_dev --format '{{{{.NetworkSettings.Networks.{docker_network}.IPAddress}}}}' 2>/dev/null || "
+            f"docker inspect docker_tomlabs_vps --format '{{{{.NetworkSettings.Networks.{docker_network}.IPAddress}}}}' 2>/dev/null", capture=True
         )
         if not vps_docker_ip or vps_docker_ip == "<no value>":
             vps_docker_ip = f"{docker_prefix}2"
@@ -202,11 +202,14 @@ class Lab(BaseOrchestrator):
             self.log("No existing container found.", "info", "cleanup")
         
         # Phase 3: STORAGE
-        if not os.path.exists(storage_path):
-            self.log("Setting up storage...", "info", "storage")
-            os.makedirs(storage_path, exist_ok=True)
+        if storage_path.startswith('/'):
+            if not os.path.exists(storage_path):
+                self.log("Setting up storage...", "info", "storage")
+                os.makedirs(storage_path, exist_ok=True)
+            else:
+                self.log("Volume verified.", "success", "storage")
         else:
-            self.log("Volume verified.", "success", "storage")
+            self.log("Using Docker named volume.", "success", "storage")
         
         # Phase 4: NETWORK
         self.log(f"Clearing stale VPN sessions for {tunnel_ip}...", "info", "network")
@@ -258,7 +261,10 @@ class Lab(BaseOrchestrator):
             'network_name': self.config.get('docker_network_name', 'bridge')
         }
         
-        self.docker.run_command(self.config.get('docker_run'), mapping)
+        result = self.docker.run_command(self.config.get('docker_run'), mapping)
+        if not result:
+            self.log("FATAL: Container failed to start (docker run failed).", "error", "container")
+            return
         
         self.log("Waiting for container services to initialize...", "info", "container")
         for i in range(10):
@@ -322,9 +328,9 @@ class Lab(BaseOrchestrator):
         escaped_auth_content = auth_content.replace('"', '\\"')
         link_cmd = f'docker exec {instance_id} {link_script} "{username}" "{escaped_auth_content}" "{docker_ip}" "{dynamic_pass}" "{lab_priv_key}" "{tunnel_ip}" "{server_pub_key}" "{user_email}" "{n8n_domain_arg}" "{vps_docker_ip}"'
         
-        code, _ = self.run(link_cmd)
+        code, output = self.run(link_cmd, capture=True)
         if code != 0:
-            self.log("linkuser.sh failed", "error", "configure")
+            self.log(f"linkuser.sh failed: {output}", "error", "configure")
             return
         
         # Phase 8: TRAEFIK

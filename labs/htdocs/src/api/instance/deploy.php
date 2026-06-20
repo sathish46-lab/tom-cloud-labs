@@ -56,7 +56,7 @@ try {
             'expose_web'    => $expose_web,
             'status'        => 'deploying',
             'created_at'    => time(),
-            'storage_path'  => "/var/tomlabs/storage/" . $user->getUsername()
+            'storage_path'  => "labs_storage_" . $instanceHash
         ]);
         
         if (!$insertResult) { 
@@ -76,6 +76,7 @@ try {
                 'domains'     => $user_domains, 
                 'expose_web'  => $expose_web,
                 'code_domain' => $code_domain,
+                'storage_path'=> "labs_storage_" . $instanceHash,
                 'status'      => 'deploying'
             ]]
         );

@@ -77,6 +77,9 @@ $current = Session::getCurrentFile();
                     <use xlink:href="/assets/icons/sprites/free.svg#cil-memory"></use>
                 </svg> Labs
             </a>
+            <a class="nav-link <?= (str_contains($current, 'services')) ? 'active' : '' ?>" href="/services">
+                <i class="nav-icon bx bxs-data"></i> Services
+            </a>
             <a class="nav-link <?= $current == 'challenges' ? 'active' : '' ?>" href="<?= Session::url('challenges') ?>">
                 <i class="nav-icon bx bxs-flag-alt"></i> Challenges
             </a>

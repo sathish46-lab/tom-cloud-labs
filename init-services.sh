@@ -28,6 +28,15 @@ if systemctl is-active --quiet rabbitmq-server; then
     rabbitmqctl set_permissions -p / admin ".*" ".*" ".*"
 fi
 
+# 1.5. MySQL Configuration
+if systemctl is-active --quiet mysql; then
+    echo "[INFO] Configuring MySQL Root password..."
+    # Set local root password
+    mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'tomlabs_root_secret'; FLUSH PRIVILEGES;" 2>/dev/null || true
+    # Create wildcard root user for access over Docker network
+    mysql -u root -ptomlabs_root_secret -e "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'tomlabs_root_secret'; GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;" 2>/dev/null || true
+fi
+
 # 2. Build dependencies (if directories exist)
 if [ -d "/var/www/labs/htdocs" ]; then
     echo "[INFO] Installing Composer dependencies for labs..."

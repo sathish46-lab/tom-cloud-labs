@@ -87,11 +87,7 @@ class BaseOrchestrator:
             else:
                 process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
                 for line in process.stdout:
-                    if line.strip():
-                        # We could log this if we wanted verbose streaming, but for now just print raw
-                        # or log it as info if we want everything structured.
-                        # We'll stick to print for pure docker build output, or structured for others.
-                        pass # Typically we use run() for quiet commands or capture=True
+                    print(line, end='', flush=True)
                 process.wait()
                 return process.returncode, ""
         except Exception as e:
@@ -144,7 +140,8 @@ class BaseOrchestrator:
                 self.run(f"docker network disconnect -f {docker_network} {container_name} 2>/dev/null")
             except Exception:
                 pass
-            self.run(f"docker stop {container_name} 2>/dev/null && docker rm -f {container_name} 2>/dev/null")
+            self.run(f"docker stop {container_name} 2>/dev/null || true")
+            self.run(f"docker rm -f {container_name} 2>/dev/null || true")
             return True
         return False
 

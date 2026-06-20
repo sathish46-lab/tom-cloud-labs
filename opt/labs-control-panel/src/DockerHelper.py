@@ -10,29 +10,30 @@ class DockerHelper:
             self.client = None
 
     def container_exists(self, name):
-        """Checks if a lab container is currently active."""
-        if not self.client: return False
+        """Checks if a lab container is currently active or stopped."""
         try:
-            self.client.containers.get(name)
-            return True
-        except docker.errors.NotFound:
+            cmd = f"docker ps -a --format '{{{{.Names}}}}' -f name=^{name}$"
+            result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+            return result.stdout.strip() == name
+        except Exception:
             return False
 
     def is_container_running(self, name):
         """Checks if a container is in running state."""
-        if not self.client: return False
         try:
-            container = self.client.containers.get(name)
-            return container.status == 'running'
-        except docker.errors.NotFound:
+            cmd = f"docker ps --format '{{{{.Names}}}}' -f name=^{name}$"
+            result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+            return result.stdout.strip() == name
+        except Exception:
             return False
 
     def image_exists(self, image_tag):
         """Verifies if the image exists locally before deployment."""
         try:
-            self.client.images.get(image_tag)
-            return True
-        except docker.errors.ImageNotFound:
+            cmd = f"docker image inspect {image_tag}"
+            result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+            return result.returncode == 0
+        except Exception:
             return False
 
     def run_command(self, cmd_template, mapping):

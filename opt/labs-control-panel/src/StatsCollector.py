@@ -1,5 +1,6 @@
 import subprocess
 import json
+import re
 import time
 import os
 from collections import deque
@@ -12,22 +13,29 @@ def collect_all_stats():
     cmd = ["docker", "stats", "--no-stream", "--format", "{{json .}}"]
     while True:
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
             all_stats = {}
             for line in result.stdout.splitlines():
                 if not line.strip(): continue
                 data = json.loads(line)
                 name = data['Name']
-
                 # 1. Parse Numeric Values
                 cpu = float(data['CPUPerc'].replace('%', ''))
                 pids = int(data['PIDs'])
+                
                 mem_raw = data['MemUsage'].split(' / ')[0]
-                mem = float(mem_raw.replace('GiB', '').replace('MiB', ''))
-                if 'GiB' in mem_raw: mem *= 1024
-                # Extract first numeric value for Network and Block IO
-                net = float(data['NetIO'].split(' / ')[0].replace('kB', '').replace('MB', '000').replace('B', ''))
-                block = float(data['BlockIO'].split(' / ')[0].replace('MB', '').replace('kB', '0').replace('B', ''))
+                mem_val = float(re.sub(r'[^\d\.]', '', mem_raw) or 0)
+                mem = mem_val * 1024 if 'G' in mem_raw else mem_val
+                
+                net_raw = data['NetIO'].split(' / ')[0]
+                net = float(re.sub(r'[^\d\.]', '', net_raw) or 0)
+                if 'M' in net_raw: net *= 1000
+                elif 'G' in net_raw: net *= 1000000
+                
+                block_raw = data['BlockIO'].split(' / ')[0]
+                block = float(re.sub(r'[^\d\.]', '', block_raw) or 0)
+                if 'M' in block_raw: block *= 1000
+                elif 'G' in block_raw: block *= 1000000
 
                 # 2. Initialize History Deques
                 if name not in HISTORY:

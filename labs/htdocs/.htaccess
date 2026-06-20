@@ -4,6 +4,9 @@
 RewriteEngine On
 RewriteBase /
 
+# Custom 404 Error Handler - Secure against server information disclosure
+ErrorDocument 404 /app/error.php
+
 # 1. Force HTTPS - COMMENT THESE OUT TO AVOID REDIRECT LOOPS
 # RewriteCond %{HTTPS} off
 # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
@@ -26,6 +29,11 @@ RewriteCond %{DOCUMENT_ROOT}/app/$1.php -f
 RewriteRule ^([^/]+)$ app/$1.php [L,QSA]
 
 RewriteRule ^home$ app/home.php [L,QSA]
+
+# 8. Services Routing
+RewriteRule ^services$ app/services.php [L,QSA]
+RewriteRule ^services/mysql$ app/services/mysql/dashboard.php [L,QSA]
+RewriteRule ^services/mysql/database$ app/services/mysql/database.php [L,QSA]
 # 3. Quiz Module Routing (AI Powered)
 RewriteRule ^quiz/v/([a-f0-9]+)/?$ app/quiz/v.php?hash=$1 [L,QSA]
 RewriteRule ^quiz/generate/?$ app/quiz/generate.php [L,QSA]
@@ -44,7 +52,10 @@ RewriteCond %{DOCUMENT_ROOT}/app/account.php -f
 RewriteRule ^([a-zA-Z0-9_.-]+)$ app/account.php?username=$1 [L,QSA]
 
 # 6. API ROUTING (Consolidated src/api/)
-RewriteRule ^api/([^/]+)/([^/]+)$ src/api/$1/$2.php [L,QSA]
+# Handle requests that already include .php extension
+RewriteRule ^api/(.+\.php)$ src/api/$1 [L,QSA]
+# Handle extensionless requests
+RewriteRule ^api/(.+)$ src/api/$1.php [L,QSA]
 
 
 # 1. Existing Lab Tabs (Dashboard, Domains, Prefs)
