@@ -61,7 +61,7 @@ class Challenge(BaseOrchestrator):
         self.log("Challenge deployment initiated...", "info", "init")
 
         # 0. Verify Docker Network exists
-        docker_network = self.config.get('docker_network_name', 'local_dev_lab_tomlabs_dev_net')
+        docker_network = self.config.get('docker_network_name', 'Dev_lab')
         code, _ = self.run(f"docker network inspect {docker_network} > /dev/null 2>&1", capture=True)
         if code != 0:
             self.log(f"FATAL: Docker network {docker_network} not found. Is docker-compose up?", "error", "init")
@@ -154,8 +154,9 @@ class Challenge(BaseOrchestrator):
         self.log(f"Tunnel IP (wg0):  {tunnel_ip}", "info", "network")
 
         # 4. Determine VPS container IP for WireGuard endpoint
+        orchestrator = self.config.get('orchestrator_container', 'Dev_lab')
         code, vps_docker_ip = self.run(
-            f"docker inspect docker_tomlabs_vps_dev --format '{{{{.NetworkSettings.Networks.{docker_network}.IPAddress}}}}' 2>/dev/null", capture=True
+            f"docker inspect {orchestrator} --format '{{{{.NetworkSettings.Networks.{docker_network}.IPAddress}}}}' 2>/dev/null", capture=True
         )
         if not vps_docker_ip:
             vps_docker_ip = f"{docker_prefix}2"
@@ -325,7 +326,7 @@ class Challenge(BaseOrchestrator):
                 docker_ip = challenge_data.get('credentials', {}).get('docker_ip')
                 if tunnel_ip and docker_ip:
                     self.log("Re-applying WireGuard routing...", "info", "routing")
-                    docker_network = self.config.get('docker_network_name', 'local_dev_lab_tomlabs_dev_net')
+                    docker_network = self.config.get('docker_network_name', 'Dev_lab')
                     bridge_id = self.detect_bridge(docker_network)
                     self.configure_routing(tunnel_ip, docker_ip, bridge_id, dnat=True)
 

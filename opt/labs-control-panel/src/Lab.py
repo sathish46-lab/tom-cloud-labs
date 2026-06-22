@@ -120,7 +120,7 @@ class Lab(BaseOrchestrator):
         self.log("Deployment initiated (WireGuard Mesh Mode)...", "info", "init")
         
         # Phase 1: INIT
-        docker_network = self.config.get('docker_network_name', 'local_dev_lab_tomlabs_dev_net')
+        docker_network = self.config.get('docker_network_name', 'Dev_lab')
         code, _ = self.run(f"docker network inspect {docker_network} > /dev/null 2>&1", capture=True)
         if code != 0:
             self.log(f"FATAL: Docker network {docker_network} not found. Is docker-compose up?", "error", "init")
@@ -181,9 +181,9 @@ class Lab(BaseOrchestrator):
         docker_ip = f"{docker_prefix}{last_octet}"
         tunnel_ip = f"{tunnel_prefix}{last_octet}"
         
+        orchestrator = self.config.get('orchestrator_container', 'Dev_lab')
         code, vps_docker_ip = self.run(
-            f"docker inspect docker_tomlabs_vps_dev --format '{{{{.NetworkSettings.Networks.{docker_network}.IPAddress}}}}' 2>/dev/null || "
-            f"docker inspect docker_tomlabs_vps --format '{{{{.NetworkSettings.Networks.{docker_network}.IPAddress}}}}' 2>/dev/null", capture=True
+            f"docker inspect {orchestrator} --format '{{{{.NetworkSettings.Networks.{docker_network}.IPAddress}}}}' 2>/dev/null", capture=True
         )
         if not vps_docker_ip or vps_docker_ip == "<no value>":
             vps_docker_ip = f"{docker_prefix}2"
@@ -461,7 +461,7 @@ class Lab(BaseOrchestrator):
                 # Re-apply Routing
                 if tunnel_ip and docker_ip:
                     self.log("Re-applying network routes...", "info", "routing")
-                    docker_network = self.config.get('docker_network_name', 'local_dev_lab_tomlabs_dev_net')
+                    docker_network = self.config.get('docker_network_name', 'Dev_lab')
                     bridge_id = self.detect_bridge(docker_network)
                     self.configure_routing(tunnel_ip, docker_ip, bridge_id)
                 

@@ -52,7 +52,9 @@ try {
     $config .= "DNS = 1.1.1.1\n\n";
     $config .= "[Peer]\n";
     $config .= "PublicKey = $serverPubKey\n";
-    $config .= "AllowedIPs = 172.30.0.0/16\n";
+    $tunnelPrefix = get_config('tunnel_ip_prefix') ?? '172.30.0.';
+    $baseSubnet = preg_replace('/\.0\.$/', '.0.0/16', $tunnelPrefix);
+    $config .= "AllowedIPs = $baseSubnet\n";
     $config .= "Endpoint = $endpoint\n";
     $config .= "PersistentKeepalive = 25";
 

@@ -100,7 +100,7 @@ echo "[INFO] Recovering host routes for deployed labs..."
 # Detect the bridge interface from config
 DOCKER_NETWORK=$(jq -r '.docker_network_name' /etc/labs-control-panel/config.json 2>/dev/null)
 if [ -z "$DOCKER_NETWORK" ] || [ "$DOCKER_NETWORK" = "null" ]; then
-    DOCKER_NETWORK="local_dev_lab_tomlabs_dev_net"
+    DOCKER_NETWORK="Dev_lab"
 fi
 
 BRIDGE_ID=$(docker network inspect "$DOCKER_NETWORK" -f '{{.Id}}' 2>/dev/null | cut -c1-12)

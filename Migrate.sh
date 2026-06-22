@@ -301,7 +301,7 @@ if [ -f /etc/wireguard/wg0.conf ]; then
     EXISTING_PEERS=$(awk '/^\[Peer\]/,0' /etc/wireguard/wg0.conf)
 fi
 
-DOCKER_BRIDGE=$(docker network inspect tomlabs_vps_net --format '{{.Id}}' 2>/dev/null | cut -c1-12)
+DOCKER_BRIDGE=$(docker network inspect Prod_lab --format '{{.Id}}' 2>/dev/null | cut -c1-12)
 if [ -n "$DOCKER_BRIDGE" ]; then
     BRIDGE_IF="br-${DOCKER_BRIDGE}"
 else
@@ -714,11 +714,11 @@ OUTER_EOF_ENV
     log "Generating docker-compose.yml..."
     cat <<'OUTER_EOF_COMPOSE' > docker-compose.yml
 services:
-  tomlabs_vps:
+  Prod_lab:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: tomlabs_vps
+    container_name: Prod_lab
     privileged: true
     environment:
       - MAIN_DOMAIN=$MAIN_DOMAIN
@@ -748,7 +748,7 @@ services:
       - /run/lock
       - /tmp
     networks:
-      - tomlabs_vps_net
+      - Prod_lab
     ports:
       - "80:80"
       - "443:443"
@@ -766,14 +766,14 @@ services:
     volumes:
       - ./mongo-data:/data/db
     networks:
-      - tomlabs_vps_net
+      - Prod_lab
     ports:
       - "27018:27017"
     restart: always
 
 networks:
-  tomlabs_vps_net:
-    name: tomlabs_vps_net
+  Prod_lab:
+    name: Prod_lab
     driver: bridge
 OUTER_EOF_COMPOSE
 
@@ -783,12 +783,38 @@ OUTER_EOF_COMPOSE
         chown -R "$SUDO_USER" ./var ./opt ./traefik-conf ./wireguard-conf ./rabbitmq-data ./mongo-data ./apache-logs docker-compose.yml Dockerfile entrypoint.sh init-services.sh 2>/dev/null || true
     fi
 
+    log "Generating config.json..."
+    cat <<OUTER_EOF_CONFIG > ./opt/labs-control-panel/config.json
+{
+  "labctl_path": "/usr/local/bin/labsctl",
+  "templates_dir": "/opt/labs-control-panel/lab-templates",
+  "storage_path": "/var/tomlabs/storage/{user}",
+  "app_log": "/var/log/labs/labctl.log",
+  "config_path": "/etc/labs-control-panel/config.json",
+  "docker_ip_prefix": "172.19.0.",
+  "tunnel_ip_prefix": "172.30.0.",
+  "docker_network_name": "Prod_lab",
+  "orchestrator_container": "Prod_lab",
+  "docker_build": "docker build -t {image_tag} {path}",
+  "docker_run": "docker run --detach --name {lab_name} --memory='{memory}' --cpus='{cpus}' --network {network_name} --ip {ip} --cap-add=NET_ADMIN --device=/dev/net/tun --sysctl net.ipv6.conf.all.disable_ipv6=1 -v {storage}:{mount_target} --hostname {host_name} {image}",
+  "docker_stop_rm": "docker stop {lab_name} && sudo docker rm -f {lab_name}",
+  "docker_ps": "docker ps --format '{{.Names}}'",
+  "docker_exec": "docker exec -d {lab_name} {script}",
+  "docker_drop_shell": "docker exec -it {lab_name} {shell}",
+  "traefik_conf_dir": "/etc/traefik/dynamic_conf",
+  "acme_json_path": "/etc/traefik/acme.json",
+  "wg_interface": "wg0",
+  "log_format": "json",
+  "log_file": "/var/log/labs/labctl.log"
+}
+OUTER_EOF_CONFIG
+
     log "Bringing up Docker Container..."
     docker compose up -d --build
 
     log "Ensuring composer dependencies are installed..."
-    docker exec tomlabs_vps bash -c "cd /var/www/labs/htdocs && COMPOSER_ALLOW_SUPERUSER=1 composer install --no-interaction --optimize-autoloader" || true
-    docker exec tomlabs_vps bash -c "cd /var/www/vpn-api && COMPOSER_ALLOW_SUPERUSER=1 composer install --no-interaction --optimize-autoloader" || true
+    docker exec Prod_lab bash -c "cd /var/www/labs/htdocs && COMPOSER_ALLOW_SUPERUSER=1 composer install --no-interaction --optimize-autoloader" || true
+    docker exec Prod_lab bash -c "cd /var/www/vpn-api && COMPOSER_ALLOW_SUPERUSER=1 composer install --no-interaction --optimize-autoloader" || true
 
     echo "=================================================="
     echo " Docker Local Setup Complete! "
