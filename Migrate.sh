@@ -151,11 +151,11 @@ if [ "$MODE" == "DOCKER" ] && [ "$AUTO" == "0" ]; then
     cp -R "$TEMP_WEB/vpn-api/"* ./var/www/vpn-api/ 2>/dev/null || true
     cp -R "$TEMP_WEB/opt/labs-control-panel/"* ./opt/labs-control-panel/ 2>/dev/null || true
     
-    # Extract test.json as env.json in local dir (will map to /var/www)
-    if [ -f "$TEMP_WEB/test.json" ]; then
-        cp "$TEMP_WEB/test.json" ./var/www/env.json
-    elif [ -f "$TEMP_WEB/labs/test.json" ]; then
-        cp "$TEMP_WEB/labs/test.json" ./var/www/env.json
+    # Extract sample.json as env.json in local dir (will map to /var/www)
+    if [ -f "$TEMP_WEB/sample.json" ]; then
+        cp "$TEMP_WEB/sample.json" ./var/www/env.json
+    elif [ -f "$TEMP_WEB/labs/sample.json" ]; then
+        cp "$TEMP_WEB/labs/sample.json" ./var/www/env.json
     else
         echo "{}" > ./var/www/env.json
     fi
@@ -1004,21 +1004,21 @@ if [ "$AUTO" == "0" ]; then
         cp -R "$TEMP_WEB/opt/labs-control-panel/"* /opt/labs-control-panel/
     fi
 
-    # Copy test.json as env.json template
-    if [ -f "$TEMP_WEB/test.json" ]; then
-        cp "$TEMP_WEB/test.json" /var/www/env.json
-    elif [ -f "$TEMP_WEB/labs/test.json" ]; then
-        cp "$TEMP_WEB/labs/test.json" /var/www/env.json
+    # Copy sample.json as env.json template
+    if [ -f "$TEMP_WEB/sample.json" ]; then
+        cp "$TEMP_WEB/sample.json" /var/www/env.json
+    elif [ -f "$TEMP_WEB/labs/sample.json" ]; then
+        cp "$TEMP_WEB/labs/sample.json" /var/www/env.json
     else
-        warn "test.json not found in repo. Please configure /var/www/env.json manually."
+        warn "sample.json not found in repo. Please configure /var/www/env.json manually."
     fi
     rm -rf "$TEMP_WEB"
 else
     log "Auto VPS mode: Repositories are already mounted."
     # Ensure env.json exists since it was mapped
     if [ ! -f "/var/www/env.json" ]; then
-        if [ -f "/var/www/labs/test.json" ]; then
-            cp "/var/www/labs/test.json" "/var/www/env.json"
+        if [ -f "/var/www/labs/sample.json" ]; then
+            cp "/var/www/labs/sample.json" "/var/www/env.json"
         fi
     fi
 fi
