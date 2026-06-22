@@ -5,12 +5,21 @@ $current = Session::getCurrentFile();
 <div class="sidebar sidebar-fixed border-end-0" id="sidebar">
     <!-- ANTI-FLICKER SCRIPT: Instantly apply narrow state before browser paints -->
     <script>
-        if (document.documentElement.classList.contains('sidebar-init-narrow')) {
+        (function() {
             const sb = document.getElementById('sidebar');
-            sb.classList.add('sidebar-narrow-unfoldable', 'no-transition-on-load');
+            // Unconditionally block transitions during initial render
+            sb.classList.add('no-transition-on-load');
+            
+            if (document.documentElement.classList.contains('sidebar-init-narrow')) {
+                sb.classList.add('sidebar-narrow-unfoldable');
+            }
+            if (document.documentElement.classList.contains('sidebar-init-hidden')) {
+                sb.classList.add('hide');
+            }
+            
             // Remove the transition lock shortly after initial render
             setTimeout(() => sb.classList.remove('no-transition-on-load'), 50);
-        }
+        })();
     </script>
     <div class="sidebar-inner-layer d-flex flex-column">
     <div class="sidebar-header border-opacity-10 py-3">

@@ -1,6 +1,7 @@
 <?php
 Session::addMetaTag('<title>Services - Tom Labs</title>');
 Session::addCustomJs('/js/services.js');
+Session::addCustomJs('/js/copy.js');
 ?>
 
 <div class="lab-header-section mb-4 px-4 mt-3">
@@ -25,7 +26,7 @@ Session::addCustomJs('/js/services.js');
                     </div>
                     <div>
                         <h5 class="card-title fw-bold mb-1 text-white" style="font-size: 1.1rem;">MySQL Server</h5>
-                        <span class="badge rounded-pill bg-primary bg-opacity-25 text-primary border border-primary border-opacity-25 px-2 py-1" style="font-size: 0.65rem;">docker_tomlabs_vps</span>
+                        <span class="badge rounded-pill bg-primary bg-opacity-25 text-primary border border-primary border-opacity-25 px-2 py-1" style="font-size: 0.65rem;">mysql.tomweb.in</span>
                     </div>
                 </div>
 
@@ -37,25 +38,25 @@ Session::addCustomJs('/js/services.js');
                     <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-light border-opacity-10">
                         <span class="text-secondary fw-semibold" style="font-size: 0.8rem;">Hostname</span>
                         <div class="d-flex align-items-center">
-                            <span class="text-light font-monospace me-2" style="font-size: 0.8rem;">docker_tomlabs_vps</span>
-                            <i class='bx bx-copy text-secondary cursor-pointer hover-white' onclick="navigator.clipboard.writeText('docker_tomlabs_vps'); Session.toast('Hostname copied');"></i>
+                            <span class="text-light font-monospace me-2" style="font-size: 0.8rem;">mysql.tomweb.in</span>
+                            <i class='bx bx-copy text-secondary cursor-pointer hover-white' onclick="copyText('mysql.tomweb.in', 'Hostname copied');"></i>
                         </div>
                     </div>
                     <div class="d-flex justify-content-between align-items-center">
                         <span class="text-secondary fw-semibold" style="font-size: 0.8rem;">MySQL Database Service</span>
                         <div class="d-flex align-items-center">
                             <span class="text-light font-monospace me-2" style="font-size: 0.8rem;">3306</span>
-                            <i class='bx bx-copy text-secondary cursor-pointer hover-white' onclick="navigator.clipboard.writeText('3306'); Session.toast('Port copied');"></i>
+                            <i class='bx bx-copy text-secondary cursor-pointer hover-white' onclick="copyText('3306', 'Port copied');"></i>
                         </div>
                     </div>
                 </div>
 
                 <h6 class="text-white fw-bold mb-2" style="font-size: 0.8rem;">Port Forwarding</h6>
                 <div class="bg-dark bg-opacity-50 rounded p-2 px-3 border border-light border-opacity-10 d-flex justify-content-between align-items-center">
-                    <span class="badge bg-secondary bg-opacity-25 text-light fw-normal border border-light border-opacity-10" style="font-size: 0.7rem;">VS Code Desktop</span>
+                    <span class="text-secondary fw-semibold" style="font-size: 0.8rem;">VS Code Desktop</span>
                     <div class="d-flex align-items-center">
-                        <span class="text-light font-monospace me-2" style="font-size: 0.8rem;">docker_tomlabs_vps:3306</span>
-                        <i class='bx bx-copy text-secondary cursor-pointer hover-white' onclick="navigator.clipboard.writeText('docker_tomlabs_vps:3306'); Session.toast('Port forwarding info copied');"></i>
+                        <span class="text-light font-monospace me-2" style="font-size: 0.8rem;">mysql.tomweb.in:3306</span>
+                        <i class='bx bx-copy text-secondary cursor-pointer hover-white' onclick="copyText('mysql.tomweb.in:3306', 'Port forwarding info copied');"></i>
                     </div>
                 </div>
             </div>
@@ -89,37 +90,30 @@ Session::addCustomJs('/js/services.js');
                     <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-light border-opacity-10">
                         <span class="text-secondary fw-semibold" style="font-size: 0.8rem;">Hostname</span>
                         <div class="d-flex align-items-center">
-                            <span class="text-light font-monospace me-2" style="font-size: 0.8rem;">docker_tomlabs_vps_dev</span>
-                            <i class='bx bx-copy text-secondary cursor-pointer hover-white' onclick="navigator.clipboard.writeText('docker_tomlabs_vps_dev'); Session.toast('Hostname copied');"></i>
+                            <span class="text-light font-monospace me-2" style="font-size: 0.8rem;">adminer.tomweb.in</span>
+                            <i class='bx bx-copy text-secondary cursor-pointer hover-white' onclick="copyText('adminer.tomweb.in', 'Hostname copied');"></i>
                         </div>
                     </div>
                     <div class="d-flex justify-content-between align-items-center">
                         <span class="text-secondary fw-semibold" style="font-size: 0.8rem;">Database Adminer (HTTP)</span>
                         <div class="d-flex align-items-center">
                             <span class="text-light font-monospace me-2" style="font-size: 0.8rem;">8080</span>
-                            <i class='bx bx-copy text-secondary cursor-pointer hover-white' onclick="navigator.clipboard.writeText('8080'); Session.toast('Port copied');"></i>
+                            <i class='bx bx-copy text-secondary cursor-pointer hover-white' onclick="copyText('8080', 'Port copied');"></i>
                         </div>
                     </div>
                 </div>
 
                 <h6 class="text-white fw-bold mb-2" style="font-size: 0.8rem;">Port Forwarding</h6>
-                <div class="bg-dark bg-opacity-50 rounded p-2 px-3 mb-2 border border-light border-opacity-10 d-flex justify-content-between align-items-center">
-                    <span class="badge bg-secondary bg-opacity-25 text-light fw-normal border border-light border-opacity-10" style="font-size: 0.7rem;">VS Code Desktop</span>
-                    <div class="d-flex align-items-center">
-                        <span class="text-light font-monospace me-2" style="font-size: 0.75rem;">localhost:8080</span>
-                        <i class='bx bx-copy text-secondary cursor-pointer hover-white' onclick="navigator.clipboard.writeText('localhost:8080'); Session.toast('Port forwarding info copied');"></i>
-                    </div>
-                </div>
                 <div class="bg-dark bg-opacity-50 rounded p-2 px-3 border border-light border-opacity-10 d-flex justify-content-between align-items-center">
-                    <span class="badge bg-secondary bg-opacity-25 text-light fw-normal border border-light border-opacity-10" style="font-size: 0.7rem;">Code Server</span>
+                    <span class="text-secondary fw-semibold" style="font-size: 0.8rem;">VS Code Desktop</span>
                     <div class="d-flex align-items-center">
-                        <span class="text-warning font-monospace me-2" style="font-size: 0.7rem;">Forward port 8080 in Ports tab</span>
+                        <span class="text-light font-monospace me-2" style="font-size: 0.8rem;">adminer.tomweb.in:8080</span>
+                        <i class='bx bx-copy text-secondary cursor-pointer hover-white' onclick="copyText('adminer.tomweb.in:8080', 'Port forwarding info copied');"></i>
                     </div>
                 </div>
             </div>
 
             <div class="card-footer bg-transparent border-top-0 p-4 pt-0 d-flex justify-content-end gap-2 position-relative z-1">
-                <a href="/services/adminer" class="btn btn-primary rounded-pill px-4" style="background: #6366f1; border: none; font-size: 0.85rem; font-weight: 600;">Manage</a>
                 <a href="https://www.adminer.org/" target="_blank" class="btn btn-success rounded-pill px-4 text-white" style="font-size: 0.85rem; font-weight: 600;">Learn More</a>
             </div>
         </div>

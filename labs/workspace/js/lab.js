@@ -551,7 +551,7 @@ const Dashboard = {
 
     // Create log entry
     const div = document.createElement("div");
-    div.className = "log-entry py-1 animate__animated animate__fadeIn";
+    div.className = "log-entry py-1";
 
     // Color coding
     if (msg.startsWith("[✓]")) div.style.color = "#a6e3a1";
@@ -567,12 +567,13 @@ const Dashboard = {
     // Check for completion messages
     const lower = msg.toLowerCase();
     if (
-      msg.includes("[✓]") &&
-      (lower.includes("deployment complete") ||
-        lower.includes("successfully") ||
-        lower.includes("graceful shutdown") ||
-        lower.includes("now offline") ||
-        lower.includes("complete"))
+      msg.includes("[*] reload") ||
+      (msg.includes("[✓]") &&
+        (lower.includes("deployment complete") ||
+          lower.includes("successfully") ||
+          lower.includes("graceful shutdown") ||
+          lower.includes("now offline") ||
+          lower.includes("complete")))
     ) {
       // Sequence finished
       this.isProcessing = false;

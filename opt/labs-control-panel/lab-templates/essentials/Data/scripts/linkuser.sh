@@ -102,10 +102,7 @@ else
     echo "[!] Missing WireGuard parameters, skipping tunnel setup"
 fi
 
-# 4.5 Add internal service hostname entries
-VPS_IP="${VPS_DOCKER_IP:-10.20.144.3}"
-grep -q "adminer.tomweb.in" /etc/hosts || echo "$VPS_IP adminer.tomweb.in mysql.tomweb.in" >> /etc/hosts
-
+# 4.5 Internal service resolution is now handled natively by Docker DNS!
 USER_HOME="/home/$USER_NAME"
 HTDOCS="$USER_HOME/htdocs"
 HTCONFIG="$USER_HOME/htconfig"

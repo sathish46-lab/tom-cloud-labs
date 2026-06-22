@@ -1,6 +1,7 @@
 <?php
 Session::addMetaTag('<title>MySQL Server - Tom Labs</title>');
 Session::addCustomJs('/js/services.js');
+Session::addCustomJs('/js/copy.js');
 
 $user = Session::getUser();
 $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
@@ -26,7 +27,7 @@ require_once __DIR__ . '/partials/mysql_header.php';
     <div class="row g-4" style="align-items: start;">
         <!-- Left Column: Connection Info -->
         <div class="col-lg-5 col-xl-4">
-            <div class="card border-0 shadow-sm rounded-4 mb-4" style="background-color: var(--cui-card-bg);">
+            <div class="card border-0 shadow-sm rounded-4 mb-4" style="background-color: #111827; border: 1px solid rgba(255,255,255,0.05) !important;">
                 <div class="card-header bg-transparent border-bottom-0 pt-4 pb-2">
                     <h5 class="card-title fw-bold text-white mb-0" style="font-size: 1.1rem;">Connection Information</h5>
                 </div>
@@ -35,25 +36,19 @@ require_once __DIR__ . '/partials/mysql_header.php';
                         <span class="text-secondary fw-semibold" style="font-size: 0.8rem;">Service</span>
                         <span class="text-light" style="font-size: 0.85rem;">MySQL Server</span>
                     </div>
-                    <div class="mb-3 d-flex justify-content-between align-items-center bg-dark bg-opacity-50 p-2 px-3 rounded border border-light border-opacity-10">
-                        <span class="text-secondary fw-semibold" style="font-size: 0.8rem;">IP Address</span>
-                        <div class="d-flex align-items-center">
-                            <span class="text-light font-monospace me-2" style="font-size: 0.8rem;">10.20.128.X:3306</span>
-                            <i class='bx bx-copy text-secondary cursor-pointer hover-white'></i>
-                        </div>
-                    </div>
+
                     <div class="mb-3 d-flex justify-content-between align-items-center bg-dark bg-opacity-50 p-2 px-3 rounded border border-light border-opacity-10">
                         <span class="text-secondary fw-semibold" style="font-size: 0.8rem;">Hostname</span>
                         <div class="d-flex align-items-center">
                             <span class="text-light font-monospace me-2" style="font-size: 0.8rem;">mysql.tomweb.in</span>
-                            <i class='bx bx-copy text-secondary cursor-pointer hover-white' onclick="navigator.clipboard.writeText('mysql.tomweb.in'); Session.toast('Hostname copied');"></i>
+                            <i class='bx bx-copy text-secondary cursor-pointer hover-white' onclick="copyText('mysql.tomweb.in', 'Hostname copied');"></i>
                         </div>
                     </div>
                     <div class="mb-0 d-flex justify-content-between align-items-center bg-dark bg-opacity-50 p-2 px-3 rounded border border-light border-opacity-10">
                         <span class="text-secondary fw-semibold" style="font-size: 0.8rem;">Port</span>
                         <div class="d-flex align-items-center">
                             <span class="text-light font-monospace me-2" style="font-size: 0.8rem;">3306</span>
-                            <i class='bx bx-copy text-secondary cursor-pointer hover-white' onclick="navigator.clipboard.writeText('3306'); Session.toast('Port copied');"></i>
+                            <i class='bx bx-copy text-secondary cursor-pointer hover-white' onclick="copyText('3306', 'Port copied');"></i>
                         </div>
                     </div>
                 </div>
@@ -62,7 +57,7 @@ require_once __DIR__ . '/partials/mysql_header.php';
 
         <!-- Right Column: MySQL Users -->
         <div class="col-lg-7 col-xl-8">
-            <div class="card border-0 shadow-sm rounded-4 mb-4" style="background-color: var(--cui-card-bg);">
+            <div class="card border-0 shadow-sm rounded-4 mb-4" style="background-color: #111827; border: 1px solid rgba(255,255,255,0.05) !important;">
                 <div class="card-header bg-transparent border-bottom-0 pt-4 pb-2 d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="card-title fw-bold text-white mb-0 d-inline-block me-2" style="font-size: 1.1rem;">MySQL Server Users</h5>
@@ -80,7 +75,7 @@ require_once __DIR__ . '/partials/mysql_header.php';
                         <?php else: ?>
                             <?php foreach ($mysqlUsers as $mu): ?>
                                 <div class="col">
-                                    <div class="card border-0 shadow-sm position-relative overflow-hidden" style="background-color: var(--cui-body-bg); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                                    <div class="card border-0 shadow-sm position-relative overflow-hidden" style="background-color: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05) !important;">
                                         <div class="position-absolute bottom-0 start-0 w-100" ></div>
                                         
                                         <div class="card-body p-3 d-flex flex-column">
@@ -88,7 +83,7 @@ require_once __DIR__ . '/partials/mysql_header.php';
                                                 <small class="text-secondary fw-bold" style="font-size: 0.65rem; letter-spacing: 1px;">USERNAME</small>
                                                 <div class="d-flex justify-content-between align-items-center bg-dark bg-opacity-50 p-2 rounded mt-1 border border-light border-opacity-10">
                                                     <span class="text-light font-monospace" style="font-size: 0.8rem;"><?= htmlspecialchars($mu['mysql_username']) ?></span>
-                                                    <i class='bx bx-copy text-secondary cursor-pointer hover-white' onclick="navigator.clipboard.writeText('<?= htmlspecialchars($mu['mysql_username']) ?>'); Session.toast('Username copied');"></i>
+                                                    <i class='bx bx-copy text-secondary cursor-pointer hover-white' onclick="copyText('<?= htmlspecialchars($mu['mysql_username']) ?>', 'Username copied');"></i>
                                                 </div>
                                             </div>
                                             
@@ -98,7 +93,7 @@ require_once __DIR__ . '/partials/mysql_header.php';
                                                     <span class="text-light font-monospace" style="font-size: 0.8rem;">••••••••••••</span>
                                                     <div>
                                                         <i class='bx bx-show text-secondary cursor-pointer hover-white me-2' onclick="alert('Password: <?= htmlspecialchars(base64_decode($mu['mysql_password'])) ?>')"></i>
-                                                        <i class='bx bx-copy text-secondary cursor-pointer hover-white' onclick="navigator.clipboard.writeText('<?= htmlspecialchars(base64_decode($mu['mysql_password'])) ?>'); Session.toast('Password copied');"></i>
+                                                        <i class='bx bx-copy text-secondary cursor-pointer hover-white' onclick="copyText('<?= htmlspecialchars(base64_decode($mu['mysql_password'])) ?>', 'Password copied');"></i>
                                                     </div>
                                                 </div>
                                             </div>

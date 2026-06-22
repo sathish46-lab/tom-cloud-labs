@@ -76,7 +76,7 @@ RUN wget -O /var/www/adminer/index.php https://github.com/vrana/adminer/releases
     a2ensite adminer
 # 8. Static Configurations
 # Apache Ports
-RUN echo "Listen 8081\nListen 8082\n<IfModule ssl_module>\n    Listen 4431\n</IfModule>" > /etc/apache2/ports.conf
+RUN echo "Listen 8080\nListen 8081\nListen 8082\n<IfModule ssl_module>\n    Listen 4431\n</IfModule>" > /etc/apache2/ports.conf
 RUN touch /etc/apache2/code_server_map.txt
 
 # Traefik configuration

@@ -292,7 +292,7 @@ class Lab(BaseOrchestrator):
             "        MaxConnectionsPerChild   0\n"
             "</IfModule>\n"
             "EOF\n"
-            "&& service apache2 reload\""
+            "service apache2 reload\""
         )
         self.run(apache_opt_cmd)
 
@@ -328,9 +328,9 @@ class Lab(BaseOrchestrator):
         escaped_auth_content = auth_content.replace('"', '\\"')
         link_cmd = f'docker exec {instance_id} {link_script} "{username}" "{escaped_auth_content}" "{docker_ip}" "{dynamic_pass}" "{lab_priv_key}" "{tunnel_ip}" "{server_pub_key}" "{user_email}" "{n8n_domain_arg}" "{vps_docker_ip}"'
         
-        code, output = self.run(link_cmd, capture=True)
+        code, _ = self.run(link_cmd, capture=False)
         if code != 0:
-            self.log(f"linkuser.sh failed: {output}", "error", "configure")
+            self.log("linkuser.sh failed. Check output above for details.", "error", "configure")
             return
         
         # Phase 8: TRAEFIK

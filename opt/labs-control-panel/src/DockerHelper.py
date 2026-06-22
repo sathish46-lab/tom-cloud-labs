@@ -40,12 +40,17 @@ class DockerHelper:
         """Formats and executes commands with real-time logging."""
         try:
             formatted_cmd = cmd_template.format(**mapping)
-            print(f"[*] Executing: {formatted_cmd}")
+            # Security Fix: Hide internal command structure from the public deploy logs
+            # print(f"[*] Executing: {formatted_cmd}")
             
             # Use Popen for real-time streaming of build logs
             with subprocess.Popen(formatted_cmd, shell=True, stdout=subprocess.PIPE, 
                                   stderr=subprocess.STDOUT, text=True) as process:
                 for line in process.stdout:
+                    stripped = line.strip()
+                    # Security Fix: Filter out the 64-character hex container ID printed by docker run -d
+                    if len(stripped) == 64 and stripped.isalnum():
+                        continue
                     print(line, end="") # Print each line as it comes from Docker
                 
                 process.wait()

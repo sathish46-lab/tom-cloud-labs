@@ -161,7 +161,8 @@ def execute_job(ch, method, properties, body):
         process.wait()
         
         if process.returncode == 0:
-            log_to_user(ch, "amq.topic", routing_key, "[✓] Job completed successfully.")
+            log_to_user(ch, "amq.topic", routing_key, "[*] Your lab is up and ready to experiment... Page will reload in few seconds.")
+            log_to_user(ch, "amq.topic", routing_key, "[*] reload")
         else:
             log_to_user(ch, "amq.topic", routing_key, "[!] Job failed. Please check parameters.")
 

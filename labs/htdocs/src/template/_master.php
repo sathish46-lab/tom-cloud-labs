@@ -13,6 +13,84 @@ define('PAGE_START_TIME', microtime(true));
     <link rel="icon" type="image/png" href="<?= Session::cdn3('logo/favicon.png') ?>">
     <link rel="shortcut icon" type="image/png" href="<?= Session::cdn3('logo/favicon.png') ?>">
 
+    <?php
+    $serverTheme = [];
+    if (Session::getAuthStatus() == Constants::STATUS_LOGGEDIN) {
+        $user = Session::getUser();
+        if ($user) {
+            $serverTheme = $user->getThemePreferences() ?? [];
+        }
+    }
+    ?>
+    <script>
+        /**
+         * Fast-track state recovery to prevent UI Flicker
+         * Runs before ANY CSS is parsed to eliminate flashes
+         */
+        (function() {
+            // Global Environment Configuration
+            window.SERVER_IP = "<?= \TomLabs\Core\Env::get('SERVER_IP') ?>";
+
+            // 0. Background Theme Data will be fetched dynamically
+            window.TomBGThemes = {};
+
+            // 1. Sync Server Preferences to LocalStorage (Server is Source of Truth)
+            const serverTheme = <?= json_encode($serverTheme) ?>;
+            if (serverTheme && serverTheme.mode) localStorage.setItem('tom-labs-bg-mode', serverTheme.mode);
+            if (serverTheme && serverTheme.plain_color) localStorage.setItem('tom-labs-plain-color', serverTheme.plain_color);
+            if (serverTheme && serverTheme.custom_slots && Array.isArray(serverTheme.custom_slots)) {
+                serverTheme.custom_slots.forEach((color, i) => {
+                    if (color) localStorage.setItem('tom-labs-custom-color-' + i, color);
+                });
+            }
+            if (serverTheme && serverTheme.accent_color) localStorage.setItem('tom-labs-accent-color', serverTheme.accent_color);
+            if (serverTheme && serverTheme.custom_themes && Array.isArray(serverTheme.custom_themes)) {
+                serverTheme.custom_themes.forEach((theme, i) => {
+                    if (theme) localStorage.setItem('tom-labs-custom-theme-' + i, theme);
+                });
+            }
+
+            // 2. Apply Theme & Layout State immediately to DOM
+            const savedTheme = localStorage.getItem('tom-labs-theme') || 'dark';
+            const themeToApply = (savedTheme === 'auto') ?
+                (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') :
+                savedTheme;
+            document.documentElement.setAttribute('data-coreui-theme', themeToApply);
+
+            // Instantly apply custom accent (primary) color to prevent flash
+            const accentColor = localStorage.getItem('tom-labs-accent-color');
+            if (accentColor && accentColor.startsWith('#')) {
+                document.documentElement.style.setProperty('--cui-primary', accentColor);
+                if (accentColor.length === 7) {
+                    const r = parseInt(accentColor.slice(1, 3), 16);
+                    const g = parseInt(accentColor.slice(3, 5), 16);
+                    const b = parseInt(accentColor.slice(5, 7), 16);
+                    document.documentElement.style.setProperty('--cui-primary-rgb', `${r}, ${g}, ${b}`);
+                }
+            }
+
+            let mode = localStorage.getItem("tom-labs-bg-mode") || "spiderman";
+            
+            // Forced state for login page
+            <?php if (defined('IS_LOGIN_PAGE') && IS_LOGIN_PAGE === true): ?>
+            mode = "spiderman";
+            document.documentElement.classList.add('glass-mode');
+            window.FORCED_BG_MODE = "spiderman";
+            <?php endif; ?>
+
+            document.documentElement.classList.toggle("mode-plain", mode === "plain");
+
+            const isNarrow = localStorage.getItem('tom-labs-sidebar-narrow') === 'true';
+            if (isNarrow) document.documentElement.classList.add('sidebar-init-narrow');
+            
+            const isHidden = localStorage.getItem('tom-labs-sidebar-hidden') === 'true';
+            if (isHidden) document.documentElement.classList.add('sidebar-init-hidden');
+            
+            const savedBlur = localStorage.getItem('tom-labs-visual-blur');
+            if (savedBlur !== 'false') document.documentElement.classList.add('glass-mode');
+        })();
+    </script>
+
     <!-- Professional SEO Meta Tags -->
     <?php
     $seoTitle = Session::$pageTitle ?? 'Tom Labs - Advanced Development Environment';
@@ -63,98 +141,6 @@ define('PAGE_START_TIME', microtime(true));
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@coreui/coreui@5.0.2/dist/css/coreui.min.css" rel="stylesheet">
-
-    <style id="tom-theme-vars">
-        /* Server-side default theme (SNA Deep Blue) */
-        :root, [data-coreui-theme="dark"] {
-            --cui-body-bg: #0b1e36;
-            --glass-bg: rgba(11, 30, 54, 0.88);
-            --glass-bg-solid: rgba(11, 30, 54, 0.96);
-            --cui-card-bg: rgba(11, 30, 54, 0.45);
-            --cui-card-bg-solid: rgba(11, 30, 54, 0.95);
-            --cui-primary: #5856d6;
-            --cui-sidebar-bg: rgba(11, 30, 54, 0.97);
-            --cui-header-bg: rgba(11, 30, 54, 0.92);
-        }
-
-        [data-coreui-theme="light"] {
-            --cui-body-bg: #f4f7f9;
-            --glass-bg: rgba(255, 255, 255, 0.4); /* Premium, transparent frosted glass */
-            --glass-bg-solid: rgba(255, 255, 255, 0.98);
-            --cui-card-bg: rgba(255, 255, 255, 0.35);
-            --cui-card-bg-solid: rgba(255, 255, 255, 0.95);
-            --cui-primary: #5856d6;
-            --cui-sidebar-bg: rgba(255, 255, 255, 0.98);
-            --cui-header-bg: rgba(255, 255, 255, 0.95);
-            --cui-body-color: #2f353a;
-        }
-    </style>
-
-    <?php
-    $serverTheme = [];
-    if (Session::getAuthStatus() == Constants::STATUS_LOGGEDIN) {
-        $user = Session::getUser();
-        if ($user) {
-            $serverTheme = $user->getThemePreferences() ?? [];
-        }
-    }
-    ?>
-    <script>
-        /**
-         * Fast-track state recovery to prevent UI Flicker
-         * Matches SNA's 'simple' architectural pattern
-         */
-        (function() {
-            // Global Environment Configuration
-            window.SERVER_IP = "<?= \TomLabs\Core\Env::get('SERVER_IP') ?>";
-
-            // 0. Background Theme Data will be fetched dynamically
-            window.TomBGThemes = {};
-
-            // 1. Sync Server Preferences to LocalStorage (Server is Source of Truth)
-            const serverTheme = <?= json_encode($serverTheme) ?>;
-            if (serverTheme && serverTheme.mode) localStorage.setItem('tom-labs-bg-mode', serverTheme.mode);
-            if (serverTheme && serverTheme.plain_color) localStorage.setItem('tom-labs-plain-color', serverTheme.plain_color);
-            if (serverTheme && serverTheme.custom_slots && Array.isArray(serverTheme.custom_slots)) {
-                serverTheme.custom_slots.forEach((color, i) => {
-                    if (color) localStorage.setItem('tom-labs-custom-color-' + i, color);
-                });
-            }
-            if (serverTheme && serverTheme.accent_color) localStorage.setItem('tom-labs-accent-color', serverTheme.accent_color);
-            if (serverTheme && serverTheme.custom_themes && Array.isArray(serverTheme.custom_themes)) {
-                serverTheme.custom_themes.forEach((theme, i) => {
-                    if (theme) localStorage.setItem('tom-labs-custom-theme-' + i, theme);
-                });
-            }
-
-            // 2. Apply Theme & Layout State
-            const savedTheme = localStorage.getItem('tom-labs-theme') || 'dark';
-            const themeToApply = (savedTheme === 'auto') ?
-                (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') :
-                savedTheme;
-            document.documentElement.setAttribute('data-coreui-theme', themeToApply);
-
-            let mode = localStorage.getItem("tom-labs-bg-mode") || "spiderman";
-            
-            // Forced state for login page
-            <?php if (defined('IS_LOGIN_PAGE') && IS_LOGIN_PAGE === true): ?>
-            mode = "spiderman";
-            document.documentElement.classList.add('glass-mode');
-            window.FORCED_BG_MODE = "spiderman";
-            <?php endif; ?>
-
-            document.documentElement.classList.toggle("mode-plain", mode === "plain");
-
-            const isNarrow = localStorage.getItem('tom-labs-sidebar-narrow') === 'true';
-            if (isNarrow) document.documentElement.classList.add('sidebar-init-narrow');
-            
-            const isHidden = localStorage.getItem('tom-labs-sidebar-hidden') === 'true';
-            if (isHidden) document.documentElement.classList.add('sidebar-init-hidden');
-            
-            const savedBlur = localStorage.getItem('tom-labs-visual-blur');
-            if (savedBlur !== 'false') document.documentElement.classList.add('glass-mode');
-        })();
-    </script>
 
 
     <?php if (!defined('IS_LANDING_PAGE') || IS_LANDING_PAGE === false): ?>
