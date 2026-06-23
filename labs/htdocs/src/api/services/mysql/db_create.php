@@ -38,6 +38,7 @@ try {
     // 1. Verify ownership of the parent MySQL user
     $userRecord = $db->mysql_users->findOne([
         'user_id' => $user->getUserId(),
+        'email' => $user->getEmail(),
         'mysql_username' => $mysqlUsername
     ]);
 
@@ -46,7 +47,11 @@ try {
     }
 
     // 2. Limit to 10 databases per MySQL user
-    $dbCount = $db->mysql_databases->countDocuments(['mysql_user_id' => (string)$userRecord['_id']]);
+    $dbCount = $db->mysql_databases->countDocuments([
+        'mysql_user_id' => (string)$userRecord['_id'],
+        'email' => $user->getEmail(),
+        'user_id' => $user->getUserId()
+    ]);
     if ($dbCount >= 10) {
         throw new Exception("You have reached the limit of 10 databases for this user.");
     }
@@ -66,6 +71,7 @@ try {
     // 4. Save to MongoDB
     $dbRecord = [
         'user_id' => $user->getUserId(),
+        'email' => $user->getEmail(),
         'mysql_user_id' => (string)$userRecord['_id'],
         'db_name' => $finalDbName,
         'collation' => $collation,

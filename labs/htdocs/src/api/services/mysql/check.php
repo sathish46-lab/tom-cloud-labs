@@ -20,6 +20,7 @@ if (empty($username)) {
 // Ensure the user owns this mysql_user
 $mysqlUser = $db->mysql_users->findOne([
     'user_id' => $user->getUserId(),
+    'email' => $user->getEmail(),
     'mysql_username' => $username
 ]);
 
@@ -29,7 +30,9 @@ if (!$mysqlUser) {
 }
 
 $databases = $db->mysql_databases->find([
-    'mysql_user_id' => (string)$mysqlUser['_id']
+    'mysql_user_id' => (string)$mysqlUser['_id'],
+    'user_id' => $user->getUserId(),
+    'email' => $user->getEmail()
 ])->toArray();
 
 $results = [];

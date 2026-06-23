@@ -30,7 +30,10 @@ if ($dbUser !== $rawUsername) {
 
 try {
     // Limit to 5 MySQL users per account
-    $userCount = $db->mysql_users->countDocuments(['user_id' => $user->getUserId()]);
+    $userCount = $db->mysql_users->countDocuments([
+        'user_id' => $user->getUserId(),
+        'email' => $user->getEmail()
+    ]);
     if ($userCount >= 5) {
         echo json_encode(['success' => false, 'error' => 'You have reached the maximum limit of 5 MySQL users.']);
         exit;
@@ -46,6 +49,7 @@ try {
     // 2. Save to MongoDB
     $dbRecord = [
         'user_id' => $user->getUserId(),
+        'email' => $user->getEmail(),
         'mysql_username' => $dbUser,
         'mysql_password' => base64_encode($password),
         'created_at' => new MongoDB\BSON\UTCDateTime()

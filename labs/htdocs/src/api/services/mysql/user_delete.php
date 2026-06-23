@@ -24,6 +24,7 @@ try {
     // Verify ownership of the MySQL user
     $userRecord = $db->mysql_users->findOne([
         'user_id' => $user->getUserId(),
+        'email' => $user->getEmail(),
         'mysql_username' => $mysqlUsername
     ]);
 
@@ -34,7 +35,11 @@ try {
     $manager = new MySqlManager();
 
     // 1. Find and Drop all databases owned by this user
-    $databases = $db->mysql_databases->find(['mysql_user_id' => (string)$userRecord['_id']]);
+    $databases = $db->mysql_databases->find([
+        'mysql_user_id' => (string)$userRecord['_id'],
+        'user_id' => $user->getUserId(),
+        'email' => $user->getEmail()
+    ]);
     foreach ($databases as $dbDoc) {
         $manager->deleteDatabase($dbDoc['db_name']);
         // Delete the MongoDB record

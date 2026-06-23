@@ -24,6 +24,7 @@ try {
     // 1. Find the DB record
     $dbRecord = $db->mysql_databases->findOne([
         'user_id' => $user->getUserId(),
+        'email' => $user->getEmail(),
         'db_name' => $dbName
     ]);
 
