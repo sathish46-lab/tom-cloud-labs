@@ -13,7 +13,8 @@ if [ -f /etc/wireguard/wg0.conf ]; then
     wg-quick up wg0 || true
     
     # Ensure all traffic within the lab network is routed through the tunnel
-    ip route add 172.30.0.0/16 dev wg0 metric 10 2>/dev/null || true
+    TUNNEL_PREFIX=$(echo "${VPS_DOCKER_IP:-172.30.0.1}" | awk -F. '{print $1"."$2"."$3"."}')
+    ip route add ${TUNNEL_PREFIX}0/16 dev wg0 metric 10 2>/dev/null || true
 fi
 
 # 3. Handle MinIO Specifics

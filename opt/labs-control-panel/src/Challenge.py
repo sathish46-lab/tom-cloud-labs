@@ -61,7 +61,10 @@ class Challenge(BaseOrchestrator):
         self.log("Challenge deployment initiated...", "info", "init")
 
         # 0. Verify Docker Network exists
-        docker_network = self.config.get('docker_network_name', 'Dev_lab')
+        docker_network = self.config.get('docker_network_name')
+        if not docker_network:
+            self.log("FATAL: 'docker_network_name' not set in config.", "error", "init")
+            return
         code, _ = self.run(f"docker network inspect {docker_network} > /dev/null 2>&1", capture=True)
         if code != 0:
             self.log(f"FATAL: Docker network {docker_network} not found. Is docker-compose up?", "error", "init")
@@ -127,7 +130,7 @@ class Challenge(BaseOrchestrator):
                 "status": "deploying",
                 "flag": flag,
                 "credentials": {
-                    "docker_ip": f"{self.config.get('docker_ip_prefix', '172.19.0.')}{challenge_ip.split('.')[3]}",
+                    "docker_ip": f"{self.config.get('docker_ip')}{challenge_ip.split('.')[3]}",
                     "tunnel_ip": challenge_ip,
                     "access_url": f"http://{challenge_ip}"
                 },
@@ -144,8 +147,14 @@ class Challenge(BaseOrchestrator):
         ip_parts = challenge_ip.split('.')
         last_octet = ip_parts[3]
 
-        docker_prefix = self.config.get('docker_ip_prefix', '172.19.0.')
-        tunnel_prefix = self.config.get('tunnel_ip_prefix', '172.30.0.')
+        docker_prefix = self.config.get('docker_ip')
+        if not docker_prefix:
+            self.log("FATAL: 'docker_ip' not set in config.", "error", "init")
+            return
+        tunnel_prefix = self.config.get('tunnel_ip')
+        if not tunnel_prefix:
+            self.log("FATAL: 'tunnel_ip' not set in config.", "error", "init")
+            return
 
         docker_ip = f"{docker_prefix}{last_octet}"
         tunnel_ip = challenge_ip  # Already a tunnel IP (172.30.x.x)
@@ -154,7 +163,10 @@ class Challenge(BaseOrchestrator):
         self.log(f"Tunnel IP (wg0):  {tunnel_ip}", "info", "network")
 
         # 4. Determine VPS container IP for WireGuard endpoint
-        orchestrator = self.config.get('orchestrator_container', 'Dev_lab')
+        orchestrator = self.config.get('orchestrator_container')
+        if not orchestrator:
+            self.log("FATAL: 'orchestrator_container' not set in config.", "error", "init")
+            return
         code, vps_docker_ip = self.run(
             f"docker inspect {orchestrator} --format '{{{{.NetworkSettings.Networks.{docker_network}.IPAddress}}}}' 2>/dev/null", capture=True
         )
@@ -177,10 +189,12 @@ class Challenge(BaseOrchestrator):
         cpu = res.get('cpus', '0.1')
         hostname = challenge_spec.get('network', {}).get('hostname', 'ctf-challenge')
 
+        vps_docker_ip = f"{self.config.get('tunnel_ip')}1"
         run_cmd = (
             f"docker run --detach --name {container_name} "
             f"--memory='{mem}' --cpus='{cpu}' "
             f"--network {docker_network} --ip {docker_ip} "
+            f"-e VPS_DOCKER_IP={vps_docker_ip} "
             f"--hostname {hostname} "
             f"{challenge_id}:lab"
         )
@@ -326,7 +340,10 @@ class Challenge(BaseOrchestrator):
                 docker_ip = challenge_data.get('credentials', {}).get('docker_ip')
                 if tunnel_ip and docker_ip:
                     self.log("Re-applying WireGuard routing...", "info", "routing")
-                    docker_network = self.config.get('docker_network_name', 'Dev_lab')
+                    docker_network = self.config.get('docker_network_name')
+                    if not docker_network:
+                        self.log("FATAL: 'docker_network_name' not set in config.", "error", "network")
+                        return
                     bridge_id = self.detect_bridge(docker_network)
                     self.configure_routing(tunnel_ip, docker_ip, bridge_id, dnat=True)
 
@@ -368,7 +385,7 @@ class Challenge(BaseOrchestrator):
         Allocate a unique IP address for a challenge from the VPN network pool.
         Challenge IPs use the 10.20.0.x range to separate them from device VPN IPs (172.30.0.x).
         """
-        tunnel_prefix = self.config.get('tunnel_ip_prefix', '172.30.0.')
+        tunnel_prefix = self.config.get('tunnel_ip')
 
         # Use a challenge-specific sub-range: 10.20.0.x (start at .10 to leave room)
         # Check existing allocations to find the next free IP

@@ -31,7 +31,7 @@ $port = get_config('wireguard_endpoint_port') ?? 51820;
 $serverHost = $_SERVER['HTTP_HOST'] ?? '127.0.0.1';
 $inferredVpnDomain = str_replace(['labs.', 'dev.'], 'vpn.', $serverHost);
 $endpointDomain = get_config('vpn_domain') ?: $inferredVpnDomain;
-$endpoint = "$endpointDomain:$port";
+$endpoint = get_config('wireguard_endpoint') ?? "$endpointDomain:$port";
 
 $config = "[Interface]\n";
 $config .= "PrivateKey = " . ($device['private_key'] ?: '<PASTE_PRIVATE_KEY>') . "\n";
@@ -44,7 +44,7 @@ $config .= "PublicKey = $serverPubKey\n";
 $config .= "Endpoint = $endpoint\n";
 
 // IMPORTANT: route the whole VPN range
-$tunnelPrefix = get_config('tunnel_ip_prefix') ?? '172.30.0.';
+$tunnelPrefix = get_config('tunnel_ip');
 $baseSubnet = preg_replace('/\.0\.$/', '.0.0/16', $tunnelPrefix);
 $config .= "AllowedIPs = $baseSubnet\n";
 $config .= "PersistentKeepalive = 25\n";

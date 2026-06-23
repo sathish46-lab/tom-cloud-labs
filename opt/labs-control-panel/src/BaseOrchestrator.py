@@ -131,7 +131,12 @@ class BaseOrchestrator:
         self.run("iptables -A FORWARD -i wg0 -o wg0 -j ACCEPT 2>/dev/null || true")
         self.run(f"iptables -A FORWARD -i wg0 -o {bridge_id} -j ACCEPT 2>/dev/null || true")
         self.run(f"iptables -A FORWARD -i {bridge_id} -o wg0 -j ACCEPT 2>/dev/null || true")
-        self.run("iptables -t nat -A POSTROUTING -s 172.30.0.0/16 -o eth0 -j MASQUERADE 2>/dev/null || true")
+        tunnel_prefix = self.config.get('tunnel_ip')
+        if not tunnel_prefix:
+            self.log("FATAL: 'tunnel_ip' not set in config.", "error", "network")
+            return
+        self.run(f"iptables -t nat -C POSTROUTING -s {tunnel_prefix}0/16 -o eth0 -j MASQUERADE 2>/dev/null || "
+                 f"iptables -t nat -A POSTROUTING -s {tunnel_prefix}0/16 -o eth0 -j MASQUERADE 2>/dev/null || true")
 
     def cleanup_container(self, container_name, docker_network):
         """Shared container cleanup."""

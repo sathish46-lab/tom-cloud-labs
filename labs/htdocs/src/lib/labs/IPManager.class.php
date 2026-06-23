@@ -9,9 +9,10 @@ class IPManager {
     private $db;
     private $collection;
     private $protected_range = 10;
-    private $ip_prefix = '172.30.0.';
+    private $ip_prefix;
 
     public function __construct() {
+        $this->ip_prefix = get_config('tunnel_ip');
         $this->db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
         $this->collection = $this->db->lab_ips;
     }

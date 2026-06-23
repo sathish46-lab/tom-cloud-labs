@@ -120,7 +120,10 @@ class Lab(BaseOrchestrator):
         self.log("Deployment initiated (WireGuard Mesh Mode)...", "info", "init")
         
         # Phase 1: INIT
-        docker_network = self.config.get('docker_network_name', 'Dev_lab')
+        docker_network = self.config.get('docker_network_name')
+        if not docker_network:
+            self.log("FATAL: 'docker_network_name' not set in config.", "error", "init")
+            return
         code, _ = self.run(f"docker network inspect {docker_network} > /dev/null 2>&1", capture=True)
         if code != 0:
             self.log(f"FATAL: Docker network {docker_network} not found. Is docker-compose up?", "error", "init")
@@ -175,13 +178,22 @@ class Lab(BaseOrchestrator):
         ip_parts = base_ip.split('.')
         last_octet = ip_parts[3]
         
-        docker_prefix = self.config.get('docker_ip_prefix', '172.19.0.')
-        tunnel_prefix = self.config.get('tunnel_ip_prefix', '172.30.0.')
+        docker_prefix = self.config.get('docker_ip')
+        if not docker_prefix:
+            self.log("FATAL: 'docker_ip' not set in config.", "error", "init")
+            return
+        tunnel_prefix = self.config.get('tunnel_ip')
+        if not tunnel_prefix:
+            self.log("FATAL: 'tunnel_ip' not set in config.", "error", "init")
+            return
 
         docker_ip = f"{docker_prefix}{last_octet}"
         tunnel_ip = f"{tunnel_prefix}{last_octet}"
         
-        orchestrator = self.config.get('orchestrator_container', 'Dev_lab')
+        orchestrator = self.config.get('orchestrator_container')
+        if not orchestrator:
+            self.log("FATAL: 'orchestrator_container' not set in config.", "error", "init")
+            return
         code, vps_docker_ip = self.run(
             f"docker inspect {orchestrator} --format '{{{{.NetworkSettings.Networks.{docker_network}.IPAddress}}}}' 2>/dev/null", capture=True
         )
@@ -257,6 +269,7 @@ class Lab(BaseOrchestrator):
             "user": username, 
             "image": f"{template_name}:lab", 
             "ip": docker_ip, 
+            "vps_docker_ip": f"{self.config.get('tunnel_ip')}1",
             "host_name": lab_spec.get('network', {}).get('hostname', 'essentials'),
             'network_name': self.config.get('docker_network_name', 'bridge')
         }
@@ -461,7 +474,10 @@ class Lab(BaseOrchestrator):
                 # Re-apply Routing
                 if tunnel_ip and docker_ip:
                     self.log("Re-applying network routes...", "info", "routing")
-                    docker_network = self.config.get('docker_network_name', 'Dev_lab')
+                    docker_network = self.config.get('docker_network_name')
+                    if not docker_network:
+                        self.log("FATAL: 'docker_network_name' not set in config.", "error", "network")
+                        return
                     bridge_id = self.detect_bridge(docker_network)
                     self.configure_routing(tunnel_ip, docker_ip, bridge_id)
                 

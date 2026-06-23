@@ -98,7 +98,7 @@ fi
 echo "[INFO] Recovering host routes for deployed labs..."
 
 # Detect the bridge interface from config
-DOCKER_NETWORK=$(jq -r '.docker_network_name' /etc/labs-control-panel/config.json 2>/dev/null)
+DOCKER_NETWORK=$(jq -r '.docker_network_name' /opt/labs-control-panel/config.json 2>/dev/null)
 if [ -z "$DOCKER_NETWORK" ] || [ "$DOCKER_NETWORK" = "null" ]; then
     DOCKER_NETWORK="Dev_lab"
 fi
@@ -107,6 +107,13 @@ BRIDGE_ID=$(docker network inspect "$DOCKER_NETWORK" -f '{{.Id}}' 2>/dev/null | 
 if [ -n "$BRIDGE_ID" ]; then
     BRIDGE_IF="br-${BRIDGE_ID}"
     
+    TUNNEL_PREFIX=$(jq -r '.tunnel_ip' /opt/labs-control-panel/config.json 2>/dev/null)
+    if [ -z "$TUNNEL_PREFIX" ] || [ "$TUNNEL_PREFIX" = "null" ]; then
+        echo "FATAL: tunnel_ip not set in config.json"
+        exit 1
+    fi
+    TUNNEL_SUBNET="${TUNNEL_PREFIX}0/16"
+
     # Ensure forwarding rules between wg0 and Docker bridge
     iptables -C FORWARD -i wg0 -o wg0 -j ACCEPT 2>/dev/null || \
         iptables -A FORWARD -i wg0 -o wg0 -j ACCEPT 2>/dev/null
@@ -114,8 +121,8 @@ if [ -n "$BRIDGE_ID" ]; then
         iptables -A FORWARD -i wg0 -o "$BRIDGE_IF" -j ACCEPT 2>/dev/null
     iptables -C FORWARD -i "$BRIDGE_IF" -o wg0 -j ACCEPT 2>/dev/null || \
         iptables -A FORWARD -i "$BRIDGE_IF" -o wg0 -j ACCEPT 2>/dev/null
-    iptables -t nat -C POSTROUTING -s 172.30.0.0/16 -o eth0 -j MASQUERADE 2>/dev/null || \
-        iptables -t nat -A POSTROUTING -s 172.30.0.0/16 -o eth0 -j MASQUERADE 2>/dev/null
+    iptables -t nat -C POSTROUTING -s "$TUNNEL_SUBNET" -o eth0 -j MASQUERADE 2>/dev/null || \
+        iptables -t nat -A POSTROUTING -s "$TUNNEL_SUBNET" -o eth0 -j MASQUERADE 2>/dev/null
     
     # For each WireGuard peer, re-create the host route to its Docker container
     # Peer AllowedIPs (172.30.x.y) maps to Docker IP (10.30.0.y) where y is the last octet
@@ -123,7 +130,7 @@ if [ -n "$BRIDGE_ID" ]; then
         wg show wg0 allowed-ips | while read -r _pubkey allowed_ip_cidr; do
             # Extract just the IP (strip /32)
             tunnel_ip=$(echo "$allowed_ip_cidr" | sed 's|/32||')
-            if [ -n "$tunnel_ip" ] && [ "$tunnel_ip" != "172.30.0.1" ]; then
+            if [ -n "$tunnel_ip" ] && [ "$tunnel_ip" != "${TUNNEL_PREFIX}1" ]; then
                 # Derive Docker IP: last octet of tunnel IP -> 172.19.0.{last_octet}
                 last_octet=$(echo "$tunnel_ip" | awk -F. '{print $4}')
                 docker_ip="172.19.0.${last_octet}"

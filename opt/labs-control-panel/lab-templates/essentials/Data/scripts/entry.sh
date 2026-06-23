@@ -18,8 +18,9 @@ if [ -f /etc/wireguard/wg0.conf ]; then
     echo "[*] Starting WireGuard..."
     wg-quick up wg0 || true
     
-    # Add routing for VPN network
-    ip route add 172.30.0.0/16 dev wg0 metric 10 2>/dev/null || true
+    # Ensure the container knows to route VPN traffic to the VPS container
+    TUNNEL_PREFIX=$(echo "${VPS_DOCKER_IP:-172.30.0.1}" | awk -F. '{print $1"."$2"."$3"."}')
+    ip route add ${TUNNEL_PREFIX}0/16 dev wg0 metric 10 2>/dev/null || true
 fi
 
 # Keep container running

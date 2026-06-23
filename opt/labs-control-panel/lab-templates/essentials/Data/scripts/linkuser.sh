@@ -69,6 +69,7 @@ if [ -n "$LAB_PRIV_KEY" ] && [ -n "$SERVER_PUBKEY" ]; then
     # Use the VPS container's Docker network IP as the WireGuard endpoint
     # This is reachable from sibling containers on the same Docker bridge network
     WG_ENDPOINT="${VPS_DOCKER_IP:-172.30.0.1}"
+    TUNNEL_PREFIX=$(echo "$WG_ENDPOINT" | awk -F. '{print $1"."$2"."$3"."}')
     
     cat <<EOF > /etc/wireguard/wg0.conf
 [Interface]
@@ -80,7 +81,7 @@ Table = off
 [Peer]
 PublicKey = $SERVER_PUBKEY
 Endpoint = ${WG_ENDPOINT}:51820
-AllowedIPs = 172.30.0.0/16
+AllowedIPs = ${TUNNEL_PREFIX}0/16
 PersistentKeepalive = 25
 EOF
     

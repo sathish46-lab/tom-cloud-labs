@@ -54,6 +54,9 @@ class IPNetwork {
             'limit' => 1,
             'sort' => ['_id' => -1],
         ]);
+        if (!$last_ip || !isset($last_ip['_id']) || !is_numeric($last_ip['_id'])) {
+            return 1;
+        }
         return $last_ip['_id'] + 1;
     }
 
@@ -97,9 +100,9 @@ class IPNetwork {
     }
 
     public function getNextIP($email=null, $ip = null){
-        // STRICT SUBNET SEGREGATION: VPN Clients always go to 172.30.1.x
-        // Ignoring the interface CIDR prefix for client allocation to preventing collisions with Labs (172.30.10.x)
-        $prefix = "172.30.1.";
+        $opt_config = json_decode(@file_get_contents('/opt/labs-control-panel/config.json'), true) ?: [];
+        $tunnel_prefix = $opt_config['tunnel_ip'];
+        $prefix = preg_replace('/\.0\.$/', '.1.', $tunnel_prefix);
 
         $protected_ips = [];
         // Protected Gateway/Router IPs in the client subnet just in case

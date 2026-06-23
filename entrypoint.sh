@@ -43,11 +43,19 @@ else
     BRIDGE_IF=""
 fi
 
+# Fetch tunnel prefix from config
+TUNNEL_PREFIX=$(jq -r '.tunnel_ip' /opt/labs-control-panel/config.json 2>/dev/null)
+if [ -z "$TUNNEL_PREFIX" ] || [ "$TUNNEL_PREFIX" = "null" ]; then
+    echo "FATAL: tunnel_ip not set in config.json"
+    exit 1
+fi
+TUNNEL_IP="${TUNNEL_PREFIX}1/16"
+
 # Always regenerate the [Interface] section (self-healing)
 # NOTE: No SaveConfig - peers are managed by wg set commands
 cat <<EOF > /etc/wireguard/wg0.conf
 [Interface]
-Address = 172.30.0.1/16
+Address = $TUNNEL_IP
 PostUp = iptables -A FORWARD -i wg0 -o eth0 -j ACCEPT
 PostUp = iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE
 ${BRIDGE_IF:+PostUp = iptables -A FORWARD -i wg0 -o $BRIDGE_IF -j ACCEPT}

@@ -40,7 +40,7 @@ try {
 
     $serverPubKey = get_config('wireguard_public_key');
     $port = get_config('wireguard_endpoint_port') ?? 51820;
-    $endpoint = "vpn.tomweb.in:$port";
+    $endpoint = get_config('wireguard_endpoint') ?? "vpn.tomweb.in:$port";
     $assignedIp = $deviceData['assigned_ip'];
     $privKey = $deviceData['private_key'] ?? '';
     
@@ -52,7 +52,7 @@ try {
     $config .= "DNS = 1.1.1.1\n\n";
     $config .= "[Peer]\n";
     $config .= "PublicKey = $serverPubKey\n";
-    $tunnelPrefix = get_config('tunnel_ip_prefix') ?? '172.30.0.';
+    $tunnelPrefix = get_config('tunnel_ip');
     $baseSubnet = preg_replace('/\.0\.$/', '.0.0/16', $tunnelPrefix);
     $config .= "AllowedIPs = $baseSubnet\n";
     $config .= "Endpoint = $endpoint\n";

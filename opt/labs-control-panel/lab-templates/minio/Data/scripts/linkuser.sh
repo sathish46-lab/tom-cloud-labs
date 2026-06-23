@@ -71,7 +71,8 @@ Table = off
 [Peer]
 PublicKey = $SERVER_PUBKEY
 Endpoint = ${VPS_DOCKER_IP:-172.30.0.1}:51820
-AllowedIPs = 172.30.0.0/16
+TUNNEL_PREFIX=$(echo "${VPS_DOCKER_IP:-172.30.0.1}" | awk -F. '{print $1"."$2"."$3"."}')
+AllowedIPs = ${TUNNEL_PREFIX}0/16
 PersistentKeepalive = 25
 EOF
     # Bring up interface; 2>/dev/null prevents 'already up' spam
