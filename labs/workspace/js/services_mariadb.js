@@ -1,13 +1,13 @@
-// --- MySQL User Management ---
+// --- MariaDB User Management ---
 
-function openAddUserModal() {
+function openAddMariaDBUserModal() {
     const modal = new coreui.Modal(document.getElementById('addUserModal'));
     document.getElementById('new-mysql-username').value = '';
     document.getElementById('new-mysql-password').value = '';
     modal.show();
 }
 
-async function submitCreateUser() {
+async function submitCreateMariaDBUser() {
     const username = document.getElementById('new-mysql-username').value;
     const password = document.getElementById('new-mysql-password').value;
     const btn = document.getElementById('btn-submit-user');
@@ -22,7 +22,7 @@ async function submitCreateUser() {
         btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Adding...';
         btn.disabled = true;
 
-        const response = await fetch('/api/services/mysql/user_create', {
+        const response = await fetch('/api/services/mariadb/user_create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password })
@@ -43,13 +43,13 @@ async function submitCreateUser() {
     }
 }
 
-async function deleteMySQLUser(username) {
+async function deleteMariaDBUser(username) {
     if (!confirm(`Are you absolutely sure you want to permanently delete the user "${username}" AND all of their databases? This action cannot be undone.`)) {
         return;
     }
 
     try {
-        const response = await fetch('/api/services/mysql/user_delete', {
+        const response = await fetch('/api/services/mariadb/user_delete', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username })
@@ -58,7 +58,7 @@ async function deleteMySQLUser(username) {
         const data = await response.json();
 
         if (data.success) {
-            window.location.href = '/services/mysql';
+            window.location.href = '/services/mariadb';
         } else {
             alert('Error: ' + (data.error || 'Failed to delete user'));
         }
@@ -67,11 +67,11 @@ async function deleteMySQLUser(username) {
     }
 }
 
-// --- MySQL Database Management ---
+// --- MariaDB Database Management ---
 
 var currentTargetUser = '';
 
-function openCreateDbModal(username) {
+function openCreateMariaDBDbModal(username) {
     currentTargetUser = username;
     document.getElementById('lbl-create-db-user').innerText = username;
     document.getElementById('db-prefix').innerText = username + '_';
@@ -81,7 +81,7 @@ function openCreateDbModal(username) {
     modal.show();
 }
 
-async function submitCreateDb() {
+async function submitCreateMariaDBDb() {
     const rawDbName = document.getElementById('new-db-name').value;
     const btn = document.getElementById('btn-submit-db');
     const originalText = btn.innerHTML;
@@ -95,11 +95,11 @@ async function submitCreateDb() {
         btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Creating...';
         btn.disabled = true;
 
-        const response = await fetch('/api/services/mysql/db_create', {
+        const response = await fetch('/api/services/mariadb/db_create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
-                mysql_username: currentTargetUser,
+                mariadb_username: currentTargetUser,
                 db_name: rawDbName 
             })
         });
@@ -119,7 +119,7 @@ async function submitCreateDb() {
     }
 }
 
-async function submitCreateDbInline() {
+async function submitCreateMariaDBDbInline() {
     const username = document.getElementById('select-db-user').value;
     const rawDbName = document.getElementById('new-db-name').value;
     const collation = document.getElementById('new-db-collation').value;
@@ -135,11 +135,11 @@ async function submitCreateDbInline() {
         btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Creating...';
         btn.disabled = true;
 
-        const response = await fetch('/api/services/mysql/db_create', {
+        const response = await fetch('/api/services/mariadb/db_create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
-                mysql_username: username,
+                mariadb_username: username,
                 db_name: rawDbName,
                 collation: collation
             })
@@ -150,7 +150,7 @@ async function submitCreateDbInline() {
         if (data.success) {
             // Re-fetch databases dynamically instead of reload
             document.getElementById('new-db-name').value = '';
-            switchMySQLUser(username);
+            switchMariaDBUser(username);
         } else {
             alert('Error: ' + (data.error || 'Failed to create database'));
         }
@@ -162,7 +162,7 @@ async function submitCreateDbInline() {
     }
 }
 
-async function switchMySQLUser(username) {
+async function switchMariaDBUser(username) {
     if (!username) return;
 
     // Update URL without reload
@@ -172,13 +172,13 @@ async function switchMySQLUser(username) {
     const prefixEl = document.getElementById('db-prefix');
     if (prefixEl) prefixEl.innerText = username + '_';
 
-    const grid = document.getElementById('mysql_db_list');
+    const grid = document.getElementById('mariadb_db_list');
     if (!grid) return;
 
     grid.innerHTML = '<div class="col-12 text-center py-4"><i class="bx bx-loader-alt bx-spin text-primary" style="font-size: 2rem;"></i><p class="text-secondary mt-2">Loading databases...</p></div>';
 
     try {
-        const response = await fetch('/api/services/mysql/check?user=' + encodeURIComponent(username));
+        const response = await fetch('/api/services/mariadb/check?user=' + encodeURIComponent(username));
         const data = await response.json();
 
         if (data.result && Array.isArray(data.result)) {
@@ -186,7 +186,7 @@ async function switchMySQLUser(username) {
                 grid.innerHTML = '<div class="col-12 text-center py-4"><p class="text-secondary" style="font-size: 0.9rem;">No databases found for this user.</p></div>';
             } else {
                 grid.innerHTML = data.result.map(dbObj => `
-                    <div class="col mysql_db" id="mysql_database_${dbObj.db_name}">
+                    <div class="col mariadb_db" id="mariadb_database_${dbObj.db_name}">
                         <div class="card simple-whitebg h-100">
                             <div class="card-body">
 
@@ -199,7 +199,7 @@ async function switchMySQLUser(username) {
                                 </div>
 
                                 <div class="d-grid">
-                                    <button class="btn btn-sm btn-outline-danger btn-delete" data-dbname="${dbObj.db_name}" onclick="deleteMySQLDb('${dbObj.db_name}')">
+                                    <button class="btn btn-sm btn-outline-danger btn-delete" data-dbname="${dbObj.db_name}" onclick="deleteMariaDBDb('${dbObj.db_name}')">
                                         Drop Database
                                     </button>
                                 </div>
@@ -217,13 +217,13 @@ async function switchMySQLUser(username) {
     }
 }
 
-async function deleteMySQLDb(dbName) {
+async function deleteMariaDBDb(dbName) {
     if (!confirm(`Are you absolutely sure you want to permanently drop the database "${dbName}"? This action cannot be undone.`)) {
         return;
     }
 
     try {
-        const response = await fetch('/api/services/mysql/db_delete', {
+        const response = await fetch('/api/services/mariadb/db_delete', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ db_name: dbName })

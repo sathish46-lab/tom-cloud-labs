@@ -32,8 +32,26 @@ RewriteRule ^home$ app/home.php [L,QSA]
 
 # 8. Services Routing
 RewriteRule ^services$ app/services.php [L,QSA]
+
+# MySQL
 RewriteRule ^services/mysql$ app/services/mysql/dashboard.php [L,QSA]
 RewriteRule ^services/mysql/database$ app/services/mysql/database.php [L,QSA]
+
+# PostgreSQL
+RewriteRule ^services/postgresql$ app/services/postgresql/dashboard.php [L,QSA]
+RewriteRule ^services/postgresql/database$ app/services/postgresql/database.php [L,QSA]
+
+# MongoDB
+RewriteRule ^services/mongodb$ app/services/mongodb/dashboard.php [L,QSA]
+RewriteRule ^services/mongodb/database$ app/services/mongodb/database.php [L,QSA]
+
+# RabbitMQ
+RewriteRule ^services/rabbitmq$ app/services/rabbitmq/dashboard.php [L,QSA]
+RewriteRule ^services/rabbitmq/vhost$ app/services/rabbitmq/vhost.php [L,QSA]
+
+# Redis
+RewriteRule ^services/redis$ app/services/redis/dashboard.php [L,QSA]
+
 # 3. Quiz Module Routing (AI Powered)
 RewriteRule ^quiz/v/([a-f0-9]+)/?$ app/quiz/v.php?hash=$1 [L,QSA]
 RewriteRule ^quiz/generate/?$ app/quiz/generate.php [L,QSA]

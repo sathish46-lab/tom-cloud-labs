@@ -18,6 +18,10 @@ fi
 
 # 1. RabbitMQ Configuration
 if systemctl is-active --quiet rabbitmq-server; then
+    echo "[INFO] Waiting for RabbitMQ to be fully ready..."
+    until rabbitmqctl status >/dev/null 2>&1; do
+        sleep 2
+    done
     rabbitmq-plugins enable rabbitmq_management rabbitmq_stomp rabbitmq_web_stomp || true
     if ! rabbitmqctl list_users | grep -qw "^admin"; then
         echo "[INFO] Creating RabbitMQ Admin User..."
@@ -35,6 +39,27 @@ if systemctl is-active --quiet mysql; then
     mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'tomlabs_root_secret'; FLUSH PRIVILEGES;" 2>/dev/null || true
     # Create wildcard root user for access over Docker network
     mysql -u root -ptomlabs_root_secret -e "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'tomlabs_root_secret'; GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;" 2>/dev/null || true
+fi
+
+# 1.6. MariaDB Configuration (Port 3307)
+if systemctl is-active --quiet mariadb; then
+    echo "[INFO] Configuring MariaDB Root password..."
+    mysql --port=3307 -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'tomlabs_root_secret'; FLUSH PRIVILEGES;" 2>/dev/null || true
+    mysql --port=3307 -u root -ptomlabs_root_secret -e "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'tomlabs_root_secret'; GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;" 2>/dev/null || true
+fi
+
+# 1.7. PostgreSQL Configuration
+if systemctl is-active --quiet postgresql; then
+    echo "[INFO] Configuring PostgreSQL Admin password..."
+    sudo -u postgres psql -c "CREATE ROLE tomlabs_admin WITH LOGIN SUPERUSER PASSWORD 'tomlabs_root_secret';" 2>/dev/null || true
+    sudo -u postgres psql -c "ALTER ROLE tomlabs_admin WITH PASSWORD 'tomlabs_root_secret';" 2>/dev/null || true
+fi
+
+# 1.8. Redis Configuration
+if systemctl is-active --quiet redis-server; then
+    echo "[INFO] Configuring Redis Admin password..."
+    redis-cli ACL SETUSER default on >tomlabs_redis_secret ~* +@all 2>/dev/null || true
+    redis-cli ACL SAVE 2>/dev/null || true
 fi
 
 # 2. Build dependencies (if directories exist)

@@ -88,6 +88,21 @@
                         } elseif (stripos($lowerPart, 'mysql server') !== false) {
                             $url = '/services/mysql';
                             $displayPart = 'MySQL Server';
+                        } elseif (stripos($lowerPart, 'mariadb server') !== false) {
+                            $url = '/services/mariadb';
+                            $displayPart = 'MariaDB Server';
+                        } elseif (stripos($lowerPart, 'postgresql server') !== false) {
+                            $url = '/services/postgresql';
+                            $displayPart = 'PostgreSQL Server';
+                        } elseif (stripos($lowerPart, 'mongodb server') !== false) {
+                            $url = '/services/mongodb';
+                            $displayPart = 'MongoDB Server';
+                        } elseif (stripos($lowerPart, 'rabbitmq server') !== false) {
+                            $url = '/services/rabbitmq';
+                            $displayPart = 'RabbitMQ Server';
+                        } elseif (stripos($lowerPart, 'redis server') !== false) {
+                            $url = '/services/redis';
+                            $displayPart = 'Redis Server';
                         } elseif (stripos($lowerPart, 'device') !== false) {
                             $url = '/devices';
                         } elseif (stripos($lowerPart, 'network') !== false) {

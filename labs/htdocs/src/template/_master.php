@@ -80,6 +80,8 @@ define('PAGE_START_TIME', microtime(true));
 
             document.documentElement.classList.toggle("mode-plain", mode === "plain");
 
+            document.documentElement.classList.toggle("mode-plain", mode === "plain");
+
             const isNarrow = localStorage.getItem('tom-labs-sidebar-narrow') === 'true';
             if (isNarrow) document.documentElement.classList.add('sidebar-init-narrow');
             
@@ -90,6 +92,16 @@ define('PAGE_START_TIME', microtime(true));
             if (savedBlur !== 'false') document.documentElement.classList.add('glass-mode');
         })();
     </script>
+
+    <?php
+    $plainColorDark = $serverTheme['plain_color'] ?? 'rgba(7, 24, 41, 0.95)';
+    $plainColorLight = $serverTheme['plain_color_light'] ?? 'rgba(227, 234, 239, 0.95)';
+    ?>
+    <style id="swatch-server-css">
+        html.mode-plain[data-coreui-theme="dark"] body { background-color: <?= $plainColorDark ?> !important; transition: none !important; }
+        html.mode-plain[data-coreui-theme="light"] body { background-color: <?= $plainColorLight ?> !important; transition: none !important; }
+        html.mode-plain #scene, html.mode-plain .scenery-container { display: none !important; }
+    </style>
 
     <!-- Professional SEO Meta Tags -->
     <?php
@@ -152,7 +164,7 @@ define('PAGE_START_TIME', microtime(true));
     <?php endforeach; ?>
 
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/@coreui/chartjs/dist/js/coreui-chartjs.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>

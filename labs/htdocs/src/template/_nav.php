@@ -17,8 +17,10 @@ $current = Session::getCurrentFile();
                 sb.classList.add('hide');
             }
             
-            // Remove the transition lock shortly after initial render
-            setTimeout(() => sb.classList.remove('no-transition-on-load'), 50);
+            // Remove the transition lock after the page has fully loaded and painted
+            window.addEventListener('load', () => {
+                setTimeout(() => sb.classList.remove('no-transition-on-load'), 50);
+            });
         })();
     </script>
     <div class="sidebar-inner-layer d-flex flex-column">
@@ -73,25 +75,37 @@ $current = Session::getCurrentFile();
                     <use xlink:href="/assets/icons/sprites/free.svg#cil-devices"></use>
                 </svg> Devices
             </a>
+        </li>
+        <li class="nav-item">
             <a class="nav-link <?= $current == 'network' ? 'active' : '' ?>" href="/network">
                 <svg class="nav-icon">
                     <use xlink:href="/assets/icons/sprites/free.svg#cil-sitemap"></use>
                 </svg> Network
             </a>
+        </li>
+        <li class="nav-item">
             <a class="nav-link <?= $current == 'domains' ? 'active' : '' ?>" href="/domains">
                 <i class="nav-icon bx bx-globe"></i> Domains
             </a>
+        </li>
+        <li class="nav-item">
             <a class="nav-link <?= (str_contains($current, 'labs')) ? 'active' : '' ?>" href="/labs">
                 <svg class="nav-icon">
                     <use xlink:href="/assets/icons/sprites/free.svg#cil-memory"></use>
                 </svg> Labs
             </a>
+        </li>
+        <li class="nav-item">
             <a class="nav-link <?= (str_contains($current, 'services')) ? 'active' : '' ?>" href="/services">
                 <i class="nav-icon bx bxs-data"></i> Services
             </a>
+        </li>
+        <li class="nav-item">
             <a class="nav-link <?= $current == 'challenges' ? 'active' : '' ?>" href="<?= Session::url('challenges') ?>">
                 <i class="nav-icon bx bxs-flag-alt"></i> Challenges
             </a>
+        </li>
+        <li class="nav-item">
             <a class="nav-link <?= $current == 'test' ? 'active' : '' ?>" href="/test">
                 <svg class="nav-icon">
                     <use xlink:href="/assets/icons/sprites/free.svg#cil-bowling"></use>
@@ -151,3 +165,36 @@ $current = Session::getCurrentFile();
     </div>
     </div>
 </div>
+
+<!-- Fast Sidebar Logo Toggler script to prevent JS overhead -->
+<script>
+(() => {
+  const sidebar   = document.getElementById('sidebar');
+  if (!sidebar) return;
+
+  const fullImgs  = sidebar.querySelectorAll('.sidebar-brand-full');
+  const narrowImgs= sidebar.querySelectorAll('.sidebar-brand-narrow');
+
+  const showSet = (showFull) => {
+    fullImgs.forEach(img   => img.style.display   = showFull ? 'block' : 'none');
+    narrowImgs.forEach(img => img.style.display   = showFull ? 'none'  : 'block');
+
+    if (showFull) {
+      fullImgs.forEach(img => {
+        if (!img.dataset.src || img.dataset.loaded) return;
+        img.src = img.dataset.src;
+        img.dataset.loaded = '1';
+      });
+    }
+  };
+
+  const isCollapsed = () => sidebar.classList.contains('sidebar-narrow') || sidebar.classList.contains('sidebar-narrow-unfoldable');
+
+  showSet(!isCollapsed());
+
+  sidebar.addEventListener('transitionend', (e) => {
+    if (e.propertyName !== 'width') return;
+    showSet(!isCollapsed());
+  });
+})();
+</script>

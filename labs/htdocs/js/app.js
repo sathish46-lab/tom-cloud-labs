@@ -4930,6 +4930,1047 @@ const TomParallax = {
 // Start Parallax when DOM is ready
 document.addEventListener("DOMContentLoaded", () => TomParallax.init());
 
+// --- MariaDB User Management ---
+
+function openAddMariaDBUserModal() {
+    const modal = new coreui.Modal(document.getElementById('addUserModal'));
+    document.getElementById('new-mysql-username').value = '';
+    document.getElementById('new-mysql-password').value = '';
+    modal.show();
+}
+
+async function submitCreateMariaDBUser() {
+    const username = document.getElementById('new-mysql-username').value;
+    const password = document.getElementById('new-mysql-password').value;
+    const btn = document.getElementById('btn-submit-user');
+    const originalText = btn.innerHTML;
+    
+    if (!username || password.length < 8) {
+        alert("Please enter a valid username and a password of at least 8 characters.");
+        return;
+    }
+
+    try {
+        btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Adding...';
+        btn.disabled = true;
+
+        const response = await fetch('/api/services/mariadb/user_create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to create user'));
+        }
+    } catch (e) {
+        alert('Network error occurred.');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+async function deleteMariaDBUser(username) {
+    if (!confirm(`Are you absolutely sure you want to permanently delete the user "${username}" AND all of their databases? This action cannot be undone.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/services/mariadb/user_delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            window.location.href = '/services/mariadb';
+        } else {
+            alert('Error: ' + (data.error || 'Failed to delete user'));
+        }
+    } catch (e) {
+        alert('Network error occurred.');
+    }
+}
+
+// --- MariaDB Database Management ---
+
+var currentTargetUser = '';
+
+function openCreateMariaDBDbModal(username) {
+    currentTargetUser = username;
+    document.getElementById('lbl-create-db-user').innerText = username;
+    document.getElementById('db-prefix').innerText = username + '_';
+    document.getElementById('new-db-name').value = '';
+    
+    const modal = new coreui.Modal(document.getElementById('createDbModal'));
+    modal.show();
+}
+
+async function submitCreateMariaDBDb() {
+    const rawDbName = document.getElementById('new-db-name').value;
+    const btn = document.getElementById('btn-submit-db');
+    const originalText = btn.innerHTML;
+    
+    if (!rawDbName) {
+        alert("Please enter a database name.");
+        return;
+    }
+
+    try {
+        btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Creating...';
+        btn.disabled = true;
+
+        const response = await fetch('/api/services/mariadb/db_create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                mariadb_username: currentTargetUser,
+                db_name: rawDbName 
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to create database'));
+        }
+    } catch (e) {
+        alert('Network error occurred.');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+async function submitCreateMariaDBDbInline() {
+    const username = document.getElementById('select-db-user').value;
+    const rawDbName = document.getElementById('new-db-name').value;
+    const collation = document.getElementById('new-db-collation').value;
+    const btn = event.currentTarget;
+    const originalText = btn.innerHTML;
+    
+    if (!rawDbName) {
+        alert("Please enter a database name.");
+        return;
+    }
+
+    try {
+        btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Creating...';
+        btn.disabled = true;
+
+        const response = await fetch('/api/services/mariadb/db_create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                mariadb_username: username,
+                db_name: rawDbName,
+                collation: collation
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Re-fetch databases dynamically instead of reload
+            document.getElementById('new-db-name').value = '';
+            switchMariaDBUser(username);
+        } else {
+            alert('Error: ' + (data.error || 'Failed to create database'));
+        }
+    } catch (e) {
+        alert('Network error occurred.');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+async function switchMariaDBUser(username) {
+    if (!username) return;
+
+    // Update URL without reload
+    window.history.pushState(null, '', '?user=' + username);
+    
+    // Update prefix
+    const prefixEl = document.getElementById('db-prefix');
+    if (prefixEl) prefixEl.innerText = username + '_';
+
+    const grid = document.getElementById('mariadb_db_list');
+    if (!grid) return;
+
+    grid.innerHTML = '<div class="col-12 text-center py-4"><i class="bx bx-loader-alt bx-spin text-primary" style="font-size: 2rem;"></i><p class="text-secondary mt-2">Loading databases...</p></div>';
+
+    try {
+        const response = await fetch('/api/services/mariadb/check?user=' + encodeURIComponent(username));
+        const data = await response.json();
+
+        if (data.result && Array.isArray(data.result)) {
+            if (data.result.length === 0) {
+                grid.innerHTML = '<div class="col-12 text-center py-4"><p class="text-secondary" style="font-size: 0.9rem;">No databases found for this user.</p></div>';
+            } else {
+                grid.innerHTML = data.result.map(dbObj => `
+                    <div class="col mariadb_db" id="mariadb_database_${dbObj.db_name}">
+                        <div class="card simple-whitebg h-100">
+                            <div class="card-body">
+
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div>
+                                        <div class="text-medium-emphasis small text-uppercase fw-semibold mb-1">Database</div>
+                                        <h6 class="card-title mb-0">${dbObj.db_name}</h6>
+                                    </div>
+                                    <span class="badge bg-light text-dark mysql-collation text-lowercase">${dbObj.collation}</span>
+                                </div>
+
+                                <div class="d-grid">
+                                    <button class="btn btn-sm btn-outline-danger btn-delete" data-dbname="${dbObj.db_name}" onclick="deleteMariaDBDb('${dbObj.db_name}')">
+                                        Drop Database
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        } else if (data.error) {
+            grid.innerHTML = '<div class="col-12 text-center py-4"><p class="text-danger" style="font-size: 0.9rem;">Error: ' + data.error + '</p></div>';
+        }
+    } catch (e) {
+        grid.innerHTML = '<div class="col-12 text-center py-4"><p class="text-danger" style="font-size: 0.9rem;">Network error loading databases.</p></div>';
+    }
+}
+
+async function deleteMariaDBDb(dbName) {
+    if (!confirm(`Are you absolutely sure you want to permanently drop the database "${dbName}"? This action cannot be undone.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/services/mariadb/db_delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ db_name: dbName })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to delete database'));
+        }
+    } catch (e) {
+        alert('Network error occurred.');
+    }
+}
+
+// --- MongoDB User Management ---
+
+function openAddMongoDBUserModal() {
+    const modal = new coreui.Modal(document.getElementById('addUserModal'));
+    document.getElementById('new-mysql-username').value = '';
+    document.getElementById('new-mysql-password').value = '';
+    modal.show();
+}
+
+async function submitCreateMongoDBUser() {
+    const username = document.getElementById('new-mysql-username').value;
+    const password = document.getElementById('new-mysql-password').value;
+    const btn = document.getElementById('btn-submit-user');
+    const originalText = btn.innerHTML;
+    
+    if (!username || password.length < 8) {
+        alert("Please enter a valid username and a password of at least 8 characters.");
+        return;
+    }
+
+    try {
+        btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Adding...';
+        btn.disabled = true;
+
+        const response = await fetch('/api/services/mongodb/user_create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to create user'));
+        }
+    } catch (e) {
+        alert('Network error occurred.');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+async function deleteMongoDBUser(username) {
+    if (!confirm(`Are you absolutely sure you want to permanently delete the user "${username}" AND all of their databases? This action cannot be undone.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/services/mongodb/user_delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            window.location.href = '/services/mongodb';
+        } else {
+            alert('Error: ' + (data.error || 'Failed to delete user'));
+        }
+    } catch (e) {
+        alert('Network error occurred.');
+    }
+}
+
+// --- MongoDB Database Management ---
+
+var currentTargetUser = '';
+
+function openCreateMongoDBDbModal(username) {
+    currentTargetUser = username;
+    document.getElementById('lbl-create-db-user').innerText = username;
+    document.getElementById('db-prefix').innerText = username + '_';
+    document.getElementById('new-db-name').value = '';
+    
+    const modal = new coreui.Modal(document.getElementById('createDbModal'));
+    modal.show();
+}
+
+async function submitCreateMongoDBDb() {
+    const rawDbName = document.getElementById('new-db-name').value;
+    const btn = document.getElementById('btn-submit-db');
+    const originalText = btn.innerHTML;
+    
+    if (!rawDbName) {
+        alert("Please enter a database name.");
+        return;
+    }
+
+    try {
+        btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Creating...';
+        btn.disabled = true;
+
+        const response = await fetch('/api/services/mongodb/db_create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                mongodb_username: currentTargetUser,
+                db_name: rawDbName 
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to create database'));
+        }
+    } catch (e) {
+        alert('Network error occurred.');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+async function submitCreateMongoDBDbInline() {
+    const username = document.getElementById('select-db-user').value;
+    const rawDbName = document.getElementById('new-db-name').value;
+    const collation = document.getElementById('new-db-collation').value;
+    const btn = event.currentTarget;
+    const originalText = btn.innerHTML;
+    
+    if (!rawDbName) {
+        alert("Please enter a database name.");
+        return;
+    }
+
+    try {
+        btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Creating...';
+        btn.disabled = true;
+
+        const response = await fetch('/api/services/mongodb/db_create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                mongodb_username: username,
+                db_name: rawDbName,
+                collation: collation
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Re-fetch databases dynamically instead of reload
+            document.getElementById('new-db-name').value = '';
+            switchMongoDBUser(username);
+        } else {
+            alert('Error: ' + (data.error || 'Failed to create database'));
+        }
+    } catch (e) {
+        alert('Network error occurred.');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+async function switchMongoDBUser(username) {
+    if (!username) return;
+
+    // Update URL without reload
+    window.history.pushState(null, '', '?user=' + username);
+    
+    // Update prefix
+    const prefixEl = document.getElementById('db-prefix');
+    if (prefixEl) prefixEl.innerText = username + '_';
+
+    const grid = document.getElementById('mongodb_db_list');
+    if (!grid) return;
+
+    grid.innerHTML = '<div class="col-12 text-center py-4"><i class="bx bx-loader-alt bx-spin text-primary" style="font-size: 2rem;"></i><p class="text-secondary mt-2">Loading databases...</p></div>';
+
+    try {
+        const response = await fetch('/api/services/mongodb/check?user=' + encodeURIComponent(username));
+        const data = await response.json();
+
+        if (data.result && Array.isArray(data.result)) {
+            if (data.result.length === 0) {
+                grid.innerHTML = '<div class="col-12 text-center py-4"><p class="text-secondary" style="font-size: 0.9rem;">No databases found for this user.</p></div>';
+            } else {
+                grid.innerHTML = data.result.map(dbObj => `
+                    <div class="col mongodb_db" id="mongodb_database_${dbObj.db_name}">
+                        <div class="card simple-whitebg h-100">
+                            <div class="card-body">
+
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div>
+                                        <div class="text-medium-emphasis small text-uppercase fw-semibold mb-1">Database</div>
+                                        <h6 class="card-title mb-0">${dbObj.db_name}</h6>
+                                    </div>
+                                    <span class="badge bg-light text-dark mysql-collation text-lowercase">${dbObj.collation}</span>
+                                </div>
+
+                                <div class="d-grid">
+                                    <button class="btn btn-sm btn-outline-danger btn-delete" data-dbname="${dbObj.db_name}" onclick="deleteMongoDBDb('${dbObj.db_name}')">
+                                        Drop Database
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        } else if (data.error) {
+            grid.innerHTML = '<div class="col-12 text-center py-4"><p class="text-danger" style="font-size: 0.9rem;">Error: ' + data.error + '</p></div>';
+        }
+    } catch (e) {
+        grid.innerHTML = '<div class="col-12 text-center py-4"><p class="text-danger" style="font-size: 0.9rem;">Network error loading databases.</p></div>';
+    }
+}
+
+async function deleteMongoDBDb(dbName) {
+    if (!confirm(`Are you absolutely sure you want to permanently drop the database "${dbName}"? This action cannot be undone.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/services/mongodb/db_delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ db_name: dbName })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to delete database'));
+        }
+    } catch (e) {
+        alert('Network error occurred.');
+    }
+}
+
+// --- PostgreSQL User Management ---
+
+function openAddPostgreSQLUserModal() {
+    const modal = new coreui.Modal(document.getElementById('addUserModal'));
+    document.getElementById('new-mysql-username').value = '';
+    document.getElementById('new-mysql-password').value = '';
+    modal.show();
+}
+
+async function submitCreatePostgreSQLUser() {
+    const username = document.getElementById('new-mysql-username').value;
+    const password = document.getElementById('new-mysql-password').value;
+    const btn = document.getElementById('btn-submit-user');
+    const originalText = btn.innerHTML;
+    
+    if (!username || password.length < 8) {
+        alert("Please enter a valid username and a password of at least 8 characters.");
+        return;
+    }
+
+    try {
+        btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Adding...';
+        btn.disabled = true;
+
+        const response = await fetch('/api/services/postgresql/user_create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to create user'));
+        }
+    } catch (e) {
+        alert('Network error occurred.');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+async function deletePostgreSQLUser(username) {
+    if (!confirm(`Are you absolutely sure you want to permanently delete the user "${username}" AND all of their databases? This action cannot be undone.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/services/postgresql/user_delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            window.location.href = '/services/postgresql';
+        } else {
+            alert('Error: ' + (data.error || 'Failed to delete user'));
+        }
+    } catch (e) {
+        alert('Network error occurred.');
+    }
+}
+
+// --- PostgreSQL Database Management ---
+
+var currentTargetUser = '';
+
+function openCreatePostgreSQLDbModal(username) {
+    currentTargetUser = username;
+    document.getElementById('lbl-create-db-user').innerText = username;
+    document.getElementById('db-prefix').innerText = username + '_';
+    document.getElementById('new-db-name').value = '';
+    
+    const modal = new coreui.Modal(document.getElementById('createDbModal'));
+    modal.show();
+}
+
+async function submitCreatePostgreSQLDb() {
+    const rawDbName = document.getElementById('new-db-name').value;
+    const btn = document.getElementById('btn-submit-db');
+    const originalText = btn.innerHTML;
+    
+    if (!rawDbName) {
+        alert("Please enter a database name.");
+        return;
+    }
+
+    try {
+        btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Creating...';
+        btn.disabled = true;
+
+        const response = await fetch('/api/services/postgresql/db_create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                postgresql_username: currentTargetUser,
+                db_name: rawDbName 
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to create database'));
+        }
+    } catch (e) {
+        alert('Network error occurred.');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+async function submitCreatePostgreSQLDbInline() {
+    const username = document.getElementById('select-db-user').value;
+    const rawDbName = document.getElementById('new-db-name').value;
+    const collation = document.getElementById('new-db-collation').value;
+    const btn = event.currentTarget;
+    const originalText = btn.innerHTML;
+    
+    if (!rawDbName) {
+        alert("Please enter a database name.");
+        return;
+    }
+
+    try {
+        btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Creating...';
+        btn.disabled = true;
+
+        const response = await fetch('/api/services/postgresql/db_create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                postgresql_username: username,
+                db_name: rawDbName,
+                collation: collation
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Re-fetch databases dynamically instead of reload
+            document.getElementById('new-db-name').value = '';
+            switchPostgreSQLUser(username);
+        } else {
+            alert('Error: ' + (data.error || 'Failed to create database'));
+        }
+    } catch (e) {
+        alert('Network error occurred.');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+async function switchPostgreSQLUser(username) {
+    if (!username) return;
+
+    // Update URL without reload
+    window.history.pushState(null, '', '?user=' + username);
+    
+    // Update prefix
+    const prefixEl = document.getElementById('db-prefix');
+    if (prefixEl) prefixEl.innerText = username + '_';
+
+    const grid = document.getElementById('postgresql_db_list');
+    if (!grid) return;
+
+    grid.innerHTML = '<div class="col-12 text-center py-4"><i class="bx bx-loader-alt bx-spin text-primary" style="font-size: 2rem;"></i><p class="text-secondary mt-2">Loading databases...</p></div>';
+
+    try {
+        const response = await fetch('/api/services/postgresql/check?user=' + encodeURIComponent(username));
+        const data = await response.json();
+
+        if (data.result && Array.isArray(data.result)) {
+            if (data.result.length === 0) {
+                grid.innerHTML = '<div class="col-12 text-center py-4"><p class="text-secondary" style="font-size: 0.9rem;">No databases found for this user.</p></div>';
+            } else {
+                grid.innerHTML = data.result.map(dbObj => `
+                    <div class="col postgresql_db" id="postgresql_database_${dbObj.db_name}">
+                        <div class="card simple-whitebg h-100">
+                            <div class="card-body">
+
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div>
+                                        <div class="text-medium-emphasis small text-uppercase fw-semibold mb-1">Database</div>
+                                        <h6 class="card-title mb-0">${dbObj.db_name}</h6>
+                                    </div>
+                                    <span class="badge bg-light text-dark mysql-collation text-lowercase">${dbObj.collation}</span>
+                                </div>
+
+                                <div class="d-grid">
+                                    <button class="btn btn-sm btn-outline-danger btn-delete" data-dbname="${dbObj.db_name}" onclick="deletePostgreSQLDb('${dbObj.db_name}')">
+                                        Drop Database
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        } else if (data.error) {
+            grid.innerHTML = '<div class="col-12 text-center py-4"><p class="text-danger" style="font-size: 0.9rem;">Error: ' + data.error + '</p></div>';
+        }
+    } catch (e) {
+        grid.innerHTML = '<div class="col-12 text-center py-4"><p class="text-danger" style="font-size: 0.9rem;">Network error loading databases.</p></div>';
+    }
+}
+
+async function deletePostgreSQLDb(dbName) {
+    if (!confirm(`Are you absolutely sure you want to permanently drop the database "${dbName}"? This action cannot be undone.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/services/postgresql/db_delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ db_name: dbName })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to delete database'));
+        }
+    } catch (e) {
+        alert('Network error occurred.');
+    }
+}
+
+// --- RabbitMQ User Management ---
+
+function openAddRabbitMQUserModal() {
+    const modal = new coreui.Modal(document.getElementById('addUserModal'));
+    document.getElementById('new-mysql-username').value = '';
+    document.getElementById('new-mysql-password').value = '';
+    modal.show();
+}
+
+async function submitCreateRabbitMQUser() {
+    const username = document.getElementById('new-mysql-username').value;
+    const password = document.getElementById('new-mysql-password').value;
+    const btn = document.getElementById('btn-submit-user');
+    const originalText = btn.innerHTML;
+    
+    if (!username || password.length < 8) {
+        alert("Please enter a valid username and a password of at least 8 characters.");
+        return;
+    }
+
+    try {
+        btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Adding...';
+        btn.disabled = true;
+
+        const response = await fetch('/api/services/rabbitmq/user_create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to create user'));
+        }
+    } catch (e) {
+        alert('Network error occurred.');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+async function deleteRabbitMQUser(username) {
+    if (!confirm(`Are you absolutely sure you want to permanently delete the user "${username}" AND all of their vhosts? This action cannot be undone.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/services/rabbitmq/user_delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            window.location.href = '/services/rabbitmq';
+        } else {
+            alert('Error: ' + (data.error || 'Failed to delete user'));
+        }
+    } catch (e) {
+        alert('Network error occurred.');
+    }
+}
+
+// --- RabbitMQ Vhost Management ---
+
+var currentTargetUser = '';
+
+function openCreateRabbitMQVhostModal(username) {
+    currentTargetUser = username;
+    document.getElementById('lbl-create-db-user').innerText = username;
+    document.getElementById('db-prefix').innerText = username + '_';
+    document.getElementById('new-db-name').value = '';
+    
+    const modal = new coreui.Modal(document.getElementById('createDbModal'));
+    modal.show();
+}
+
+async function submitCreateRabbitMQVhost() {
+    const rawDbName = document.getElementById('new-db-name').value;
+    const btn = document.getElementById('btn-submit-db');
+    const originalText = btn.innerHTML;
+    
+    if (!rawDbName) {
+        alert("Please enter a vhost name.");
+        return;
+    }
+
+    try {
+        btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Creating...';
+        btn.disabled = true;
+
+        const response = await fetch('/api/services/rabbitmq/vhost_create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                rabbitmq_username: currentTargetUser,
+                vhost_name: rawDbName 
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to create vhost'));
+        }
+    } catch (e) {
+        alert('Network error occurred.');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+async function submitCreateRabbitMQVhostInline() {
+    const username = document.getElementById('select-db-user').value;
+    const rawDbName = document.getElementById('new-db-name').value;
+    const collation = document.getElementById('new-db-collation').value;
+    const btn = event.currentTarget;
+    const originalText = btn.innerHTML;
+    
+    if (!rawDbName) {
+        alert("Please enter a vhost name.");
+        return;
+    }
+
+    try {
+        btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Creating...';
+        btn.disabled = true;
+
+        const response = await fetch('/api/services/rabbitmq/vhost_create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                rabbitmq_username: username,
+                vhost_name: rawDbName,
+                collation: collation
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Re-fetch vhosts dynamically instead of reload
+            document.getElementById('new-db-name').value = '';
+            switchRabbitMQUser(username);
+        } else {
+            alert('Error: ' + (data.error || 'Failed to create vhost'));
+        }
+    } catch (e) {
+        alert('Network error occurred.');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+async function switchRabbitMQUser(username) {
+    if (!username) return;
+
+    // Update URL without reload
+    window.history.pushState(null, '', '?user=' + username);
+    
+    // Update prefix
+    const prefixEl = document.getElementById('db-prefix');
+    if (prefixEl) prefixEl.innerText = username + '_';
+
+    const grid = document.getElementById('rabbitmq_db_list');
+    if (!grid) return;
+
+    grid.innerHTML = '<div class="col-12 text-center py-4"><i class="bx bx-loader-alt bx-spin text-primary" style="font-size: 2rem;"></i><p class="text-secondary mt-2">Loading vhosts...</p></div>';
+
+    try {
+        const response = await fetch('/api/services/rabbitmq/check?user=' + encodeURIComponent(username));
+        const data = await response.json();
+
+        if (data.result && Array.isArray(data.result)) {
+            if (data.result.length === 0) {
+                grid.innerHTML = '<div class="col-12 text-center py-4"><p class="text-secondary" style="font-size: 0.9rem;">No vhosts found for this user.</p></div>';
+            } else {
+                grid.innerHTML = data.result.map(dbObj => `
+                    <div class="col rabbitmq_db" id="rabbitmq_vhost_${dbObj.vhost_name}">
+                        <div class="card simple-whitebg h-100">
+                            <div class="card-body">
+
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div>
+                                        <div class="text-medium-emphasis small text-uppercase fw-semibold mb-1">Vhost</div>
+                                        <h6 class="card-title mb-0">${dbObj.vhost_name}</h6>
+                                    </div>
+                                    <span class="badge bg-light text-dark mysql-collation text-lowercase">${dbObj.collation}</span>
+                                </div>
+
+                                <div class="d-grid">
+                                    <button class="btn btn-sm btn-outline-danger btn-delete" data-dbname="${dbObj.vhost_name}" onclick="deleteRabbitMQDb('${dbObj.vhost_name}')">
+                                        Drop Vhost
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        } else if (data.error) {
+            grid.innerHTML = '<div class="col-12 text-center py-4"><p class="text-danger" style="font-size: 0.9rem;">Error: ' + data.error + '</p></div>';
+        }
+    } catch (e) {
+        grid.innerHTML = '<div class="col-12 text-center py-4"><p class="text-danger" style="font-size: 0.9rem;">Network error loading vhosts.</p></div>';
+    }
+}
+
+async function deleteRabbitMQDb(dbName) {
+    if (!confirm(`Are you absolutely sure you want to permanently drop the vhost "${dbName}"? This action cannot be undone.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/services/rabbitmq/vhost_delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ vhost_name: dbName })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to delete vhost'));
+        }
+    } catch (e) {
+        alert('Network error occurred.');
+    }
+}
+
+// --- Redis User Management ---
+
+function openAddRedisUserModal() {
+    const modal = new coreui.Modal(document.getElementById('addUserModal'));
+    document.getElementById('new-mysql-username').value = '';
+    document.getElementById('new-mysql-password').value = '';
+    modal.show();
+}
+
+async function submitCreateRedisUser() {
+    const username = document.getElementById('new-mysql-username').value;
+    const password = document.getElementById('new-mysql-password').value;
+    const btn = document.getElementById('btn-submit-user');
+    const originalText = btn.innerHTML;
+    
+    if (!username || password.length < 8) {
+        alert("Please enter a valid username and a password of at least 8 characters.");
+        return;
+    }
+
+    try {
+        btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Adding...';
+        btn.disabled = true;
+
+        const response = await fetch('/api/services/redis/user_create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to create user'));
+        }
+    } catch (e) {
+        alert('Network error occurred.');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+async function deleteRedisUser(username) {
+    if (!confirm(`Are you absolutely sure you want to permanently delete the user "${username}" AND all of their databases? This action cannot be undone.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/services/redis/user_delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            window.location.href = '/services/redis';
+        } else {
+            alert('Error: ' + (data.error || 'Failed to delete user'));
+        }
+    } catch (e) {
+        alert('Network error occurred.');
+    }
+}
+
 // --- MySQL User Management ---
 
 function openAddUserModal() {
@@ -5001,7 +6042,7 @@ async function deleteMySQLUser(username) {
 
 // --- MySQL Database Management ---
 
-let currentTargetUser = '';
+var currentTargetUser = '';
 
 function openCreateDbModal(username) {
     currentTargetUser = username;

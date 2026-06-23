@@ -31,12 +31,12 @@ RUN add-apt-repository -y ppa:ondrej/php && \
 RUN apt-get update && apt-get install -y \
     git curl unzip \
     apache2 libapache2-mod-php8.4 \
-    php8.4 php8.4-cli php8.4-common php8.4-curl php8.4-mbstring php8.4-xml php8.4-zip php8.4-bcmath php8.4-intl php8.4-gd php8.4-mongodb php8.4-amqp php8.4-mysql \
+    php8.4 php8.4-cli php8.4-common php8.4-curl php8.4-mbstring php8.4-xml php8.4-zip php8.4-bcmath php8.4-intl php8.4-gd php8.4-mongodb php8.4-amqp php8.4-mysql php8.4-pgsql php8.4-redis \
     rabbitmq-server \
     wireguard wireguard-tools \
     python3 python3-pip python3-pymongo python3-docker python3-redis python3-pika python3-psutil \
     docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin \
-    ufw fail2ban nmap mongodb-org mysql-server \
+    ufw fail2ban nmap mongodb-org mysql-server postgresql redis-server \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install Python packages not available via apt
@@ -67,6 +67,16 @@ RUN sed -i 's/#security:/security:\n  authorization: enabled/' /etc/mongod.conf 
 # MySQL Bind Address
 RUN sed -i 's/bind-address\s*=\s*127.0.0.1/bind-address = 0.0.0.0/' /etc/mysql/mysql.conf.d/mysqld.cnf || true
 
+# PostgreSQL Config
+RUN for conf in /etc/postgresql/*/main/postgresql.conf; do sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/" "$conf"; done && \
+    for conf in /etc/postgresql/*/main/pg_hba.conf; do echo "host all all 0.0.0.0/0 md5" >> "$conf"; done && \
+    mkdir -p /etc/systemd/system/postgresql@.service.d && \
+    echo "[Service]\nPIDFile=" > /etc/systemd/system/postgresql@.service.d/override.conf
+
+# Redis Config
+RUN sed -i 's/bind 127.0.0.1 ::1/bind 0.0.0.0/' /etc/redis/redis.conf && \
+    sed -i 's/protected-mode yes/protected-mode no/' /etc/redis/redis.conf
+
 # 7. Create Directories
 RUN mkdir -p /var/www/labs /var/www/vpn-api /opt/labs-control-panel /etc/traefik/dynamic_conf /etc/wireguard /var/www/adminer
 
@@ -87,9 +97,9 @@ RUN echo "entryPoints:\n  web:\n    address: \":80\"\n  websecure:\n    address:
 RUN echo "[Unit]\nDescription=Traefik Edge Router\nAfter=network-online.target\n[Service]\nRestart=on-failure\nExecStart=/usr/local/bin/traefik --configFile=/etc/traefik/traefik.yml\nLimitNOFILE=65536\n[Install]\nWantedBy=multi-user.target" > /etc/systemd/system/traefik.service
 RUN systemctl enable traefik
 
-# Container Setup Systemd Service (runs after DB, RabbitMQ, and MySQL)
-RUN echo "[Unit]\nDescription=Container Setup Script\nAfter=mongod.service rabbitmq-server.service mysql.service network.target\n[Service]\nType=oneshot\nExecStart=/usr/local/bin/init-services.sh\nRemainAfterExit=yes\n[Install]\nWantedBy=multi-user.target" > /etc/systemd/system/init-services.service
-RUN systemctl enable mongod.service rabbitmq-server.service mysql.service init-services.service
+# Container Setup Systemd Service (runs after DBs)
+RUN echo "[Unit]\nDescription=Container Setup Script\nAfter=mongod.service rabbitmq-server.service mysql.service postgresql.service redis-server.service network.target\n[Service]\nType=oneshot\nTimeoutStartSec=infinity\nExecStart=/usr/local/bin/init-services.sh\nRemainAfterExit=yes\n[Install]\nWantedBy=multi-user.target" > /etc/systemd/system/init-services.service
+RUN systemctl enable mongod.service rabbitmq-server.service mysql.service postgresql.service redis-server.service init-services.service
 
 # Sudoers & Git config
 RUN echo "www-data ALL=(ALL) NOPASSWD: /usr/bin/python3 /opt/labs-control-panel/labsctl.py *" > /etc/sudoers.d/labs-www-data && \
