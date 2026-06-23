@@ -60,7 +60,7 @@ try {
         'success' => true,
         'message' => 'MySQL database created successfully.',
         'data' => [
-            'host' => 'docker_tomlabs_vps',
+            'host' => get_config('tunnel_ip') . '1',
             'port' => 3306,
             'db_name' => $dbName,
             'db_user' => $dbUser,

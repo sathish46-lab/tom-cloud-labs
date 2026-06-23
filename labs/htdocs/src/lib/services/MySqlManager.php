@@ -9,7 +9,8 @@ class MySqlManager
         // Connect to the shared MySQL instance inside the VPS container
         // We use the docker container hostname so that it authenticates against 'root'@'%' 
         // instead of 'root'@'localhost' which might be locked down by auth_socket.
-        $dsn = "mysql:host=docker_tomlabs_vps_dev;port=3306;charset=utf8mb4";
+        $host = gethostname();
+        $dsn = "mysql:host={$host};port=3306;charset=utf8mb4";
         $user = 'root';
         $password = 'tomlabs_root_secret'; // Configured in init-services.sh
         
