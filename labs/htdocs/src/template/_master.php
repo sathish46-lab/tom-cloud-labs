@@ -57,18 +57,6 @@ define('PAGE_START_TIME', microtime(true));
                 savedTheme;
             document.documentElement.setAttribute('data-coreui-theme', themeToApply);
 
-            // Instantly apply custom accent (primary) color to prevent flash
-            const accentColor = localStorage.getItem('tom-labs-accent-color');
-            if (accentColor && accentColor.startsWith('#')) {
-                document.documentElement.style.setProperty('--cui-primary', accentColor);
-                if (accentColor.length === 7) {
-                    const r = parseInt(accentColor.slice(1, 3), 16);
-                    const g = parseInt(accentColor.slice(3, 5), 16);
-                    const b = parseInt(accentColor.slice(5, 7), 16);
-                    document.documentElement.style.setProperty('--cui-primary-rgb', `${r}, ${g}, ${b}`);
-                }
-            }
-
             let mode = localStorage.getItem("tom-labs-bg-mode") || "spiderman";
             
             // Forced state for login page
@@ -77,8 +65,6 @@ define('PAGE_START_TIME', microtime(true));
             document.documentElement.classList.add('glass-mode');
             window.FORCED_BG_MODE = "spiderman";
             <?php endif; ?>
-
-            document.documentElement.classList.toggle("mode-plain", mode === "plain");
 
             document.documentElement.classList.toggle("mode-plain", mode === "plain");
 
@@ -94,14 +80,62 @@ define('PAGE_START_TIME', microtime(true));
     </script>
 
     <?php
-    $plainColorDark = $serverTheme['plain_color'] ?? 'rgba(7, 24, 41, 0.95)';
-    $plainColorLight = $serverTheme['plain_color_light'] ?? 'rgba(227, 234, 239, 0.95)';
+    $plainColorDark = $serverTheme['plain_color'] ?? '#1a2a1a';
+    $plainColorLight = $serverTheme['plain_color_light'] ?? '#f0fff4';
+    $accentColor = $serverTheme['accent_color'] ?? '#51b355';
+
+    function tomHexToRgb($hex) {
+        $hex = ltrim($hex, '#');
+        if (strlen($hex) == 3) $hex = $hex[0].$hex[0].$hex[1].$hex[1].$hex[2].$hex[2];
+        if (strlen($hex) !== 6) return [0,0,0];
+        return [hexdec(substr($hex,0,2)), hexdec(substr($hex,2,2)), hexdec(substr($hex,4,2))];
+    }
+    function tomRgbToHex($r, $g, $b) {
+        return sprintf("#%02x%02x%02x", max(0,min(255,round($r))), max(0,min(255,round($g))), max(0,min(255,round($b))));
+    }
+    function tomAdjustBright($hex, $amt) {
+        $rgb = tomHexToRgb($hex);
+        return tomRgbToHex($rgb[0]+$amt, $rgb[1]+$amt, $rgb[2]+$amt);
+    }
+    function tomShiftHue($hex, $degree) {
+        $rgb = tomHexToRgb($hex);
+        $r = $rgb[0]/255; $g = $rgb[1]/255; $b = $rgb[2]/255;
+        $max = max($r, $g, $b); $min = min($r, $g, $b);
+        $l = ($max + $min) / 2;
+        $d = $max - $min;
+        if ($max == $min) { $h = $s = 0; }
+        else {
+            $s = $l > 0.5 ? $d / (2 - $max - $min) : $d / ($max + $min);
+            switch ($max) {
+                case $r: $h = ($g - $b) / $d + ($g < $b ? 6 : 0); break;
+                case $g: $h = ($b - $r) / $d + 2; break;
+                case $b: $h = ($r - $g) / $d + 4; break;
+            }
+            $h /= 6;
+        }
+        $h = fmod($h + ($degree/360), 1.0);
+        if ($h < 0) $h += 1.0;
+        
+        if ($s == 0) { $r = $g = $b = $l; }
+        else {
+            $hue2rgb = function($p, $q, $t) {
+                if($t < 0) $t += 1; if($t > 1) $t -= 1;
+                if($t < 1/6) return $p + ($q - $p) * 6 * $t;
+                if($t < 1/2) return $q;
+                if($t < 2/3) return $p + ($q - $p) * (2/3 - $t) * 6;
+                return $p;
+            };
+            $q = $l < 0.5 ? $l * (1 + $s) : $l + $s - $l * $s;
+            $p = 2 * $l - $q;
+            $r = $hue2rgb($p, $q, $h + 1/3);
+            $g = $hue2rgb($p, $q, $h);
+            $b = $hue2rgb($p, $q, $h - 1/3);
+        }
+        return tomRgbToHex($r*255, $g*255, $b*255);
+    }
+
+    // Color utils have been moved below CSS to ensure specificity.
     ?>
-    <style id="swatch-server-css">
-        html.mode-plain[data-coreui-theme="dark"] body { background-color: <?= $plainColorDark ?> !important; transition: none !important; }
-        html.mode-plain[data-coreui-theme="light"] body { background-color: <?= $plainColorLight ?> !important; transition: none !important; }
-        html.mode-plain #scene, html.mode-plain .scenery-container { display: none !important; }
-    </style>
 
     <!-- Professional SEO Meta Tags -->
     <?php
@@ -170,15 +204,136 @@ define('PAGE_START_TIME', microtime(true));
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/parallax/3.1.0/parallax.min.js"></script>
 
+    <?php
+    $mode = $serverTheme['mode'] ?? 'spiderman';
+    if (defined('IS_LOGIN_PAGE') && IS_LOGIN_PAGE === true) {
+        $mode = 'spiderman';
+    }
+
+    require_once __DIR__ . '/tom_color_utils.php';
+    require_once __DIR__ . '/../config/themes.php';
+
+    $assets = [];
+
+    if ($mode === 'plain') {
+        $themeColor = $plainColorDark;
+        // Dark Mode logic for Plain
+        $safeColorDark = tomEnsureDarkness($themeColor, 0.2);
+        $c1Dark = tomAdjustColorLightness($safeColorDark, -10);
+        $c2Dark = $safeColorDark;
+        $c3Dark = tomAdjustColorLightness($safeColorDark, 8);
+        $c4Dark = tomAdjustColorLightness($safeColorDark, 15);
+        $c5Dark = tomAdjustColorLightness($safeColorDark, 5);
+        $c6Dark = $safeColorDark;
+        $c7Dark = tomAdjustColorLightness($safeColorDark, -5);
+        
+        $glassBgDark = tomHexToRgbaString($safeColorDark, 0.88);
+        $cardBgDark = tomHexToRgbaString(tomAdjustColorLightness($safeColorDark, 4), 0.65);
+        $sidebarBgDark = tomHexToRgbaString(tomAdjustColorLightness($safeColorDark, 1.5), 0.98);
+        $headerBgDark = tomHexToRgbaString(tomAdjustColorLightness($safeColorDark, 1), 0.92);
+        $primaryRgb = implode(',', tomHexToRgbArray($accentColor));
+
+        // Light Mode logic for Plain
+        $safeColorLight = tomEnsureLightness($themeColor, 0.95);
+        $baseLight = tomEnsureLightness($themeColor, 0.98);
+        $c1Light = "#ffffff";
+        $c2Light = $baseLight;
+        $c3Light = tomAdjustColorLightness($baseLight, -2);
+        $c4Light = tomAdjustColorLightness($baseLight, -5);
+        $c5Light = "#ffffff";
+        $c6Light = $baseLight;
+        $c7Light = tomAdjustColorLightness($baseLight, -3);
+    } else {
+        $themeConfig = $tomThemes[$mode] ?? $tomThemes['spiderman'];
+        $themeColor = $themeConfig['color'] ?? '#0b1e36';
+        $accentColor = $themeConfig['primary'] ?? tomAdjustColorLightness($themeColor, 40);
+        $assets = $themeConfig['assets'] ?? [];
+
+        // Dark Mode logic for Image Themes
+        $safeColorDark = tomEnsureDarkness($themeColor, 0.15);
+        $c1Dark = tomAdjustColorLightness($safeColorDark, -5);
+        $c2Dark = $safeColorDark;
+        $c3Dark = tomAdjustColorLightness($safeColorDark, 5);
+        $c4Dark = tomAdjustColorLightness($safeColorDark, 10);
+        $c5Dark = $c4Dark;
+        $c6Dark = $c4Dark;
+        $c7Dark = $c4Dark;
+        
+        $glassBgDark = tomHexToRgbaString($safeColorDark, 0.85);
+        $cardBgDark = tomHexToRgbaString($safeColorDark, 0.20);
+        $sidebarBgDark = tomHexToRgbaString($safeColorDark, 0.95);
+        $headerBgDark = tomHexToRgbaString($safeColorDark, 0.85);
+        $primaryRgb = implode(',', tomHexToRgbArray($accentColor));
+
+        // Light Mode logic for Image Themes (Fallback approximation)
+        $safeColorLight = tomEnsureLightness($themeColor, 0.8);
+        $c1Light = "#ffffff";
+        $c2Light = "#f8f9fa";
+        $c3Light = "#ffffff";
+        $c4Light = "#f0f2f5";
+        $c5Light = "#ffffff";
+        $c6Light = "#ffffff";
+        $c7Light = "#ffffff";
+    }
+    ?>
+    <!-- Inject perfectly calculated gradient on the server to prevent ANY flash -->
+    <!-- PLACED AFTER APP.CSS TO OVERRIDE DEFAULTS -->
+    <style id="swatch-server-css">
+        html[data-coreui-theme="dark"] {
+            --c1: <?= $c1Dark ?>;
+            --c2: <?= $c2Dark ?>;
+            --c3: <?= $c3Dark ?>;
+            --c4: <?= $c4Dark ?>;
+            --c5: <?= $c5Dark ?>;
+            --c6: <?= $c6Dark ?>;
+            --c7: <?= $c7Dark ?>;
+            --glass-bg: <?= $glassBgDark ?>;
+            --cui-card-bg: <?= $cardBgDark ?>;
+            --cui-sidebar-bg: <?= $sidebarBgDark ?>;
+            --cui-header-bg: <?= $headerBgDark ?>;
+            --accent-color: <?= $accentColor ?>;
+            --cui-primary: <?= $accentColor ?>;
+            --cui-primary-rgb: <?= $primaryRgb ?>;
+            --cui-body-bg: <?= $safeColorDark ?>;
+        }
+        html[data-coreui-theme="light"] {
+            --c1: <?= $c1Light ?>;
+            --c2: <?= $c2Light ?>;
+            --c3: <?= $c3Light ?>;
+            --c4: <?= $c4Light ?>;
+            --c5: <?= $c5Light ?>;
+            --c6: <?= $c6Light ?>;
+            --c7: <?= $c7Light ?>;
+            --glass-bg: #ffffff;
+            --cui-card-bg: #ffffff;
+            --cui-sidebar-bg: #ffffff;
+            --cui-header-bg: #ffffff;
+            --accent-color: <?= $accentColor ?>;
+            --cui-primary: <?= $accentColor ?>;
+            --cui-primary-rgb: <?= $primaryRgb ?>;
+            --cui-body-bg: <?= $safeColorLight ?>;
+        }
+        html[data-coreui-theme="dark"] .btn-primary { color: #ffffff !important; }
+        html[data-coreui-theme="dark"] .badge.bg-primary { color: #ffffff !important; }
+        html[data-coreui-theme="light"] .btn-primary { color: #ffffff !important; }
+        html[data-coreui-theme="light"] .badge.bg-primary { color: #ffffff !important; }
+
+        html.mode-plain body { transition: none !important; }
+        html.mode-plain #scene, html.mode-plain .scenery-container { display: none !important; }
+
+        <?php if ($mode !== 'plain'): ?>
+        body { background: transparent !important; }
+        <?php endif; ?>
+    </style>
 </head>
 
 <body>
     <?php if (!defined('IS_LANDING_PAGE') || IS_LANDING_PAGE === false): ?>
-    <div id="scene">
-        <div class="bg-cover bg-img-1" data-depth="0.8"></div>
-        <div class="bg-cover bg-img-2" data-depth="0.5"></div>
-        <div class="bg-cover bg-img-3" data-depth="0.3"></div>
-        <div class="bg-cover bg-img-4" data-depth="0.1"></div>
+    <div id="scene" style="<?= $mode !== 'plain' ? 'display: block;' : '' ?>">
+        <div class="bg-cover bg-img-1" data-depth="0.8" style="<?= isset($assets[0]) ? "background-image: url('{$assets[0]}'); display: block;" : '' ?>"></div>
+        <div class="bg-cover bg-img-2" data-depth="0.5" style="<?= isset($assets[1]) ? "background-image: url('{$assets[1]}'); display: block;" : '' ?>"></div>
+        <div class="bg-cover bg-img-3" data-depth="0.3" style="<?= isset($assets[2]) ? "background-image: url('{$assets[2]}'); display: block;" : '' ?>"></div>
+        <div class="bg-cover bg-img-4" data-depth="0.1" style="<?= isset($assets[3]) ? "background-image: url('{$assets[3]}'); display: block;" : '' ?>"></div>
     </div>
     <?php endif; ?>
 

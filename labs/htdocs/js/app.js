@@ -1163,7 +1163,7 @@ var TomBG = {
 
     var cssVars = "";
     var setVar = function (name, value) {
-      cssVars += name + ": " + value + " !important; ";
+      cssVars += name + ": " + value + "; ";
     };
 
     if (mode === "plain") {
@@ -1203,13 +1203,13 @@ var TomBG = {
 
       setVar("--glass-bg", isLight ? "#ffffff" : this.hexToRgba(safeColor, 0.88));
       setVar("--glass-bg-solid", isLight ? "#ffffff" : this.hexToRgba(safeColor, 0.96));
-      setVar("--cui-card-bg", isLight ? "#ffffff" : this.hexToRgba(safeColor, 0.45));
-      setVar("--cui-card-bg-solid", isLight ? "#ffffff" : this.hexToRgba(safeColor, 0.95));
+      setVar("--cui-card-bg", isLight ? "#ffffff" : this.hexToRgba(this.adjustColor(safeColor, 4), 0.65));
+      setVar("--cui-card-bg-solid", isLight ? "#ffffff" : this.hexToRgba(this.adjustColor(safeColor, 3), 0.98));
       setVar("--cui-body-bg", safeColor);
       setVar("--cui-primary", primaryColor);
       setVar("--cui-primary-rgb", pRGB);
-      setVar("--cui-sidebar-bg", isLight ? "#ffffff" : this.hexToRgba(safeColor, 0.97));
-      setVar("--cui-header-bg", isLight ? "#ffffff" : this.hexToRgba(safeColor, 0.92));
+      setVar("--cui-sidebar-bg", isLight ? "#ffffff" : this.hexToRgba(this.adjustColor(safeColor, 1.5), 0.98));
+      setVar("--cui-header-bg", isLight ? "#ffffff" : this.hexToRgba(this.adjustColor(safeColor, 1), 0.92));
 
       if (typeof TomParallax !== "undefined") TomParallax.destroy();
     } else {
@@ -1267,7 +1267,7 @@ var TomBG = {
       themeStyle.id = "tom-theme-vars";
       document.head.appendChild(themeStyle);
     }
-    themeStyle.innerHTML = `:root { ${cssVars} }`;
+    themeStyle.innerHTML = `html[data-coreui-theme] { ${cssVars} }`;
 
     // Remove all style attributes from root to keep it clean like SNA
     this.updateActiveSwatchUI();
@@ -1446,34 +1446,38 @@ var TomBG = {
 
         var gradient = 'radial-gradient(circle at 35% 30%, ' + this.adjustColor(bg, 25) + ', ' + bg + ' 70%)';
 
-        html += `
-          <div class="text-center dynamic-slot position-relative swatch-sphere-wrap swatch-item" style="width: 72px;" data-bg="${bg}" data-accent="${accent}" onmouseenter="this.querySelector('.action-btns').style.opacity='1'" onmouseleave="this.querySelector('.action-btns').style.opacity='0'">
-              <div class="rounded-circle mx-auto mb-2 swatch-sphere dual-sphere d-flex align-items-center justify-content-center position-relative pointer" 
-                   onclick="TomBG.applyCustomTheme(${i})"
-                   style="width: 52px; height: 52px; border: 2px solid ${bg}; padding: 3px; background: transparent; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);">
-                  <div class="w-100 h-100 rounded-circle position-relative" style="background: linear-gradient(to bottom, #1e293b 50%, #ffffff 50%); box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
-                      ${hasAccent ? `<span class="dual-sphere-dot" style="background: ${accent}; border: 2px solid rgba(255,255,255,0.8); width: 14px; height: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 50%;"></span>` : ''}
-                  </div>
-                  <div class="active-badge position-absolute shadow-sm" style="top: -4px; right: -4px; width: 16px; height: 16px; background: #22c55e; border-radius: 50%; color: white; display: none; align-items: center; justify-content: center; font-size: 11px; border: 2px solid var(--cui-body-bg); z-index: 2;">
-                      <i class='bx bx-check fw-bold'></i>
-                  </div>
-              </div>
-              <span class="d-block text-body-secondary" style="font-size: 0.65rem; font-weight: 500; line-height: 1.2;">Custom ${i + 1}</span>
-              
-              <div class="action-btns position-absolute w-100 d-flex justify-content-between" style="top: -5px; padding: 0 2px; opacity: 0; transition: opacity 0.2s ease; pointer-events: none; z-index: 5;">
-                  <button class="btn btn-sm btn-success rounded-circle shadow-sm d-flex align-items-center justify-content-center p-0 action-btn" 
-                          onclick="TomBG.openDesignerForSlot(${i}); event.stopPropagation();"
-                          style="width: 20px; height: 20px; border: 1px solid rgba(255,255,255,0.5); pointer-events: auto; background-color: #22c55e;" title="Edit">
-                      <i class='bx bxs-pencil' style="font-size: 10px; color: #fff;"></i>
-                  </button>
-                  <button class="btn btn-sm btn-danger rounded-circle shadow-sm d-flex align-items-center justify-content-center p-0 action-btn" 
-                          onclick="TomBG.deleteCustomTheme(${i}); event.stopPropagation();"
-                          style="width: 20px; height: 20px; border: 1px solid rgba(255,255,255,0.5); pointer-events: auto; background-color: #ef4444;" title="Delete">
-                      <i class='bx bx-x' style="font-size: 14px; color: #fff;"></i>
-                  </button>
-              </div>
-          </div>
-        `;
+        html += '<div class="text-center dynamic-slot position-relative swatch-sphere-wrap swatch-item" style="width: 72px;" data-bg="' + bg + '" data-accent="' + accent + '" onmouseenter="this.querySelector(\'.action-btns\').style.opacity=\'1\'" onmouseleave="this.querySelector(\'.action-btns\').style.opacity=\'0\'">' +
+              '<button class="swatch-circle pointer" title="Custom ' + (i+1) + '" onclick="TomBG.applyCustomTheme(' + i + ')" style="background: transparent; border: none; padding: 0; cursor: pointer; outline: none; position: relative;">' +
+                  '<svg width="52" height="52" viewBox="0 0 48 48" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));">' +
+                      '<clipPath id="top-custom-' + i + '">' +
+                          '<path d="M24 4 A20 20 0 0 1 44 24 L4 24 A20 20 0 0 1 24 4Z"></path>' +
+                      '</clipPath>' +
+                      '<clipPath id="bot-custom-' + i + '">' +
+                          '<path d="M4 24 L44 24 A20 20 0 0 1 24 44 A20 20 0 0 1 4 24Z"></path>' +
+                      '</clipPath>' +
+                      '<circle cx="24" cy="24" r="22" fill="' + bg + '" clip-path="url(#top-custom-' + i + ')"></circle>' +
+                      '<circle cx="24" cy="24" r="22" fill="' + (hasAccent ? '#ffffff' : '#f0f0f0') + '" clip-path="url(#bot-custom-' + i + ')"></circle>' +
+                      '<circle cx="24" cy="24" r="22" fill="none" stroke="' + (hasAccent ? accent : bg) + '" stroke-width="2"></circle>' +
+                      '<circle cx="24" cy="24" r="6" fill="' + (hasAccent ? accent : bg) + '"></circle>' +
+                  '</svg>' +
+                  '<div class="active-badge position-absolute shadow-sm" style="top: -2px; right: -2px; width: 16px; height: 16px; background: #22c55e; border-radius: 50%; color: white; display: none; align-items: center; justify-content: center; font-size: 11px; border: 2px solid var(--cui-body-bg); z-index: 2;">' +
+                      '<i class=\'bx bx-check fw-bold\'></i>' +
+                  '</div>' +
+              '</button>' +
+              '<span class="d-block text-body-secondary" style="font-size: 0.65rem; font-weight: 500; line-height: 1.2;">Custom ' + (i + 1) + '</span>' +
+              '<div class="action-btns position-absolute w-100 d-flex justify-content-between" style="top: -5px; padding: 0 2px; opacity: 0; transition: opacity 0.2s ease; pointer-events: none; z-index: 5;">' +
+                  '<button class="btn btn-sm btn-success rounded-circle shadow-sm d-flex align-items-center justify-content-center p-0 action-btn" ' +
+                          'onclick="TomBG.openDesignerForSlot(' + i + '); event.stopPropagation();" ' +
+                          'style="width: 20px; height: 20px; border: 1px solid rgba(255,255,255,0.5); pointer-events: auto; background-color: #22c55e;" title="Edit">' +
+                      '<i class=\'bx bxs-pencil\' style="font-size: 10px; color: #fff;"></i>' +
+                  '</button>' +
+                  '<button class="btn btn-sm btn-danger rounded-circle shadow-sm d-flex align-items-center justify-content-center p-0 action-btn" ' +
+                          'onclick="TomBG.deleteCustomTheme(' + i + '); event.stopPropagation();" ' +
+                          'style="width: 20px; height: 20px; border: 1px solid rgba(255,255,255,0.5); pointer-events: auto; background-color: #ef4444;" title="Delete">' +
+                      '<i class=\'bx bx-x\' style="font-size: 14px; color: #fff;"></i>' +
+                  '</button>' +
+              '</div>' +
+          '</div>';
       }
     }
 

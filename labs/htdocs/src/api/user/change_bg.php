@@ -31,36 +31,56 @@ if (!Session::getUser()) {
             <div class="d-flex flex-wrap justify-content-center gap-4">
                 <?php
                 $swatches = [
-                    ['name' => 'Default',   'bg' => '#010d12',  'accent' => '#8b91f9', 'gradient' => 'radial-gradient(circle at 35% 30%, #1a3a4a, #010d12 70%)'],
-                    ['name' => 'Charcoal',  'bg' => '#0B1E36',  'accent' => '#5dade2', 'gradient' => 'radial-gradient(circle at 35% 30%, #1a3d5c, #0B1E36 70%)'],
-                    ['name' => 'Sunset',    'bg' => '#FF6251',  'accent' => '#1a1a2e', 'gradient' => 'radial-gradient(circle at 35% 30%, #ff9a8b, #FF6251 70%)'],
-                    ['name' => 'Ocean',     'bg' => '#00BBD6',  'accent' => '#0a2540', 'gradient' => 'radial-gradient(circle at 35% 30%, #5ce1f0, #00BBD6 70%)'],
-                    ['name' => 'Gold',      'bg' => '#FFE373',  'accent' => '#3d2e00', 'gradient' => 'radial-gradient(circle at 35% 30%, #fff4b8, #FFE373 70%)'],
-                    ['name' => 'Midnight',  'bg' => '#000000',  'accent' => '#a78bfa', 'gradient' => 'radial-gradient(circle at 35% 30%, #3a3a3a, #000000 70%)'],
-                    ['name' => 'Arctic',    'bg' => '#ffffff',  'accent' => '#2563eb', 'gradient' => 'radial-gradient(circle at 35% 30%, #ffffff, #d4d4d4 70%)'],
-                    ['name' => 'Forest',    'bg' => '#0d5e3a',  'accent' => '#a7f3d0', 'gradient' => 'radial-gradient(circle at 35% 30%, #28a06a, #0d5e3a 70%)'],
-                    ['name' => 'Amethyst',  'bg' => '#6B3FA0',  'accent' => '#fbbf24', 'gradient' => 'radial-gradient(circle at 35% 30%, #a06de0, #6B3FA0 70%)'],
-                    ['name' => 'Slate',     'bg' => '#3D4F5F',  'accent' => '#67e8f9', 'gradient' => 'radial-gradient(circle at 35% 30%, #6b8da0, #3D4F5F 70%)'],
-                    ['name' => 'Teal',      'bg' => '#00796B',  'accent' => '#fde68a', 'gradient' => 'radial-gradient(circle at 35% 30%, #2baf9e, #00796B 70%)'],
-                    ['name' => 'Rose',      'bg' => '#C2185B',  'accent' => '#fce7f3', 'gradient' => 'radial-gradient(circle at 35% 30%, #f06292, #C2185B 70%)'],
-                    ['name' => 'Deep Sea',  'bg' => '#0D2137',  'accent' => '#38bdf8', 'gradient' => 'radial-gradient(circle at 35% 30%, #1d4a6e, #0D2137 70%)'],
-                    ['name' => 'Coral',     'bg' => '#FF7043',  'accent' => '#1e293b', 'gradient' => 'radial-gradient(circle at 35% 30%, #ffab91, #FF7043 70%)'],
+                    ['name' => 'Sunset',   'bg' => '#2a2a2a', 'light' => '#faf7f4', 'accent' => '#FF6B1A'],
+                    ['name' => 'Ocean',    'bg' => '#1a2238', 'light' => '#f0f4ff', 'accent' => '#4A90D9'],
+                    ['name' => 'Forest',   'bg' => '#1a2a1a', 'light' => '#f0fff4', 'accent' => '#4CAF50'],
+                    ['name' => 'Amethyst', 'bg' => '#261a38', 'light' => '#f6f0ff', 'accent' => '#9C27B0'],
+                    ['name' => 'Slate',    'bg' => '#252525', 'light' => '#f5f5f5', 'accent' => '#78909C'],
+                    ['name' => 'Teal',     'bg' => '#14282a', 'light' => '#f0fffd', 'accent' => '#009688'],
+                    ['name' => 'Rose',     'bg' => '#2a1a22', 'light' => '#fff0f4', 'accent' => '#E91E63'],
+                    ['name' => 'Espresso', 'bg' => '#2a2018', 'light' => '#fdf6f0', 'accent' => '#795548'],
+                    ['name' => 'Midnight', 'bg' => '#0f1628', 'light' => '#eef2ff', 'accent' => '#3F51B5'],
+                    ['name' => 'Olive',    'bg' => '#222a1a', 'light' => '#f8fff0', 'accent' => '#8BC34A'],
+                    ['name' => 'Coral',    'bg' => '#1e1e1e', 'light' => '#faf5f4', 'accent' => '#FF5722'],
+                    ['name' => 'Gold',     'bg' => '#2a2510', 'light' => '#fffdf0', 'accent' => '#FFC107'],
+                    ['name' => 'Deep Sea', 'bg' => '#00384d', 'light' => '#f1f7f9', 'accent' => '#FF6B1A'],
+                    ['name' => 'Arctic',   'bg' => '#0d1630', 'light' => '#f0f2f8', 'accent' => '#D4A017'],
+                    ['name' => 'Volcano',  'bg' => '#2e0d18', 'light' => '#faf0f3', 'accent' => '#00BCD4'],
+                    ['name' => 'Carbon',   'bg' => '#1f2226', 'light' => '#f4f5f6', 'accent' => '#2979FF'],
+                    ['name' => 'Dusk',     'bg' => '#191028', 'light' => '#f4f0fa', 'accent' => '#FFB300'],
+                    ['name' => 'Moss',     'bg' => '#112a1a', 'light' => '#f0f8f2', 'accent' => '#FF6B6B'],
+                    ['name' => 'Sapphire', 'bg' => '#0e1830', 'light' => '#f0f3fa', 'accent' => '#F06292'],
+                    ['name' => 'Ember',    'bg' => '#261a12', 'light' => '#faf6f2', 'accent' => '#00E676'],
                 ];
-                foreach ($swatches as $swatch): ?>
+                foreach ($swatches as $index => $swatch): 
+                    $uid = "swatch_" . md5($swatch['name'] . $index);
+                ?>
                     <div class="text-center pointer swatch-sphere-wrap swatch-item" 
                          onclick="TomBG.applySwatchPreset('<?= $swatch['bg'] ?>', '<?= $swatch['accent'] ?>')"
                          data-bg="<?= $swatch['bg'] ?>" data-accent="<?= $swatch['accent'] ?>"
-                         style="width: 72px;">
-                        <div class="rounded-circle mx-auto mb-2 swatch-sphere dual-sphere d-flex align-items-center justify-content-center position-relative" 
-                             style="width: 52px; height: 52px; border: 2px solid <?= $swatch['bg'] ?>; padding: 3px; background: transparent; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);">
-                            <div class="w-100 h-100 rounded-circle position-relative" style="background: linear-gradient(to bottom, #1e293b 50%, #ffffff 50%); box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
-                                <span class="dual-sphere-dot" style="background: <?= $swatch['accent'] ?>; border: 2px solid rgba(255,255,255,0.8); width: 14px; height: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 50%;"></span>
-                            </div>
-                            <div class="active-badge position-absolute shadow-sm" style="top: -4px; right: -4px; width: 16px; height: 16px; background: #22c55e; border-radius: 50%; color: white; display: none; align-items: center; justify-content: center; font-size: 11px; border: 2px solid var(--cui-body-bg); z-index: 2;">
+                         style="width: 72px; position: relative;">
+                         
+                        <button class="swatch-circle" title="<?= $swatch['name'] ?>" style="background: transparent; border: none; padding: 0; cursor: pointer; outline: none; position: relative;">
+                            <svg width="52" height="52" viewBox="0 0 48 48" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));">
+                                <clipPath id="top-<?= $uid ?>">
+                                    <path d="M24 4 A20 20 0 0 1 44 24 L4 24 A20 20 0 0 1 24 4Z"></path>
+                                </clipPath>
+                                <clipPath id="bot-<?= $uid ?>">
+                                    <path d="M4 24 L44 24 A20 20 0 0 1 24 44 A20 20 0 0 1 4 24Z"></path>
+                                </clipPath>
+                                <circle cx="24" cy="24" r="22" fill="<?= $swatch['bg'] ?>" clip-path="url(#top-<?= $uid ?>)"></circle>
+                                <circle cx="24" cy="24" r="22" fill="<?= $swatch['light'] ?>" clip-path="url(#bot-<?= $uid ?>)"></circle>
+                                <circle cx="24" cy="24" r="22" fill="none" stroke="<?= $swatch['accent'] ?>" stroke-width="2"></circle>
+                                <circle cx="24" cy="24" r="6" fill="<?= $swatch['accent'] ?>"></circle>
+                            </svg>
+                            
+                            <!-- Active Checkmark overlay -->
+                            <div class="active-badge position-absolute shadow-sm" style="top: -2px; right: -2px; width: 16px; height: 16px; background: #22c55e; border-radius: 50%; color: white; display: none; align-items: center; justify-content: center; font-size: 11px; border: 2px solid var(--cui-body-bg); z-index: 2;">
                                 <i class='bx bx-check fw-bold'></i>
                             </div>
-                        </div>
-                        <span class="d-block text-body-emphasis" style="font-size: 0.7rem; font-weight: 500; opacity: 0.85; line-height: 1.2;"><?= $swatch['name'] ?></span>
+                        </button>
+                        
+                        <span class="d-block text-body-emphasis mt-1" style="font-size: 0.7rem; font-weight: 500; opacity: 0.85; line-height: 1.2;"><?= $swatch['name'] ?></span>
                     </div>
                 <?php endforeach; ?>
             </div>

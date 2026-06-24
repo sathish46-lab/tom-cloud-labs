@@ -101,6 +101,10 @@ RUN systemctl enable traefik
 RUN echo "[Unit]\nDescription=Container Setup Script\nAfter=mongod.service rabbitmq-server.service mysql.service postgresql.service redis-server.service network.target\n[Service]\nType=oneshot\nTimeoutStartSec=infinity\nExecStart=/usr/local/bin/init-services.sh\nRemainAfterExit=yes\n[Install]\nWantedBy=multi-user.target" > /etc/systemd/system/init-services.service
 RUN systemctl enable mongod.service rabbitmq-server.service mysql.service postgresql.service redis-server.service init-services.service
 
+# Fix PostgreSQL systemd bug in containers (refusing PIDFile)
+RUN mkdir -p /etc/systemd/system/postgresql@.service.d/ && \
+    printf "[Service]\nPIDFile=\n" > /etc/systemd/system/postgresql@.service.d/override.conf
+
 # Sudoers & Git config
 RUN echo "www-data ALL=(ALL) NOPASSWD: /usr/bin/python3 /opt/labs-control-panel/labsctl.py *" > /etc/sudoers.d/labs-www-data && \
     echo "www-data ALL=(ALL) NOPASSWD: /usr/local/bin/labsctl *" >> /etc/sudoers.d/labs-www-data && \
