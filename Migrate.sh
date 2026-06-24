@@ -178,10 +178,12 @@ FROM ubuntu:24.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV container docker
 
+# 1. System Updates & Core Dependencies
 RUN apt-get update && \
     apt-get install -y systemd systemd-sysv sudo iputils-ping curl wget nano iptables iproute2 kmod tzdata software-properties-common gnupg2 jq \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Delete systemd targets that prevent running cleanly in a container
 RUN cd /lib/systemd/system/sysinit.target.wants/ || exit; \
     for i in *; do [ $i = systemd-tmpfiles-setup.service ] || rm -f $i; done; \
     rm -f /lib/systemd/system/multi-user.target.wants/*; \
@@ -192,6 +194,7 @@ RUN cd /lib/systemd/system/sysinit.target.wants/ || exit; \
     rm -f /lib/systemd/system/basic.target.wants/*; \
     rm -f /lib/systemd/system/anaconda.target.wants/*;
 
+# 2. Add Repositories (PHP, Docker, MongoDB)
 RUN add-apt-repository -y ppa:ondrej/php && \
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg --yes && \
     chmod a+r /etc/apt/keyrings/docker.gpg && \
@@ -199,47 +202,85 @@ RUN add-apt-repository -y ppa:ondrej/php && \
     curl -fsSL https://www.mongodb.org/static/pgp/server-8.0.asc | sudo gpg -o /usr/share/keyrings/mongodb-server-8.0.gpg --dearmor --yes && \
     echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu noble/mongodb-org/8.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-8.0.list
 
+# 3. Install Software Stack
 RUN apt-get update && apt-get install -y \
     git curl unzip \
     apache2 libapache2-mod-php8.4 \
-    php8.4 php8.4-cli php8.4-common php8.4-curl php8.4-mbstring php8.4-xml php8.4-zip php8.4-bcmath php8.4-intl php8.4-gd php8.4-mongodb php8.4-amqp \
+    php8.4 php8.4-cli php8.4-common php8.4-curl php8.4-mbstring php8.4-xml php8.4-zip php8.4-bcmath php8.4-intl php8.4-gd php8.4-mongodb php8.4-amqp php8.4-mysql php8.4-pgsql php8.4-redis \
     rabbitmq-server \
     wireguard wireguard-tools \
     python3 python3-pip python3-pymongo python3-docker python3-redis python3-pika python3-psutil \
     docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin \
-    ufw fail2ban nmap mongodb-org \
+    ufw fail2ban nmap mongodb-org mysql-server postgresql redis-server \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Install Python packages not available via apt
 RUN pip3 install --break-system-packages google-generativeai requests pymongo
 
+# Create symlink for labsctl
 RUN ln -sf /opt/labs-control-panel/labsctl.py /usr/local/bin/labsctl && \
     chmod +x /opt/labs-control-panel/labsctl.py 2>/dev/null || true
 
+# 4. Install Traefik
 RUN wget https://github.com/traefik/traefik/releases/download/v2.10.6/traefik_v2.10.6_linux_amd64.tar.gz && \
     tar -zxvf traefik_v2.10.6_linux_amd64.tar.gz && \
     mv traefik /usr/local/bin/ && \
     chmod +x /usr/local/bin/traefik && \
     rm traefik_v2.10.6_linux_amd64.tar.gz
 
+# 5. Install Node.js, Composer, Grunt
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y nodejs && \
     curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer && \
     npm install -g grunt-cli
 
+# 6. Configure Base Services
+# MongoDB Auth
 RUN sed -i 's/#security:/security:\n  authorization: enabled/' /etc/mongod.conf && \
     sed -i 's/bindIp: 127.0.0.1/bindIp: 0.0.0.0/' /etc/mongod.conf
 
-RUN mkdir -p /var/www/labs /var/www/vpn-api /opt/labs-control-panel /etc/traefik/dynamic_conf /etc/wireguard
+# MySQL Bind Address
+RUN sed -i 's/bind-address\s*=\s*127.0.0.1/bind-address = 0.0.0.0/' /etc/mysql/mysql.conf.d/mysqld.cnf || true
 
-RUN echo "Listen 8081\nListen 8082\n<IfModule ssl_module>\n    Listen 4431\n</IfModule>" > /etc/apache2/ports.conf
+# PostgreSQL Config
+RUN for conf in /etc/postgresql/*/main/postgresql.conf; do sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/" "$conf"; done && \
+    for conf in /etc/postgresql/*/main/pg_hba.conf; do echo "host all all 0.0.0.0/0 md5" >> "$conf"; done && \
+    mkdir -p /etc/systemd/system/postgresql@.service.d && \
+    echo "[Service]\nPIDFile=" > /etc/systemd/system/postgresql@.service.d/override.conf
+
+# Redis Config
+RUN sed -i 's/bind 127.0.0.1 ::1/bind 0.0.0.0/' /etc/redis/redis.conf && \
+    sed -i 's/protected-mode yes/protected-mode no/' /etc/redis/redis.conf
+
+# 7. Create Directories
+RUN mkdir -p /var/www/labs /var/www/vpn-api /opt/labs-control-panel /etc/traefik/dynamic_conf /etc/wireguard /var/www/adminer
+
+# Install Adminer
+RUN wget -O /var/www/adminer/index.php https://github.com/vrana/adminer/releases/download/v4.8.1/adminer-4.8.1.php && \
+    echo '<VirtualHost *:8080>\n    ServerName adminer.tomweb.in\n    DocumentRoot /var/www/adminer\n    <Directory /var/www/adminer>\n        AllowOverride All\n        Require all granted\n    </Directory>\n    ErrorLog ${APACHE_LOG_DIR}/adminer_error.log\n</VirtualHost>' > /etc/apache2/sites-available/adminer.conf && \
+    a2ensite adminer
+# 8. Static Configurations
+# Apache Ports
+RUN echo "Listen 8080\nListen 8081\nListen 8082\n<IfModule ssl_module>\n    Listen 4431\n</IfModule>" > /etc/apache2/ports.conf
 RUN touch /etc/apache2/code_server_map.txt
 
+# Traefik configuration
+RUN touch /etc/traefik/acme.json && chmod 600 /etc/traefik/acme.json
+RUN echo "entryPoints:\n  web:\n    address: \":80\"\n  websecure:\n    address: \":443\"\nproviders:\n  file:\n    directory: \"/etc/traefik/dynamic_conf\"\n    watch: true" > /etc/traefik/traefik.yml
+
+# Traefik Systemd Service
 RUN echo "[Unit]\nDescription=Traefik Edge Router\nAfter=network-online.target\n[Service]\nRestart=on-failure\nExecStart=/usr/local/bin/traefik --configFile=/etc/traefik/traefik.yml\nLimitNOFILE=65536\n[Install]\nWantedBy=multi-user.target" > /etc/systemd/system/traefik.service
 RUN systemctl enable traefik
 
-RUN echo "[Unit]\nDescription=Container Setup Script\nAfter=mongod.service rabbitmq-server.service network.target\n[Service]\nType=oneshot\nExecStart=/usr/local/bin/init-services.sh\nRemainAfterExit=yes\n[Install]\nWantedBy=multi-user.target" > /etc/systemd/system/init-services.service
-RUN systemctl enable mongod.service rabbitmq-server.service init-services.service
+# Container Setup Systemd Service (runs after DBs)
+RUN echo "[Unit]\nDescription=Container Setup Script\nAfter=mongod.service rabbitmq-server.service mysql.service postgresql.service redis-server.service network.target\n[Service]\nType=oneshot\nTimeoutStartSec=infinity\nExecStart=/usr/local/bin/init-services.sh\nRemainAfterExit=yes\n[Install]\nWantedBy=multi-user.target" > /etc/systemd/system/init-services.service
+RUN systemctl enable mongod.service rabbitmq-server.service mysql.service postgresql.service redis-server.service init-services.service
 
+# Fix PostgreSQL systemd bug in containers (refusing PIDFile)
+RUN mkdir -p /etc/systemd/system/postgresql@.service.d/ && \
+    printf "[Service]\nPIDFile=\n" > /etc/systemd/system/postgresql@.service.d/override.conf
+
+# Sudoers & Git config
 RUN echo "www-data ALL=(ALL) NOPASSWD: /usr/bin/python3 /opt/labs-control-panel/labsctl.py *" > /etc/sudoers.d/labs-www-data && \
     echo "www-data ALL=(ALL) NOPASSWD: /usr/local/bin/labsctl *" >> /etc/sudoers.d/labs-www-data && \
     echo "www-data ALL=(ALL) NOPASSWD: /usr/bin/docker" >> /etc/sudoers.d/labs-www-data && \
@@ -253,6 +294,8 @@ RUN echo "www-data ALL=(ALL) NOPASSWD: /usr/bin/python3 /opt/labs-control-panel/
     git config --system --add safe.directory /var/www && \
     git config --system --add safe.directory /var/www/labs
 
+# Copy scripts
+# Avoid internal docker conflict and ensure socket symlink persists
 RUN systemctl mask docker.service docker.socket && \
     echo "L+ /run/docker.sock - - - - /var/docker.sock" > /etc/tmpfiles.d/docker-socket.conf
 
@@ -261,26 +304,30 @@ COPY init-services.sh /usr/local/bin/init-services.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/init-services.sh
 
 VOLUME [ "/sys/fs/cgroup" ]
+
+# Set Entrypoint script up to run before systemd execution
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
 OUTER_EOF_DOCKER
 
     log "Generating entrypoint.sh..."
     cat <<'OUTER_EOF_ENTRYPOINT' > entrypoint.sh
 #!/bin/bash
-export MAIN_DOMAIN=${MAIN_DOMAIN:-awshosting.in}
-export VPN_DOMAIN=${VPN_DOMAIN:-vpn.awshosting.in}
-export MQS_DOMAIN=${MQS_DOMAIN:-mq.awshosting.in}
+
+# Configuration settings (Defaults or from ENV)
+export MAIN_DOMAIN=${MAIN_DOMAIN:-tomweb.in}
+export VPN_DOMAIN=${VPN_DOMAIN:-vpn.tomweb.in}
+export MQS_DOMAIN=${MQS_DOMAIN:-mq.tomweb.in}
 export CODE_DOMAIN=${CODE_DOMAIN:-tomweb.shop}
-export WORK_DOMAIN=${WORK_DOMAIN:-work.awshosting.in}
+export WORK_DOMAIN=${WORK_DOMAIN:-work.tomweb.in}
 export SSL_EMAIL=${SSL_EMAIL:-admin@example.com}
 
 echo "[INFO] Running Pre-boot Initialization in Entrypoint..."
 
-# Fix Traefik empty volume mount issues
-mkdir -p /etc/traefik/dynamic_conf
-touch /etc/traefik/acme.json && chmod 600 /etc/traefik/acme.json
-
+# 1. WireGuard Configuration (Idempotent - always fixes Interface, preserves Peers)
 echo "[INFO] Configuring WireGuard..."
+
+# Enable IP forwarding (required for WireGuard routing)
 sysctl -w net.ipv4.ip_forward=1 > /dev/null 2>&1
 
 if [ ! -f /etc/wireguard/privatekey ]; then
@@ -296,21 +343,33 @@ else
     echo "[INFO] Using existing WireGuard keys."
 fi
 
+# Extract existing [Peer] blocks from current config (if any)
 EXISTING_PEERS=""
 if [ -f /etc/wireguard/wg0.conf ]; then
     EXISTING_PEERS=$(awk '/^\[Peer\]/,0' /etc/wireguard/wg0.conf)
 fi
 
-DOCKER_BRIDGE=$(docker network inspect Prod_lab --format '{{.Id}}' 2>/dev/null | cut -c1-12)
+# Detect Docker bridge interface for forwarding rules
+DOCKER_BRIDGE=$(docker network inspect Dev_lab --format '{{.Id}}' 2>/dev/null | cut -c1-12)
 if [ -n "$DOCKER_BRIDGE" ]; then
     BRIDGE_IF="br-${DOCKER_BRIDGE}"
 else
     BRIDGE_IF=""
 fi
 
+# Fetch tunnel prefix from config
+TUNNEL_PREFIX=$(jq -r '.tunnel_ip' /opt/labs-control-panel/config.json 2>/dev/null)
+if [ -z "$TUNNEL_PREFIX" ] || [ "$TUNNEL_PREFIX" = "null" ]; then
+    echo "FATAL: tunnel_ip not set in config.json"
+    exit 1
+fi
+TUNNEL_IP="${TUNNEL_PREFIX}1/16"
+
+# Always regenerate the [Interface] section (self-healing)
+# NOTE: No SaveConfig - peers are managed by wg set commands
 cat <<EOF > /etc/wireguard/wg0.conf
 [Interface]
-Address = 172.30.0.1/16
+Address = $TUNNEL_IP
 PostUp = iptables -A FORWARD -i wg0 -o eth0 -j ACCEPT
 PostUp = iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE
 ${BRIDGE_IF:+PostUp = iptables -A FORWARD -i wg0 -o $BRIDGE_IF -j ACCEPT}
@@ -323,6 +382,7 @@ ListenPort = 51820
 PrivateKey = $PRIVATE_KEY
 EOF
 
+# Re-append preserved [Peer] entries (skip any orphan peers with no AllowedIPs)
 if [ -n "$EXISTING_PEERS" ]; then
     echo "" >> /etc/wireguard/wg0.conf
     echo "$EXISTING_PEERS" | awk '
@@ -339,7 +399,9 @@ fi
 
 sed -i '/^$/{ N; /^\n$/d }' /etc/wireguard/wg0.conf
 chmod 600 /etc/wireguard/wg0.conf
+echo "[INFO] WireGuard config regenerated (peers preserved)."
 
+# 2. Generate Apache Configuration Files
 echo "[INFO] Generating Apache VirtualHosts..."
 cat <<EOF > /etc/apache2/sites-available/labs.conf
 <VirtualHost *:8081>
@@ -368,11 +430,15 @@ cat <<EOF > /etc/apache2/sites-available/mqs.conf
     # 1. Handle the Native WebSocket for Overview Stats
     ProxyPass /stats-ws ws://127.0.0.1:8085/
     ProxyPassReverse /stats-ws ws://127.0.0.1:8085/
-    
+
+    # 1.5 Handle the STOMP WebSocket for Deployment Logs
     ProxyPass /ws ws://127.0.0.1:15674/ws
     ProxyPassReverse /ws ws://127.0.0.1:15674/ws
+
+    # 2. Handle standard RabbitMQ Management traffic
     ProxyPass / http://127.0.0.1:15672/
     ProxyPassReverse / http://127.0.0.1:15672/
+
     Header set Sec-WebSocket-Protocol "v10.stomp, v11.stomp, v12.stomp"
 </VirtualHost>
 EOF
@@ -444,7 +510,10 @@ cat <<EOF > /etc/apache2/sites-available/work.conf
 </VirtualHost>
 EOF
 
+# 3. Generate Traefik Dynamic config
 echo "[INFO] Generating Traefik Configuration..."
+
+# Generate static Traefik config with certResolver
 cat <<EOF > /etc/traefik/traefik.yml
 entryPoints:
   web:
@@ -486,6 +555,7 @@ http:
       service: apache-service
       entryPoints:
         - web
+        - websecure
 
     vpns-router:
       rule: "Host(\`$VPN_DOMAIN\`)"
@@ -494,12 +564,14 @@ http:
         - vpn-headers
       entryPoints:
         - web
+        - websecure
 
     mqs-router:
       rule: "Host(\`$MQS_DOMAIN\`)"
       service: mqs-service
       entryPoints:
         - web
+        - websecure
 
     code-server-router:
       rule: "HostRegexp(\`{subdomain:.+}.$CODE_DOMAIN\`)"
@@ -508,12 +580,14 @@ http:
         - code-headers
       entryPoints:
         - web
+        - websecure
 
     work-router:
       rule: "Host(\`$WORK_DOMAIN\`)"
       service: apache-service
       entryPoints:
         - web
+        - websecure
 
   services:
     apache-service:
@@ -534,35 +608,64 @@ http:
           - url: "http://127.0.0.1:8081"
 EOF
 
+# 4. Configure env.json
 echo "[INFO] Configuring env.json..."
 if [ ! -f "/var/www/env.json" ]; then
-    echo "{}" > /var/www/env.json
+    echo "[INFO] /var/www/env.json not found! Generating default configuration..."
+    cat <<EOF > /var/www/env.json
+{
+    "database": {
+        "host": "127.0.0.1",
+        "user": "root",
+        "password": "",
+        "dbname": "labs"
+    },
+    "app_cache": "/var/cache/labs",
+    "domains": {
+        "main": "labs.tomweb.fun",
+        "vpns": "vpns.tomweb.fun",
+        "mqs": "mqs.tomweb.fun"
+    },
+    "rabbitmq": {
+        "host": "127.0.0.1",
+        "port": 5672,
+        "user": "admin",
+        "password": "RootTom@46"
+    }
+}
+EOF
     chown www-data:www-data /var/www/env.json
 fi
 
-# Use sed to replace domains in a temp file to avoid bind mount "Device busy" error
-sed "s/labs.tomweb.fun/$MAIN_DOMAIN/g; s/vpns.tomweb.fun/$VPN_DOMAIN/g; s/mqs.tomweb.fun/$MQS_DOMAIN/g" /var/www/env.json > /tmp/env.json
-cp /tmp/env.json /var/www/env.json
-rm /tmp/env.json
-
-if [ -f /etc/wireguard/publickey ]; then
-    WG_PUBKEY=$(cat /etc/wireguard/publickey)
-    jq --arg key "$WG_PUBKEY" '.wireguard_public_key = $key' /var/www/env.json > /tmp/env.json
-    cp /tmp/env.json /var/www/env.json
-    rm /tmp/env.json
+if [ -f "/var/www/env.json" ]; then
+    sed -i "s/labs.tomweb.fun/$MAIN_DOMAIN/g" /var/www/env.json
+    sed -i "s/vpns.tomweb.fun/$VPN_DOMAIN/g" /var/www/env.json
+    sed -i "s/mqs.tomweb.fun/$MQS_DOMAIN/g" /var/www/env.json
+    
+    # Dynamically inject WireGuard Public Key if it exists
+    if [ -f /etc/wireguard/publickey ]; then
+        WG_PUBKEY=$(cat /etc/wireguard/publickey)
+        echo "[INFO] Injecting WireGuard Public Key into env.json..."
+        # Use jq to update/add the key
+        jq --arg key "$WG_PUBKEY" '.wireguard_public_key = $key' /var/www/env.json > /var/www/env.json.tmp && \
+        mv /var/www/env.json.tmp /var/www/env.json
+        chown www-data:www-data /var/www/env.json
+    fi
 fi
-chown www-data:www-data /var/www/env.json
 
+# 5. Enable Apache Sites
 echo "[INFO] Enabling Apache Sites..."
 a2enmod rewrite proxy proxy_http proxy_wstunnel headers ssl
 a2dissite 000-default.conf
 a2ensite labs.conf mqs.conf wg-api.conf code.conf work.conf
 
+# 6. Setup Directory Permissions & Log Rotation
 echo "[INFO] Setting Directory Permissions..."
 mkdir -p /var/log/labs && chown -R www-data:www-data /var/log/labs
 mkdir -p /var/cache/labs && chown -R www-data:www-data /var/cache/labs
 touch /var/log/labs_deploy.log && chown www-data:www-data /var/log/labs_deploy.log && chmod 664 /var/log/labs_deploy.log
 
+# 7. Setup Labs Control Panel Links & Workers
 if [ -f "/opt/labs-control-panel/labsctl.py" ]; then
     echo "[INFO] Linking Labs Control Panel..."
     chmod +x /opt/labs-control-panel/labsctl.py
@@ -590,11 +693,11 @@ if [ -d "/opt/labs-control-panel/systemd/" ]; then
         fi
     done
 fi
-
+# 8. Setup AI Worker Service
 echo "[INFO] Setting up AI Worker systemd service..."
 cat <<EOF > /etc/systemd/system/ai-worker.service
 [Unit]
-Description=LearnAI Worker
+Description=LearnAI Worker - AI Chat Processing
 After=mongod.service rabbitmq-server.service network.target
 Wants=mongod.service rabbitmq-server.service
 
@@ -612,8 +715,31 @@ WantedBy=multi-user.target
 EOF
 systemctl enable ai-worker.service || true
 
+# 9. Setup Native Stats Worker Service
+echo "[INFO] Setting up Native Stats Worker systemd service..."
+cat <<EOF > /etc/systemd/system/stats-worker.service
+[Unit]
+Description=Tom Labs Native Stats WebSocket Worker
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/var/www/labs/worker
+ExecStartPre=/usr/bin/npm install
+ExecStart=/usr/bin/node /var/www/labs/worker/stats-daemon.js
+Restart=always
+RestartSec=3
+StandardOutput=append:/var/log/stats-worker.log
+StandardError=append:/var/log/stats-worker.log
+
+[Install]
+WantedBy=multi-user.target
+EOF
+systemctl enable stats-worker.service || true
+
 echo "[INFO] Handing over control to systemd!"
 exec /lib/systemd/systemd
+
 OUTER_EOF_ENTRYPOINT
     
     # Inject variables
@@ -634,19 +760,32 @@ OUTER_EOF_ENTRYPOINT
     log "Generating init-services.sh..."
     cat <<'OUTER_EOF_SETUP' > init-services.sh
 #!/bin/bash
-export MAIN_DOMAIN=${MAIN_DOMAIN:-awshosting.in}
-export VPN_DOMAIN=${VPN_DOMAIN:-vpn.awshosting.in}
-export MQS_DOMAIN=${MQS_DOMAIN:-mq.awshosting.in}
+# /usr/local/bin/container-setup.sh
+
+# This script is executed by systemd after MongoDB and RabbitMQ start.
+
+# Default values if not set
+export MAIN_DOMAIN=${MAIN_DOMAIN:-tomweb.in}
+export VPN_DOMAIN=${VPN_DOMAIN:-vpn.tomweb.in}
+export MQS_DOMAIN=${MQS_DOMAIN:-mq.tomweb.in}
 
 echo "[INFO] Running post-boot container setup..."
 
+# Docker Socket Symlink (Ensures tools like labsctl find the API after systemd boot)
 if [ -S /var/docker.sock ]; then
+    echo "[INFO] Creating Docker socket symlink..."
     ln -sf /var/docker.sock /var/run/docker.sock
 fi
 
+# 1. RabbitMQ Configuration
 if systemctl is-active --quiet rabbitmq-server; then
+    echo "[INFO] Waiting for RabbitMQ to be fully ready..."
+    until rabbitmqctl status >/dev/null 2>&1; do
+        sleep 2
+    done
     rabbitmq-plugins enable rabbitmq_management rabbitmq_stomp rabbitmq_web_stomp || true
     if ! rabbitmqctl list_users | grep -qw "^admin"; then
+        echo "[INFO] Creating RabbitMQ Admin User..."
         rabbitmqctl add_user admin RootTom@46
         rabbitmqctl set_user_tags admin administrator
     fi
@@ -654,40 +793,153 @@ if systemctl is-active --quiet rabbitmq-server; then
     rabbitmqctl set_permissions -p / admin ".*" ".*" ".*"
 fi
 
-if [ -d "/var/www/labs/htdocs" ]; then
-    cd /var/www/labs/htdocs && COMPOSER_ALLOW_SUPERUSER=1 composer install --no-interaction --optimize-autoloader || true
-fi
-if [ -d "/var/www/vpn-api" ]; then
-    cd /var/www/vpn-api && COMPOSER_ALLOW_SUPERUSER=1 composer install --no-interaction --optimize-autoloader || true
-fi
-if [ -d "/var/www/labs/workspace/grunt" ]; then
-    cd /var/www/labs/workspace/grunt && npm install --unsafe-perm && grunt build || true
+# 1.5. MySQL Configuration
+if systemctl is-active --quiet mysql; then
+    echo "[INFO] Configuring MySQL Root password..."
+    # Set local root password
+    mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'tomlabs_root_secret'; FLUSH PRIVILEGES;" 2>/dev/null || true
+    # Create wildcard root user for access over Docker network
+    mysql -u root -ptomlabs_root_secret -e "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'tomlabs_root_secret'; GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;" 2>/dev/null || true
 fi
 
+# 1.6. MariaDB Configuration (Port 3307)
+if systemctl is-active --quiet mariadb; then
+    echo "[INFO] Configuring MariaDB Root password..."
+    mysql --port=3307 -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'tomlabs_root_secret'; FLUSH PRIVILEGES;" 2>/dev/null || true
+    mysql --port=3307 -u root -ptomlabs_root_secret -e "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'tomlabs_root_secret'; GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;" 2>/dev/null || true
+fi
+
+# 1.7. PostgreSQL Configuration
+if systemctl is-active --quiet postgresql; then
+    echo "[INFO] Configuring PostgreSQL Admin password..."
+    sudo -u postgres psql -c "CREATE ROLE tomlabs_admin WITH LOGIN SUPERUSER PASSWORD 'tomlabs_root_secret';" 2>/dev/null || true
+    sudo -u postgres psql -c "ALTER ROLE tomlabs_admin WITH PASSWORD 'tomlabs_root_secret';" 2>/dev/null || true
+fi
+
+# 1.8. Redis Configuration
+if systemctl is-active --quiet redis-server; then
+    echo "[INFO] Configuring Redis Admin password..."
+    redis-cli ACL SETUSER default on >tomlabs_redis_secret ~* +@all 2>/dev/null || true
+    redis-cli ACL SAVE 2>/dev/null || true
+fi
+
+# 2. Build dependencies (if directories exist)
+if [ -d "/var/www/labs/htdocs" ]; then
+    echo "[INFO] Installing Composer dependencies for labs..."
+    cd /var/www/labs/htdocs && composer install --no-interaction --optimize-autoloader
+fi
+if [ -d "/var/www/vpn-api" ]; then
+    echo "[INFO] Installing Composer dependencies for vpn-api..."
+    cd /var/www/vpn-api && composer install --no-interaction --optimize-autoloader
+fi
+if [ -d "/var/www/labs/workspace/grunt" ]; then
+    echo "[INFO] Installing Node attributes for grunt..."
+    cd /var/www/labs/workspace/grunt && npm install && grunt build
+fi
+
+# 3. Python Requirements
 if [ -f "/opt/labs-control-panel/requirements.txt" ]; then
+    echo "[INFO] Installing Python requirements..."
     pip3 install -r /opt/labs-control-panel/requirements.txt --break-system-packages
 fi
 
+# 4. VPN Network Sync
 if [ -f "/var/www/vpn-api/syncnetwork.php" ]; then
+    echo "[INFO] Initializing VPN Network Pool..."
     php /var/www/vpn-api/syncnetwork.php wg0 || echo "[WARN] Failed to sync network."
     if [ -f "/var/www/labs/workspace/tools/populate_ips.php" ]; then
         php /var/www/labs/workspace/tools/populate_ips.php || echo "[WARN] Failed to populate IPs."
     fi
 fi
 
+# 5. WireGuard Start & Health Check
 if [ -f "/etc/wireguard/wg0.conf" ]; then
+    echo "[INFO] Starting WireGuard (wg0)..."
+    
+    # Ensure IP forwarding is enabled
     sysctl -w net.ipv4.ip_forward=1 > /dev/null 2>&1
+    
+    # Bring up WireGuard
     systemctl start wg-quick@wg0 || true
     sleep 2
+    
+    # Health check - if wg0 isn't working, bounce it
     if ! wg show wg0 > /dev/null 2>&1; then
+        echo "[WARN] WireGuard failed to start, bouncing interface..."
         wg-quick down wg0 2>/dev/null || true
         sleep 1
         wg-quick up wg0 || true
         sleep 2
     fi
+    
+    if wg show wg0 > /dev/null 2>&1; then
+        echo "[INFO] WireGuard is running."
+        wg show wg0 | head -4
+    else
+        echo "[ERROR] WireGuard failed to start after retry."
+    fi
 fi
 
+# 6. Re-apply Host Routing for Existing Lab Peers
+echo "[INFO] Recovering host routes for deployed labs..."
+
+# Detect the bridge interface from config
+DOCKER_NETWORK=$(jq -r '.docker_network_name' /opt/labs-control-panel/config.json 2>/dev/null)
+if [ -z "$DOCKER_NETWORK" ] || [ "$DOCKER_NETWORK" = "null" ]; then
+    DOCKER_NETWORK="Dev_lab"
+fi
+
+BRIDGE_ID=$(docker network inspect "$DOCKER_NETWORK" -f '{{.Id}}' 2>/dev/null | cut -c1-12)
+if [ -n "$BRIDGE_ID" ]; then
+    BRIDGE_IF="br-${BRIDGE_ID}"
+    
+    TUNNEL_PREFIX=$(jq -r '.tunnel_ip' /opt/labs-control-panel/config.json 2>/dev/null)
+    if [ -z "$TUNNEL_PREFIX" ] || [ "$TUNNEL_PREFIX" = "null" ]; then
+        echo "FATAL: tunnel_ip not set in config.json"
+        exit 1
+    fi
+    TUNNEL_SUBNET="${TUNNEL_PREFIX}0/16"
+
+    # Ensure forwarding rules between wg0 and Docker bridge
+    iptables -C FORWARD -i wg0 -o wg0 -j ACCEPT 2>/dev/null || \
+        iptables -A FORWARD -i wg0 -o wg0 -j ACCEPT 2>/dev/null
+    iptables -C FORWARD -i wg0 -o "$BRIDGE_IF" -j ACCEPT 2>/dev/null || \
+        iptables -A FORWARD -i wg0 -o "$BRIDGE_IF" -j ACCEPT 2>/dev/null
+    iptables -C FORWARD -i "$BRIDGE_IF" -o wg0 -j ACCEPT 2>/dev/null || \
+        iptables -A FORWARD -i "$BRIDGE_IF" -o wg0 -j ACCEPT 2>/dev/null
+    iptables -t nat -C POSTROUTING -s "$TUNNEL_SUBNET" -o eth0 -j MASQUERADE 2>/dev/null || \
+        iptables -t nat -A POSTROUTING -s "$TUNNEL_SUBNET" -o eth0 -j MASQUERADE 2>/dev/null
+    
+    # For each WireGuard peer, re-create the host route to its Docker container
+    # Peer AllowedIPs (172.30.x.y) maps to Docker IP (10.30.0.y) where y is the last octet
+    if wg show wg0 allowed-ips 2>/dev/null | grep -q '/32'; then
+        wg show wg0 allowed-ips | while read -r _pubkey allowed_ip_cidr; do
+            # Extract just the IP (strip /32)
+            tunnel_ip=$(echo "$allowed_ip_cidr" | sed 's|/32||')
+            if [ -n "$tunnel_ip" ] && [ "$tunnel_ip" != "${TUNNEL_PREFIX}1" ]; then
+                # Derive Docker IP: last octet of tunnel IP -> 172.19.0.{last_octet}
+                last_octet=$(echo "$tunnel_ip" | awk -F. '{print $4}')
+                docker_ip="172.19.0.${last_octet}"
+                
+                # Check if the container with this Docker IP exists and is running
+                if docker network inspect "$DOCKER_NETWORK" --format '{{range .Containers}}{{.IPv4Address}} {{end}}' 2>/dev/null | grep -q "$docker_ip"; then
+                    ip route del "$tunnel_ip/32" 2>/dev/null || true
+                    ip route add "$tunnel_ip/32" via "$docker_ip" dev "$BRIDGE_IF" 2>/dev/null || true
+                    echo "[INFO] Route restored: $tunnel_ip -> $docker_ip via $BRIDGE_IF"
+                else
+                    echo "[INFO] No container at $docker_ip for peer $tunnel_ip, skipping route."
+                fi
+            fi
+        done
+    fi
+else
+    echo "[WARN] $DOCKER_NETWORK bridge not found. Lab routes will be created at deploy time."
+fi
+
+# 7. Reload Traefik
+
 echo "[INFO] Setup complete!"
+
 OUTER_EOF_SETUP
     
     # Inject variables
@@ -714,47 +966,53 @@ OUTER_EOF_ENV
     log "Generating docker-compose.yml..."
     cat <<'OUTER_EOF_COMPOSE' > docker-compose.yml
 services:
-  Prod_lab:
+  vps_dev:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: Prod_lab
+    container_name: Dev_lab
     privileged: true
     environment:
-      - MAIN_DOMAIN=$MAIN_DOMAIN
-      - VPN_DOMAIN=$VPN_DOMAIN
-      - MQS_DOMAIN=$MQS_DOMAIN
-      - CODE_DOMAIN=$CODE_DOMAIN
-      - WORK_DOMAIN=$WORK_DOMAIN
-      - SSL_EMAIL=$SSL_EMAIL
+      - MAIN_DOMAIN=dev.tomweb.in
+      - VPN_DOMAIN=vpn.dev.tomweb.in
+      - MQS_DOMAIN=mq.dev.tomweb.in
+      - CODE_DOMAIN=code.dev.tomweb.in
+      - WORK_DOMAIN=work.dev.tomweb.in
+      - SSL_EMAIL=admin@example.com
       - DOCKER_HOST=unix:///var/docker.sock
     extra_hosts:
-      - "$MAIN_DOMAIN:127.0.0.1"
-      - "$VPN_DOMAIN:127.0.0.1"
-      - "$MQS_DOMAIN:127.0.0.1"
-      - "$CODE_DOMAIN:127.0.0.1"
-      - "$WORK_DOMAIN:127.0.0.1"
+      - "dev.tomweb.in:127.0.0.1"
+      - "vpn.dev.tomweb.in:127.0.0.1"
+      - "mq.dev.tomweb.in:127.0.0.1"
+      - "code.dev.tomweb.in:127.0.0.1"
+      - "work.dev.tomweb.in:127.0.0.1"
+      - "mysql.tomweb.in:127.0.0.1"
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:rw
-      - ./var/www:/var/www
+      - .:/var/www
       - /var/run/docker.sock:/var/docker.sock
       - ./opt/labs-control-panel:/opt/labs-control-panel
+      # ⬇️ NEW PERSISTENT VOLUMES ⬇️
       - ./rabbitmq-data:/var/lib/rabbitmq
       - ./wireguard-conf:/etc/wireguard
       - ./apache-logs:/var/log/apache2
       - ./traefik-conf:/etc/traefik
-    tmpfs:
-      - /run
-      - /run/lock
-      - /tmp
     networks:
-      - Prod_lab
+      tomlabs_dev_net:
+        aliases:
+          - mysql.tomweb.in
+          - adminer.tomweb.in
+          - mongo.tomweb.in
+          - code.tomweb.in
     ports:
-      - "80:80"
-      - "443:443"
-      - "8081:8081"
-      - "8082:8082"
-      - "51820:51820/udp"
+      - "8080:80"
+      - "8443:443"
+      - "9081:8081"
+      - "9082:8082"
+      - "5673:5672"
+      - "15673:15672"
+      - "15674:15674"
+      - "51821:51820/udp"
     stop_signal: SIGRTMIN+3
 
   mongodb:
@@ -766,15 +1024,39 @@ services:
     volumes:
       - ./mongo-data:/data/db
     networks:
-      - Prod_lab
+      - tomlabs_dev_net
     ports:
       - "27018:27017"
     restart: always
 
+
+
+  # gitlab:
+  #   image: 'gitlab/gitlab-ce:latest'
+  #   container_name: docker_tomlabs_gitlab
+  #   restart: always
+  #   hostname: 'git.tomweb.in'
+  #   environment:
+  #     GITLAB_OMNIBUS_CONFIG: |
+  #       external_url 'https://git.tomweb.in'
+  #       nginx['listen_port'] = 80
+  #       nginx['listen_https'] = false
+  #   volumes:
+  #     - './gitlab_config:/etc/gitlab'
+  #     - './gitlab_logs:/var/log/gitlab'
+  #     - './gitlab_data:/var/opt/gitlab'
+  #   networks:
+  #     - tomlabs_dev_net
+
 networks:
-  Prod_lab:
-    name: Prod_lab
+  tomlabs_dev_net:
+    name: Dev_lab
+    ipam:
+      config:
+        - subnet: 10.20.144.0/20
+          gateway: 10.20.144.1
     driver: bridge
+
 OUTER_EOF_COMPOSE
 
     # Fix ownership of all extracted/generated files so the user can edit them in their IDE

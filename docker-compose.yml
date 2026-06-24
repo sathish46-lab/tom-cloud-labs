@@ -1,0 +1,91 @@
+services:
+  vps_dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: Dev_lab
+    privileged: true
+    environment:
+      - MAIN_DOMAIN=dev.tomweb.in
+      - VPN_DOMAIN=vpn.dev.tomweb.in
+      - MQS_DOMAIN=mq.dev.tomweb.in
+      - CODE_DOMAIN=code.dev.tomweb.in
+      - WORK_DOMAIN=work.dev.tomweb.in
+      - SSL_EMAIL=admin@example.com
+      - DOCKER_HOST=unix:///var/docker.sock
+    extra_hosts:
+      - "dev.tomweb.in:127.0.0.1"
+      - "vpn.dev.tomweb.in:127.0.0.1"
+      - "mq.dev.tomweb.in:127.0.0.1"
+      - "code.dev.tomweb.in:127.0.0.1"
+      - "work.dev.tomweb.in:127.0.0.1"
+      - "mysql.tomweb.in:127.0.0.1"
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+      - .:/var/www
+      - /var/run/docker.sock:/var/docker.sock
+      - ./opt/labs-control-panel:/opt/labs-control-panel
+      # ⬇️ NEW PERSISTENT VOLUMES ⬇️
+      - ./rabbitmq-data:/var/lib/rabbitmq
+      - ./wireguard-conf:/etc/wireguard
+      - ./apache-logs:/var/log/apache2
+      - ./traefik-conf:/etc/traefik
+    networks:
+      tomlabs_dev_net:
+        aliases:
+          - mysql.tomweb.in
+          - adminer.tomweb.in
+          - mongo.tomweb.in
+          - code.tomweb.in
+    ports:
+      - "8080:80"
+      - "8443:443"
+      - "9081:8081"
+      - "9082:8082"
+      - "5673:5672"
+      - "15673:15672"
+      - "15674:15674"
+      - "51821:51820/udp"
+    stop_signal: SIGRTMIN+3
+
+  mongodb:
+    image: mongo:8.0
+    container_name: docker_tomlabs_mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: Tombootroot
+    volumes:
+      - ./mongo-data:/data/db
+    networks:
+      - tomlabs_dev_net
+    ports:
+      - "27018:27017"
+    restart: always
+
+
+
+  # gitlab:
+  #   image: 'gitlab/gitlab-ce:latest'
+  #   container_name: docker_tomlabs_gitlab
+  #   restart: always
+  #   hostname: 'git.tomweb.in'
+  #   environment:
+  #     GITLAB_OMNIBUS_CONFIG: |
+  #       external_url 'https://git.tomweb.in'
+  #       nginx['listen_port'] = 80
+  #       nginx['listen_https'] = false
+  #   volumes:
+  #     - './gitlab_config:/etc/gitlab'
+  #     - './gitlab_logs:/var/log/gitlab'
+  #     - './gitlab_data:/var/opt/gitlab'
+  #   networks:
+  #     - tomlabs_dev_net
+
+networks:
+  tomlabs_dev_net:
+    name: Dev_lab
+    ipam:
+      config:
+        - subnet: 10.20.144.0/20
+          gateway: 10.20.144.1
+    driver: bridge

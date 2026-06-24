@@ -12,11 +12,15 @@
 !/README.md
 !/.gitlab-ci.yml
 !/session.json
+!/Dockerfile
+!/docker-compose.yml
+!/Migrate.sh
+!/entrypoint.sh
+!/init-services.sh
 
 # =========================
 # Original Ignores
 # =========================
-docker-compose.yml
 *.log
 *.tmp
 *.cache

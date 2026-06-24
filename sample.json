@@ -1,0 +1,42 @@
+{
+  "amqp_host": "127.0.0.1",
+  "amqp_port": 5672,
+  "amqp_user": "admin",
+  "amqp_pass": "RootTom@46",
+  "google_oauth": {
+    "client_id": "*****************.apps.googleusercontent.com",
+    "client_secret": "********************",
+    "redirect_uri": "https://labs.tomweb.in/signin",
+    "metadata_url": "https://accounts.google.com/.well-known/openid-configuration"
+  },
+  "smtp": {
+    "host": "smtp.gmail.com",
+    "port": 465,
+    "user": "sathishp3223@gmail.com",
+    "pass": "*************"
+  },
+  "exception_path": "/var/www/labs/htdocs/src/lib/exceptions/",
+  "app_log": "/var/log/labs/log.txt",
+  "app_cache": "/var/cache/labs",
+  "database_file": "mongodb://admin:Tombootroot@127.0.0.1:27017/tom_labs_db?authSource=admin",
+  "main_db": "tom_labs_db",
+  "vpn_db": "tom_labs_vpn",
+  "vpn_url": "https://vpn.tomweb.in/api",
+  "api_secret": "your-super-secret-token-here",
+  "wireguard": {
+    "conf_path": "/etc/wireguard/",
+    "interface": "wg0"
+  },
+  "s3": {
+    "endpoint": "https://api-0a0fa067832614bb98336cde4230ad3b.tomweb.shop",
+    "region": "us-east-1",
+    "bucket": "labassets",
+    "access_key": "sathish47",
+    "secret_key": "gjgI7bKk3XjE",
+    "use_path_style": true
+  },
+  "allowed_hosts": [
+    "labs.tomweb.in"
+  ]
+}
+
