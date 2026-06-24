@@ -14237,8 +14237,8 @@ body {
   background: rgba(15, 23, 42, 0.95) !important;
   backdrop-filter: blur(25px) saturate(200%) !important;
   -webkit-backdrop-filter: blur(25px) saturate(200%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+  border: 1px solid rgba(var(--cui-primary-rgb, 139, 145, 249), 0.4) !important;
+  box-shadow: 0 12px 40px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.25), 0 0 15px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.15) !important;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -15039,22 +15039,38 @@ body::before {
 .modal-content {
   z-index: 10006 !important;
   pointer-events: auto !important;
+  box-shadow: 0 10px 40px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.15), 0 0 0 1px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.1) !important;
+}
+[data-coreui-theme=dark] .modal-content {
+  box-shadow: 0 15px 50px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.25), 0 0 20px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.15) !important;
 }
 
 /* Enhanced visibility for dropdown menus in fallback mode */
-.dropdown-menu {
+.dropdown-menu:not(.theme-mega-container) {
   z-index: 2000 !important;
   /* Always stay above hovering glass-cards */
+  border: 1px solid rgba(var(--cui-primary-rgb, 139, 145, 249), 0.2) !important;
+  box-shadow: 0 8px 32px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.15), 0 0 0 1px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.1) !important;
+}
+[data-coreui-theme=dark] .dropdown-menu:not(.theme-mega-container) {
+  border: 1px solid rgba(var(--cui-primary-rgb, 139, 145, 249), 0.4) !important;
+  box-shadow: 0 12px 40px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.25), 0 0 15px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.15) !important;
 }
 
 .dropdown-menu.glass-card {
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15) !important;
-  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 15px 35px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.2) !important;
 }
 [data-coreui-theme=dark] .dropdown-menu.glass-card {
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5) !important;
-  background: rgba(15, 25, 45, 0.94) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 15px 35px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.35) !important;
+}
+
+.theme-glow-avatar {
+  border: 2px solid rgba(var(--cui-primary-rgb, 139, 145, 249), 0.8) !important;
+  box-shadow: 0 0 10px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.4), inset 0 0 5px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.2) !important;
+  transition: all 0.3s ease;
+}
+.theme-glow-avatar:hover {
+  box-shadow: 0 0 15px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.6), inset 0 0 5px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.3) !important;
 }
 
 .profile-hero-card {
@@ -15557,7 +15573,12 @@ html[data-coreui-theme=dark] {
 .toast {
   border-radius: 12px;
   backdrop-filter: blur(10px);
-  background-color: rgba(240, 202, 51, 0.85) !important;
+  border: 1px solid rgba(var(--cui-primary-rgb, 139, 145, 249), 0.2) !important;
+  box-shadow: 0 8px 32px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.15), 0 0 0 1px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.1) !important;
+}
+[data-coreui-theme=dark] .toast {
+  border: 1px solid rgba(var(--cui-primary-rgb, 139, 145, 249), 0.4) !important;
+  box-shadow: 0 12px 40px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.25), 0 0 15px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.15) !important;
 }
 
 #scene {

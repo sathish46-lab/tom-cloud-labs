@@ -13,5 +13,11 @@
 .toast {
   border-radius: 12px;
   backdrop-filter: blur(10px);
-  background-color: rgba(240, 202, 51, 0.85) !important;
+  border: 1px solid rgba(var(--cui-primary-rgb, 139, 145, 249), 0.2) !important;
+  box-shadow: 0 8px 32px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.15), 0 0 0 1px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.1) !important;
+  
+  [data-coreui-theme="dark"] & {
+    border: 1px solid rgba(var(--cui-primary-rgb, 139, 145, 249), 0.4) !important;
+    box-shadow: 0 12px 40px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.25), 0 0 15px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.15) !important;
+  }
 }

@@ -469,7 +469,7 @@ define('PAGE_START_TIME', microtime(true));
 
                 const html = `
                     <div id="${toastId}" class="toast border-0 rounded-4 overflow-hidden shadow-lg mb-3" role="alert" aria-live="assertive" aria-atomic="true" data-coreui-autohide="true" data-coreui-delay="${duration}"
-                        style="background: var(--glass-bg, rgba(11, 30, 54, 0.88)); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(var(--cui-emphasis-color-rgb, 255, 255, 255), 0.1) !important; min-width: 320px;">
+                        style="background: var(--glass-bg, rgba(11, 30, 54, 0.88)); min-width: 320px;">
                         <div class="toast-header border-0 bg-transparent pt-3 px-3 d-flex align-items-center">
                             <strong class="me-auto d-flex align-items-center gap-2 fs-6 text-body-emphasis">
                                 <i class="bx ${icon}"></i> 
