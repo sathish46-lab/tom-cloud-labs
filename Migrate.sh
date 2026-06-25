@@ -79,7 +79,7 @@ else
     echo "Select Setup Type:"
     echo "  [1] VPS Bare-Metal Server Setup"
     echo "  [2] Docker Container Local Setup"
-    read -p "Enter choice (1 or 2): " SETUP_CHOICE
+    read -p "Enter choice (1 or 2): " SETUP_CHOICE </dev/tty
 
     if [ "$SETUP_CHOICE" == "2" ]; then
         MODE="DOCKER"
@@ -88,28 +88,28 @@ else
     fi
     AUTO=0
 
-    read -p "Enter Main Domain (default: awshosting.in): " MAIN_DOMAIN
+    read -p "Enter Main Domain (default: awshosting.in): " MAIN_DOMAIN </dev/tty
     export MAIN_DOMAIN=${MAIN_DOMAIN:-awshosting.in}
 
-    read -p "Enter VPN API Domain (default: vpn.awshosting.in): " VPN_DOMAIN
+    read -p "Enter VPN API Domain (default: vpn.awshosting.in): " VPN_DOMAIN </dev/tty
     export VPN_DOMAIN=${VPN_DOMAIN:-vpn.awshosting.in}
 
-    read -p "Enter RabbitMQ Domain (default: mq.awshosting.in): " MQS_DOMAIN
+    read -p "Enter RabbitMQ Domain (default: mq.awshosting.in): " MQS_DOMAIN </dev/tty
     export MQS_DOMAIN=${MQS_DOMAIN:-mq.awshosting.in}
 
-    read -p "Enter Code Server Domain (default: tomweb.shop): " CODE_DOMAIN
+    read -p "Enter Code Server Domain (default: tomweb.shop): " CODE_DOMAIN </dev/tty
     export CODE_DOMAIN=${CODE_DOMAIN:-tomweb.shop}
 
-    read -p "Enter Work Domain (default: work.awshosting.in): " WORK_DOMAIN
+    read -p "Enter Work Domain (default: work.awshosting.in): " WORK_DOMAIN </dev/tty
     export WORK_DOMAIN=${WORK_DOMAIN:-work.awshosting.in}
 
-    read -p "Enter Email for SSL generation (e.g., admin@example.com): " SSL_EMAIL
+    read -p "Enter Email for SSL generation (e.g., admin@example.com): " SSL_EMAIL </dev/tty
     export SSL_EMAIL=${SSL_EMAIL:-admin@example.com}
 
     echo "--------------------------------------------------"
     echo "Git Repository"
     echo "--------------------------------------------------"
-    read -p "Enter Repository URL (default: https://git.selfmade.ninja/sathish46/labs.git): " MAIN_REPO
+    read -p "Enter Repository URL (default: https://git.selfmade.ninja/sathish46/labs.git): " MAIN_REPO </dev/tty
     export MAIN_REPO=${MAIN_REPO:-https://git.selfmade.ninja/sathish46/labs.git}
 
     echo "Note: If this is a private repository, you will be prompted for Username and Password (or Token)."
@@ -124,7 +124,7 @@ else
     echo "  SSL Email:   $SSL_EMAIL"
     echo "  Repository:  $MAIN_REPO"
     echo "--------------------------------------------------"
-    read -p "Is this correct? (y/n): " CONFIRM
+    read -p "Is this correct? (y/n): " CONFIRM </dev/tty
     if [[ "$CONFIRM" != "y" ]]; then
         echo "Aborted."
         exit 0
