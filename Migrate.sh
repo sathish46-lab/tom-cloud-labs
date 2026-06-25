@@ -176,10 +176,12 @@ if [ "$MODE" == "DOCKER" ] && [ "$AUTO" == "0" ]; then
     if [ -f ./env.json ]; then
         if [[ "$OSTYPE" == "darwin"* ]]; then
             sed -i '' "s/DB_PASS_PLACEHOLDER/$DB_PASS/g" ./env.json
+            sed -i '' "s/MQ_PASS_PLACEHOLDER/$MQ_PASS/g" ./env.json
             sed -i '' "s/DB_HOST_PLACEHOLDER/mongodb/g" ./env.json
             sed -i '' "s|VPN_URL_PLACEHOLDER|http://127.0.0.1:8082/api|g" ./env.json
         else
             sed -i "s/DB_PASS_PLACEHOLDER/$DB_PASS/g" ./env.json
+            sed -i "s/MQ_PASS_PLACEHOLDER/$MQ_PASS/g" ./env.json
             sed -i "s/DB_HOST_PLACEHOLDER/mongodb/g" ./env.json
             sed -i "s|VPN_URL_PLACEHOLDER|http://127.0.0.1:8082/api|g" ./env.json
         fi
@@ -1364,10 +1366,12 @@ if [ "$AUTO" == "0" ]; then
     if [ -f /var/www/env.json ]; then
         if [[ "$OSTYPE" == "darwin"* ]]; then
             sed -i '' "s/DB_PASS_PLACEHOLDER/$DB_PASS/g" /var/www/env.json
+            sed -i '' "s/MQ_PASS_PLACEHOLDER/$MQ_PASS/g" /var/www/env.json
             sed -i '' "s/DB_HOST_PLACEHOLDER/127.0.0.1/g" /var/www/env.json
             sed -i '' "s|VPN_URL_PLACEHOLDER|https://$VPN_DOMAIN/api|g" /var/www/env.json
         else
             sed -i "s/DB_PASS_PLACEHOLDER/$DB_PASS/g" /var/www/env.json
+            sed -i "s/MQ_PASS_PLACEHOLDER/$MQ_PASS/g" /var/www/env.json
             sed -i "s/DB_HOST_PLACEHOLDER/127.0.0.1/g" /var/www/env.json
             sed -i "s|VPN_URL_PLACEHOLDER|https://$VPN_DOMAIN/api|g" /var/www/env.json
         fi

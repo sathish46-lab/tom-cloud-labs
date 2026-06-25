@@ -70,7 +70,36 @@ class IPManager {
     );
 
     if (!$result) {
-        throw new Exception("IP Pool Full or Colliding with VPN Devices!");
+        // Auto-initialize if the pool is completely empty (fresh DB)
+        if ($this->collection->countDocuments([]) === 0) {
+            error_log("IPManager: Fresh database detected. Auto-initializing IP pool...");
+            $this->initializePool();
+            
+            // Retry the allocation
+            $result = $this->collection->findOneAndUpdate(
+                $query,
+                [
+                    '$set' => [
+                        'status'       => 'allocated',
+                        'allocated'    => true,
+                        'allocated_to' => $instanceHash,
+                        'email'        => $email,
+                        'reserved_to'  => $email,
+                        'service_type' => $labType,
+                        'label'        => ucfirst($labType) . ' Lab',
+                        'last_deploy'  => time()
+                    ]
+                ],
+                [
+                    'sort' => ['last_deploy' => 1, 'ip_numeric' => 1], 
+                    'returnDocument' => \MongoDB\Operation\FindOneAndUpdate::RETURN_DOCUMENT_AFTER
+                ]
+            );
+        }
+
+        if (!$result) {
+            throw new Exception("IP Pool Full or Colliding with VPN Devices!");
+        }
     }
 
     return $result['ip_addr'];
