@@ -974,19 +974,19 @@ services:
     container_name: TomCloudLab
     privileged: true
     environment:
-      - MAIN_DOMAIN=dev.tomweb.in
-      - VPN_DOMAIN=vpn.dev.tomweb.in
-      - MQS_DOMAIN=mq.dev.tomweb.in
-      - CODE_DOMAIN=code.dev.tomweb.in
-      - WORK_DOMAIN=work.dev.tomweb.in
-      - SSL_EMAIL=admin@example.com
+      - MAIN_DOMAIN=${MAIN_DOMAIN}
+      - VPN_DOMAIN=${VPN_DOMAIN}
+      - MQS_DOMAIN=${MQS_DOMAIN}
+      - CODE_DOMAIN=${CODE_DOMAIN}
+      - WORK_DOMAIN=${WORK_DOMAIN}
+      - SSL_EMAIL=${SSL_EMAIL}
       - DOCKER_HOST=unix:///var/docker.sock
     extra_hosts:
-      - "dev.tomweb.in:127.0.0.1"
-      - "vpn.dev.tomweb.in:127.0.0.1"
-      - "mq.dev.tomweb.in:127.0.0.1"
-      - "code.dev.tomweb.in:127.0.0.1"
-      - "work.dev.tomweb.in:127.0.0.1"
+      - "${MAIN_DOMAIN}:127.0.0.1"
+      - "${VPN_DOMAIN}:127.0.0.1"
+      - "${MQS_DOMAIN}:127.0.0.1"
+      - "${CODE_DOMAIN}:127.0.0.1"
+      - "${WORK_DOMAIN}:127.0.0.1"
       - "mysql.tomweb.in:127.0.0.1"
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:rw
