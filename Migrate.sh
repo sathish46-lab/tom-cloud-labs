@@ -961,6 +961,7 @@ MQS_DOMAIN=$MQS_DOMAIN
 CODE_DOMAIN=$CODE_DOMAIN
 WORK_DOMAIN=$WORK_DOMAIN
 SSL_EMAIL=$SSL_EMAIL
+TUNNEL_TOKEN=
 OUTER_EOF_ENV
 
     log "Generating docker-compose.yml..."
@@ -1015,9 +1016,19 @@ services:
       - "51821:51820/udp"
     stop_signal: SIGRTMIN+3
 
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: TomCloudLab_cloudflare
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+    networks:
+      - tomcloudlab_net
+
   mongodb:
     image: mongo:8.0
-    container_name: docker_tomlabs_mongodb
+    container_name: TomCloudLab_mongodb
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: Tombootroot
@@ -1033,7 +1044,7 @@ services:
 
   # gitlab:
   #   image: 'gitlab/gitlab-ce:latest'
-  #   container_name: docker_tomlabs_gitlab
+  #   container_name: TomCloudLab_gitlab
   #   restart: always
   #   hostname: 'git.tomweb.in'
   #   environment:
@@ -1062,7 +1073,7 @@ OUTER_EOF_COMPOSE
     # Fix ownership of all extracted/generated files so the user can edit them in their IDE
     if [ -n "$SUDO_USER" ]; then
         log "Fixing file ownership for user $SUDO_USER..."
-        chown -R "$SUDO_USER" ./var ./opt ./traefik-conf ./wireguard-conf ./rabbitmq-data ./mongo-data ./apache-logs docker-compose.yml Dockerfile entrypoint.sh init-services.sh 2>/dev/null || true
+        chown -R "$SUDO_USER" ./labs ./vpn-api ./env.json ./session.json ./opt ./traefik-conf ./wireguard-conf ./rabbitmq-data ./mongo-data ./apache-logs docker-compose.yml Dockerfile entrypoint.sh init-services.sh 2>/dev/null || true
     fi
 
     log "Generating config.json..."

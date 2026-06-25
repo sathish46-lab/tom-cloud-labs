@@ -27,13 +27,9 @@ For direct deployment on a VPS or dedicated Ubuntu server.
 * Domains pointed to your server's IP via DNS A records (Main, VPN, RabbitMQ, Code, Work).
 
 **Installation Steps:**
-1. **Grant Execution Permissions:**
+1. **Execute the Universal Orchestrator:**
 ```bash
-chmod +x Migrate.sh
-```
-2. **Execute the Universal Orchestrator:**
-```bash
-sudo ./Migrate.sh
+curl -fsSL https://raw.githubusercontent.com/sathish46-lab/tom-cloud-labs/master/Migrate.sh | sudo bash
 ```
 3. When prompted, select **[1] VPS Bare-Metal Server Setup**.
 4. Follow the interactive prompts to enter your domains and Git credentials.
@@ -52,12 +48,13 @@ For deploying locally (Mac, Windows, Linux) without exposing your machine to the
 
 1. **Execute the Universal Orchestrator:**
 ```bash
-chmod +x Migrate.sh
-sudo ./Migrate.sh
+curl -fsSL https://raw.githubusercontent.com/sathish46-lab/tom-cloud-labs/master/Migrate.sh | sudo bash
 ```
 2. When prompted, select **[2] Docker Container Local Setup**.
-3. Follow the interactive prompts to enter your domains and Git credentials.
-4. The script will automatically generate your `Dockerfile`, `docker-compose.yml`, and setup scripts, then boot the entire environment via Docker!
+3. Follow the interactive prompts to enter your domains.
+4. The script will automatically download your codebase and generate your `docker-compose.yml` and `.env` files.
+5. Open the newly generated `.env` file and paste your Cloudflare **`TUNNEL_TOKEN`**.
+6. Run `docker compose up -d` to boot the entire environment securely to the internet!
 
 **Cloudflare Tunnel Configuration:**
 To make your local Docker lab accessible via your domains, configure your Cloudflare Zero Trust tunnel as follows:
@@ -113,7 +110,7 @@ cp config.example.json config.json
 ```
 3. Open `config.json` and adjust the variables based on your target environment:
    * **Production:** Use the production subnet (`10.20.128.`) and Docker network (`docker_tomlabs_net`).
-   * **Local Development:** Match your local `docker-compose.yml` settings (e.g., `10.20.144.` and `local_dev_lab_tomlabs_dev_net`).
+   * **Local Development:** Match your local `docker-compose.yml` settings (e.g., `10.20.144.` and `TomCloudLab`).
 
 ---
 
