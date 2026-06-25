@@ -109,8 +109,8 @@ else
     echo "--------------------------------------------------"
     echo "Git Repository"
     echo "--------------------------------------------------"
-    read -p "Enter Repository URL (default: https://git.selfmade.ninja/sathish46/labs.git): " MAIN_REPO </dev/tty
-    export MAIN_REPO=${MAIN_REPO:-https://git.selfmade.ninja/sathish46/labs.git}
+    read -p "Enter Repository URL (default: https://github.com/sathish46-lab/tom-cloud-labs.git): " MAIN_REPO </dev/tty
+    export MAIN_REPO=${MAIN_REPO:-https://github.com/sathish46-lab/tom-cloud-labs.git}
 
     echo "Note: If this is a private repository, you will be prompted for Username and Password (or Token)."
 
