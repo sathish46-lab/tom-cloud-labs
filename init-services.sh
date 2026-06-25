@@ -23,13 +23,21 @@ if systemctl is-active --quiet rabbitmq-server; then
         sleep 2
     done
     rabbitmq-plugins enable rabbitmq_management rabbitmq_stomp rabbitmq_web_stomp || true
-    if ! rabbitmqctl list_users | grep -qw "^admin"; then
+    # Create RabbitMQ Admin User and verify it exists
+    until rabbitmqctl list_users | grep -qw "^admin"; do
         echo "[INFO] Creating RabbitMQ Admin User..."
-        rabbitmqctl add_user admin RootTom@46
-        rabbitmqctl set_user_tags admin administrator
-    fi
-    rabbitmqctl set_user_tags admin administrator
-    rabbitmqctl set_permissions -p / admin ".*" ".*" ".*"
+        rabbitmqctl add_user admin RootTom@46 || true
+        sleep 2
+    done
+
+    # Set and verify permissions for the Admin User
+    until rabbitmqctl list_permissions -p / | grep -qw "^admin"; do
+        echo "[INFO] Setting RabbitMQ Admin Permissions..."
+        rabbitmqctl set_user_tags admin administrator || true
+        rabbitmqctl set_permissions -p / admin ".*" ".*" ".*" || true
+        sleep 2
+    done
+    echo "[INFO] RabbitMQ Admin User verified and permissions applied."
 fi
 
 # 1.5. MySQL Configuration
