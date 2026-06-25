@@ -350,7 +350,7 @@ if [ -f /etc/wireguard/wg0.conf ]; then
 fi
 
 # Detect Docker bridge interface for forwarding rules
-DOCKER_BRIDGE=$(docker network inspect Dev_lab --format '{{.Id}}' 2>/dev/null | cut -c1-12)
+DOCKER_BRIDGE=$(docker network inspect TomCloudLab --format '{{.Id}}' 2>/dev/null | cut -c1-12)
 if [ -n "$DOCKER_BRIDGE" ]; then
     BRIDGE_IF="br-${DOCKER_BRIDGE}"
 else
@@ -886,7 +886,7 @@ echo "[INFO] Recovering host routes for deployed labs..."
 # Detect the bridge interface from config
 DOCKER_NETWORK=$(jq -r '.docker_network_name' /opt/labs-control-panel/config.json 2>/dev/null)
 if [ -z "$DOCKER_NETWORK" ] || [ "$DOCKER_NETWORK" = "null" ]; then
-    DOCKER_NETWORK="Dev_lab"
+    DOCKER_NETWORK="TomCloudLab"
 fi
 
 BRIDGE_ID=$(docker network inspect "$DOCKER_NETWORK" -f '{{.Id}}' 2>/dev/null | cut -c1-12)
@@ -970,7 +970,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: Dev_lab
+    container_name: TomCloudLab
     privileged: true
     environment:
       - MAIN_DOMAIN=dev.tomweb.in
@@ -998,7 +998,7 @@ services:
       - ./apache-logs:/var/log/apache2
       - ./traefik-conf:/etc/traefik
     networks:
-      tomlabs_dev_net:
+      tomcloudlab_net:
         aliases:
           - mysql.tomweb.in
           - adminer.tomweb.in
@@ -1024,7 +1024,7 @@ services:
     volumes:
       - ./mongo-data:/data/db
     networks:
-      - tomlabs_dev_net
+      - tomcloudlab_net
     ports:
       - "27018:27017"
     restart: always
@@ -1046,11 +1046,11 @@ services:
   #     - './gitlab_logs:/var/log/gitlab'
   #     - './gitlab_data:/var/opt/gitlab'
   #   networks:
-  #     - tomlabs_dev_net
+  #     - tomcloudlab_net
 
 networks:
-  tomlabs_dev_net:
-    name: Dev_lab
+  tomcloudlab_net:
+    name: TomCloudLab
     ipam:
       config:
         - subnet: 10.20.144.0/20
@@ -1075,8 +1075,8 @@ OUTER_EOF_COMPOSE
   "config_path": "/etc/labs-control-panel/config.json",
   "docker_ip": "172.19.0.",
   "tunnel_ip": "172.30.0.",
-  "docker_network_name": "Prod_lab",
-  "orchestrator_container": "Prod_lab",
+  "docker_network_name": "TomCloudLab",
+  "orchestrator_container": "TomCloudLab",
   "docker_build": "docker build -t {image_tag} {path}",
   "docker_run": "docker run --detach --name {lab_name} --memory='{memory}' --cpus='{cpus}' --network {network_name} --ip {ip} --cap-add=NET_ADMIN --device=/dev/net/tun --sysctl net.ipv6.conf.all.disable_ipv6=1 -v {storage}:{mount_target} --hostname {host_name} {image}",
   "docker_stop_rm": "docker stop {lab_name} && sudo docker rm -f {lab_name}",
@@ -1095,8 +1095,8 @@ OUTER_EOF_CONFIG
     docker compose up -d --build
 
     log "Ensuring composer dependencies are installed..."
-    docker exec Prod_lab bash -c "cd /var/www/labs/htdocs && COMPOSER_ALLOW_SUPERUSER=1 composer install --no-interaction --optimize-autoloader" || true
-    docker exec Prod_lab bash -c "cd /var/www/vpn-api && COMPOSER_ALLOW_SUPERUSER=1 composer install --no-interaction --optimize-autoloader" || true
+    docker exec TomCloudLab bash -c "cd /var/www/labs/htdocs && COMPOSER_ALLOW_SUPERUSER=1 composer install --no-interaction --optimize-autoloader" || true
+    docker exec TomCloudLab bash -c "cd /var/www/vpn-api && COMPOSER_ALLOW_SUPERUSER=1 composer install --no-interaction --optimize-autoloader" || true
 
     echo "=================================================="
     echo " Docker Local Setup Complete! "
