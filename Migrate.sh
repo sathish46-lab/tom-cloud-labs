@@ -138,7 +138,7 @@ if [ "$MODE" == "DOCKER" ] && [ "$AUTO" == "0" ]; then
     log "Starting Docker Setup Mode..."
 
     # Create local directories for mapping
-    mkdir -p ./traefik-conf/dynamic_conf ./opt/labs-control-panel ./var/www/vpn-api ./var/www/labs ./wireguard-conf ./rabbitmq-data ./mongo-data ./apache-logs
+    mkdir -p ./traefik-conf/dynamic_conf ./opt/labs-control-panel ./vpn-api ./labs ./wireguard-conf ./rabbitmq-data ./mongo-data ./apache-logs
 
     # Clone the repo locally
     TEMP_WEB="/tmp/labs_clone_docker"
@@ -147,26 +147,26 @@ if [ "$MODE" == "DOCKER" ] && [ "$AUTO" == "0" ]; then
     
     # Copy repo files into mapped directories
     log "Populating mapped directories..."
-    cp -R "$TEMP_WEB/labs/"* ./var/www/labs/ 2>/dev/null || true
-    cp -R "$TEMP_WEB/vpn-api/"* ./var/www/vpn-api/ 2>/dev/null || true
+    cp -R "$TEMP_WEB/labs/"* ./labs/ 2>/dev/null || true
+    cp -R "$TEMP_WEB/vpn-api/"* ./vpn-api/ 2>/dev/null || true
     cp -R "$TEMP_WEB/opt/labs-control-panel/"* ./opt/labs-control-panel/ 2>/dev/null || true
     
     # Extract sample.json as env.json in local dir (will map to /var/www)
     if [ -f "$TEMP_WEB/sample.json" ]; then
-        cp "$TEMP_WEB/sample.json" ./var/www/env.json
+        cp "$TEMP_WEB/sample.json" ./env.json
     elif [ -f "$TEMP_WEB/labs/sample.json" ]; then
-        cp "$TEMP_WEB/labs/sample.json" ./var/www/env.json
+        cp "$TEMP_WEB/labs/sample.json" ./env.json
     else
-        echo "{}" > ./var/www/env.json
+        echo "{}" > ./env.json
     fi
     
     # Extract session.json in local dir (will map to /var/www)
     if [ -f "$TEMP_WEB/session.json" ]; then
-        cp "$TEMP_WEB/session.json" ./var/www/session.json
+        cp "$TEMP_WEB/session.json" ./session.json
     elif [ -f "$TEMP_WEB/labs/session.json" ]; then
-        cp "$TEMP_WEB/labs/session.json" ./var/www/session.json
+        cp "$TEMP_WEB/labs/session.json" ./session.json
     else
-        echo "{}" > ./var/www/session.json
+        echo "{}" > ./session.json
     fi
     
     rm -rf "$TEMP_WEB"
