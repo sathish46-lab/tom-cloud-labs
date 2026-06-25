@@ -4,13 +4,8 @@ Professional deployment and orchestration suite for the Labs environment. Use th
 
 ---
 
-## <span style="color: #ff9800;">⚠️ Pre-Installation Security</span>
-
-> [!CAUTION]
-> **CRITICAL:** Before running the migration, you **must** update the default security credentials within the script to protect your environment!
-
-1. Open `Migrate.sh` in a text editor.
-2. Locate and modify the default passwords if necessary (they will also be prompted during installation).
+> [!TIP]
+> **Security:** The setup script will securely prompt you for your desired Database and RabbitMQ passwords during execution. No hardcoded passwords will be used in your configuration!
 
 ---
 
@@ -32,7 +27,7 @@ For direct deployment on a VPS or dedicated Ubuntu server.
 curl -fsSL https://raw.githubusercontent.com/sathish46-lab/tom-cloud-labs/master/Migrate.sh | sudo bash
 ```
 3. When prompted, select **[1] VPS Bare-Metal Server Setup**.
-4. Follow the interactive prompts to enter your domains and Git credentials.
+4. Follow the interactive prompts to enter your domains, database passwords, and Git credentials.
 5. After the script finishes building the server, proceed directly to the **Configuration Setup (`ip.json`)** section below.
 
 ---

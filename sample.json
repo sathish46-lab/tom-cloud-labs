@@ -18,10 +18,10 @@
   "exception_path": "/var/www/labs/htdocs/src/lib/exceptions/",
   "app_log": "/var/log/labs/log.txt",
   "app_cache": "/var/cache/labs",
-  "database_file": "mongodb://admin:Tombootroot@127.0.0.1:27017/tom_labs_db?authSource=admin",
+  "database_file": "mongodb://admin:DB_PASS_PLACEHOLDER@DB_HOST_PLACEHOLDER:27017/tom_labs_db?authSource=admin",
   "main_db": "tom_labs_db",
   "vpn_db": "tom_labs_vpn",
-  "vpn_url": "https://vpn.tomweb.in/api",
+  "vpn_url": "VPN_URL_PLACEHOLDER",
   "api_secret": "your-super-secret-token-here",
   "wireguard": {
     "conf_path": "/etc/wireguard/",

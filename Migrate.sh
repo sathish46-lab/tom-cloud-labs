@@ -107,6 +107,17 @@ else
     export SSL_EMAIL=${SSL_EMAIL:-admin@example.com}
 
     echo "--------------------------------------------------"
+    echo "Database & Services Credentials"
+    echo "--------------------------------------------------"
+    read -s -p "Enter Database Root Password (default: tomlabs_secret): " DB_PASS </dev/tty
+    echo ""
+    export DB_PASS=${DB_PASS:-tomlabs_secret}
+
+    read -s -p "Enter RabbitMQ Admin Password (default: tomlabs_mq_secret): " MQ_PASS </dev/tty
+    echo ""
+    export MQ_PASS=${MQ_PASS:-tomlabs_mq_secret}
+
+    echo "--------------------------------------------------"
     echo "Git Repository"
     echo "--------------------------------------------------"
     read -p "Enter Repository URL (default: https://github.com/sathish46-lab/tom-cloud-labs.git): " MAIN_REPO </dev/tty
@@ -122,6 +133,8 @@ else
     echo "  MQS Domain:  $MQS_DOMAIN"
     echo "  Code Domain: $CODE_DOMAIN"
     echo "  SSL Email:   $SSL_EMAIL"
+    echo "  DB Password: (hidden)"
+    echo "  MQ Password: (hidden)"
     echo "  Repository:  $MAIN_REPO"
     echo "--------------------------------------------------"
     read -p "Is this correct? (y/n): " CONFIRM </dev/tty
@@ -158,6 +171,18 @@ if [ "$MODE" == "DOCKER" ] && [ "$AUTO" == "0" ]; then
         cp "$TEMP_WEB/labs/sample.json" ./env.json
     else
         echo "{}" > ./env.json
+    fi
+
+    if [ -f ./env.json ]; then
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' "s/DB_PASS_PLACEHOLDER/$DB_PASS/g" ./env.json
+            sed -i '' "s/DB_HOST_PLACEHOLDER/mongodb/g" ./env.json
+            sed -i '' "s|VPN_URL_PLACEHOLDER|http://127.0.0.1:8082/api|g" ./env.json
+        else
+            sed -i "s/DB_PASS_PLACEHOLDER/$DB_PASS/g" ./env.json
+            sed -i "s/DB_HOST_PLACEHOLDER/mongodb/g" ./env.json
+            sed -i "s|VPN_URL_PLACEHOLDER|http://127.0.0.1:8082/api|g" ./env.json
+        fi
     fi
     
     # Extract session.json in local dir (will map to /var/www)
@@ -630,7 +655,7 @@ if [ ! -f "/var/www/env.json" ]; then
         "host": "127.0.0.1",
         "port": 5672,
         "user": "admin",
-        "password": "RootTom@46"
+        "password": "$MQ_PASS"
     }
 }
 EOF
@@ -786,7 +811,7 @@ if systemctl is-active --quiet rabbitmq-server; then
     rabbitmq-plugins enable rabbitmq_management rabbitmq_stomp rabbitmq_web_stomp || true
     if ! rabbitmqctl list_users | grep -qw "^admin"; then
         echo "[INFO] Creating RabbitMQ Admin User..."
-        rabbitmqctl add_user admin RootTom@46
+        rabbitmqctl add_user admin $MQ_PASS
         rabbitmqctl set_user_tags admin administrator
     fi
     rabbitmqctl set_user_tags admin administrator
@@ -797,23 +822,23 @@ fi
 if systemctl is-active --quiet mysql; then
     echo "[INFO] Configuring MySQL Root password..."
     # Set local root password
-    mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'tomlabs_root_secret'; FLUSH PRIVILEGES;" 2>/dev/null || true
+    mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '$DB_PASS'; FLUSH PRIVILEGES;" 2>/dev/null || true
     # Create wildcard root user for access over Docker network
-    mysql -u root -ptomlabs_root_secret -e "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'tomlabs_root_secret'; GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;" 2>/dev/null || true
+    mysql -u root -p$DB_PASS -e "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '$DB_PASS'; GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;" 2>/dev/null || true
 fi
 
 # 1.6. MariaDB Configuration (Port 3307)
 if systemctl is-active --quiet mariadb; then
     echo "[INFO] Configuring MariaDB Root password..."
-    mysql --port=3307 -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'tomlabs_root_secret'; FLUSH PRIVILEGES;" 2>/dev/null || true
-    mysql --port=3307 -u root -ptomlabs_root_secret -e "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'tomlabs_root_secret'; GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;" 2>/dev/null || true
+    mysql --port=3307 -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '$DB_PASS'; FLUSH PRIVILEGES;" 2>/dev/null || true
+    mysql --port=3307 -u root -p$DB_PASS -e "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '$DB_PASS'; GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;" 2>/dev/null || true
 fi
 
 # 1.7. PostgreSQL Configuration
 if systemctl is-active --quiet postgresql; then
     echo "[INFO] Configuring PostgreSQL Admin password..."
-    sudo -u postgres psql -c "CREATE ROLE tomlabs_admin WITH LOGIN SUPERUSER PASSWORD 'tomlabs_root_secret';" 2>/dev/null || true
-    sudo -u postgres psql -c "ALTER ROLE tomlabs_admin WITH PASSWORD 'tomlabs_root_secret';" 2>/dev/null || true
+    sudo -u postgres psql -c "CREATE ROLE tomlabs_admin WITH LOGIN SUPERUSER PASSWORD '$DB_PASS';" 2>/dev/null || true
+    sudo -u postgres psql -c "ALTER ROLE tomlabs_admin WITH PASSWORD '$DB_PASS';" 2>/dev/null || true
 fi
 
 # 1.8. Redis Configuration
@@ -961,6 +986,8 @@ MQS_DOMAIN=$MQS_DOMAIN
 CODE_DOMAIN=$CODE_DOMAIN
 WORK_DOMAIN=$WORK_DOMAIN
 SSL_EMAIL=$SSL_EMAIL
+DB_PASS=$DB_PASS
+MQ_PASS=$MQ_PASS
 TUNNEL_TOKEN=
 OUTER_EOF_ENV
 
@@ -980,6 +1007,8 @@ services:
       - CODE_DOMAIN=${CODE_DOMAIN}
       - WORK_DOMAIN=${WORK_DOMAIN}
       - SSL_EMAIL=${SSL_EMAIL}
+      - DB_PASS=${DB_PASS}
+      - MQ_PASS=${MQ_PASS}
       - DOCKER_HOST=unix:///var/docker.sock
     extra_hosts:
       - "${MAIN_DOMAIN}:127.0.0.1"
@@ -1031,7 +1060,7 @@ services:
     container_name: TomCloudLab_mongodb
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: Tombootroot
+      MONGO_INITDB_ROOT_PASSWORD: ${DB_PASS}
     volumes:
       - ./mongo-data:/data/db
     networks:
@@ -1268,7 +1297,7 @@ fi
 # Create Admin User (idempotent check)
 log "Ensuring MongoDB Admin User exists..."
 # Attempt to create user without auth first (localhost exception), then with auth if it fails
-mongosh admin --eval 'try { db.createUser({user: "admin", pwd: "Tombootroot", roles: [{ role: "root", db: "admin" }]}) } catch(e) { print("Creating without auth failed, trying with auth..."); try { db.getSiblingDB("admin").auth("admin", "Tombootroot"); db.createUser({user: "admin", pwd: "Tombootroot", roles: [{ role: "root", db: "admin" }]}) } catch(e2) { print("User likely already exists or auth failed: " + e2) } }'
+mongosh admin --eval 'try { db.createUser({user: "admin", pwd: "$DB_PASS", roles: [{ role: "root", db: "admin" }]}) } catch(e) { print("Creating without auth failed, trying with auth..."); try { db.getSiblingDB("admin").auth("admin", "$DB_PASS"); db.createUser({user: "admin", pwd: "$DB_PASS", roles: [{ role: "root", db: "admin" }]}) } catch(e2) { print("User likely already exists or auth failed: " + e2) } }'
 
 # Install Node.js
 if ! command -v node &> /dev/null; then
@@ -1330,6 +1359,18 @@ if [ "$AUTO" == "0" ]; then
         cp "$TEMP_WEB/labs/sample.json" /var/www/env.json
     else
         warn "sample.json not found in repo. Please configure /var/www/env.json manually."
+    fi
+
+    if [ -f /var/www/env.json ]; then
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' "s/DB_PASS_PLACEHOLDER/$DB_PASS/g" /var/www/env.json
+            sed -i '' "s/DB_HOST_PLACEHOLDER/127.0.0.1/g" /var/www/env.json
+            sed -i '' "s|VPN_URL_PLACEHOLDER|https://$VPN_DOMAIN/api|g" /var/www/env.json
+        else
+            sed -i "s/DB_PASS_PLACEHOLDER/$DB_PASS/g" /var/www/env.json
+            sed -i "s/DB_HOST_PLACEHOLDER/127.0.0.1/g" /var/www/env.json
+            sed -i "s|VPN_URL_PLACEHOLDER|https://$VPN_DOMAIN/api|g" /var/www/env.json
+        fi
     fi
     rm -rf "$TEMP_WEB"
 else
@@ -1728,7 +1769,7 @@ rabbitmq-plugins enable rabbitmq_management rabbitmq_stomp rabbitmq_web_stomp ||
 # Create RabbitMQ Admin User
 if ! rabbitmqctl list_users | grep -qw "^admin"; then
     log "Creating RabbitMQ Admin User..."
-    rabbitmqctl add_user admin RootTom@46
+    rabbitmqctl add_user admin $MQ_PASS
     rabbitmqctl set_user_tags admin administrator
 else
     log "RabbitMQ Admin User already exists."
@@ -1758,4 +1799,4 @@ echo "Verify URLs:"
 echo "  https://$MAIN_DOMAIN"
 echo "  https://$VPN_DOMAIN"
 echo "  https://$MQS_DOMAIN"
-echo "  MongoDB: mongodb://admin:Tombootroot@127.0.0.1:27018/admin"
+echo "  MongoDB: mongodb://admin:$DB_PASS@127.0.0.1:27018/admin"
