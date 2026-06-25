@@ -22,6 +22,8 @@
   "main_db": "tom_labs_db",
   "vpn_db": "tom_labs_vpn",
   "vpn_url": "VPN_URL_PLACEHOLDER",
+  "docker_ip": "172.19.0.",
+  "tunnel_ip": "172.31.0.",
   "api_secret": "your-super-secret-token-here",
   "wireguard": {
     "conf_path": "/etc/wireguard/",
