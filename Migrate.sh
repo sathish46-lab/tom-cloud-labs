@@ -88,20 +88,20 @@ else
     fi
     AUTO=0
 
-    read -p "Enter Main Domain (default: awshosting.in): " MAIN_DOMAIN </dev/tty
-    export MAIN_DOMAIN=${MAIN_DOMAIN:-awshosting.in}
+    read -p "Enter Main Domain (default: tomweb.in): " MAIN_DOMAIN </dev/tty
+    export MAIN_DOMAIN=${MAIN_DOMAIN:-tomweb.in}
 
-    read -p "Enter VPN API Domain (default: vpn.awshosting.in): " VPN_DOMAIN </dev/tty
-    export VPN_DOMAIN=${VPN_DOMAIN:-vpn.awshosting.in}
+    read -p "Enter VPN API Domain (default: vpn.tomweb.in): " VPN_DOMAIN </dev/tty
+    export VPN_DOMAIN=${VPN_DOMAIN:-vpn.tomweb.in}
 
-    read -p "Enter RabbitMQ Domain (default: mq.awshosting.in): " MQS_DOMAIN </dev/tty
-    export MQS_DOMAIN=${MQS_DOMAIN:-mq.awshosting.in}
+    read -p "Enter RabbitMQ Domain (default: mq.tomweb.in): " MQS_DOMAIN </dev/tty
+    export MQS_DOMAIN=${MQS_DOMAIN:-mq.tomweb.in}
 
     read -p "Enter Code Server Domain (default: tomweb.shop): " CODE_DOMAIN </dev/tty
     export CODE_DOMAIN=${CODE_DOMAIN:-tomweb.shop}
 
-    read -p "Enter Work Domain (default: work.awshosting.in): " WORK_DOMAIN </dev/tty
-    export WORK_DOMAIN=${WORK_DOMAIN:-work.awshosting.in}
+    read -p "Enter Work Domain (default: work.tomweb.in): " WORK_DOMAIN </dev/tty
+    export WORK_DOMAIN=${WORK_DOMAIN:-work.tomweb.in}
 
     read -p "Enter Email for SSL generation (e.g., admin@example.com): " SSL_EMAIL </dev/tty
     export SSL_EMAIL=${SSL_EMAIL:-admin@example.com}
@@ -754,15 +754,15 @@ OUTER_EOF_ENTRYPOINT
     
     # Inject variables
     if [[ "$OSTYPE" == "darwin"* ]]; then
-        sed -i '' "s/awshosting.in/$MAIN_DOMAIN/g" entrypoint.sh
-        sed -i '' "s/vpn.awshosting.in/$VPN_DOMAIN/g" entrypoint.sh
-        sed -i '' "s/mq.awshosting.in/$MQS_DOMAIN/g" entrypoint.sh
+        sed -i '' "s/tomweb.in/$MAIN_DOMAIN/g" entrypoint.sh
+        sed -i '' "s/vpn.tomweb.in/$VPN_DOMAIN/g" entrypoint.sh
+        sed -i '' "s/mq.tomweb.in/$MQS_DOMAIN/g" entrypoint.sh
         sed -i '' "s/tomweb.shop/$CODE_DOMAIN/g" entrypoint.sh
         sed -i '' "s/admin@example.com/$SSL_EMAIL/g" entrypoint.sh
     else
-        sed -i "s/awshosting.in/$MAIN_DOMAIN/g" entrypoint.sh
-        sed -i "s/vpn.awshosting.in/$VPN_DOMAIN/g" entrypoint.sh
-        sed -i "s/mq.awshosting.in/$MQS_DOMAIN/g" entrypoint.sh
+        sed -i "s/tomweb.in/$MAIN_DOMAIN/g" entrypoint.sh
+        sed -i "s/vpn.tomweb.in/$VPN_DOMAIN/g" entrypoint.sh
+        sed -i "s/mq.tomweb.in/$MQS_DOMAIN/g" entrypoint.sh
         sed -i "s/tomweb.shop/$CODE_DOMAIN/g" entrypoint.sh
         sed -i "s/admin@example.com/$SSL_EMAIL/g" entrypoint.sh
     fi
@@ -954,13 +954,13 @@ OUTER_EOF_SETUP
     
     # Inject variables
     if [[ "$OSTYPE" == "darwin"* ]]; then
-        sed -i '' "s/awshosting.in/$MAIN_DOMAIN/g" init-services.sh
-        sed -i '' "s/vpn.awshosting.in/$VPN_DOMAIN/g" init-services.sh
-        sed -i '' "s/mq.awshosting.in/$MQS_DOMAIN/g" init-services.sh
+        sed -i '' "s/tomweb.in/$MAIN_DOMAIN/g" init-services.sh
+        sed -i '' "s/vpn.tomweb.in/$VPN_DOMAIN/g" init-services.sh
+        sed -i '' "s/mq.tomweb.in/$MQS_DOMAIN/g" init-services.sh
     else
-        sed -i "s/awshosting.in/$MAIN_DOMAIN/g" init-services.sh
-        sed -i "s/vpn.awshosting.in/$VPN_DOMAIN/g" init-services.sh
-        sed -i "s/mq.awshosting.in/$MQS_DOMAIN/g" init-services.sh
+        sed -i "s/tomweb.in/$MAIN_DOMAIN/g" init-services.sh
+        sed -i "s/vpn.tomweb.in/$VPN_DOMAIN/g" init-services.sh
+        sed -i "s/mq.tomweb.in/$MQS_DOMAIN/g" init-services.sh
     fi
 
     log "Generating .env for Docker Compose..."
