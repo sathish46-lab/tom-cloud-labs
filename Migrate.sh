@@ -109,11 +109,11 @@ else
     echo "--------------------------------------------------"
     echo "Database & Services Credentials"
     echo "--------------------------------------------------"
-    read -s -p "Enter Database Root Password (default: tomlabs_secret): " DB_PASS </dev/tty
+    read -s -p "Enter Universal Database Root Password (MongoDB/MySQL/Postgres) (default: tomlabs_secret): " DB_PASS </dev/tty
     echo ""
     export DB_PASS=${DB_PASS:-tomlabs_secret}
 
-    read -s -p "Enter RabbitMQ Admin Password (default: tomlabs_mq_secret): " MQ_PASS </dev/tty
+    read -s -p "Enter RabbitMQ Admin Password (Broker) (default: tomlabs_mq_secret): " MQ_PASS </dev/tty
     echo ""
     export MQ_PASS=${MQ_PASS:-tomlabs_mq_secret}
 
