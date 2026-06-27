@@ -117,13 +117,6 @@ else
     echo ""
     export MQ_PASS=${MQ_PASS:-tomlabs_mq_secret}
 
-    echo "--------------------------------------------------"
-    echo "Git Repository"
-    echo "--------------------------------------------------"
-    read -p "Enter Repository URL (default: https://github.com/sathish46-lab/tom-cloud-labs.git): " MAIN_REPO </dev/tty
-    export MAIN_REPO=${MAIN_REPO:-https://github.com/sathish46-lab/tom-cloud-labs.git}
-
-    echo "Note: If this is a private repository, you will be prompted for Username and Password (or Token)."
 
     echo "--------------------------------------------------"
     echo "Configuration Summary:"
@@ -135,7 +128,6 @@ else
     echo "  SSL Email:   $SSL_EMAIL"
     echo "  DB Password: (hidden)"
     echo "  MQ Password: (hidden)"
-    echo "  Repository:  $MAIN_REPO"
     echo "--------------------------------------------------"
     read -p "Is this correct? (y/n): " CONFIRM </dev/tty
     if [[ "$CONFIRM" != "y" ]]; then
@@ -150,27 +142,18 @@ fi
 if [ "$MODE" == "DOCKER" ]; then
     log "Starting Docker Setup Mode..."
 
-    # Create local directories for mapping
+    # Create local directories for mapping if they don't exist
     mkdir -p ./traefik-conf/dynamic_conf ./opt/labs-control-panel ./vpn-api ./labs ./wireguard-conf ./rabbitmq-data ./mongo-data ./apache-logs
-
-    # Clone the repo locally
-    TEMP_WEB="/tmp/labs_clone_docker"
-    rm -rf "$TEMP_WEB"
-    run_with_progress "git clone \"$MAIN_REPO\" \"$TEMP_WEB\"" "Cloning Repository"
-    
-    # Copy repo files into mapped directories
-    log "Populating mapped directories..."
-    cp -R "$TEMP_WEB/labs/"* ./labs/ 2>/dev/null || true
-    cp -R "$TEMP_WEB/vpn-api/"* ./vpn-api/ 2>/dev/null || true
-    cp -R "$TEMP_WEB/opt/labs-control-panel/"* ./opt/labs-control-panel/ 2>/dev/null || true
     
     # Extract sample.json as env.json in local dir (will map to /var/www)
-    if [ -f "$TEMP_WEB/sample.json" ]; then
-        cp "$TEMP_WEB/sample.json" ./env.json
-    elif [ -f "$TEMP_WEB/labs/sample.json" ]; then
-        cp "$TEMP_WEB/labs/sample.json" ./env.json
-    else
-        echo "{}" > ./env.json
+    if [ ! -f "./env.json" ]; then
+        if [ -f "./sample.json" ]; then
+            cp "./sample.json" ./env.json
+        elif [ -f "./labs/sample.json" ]; then
+            cp "./labs/sample.json" ./env.json
+        else
+            echo "{}" > ./env.json
+        fi
     fi
 
     if [ -f ./env.json ]; then
@@ -1327,38 +1310,23 @@ fi
 if [ ! -d "/var/www/labs" ] || [ -z "$(ls -A /var/www/labs 2>/dev/null)" ]; then
     log "Setting up application from Git..."
 
-    # Prepare temp directory for cloning web repo
-    TEMP_WEB="/tmp/labs_clone"
-    rm -rf "$TEMP_WEB"
-
-    run_with_progress "git clone \"$MAIN_REPO\" \"$TEMP_WEB\"" "Cloning Repository"
-
     # Create destinations
     mkdir -p /var/www/labs
     mkdir -p /var/www/vpn-api
     mkdir -p /opt/labs-control-panel
+    
+    # Copy from local repo directory (since install.sh already cloned it)
+    LOCAL_REPO="$(cd "$(dirname "$0")" && pwd)"
+    run_with_progress "cp -R \"$LOCAL_REPO/labs/\"* /var/www/labs/ 2>/dev/null || true" "Copying Application Files"
+    run_with_progress "cp -R \"$LOCAL_REPO/vpn-api/\"* /var/www/vpn-api/ 2>/dev/null || true" "Copying VPN API Files"
+    run_with_progress "cp -R \"$LOCAL_REPO/opt/labs-control-panel/\"* /opt/labs-control-panel/ 2>/dev/null || true" "Copying Control Panel Files"
 
-    log "Copying repo content to destinations..."
-    # Logic to handle repo structure (root or nested)
-    if [ -d "$TEMP_WEB/labs" ]; then
-        cp -R "$TEMP_WEB/labs/"* /var/www/labs/
-    else
-        cp -R "$TEMP_WEB/"* /var/www/labs/
-    fi
-
-    if [ -d "$TEMP_WEB/vpn-api" ]; then
-        cp -R "$TEMP_WEB/vpn-api/"* /var/www/vpn-api/
-    fi
-
-    if [ -d "$TEMP_WEB/opt/labs-control-panel" ]; then
-        cp -R "$TEMP_WEB/opt/labs-control-panel/"* /opt/labs-control-panel/
-    fi
 
     # Copy sample.json as env.json template
-    if [ -f "$TEMP_WEB/sample.json" ]; then
-        cp "$TEMP_WEB/sample.json" /var/www/env.json
-    elif [ -f "$TEMP_WEB/labs/sample.json" ]; then
-        cp "$TEMP_WEB/labs/sample.json" /var/www/env.json
+    if [ -f "$LOCAL_REPO/sample.json" ]; then
+        cp "$LOCAL_REPO/sample.json" /var/www/env.json
+    elif [ -f "$LOCAL_REPO/labs/sample.json" ]; then
+        cp "$LOCAL_REPO/labs/sample.json" /var/www/env.json
     else
         warn "sample.json not found in repo. Please configure /var/www/env.json manually."
     fi
@@ -1376,7 +1344,7 @@ if [ ! -d "/var/www/labs" ] || [ -z "$(ls -A /var/www/labs 2>/dev/null)" ]; then
             sed -i "s|VPN_URL_PLACEHOLDER|https://$VPN_DOMAIN/api|g" /var/www/env.json
         fi
     fi
-    rm -rf "$TEMP_WEB"
+    fi
 else
     log "Auto VPS mode: Repositories are already mounted."
     # Ensure env.json exists since it was mapped
