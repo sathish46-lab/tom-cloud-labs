@@ -69,7 +69,7 @@ if [ "$1" == "--auto-vps" ]; then
     if [ -f "/tmp/migrate.env" ]; then
         source /tmp/migrate.env
     fi
-    MODE="VPS"
+    MODE="${MODE:-VPS}"
     AUTO=1
 else
     # Interactive Prompts
@@ -147,7 +147,7 @@ fi
 # ==========================================
 # DOCKER MODE
 # ==========================================
-if [ "$MODE" == "DOCKER" ] && [ "$AUTO" == "0" ]; then
+if [ "$MODE" == "DOCKER" ]; then
     log "Starting Docker Setup Mode..."
 
     # Create local directories for mapping
@@ -1324,7 +1324,7 @@ else
 fi
 
 # 2. Application Setup (Git Clone)
-if [ "$AUTO" == "0" ]; then
+if [ ! -d "/var/www/labs" ] || [ -z "$(ls -A /var/www/labs 2>/dev/null)" ]; then
     log "Setting up application from Git..."
 
     # Prepare temp directory for cloning web repo
