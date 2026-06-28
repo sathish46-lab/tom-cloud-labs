@@ -4,6 +4,7 @@ import time
 import secrets
 import string
 import sys
+from pymongo import MongoClient
 from src.BaseOrchestrator import BaseOrchestrator
 
 class Lab(BaseOrchestrator):
@@ -657,9 +658,7 @@ class Lab(BaseOrchestrator):
             self.log("Missing --user or --hash", "error", "system")
             return
             
-        client = MongoClient(self.db_uri)
-        db = client['tom_labs_db']
-        lab_data = db.deployed_labs.find_one({'instance_hash': instance_hash})
+        lab_data = self.db.deployed_labs.find_one({'instance_hash': instance_hash})
         
         if not lab_data:
             self.log("Lab not found in database.", "error", "system")
@@ -710,9 +709,7 @@ class Lab(BaseOrchestrator):
             return
             
         if not lab_data:
-            client = MongoClient(self.db_uri)
-            db = client['tom_labs_db']
-            lab_data = db.deployed_labs.find_one({'instance_hash': instance_hash})
+            lab_data = self.db.deployed_labs.find_one({'instance_hash': instance_hash})
             
         if not lab_data:
             self.log("Lab not found in database.", "error", "system")
