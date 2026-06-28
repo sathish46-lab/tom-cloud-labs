@@ -664,7 +664,7 @@ class Lab(BaseOrchestrator):
             self.log("Lab not found in database.", "error", "system")
             return
             
-        lab_name = f"{username}_{lab_data['lab_type']}_lab"
+        lab_name = instance_hash
         
         # 1. Check if running
         check_cmd = f"docker inspect -f '{{{{.State.Running}}}}' {lab_name}"
@@ -683,9 +683,15 @@ class Lab(BaseOrchestrator):
             return
             
         # 3. Reload Traefik config
-        from ConfigLoader import ConfigLoader
-        conf_loader = ConfigLoader()
-        lab_spec = conf_loader.get_lab_spec(lab_data['lab_type'])
+        template_name = lab_data['lab_type']
+        template_config_path = os.path.join(self.config.get('templates_dir', '/opt/labs-control-panel/lab-templates'), template_name, 'config.json')
+        
+        if not os.path.exists(template_config_path):
+            self.log(f"Template config missing: {template_config_path}", "error", "system")
+            return
+            
+        with open(template_config_path, 'r') as f:
+            lab_spec = json.load(f)
         
         yaml_content = self.generate_traefik_config(instance_hash, docker_ip, lab_spec, lab_data)
         traefik_conf_path = f"/etc/traefik/dynamic_conf/{instance_hash}.yml"
@@ -715,7 +721,7 @@ class Lab(BaseOrchestrator):
             self.log("Lab not found in database.", "error", "system")
             return
             
-        lab_name = f"{username}_{lab_data['lab_type']}_lab"
+        lab_name = instance_hash
         
         # 1. Check if running
         check_cmd = f"docker inspect -f '{{{{.State.Running}}}}' {lab_name}"
