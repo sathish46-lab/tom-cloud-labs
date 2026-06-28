@@ -112,6 +112,25 @@ class Lab(BaseOrchestrator):
                 routers += f"      entryPoints: [web, websecure]\n"
                 routers += f"      priority: 100\n"
         
+        # C. Handle HTTP Proxies
+        http_proxies = lab_data.get('http_proxies', [])
+        for idx, proxy in enumerate(http_proxies):
+            p_port = proxy.get('port')
+            p_domain = proxy.get('domain')
+            if p_port and p_domain:
+                proxy_router = f"router-{instance_id}-proxy-{idx}"
+                proxy_service = f"service-{instance_id}-proxy-{idx}"
+                
+                routers += f"    {proxy_router}:\n"
+                routers += f"      rule: \"Host(`{p_domain}`)\"\n"
+                routers += f"      service: {proxy_service}\n"
+                routers += f"      entryPoints: [web, websecure]\n"
+                routers += f"      priority: 150\n" # Higher priority to override wildcard web
+                
+                services += f"    {proxy_service}:\n"
+                services += f"      loadBalancer:\n"
+                services += f"        servers: [{{url: \"http://{docker_ip}:{p_port}\"}}]\n"
+
         yaml_str = "http:\n  routers:\n" + routers + "\n  services:\n" + services
         return yaml_str
 
@@ -628,6 +647,118 @@ class Lab(BaseOrchestrator):
                 self.log("Failed to verify code-server startup.", "error", "system")
         else:
             self.log("Failed to execute startup command.", "error", "system")
+    def apply_preferences(self):
+        """Re-generate Traefik routing rules without full redeploy, and execute init.sh"""
+        self.log("Applying preferences (Hot Reload)...", "info", "system")
+        username = self.args.getFlagValue('user')
+        instance_hash = self.args.getFlagValue('hash')
+        
+        if not username or not instance_hash:
+            self.log("Missing --user or --hash", "error", "system")
+            return
+            
+        client = MongoClient(self.db_uri)
+        db = client['tom_labs_db']
+        lab_data = db.deployed_labs.find_one({'instance_hash': instance_hash})
+        
+        if not lab_data:
+            self.log("Lab not found in database.", "error", "system")
+            return
+            
+        lab_name = f"{username}_{lab_data['lab_type']}_lab"
+        
+        # 1. Check if running
+        check_cmd = f"docker inspect -f '{{{{.State.Running}}}}' {lab_name}"
+        rc, out = self.run(check_cmd, capture=True)
+        if rc != 0 or out.strip() != "true":
+            self.log("Lab is not running. Start it first.", "error", "system")
+            return
+            
+        # 2. Get docker IP
+        ip_cmd = f"docker inspect -f '{{{{range.NetworkSettings.Networks}}}}{{{{.IPAddress}}}}{{{{end}}}}' {lab_name}"
+        rc, docker_ip = self.run(ip_cmd, capture=True)
+        docker_ip = docker_ip.strip()
+        
+        if not docker_ip:
+            self.log("Could not resolve docker IP for Traefik routing.", "error", "system")
+            return
+            
+        # 3. Reload Traefik config
+        from ConfigLoader import ConfigLoader
+        conf_loader = ConfigLoader()
+        lab_spec = conf_loader.get_lab_spec(lab_data['lab_type'])
+        
+        yaml_content = self.generate_traefik_config(instance_hash, docker_ip, lab_spec, lab_data)
+        traefik_conf_path = f"/etc/traefik/dynamic_conf/{instance_hash}.yml"
+        
+        with open(traefik_conf_path, 'w') as f:
+            f.write(yaml_content)
+            
+        self.log(f"Traefik configuration reloaded.", "success", "system")
+        
+        # 4. Run the init.sh script
+        self.run_script(lab_data=lab_data)
+
+    def run_script(self, lab_data=None):
+        """Write init_script to container and execute it"""
+        self.log("Executing startup script...", "info", "system")
+        username = self.args.getFlagValue('user')
+        instance_hash = self.args.getFlagValue('hash')
+        
+        if not username or not instance_hash:
+            self.log("Missing --user or --hash", "error", "system")
+            return
+            
+        if not lab_data:
+            client = MongoClient(self.db_uri)
+            db = client['tom_labs_db']
+            lab_data = db.deployed_labs.find_one({'instance_hash': instance_hash})
+            
+        if not lab_data:
+            self.log("Lab not found in database.", "error", "system")
+            return
+            
+        lab_name = f"{username}_{lab_data['lab_type']}_lab"
+        
+        # 1. Check if running
+        check_cmd = f"docker inspect -f '{{{{.State.Running}}}}' {lab_name}"
+        rc, out = self.run(check_cmd, capture=True)
+        if rc != 0 or out.strip() != "true":
+            self.log("Lab is not running. Start it first.", "error", "system")
+            return
+            
+        # 2. Get script content
+        script_content = lab_data.get('init_script', '#!/bin/bash\n')
+        
+        # 3. Write script to local temp file
+        tmp_path = f"/tmp/init_{instance_hash}.sh"
+        with open(tmp_path, 'w') as f:
+            f.write(script_content)
+            
+        self.run(f"chmod +x {tmp_path}")
+        
+        # 4. Copy to container and run
+        self.log(f"Copying script to /home/{username}/init.sh...", "info", "system")
+        rc, out = self.run(f"docker cp {tmp_path} {lab_name}:/home/{username}/init.sh", capture=True)
+        if rc != 0:
+            self.log("Failed to copy script to container.", "error", "system")
+            return
+            
+        self.run(f"docker exec {lab_name} chown {username}:{username} /home/{username}/init.sh")
+        
+        self.log("Running script (output below)...", "info", "system")
+        # Run inside bash
+        rc, out = self.run(f"docker exec -u {username} {lab_name} bash /home/{username}/init.sh", capture=False)
+        
+        if rc == 0:
+            self.log("Script executed successfully.", "success", "system")
+        else:
+            self.log(f"Script failed with exit code {rc}.", "error", "system")
+            
+        # Cleanup temp file
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+
     def list_images(self):
         """List all lab templates and their build status"""
         templates_dir = self.config.get('templates_dir', '/opt/labs-control-panel/lab-templates')

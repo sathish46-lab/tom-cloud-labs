@@ -25,6 +25,8 @@ def print_help():
     print("  syncuser <user>     Fix permissions.  Ex: labsctl syncuser sathish")
     print("  ensure-codeserver   Check VS Code.    Ex: labsctl ensure-codeserver --hash=HASH")
     print("  quiz generate       AI Quiz Gen.      Ex: labsctl quiz generate --topic=ID --subtopic=ID --diff=hard")
+    print("  apply-preferences   Hot-apply prefs.  Ex: labsctl apply-preferences --hash=HASH")
+    print("  run-script          Run init.sh now.  Ex: labsctl run-script --hash=HASH --user=sathish")
     print("  list-images         List built labs.  Ex: labsctl list-images")
     print("  get-workers         Check active.     Ex: labsctl get-workers")
     print("")
@@ -121,10 +123,14 @@ def main():
                 print("Usage: labsctl challenge <build|deploy|stop|start|remove> [options]")
                 print("  Ex:  labsctl challenge build sql_injection:lab")
                 print("  Ex:  labsctl challenge deploy --user=sathish --hash=HASH --challenge=sql_injection")
+        elif cmd == 'apply-preferences':
+            lab_manager.apply_preferences()
+        elif cmd == 'run-script':
+            lab_manager.run_script()
         elif cmd == 'list-images':
-             lab_manager.list_images()
+              lab_manager.list_images()
         elif cmd == 'get-workers':
-             lab_manager.get_workers()
+              lab_manager.get_workers()
         else:
             print(f"❌ Unknown command: {cmd}")
         

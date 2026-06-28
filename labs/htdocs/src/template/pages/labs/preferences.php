@@ -173,7 +173,173 @@
                 </div>
             </div>
         </div>
+        
+        <!-- HTTP Proxies Section -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm glass-card rounded-4 mb-4">
+                    <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2">
+                        <h6 class="fw-bold mb-1">HTTP Proxies</h6>
+                        <p class="small text-muted mb-0">Reverse-proxy any port to one or more of your domains over HTTP — TLS is terminated for you at the edge.</p>
+                    </div>
+                    <div class="card-body p-4">
+                        <div id="http-proxies-list">
+                            <?php
+                                $httpProxies = [];
+                                if ($labData && isset($labData['http_proxies'])) {
+                                    $httpProxies = (array)$labData['http_proxies'];
+                                }
+                                // Fetch user's domains for the select dropdown
+                                $userDomains = [];
+                                $domainsCursor = $db->domains->find(['user_id' => $user->getUserId()]);
+                                foreach ($domainsCursor as $d) {
+                                    $userDomains[] = (string)$d['domain'];
+                                }
+                                
+                                if (empty($httpProxies)):
+                            ?>
+                            <div class="row align-items-center mb-3 proxy-row" data-index="0">
+                                <div class="col-md-2">
+                                    <label class="small fw-bold text-secondary mb-0">Port & Domains</label>
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="number" name="proxy_port[]" class="form-control bg-dark bg-opacity-50 rounded-pill border-secondary border-opacity-25 text-white px-3 proxy-port" placeholder="Port" min="1" max="65535">
+                                </div>
+                                <div class="col-md-6">
+                                    <select name="proxy_domain[]" class="form-select bg-dark bg-opacity-50 rounded-pill border-secondary border-opacity-25 text-white px-3 proxy-domain-select">
+                                        <option value="">Select...</option>
+                                        <?php foreach ($userDomains as $ud): ?>
+                                            <option value="<?= htmlspecialchars($ud) ?>"><?= htmlspecialchars($ud) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-1">
+                                    <button type="button" class="btn rounded-circle d-flex align-items-center justify-content-center p-0 btn-remove-proxy" style="width: 36px; height: 36px; border: 1px solid #be185d; color: #be185d; background: transparent;" onclick="removeProxyRow(this)">
+                                        <i class='bx bx-trash'></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <?php else: ?>
+                                <?php foreach ($httpProxies as $idx => $proxy): ?>
+                                <div class="row align-items-center mb-3 proxy-row" data-index="<?= $idx ?>">
+                                    <div class="col-md-2">
+                                        <label class="small fw-bold text-secondary mb-0">Port & Domains</label>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <input type="number" name="proxy_port[]" class="form-control bg-dark bg-opacity-50 rounded-pill border-secondary border-opacity-25 text-white px-3 proxy-port" placeholder="Port" min="1" max="65535" value="<?= (int)($proxy['port'] ?? '') ?>">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <select name="proxy_domain[]" class="form-select bg-dark bg-opacity-50 rounded-pill border-secondary border-opacity-25 text-white px-3 proxy-domain-select">
+                                            <option value="">Select...</option>
+                                            <?php foreach ($userDomains as $ud): ?>
+                                                <option value="<?= htmlspecialchars($ud) ?>" <?= ((string)($proxy['domain'] ?? '') === $ud) ? 'selected' : '' ?>><?= htmlspecialchars($ud) ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-1">
+                                        <button type="button" class="btn rounded-circle d-flex align-items-center justify-content-center p-0 btn-remove-proxy" style="width: 36px; height: 36px; border: 1px solid #be185d; color: #be185d; background: transparent;" onclick="removeProxyRow(this)">
+                                            <i class='bx bx-trash'></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-md-2"></div>
+                            <div class="col-md-10">
+                                <button type="button" class="btn rounded-pill px-4 py-1 d-inline-flex align-items-center gap-2" style="border: 1px solid #ea580c; color: #ea580c; background: transparent; font-size: 0.9rem;" onclick="addProxyRow()">
+                                    <i class='bx bx-message-square-add'></i> Add HTTP Proxy
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lifecycle Section -->
+        <div class="row mt-2">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm glass-card rounded-4 mb-4">
+                    <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2">
+                        <h6 class="fw-bold mb-1 text-uppercase ls-1 small">Lifecycle</h6>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row align-items-start">
+                            <div class="col-md-2">
+                                <label class="small fw-bold text-secondary mb-0">Always-on</label>
+                            </div>
+                            <div class="col-md-10">
+                                <div class="form-check form-switch mb-1">
+                                    <?php $alwaysOn = ($labData && isset($labData['always_on'])) ? (bool)$labData['always_on'] : false; ?>
+                                    <input class="form-check-input" type="checkbox" id="always-on-toggle" <?= $alwaysOn ? 'checked' : '' ?>>
+                                    <label class="form-check-label fw-bold small" for="always-on-toggle">Keep this instance running</label>
+                                </div>
+                                <p class="text-muted small mb-0" style="max-width: 700px;">When on, a background worker brings this lab back up — as you, with your saved settings — within ~10 minutes whenever it's found stopped, and it won't auto-stop on expiry.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Startup Script Section -->
+        <div class="row mt-2">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm glass-card rounded-4 mb-4">
+                    <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0 d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <i class='bx bx-terminal text-muted'></i>
+                                <span class="fw-bold small">Startup Script</span>
+                                <span class="text-muted small font-monospace">/home/<?= htmlspecialchars($currentUsername) ?>/init.sh</span>
+                            </div>
+                        </div>
+                        <span class="text-muted small fst-italic">Runs as root on every (re)deploy</span>
+                    </div>
+                    <div class="card-body p-4 pt-2">
+                        <?php
+                            $initScript = '';
+                            if ($labData && isset($labData['init_script'])) {
+                                $initScript = (string)$labData['init_script'];
+                            }
+                            if (empty($initScript)) {
+                                $initScript = "#!/bin/bash\n";
+                            }
+                        ?>
+                        <div class="position-relative">
+                            <textarea id="init-script-editor" class="form-control font-monospace bg-dark text-white border-0 rounded-3 p-3" rows="10" style="resize: vertical; font-size: 13px; line-height: 1.6; tab-size: 4;"><?= htmlspecialchars($initScript) ?></textarea>
+                        </div>
+                        <div class="d-flex justify-content-end mt-2">
+                            <button type="button" class="btn btn-sm rounded-pill px-3 d-inline-flex align-items-center gap-1" style="background: #16a34a; color: #fff; font-size: 0.85rem;" onclick="runInitScript()">
+                                <i class='bx bx-play'></i> Run now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Save / Apply Buttons -->
+        <div class="row mt-2 mb-4">
+            <div class="col-12 d-flex justify-content-end gap-3">
+                <button type="button" id="btn-save-preferences" class="btn rounded-pill px-4 py-2 d-inline-flex align-items-center gap-2 fw-bold" style="background: #404040; color: #fff; font-size: 0.9rem;" onclick="savePreferences()">
+                    <i class='bx bx-save'></i> Save Preferences
+                </button>
+                <button type="button" id="btn-apply-redeploy" class="btn rounded-pill px-4 py-2 d-inline-flex align-items-center gap-2 fw-bold" style="background: #eab308; color: #1a1a1a; font-size: 0.9rem;" onclick="applyAndRedeploy()">
+                    <i class='bx bx-refresh'></i> Apply & Redeploy now
+                </button>
+            </div>
+        </div>
+
     </div>
+
+<!-- Inject user domains as JS array for dynamic proxy rows -->
+<script>
+    window.USER_DOMAINS = <?= json_encode($userDomains) ?>;
+    window.EXISTING_PROXIES = <?= json_encode($httpProxies) ?>;
+</script>
 
 <?php include __DIR__ . '/partials/lab_modals.php'; ?>
 <div class="server-logs-panel shadow-lg">
