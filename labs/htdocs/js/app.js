@@ -1502,6 +1502,11 @@ var TomBG = {
       }
     }
     
+    var myThemesBadge = document.getElementById('my-themes-count-badge');
+    if (myThemesBadge) {
+      myThemesBadge.textContent = slotCount + '/' + maxSlots;
+    }
+    
     this.updateActiveSwatchUI();
   },
 

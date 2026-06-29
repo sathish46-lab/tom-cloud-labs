@@ -6,6 +6,37 @@ if (!Session::getUser()) {
     http_response_code(401);
     die("Unauthorized");
 }
+
+$swatches = [
+    ['name' => 'Sunset',   'bg' => '#2a2a2a', 'light' => '#faf7f4', 'accent' => '#FF6B1A'],
+    ['name' => 'Ocean',    'bg' => '#1a2238', 'light' => '#f0f4ff', 'accent' => '#4A90D9'],
+    ['name' => 'Forest',   'bg' => '#1a2a1a', 'light' => '#f0fff4', 'accent' => '#4CAF50'],
+    ['name' => 'Amethyst', 'bg' => '#261a38', 'light' => '#f6f0ff', 'accent' => '#9C27B0'],
+    ['name' => 'Slate',    'bg' => '#252525', 'light' => '#f5f5f5', 'accent' => '#78909C'],
+    ['name' => 'Teal',     'bg' => '#14282a', 'light' => '#f0fffd', 'accent' => '#009688'],
+    ['name' => 'Rose',     'bg' => '#2a1a22', 'light' => '#fff0f4', 'accent' => '#E91E63'],
+    ['name' => 'Espresso', 'bg' => '#2a2018', 'light' => '#fdf6f0', 'accent' => '#795548'],
+    ['name' => 'Midnight', 'bg' => '#0f1628', 'light' => '#eef2ff', 'accent' => '#3F51B5'],
+    ['name' => 'Olive',    'bg' => '#222a1a', 'light' => '#f8fff0', 'accent' => '#8BC34A'],
+    ['name' => 'Coral',    'bg' => '#1e1e1e', 'light' => '#faf5f4', 'accent' => '#FF5722'],
+    ['name' => 'Gold',     'bg' => '#2a2510', 'light' => '#fffdf0', 'accent' => '#FFC107'],
+    ['name' => 'Deep Sea', 'bg' => '#00384d', 'light' => '#f1f7f9', 'accent' => '#FF6B1A'],
+    ['name' => 'Arctic',   'bg' => '#0d1630', 'light' => '#f0f2f8', 'accent' => '#D4A017'],
+    ['name' => 'Volcano',  'bg' => '#2e0d18', 'light' => '#faf0f3', 'accent' => '#00BCD4'],
+    ['name' => 'Carbon',   'bg' => '#1f2226', 'light' => '#f4f5f6', 'accent' => '#2979FF'],
+    ['name' => 'Dusk',     'bg' => '#191028', 'light' => '#f4f0fa', 'accent' => '#FFB300'],
+    ['name' => 'Moss',     'bg' => '#112a1a', 'light' => '#f0f8f2', 'accent' => '#FF6B6B'],
+    ['name' => 'Sapphire', 'bg' => '#0e1830', 'light' => '#f0f3fa', 'accent' => '#F06292'],
+    ['name' => 'Ember',    'bg' => '#261a12', 'light' => '#faf6f2', 'accent' => '#00E676'],
+];
+
+$templates = [
+    ['mode' => 'robo', 'name' => 'Robot Mode', 'img' => '/assets/Background_Img/robo/robo.jpg'],
+    ['mode' => 'ninja', 'name' => 'Ninja Mode', 'img' => '/assets/Background_Img/ninja/ninja.jpg'],
+    ['mode' => 'robotower', 'name' => 'Robo Tower', 'img' => '/assets/Background_Img/RoboTower/robo_tower.jpg'],
+    ['mode' => 'spiderman', 'name' => 'Spiderman Mode', 'img' => '/assets/Background_Img/spiderman/spiderman.jpg'],
+    ['mode' => 'ironman', 'name' => 'Iron Man Mode', 'img' => '/assets/Background_Img/IronMan/0.jpg'],
+];
 ?>
 <!-- Tab Navigation -->
 <div class="px-4 pt-3">
@@ -13,25 +44,25 @@ if (!Session::getUser()) {
         <li class="nav-item" role="presentation">
             <button class="nav-link px-3 py-2 rounded-pill fw-semibold" id="my-themes-tab" data-coreui-toggle="tab" data-coreui-target="#my-themes-pane" type="button" role="tab" aria-selected="false"
                 style="font-size: 0.82rem; color: var(--cui-body-color); opacity: 0.65; border: 1px solid rgba(var(--cui-emphasis-color-rgb, 255, 255, 255), 0.2);">
-                My Themes <span class="badge bg-success ms-1" style="font-size: 0.65rem;">3/3</span>
+                My Themes <span class="badge bg-success ms-1" id="my-themes-count-badge" style="font-size: 0.65rem;">0/10</span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link px-3 py-2 rounded-pill fw-semibold" id="community-tab" data-coreui-toggle="tab" data-coreui-target="#community-pane" type="button" role="tab" aria-selected="false"
                 style="font-size: 0.82rem; color: var(--cui-body-color); opacity: 0.65; border: 1px solid rgba(var(--cui-emphasis-color-rgb, 255, 255, 255), 0.2);">
-                Community <span class="badge bg-success ms-1" style="font-size: 0.65rem;">7</span>
+                Community <span class="badge bg-success ms-1" id="community-count-badge" style="font-size: 0.65rem;">0</span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link px-3 py-2 rounded-pill fw-semibold" id="templates-tab" data-coreui-toggle="tab" data-coreui-target="#templates-pane" type="button" role="tab" aria-selected="false"
                 style="font-size: 0.82rem; color: var(--cui-body-color); opacity: 0.65; border: 1px solid rgba(var(--cui-emphasis-color-rgb, 255, 255, 255), 0.2);">
-                Templates <span class="badge bg-success ms-1" style="font-size: 0.65rem;">14</span>
+                Templates <span class="badge bg-success ms-1" id="templates-count-badge" style="font-size: 0.65rem;"><?= count($templates) ?></span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link active px-3 py-2 rounded-pill fw-semibold" id="swatches-tab" data-coreui-toggle="tab" data-coreui-target="#swatches-pane" type="button" role="tab" aria-selected="true"
                 style="font-size: 0.82rem; background: rgba(var(--cui-primary-rgb), 0.15); color: var(--cui-primary); border: 1px solid rgba(var(--cui-primary-rgb), 0.25);">
-                Swatches <span class="badge bg-success text-white ms-1" style="font-size: 0.65rem;">20</span>
+                Swatches <span class="badge bg-success text-white ms-1" id="swatches-count-badge" style="font-size: 0.65rem;"><?= count($swatches) ?></span>
             </button>
         </li>
     </ul>
@@ -43,28 +74,6 @@ if (!Session::getUser()) {
             <p class="mb-4" style="font-size: 0.9rem; opacity: 0.85;">Pick a color palette for plain backgrounds</p>
             <div class="d-flex flex-wrap justify-content-center gap-3">
                 <?php
-                $swatches = [
-                    ['name' => 'Sunset',   'bg' => '#2a2a2a', 'light' => '#faf7f4', 'accent' => '#FF6B1A'],
-                    ['name' => 'Ocean',    'bg' => '#1a2238', 'light' => '#f0f4ff', 'accent' => '#4A90D9'],
-                    ['name' => 'Forest',   'bg' => '#1a2a1a', 'light' => '#f0fff4', 'accent' => '#4CAF50'],
-                    ['name' => 'Amethyst', 'bg' => '#261a38', 'light' => '#f6f0ff', 'accent' => '#9C27B0'],
-                    ['name' => 'Slate',    'bg' => '#252525', 'light' => '#f5f5f5', 'accent' => '#78909C'],
-                    ['name' => 'Teal',     'bg' => '#14282a', 'light' => '#f0fffd', 'accent' => '#009688'],
-                    ['name' => 'Rose',     'bg' => '#2a1a22', 'light' => '#fff0f4', 'accent' => '#E91E63'],
-                    ['name' => 'Espresso', 'bg' => '#2a2018', 'light' => '#fdf6f0', 'accent' => '#795548'],
-                    ['name' => 'Midnight', 'bg' => '#0f1628', 'light' => '#eef2ff', 'accent' => '#3F51B5'],
-                    ['name' => 'Olive',    'bg' => '#222a1a', 'light' => '#f8fff0', 'accent' => '#8BC34A'],
-                    ['name' => 'Coral',    'bg' => '#1e1e1e', 'light' => '#faf5f4', 'accent' => '#FF5722'],
-                    ['name' => 'Gold',     'bg' => '#2a2510', 'light' => '#fffdf0', 'accent' => '#FFC107'],
-                    ['name' => 'Deep Sea', 'bg' => '#00384d', 'light' => '#f1f7f9', 'accent' => '#FF6B1A'],
-                    ['name' => 'Arctic',   'bg' => '#0d1630', 'light' => '#f0f2f8', 'accent' => '#D4A017'],
-                    ['name' => 'Volcano',  'bg' => '#2e0d18', 'light' => '#faf0f3', 'accent' => '#00BCD4'],
-                    ['name' => 'Carbon',   'bg' => '#1f2226', 'light' => '#f4f5f6', 'accent' => '#2979FF'],
-                    ['name' => 'Dusk',     'bg' => '#191028', 'light' => '#f4f0fa', 'accent' => '#FFB300'],
-                    ['name' => 'Moss',     'bg' => '#112a1a', 'light' => '#f0f8f2', 'accent' => '#FF6B6B'],
-                    ['name' => 'Sapphire', 'bg' => '#0e1830', 'light' => '#f0f3fa', 'accent' => '#F06292'],
-                    ['name' => 'Ember',    'bg' => '#261a12', 'light' => '#faf6f2', 'accent' => '#00E676'],
-                ];
                 foreach ($swatches as $index => $swatch): 
                     $uid = "swatch_" . md5($swatch['name'] . $index);
                 ?>
@@ -140,41 +149,15 @@ if (!Session::getUser()) {
         <!-- ============ TEMPLATES TAB ============ -->
         <div class="tab-pane fade" id="templates-pane" role="tabpanel">
             <div class="row g-3">
-                <div class="col-md-4">
-                    <div class="bg-preview rounded-3 p-4 text-center pointer border border-white border-opacity-10 transition-all hover-scale" 
-                        onclick="TomBG.setMode('robo')" 
-                        style="background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('/assets/Background_Img/robo/robo.jpg'); background-size: cover; background-position: center; min-height: 90px; display: flex; align-items: center; justify-content: center;">
-                        <h6 class="fw-bold m-0 text-white" style="font-size: 0.85rem;">Robot Mode</h6>
+                <?php foreach ($templates as $t): ?>
+                    <div class="col-md-4">
+                        <div class="bg-preview rounded-3 p-4 text-center pointer border border-white border-opacity-10 transition-all hover-scale" 
+                            onclick="TomBG.setMode('<?= $t['mode'] ?>')" 
+                            style="background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('<?= $t['img'] ?>'); background-size: cover; background-position: center; min-height: 90px; display: flex; align-items: center; justify-content: center;">
+                            <h6 class="fw-bold m-0 text-white" style="font-size: 0.85rem;"><?= $t['name'] ?></h6>
+                        </div>
                     </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="bg-preview rounded-3 p-4 text-center pointer border border-white border-opacity-10 transition-all hover-scale" 
-                        onclick="TomBG.setMode('ninja')" 
-                        style="background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('/assets/Background_Img/ninja/ninja.jpg'); background-size: cover; background-position: center; min-height: 90px; display: flex; align-items: center; justify-content: center;">
-                        <h6 class="fw-bold m-0 text-white" style="font-size: 0.85rem;">Ninja Mode</h6>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="bg-preview rounded-3 p-4 text-center pointer border border-white border-opacity-10 transition-all hover-scale" 
-                        onclick="TomBG.setMode('robotower')" 
-                        style="background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('/assets/Background_Img/RoboTower/robo_tower.jpg'); background-size: cover; background-position: center; min-height: 90px; display: flex; align-items: center; justify-content: center;">
-                        <h6 class="fw-bold m-0 text-white" style="font-size: 0.85rem;">Robo Tower</h6>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="bg-preview rounded-3 p-4 text-center pointer border border-white border-opacity-10 transition-all hover-scale" 
-                        onclick="TomBG.setMode('spiderman')" 
-                        style="background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('/assets/Background_Img/spiderman/spiderman.jpg'); background-size: cover; background-position: center; min-height: 90px; display: flex; align-items: center; justify-content: center;">
-                        <h6 class="fw-bold m-0 text-white" style="font-size: 0.85rem;">Spiderman Mode</h6>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="bg-preview rounded-3 p-4 text-center pointer border border-white border-opacity-10 transition-all hover-scale" 
-                        onclick="TomBG.setMode('ironman')" 
-                        style="background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('/assets/Background_Img/IronMan/0.jpg'); background-size: cover; background-position: center; min-height: 90px; display: flex; align-items: center; justify-content: center;">
-                        <h6 class="fw-bold m-0 text-white" style="font-size: 0.85rem;">Iron Man Mode</h6>
-                    </div>
-                </div>
+                <?php endforeach; ?>
             </div>
         </div>
     </div>
