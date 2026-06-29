@@ -4,6 +4,7 @@ import time
 import secrets
 import string
 import sys
+import base64
 from pymongo import MongoClient
 from src.BaseOrchestrator import BaseOrchestrator
 
@@ -639,12 +640,10 @@ while true; do
     fi
 done
 """
-        # Write the script directly into the container using docker exec
-        # (docker cp won't work because labsctl runs inside Dev_lab, 
-        #  and docker cp reads from the host filesystem, not Dev_lab's /tmp)
-        escaped_content = monitor_script_content.replace("'", "'\\''")
+        # Write the script into the container using base64 to avoid shell escaping issues
+        b64_script = base64.b64encode(monitor_script_content.encode()).decode()
         self.run(f"docker exec {lab_name} mkdir -p /var/labsdata/scripts")
-        self.run(f"docker exec {lab_name} bash -c 'echo {chr(39)}{escaped_content}{chr(39)} > /var/labsdata/scripts/monitor_codeserver.sh'")
+        self.run(f"docker exec {lab_name} bash -c 'echo {b64_script} | base64 -d > /var/labsdata/scripts/monitor_codeserver.sh'")
         self.run(f"docker exec {lab_name} chmod +x /var/labsdata/scripts/monitor_codeserver.sh")
 
         # 2. Start monitor if not running (using detached mode!)
