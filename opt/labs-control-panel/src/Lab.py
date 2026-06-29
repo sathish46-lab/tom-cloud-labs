@@ -619,6 +619,40 @@ class Lab(BaseOrchestrator):
 
         self.log("Starting code-server...", "info", "system")
         
+        # 1. Dynamically create and inject the idle monitor script
+        monitor_script_content = f"""#!/bin/bash
+USER=$1
+IDLE_LIMIT=20
+
+idle_time=0
+while true; do
+    sleep 60
+    
+    # Exit if code-server was killed manually
+    if ! pgrep -u $USER -f code-server > /dev/null; then
+        exit 0
+    fi
+    
+    # Check for active connections (WebSocket keeps ESTAB state when tab is open)
+    if ss -tnp 2>/dev/null | grep -E ":8080\\s+ESTAB" > /dev/null; then
+        idle_time=0
+    else
+        idle_time=$((idle_time + 1))
+    fi
+    
+    if [ $idle_time -ge $IDLE_LIMIT ]; then
+        pkill -u $USER -f code-server
+        exit 0
+    fi
+done
+"""
+        with open("/tmp/monitor_codeserver.sh", "w") as f:
+            f.write(monitor_script_content)
+            
+        self.run(f"docker cp /tmp/monitor_codeserver.sh {lab_name}:/var/labsdata/scripts/monitor_codeserver.sh")
+        self.run(f"docker exec {lab_name} chmod +x /var/labsdata/scripts/monitor_codeserver.sh")
+        
+        
         user_home = f"/home/{username}"
         config_file = f"{user_home}/.config/code-server/config.yaml"
         log_file = f"{user_home}/.code-server.log"
