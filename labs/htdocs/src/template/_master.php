@@ -51,21 +51,29 @@ define('PAGE_START_TIME', microtime(true));
             }
 
             // 2. Apply Theme & Layout State immediately to DOM
-            const savedTheme = localStorage.getItem('tom-labs-theme') || 'dark';
-            const themeToApply = (savedTheme === 'auto') ?
+            let savedTheme = localStorage.getItem('tom-labs-theme') || 'dark';
+            let themeToApply = (savedTheme === 'auto') ?
                 (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') :
                 savedTheme;
-            document.documentElement.setAttribute('data-coreui-theme', themeToApply);
 
             let mode = localStorage.getItem("tom-labs-bg-mode") || "spiderman";
             
             // Forced state for login page
             <?php if (defined('IS_LOGIN_PAGE') && IS_LOGIN_PAGE === true): ?>
+            themeToApply = "dark";
             mode = "spiderman";
             document.documentElement.classList.add('glass-mode');
             window.FORCED_BG_MODE = "spiderman";
             <?php endif; ?>
 
+            // Forced state for landing page
+            <?php if (defined('IS_LANDING_PAGE') && IS_LANDING_PAGE === true): ?>
+            themeToApply = "dark";
+            mode = "plain";
+            window.FORCED_BG_MODE = "plain";
+            <?php endif; ?>
+
+            document.documentElement.setAttribute('data-coreui-theme', themeToApply);
             document.documentElement.classList.toggle("mode-plain", mode === "plain");
 
             const isNarrow = localStorage.getItem('tom-labs-sidebar-narrow') === 'true';
@@ -208,6 +216,12 @@ define('PAGE_START_TIME', microtime(true));
     $mode = $serverTheme['mode'] ?? 'spiderman';
     if (defined('IS_LOGIN_PAGE') && IS_LOGIN_PAGE === true) {
         $mode = 'spiderman';
+    }
+    if (defined('IS_LANDING_PAGE') && IS_LANDING_PAGE === true) {
+        $mode = 'plain';
+        $plainColorDark = '#091723';
+        $plainColorLight = '#091723';
+        $accentColor = '#3b82f6'; // A nice blue accent
     }
 
     require_once __DIR__ . '/tom_color_utils.php';
