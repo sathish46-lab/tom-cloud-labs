@@ -34,6 +34,7 @@ function addProxyRow() {
         </div>
     `;
     list.appendChild(row);
+    updateProxyDomainOptions();
 }
 
 /**
@@ -48,15 +49,36 @@ function removeProxyRow(btn) {
         // Keep one empty row, just clear the inputs
         row.querySelector('.proxy-port').value = '';
         row.querySelector('.proxy-domain-select').value = '';
+        updateProxyDomainOptions();
         return;
     }
     row.remove();
+    updateProxyDomainOptions();
+}
+
+function updateProxyDomainOptions() {
+    const selects = document.querySelectorAll('.proxy-domain-select');
+    const selectedDomains = new Set();
+    selects.forEach(select => {
+        if (select.value) selectedDomains.add(select.value);
+    });
+    selects.forEach(select => {
+        Array.from(select.options).forEach(option => {
+            if (option.value === "") return;
+            if (selectedDomains.has(option.value) && select.value !== option.value) {
+                option.disabled = true;
+            } else {
+                option.disabled = false;
+            }
+        });
+    });
 }
 
 /**
  * Check if selected domain is already exposed on port 80/443 (public web exposure)
  */
 function checkProxyDomainConflict(selectEl) {
+    updateProxyDomainOptions();
     const domain = selectEl.value;
     if (!domain) return;
     const usageMap = window.DOMAIN_USAGE_MAP || {};
@@ -286,3 +308,4 @@ function copyFromInput(inputId) {
     const input = document.getElementById(inputId);
     copyText(input.value);
 }
+document.addEventListener('DOMContentLoaded', updateProxyDomainOptions);

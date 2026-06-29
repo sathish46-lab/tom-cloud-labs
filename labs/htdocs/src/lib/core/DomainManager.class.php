@@ -319,6 +319,24 @@ class DomainManager {
                     }
                 }
             }
+            // 4. HTTP Proxies
+            $httpProxies = $lab['http_proxies'] ?? null;
+            if ($httpProxies && (is_array($httpProxies) || is_object($httpProxies))) {
+                foreach($httpProxies as $proxy) {
+                    // Convert BSONDocument to array if needed
+                    if (is_object($proxy) && method_exists($proxy, 'getArrayCopy')) {
+                        $proxy = $proxy->getArrayCopy();
+                    }
+                    $domain = $proxy['domain'] ?? null;
+                    if (!empty($domain) && !isset($usageMap[$domain])) {
+                        $usageMap[$domain] = [
+                            'lab_type' => $labType,
+                            'usage' => 'HTTP Proxy (Port ' . ($proxy['port'] ?? '?') . ')',
+                            'instance_hash' => $instanceHash
+                        ];
+                    }
+                }
+            }
         }
         
         return $usageMap;
