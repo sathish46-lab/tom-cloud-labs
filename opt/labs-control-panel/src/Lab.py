@@ -626,7 +626,7 @@ IDLE_LIMIT=20
 
 idle_time=0
 while true; do
-    sleep 60
+    sleep 5
     
     # Exit if code-server was killed manually
     if ! pgrep -u $USER -f code-server > /dev/null; then
@@ -637,7 +637,7 @@ while true; do
     if ss -tnp 2>/dev/null | grep -E ":8080\\s+ESTAB" > /dev/null; then
         idle_time=0
     else
-        idle_time=$((idle_time + 1))
+        idle_time=$((idle_time + 5))
     fi
     
     if [ $idle_time -ge $IDLE_LIMIT ]; then
