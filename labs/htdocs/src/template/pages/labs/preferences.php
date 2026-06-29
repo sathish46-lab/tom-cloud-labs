@@ -360,7 +360,36 @@
                             }
                         ?>
                         <div class="position-relative">
+                            <!-- CodeMirror Dependencies -->
+                            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+                            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
+                            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+                            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/shell/shell.min.js"></script>
+
                             <textarea id="init-script-editor" class="form-control font-monospace bg-dark text-white border-0 rounded-3 p-3" rows="10" style="resize: vertical; font-size: 13px; line-height: 1.6; tab-size: 4;"><?= htmlspecialchars($initScript) ?></textarea>
+
+                            <script>
+                                document.addEventListener("DOMContentLoaded", function() {
+                                    // Slight delay to ensure DOM is fully ready when injected dynamically
+                                    setTimeout(function() {
+                                        var editorArea = document.getElementById("init-script-editor");
+                                        if (editorArea && typeof CodeMirror !== 'undefined') {
+                                            window.initScriptEditor = CodeMirror.fromTextArea(editorArea, {
+                                                mode: "shell",
+                                                theme: "dracula",
+                                                lineNumbers: true,
+                                                matchBrackets: true,
+                                                viewportMargin: Infinity
+                                            });
+                                            var wrapper = window.initScriptEditor.getWrapperElement();
+                                            wrapper.style.borderRadius = "8px";
+                                            wrapper.style.fontSize = "13.5px";
+                                            wrapper.style.padding = "10px 0";
+                                            wrapper.style.fontFamily = "var(--bs-font-monospace)";
+                                        }
+                                    }, 200);
+                                });
+                            </script>
                         </div>
                         <div class="d-flex justify-content-end mt-2">
                             <button type="button" class="btn btn-sm rounded-pill px-3 d-inline-flex align-items-center gap-1" style="background: #16a34a; color: #fff; font-size: 0.85rem;" onclick="runInitScript()">

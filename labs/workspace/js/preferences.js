@@ -92,7 +92,12 @@ function collectPreferencesData() {
     const alwaysOn = document.getElementById('always-on-toggle')?.checked || false;
 
     // Init script
-    const initScript = document.getElementById('init-script-editor')?.value || '#!/bin/bash\n';
+    let initScript = '#!/bin/bash\n';
+    if (window.initScriptEditor) {
+        initScript = window.initScriptEditor.getValue();
+    } else {
+        initScript = document.getElementById('init-script-editor')?.value || '#!/bin/bash\n';
+    }
 
     // Sudo and Code-Server passwords
     const suPass = document.getElementById('sudo-pass-input')?.value || '';
