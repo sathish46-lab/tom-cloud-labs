@@ -141,12 +141,12 @@ async function savePreferences() {
                     changed = true;
                 }
                 if (result.changes && result.changes.proxies) {
-                    setTimeout(() => TomNotify.show('HTTP proxy changes saved. Apply & Redeploy required.', 'Action Required', 'info', 5000), delay);
+                    setTimeout(() => TomNotify.show('HTTP proxy changes saved. Fast Apply required.', 'Action Required', 'info', 5000), delay);
                     delay += 500;
                     changed = true;
                 }
                 if (result.changes && result.changes.init_script) {
-                    setTimeout(() => TomNotify.show('Init script saved. Apply & Redeploy required.', 'Action Required', 'info', 5000), delay);
+                    setTimeout(() => TomNotify.show('Init script saved. Fast Apply required.', 'Action Required', 'info', 5000), delay);
                     changed = true;
                 }
                 if (!changed) {

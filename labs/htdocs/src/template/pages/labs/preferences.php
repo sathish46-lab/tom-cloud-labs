@@ -422,7 +422,7 @@
                                 <i class='bx bx-save'></i> Save Preferences
                             </button>
                             <button type="button" id="btn-apply-redeploy" class="btn rounded-pill px-4 py-2 d-inline-flex align-items-center gap-2 fw-bold" style="background: #eab308; color: #1a1a1a; font-size: 0.9rem; border: none;" onclick="applyAndRedeploy()">
-                                <i class='bx bx-refresh'></i> Apply & Redeploy now
+                                <i class='bx bxs-zap'></i> Fast Apply Now
                             </button>
                         </div>
                     </div>
