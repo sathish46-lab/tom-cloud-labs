@@ -17524,6 +17524,65 @@ html:not(.glass-mode) .clan-stats-grid {
   transform: scale(1.06);
 }
 
+.home-nav-card.card,
+[data-coreui-theme=light] .home-nav-card.card {
+  background: #1c1d26 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+}
+.home-nav-card.card:hover,
+[data-coreui-theme=light] .home-nav-card.card:hover {
+  background: #1c1d26 !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+.home-nav-card.card::before,
+[data-coreui-theme=light] .home-nav-card.card::before {
+  display: none !important;
+}
+.home-nav-card.card .card-title,
+.home-nav-card.card h5,
+[data-coreui-theme=light] .home-nav-card.card .card-title,
+[data-coreui-theme=light] .home-nav-card.card h5 {
+  color: #ffffff !important;
+}
+.home-nav-card.card .card-text,
+.home-nav-card.card p,
+[data-coreui-theme=light] .home-nav-card.card .card-text,
+[data-coreui-theme=light] .home-nav-card.card p {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+.home-nav-card.card .card-icon-ring,
+.home-nav-card.card .icon-wrapper,
+[data-coreui-theme=light] .home-nav-card.card .card-icon-ring,
+[data-coreui-theme=light] .home-nav-card.card .icon-wrapper {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.home-signout-btn {
+  width: 35px !important;
+  height: 35px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+}
+.home-signout-btn i {
+  font-size: 1.2rem !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  transition: color 0.2s ease !important;
+}
+.home-signout-btn:hover {
+  background: rgba(231, 76, 60, 0.15) !important;
+  border-color: rgba(231, 76, 60, 0.3) !important;
+}
+.home-signout-btn:hover i {
+  color: #e74c3c !important;
+}
+
 @keyframes greenPulse {
   0% {
     box-shadow: 0 0 0 0 rgba(16, 172, 132, 0.85);

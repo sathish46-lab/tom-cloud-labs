@@ -14,6 +14,8 @@ elseif ($hour < 21) $greeting = "Evening, legend";
 else $greeting = "Winding down";
 ?>
 
+
+
 <div class="container-fluid min-vh-100 d-flex flex-column align-items-center justify-content-center py-2 position-relative overflow-hidden">
     <!-- Premium Ambient Background Orbs -->
     <div class="scenery-orb-1"></div>
@@ -35,10 +37,10 @@ else $greeting = "Winding down";
         <p class="small mb-3" style="font-size: 0.85rem; opacity: 0.7; color: var(--cui-body-color-muted);">State of the art laboratories at the hands and homes of every learner!</p>
         <div class="d-flex justify-content-center gap-3 align-items-center">
             <span class="badge rounded-pill home-plan-badge px-3 py-2">
-                <i class='bx bxs-check-circle me-1' style="color: #f9ca24;"></i> Pro Plan
+                <i class='bx bxs-check-circle me-1' style="color: #f9ca24;"></i> PRO PLAN
             </span>
-            <a href="/logout" class="text-white-50 text-decoration-none home-signout-link small opacity-75">
-                <i class='bx bx-log-out-circle me-1'></i> Sign out
+            <a href="/logout" class="btn rounded-circle d-flex align-items-center justify-content-center shadow-sm border p-0" style="width: 35px; height: 35px; position: relative; z-index: 100; --cui-btn-border-color: rgba(255,255,255,0.1); --cui-btn-bg: rgba(255,255,255,0.05); --cui-btn-hover-bg: rgba(231,76,60,0.15); --cui-btn-hover-border-color: rgba(231,76,60,0.3); --cui-btn-color: rgba(255,255,255,0.7); --cui-btn-hover-color: #e74c3c;">
+                <i class='bx bx-log-out-circle' style="font-size: 1.2rem;"></i>
             </a>
         </div>
     </div>
