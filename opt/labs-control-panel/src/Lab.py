@@ -430,7 +430,11 @@ class Lab(BaseOrchestrator):
             }}
         )
         
-        # Phase 10: DONE
+        # Phase 10: INIT SCRIPT
+        self.log("Running init script...", "info", "init_script")
+        self.run_script(lab_data=lab_data)
+
+        # Phase 11: DONE
         self.log("Deployment Complete. Ready for connections.", "success", "done")
         self.log(f"Access URL: {code_server_url}", "info", "done")
         self.log(f"VPN Access: ssh {username}@{tunnel_ip}", "info", "done")
@@ -766,20 +770,16 @@ done
         # 2. Get script content
         script_content = lab_data.get('init_script', '#!/bin/bash\n')
         
-        # 3. Write script to local temp file
-        tmp_path = f"/tmp/init_{instance_hash}.sh"
-        with open(tmp_path, 'w') as f:
-            f.write(script_content)
-            
-        self.run(f"chmod +x {tmp_path}")
+        # 3. Write script to container using base64 (docker cp won't work from orchestrator container)
+        b64_content = base64.b64encode(script_content.encode()).decode()
         
-        # 4. Copy to container and run
-        self.log(f"Copying script to /home/{username}/init.sh...", "info", "system")
-        rc, out = self.run(f"docker cp {tmp_path} {lab_name}:/home/{username}/init.sh", capture=True)
+        self.log(f"Injecting script to /home/{username}/init.sh...", "info", "system")
+        rc, _ = self.run(f"docker exec {lab_name} bash -c 'echo {b64_content} | base64 -d > /home/{username}/init.sh'", capture=True)
         if rc != 0:
-            self.log("Failed to copy script to container.", "error", "system")
+            self.log("Failed to inject script into container.", "error", "system")
             return
             
+        self.run(f"docker exec {lab_name} chmod +x /home/{username}/init.sh")
         self.run(f"docker exec {lab_name} chown {username}:{username} /home/{username}/init.sh")
         
         self.log("Running script (output below)...", "info", "system")
@@ -790,10 +790,6 @@ done
             self.log("Script executed successfully.", "success", "system")
         else:
             self.log(f"Script failed with exit code {rc}.", "error", "system")
-            
-        # Cleanup temp file
-        if os.path.exists(tmp_path):
-            os.remove(tmp_path)
 
     def list_images(self):
         """List all lab templates and their build status"""
