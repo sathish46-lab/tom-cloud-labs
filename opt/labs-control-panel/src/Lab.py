@@ -375,7 +375,7 @@ class Lab(BaseOrchestrator):
         # Pass n8n Domain (9th argument) for Webhook URL
         n8n_domain_arg = selected_n8n_domain if selected_n8n_domain else ""
         escaped_auth_content = auth_content.replace('"', '\\"')
-        link_cmd = f'docker exec {instance_id} {link_script} "{username}" "{escaped_auth_content}" "{docker_ip}" "{dynamic_pass}" "{lab_priv_key}" "{tunnel_ip}" "{server_pub_key}" "{user_email}" "{n8n_domain_arg}" "{vps_docker_ip}"'
+        link_cmd = f'docker exec {instance_id} {link_script} "{username}" "{escaped_auth_content}" "{docker_ip}" "{dynamic_pass}" "{lab_priv_key}" "{tunnel_ip}" "{server_pub_key}" "{user_email}" "{n8n_domain_arg}" "{vps_docker_ip}" "{su_pass}"'
         
         code, _ = self.run(link_cmd, capture=False)
         if code != 0:

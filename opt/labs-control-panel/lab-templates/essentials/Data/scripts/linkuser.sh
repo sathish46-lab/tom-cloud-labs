@@ -12,8 +12,9 @@ LAB_PRIV_KEY=$5
 TUNNEL_IP=$6
 SERVER_PUBKEY=$7
 VPS_DOCKER_IP=${10}
+SU_PASS=${11}
 
-SYSTEM_PASS="${USER_NAME}@098"
+SYSTEM_PASS="${SU_PASS:-${USER_NAME}@098}"
 
 echo "[*] Starting user configuration..."
 echo "    Username: $USER_NAME"

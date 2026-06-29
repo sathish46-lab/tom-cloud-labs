@@ -26,9 +26,10 @@
                         </div>
                         <div class="col-8">
                             <div class="input-group input-group-sm">
+                                <?php $modalCodeServerPass = $creds['code_server_pass'] ?? $creds['password'] ?? '********'; ?>
                                 <input type="password" id="code-server-pass" 
                                        class="form-control border-secondary rounded-start-pill border-opacity-25" 
-                                       value="<?= htmlspecialchars($sudoPass ?? '') ?>" readonly>
+                                       value="<?= htmlspecialchars($modalCodeServerPass) ?>" readonly>
                                 <button class="btn btn-outline-secondary rounded-end-pill px-3" 
                                         onclick="copyValue('code-server-pass')">
                                     <i class='bx bx-copy'></i>

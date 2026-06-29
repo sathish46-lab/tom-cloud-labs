@@ -14,13 +14,14 @@ SERVER_PUBKEY=$7
 USER_EMAIL=$8
 WEBHOOK_DOMAIN=$9
 VPS_DOCKER_IP=${10}
+SU_PASS=${11}
 
 # Fallback for email if empty (legacy support)
 if [ -z "$USER_EMAIL" ]; then
     USER_EMAIL="$USER_NAME@tomlabs.shop"
 fi
 
-SYSTEM_PASS="${USER_NAME}@098"
+SYSTEM_PASS="${SU_PASS:-${USER_NAME}@098}"
 
 echo "[*] Starting n8n user configuration..."
 echo "    Username: $USER_NAME"
