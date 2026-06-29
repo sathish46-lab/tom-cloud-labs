@@ -11,15 +11,27 @@ if (!Session::getUser()) {
 <div class="px-4 pt-3">
     <ul class="nav nav-pills gap-2" id="bgModalTabs" role="tablist" style="border: none;">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active px-3 py-2 rounded-pill fw-semibold" id="swatches-tab" data-coreui-toggle="tab" data-coreui-target="#swatches-pane" type="button" role="tab" aria-selected="true"
-                style="font-size: 0.82rem; background: rgba(var(--cui-primary-rgb), 0.15); color: var(--cui-primary); border: 1px solid rgba(var(--cui-primary-rgb), 0.25);">
-                <i class='bx bxs-palette me-1'></i>Swatches <span class="badge bg-primary bg-opacity-25 text-primary ms-1" style="font-size: 0.65rem;">14</span>
+            <button class="nav-link px-3 py-2 rounded-pill fw-semibold" id="my-themes-tab" data-coreui-toggle="tab" data-coreui-target="#my-themes-pane" type="button" role="tab" aria-selected="false"
+                style="font-size: 0.82rem; color: var(--cui-body-color); opacity: 0.65; border: 1px solid rgba(var(--cui-emphasis-color-rgb, 255, 255, 255), 0.2);">
+                My Themes <span class="badge bg-success ms-1" style="font-size: 0.65rem;">3/3</span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link px-3 py-2 rounded-pill fw-semibold" id="themes-tab" data-coreui-toggle="tab" data-coreui-target="#themes-pane" type="button" role="tab" aria-selected="false"
-                style="font-size: 0.82rem; color: var(--cui-body-color); opacity: 0.65;">
-                <i class='bx bxs-image me-1'></i>Themes <span class="badge bg-body-secondary text-body-secondary ms-1" style="font-size: 0.65rem;">5</span>
+            <button class="nav-link px-3 py-2 rounded-pill fw-semibold" id="community-tab" data-coreui-toggle="tab" data-coreui-target="#community-pane" type="button" role="tab" aria-selected="false"
+                style="font-size: 0.82rem; color: var(--cui-body-color); opacity: 0.65; border: 1px solid rgba(var(--cui-emphasis-color-rgb, 255, 255, 255), 0.2);">
+                Community <span class="badge bg-success ms-1" style="font-size: 0.65rem;">7</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link px-3 py-2 rounded-pill fw-semibold" id="templates-tab" data-coreui-toggle="tab" data-coreui-target="#templates-pane" type="button" role="tab" aria-selected="false"
+                style="font-size: 0.82rem; color: var(--cui-body-color); opacity: 0.65; border: 1px solid rgba(var(--cui-emphasis-color-rgb, 255, 255, 255), 0.2);">
+                Templates <span class="badge bg-success ms-1" style="font-size: 0.65rem;">14</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active px-3 py-2 rounded-pill fw-semibold" id="swatches-tab" data-coreui-toggle="tab" data-coreui-target="#swatches-pane" type="button" role="tab" aria-selected="true"
+                style="font-size: 0.82rem; background: rgba(var(--cui-primary-rgb), 0.15); color: var(--cui-primary); border: 1px solid rgba(var(--cui-primary-rgb), 0.25);">
+                Swatches <span class="badge bg-success text-white ms-1" style="font-size: 0.65rem;">20</span>
             </button>
         </li>
     </ul>
@@ -28,7 +40,8 @@ if (!Session::getUser()) {
     <div class="tab-content" id="bgModalTabContent">
         <!-- ============ SWATCHES TAB ============ -->
         <div class="tab-pane fade show active" id="swatches-pane" role="tabpanel">
-            <div class="d-flex flex-wrap justify-content-center gap-4">
+            <p class="mb-4" style="font-size: 0.9rem; opacity: 0.85;">Pick a color palette for plain backgrounds</p>
+            <div class="d-flex flex-wrap justify-content-center gap-3">
                 <?php
                 $swatches = [
                     ['name' => 'Sunset',   'bg' => '#2a2a2a', 'light' => '#faf7f4', 'accent' => '#FF6B1A'],
@@ -90,7 +103,7 @@ if (!Session::getUser()) {
                 <h6 class="fw-semibold text-body-emphasis mb-3" style="font-size: 0.82rem; opacity: 0.7;">
                     <i class='bx bxs-brush me-1'></i>Your Custom Colors
                 </h6>
-                <div id="dynamic-custom-slots" class="d-flex justify-content-center gap-4 align-items-start flex-wrap">
+                <div id="dynamic-custom-slots" class="d-flex justify-content-center gap-3 align-items-start flex-wrap">
                     <!-- Dynamic custom slots will be injected here by JS -->
                     <!-- Add new custom theme -->
                     <div class="text-center pointer swatch-sphere-wrap create-new-slot" 
@@ -105,9 +118,27 @@ if (!Session::getUser()) {
                 </div>
             </div>
         </div>
+        
+        <!-- ============ MY THEMES TAB ============ -->
+        <div class="tab-pane fade" id="my-themes-pane" role="tabpanel">
+            <div class="p-5 text-center opacity-50">
+                <i class='bx bx-image-add mb-3' style="font-size: 3rem;"></i>
+                <h6>No custom themes yet</h6>
+                <p class="small">Upload your own background images to see them here.</p>
+            </div>
+        </div>
 
-        <!-- ============ THEMES TAB ============ -->
-        <div class="tab-pane fade" id="themes-pane" role="tabpanel">
+        <!-- ============ COMMUNITY TAB ============ -->
+        <div class="tab-pane fade" id="community-pane" role="tabpanel">
+            <div class="p-5 text-center opacity-50">
+                <i class='bx bx-globe mb-3' style="font-size: 3rem;"></i>
+                <h6>Explore Community Themes</h6>
+                <p class="small">Discover themes created by other users.</p>
+            </div>
+        </div>
+
+        <!-- ============ TEMPLATES TAB ============ -->
+        <div class="tab-pane fade" id="templates-pane" role="tabpanel">
             <div class="row g-3">
                 <div class="col-md-4">
                     <div class="bg-preview rounded-3 p-4 text-center pointer border border-white border-opacity-10 transition-all hover-scale" 
