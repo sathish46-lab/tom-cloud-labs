@@ -614,10 +614,10 @@ class Lab(BaseOrchestrator):
         # 1. ALWAYS dynamically create and inject the idle monitor script
         monitor_script_content = f"""#!/bin/bash
 USER=$1
-IDLE_LIMIT=20
+IDLE_LIMIT=120
 
 while true; do
-    sleep 5
+    sleep 30
     
     # Exit if code-server was killed manually
     if ! pgrep -u $USER -f code-server > /dev/null; then
