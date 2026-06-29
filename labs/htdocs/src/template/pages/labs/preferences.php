@@ -323,13 +323,30 @@
 
         <!-- Save / Apply Buttons -->
         <div class="row mt-2 mb-4">
-            <div class="col-12 d-flex justify-content-end gap-3">
-                <button type="button" id="btn-save-preferences" class="btn rounded-pill px-4 py-2 d-inline-flex align-items-center gap-2 fw-bold" style="background: #404040; color: #fff; font-size: 0.9rem;" onclick="savePreferences()">
-                    <i class='bx bx-save'></i> Save Preferences
-                </button>
-                <button type="button" id="btn-apply-redeploy" class="btn rounded-pill px-4 py-2 d-inline-flex align-items-center gap-2 fw-bold" style="background: #eab308; color: #1a1a1a; font-size: 0.9rem;" onclick="applyAndRedeploy()">
-                    <i class='bx bx-refresh'></i> Apply & Redeploy now
-                </button>
+            <div class="col-12">
+                <div class="card border-0 shadow-sm glass-card rounded-4 p-4">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+                        <div class="d-flex align-items-start gap-3">
+                            <div class="text-warning rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; min-width: 36px; background: rgba(234, 179, 8, 0.15);">
+                                <i class='bx bx-info-circle fs-4'></i>
+                            </div>
+                            <div style="max-width: 600px;">
+                                <h6 class="mb-1 fw-bold text-warning" style="font-size: 0.85rem; letter-spacing: 0.5px; text-transform: uppercase;">Fast Apply Note</h6>
+                                <p class="text-body-secondary mb-0 small" style="font-size: 0.82rem; line-height: 1.45;">
+                                    Applying preferences updates HTTP proxy routes and runs <code class="text-warning font-monospace bg-dark px-1.5 py-0.5 rounded">init.sh</code> immediately. This action does not perform a slow, full container redeployment.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-3 mt-3 mt-md-0 align-self-end align-self-md-center">
+                            <button type="button" id="btn-save-preferences" class="btn btn-secondary rounded-pill px-4 py-2 d-inline-flex align-items-center gap-2 fw-bold" style="font-size: 0.9rem;" onclick="savePreferences()">
+                                <i class='bx bx-save'></i> Save Preferences
+                            </button>
+                            <button type="button" id="btn-apply-redeploy" class="btn rounded-pill px-4 py-2 d-inline-flex align-items-center gap-2 fw-bold" style="background: #eab308; color: #1a1a1a; font-size: 0.9rem; border: none;" onclick="applyAndRedeploy()">
+                                <i class='bx bx-refresh'></i> Apply & Redeploy now
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
