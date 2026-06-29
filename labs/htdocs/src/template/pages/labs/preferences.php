@@ -374,18 +374,34 @@
                                     setTimeout(function() {
                                         var editorArea = document.getElementById("init-script-editor");
                                         if (editorArea && typeof CodeMirror !== 'undefined') {
+                                            var isLight = document.documentElement.getAttribute('data-coreui-theme') === 'light';
+                                            var activeTheme = isLight ? "default" : "dracula";
+                                            
                                             window.initScriptEditor = CodeMirror.fromTextArea(editorArea, {
                                                 mode: "shell",
-                                                theme: "dracula",
+                                                theme: activeTheme,
                                                 lineNumbers: true,
                                                 matchBrackets: true,
                                                 viewportMargin: Infinity
                                             });
+                                            
                                             var wrapper = window.initScriptEditor.getWrapperElement();
                                             wrapper.style.borderRadius = "8px";
                                             wrapper.style.fontSize = "13.5px";
                                             wrapper.style.padding = "10px 0";
                                             wrapper.style.fontFamily = "var(--bs-font-monospace)";
+                                            wrapper.style.border = "1px solid var(--cui-border-color, rgba(255,255,255,0.1))";
+                                            
+                                            // Watch for light/dark mode toggles
+                                            var themeObserver = new MutationObserver(function(mutations) {
+                                                mutations.forEach(function(mutation) {
+                                                    if (mutation.attributeName === 'data-coreui-theme') {
+                                                        var nowLight = document.documentElement.getAttribute('data-coreui-theme') === 'light';
+                                                        window.initScriptEditor.setOption("theme", nowLight ? "default" : "dracula");
+                                                    }
+                                                });
+                                            });
+                                            themeObserver.observe(document.documentElement, { attributes: true });
                                         }
                                     }, 200);
                                 });
