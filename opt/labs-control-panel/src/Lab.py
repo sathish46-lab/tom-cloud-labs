@@ -639,19 +639,21 @@ while true; do
     fi
 done
 """
-        with open("/tmp/monitor_codeserver.sh", "w") as f:
-            f.write(monitor_script_content)
-            
-        self.run(f"docker cp /tmp/monitor_codeserver.sh {lab_name}:/var/labsdata/scripts/monitor_codeserver.sh")
+        # Write the script directly into the container using docker exec
+        # (docker cp won't work because labsctl runs inside Dev_lab, 
+        #  and docker cp reads from the host filesystem, not Dev_lab's /tmp)
+        escaped_content = monitor_script_content.replace("'", "'\\''")
+        self.run(f"docker exec {lab_name} mkdir -p /var/labsdata/scripts")
+        self.run(f"docker exec {lab_name} bash -c 'echo {chr(39)}{escaped_content}{chr(39)} > /var/labsdata/scripts/monitor_codeserver.sh'")
         self.run(f"docker exec {lab_name} chmod +x /var/labsdata/scripts/monitor_codeserver.sh")
 
         # 2. Start monitor if not running (using detached mode!)
         monitor_check = f"docker exec {lab_name} pgrep -f monitor_codeserver"
         mcode, _ = self.run(monitor_check, capture=True)
         if mcode != 0:
-            docker_monitor = f"docker exec -d {lab_name} bash -c 'nohup /var/labsdata/scripts/monitor_codeserver.sh {username} > /var/log/code-monitor.log 2>&1 &'"
+            docker_monitor = f"docker exec -d {lab_name} bash /var/labsdata/scripts/monitor_codeserver.sh {username}"
             self.run(docker_monitor)
-            self.log("Idle monitor started (20s timeout).", "success", "system")
+            self.log("Idle monitor started (2min timeout for testing).", "success", "system")
 
         # 3. Check code-server
         check_cmd = f"docker exec {lab_name} pgrep -u {username} -f code-server"
