@@ -81,11 +81,12 @@ function timeAgo($timestamp) {
                             // Add usage status badge
                             $dm = new DomainManager();
                             $usageInfo = $dm->getDomainUsage(Session::getUser()->getUserId(), $d['domain']);
-                            if ($usageInfo): 
+                            if ($usageInfo && isset($usageInfo['status']) && $usageInfo['status'] === 'running'): 
                         ?>
-                            <span class="badge bg-danger text-white rounded-pill fw-bold" style="font-size: 8px; padding: 2px 6px; text-transform: capitalize;">In Use</span>
+                            <span class="badge bg-primary text-white rounded-pill fw-bold text-lowercase" style="font-size: 8px; padding: 2px 6px;">in use</span>
                         <?php else: ?>
-                            <span class="badge bg-info text-dark rounded-pill fw-bold" style="font-size: 8px; padding: 2px 6px; text-transform: capitalize;">Available</span>
+                            <span class="badge bg-warning text-dark rounded-pill fw-bold text-lowercase" style="font-size: 8px; padding: 2px 6px;">orphaned</span>
+                            <span class="badge bg-danger text-white rounded-pill fw-bold text-lowercase" style="font-size: 8px; padding: 2px 6px;">not in use</span>
                         <?php endif; ?>
                         
                         <?php
@@ -101,8 +102,8 @@ function timeAgo($timestamp) {
                             }
                             if ($certIndex >= 0):
                         ?>
-                            <a href="/ssl" class="badge text-white rounded-pill fw-bold border border-secondary text-decoration-none" style="background-color: #1a1b1e; font-size: 8px; padding: 2px 6px; transition: all 0.2s;">
-                                SSL <?= $hasValidSsl ? 'valid' : 'invalid' ?>
+                            <a href="/ssl" class="badge <?= $hasValidSsl ? 'bg-success' : 'bg-danger' ?> text-white rounded-pill fw-bold text-decoration-none text-lowercase" style="font-size: 8px; padding: 2px 6px; transition: all 0.2s;">
+                                ssl <?= $hasValidSsl ? 'valid' : 'invalid' ?>
                             </a>
                         <?php endif; ?>
                     </div>
@@ -130,7 +131,7 @@ function timeAgo($timestamp) {
                         
                         <?php 
                             $usageInfo = $dm->getDomainUsage(Session::getUser()->getUserId(), $d['domain']);
-                            if ($usageInfo): 
+                            if ($usageInfo && isset($usageInfo['status']) && $usageInfo['status'] === 'running'): 
                         ?>
                             <div class="mb-1">
                                 <b style="color: var(--glass-text-muted); font-weight: 600;">Currently Used:</b> 
@@ -139,7 +140,7 @@ function timeAgo($timestamp) {
                         <?php else: ?>
                             <div class="mb-1">
                                 <b style="color: var(--glass-text-muted); font-weight: 600;">Currently Used:</b> 
-                                <span class="ms-1 opacity-50">Not in use</span>
+                                <span class="ms-1 opacity-50 text-lowercase">(not in use)</span>
                             </div>
                         <?php endif; ?>
                     </div>

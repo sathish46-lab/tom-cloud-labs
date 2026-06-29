@@ -255,6 +255,8 @@ class DomainManager {
         $allUserLabs = $this->db->deployed_labs->find(['user_id' => (int)$user_id]);
         
         foreach($allUserLabs as $lab) {
+            $status = $lab['status'] ?? 'offline';
+
             $labType = $lab['lab_type'] ?? 'unknown';
             $instanceHash = $lab['instance_hash'] ?? '';
             
@@ -268,7 +270,8 @@ class DomainManager {
                 $usageMap[$domain] = [
                     'lab_type' => $labType,
                     'usage' => 'VS Code Web',
-                    'instance_hash' => $instanceHash
+                    'instance_hash' => $instanceHash,
+                    'status' => $status
                 ];
             }
             
@@ -284,7 +287,8 @@ class DomainManager {
                         $usageMap[$domain] = [
                             'lab_type' => $labType,
                             'usage' => 'MinIO Console',
-                            'instance_hash' => $instanceHash
+                            'instance_hash' => $instanceHash,
+                            'status' => $status
                         ];
                     }
                 }
@@ -295,8 +299,9 @@ class DomainManager {
                     if ($domain) {
                         $usageMap[$domain] = [
                             'lab_type' => $labType,
-                            'usage' => 'S3 API',
-                            'instance_hash' => $instanceHash
+                            'usage' => 'MinIO API',
+                            'instance_hash' => $instanceHash,
+                            'status' => $status
                         ];
                     }
                 }
@@ -314,7 +319,8 @@ class DomainManager {
                         $usageMap[$domain] = [
                             'lab_type' => $labType,
                             'usage' => 'Public Exposure',
-                            'instance_hash' => $instanceHash
+                            'instance_hash' => $instanceHash,
+                            'status' => $status
                         ];
                     }
                 }
@@ -332,7 +338,8 @@ class DomainManager {
                         $usageMap[$domain] = [
                             'lab_type' => $labType,
                             'usage' => 'HTTP Proxy (Port ' . ($proxy['port'] ?? '?') . ')',
-                            'instance_hash' => $instanceHash
+                            'instance_hash' => $instanceHash,
+                            'status' => $status
                         ];
                     }
                 }

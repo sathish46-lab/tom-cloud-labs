@@ -385,8 +385,10 @@ class SSLManager {
             // Create badge labels from usage
             $badges = ['Tom'];
             $badges[] = 'valid';
-            if ($usedByInfo) {
-                $badges[] = 'in use - ' . $usedByInfo['lab_type'];
+            if ($usedByInfo && isset($usedByInfo['status']) && $usedByInfo['status'] === 'running') {
+                $badges[] = 'in use';
+            } else {
+                $badges[] = 'orphaned';
             }
             
             $certs[] = [
@@ -400,6 +402,8 @@ class SSLManager {
                 'is_expired' => false,
                 'is_valid' => true,
                 'used_by' => $usedByStr,
+                'used_by_hash' => $usedByInfo['instance_hash'] ?? null,
+                'used_by_status' => $usedByInfo['status'] ?? null,
                 'badges' => $badges
             ];
             
@@ -461,6 +465,8 @@ class SSLManager {
                         if (isset($usageMap[$san])) {
                             $info = $usageMap[$san];
                             $cert['used_by'] = $info['usage'] . ' (' . $info['lab_type'] . ' lab, instance ' . substr($info['instance_hash'], 0, 20) . '...)';
+                            $cert['used_by_hash'] = $info['instance_hash'] ?? null;
+                            $cert['used_by_status'] = $info['status'] ?? null;
                             break;
                         }
                     }

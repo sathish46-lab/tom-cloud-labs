@@ -78,11 +78,19 @@ $serverIP = $dm->getServerIP();
                             // Generate default badges
                             $badges = [];
                             if ($cert['is_valid']) $badges[] = 'valid';
+                            
+                            // Check usage
+                            if (!empty($cert['used_by']) && isset($cert['used_by_status']) && $cert['used_by_status'] === 'running') {
+                                $badges[] = 'in use';
+                            } else {
+                                $badges[] = 'orphaned';
+                            }
                         }
                         foreach ($badges as $badge): 
                             $badgeClass = 'bg-secondary';
                             $textClass = 'text-white';
                             $badgeLabel = htmlspecialchars($badge);
+                            $tooltipAttr = '';
                             
                             if (stripos($badge, 'Tom') !== false) {
                                 $badgeClass = 'bg-purple';
@@ -91,15 +99,23 @@ $serverIP = $dm->getServerIP();
                                 $badgeClass = 'bg-success';
                                 $textClass = 'text-white';
                             } elseif (stripos($badge, 'in use') !== false) {
-                                $badgeClass = 'bg-info';
+                                $badgeClass = 'bg-primary';
+                                $textClass = 'text-white';
+                            } elseif (stripos($badge, 'orphaned') !== false || stripos($badge, 'available') !== false) {
+                                $badgeClass = 'bg-warning';
                                 $textClass = 'text-dark';
+                                if (!empty($cert['used_by_hash']) && isset($cert['used_by_status']) && $cert['used_by_status'] !== 'running') {
+                                    $tooltipAttr = 'data-coreui-toggle="tooltip" title="Lab instance ' . htmlspecialchars(substr($cert['used_by_hash'], 0, 10)) . ' is ' . htmlspecialchars($cert['used_by_status']) . '. No running lab routes these domains anymore."';
+                                } else {
+                                    $tooltipAttr = 'data-coreui-toggle="tooltip" title="No running lab routes these domains anymore."';
+                                }
                             } elseif (stripos($badge, 'expired') !== false) {
                                 $badgeClass = 'bg-danger';
                                 $textClass = 'text-white';
                             }
                         ?>
-                            <span class="badge <?php echo $badgeClass; ?> <?php echo $textClass; ?> rounded-pill fw-bold" 
-                                  style="font-size: 8px; padding: 2px 6px; text-transform: capitalize;"><?php echo $badgeLabel; ?></span>
+                            <span class="badge <?php echo $badgeClass; ?> <?php echo $textClass; ?> rounded-pill fw-bold text-lowercase" 
+                                  style="font-size: 8px; padding: 2px 6px;" <?php echo $tooltipAttr; ?>><?php echo $badgeLabel; ?></span>
                         <?php endforeach; ?>
                     </div>
 

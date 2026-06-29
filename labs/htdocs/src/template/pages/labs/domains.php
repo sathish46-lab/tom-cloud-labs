@@ -93,8 +93,14 @@
         <!-- Masonry Grid for Domains -->
         <div class="row row-cols-1 row-cols-md-3 g-3" id="masonry-area">
            <?php 
-                $activeDomains = (array)($labData['domains'] ?? []);
-                if(empty($activeDomains)):
+                // Filter DomainManager's map for this specific instance (includes http proxies)
+                $instanceDomains = [];
+                foreach ($domainUsageMap as $dom => $info) {
+                    if (($info['instance_hash'] ?? '') === $fullHash) {
+                       $instanceDomains[$dom] = $info;
+                    }
+                }
+                if(!$isRunning || empty($instanceDomains)):
             ?>
                 <div class="d-flex justify-content-center align-items-center vh-10 w-100">
                     <div class="card p-3 text-center shadow-lg border-0 rounded-4 bg-dark bg-opacity-25" 
@@ -108,22 +114,22 @@
                         <h4 class="fw-bold text-white mb-3">No Domains Associated Yet</h4>
                         
                         <p class="text-secondary mb-2 mx-auto small" style="line-height: 1.6; opacity: 0.8;">
-                            This lab is running but needs to be redeployed to assign domains. Visit the dashboard and click the <strong>Redeploy</strong> button to configure your access.
+                            Deploy this lab to see associated domains here. Once deployed, your domains will be automatically configured and displayed on this page.
                         </p>
 
-                        <button class="btn btn-lg rounded-pill px-4 py-1 fw-bold hover-scale text-white border-0 shadow-sm bg-gradient" 
+                        <button class="btn btn-lg rounded-pill px-4 py-1 fw-bold hover-scale text-white border-0 shadow-sm bg-gradient mt-2" 
                                 onclick="handleDeploy(this, '<?= $labType ?>')">
-                            <i class='bx bx-rocket me-2'></i> Attach Domain Now
+                            <i class='bx <?= $isRunning ? 'bx-refresh' : 'bx-cloud-upload' ?> me-2'></i> <?= $isRunning ? 'Redeploy' : 'Deploy' ?> Now
                         </button>
                     </div>
                 </div>
             <?php else: ?>
-                <?php foreach($activeDomains as $dom): ?>
+                <?php foreach($instanceDomains as $dom => $info): ?>
                 <div class="col">
                     <div class="card h-100 border-0 shadow-sm rounded-4 position-relative overflow-hidden bg-dark">
                         <div class="bg-success p-2 d-flex align-items-center gap-2">
                             <i class="bx bx-globe text-white fs-5"></i>
-                            <span class="text-white fw-bold">Port 80 Public</span>
+                            <span class="text-white fw-bold"><?= htmlspecialchars($info['usage'] ?? 'Public Exposure') ?></span>
                         </div>
                         
                         <div class="card-body p-4 d-flex flex-column">
@@ -140,7 +146,7 @@
                             </div>
 
                             <div class="mt-auto">
-                                <p class="small text-secondary mb-1 fw-bold">Service: <?= htmlspecialchars($labType) ?></p>
+                                <p class="small text-secondary mb-1 fw-bold">Service: <?= htmlspecialchars($info['lab_type'] ?? $labType) ?></p>
                             </div>
                         </div>
                     </div>
