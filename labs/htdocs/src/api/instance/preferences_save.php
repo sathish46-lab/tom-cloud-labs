@@ -81,14 +81,16 @@ try {
 
     if (isset($input['su_pass']) && $input['su_pass'] !== '') {
         $updateData['staged_preferences.su_pass'] = trim((string)$input['su_pass']);
-        if (($existing['credentials']['su_pass'] ?? '') !== trim((string)$input['su_pass'])) {
+        $currentSuPass = $existing['staged_preferences']['su_pass'] ?? $existing['credentials']['su_pass'] ?? '';
+        if ($currentSuPass !== trim((string)$input['su_pass'])) {
             $changes['passwords'] = true;
         }
     }
     if (isset($input['code_server_pass']) && $input['code_server_pass'] !== '') {
         $updateData['staged_preferences.code_server_pass'] = trim((string)$input['code_server_pass']);
         $updateData['staged_preferences.password'] = trim((string)$input['code_server_pass']);
-        if (($existing['credentials']['code_server_pass'] ?? '') !== trim((string)$input['code_server_pass'])) {
+        $currentCodePass = $existing['staged_preferences']['code_server_pass'] ?? $existing['credentials']['code_server_pass'] ?? '';
+        if ($currentCodePass !== trim((string)$input['code_server_pass'])) {
             $changes['passwords'] = true;
         }
     }

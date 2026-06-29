@@ -128,13 +128,23 @@ async function savePreferences() {
         const result = await response.json();
         if (result.status === 'success') {
             if (window.TomNotify) {
+                let changed = false;
+                let delay = 0;
                 if (result.changes && result.changes.passwords) {
-                    TomNotify.show('Password changes saved — applied on the next redeploy.', 'Saved', 'info', 5000);
-                } else if (result.changes && result.changes.proxies) {
-                    TomNotify.show('HTTP proxy changes saved. Apply & Redeploy required.', 'Action Required', 'info', 5000);
-                } else if (result.changes && result.changes.init_script) {
-                    TomNotify.show('Init script saved. Apply & Redeploy required.', 'Action Required', 'info', 5000);
-                } else {
+                    setTimeout(() => TomNotify.show('Password changes saved — applied on the next redeploy.', 'Saved', 'info', 5000), delay);
+                    delay += 500;
+                    changed = true;
+                }
+                if (result.changes && result.changes.proxies) {
+                    setTimeout(() => TomNotify.show('HTTP proxy changes saved. Apply & Redeploy required.', 'Action Required', 'info', 5000), delay);
+                    delay += 500;
+                    changed = true;
+                }
+                if (result.changes && result.changes.init_script) {
+                    setTimeout(() => TomNotify.show('Init script saved. Apply & Redeploy required.', 'Action Required', 'info', 5000), delay);
+                    changed = true;
+                }
+                if (!changed) {
                     TomNotify.show('Preferences saved successfully.', 'Saved', 'success', 3000);
                 }
             }
