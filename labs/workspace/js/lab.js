@@ -555,7 +555,13 @@ const Dashboard = {
 
     // Color coding
     if (msg.startsWith("[✓]")) div.style.color = "#a6e3a1";
-    if (msg.startsWith("[!]")) div.style.color = "#f38ba8";
+    if (msg.startsWith("[!]")) {
+        div.style.color = "#f38ba8";
+        // Show TomNotify for critical background errors
+        if (msg.includes("Lab is not running")) {
+            if (window.TomNotify) TomNotify.show("Lab is not running. Please start it first.", "Error", "warning", 5000);
+        }
+    }
 
     div.innerText = msg;
     container.appendChild(div);
