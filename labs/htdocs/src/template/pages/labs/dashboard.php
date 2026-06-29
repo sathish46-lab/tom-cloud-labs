@@ -345,9 +345,13 @@
                                     <p class="small text-muted mb-0">No recent lab activity.</p>
                                 <?php else: ?>
                                     <div class="list-group list-group-flush bg-transparent">
-                                        <?php foreach(array_slice($labLogs, 0, 10) as $log): ?>
+                                        <?php foreach(array_slice($labLogs, 0, 10) as $log): 
+                                            $actionLower = strtolower($log['action']);
+                                            $iconClass = 'bx-refresh text-success';
+                                            if (strpos($actionLower, 'stop') !== false) $iconClass = 'bx-power-off text-danger';
+                                        ?>
                                             <div class="list-group-item bg-transparent border-bottom border-success border-opacity-10 py-2 px-0 d-flex gap-3 align-items-center">
-                                                <i class='bx bx-refresh text-success fs-5'></i>
+                                                <i class='bx <?= $iconClass ?> fs-5'></i>
                                                 <div>
                                                     <div class="fw-bold text-body small"><?= htmlspecialchars($log['action']) ?></div>
                                                     <div class="text-muted small opacity-75"><?= htmlspecialchars($log['user']) ?> &bull; <?= timeAgo($log['timestamp']) ?></div>
@@ -372,11 +376,11 @@
                                         <?php foreach(array_slice($prefLogs, 0, 10) as $log): ?>
                                             <div class="list-group-item bg-transparent border-bottom border-success border-opacity-10 py-2 px-0 d-flex gap-3 align-items-center">
                                                 <i class='bx bx-cog text-primary fs-5'></i>
-                                                <div>
+                                                <div class="overflow-hidden">
                                                     <div class="fw-bold text-body small"><?= htmlspecialchars($log['action']) ?></div>
                                                     <div class="text-muted small opacity-75 mb-1"><?= htmlspecialchars($log['user']) ?> &bull; <?= timeAgo($log['timestamp']) ?></div>
-                                                    <div class="badge bg-info bg-opacity-10 text-info fw-bold">
-                                                        <?= htmlspecialchars($log['details'] ?? 'Applied Preferences') ?>
+                                                    <div class="small text-secondary" style="word-break: break-word; line-height: 1.4; opacity: 0.85;">
+                                                        <?= ucfirst(strtolower(htmlspecialchars($log['details'] ?? 'Applied Preferences'))) ?>
                                                     </div>
                                                 </div>
                                             </div>
