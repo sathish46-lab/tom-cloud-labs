@@ -64,15 +64,25 @@ try {
     $alwaysOn = !empty($input['always_on']);
     $initScript = isset($input['init_script']) ? (string)$input['init_script'] : '#!/bin/bash';
 
+    $updateData = [
+        'http_proxies' => $httpProxies,
+        'always_on'    => $alwaysOn,
+        'init_script'  => $initScript,
+        'prefs_updated_at' => time()
+    ];
+
+    if (isset($input['su_pass']) && $input['su_pass'] !== '') {
+        $updateData['staged_preferences.su_pass'] = trim((string)$input['su_pass']);
+    }
+    if (isset($input['code_server_pass']) && $input['code_server_pass'] !== '') {
+        $updateData['staged_preferences.code_server_pass'] = trim((string)$input['code_server_pass']);
+        $updateData['staged_preferences.password'] = trim((string)$input['code_server_pass']);
+    }
+
     // 1. Save to DB first
     $col->updateOne(
         ['instance_hash' => $instanceHash],
-        ['$set' => [
-            'http_proxies' => $httpProxies,
-            'always_on'    => $alwaysOn,
-            'init_script'  => $initScript,
-            'prefs_updated_at' => time()
-        ]]
+        ['$set' => $updateData]
     );
 
     // 2. Queue an apply-preferences job via RabbitMQ

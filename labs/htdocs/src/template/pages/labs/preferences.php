@@ -57,7 +57,17 @@
     $creds = $labData['credentials'] ?? null;
     $deviceIp = isset($labData['internal_ip']) ? $labData['internal_ip'] : "0.0.0.0";
     $sshCommand = ($isRunning && isset($creds['tunnel_ip'])) ? "ssh " . $currentUsername . "@" . $creds['tunnel_ip'] : "#";
-    $sudoPass = $creds['password'] ?? "********";
+    $sudoPass = $creds['su_pass'] ?? $creds['password'] ?? "********";
+    // Handle staged preferences for input fields
+    $staged = $labData['staged_preferences'] ?? [];
+    $stagedPasswordNames = [];
+    
+    if (!empty($staged['su_pass']) && $staged['su_pass'] !== $sudoPass) {
+        $sudoPassInput = $staged['su_pass'];
+        $stagedPasswordNames[] = '<span class="fw-bold" style="color: cyan;">Sudo Password</span>';
+    } else {
+        $sudoPassInput = $sudoPass;
+    }
 
     // Lab configuration Load place
     $configData = (array)$labData;
@@ -101,34 +111,81 @@
                             <label class="small fw-bold text-secondary mb-2 text-uppercase ls-1">Sudo Password</label>
                             <div class="input-group p-1 bg-dark bg-opacity-50 rounded-pill border border-secondary border-opacity-25">
                                 <span class="input-group-text bg-transparent border-0 text-secondary ps-3"><i class='bx bx-key'></i></span>
-                                <input type="text" class="form-control bg-transparent border-0 text-white fw-bold font-monospace" value="<?= htmlspecialchars($sudoPass) ?>" readonly>
-                                <button class="btn btn-dark rounded-circle m-1 d-flex align-items-center justify-content-center" 
-                                        style="width: 32px; height: 32px;"
-                                        onclick="copyText('<?= htmlspecialchars($sudoPass) ?>')">
-                                    <i class='bx bx-copy'></i>
-                                </button>
+                                <input type="password" id="sudo-pass-input" class="form-control bg-transparent border-0 text-white fw-bold font-monospace" value="<?= htmlspecialchars($sudoPassInput) ?>">
+                                <div class="d-flex align-items-center gap-1 pe-1">
+                                    <button type="button" class="btn btn-link text-secondary p-0 d-flex align-items-center justify-content-center" 
+                                            style="width: 32px; height: 32px; text-decoration: none;"
+                                            onclick="togglePasswordVisibility('sudo-pass-input', this)">
+                                        <i class='bx bx-hide fs-5'></i>
+                                    </button>
+                                    <div class="vr bg-secondary opacity-25" style="height: 18px;"></div>
+                                    <button type="button" class="btn btn-link text-secondary p-0 d-flex align-items-center justify-content-center" 
+                                            style="width: 32px; height: 32px; text-decoration: none;"
+                                            onclick="generateNewPassword('sudo-pass-input')">
+                                        <i class='bx bx-refresh fs-5'></i>
+                                    </button>
+                                    <div class="vr bg-secondary opacity-25" style="height: 18px;"></div>
+                                    <button type="button" class="btn btn-link text-secondary p-0 d-flex align-items-center justify-content-center" 
+                                            style="width: 32px; height: 32px; text-decoration: none;"
+                                            onclick="copyFromInput('sudo-pass-input')">
+                                        <i class='bx bx-copy fs-5'></i>
+                                    </button>
+                                </div>
                             </div>
                             <div class="form-text small opacity-50 mt-2 ms-2"><i class='bx bx-info-circle me-1'></i>Used for root access within the terminal.</div>
                         </div>
 
-                        <?php if($creds && isset($creds['code_server_password'])): ?>
+                        <?php 
+                            $codeServerPass = $creds['code_server_pass'] ?? $creds['password'] ?? null;
+                            if($codeServerPass): 
+                                $codeServerPassInput = (!empty($staged['code_server_pass']) && $staged['code_server_pass'] !== $codeServerPass) ? $staged['code_server_pass'] : $codeServerPass;
+                                if ($codeServerPassInput !== $codeServerPass) {
+                                    $stagedPasswordNames[] = '<span class="fw-bold" style="color: cyan;">Code-Server Password</span>';
+                                }
+                        ?>
                         <div class="mb-4">
                             <label class="small fw-bold text-secondary mb-2 text-uppercase ls-1">Code-Server Password</label>
                             <div class="input-group p-1 bg-dark bg-opacity-50 rounded-pill border border-secondary border-opacity-25">
                                 <span class="input-group-text bg-transparent border-0 text-secondary ps-3"><i class='bx bx-code-alt'></i></span>
-                                <input type="text" class="form-control bg-transparent border-0 text-white fw-bold font-monospace" value="<?= htmlspecialchars($creds['code_server_password']) ?>" readonly>
-                                <button class="btn btn-dark rounded-circle m-1 d-flex align-items-center justify-content-center" 
-                                        style="width: 32px; height: 32px;"
-                                        onclick="copyText('<?= htmlspecialchars($creds['code_server_password']) ?>')">
-                                    <i class='bx bx-copy'></i>
-                                </button>
+                                <input type="password" id="code-server-pass-input" class="form-control bg-transparent border-0 text-white fw-bold font-monospace" value="<?= htmlspecialchars($codeServerPassInput) ?>">
+                                <div class="d-flex align-items-center gap-1 pe-1">
+                                    <button type="button" class="btn btn-link text-secondary p-0 d-flex align-items-center justify-content-center" 
+                                            style="width: 32px; height: 32px; text-decoration: none;"
+                                            onclick="togglePasswordVisibility('code-server-pass-input', this)">
+                                        <i class='bx bx-hide fs-5'></i>
+                                    </button>
+                                    <div class="vr bg-secondary opacity-25" style="height: 18px;"></div>
+                                    <button type="button" class="btn btn-link text-secondary p-0 d-flex align-items-center justify-content-center" 
+                                            style="width: 32px; height: 32px; text-decoration: none;"
+                                            onclick="generateNewPassword('code-server-pass-input')">
+                                        <i class='bx bx-refresh fs-5'></i>
+                                    </button>
+                                    <div class="vr bg-secondary opacity-25" style="height: 18px;"></div>
+                                    <button type="button" class="btn btn-link text-secondary p-0 d-flex align-items-center justify-content-center" 
+                                            style="width: 32px; height: 32px; text-decoration: none;"
+                                            onclick="copyFromInput('code-server-pass-input')">
+                                        <i class='bx bx-copy fs-5'></i>
+                                    </button>
+                                </div>
                             </div>
                             <div class="form-text small opacity-50 mt-2 ms-2"><i class='bx bx-info-circle me-1'></i>Password for the web-based VS Code environment.</div>
+                        </div>
+                        <?php endif; ?>
+
+                        <?php if (!empty($stagedPasswordNames)): ?>
+                        <?php $changedNamesStr = implode(' and ', $stagedPasswordNames); ?>
+                        <div class="d-flex align-items-center p-3 mb-0 mt-3 border rounded-3" style="background-color: rgba(255, 193, 7, 0.1); border-color: rgba(255, 193, 7, 0.3) !important;">
+                            <i class='bx bx-error-circle fs-4 me-3 text-warning'></i>
+                            <div class="small text-warning fw-medium" style="line-height: 1.5;">
+                                Your <?= $changedNamesStr ?> is not updated in your lab. You need to redeploy for changes to take effect. The currently active password is shown in your dashboard.
+                            </div>
                         </div>
                         <?php endif; ?>
                     </div>
                 </div>
             </div>
+
+
              <div class="col-lg-6">
                  <div class="card border-0 shadow-sm glass-card rounded-4">
                     <div class="card-header bg-transparent border-0 pt-4 px-4">
@@ -174,15 +231,44 @@
             </div>
         </div>
         
-        <!-- HTTP Proxies Section -->
+        <!-- Side-by-Side: HTTP Proxies & Lifecycle Section -->
         <div class="row mt-4">
-            <div class="col-12">
-                <div class="card border-0 shadow-sm glass-card rounded-4 mb-4">
+            <!-- Left Side: Lifecycle -->
+            <div class="col-md-5">
+                <div class="card border-0 shadow-sm glass-card rounded-4 mb-4" style="height: calc(100% - 1.5rem);">
+                    <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2">
+                        <h6 class="fw-bold mb-1 text-uppercase ls-1 small">Lifecycle</h6>
+                    </div>
+                    <div class="card-body p-4 pt-2 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="form-check form-switch mb-3">
+                                <?php $alwaysOn = ($labData && isset($labData['always_on'])) ? (bool)$labData['always_on'] : false; ?>
+                                <input class="form-check-input" type="checkbox" id="always-on-toggle" <?= $alwaysOn ? 'checked' : '' ?> style="transform: scale(1.1); margin-right: 8px;">
+                                <label class="form-check-label fw-bold small" for="always-on-toggle">Keep this instance running (Always-on)</label>
+                            </div>
+                            <p class="text-body-secondary small mb-0" style="font-size: 0.82rem; line-height: 1.5;">
+                                When enabled, a background worker monitors this lab and automatically restarts it within ~10 minutes if it stops. The instance will not auto-expire.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: HTTP Proxies -->
+            <div class="col-md-7">
+                <div class="card border-0 shadow-sm glass-card rounded-4 mb-4" style="height: calc(100% - 1.5rem);">
                     <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2">
                         <h6 class="fw-bold mb-1">HTTP Proxies</h6>
-                        <p class="small text-muted mb-0">Reverse-proxy any port to one or more of your domains over HTTP — TLS is terminated for you at the edge.</p>
+                        <p class="small text-muted mb-0">Reverse-proxy ports to your domains over HTTP. TLS is terminated at the edge.</p>
                     </div>
-                    <div class="card-body p-4">
+                    <div class="card-body p-4 pt-2">
+                        <!-- Headers -->
+                        <div class="row align-items-center mb-2 text-muted small fw-bold d-none d-md-flex px-1">
+                            <div class="col-md-4">Local Port</div>
+                            <div class="col-md-7">Target Domain</div>
+                            <div class="col-md-1"></div>
+                        </div>
+
                         <div id="http-proxies-list">
                             <?php
                                 $httpProxies = [];
@@ -199,21 +285,18 @@
                                 if (empty($httpProxies)):
                             ?>
                             <div class="row align-items-center mb-3 proxy-row" data-index="0">
-                                <div class="col-md-2">
-                                    <label class="small fw-bold text-secondary mb-0">Port & Domains</label>
+                                <div class="col-md-4 col-12 mb-2 mb-md-0">
+                                    <input type="number" name="proxy_port[]" class="form-control bg-dark bg-opacity-50 rounded-pill border-secondary border-opacity-25 text-white px-3 proxy-port" placeholder="Port (e.g. 8080)" min="1" max="65535">
                                 </div>
-                                <div class="col-md-3">
-                                    <input type="number" name="proxy_port[]" class="form-control bg-dark bg-opacity-50 rounded-pill border-secondary border-opacity-25 text-white px-3 proxy-port" placeholder="Port" min="1" max="65535">
-                                </div>
-                                <div class="col-md-6">
+                                <div class="col-md-7 col-10">
                                     <select name="proxy_domain[]" class="form-select bg-dark bg-opacity-50 rounded-pill border-secondary border-opacity-25 text-white px-3 proxy-domain-select">
-                                        <option value="">Select...</option>
+                                        <option value="">Select Domain...</option>
                                         <?php foreach ($userDomains as $ud): ?>
                                             <option value="<?= htmlspecialchars($ud) ?>"><?= htmlspecialchars($ud) ?></option>
                                         <?php endforeach; ?>
                                     </select>
                                 </div>
-                                <div class="col-md-1">
+                                <div class="col-md-1 col-2 d-flex justify-content-end">
                                     <button type="button" class="btn rounded-circle d-flex align-items-center justify-content-center p-0 btn-remove-proxy" style="width: 36px; height: 36px; border: 1px solid #be185d; color: #be185d; background: transparent;" onclick="removeProxyRow(this)">
                                         <i class='bx bx-trash'></i>
                                     </button>
@@ -222,21 +305,18 @@
                             <?php else: ?>
                                 <?php foreach ($httpProxies as $idx => $proxy): ?>
                                 <div class="row align-items-center mb-3 proxy-row" data-index="<?= $idx ?>">
-                                    <div class="col-md-2">
-                                        <label class="small fw-bold text-secondary mb-0">Port & Domains</label>
+                                    <div class="col-md-4 col-12 mb-2 mb-md-0">
+                                        <input type="number" name="proxy_port[]" class="form-control bg-dark bg-opacity-50 rounded-pill border-secondary border-opacity-25 text-white px-3 proxy-port" placeholder="Port (e.g. 8080)" min="1" max="65535" value="<?= (int)($proxy['port'] ?? '') ?>">
                                     </div>
-                                    <div class="col-md-3">
-                                        <input type="number" name="proxy_port[]" class="form-control bg-dark bg-opacity-50 rounded-pill border-secondary border-opacity-25 text-white px-3 proxy-port" placeholder="Port" min="1" max="65535" value="<?= (int)($proxy['port'] ?? '') ?>">
-                                    </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-7 col-10">
                                         <select name="proxy_domain[]" class="form-select bg-dark bg-opacity-50 rounded-pill border-secondary border-opacity-25 text-white px-3 proxy-domain-select">
-                                            <option value="">Select...</option>
+                                            <option value="">Select Domain...</option>
                                             <?php foreach ($userDomains as $ud): ?>
                                                 <option value="<?= htmlspecialchars($ud) ?>" <?= ((string)($proxy['domain'] ?? '') === $ud) ? 'selected' : '' ?>><?= htmlspecialchars($ud) ?></option>
                                             <?php endforeach; ?>
                                         </select>
                                     </div>
-                                    <div class="col-md-1">
+                                    <div class="col-md-1 col-2 d-flex justify-content-end">
                                         <button type="button" class="btn rounded-circle d-flex align-items-center justify-content-center p-0 btn-remove-proxy" style="width: 36px; height: 36px; border: 1px solid #be185d; color: #be185d; background: transparent;" onclick="removeProxyRow(this)">
                                             <i class='bx bx-trash'></i>
                                         </button>
@@ -245,39 +325,10 @@
                                 <?php endforeach; ?>
                             <?php endif; ?>
                         </div>
-                        <div class="row mt-2">
-                            <div class="col-md-2"></div>
-                            <div class="col-md-10">
-                                <button type="button" class="btn rounded-pill px-4 py-1 d-inline-flex align-items-center gap-2" style="border: 1px solid #ea580c; color: #ea580c; background: transparent; font-size: 0.9rem;" onclick="addProxyRow()">
-                                    <i class='bx bx-message-square-add'></i> Add HTTP Proxy
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Lifecycle Section -->
-        <div class="row mt-2">
-            <div class="col-12">
-                <div class="card border-0 shadow-sm glass-card rounded-4 mb-4">
-                    <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2">
-                        <h6 class="fw-bold mb-1 text-uppercase ls-1 small">Lifecycle</h6>
-                    </div>
-                    <div class="card-body p-4">
-                        <div class="row align-items-start">
-                            <div class="col-md-2">
-                                <label class="small fw-bold text-secondary mb-0">Always-on</label>
-                            </div>
-                            <div class="col-md-10">
-                                <div class="form-check form-switch mb-1">
-                                    <?php $alwaysOn = ($labData && isset($labData['always_on'])) ? (bool)$labData['always_on'] : false; ?>
-                                    <input class="form-check-input" type="checkbox" id="always-on-toggle" <?= $alwaysOn ? 'checked' : '' ?>>
-                                    <label class="form-check-label fw-bold small" for="always-on-toggle">Keep this instance running</label>
-                                </div>
-                                <p class="text-muted small mb-0" style="max-width: 700px;">When on, a background worker brings this lab back up — as you, with your saved settings — within ~10 minutes whenever it's found stopped, and it won't auto-stop on expiry.</p>
-                            </div>
+                        <div class="mt-2">
+                            <button type="button" class="btn rounded-pill px-4 py-1.5 d-inline-flex align-items-center gap-2" style="border: 1px solid #ea580c; color: #ea580c; background: transparent; font-size: 0.9rem;" onclick="addProxyRow()">
+                                <i class='bx bx-message-square-add'></i> Add HTTP Proxy
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -341,7 +341,22 @@ class Lab(BaseOrchestrator):
         auth_content = "\\n".join([k['public_key'] for k in user_keys if 'public_key' in k])
 
         import string, secrets
-        dynamic_pass = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(12))
+        staged_creds = lab_data.get('staged_preferences', {})
+        existing_creds = lab_data.get('credentials', {})
+
+        if staged_creds.get('code_server_pass'):
+            dynamic_pass = staged_creds['code_server_pass']
+        elif existing_creds.get('code_server_pass'):
+            dynamic_pass = existing_creds['code_server_pass']
+        elif existing_creds.get('password'):
+            dynamic_pass = existing_creds['password']
+        else:
+            dynamic_pass = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(12))
+            
+        if staged_creds.get('su_pass'):
+            su_pass = staged_creds['su_pass']
+        else:
+            su_pass = existing_creds.get('su_pass', f"{username}@098")
         
         # Custom Domain Logic for n8n
         selected_n8n_domain = None
@@ -400,7 +415,7 @@ class Lab(BaseOrchestrator):
                 "username": username,
                 "password": dynamic_pass,
                 "email": user_email,
-                "su_pass": f"{username}@098"
+                "su_pass": su_pass
             }
             # Dynamically pull domain values
             for svc_name, svc_spec in lab_spec.get('services', {}).items():
@@ -423,11 +438,16 @@ class Lab(BaseOrchestrator):
 
         self.db.deployed_labs.update_one(
             {"instance_hash": instance_id}, 
-            {"$set": {
-                "status": "running", 
-                "credentials": credentials, 
-                "updated_at": time.time()
-            }}
+            {
+                "$set": {
+                    "status": "running", 
+                    "credentials": credentials, 
+                    "updated_at": time.time()
+                },
+                "$unset": {
+                    "staged_preferences": ""
+                }
+            }
         )
         
         # Phase 10: INIT SCRIPT

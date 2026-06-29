@@ -4961,18 +4961,15 @@ function addProxyRow() {
     row.className = 'row align-items-center mb-3 proxy-row';
     row.setAttribute('data-index', idx);
     row.innerHTML = `
-        <div class="col-md-2">
-            <label class="small fw-bold text-secondary mb-0">Port & Domains</label>
+        <div class="col-md-4 col-12 mb-2 mb-md-0">
+            <input type="number" name="proxy_port[]" class="form-control bg-dark bg-opacity-50 rounded-pill border-secondary border-opacity-25 text-white px-3 proxy-port" placeholder="Local Port (e.g. 8080)" min="1" max="65535">
         </div>
-        <div class="col-md-3">
-            <input type="number" name="proxy_port[]" class="form-control bg-dark bg-opacity-50 rounded-pill border-secondary border-opacity-25 text-white px-3 proxy-port" placeholder="Port" min="1" max="65535">
-        </div>
-        <div class="col-md-6">
+        <div class="col-md-7 col-10">
             <select name="proxy_domain[]" class="form-select bg-dark bg-opacity-50 rounded-pill border-secondary border-opacity-25 text-white px-3 proxy-domain-select" onchange="checkProxyDomainConflict(this)">
                 ${optionsHtml}
             </select>
         </div>
-        <div class="col-md-1">
+        <div class="col-md-1 col-2 d-flex justify-content-end">
             <button type="button" class="btn rounded-circle d-flex align-items-center justify-content-center p-0 btn-remove-proxy" style="width: 36px; height: 36px; border: 1px solid #be185d; color: #be185d; background: transparent;" onclick="removeProxyRow(this)">
                 <i class='bx bx-trash'></i>
             </button>
@@ -5039,12 +5036,18 @@ function collectPreferencesData() {
     // Init script
     const initScript = document.getElementById('init-script-editor')?.value || '#!/bin/bash\n';
 
+    // Sudo and Code-Server passwords
+    const suPass = document.getElementById('sudo-pass-input')?.value || '';
+    const codeServerPass = document.getElementById('code-server-pass-input')?.value || '';
+
     return {
         hash: window.SESSION_HASH,
         lab: window.LAB_TYPE || 'essentials',
         http_proxies: proxies,
         always_on: alwaysOn,
-        init_script: initScript
+        init_script: initScript,
+        su_pass: suPass,
+        code_server_pass: codeServerPass
     };
 }
 
@@ -5066,7 +5069,17 @@ async function savePreferences() {
         });
         const result = await response.json();
         if (result.status === 'success') {
-            if (window.TomNotify) TomNotify.show('Preferences saved successfully.', 'Saved', 'success', 3000);
+            if (window.TomNotify) {
+                if (result.changes && result.changes.passwords) {
+                    TomNotify.show('Password changes saved — applied on the next redeploy.', 'Saved', 'info', 5000);
+                } else if (result.changes && result.changes.proxies) {
+                    TomNotify.show('HTTP proxy changes saved. Apply & Redeploy required.', 'Action Required', 'info', 5000);
+                } else if (result.changes && result.changes.init_script) {
+                    TomNotify.show('Init script saved. Apply & Redeploy required.', 'Action Required', 'info', 5000);
+                } else {
+                    TomNotify.show('Preferences saved successfully.', 'Saved', 'success', 3000);
+                }
+            }
         } else {
             if (window.TomNotify) TomNotify.show(result.error || 'Failed to save.', 'Error', 'warning', 4000);
         }
@@ -5155,6 +5168,51 @@ document.addEventListener('DOMContentLoaded', function() {
         sel.addEventListener('change', function() { checkProxyDomainConflict(this); });
     });
 });
+
+/**
+ * Toggle visibility of password input
+ */
+function togglePasswordVisibility(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const icon = btn.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'bx bx-show fs-5';
+    } else {
+        input.type = 'password';
+        icon.className = 'bx bx-hide fs-5';
+    }
+}
+
+/**
+ * Client-side random password generation
+ */
+function generateNewPassword(inputId) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let newPass = '';
+    for (let i = 0; i < 12; i++) {
+        newPass += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    const input = document.getElementById(inputId);
+    input.value = newPass;
+    input.type = 'text'; // Show the newly generated pass
+    
+    // Update show/hide button icon to bx-show since it's visible now
+    const parent = input.parentElement;
+    const hideBtn = parent.querySelector('button[onclick*="togglePasswordVisibility"]');
+    if (hideBtn) {
+        const icon = hideBtn.querySelector('i');
+        if (icon) icon.className = 'bx bx-show fs-5';
+    }
+}
+
+/**
+ * Copy password from current input value
+ */
+function copyFromInput(inputId) {
+    const input = document.getElementById(inputId);
+    copyText(input.value);
+}
 
 // --- MariaDB User Management ---
 

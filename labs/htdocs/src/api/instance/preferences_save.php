@@ -58,20 +58,51 @@ try {
     // Sanitize init_script
     $initScript = isset($input['init_script']) ? (string)$input['init_script'] : '#!/bin/bash';
 
+    $updateData = [
+        'http_proxies' => $httpProxies,
+        'always_on'    => $alwaysOn,
+        'init_script'  => $initScript,
+        'prefs_updated_at' => time()
+    ];
+
+    $changes = [
+        'proxies' => false,
+        'init_script' => false,
+        'passwords' => false
+    ];
+
+    // Check what changed
+    if (json_encode($existing['http_proxies'] ?? []) !== json_encode($httpProxies)) {
+        $changes['proxies'] = true;
+    }
+    if (($existing['init_script'] ?? '') !== $initScript) {
+        $changes['init_script'] = true;
+    }
+
+    if (isset($input['su_pass']) && $input['su_pass'] !== '') {
+        $updateData['staged_preferences.su_pass'] = trim((string)$input['su_pass']);
+        if (($existing['credentials']['su_pass'] ?? '') !== trim((string)$input['su_pass'])) {
+            $changes['passwords'] = true;
+        }
+    }
+    if (isset($input['code_server_pass']) && $input['code_server_pass'] !== '') {
+        $updateData['staged_preferences.code_server_pass'] = trim((string)$input['code_server_pass']);
+        $updateData['staged_preferences.password'] = trim((string)$input['code_server_pass']);
+        if (($existing['credentials']['code_server_pass'] ?? '') !== trim((string)$input['code_server_pass'])) {
+            $changes['passwords'] = true;
+        }
+    }
+
     $col->updateOne(
         ['instance_hash' => $instanceHash],
-        ['$set' => [
-            'http_proxies' => $httpProxies,
-            'always_on'    => $alwaysOn,
-            'init_script'  => $initScript,
-            'prefs_updated_at' => time()
-        ]]
+        ['$set' => $updateData]
     );
 
     echo json_encode([
         'status' => 'success',
         'message' => 'Preferences saved',
-        'hash' => $instanceHash
+        'hash' => $instanceHash,
+        'changes' => $changes
     ]);
 
 } catch (Exception $e) {
