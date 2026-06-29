@@ -427,7 +427,7 @@
                             <div style="max-width: 600px;">
                                 <h6 class="mb-1 fw-bold text-warning" style="font-size: 0.85rem; letter-spacing: 0.5px; text-transform: uppercase;">Fast Apply Note</h6>
                                 <p class="text-body-secondary mb-0 small" style="font-size: 0.82rem; line-height: 1.45;">
-                                    Applying preferences updates HTTP proxy routes and runs <code class="text-warning font-monospace bg-dark px-1.5 py-0.5 rounded">init.sh</code> immediately. This action does not perform a slow, full container redeployment.
+                                    Applying preferences updates HTTP proxy routes and runs <code class="text-warning font-monospace px-1.5 py-0.5 rounded">init.sh</code> immediately. This action does not perform a slow, full container redeployment.
                                 </p>
                             </div>
                         </div>
