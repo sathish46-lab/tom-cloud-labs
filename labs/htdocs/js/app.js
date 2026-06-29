@@ -5204,11 +5204,13 @@ async function runInitScript() {
     }
 }
 
-// Attach domain conflict checker to server-rendered proxy selects on load
+// Attach domain conflict checker and auto-password generation to elements on load
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.proxy-domain-select').forEach(function(sel) {
         sel.addEventListener('change', function() { checkProxyDomainConflict(this); });
     });
+
+
 });
 
 /**

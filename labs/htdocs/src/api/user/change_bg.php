@@ -154,7 +154,7 @@ $templates = [
                         <div class="bg-preview rounded-3 p-4 text-center pointer border border-white border-opacity-10 transition-all hover-scale" 
                             onclick="TomBG.setMode('<?= $t['mode'] ?>')" 
                             style="background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('<?= $t['img'] ?>'); background-size: cover; background-position: center; min-height: 90px; display: flex; align-items: center; justify-content: center;">
-                            <h6 class="fw-bold m-0 text-white" style="font-size: 0.85rem;"><?= $t['name'] ?></h6>
+                            <h6 class="fw-bold m-0" style="font-size: 0.85rem; color: #ffffff !important;"><?= $t['name'] ?></h6>
                         </div>
                     </div>
                 <?php endforeach; ?>

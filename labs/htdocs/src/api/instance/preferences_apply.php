@@ -71,12 +71,13 @@ try {
         'prefs_updated_at' => time()
     ];
 
-    if (isset($input['su_pass']) && $input['su_pass'] !== '') {
+    if (isset($input['su_pass'])) {
         $updateData['staged_preferences.su_pass'] = trim((string)$input['su_pass']);
     }
-    if (isset($input['code_server_pass']) && $input['code_server_pass'] !== '') {
-        $updateData['staged_preferences.code_server_pass'] = trim((string)$input['code_server_pass']);
-        $updateData['staged_preferences.password'] = trim((string)$input['code_server_pass']);
+    if (isset($input['code_server_pass'])) {
+        $codeServerPassVal = trim((string)$input['code_server_pass']);
+        $updateData['staged_preferences.code_server_pass'] = $codeServerPassVal;
+        $updateData['staged_preferences.password'] = $codeServerPassVal;
     }
 
     // 1. Save to DB first

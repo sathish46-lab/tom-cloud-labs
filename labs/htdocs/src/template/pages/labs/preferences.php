@@ -62,12 +62,10 @@
     $staged = $labData['staged_preferences'] ?? [];
     $stagedPasswordNames = [];
     
-    if (!empty($staged['su_pass']) && $staged['su_pass'] !== $sudoPass) {
-        $sudoPassInput = $staged['su_pass'];
+    if (isset($staged['su_pass']) && $staged['su_pass'] !== $sudoPass) {
         $stagedPasswordNames[] = '<span class="fw-bold" style="color: cyan;">Sudo Password</span>';
-    } else {
-        $sudoPassInput = $sudoPass;
     }
+    $sudoPassInput = $staged['su_pass'] ?? '';
 
     // Lab configuration Load place
     $configData = (array)$labData;
@@ -111,7 +109,7 @@
                             <label class="small fw-bold text-secondary mb-2 text-uppercase ls-1">Sudo Password</label>
                             <div class="input-group p-1 bg-dark bg-opacity-50 rounded-pill border border-secondary border-opacity-25">
                                 <span class="input-group-text bg-transparent border-0 text-secondary ps-3"><i class='bx bx-key'></i></span>
-                                <input type="password" id="sudo-pass-input" class="form-control bg-transparent border-0 text-white fw-bold font-monospace" value="<?= htmlspecialchars($sudoPassInput) ?>">
+                                <input type="password" id="sudo-pass-input" class="form-control bg-transparent border-0 text-white fw-bold font-monospace" value="<?= htmlspecialchars($sudoPassInput) ?>" placeholder="Auto-generate like <?= htmlspecialchars($currentUsername) ?>@098">
                                 <div class="d-flex align-items-center gap-1 pe-1">
                                     <button type="button" class="btn btn-link text-secondary p-0 d-flex align-items-center justify-content-center" 
                                             style="width: 32px; height: 32px; text-decoration: none;"
@@ -132,14 +130,14 @@
                                     </button>
                                 </div>
                             </div>
-                            <div class="form-text small opacity-50 mt-2 ms-2"><i class='bx bx-info-circle me-1'></i>Used for root access within the terminal.</div>
+                            <div class="form-text small opacity-50 mt-2 ms-2"><i class='bx bx-info-circle me-1'></i>Used for root access within the terminal. Leave blank to auto-generate a fresh one on each redeploy.</div>
                         </div>
 
                         <?php 
                             $codeServerPass = $creds['code_server_pass'] ?? $creds['password'] ?? null;
                             if($codeServerPass): 
-                                $codeServerPassInput = (!empty($staged['code_server_pass']) && $staged['code_server_pass'] !== $codeServerPass) ? $staged['code_server_pass'] : $codeServerPass;
-                                if ($codeServerPassInput !== $codeServerPass) {
+                                $codeServerPassInput = $staged['code_server_pass'] ?? '';
+                                if (isset($staged['code_server_pass']) && $staged['code_server_pass'] !== $codeServerPass) {
                                     $stagedPasswordNames[] = '<span class="fw-bold" style="color: cyan;">Code-Server Password</span>';
                                 }
                         ?>
@@ -147,7 +145,7 @@
                             <label class="small fw-bold text-secondary mb-2 text-uppercase ls-1">Code-Server Password</label>
                             <div class="input-group p-1 bg-dark bg-opacity-50 rounded-pill border border-secondary border-opacity-25">
                                 <span class="input-group-text bg-transparent border-0 text-secondary ps-3"><i class='bx bx-code-alt'></i></span>
-                                <input type="password" id="code-server-pass-input" class="form-control bg-transparent border-0 text-white fw-bold font-monospace" value="<?= htmlspecialchars($codeServerPassInput) ?>">
+                                <input type="password" id="code-server-pass-input" class="form-control bg-transparent border-0 text-white fw-bold font-monospace" value="<?= htmlspecialchars($codeServerPassInput) ?>" placeholder="Auto-generate random password">
                                 <div class="d-flex align-items-center gap-1 pe-1">
                                     <button type="button" class="btn btn-link text-secondary p-0 d-flex align-items-center justify-content-center" 
                                             style="width: 32px; height: 32px; text-decoration: none;"
@@ -168,7 +166,7 @@
                                     </button>
                                 </div>
                             </div>
-                            <div class="form-text small opacity-50 mt-2 ms-2"><i class='bx bx-info-circle me-1'></i>Password for the web-based VS Code environment.</div>
+                            <div class="form-text small opacity-50 mt-2 ms-2"><i class='bx bx-info-circle me-1'></i>Password for the web-based VS Code environment. Leave blank to auto-generate a fresh one on each redeploy.</div>
                         </div>
                         <?php endif; ?>
 
