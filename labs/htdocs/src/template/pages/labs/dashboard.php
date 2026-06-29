@@ -389,7 +389,6 @@
                 </div>
             </div>
         </div>
-    </div>
 
 <?php include __DIR__ . '/partials/lab_modals.php'; ?>
 <div class="server-logs-panel shadow-lg">
