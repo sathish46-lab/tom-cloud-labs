@@ -611,15 +611,7 @@ class Lab(BaseOrchestrator):
             self.log(f"Container {lab_name} not found", "error", "system")
             return
 
-        check_cmd = f"docker exec {lab_name} pgrep -u {username} -f code-server"
-        code, _ = self.run(check_cmd, capture=True)
-        if code == 0:
-            self.log("Code-server is already running.", "success", "done")
-            return
-
-        self.log("Starting code-server...", "info", "system")
-        
-        # 1. Dynamically create and inject the idle monitor script
+        # 1. ALWAYS dynamically create and inject the idle monitor script
         monitor_script_content = f"""#!/bin/bash
 USER=$1
 IDLE_LIMIT=20
@@ -652,14 +644,30 @@ done
             
         self.run(f"docker cp /tmp/monitor_codeserver.sh {lab_name}:/var/labsdata/scripts/monitor_codeserver.sh")
         self.run(f"docker exec {lab_name} chmod +x /var/labsdata/scripts/monitor_codeserver.sh")
-        
+
+        # 2. Start monitor if not running (using detached mode!)
+        monitor_check = f"docker exec {lab_name} pgrep -f monitor_codeserver"
+        mcode, _ = self.run(monitor_check, capture=True)
+        if mcode != 0:
+            docker_monitor = f"docker exec -d {lab_name} bash -c 'nohup /var/labsdata/scripts/monitor_codeserver.sh {username} > /var/log/code-monitor.log 2>&1 &'"
+            self.run(docker_monitor)
+            self.log("Idle monitor started (20s timeout).", "success", "system")
+
+        # 3. Check code-server
+        check_cmd = f"docker exec {lab_name} pgrep -u {username} -f code-server"
+        code, _ = self.run(check_cmd, capture=True)
+        if code == 0:
+            self.log("Code-server is already running.", "success", "done")
+            return
+
+        self.log("Starting code-server...", "info", "system")
         
         user_home = f"/home/{username}"
         config_file = f"{user_home}/.config/code-server/config.yaml"
         log_file = f"{user_home}/.code-server.log"
         
         start_cmd = f"nohup code-server --disable-telemetry --disable-update-check --config {config_file} > {log_file} 2>&1 &"
-        docker_cmd = f"docker exec -u {username} {lab_name} bash -c '{start_cmd}'"
+        docker_cmd = f"docker exec -d -u {username} {lab_name} bash -c '{start_cmd}'"
         
         code, _ = self.run(docker_cmd)
         if code == 0:
@@ -667,22 +675,11 @@ done
             code, _ = self.run(check_cmd, capture=True)
             if code == 0:
                 self.log("Code-server started successfully.", "success", "done")
-                
-                self.log("Ensuring idle monitor is active...", "info", "system")
-                monitor_check = f"docker exec {lab_name} pgrep -f monitor_codeserver"
-                mcode, _ = self.run(monitor_check, capture=True)
-                if mcode != 0:
-                    monitor_start = f"nohup /var/labsdata/scripts/monitor_codeserver.sh {username} > /var/log/code-monitor.log 2>&1 &"
-                    docker_monitor = f"docker exec {lab_name} bash -c '{monitor_start}'"
-                    self.run(docker_monitor)
-                    self.log("Idle monitor started.", "success", "system")
-                else:
-                    self.log("Idle monitor already running.", "info", "system")
-
             else:
-                self.log("Failed to verify code-server startup.", "error", "system")
+                self.log("Code-server failed to stay running.", "error", "system")
         else:
-            self.log("Failed to execute startup command.", "error", "system")
+            self.log("Failed to start code-server.", "error", "system")
+
     def apply_preferences(self):
         """Re-generate Traefik routing rules without full redeploy, and execute init.sh"""
         self.log("Applying preferences (Hot Reload)...", "info", "system")
