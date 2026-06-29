@@ -80,10 +80,72 @@ try {
         $updateData['staged_preferences.password'] = $codeServerPassVal;
     }
 
+    // Build details string for activity log by comparing with existing data
+    $changedDetails = [];
+    
+    // Check HTTP Proxies
+    $oldProxies = $existing['http_proxies'] ?? [];
+    // Normalize arrays for comparison
+    $oldProxiesJson = json_encode(array_values((array)$oldProxies));
+    $newProxiesJson = json_encode(array_values($httpProxies));
+    if ($oldProxiesJson !== $newProxiesJson) {
+        $changedDetails[] = "HTTP Proxies";
+    }
+    
+    // Check Always-on
+    $oldAlwaysOn = !empty($existing['always_on']);
+    if ($alwaysOn !== $oldAlwaysOn) {
+        $changedDetails[] = "Always-On State";
+    }
+    
+    // Check Init Script
+    $oldInit = $existing['init_script'] ?? '#!/bin/bash';
+    if ($initScript !== $oldInit) {
+        $changedDetails[] = "Init Script";
+    }
+    
+    // Check Sudo Password
+    if (isset($input['su_pass'])) {
+        // Handle BSONDocument correctly
+        $staged = isset($existing['staged_preferences']) ? (array)$existing['staged_preferences'] : [];
+        $oldSuPass = $staged['su_pass'] ?? '';
+        if (trim((string)$input['su_pass']) !== $oldSuPass) {
+            $changedDetails[] = "Sudo Password";
+        }
+    }
+    
+    // Check Code-Server Password
+    if (isset($input['code_server_pass'])) {
+        $staged = isset($existing['staged_preferences']) ? (array)$existing['staged_preferences'] : [];
+        $oldCodePass = $staged['code_server_pass'] ?? '';
+        if (trim((string)$input['code_server_pass']) !== $oldCodePass) {
+            $changedDetails[] = "Code-Server Password";
+        }
+    }
+    
+    $detailsString = !empty($changedDetails) ? "Changes: " . implode(", ", $changedDetails) : "Applied Preferences";
+
     // 1. Save to DB first
     $col->updateOne(
         ['instance_hash' => $instanceHash],
-        ['$set' => $updateData]
+        [
+            '$set' => $updateData,
+            '$push' => [
+                'activity_log' => [
+                    '$each' => [
+                        [
+                            'action' => 'Fast Apply',
+                            'user' => $user->getUsername(),
+                            'timestamp' => time(),
+                            'type' => 'preference',
+                            'details' => $detailsString
+                        ]
+                    ],
+                    '$position' => 0,
+                    '$slice' => 50
+                ]
+            ]
+        ]
     );
 
     // 2. Queue an apply-preferences job via RabbitMQ

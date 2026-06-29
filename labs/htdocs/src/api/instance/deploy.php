@@ -56,7 +56,15 @@ try {
             'expose_web'    => $expose_web,
             'status'        => 'deploying',
             'created_at'    => time(),
-            'storage_path'  => "labs_storage_" . $instanceHash
+            'storage_path'  => "labs_storage_" . $instanceHash,
+            'activity_log'  => [
+                [
+                    'action' => 'Deployed',
+                    'user' => $user->getUsername(),
+                    'timestamp' => time(),
+                    'type' => 'lab'
+                ]
+            ]
         ]);
         
         if (!$insertResult) { 
@@ -78,6 +86,20 @@ try {
                 'code_domain' => $code_domain,
                 'storage_path'=> "labs_storage_" . $instanceHash,
                 'status'      => 'deploying'
+            ],
+            '$push' => [
+                'activity_log' => [
+                    '$each' => [
+                        [
+                            'action' => 'Redeployed',
+                            'user' => $user->getUsername(),
+                            'timestamp' => time(),
+                            'type' => 'lab'
+                        ]
+                    ],
+                    '$position' => 0,
+                    '$slice' => 50
+                ]
             ]]
         );
     }

@@ -69,6 +69,35 @@
     // REUSABLE: Get domain usage map from DomainManager (works for ALL lab types)
     $dm = new DomainManager();
     $domainUsageMap = $dm->getDomainUsageMap($user->getUserId());
+
+    function timeAgo($time_ago) {
+        $time_difference = time() - $time_ago;
+        if ($time_difference < 1) { return 'just now'; }
+        $condition = [
+            12 * 30 * 24 * 60 * 60 => 'year',
+            30 * 24 * 60 * 60      => 'month',
+            24 * 60 * 60           => 'day',
+            60 * 60                => 'hour',
+            60                     => 'minute',
+            1                      => 'second'
+        ];
+        foreach ($condition as $secs => $str) {
+            $d = $time_difference / $secs;
+            if ($d >= 1) {
+                $t = round($d);
+                return $t . ' ' . $str . ($t > 1 ? 's' : '') . ' ago';
+            }
+        }
+        return 'just now';
+    }
+
+    $activityLog = [];
+    if (isset($labData['activity_log'])) {
+        // Convert BSONArray to array if necessary, or use as is
+        foreach ($labData['activity_log'] as $logItem) {
+            $activityLog[] = (array)$logItem;
+        }
+    }
 ?>
 
 <script>
@@ -287,6 +316,73 @@
                                         <canvas id="chart-high-mem"></canvas>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity Lifecycle Card -->
+    <div class="container-fluid px-3 mb-4">
+        <div class="card border-0 shadow-sm glass-card rounded-4 lab-activity-card" data-id="<?= htmlspecialchars($fullHash) ?>" data-lab="<?= htmlspecialchars($labType) ?>">
+            <div class="card-header bg-transparent border-0 p-4 d-flex justify-content-between align-items-center" role="button" data-coreui-toggle="collapse" data-coreui-target="#collapseActivity" aria-expanded="false" aria-controls="collapseActivity">
+                <h6 class="fw-bold mb-0 text-success">Activity <span class="small text-muted fw-normal ms-1">Recent lifecycle</span></h6>
+                <i class='bx bx-chevron-down fs-4 text-muted'></i>
+            </div>
+            <div id="collapseActivity" class="collapse">
+                <div class="card-body p-4 border-top border-success border-opacity-10 mt-2">
+                <div class="row g-4">
+                    <!-- Left Side: Lab Logs -->
+                    <div class="col-md-6">
+                                <h6 class="fw-bold mb-3 small text-muted text-uppercase">Lab Lifecycle</h6>
+                                <?php 
+                                $labLogs = array_filter($activityLog, function($log) {
+                                    return isset($log['type']) && $log['type'] === 'lab';
+                                });
+                                if (empty($labLogs)): ?>
+                                    <p class="small text-muted mb-0">No recent lab activity.</p>
+                                <?php else: ?>
+                                    <div class="list-group list-group-flush bg-transparent">
+                                        <?php foreach(array_slice($labLogs, 0, 10) as $log): ?>
+                                            <div class="list-group-item bg-transparent border-bottom border-success border-opacity-10 py-2 px-0 d-flex gap-3 align-items-center">
+                                                <i class='bx bx-refresh text-success fs-5'></i>
+                                                <div>
+                                                    <div class="fw-bold text-body small"><?= htmlspecialchars($log['action']) ?></div>
+                                                    <div class="text-muted small opacity-75"><?= htmlspecialchars($log['user']) ?> &bull; <?= timeAgo($log['timestamp']) ?></div>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                            
+                            <!-- Right Side: Preferences Logs -->
+                            <div class="col-md-6">
+                                <h6 class="fw-bold mb-3 small text-muted text-uppercase">Fast Apply (Preferences)</h6>
+                                <?php 
+                                $prefLogs = array_filter($activityLog, function($log) {
+                                    return isset($log['type']) && $log['type'] === 'preference';
+                                });
+                                if (empty($prefLogs)): ?>
+                                    <p class="small text-muted mb-0">No recent preference updates.</p>
+                                <?php else: ?>
+                                    <div class="list-group list-group-flush bg-transparent">
+                                        <?php foreach(array_slice($prefLogs, 0, 10) as $log): ?>
+                                            <div class="list-group-item bg-transparent border-bottom border-success border-opacity-10 py-2 px-0 d-flex gap-3 align-items-center">
+                                                <i class='bx bx-cog text-primary fs-5'></i>
+                                                <div>
+                                                    <div class="fw-bold text-body small"><?= htmlspecialchars($log['action']) ?></div>
+                                                    <div class="text-muted small opacity-75 mb-1"><?= htmlspecialchars($log['user']) ?> &bull; <?= timeAgo($log['timestamp']) ?></div>
+                                                    <div class="badge bg-info bg-opacity-10 text-info fw-bold">
+                                                        <?= htmlspecialchars($log['details'] ?? 'Applied Preferences') ?>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>

@@ -30,7 +30,23 @@ try {
     // 3. Update status to 'stopping' immediately
     $col->updateOne(
         ['instance_hash' => $instanceHash],
-        ['$set' => ['status' => 'stopping']]
+        [
+            '$set' => ['status' => 'stopping'],
+            '$push' => [
+                'activity_log' => [
+                    '$each' => [
+                        [
+                            'action' => 'Stopped',
+                            'user' => $user->getUsername(),
+                            'timestamp' => time(),
+                            'type' => 'lab'
+                        ]
+                    ],
+                    '$position' => 0,
+                    '$slice' => 50
+                ]
+            ]
+        ]
     );
     
     // 4. Trigger worker via QUEUE
