@@ -624,7 +624,6 @@ class Lab(BaseOrchestrator):
 USER=$1
 IDLE_LIMIT=20
 
-idle_time=0
 while true; do
     sleep 5
     
@@ -633,16 +632,18 @@ while true; do
         exit 0
     fi
     
-    # Check for active connections (WebSocket keeps ESTAB state when tab is open)
-    if ss -tnp 2>/dev/null | grep -E ":8080\\s+ESTAB" > /dev/null; then
-        idle_time=0
-    else
-        idle_time=$((idle_time + 5))
-    fi
+    HEARTBEAT="/home/$USER/.local/share/code-server/heartbeat"
     
-    if [ $idle_time -ge $IDLE_LIMIT ]; then
-        pkill -u $USER -f code-server
-        exit 0
+    # Check if the heartbeat file is older than our limit
+    if [ -f "$HEARTBEAT" ]; then
+        LAST_MOD=$(stat -c %Y "$HEARTBEAT")
+        NOW=$(date +%s)
+        DIFF=$((NOW - LAST_MOD))
+        
+        if [ $DIFF -ge $IDLE_LIMIT ]; then
+            pkill -u $USER -f code-server
+            exit 0
+        fi
     fi
 done
 """
