@@ -26,8 +26,8 @@ $labData = $db->deployed_labs->findOne(['instance_hash' => $instanceHash]);
 if (!$labData) {
     if ($instanceHash === $user->getLabHash('minio')) {
         $labType = 'minio';
-    } elseif ($instanceHash === $user->getLabHash('docker')) {
-        $labType = 'docker';
+    } elseif ($instanceHash === $user->getLabHash('n8n')) {
+        $labType = 'n8n';
     } else {
         $labType = 'essentials';
     }
@@ -40,7 +40,17 @@ if (!$labData) {
         'internal_ip' => '0.0.0.0'
     ];
 } else {
-    $labType = $labData['lab_type'] ?? 'essentials';
+    if (!empty($labData['lab_type'])) {
+        $labType = $labData['lab_type'];
+    } else {
+        if ($instanceHash === $user->getLabHash('minio')) {
+            $labType = 'minio';
+        } elseif ($instanceHash === $user->getLabHash('n8n')) {
+            $labType = 'n8n';
+        } else {
+            $labType = 'essentials';
+        }
+    }
     $instanceHash = $labData['instance_hash'];
 }
 

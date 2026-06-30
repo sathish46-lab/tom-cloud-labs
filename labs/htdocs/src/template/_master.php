@@ -13,6 +13,20 @@ define('PAGE_START_TIME', microtime(true));
     <link rel="icon" type="image/png" href="<?= Session::cdn3('logo/favicon.png') ?>">
     <link rel="shortcut icon" type="image/png" href="<?= Session::cdn3('logo/favicon.png') ?>">
 
+    <script type="text/javascript">
+    window.addEventListener('load', function() {
+        // Wait 2000 milliseconds (2 seconds) AFTER the page loads to inject the tracker.
+        // This guarantees the browser stops the loading spinner completely.
+        setTimeout(function() {
+            (function(c,l,a,r,i,t,y){
+                c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+                t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+                y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+            })(window, document, "clarity", "script", "n7q1nqtm06");
+        }, 2000); 
+    });
+    </script>
+
     <?php
     $serverTheme = [];
     if (Session::getAuthStatus() == Constants::STATUS_LOGGEDIN) {
@@ -51,29 +65,21 @@ define('PAGE_START_TIME', microtime(true));
             }
 
             // 2. Apply Theme & Layout State immediately to DOM
-            const savedTheme = localStorage.getItem('tom-labs-theme') || 'dark';
-            const themeToApply = (savedTheme === 'auto') ?
+            let savedTheme = localStorage.getItem('tom-labs-theme') || 'dark';
+            let themeToApply = (savedTheme === 'auto') ?
                 (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') :
                 savedTheme;
+            document.documentElement.setAttribute('data-coreui-theme', themeToApply);
 
-            const mode = localStorage.getItem("tom-labs-bg-mode") || "spiderman";
+            let mode = localStorage.getItem("tom-labs-bg-mode") || "spiderman";
             
             // Forced state for login page
             <?php if (defined('IS_LOGIN_PAGE') && IS_LOGIN_PAGE === true): ?>
-            themeToApply = "dark";
             mode = "spiderman";
             document.documentElement.classList.add('glass-mode');
             window.FORCED_BG_MODE = "spiderman";
             <?php endif; ?>
 
-            // Forced state for landing page
-            <?php if (defined('IS_LANDING_PAGE') && IS_LANDING_PAGE === true): ?>
-            themeToApply = "dark";
-            mode = "plain";
-            window.FORCED_BG_MODE = "plain";
-            <?php endif; ?>
-
-            document.documentElement.setAttribute('data-coreui-theme', themeToApply);
             document.documentElement.classList.toggle("mode-plain", mode === "plain");
 
             const isNarrow = localStorage.getItem('tom-labs-sidebar-narrow') === 'true';
@@ -84,118 +90,7 @@ define('PAGE_START_TIME', microtime(true));
             
             const savedBlur = localStorage.getItem('tom-labs-visual-blur');
             if (savedBlur !== 'false') document.documentElement.classList.add('glass-mode');
-
-            /**
-             * 4. Background & Color Force Logic (Instant Application to prevent flash)
-             */
-            const isLandingPage = <?= (defined('IS_LANDING_PAGE') && IS_LANDING_PAGE === true) ? 'true' : 'false' ?>;
-            let savedBG = mode;
-            let savedColor = localStorage.getItem('tom-labs-plain-color') || '#1a2a1a';
-            let customAccent = localStorage.getItem('tom-labs-accent-color') || '#51b355';
-            
-            if (isLandingPage) {
-                savedBG = 'plain';
-                savedColor = '#091723';
-                customAccent = '#3b82f6';
-            }
-
-            const themeColors = {
-                'robo': '#0b2b1c',
-                'robotower': '#0b1e36',
-                'spiderman': '#0b1e36',
-                'ninja': '#1c0b2b'
-            };
-
-            const isLight = themeToApply === 'light';
-
-            // Math utilities for colors
-            function hexToRgbValues(hex) {
-                let r=0, g=0, b=0;
-                if(hex.length == 4) { r="0x"+hex[1]+hex[1]; g="0x"+hex[2]+hex[2]; b="0x"+hex[3]+hex[3]; }
-                else if(hex.length == 7) { r="0x"+hex[1]+hex[2]; g="0x"+hex[3]+hex[4]; b="0x"+hex[5]+hex[6]; }
-                return +(r)+","+(+g)+","+(+b);
-            }
-            function hexToRgba(hex, alpha) { return `rgba(${hexToRgbValues(hex)}, ${alpha})`; }
-            function adjustColor(hex, percent) {
-                var num = parseInt(hex.replace("#",""),16), amt = Math.round(2.55 * percent),
-                R = (num >> 16) + amt, G = (num >> 8 & 0x00FF) + amt, B = (num & 0x0000FF) + amt;
-                return "#" + (0x1000000 + (R<255?R<1?0:R:255)*0x10000 + (G<255?G<1?0:G:255)*0x100 + (B<255?B<1?0:B:255)).toString(16).slice(1);
-            }
-            function ensureDarkness(hex, maxLuminance) {
-                const rgbStr = hexToRgbValues(hex).split(",");
-                const r = parseInt(rgbStr[0]), g = parseInt(rgbStr[1]), b = parseInt(rgbStr[2]);
-                const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-                if (luminance > maxLuminance) {
-                    const factor = maxLuminance / luminance;
-                    const nr = Math.round(r * factor), ng = Math.round(g * factor), nb = Math.round(b * factor);
-                    return "#" + (0x1000000 + (nr << 16) + (ng << 8) + nb).toString(16).slice(1);
-                }
-                return hex;
-            }
-            function ensureLightness(hex, minLuminance) {
-                const rgbStr = hexToRgbValues(hex).split(",");
-                const r = parseInt(rgbStr[0]), g = parseInt(rgbStr[1]), b = parseInt(rgbStr[2]);
-                const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-                if (luminance < minLuminance) {
-                    const factor = (1 - minLuminance) / (1 - luminance);
-                    const nr = Math.round(255 - (255 - r) * factor), ng = Math.round(255 - (255 - g) * factor), nb = Math.round(255 - (255 - b) * factor);
-                    return "#" + (0x1000000 + (nr << 16) + (ng << 8) + nb).toString(16).slice(1);
-                }
-                return hex;
-            }
-
-            if (savedBG === 'plain' || themeColors[savedBG]) {
-                const color = savedBG === 'plain' ? savedColor : themeColors[savedBG];
-                
-                if (savedBG === 'plain') {
-                    const safeColor = isLight ? ensureLightness(color, 0.95) : ensureDarkness(color, 0.2);
-                    const primaryColor = customAccent;
-                    const pRGB = hexToRgbValues(primaryColor);
-                    
-                    document.documentElement.style.setProperty("--glass-bg", isLight ? "#ffffff" : hexToRgba(safeColor, 0.88));
-                    document.documentElement.style.setProperty("--cui-card-bg", isLight ? "#ffffff" : hexToRgba(adjustColor(safeColor, 4), 0.65));
-                    document.documentElement.style.setProperty("--cui-sidebar-bg", isLight ? "#ffffff" : hexToRgba(adjustColor(safeColor, 1.5), 0.98));
-                    document.documentElement.style.setProperty("--cui-header-bg", isLight ? "#ffffff" : hexToRgba(adjustColor(safeColor, 1), 0.92));
-                    
-                    document.documentElement.style.setProperty("--cui-body-bg", isLight ? ensureLightness(color, 0.98) : safeColor);
-                    document.documentElement.style.setProperty("--accent-color", primaryColor);
-                    document.documentElement.style.setProperty("--cui-primary", primaryColor);
-                    document.documentElement.style.setProperty("--cui-primary-rgb", pRGB);
-                    
-                    const baseLight = ensureLightness(color, 0.98);
-                    document.documentElement.style.setProperty("--c1", isLight ? "#ffffff" : adjustColor(safeColor, -10));
-                    document.documentElement.style.setProperty("--c2", isLight ? baseLight : safeColor);
-                    document.documentElement.style.setProperty("--c3", isLight ? adjustColor(baseLight, -2) : adjustColor(safeColor, 8));
-                    document.documentElement.style.setProperty("--c4", isLight ? adjustColor(baseLight, -5) : adjustColor(safeColor, 15));
-                    document.documentElement.style.setProperty("--c5", isLight ? "#ffffff" : adjustColor(safeColor, 5));
-                    document.documentElement.style.setProperty("--c6", isLight ? baseLight : safeColor);
-                    document.documentElement.style.setProperty("--c7", isLight ? adjustColor(baseLight, -3) : adjustColor(safeColor, -5));
-                } else {
-                    const safeColor = isLight ? ensureLightness(color, 0.8) : ensureDarkness(color, 0.15);
-                    const primaryColor = adjustColor(color, isLight ? -40 : 40);
-                    const pRGB = hexToRgbValues(primaryColor);
-                    
-                    document.documentElement.style.setProperty("--glass-bg", isLight ? "#ffffff" : hexToRgba(safeColor, 0.85));
-                    document.documentElement.style.setProperty("--cui-card-bg", isLight ? "#ffffff" : hexToRgba(safeColor, 0.20));
-                    document.documentElement.style.setProperty("--cui-sidebar-bg", isLight ? "#ffffff" : hexToRgba(safeColor, 0.95));
-                    document.documentElement.style.setProperty("--cui-header-bg", isLight ? "#ffffff" : hexToRgba(safeColor, 0.85));
-                    
-                    document.documentElement.style.setProperty("--cui-body-bg", safeColor);
-                    document.documentElement.style.setProperty("--accent-color", primaryColor);
-                    document.documentElement.style.setProperty("--cui-primary", primaryColor);
-                    document.documentElement.style.setProperty("--cui-primary-rgb", pRGB);
-                    
-                    document.documentElement.style.setProperty("--c1", isLight ? "#ffffff" : adjustColor(safeColor, -5));
-                    document.documentElement.style.setProperty("--c2", isLight ? "#f8f9fa" : safeColor);
-                    document.documentElement.style.setProperty("--c3", isLight ? "#ffffff" : adjustColor(safeColor, 5));
-                    document.documentElement.style.setProperty("--c4", isLight ? "#f0f2f5" : adjustColor(safeColor, 10));
-                    document.documentElement.style.setProperty("--c5", isLight ? "#ffffff" : adjustColor(safeColor, 10));
-                    document.documentElement.style.setProperty("--c6", isLight ? "#ffffff" : adjustColor(safeColor, 10));
-                    document.documentElement.style.setProperty("--c7", isLight ? "#ffffff" : adjustColor(safeColor, 10));
-                }
-            }
         })();
-
     </script>
 
     <?php
@@ -327,12 +222,6 @@ define('PAGE_START_TIME', microtime(true));
     $mode = $serverTheme['mode'] ?? 'spiderman';
     if (defined('IS_LOGIN_PAGE') && IS_LOGIN_PAGE === true) {
         $mode = 'spiderman';
-    }
-    if (defined('IS_LANDING_PAGE') && IS_LANDING_PAGE === true) {
-        $mode = 'plain';
-        $plainColorDark = '#091723';
-        $plainColorLight = '#091723';
-        $accentColor = '#3b82f6'; // A nice blue accent
     }
 
     require_once __DIR__ . '/tom_color_utils.php';
@@ -494,7 +383,7 @@ define('PAGE_START_TIME', microtime(true));
         <?php if (!Session::get('footer', false) && !defined('IS_HOME_PAGE')) { echo Session::generateFooter(); } ?>
     </div>
     <!-- Premium Stackable Notification Container -->
-    <div id="notification-container" class="toast-container position-fixed top-0 end-0 p-3" style="margin-top: 4rem; z-index: 100000 !important;">
+    <div id="notification-container" class="toast-container position-fixed top-0 end-0 p-3" style="margin-top: 4rem; z-index: 100000 !important; pointer-events: none;">
         <!-- Toasts will be injected here dynamically -->
     </div>
     <!-- This card section is for the background selection modal -->
@@ -593,8 +482,8 @@ define('PAGE_START_TIME', microtime(true));
                 const progressColor = type === 'error' ? '#e74c3c' : (type === 'warning' ? '#f1c40f' : 'var(--cui-primary, #8b91f9)');
 
                 const html = `
-                    <div id="${toastId}" class="toast border-0 rounded-4 overflow-hidden shadow-lg mb-3" role="alert" aria-live="assertive" aria-atomic="true" data-coreui-autohide="true" data-coreui-delay="${duration}"
-                        style="background: var(--glass-bg, rgba(11, 30, 54, 0.88)); min-width: 320px;">
+                    <div id="${toastId}" class="toast fade border-0 rounded-4 overflow-hidden shadow-lg mb-3" role="alert" aria-live="assertive" aria-atomic="true" data-coreui-autohide="true" data-coreui-delay="${duration}"
+                        style="background: var(--glass-bg, rgba(11, 30, 54, 0.88)); min-width: 320px; pointer-events: auto;">
                         <div class="toast-header border-0 bg-transparent pt-3 px-3 d-flex align-items-center">
                             <strong class="me-auto d-flex align-items-center gap-2 fs-6 text-body-emphasis">
                                 <i class="bx ${icon}"></i> 

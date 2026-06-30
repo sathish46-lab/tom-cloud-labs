@@ -35,4 +35,10 @@ class Constants
     const GROUP_ADMIN      = 'admin';
     const GROUP_MODERATOR  = 'moderator'; //
     const GROUP_SUPERUSER  = 'superuser'; //
+
+    /* ----------------------------------------------------------------------
+     * Feature Flags
+     * Used to easily toggle UI features across the application.
+     * -------------------------------------------------------------------- */
+    const FEATURE_HTTP_PROXIES = false;
 }

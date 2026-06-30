@@ -376,9 +376,9 @@
                                         <?php foreach(array_slice($prefLogs, 0, 10) as $log): ?>
                                             <div class="list-group-item bg-transparent border-bottom border-success border-opacity-10 py-2 px-0 d-flex gap-3 align-items-center">
                                                 <i class='bx bx-cog text-primary fs-5'></i>
-                                                <div class="overflow-hidden">
-                                                    <div class="fw-bold text-body small"><?= htmlspecialchars($log['action']) ?></div>
-                                                    <div class="text-muted small opacity-75 mb-1"><?= htmlspecialchars($log['user']) ?> &bull; <?= timeAgo($log['timestamp']) ?></div>
+                                                <div class="overflow-hidden flex-grow-1" style="min-width: 0;">
+                                                    <div class="fw-bold text-body small text-truncate"><?= htmlspecialchars($log['action']) ?></div>
+                                                    <div class="text-muted small opacity-75 mb-1 text-truncate"><?= htmlspecialchars($log['user']) ?> &bull; <?= timeAgo($log['timestamp']) ?></div>
                                                     <div class="small text-secondary" style="word-break: break-word; line-height: 1.4; opacity: 0.85;">
                                                         <?= ucfirst(strtolower(htmlspecialchars($log['details'] ?? 'Applied Preferences'))) ?>
                                                     </div>

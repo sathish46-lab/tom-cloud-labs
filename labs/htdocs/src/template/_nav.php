@@ -161,7 +161,7 @@ $current = Session::getCurrentFile();
             <i class="bx bx-menu fs-4 text-secondary"></i>
         </button>
         <button class="sidebar-toggler ms-auto me-2" type="button" data-coreui-toggle="unfoldable"
-            data-coreui-target="#sidebar"></button>
+            data-coreui-target="#sidebar" onclick="console.log('Sidebar fold/unfold button triggered!'); debugger;"></button>
     </div>
     </div>
 </div>

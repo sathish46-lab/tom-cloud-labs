@@ -40,34 +40,43 @@ try {
     
     // error_log("PHPLOG: User selected domain: " . $code_domain);
 
-    if (!$existing) {
+    if (!$existing || empty($existing['internal_ip'])) {
         // PASS LAB TYPE to IP manager
         $internalIp = $ipManager->getNextIPForUser($email, $instanceHash, $labName);
         
-        $insertResult = $col->insertOne([
-            'user_id'       => $user->getUserId(),
-            'email'         => $email,
-            'username'      => $user->getUsername(),
-            'instance_hash' => $instanceHash,
-            'lab_type'      => $labName,
-            'internal_ip'   => $internalIp, 
-            'domains'       => $user_domains,
-            'code_domain'   => $code_domain,
-            'expose_web'    => $expose_web,
-            'status'        => 'deploying',
-            'created_at'    => time(),
-            'storage_path'  => "labs_storage_" . $instanceHash,
-            'activity_log'  => [
-                [
-                    'action' => 'Deployed',
-                    'user' => $user->getUsername(),
-                    'timestamp' => time(),
-                    'type' => 'lab'
+        $updateResult = $col->updateOne(
+            ['instance_hash' => $instanceHash],
+            ['$set' => [
+                'user_id'       => $user->getUserId(),
+                'email'         => $email,
+                'username'      => $user->getUsername(),
+                'instance_hash' => $instanceHash,
+                'lab_type'      => $labName,
+                'internal_ip'   => $internalIp, 
+                'domains'       => $user_domains,
+                'code_domain'   => $code_domain,
+                'expose_web'    => $expose_web,
+                'status'        => 'deploying',
+                'created_at'    => time(),
+                'storage_path'  => "labs_storage_" . $instanceHash
+            ],
+            '$push' => [
+                'activity_log'  => [
+                    '$each' => [
+                        [
+                            'action' => 'Deployed',
+                            'user' => $user->getUsername(),
+                            'timestamp' => time(),
+                            'type' => 'lab'
+                        ]
+                    ],
+                    '$position' => 0
                 ]
-            ]
-        ]);
+            ]],
+            ['upsert' => true]
+        );
         
-        if (!$insertResult) { 
+        if (!$updateResult) { 
             throw new Exception('Failed to create lab record'); 
         }
         

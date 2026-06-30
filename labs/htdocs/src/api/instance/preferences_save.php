@@ -33,9 +33,7 @@ try {
     $col = $db->deployed_labs;
 
     $existing = $col->findOne(['instance_hash' => $instanceHash]);
-    if (!$existing) {
-        throw new Exception('Lab not found. Please deploy first.');
-    }
+    $status = $existing['status'] ?? 'not_deployed';
 
     // Sanitize HTTP proxies
     $httpProxies = [];
@@ -97,14 +95,31 @@ try {
 
     $col->updateOne(
         ['instance_hash' => $instanceHash],
-        ['$set' => $updateData]
+        [
+            '$set' => $updateData,
+            '$setOnInsert' => [
+                'user_id'       => $user->getUserId(),
+                'email'         => $user->getEmail(),
+                'username'      => $user->getUsername(),
+                'lab_type'      => $labName,
+                'status'        => 'not_deployed',
+                'created_at'    => time()
+            ]
+        ],
+        ['upsert' => true]
     );
+
+    $warning = null;
+    if ($status !== 'running') {
+        $warning = 'Saved successfully, but you need to deploy or start the lab to run scripts.';
+    }
 
     echo json_encode([
         'status' => 'success',
         'message' => 'Preferences saved',
         'hash' => $instanceHash,
-        'changes' => $changes
+        'changes' => $changes,
+        'warning' => $warning
     ]);
 
 } catch (Exception $e) {

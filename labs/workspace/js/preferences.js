@@ -157,6 +157,13 @@ async function savePreferences() {
             if (window.TomNotify) {
                 let changed = false;
                 let delay = 0;
+                
+                if (result.warning) {
+                    setTimeout(() => TomNotify.show(result.warning, 'Action Required', 'warning', 6000), delay);
+                    delay += 500;
+                    changed = true;
+                }
+                
                 if (result.changes && result.changes.passwords) {
                     setTimeout(() => TomNotify.show('Password changes saved — applied on the next redeploy.', 'Saved', 'info', 5000), delay);
                     delay += 500;
@@ -248,8 +255,12 @@ async function runInitScript() {
         const result = await response.json();
         if (result.status === 'success') {
             Dashboard.appendLog('[*] Script execution queued. Streaming output...');
+            if (window.TomNotify) TomNotify.show('Script execution queued. Streaming output...', 'Success', 'success', 4000);
         } else {
             Dashboard.appendLog(`[!] Error: ${result.error || 'Script execution failed'}`);
+            if (window.TomNotify && !result.error.includes("Lab is not running")) {
+                TomNotify.show(result.error || 'Failed to run script.', 'Error', 'error', 4000);
+            }
         }
     } catch (e) {
         console.error('Run script error:', e);

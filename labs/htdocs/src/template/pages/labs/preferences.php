@@ -17,7 +17,17 @@
         }
         $status = 'not_deployed';
     } else {
-        $labType = $labData['lab_type'] ?? 'essentials';
+        if (!empty($labData['lab_type'])) {
+            $labType = $labData['lab_type'];
+        } else {
+            if ($fullHash === $user->getLabHash('minio')) {
+                $labType = 'minio';
+            } elseif ($fullHash === $user->getLabHash('n8n')) {
+                $labType = 'n8n';
+            } else {
+                $labType = 'essentials';
+            }
+        }
         $status = $labData['status'] ?? 'offline';
     }
     
@@ -229,10 +239,11 @@
             </div>
         </div>
         
+        <?php $showHttpProxies = defined('Constants::FEATURE_HTTP_PROXIES') && Constants::FEATURE_HTTP_PROXIES; ?>
         <!-- Side-by-Side: HTTP Proxies & Lifecycle Section -->
         <div class="row mt-4">
             <!-- Left Side: Lifecycle -->
-            <div class="col-md-5">
+            <div class="col-md-<?= $showHttpProxies ? '5' : '12' ?>">
                 <div class="card border-0 shadow-sm glass-card rounded-4 mb-4" style="height: calc(100% - 1.5rem);">
                     <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2">
                         <h6 class="fw-bold mb-1 text-uppercase ls-1 small">Lifecycle</h6>
@@ -252,6 +263,7 @@
                 </div>
             </div>
 
+            <?php if ($showHttpProxies): ?>
             <!-- Right Side: HTTP Proxies -->
             <div class="col-md-7">
                 <div class="card border-0 shadow-sm glass-card rounded-4 mb-4" style="height: calc(100% - 1.5rem);">
@@ -331,6 +343,7 @@
                     </div>
                 </div>
             </div>
+            <?php endif; ?>
         </div>
 
         <!-- Startup Script Section -->

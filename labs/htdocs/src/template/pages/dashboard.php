@@ -122,13 +122,15 @@ $labs = $db->deployed_labs->find(
 );
 foreach ($labs as $l) {
     $time = isset($l['created_at']) ? (int)$l['created_at'] : time();
+    $isStopped = isset($l['status']) && $l['status'] === 'stopped';
+    
     $activitiesList[] = [
         'timestamp' => $time,
-        'icon' => "bx bx-server fs-6",
-        'color' => "#10ac84",
-        'bg' => "rgba(16, 172, 132, 0.12)",
-        'border' => "rgba(16, 172, 132, 0.25)",
-        'text' => "Deployed <strong>" . ucfirst($l['lab_type'] ?? 'sandbox') . "</strong> Lab"
+        'icon' => $isStopped ? "bx bx-stop-circle fs-6" : "bx bx-server fs-6",
+        'color' => $isStopped ? "#636e72" : "#10ac84",
+        'bg' => $isStopped ? "rgba(99, 110, 114, 0.12)" : "rgba(16, 172, 132, 0.12)",
+        'border' => $isStopped ? "rgba(99, 110, 114, 0.25)" : "rgba(16, 172, 132, 0.25)",
+        'text' => ($isStopped ? "Stopped" : "Deployed") . " <strong>" . ucfirst($l['lab_type'] ?? 'sandbox') . "</strong> Lab"
     ];
 }
 
