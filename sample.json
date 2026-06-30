@@ -39,6 +39,9 @@
   },
   "allowed_hosts": [
     "labs.tomweb.in"
-  ]
+  ],
+  "wireguard_mode": "docker",
+  "wireguard_endpoint": "vpn.yourdomain.com:51821",
+  "wireguard_endpoint_port": 51821
 }
 

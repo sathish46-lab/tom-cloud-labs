@@ -87,6 +87,33 @@ sed -i '/^$/{ N; /^\n$/d }' /etc/wireguard/wg0.conf
 chmod 600 /etc/wireguard/wg0.conf
 echo "[INFO] WireGuard config regenerated (peers preserved)."
 
+# WireGuard Endpoint Resolution (Docker vs VPS mode)
+WG_MODE="${WIREGUARD_MODE:-docker}"
+WG_PORT=$(jq -r '.wireguard_endpoint_port // 51820' /var/www/env.json 2>/dev/null || echo "51820")
+
+if [ "$WG_MODE" = "vps" ]; then
+    # VPS mode: prefer VPS_PUBLIC_IP env var, fallback to auto-detect
+    if [ -n "$VPS_PUBLIC_IP" ]; then
+        WG_ENDPOINT="${VPS_PUBLIC_IP}:${WG_PORT}"
+        echo "[INFO] WireGuard Mode: VPS (using VPS_PUBLIC_IP=${VPS_PUBLIC_IP})"
+    else
+        DETECTED_IP=$(curl -s --max-time 5 ifconfig.me 2>/dev/null || echo "")
+        if [ -n "$DETECTED_IP" ]; then
+            WG_ENDPOINT="${DETECTED_IP}:${WG_PORT}"
+            echo "[INFO] WireGuard Mode: VPS (auto-detected IP=${DETECTED_IP})"
+        else
+            WG_ENDPOINT="${VPN_DOMAIN}:${WG_PORT}"
+            echo "[WARN] WireGuard Mode: VPS — IP detection failed, falling back to VPN_DOMAIN (${VPN_DOMAIN})"
+        fi
+    fi
+else
+    # Docker mode: use DDNS domain (Cloudflare)
+    WG_ENDPOINT="${VPN_DOMAIN}:${WG_PORT}"
+    echo "[INFO] WireGuard Mode: Docker/DDNS (Endpoint: ${WG_ENDPOINT})"
+fi
+
+export WG_ENDPOINT
+
 # 2. Generate Apache Configuration Files
 echo "[INFO] Generating Apache VirtualHosts..."
 cat <<EOF > /etc/apache2/sites-available/labs.conf
@@ -334,6 +361,16 @@ if [ -f "/var/www/env.json" ]; then
         echo "[INFO] Injecting WireGuard Public Key into env.json..."
         # Use jq to update/add the key
         jq --arg key "$WG_PUBKEY" '.wireguard_public_key = $key' /var/www/env.json > /var/www/env.json.tmp && \
+        mv /var/www/env.json.tmp /var/www/env.json
+        chown www-data:www-data /var/www/env.json
+    fi
+
+    # Dynamically inject WireGuard Endpoint & Mode into env.json
+    if [ -n "$WG_ENDPOINT" ]; then
+        echo "[INFO] Injecting WireGuard Endpoint ($WG_ENDPOINT) into env.json..."
+        jq --arg ep "$WG_ENDPOINT" --arg mode "$WG_MODE" --arg port "$WG_PORT" \
+           '.wireguard_endpoint = $ep | .wireguard_mode = $mode | .wireguard_endpoint_port = ($port | tonumber)' \
+           /var/www/env.json > /var/www/env.json.tmp && \
         mv /var/www/env.json.tmp /var/www/env.json
         chown www-data:www-data /var/www/env.json
     fi

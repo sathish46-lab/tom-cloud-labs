@@ -14,7 +14,8 @@ class Wireguard {
         $port = get_config('wireguard_endpoint_port') ?? 51820;
         $conf .= "PublicKey = $serverPubKey\n";
         $tunnelPrefix = get_config('tunnel_ip');
-        $conf .= "Endpoint = {$tunnelPrefix}1:$port\n";
+        $endpoint = get_config('wireguard_endpoint') ?? "{$tunnelPrefix}1:$port";
+        $conf .= "Endpoint = $endpoint\n";
         $conf .= "AllowedIPs = 172.30.0.0/16, 10.30.0.0/16\n";
         $conf .= "PersistentKeepalive = 25\n";
         return $conf;

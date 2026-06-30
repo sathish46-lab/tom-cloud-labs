@@ -13,6 +13,7 @@ services:
       - WORK_DOMAIN=work.dev.tomweb.in
       - SSL_EMAIL=admin@example.com
       - DOCKER_HOST=unix:///var/docker.sock
+      - WIREGUARD_MODE=docker
     extra_hosts:
       - "dev.tomweb.in:127.0.0.1"
       - "vpn.dev.tomweb.in:127.0.0.1"
