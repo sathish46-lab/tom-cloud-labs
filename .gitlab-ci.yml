@@ -1,7 +1,7 @@
 stages:
   - deploy
 
-deploy_to_docker_lab:
+deploy_to_tomcloud_lab:
   stage: deploy
   
   # This tag must match the tag you give your GitLab Runner when you register it.
@@ -20,23 +20,23 @@ deploy_to_docker_lab:
       - "opt/**/*"
       - "session.json"
   script:
-    - echo "Starting deployment to Docker_lab..."
+    - echo "Starting deployment to TomCloudLab..."
     
     # 0. Generate version file based on current commit
     - git rev-parse --short HEAD > labs/.version
     
     # 1. Sync the 'labs' folder. 
     # We exclude 'vendor' and 'node_modules' so production dependencies stay safe.
-    - rsync -av --delete --exclude 'vendor' --exclude 'node_modules' labs/ /Users/sathish/Downloads/Docker_lab/labs/
+    - rsync -av --delete --exclude 'vendor' --exclude 'node_modules' labs/ /Users/sathish/Downloads/TomCloudLab/labs/
     
     # 2. Sync the 'vpn-api' folder.
-    - rsync -av --delete --exclude 'vendor' --exclude 'node_modules' vpn-api/ /Users/sathish/Downloads/Docker_lab/vpn-api/
+    - rsync -av --delete --exclude 'vendor' --exclude 'node_modules' vpn-api/ /Users/sathish/Downloads/TomCloudLab/vpn-api/
     
     # 3. Sync the 'opt' folder (Labs Control Panel & Orchestrators)
     # We exclude 'labs-control-panel/config.json' so rsync doesn't delete the production config
-    - rsync -av --delete --exclude 'labs-control-panel/config.json' opt/ /Users/sathish/Downloads/Docker_lab/opt/
+    - rsync -av --delete --exclude 'labs-control-panel/config.json' opt/ /Users/sathish/Downloads/TomCloudLab/opt/
     
     # 4. Sync the 'session.json' configuration
-    - cp session.json /Users/sathish/Downloads/Docker_lab/session.json
+    - cp session.json /Users/sathish/Downloads/TomCloudLab/session.json
     
     - echo "Deployment of labs, vpn-api, and opt completed successfully!"

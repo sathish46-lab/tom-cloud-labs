@@ -290,8 +290,8 @@ class Lab(BaseOrchestrator):
             "user": username, 
             "image": f"{template_name}:lab", 
             "ip": docker_ip, 
-            "vps_docker_ip": f"{self.config.get('tunnel_ip')}1",
-            "host_name": lab_spec.get('network', {}).get('hostname', 'essentials'),
+            "vps_docker_ip": vps_docker_ip,
+            "host_name": f"{lab_spec.get('network', {}).get('hostname', 'essentials')}.{instance_id}.{os.environ.get('CODE_DOMAIN', 'tomweb.fun')}",
             'network_name': self.config.get('docker_network_name', 'bridge')
         }
         
@@ -381,6 +381,26 @@ class Lab(BaseOrchestrator):
         if code != 0:
             self.log("linkuser.sh failed. Check output above for details.", "error", "configure")
             return
+        
+        # Phase 7.5: Post-link WireGuard Routing & DNS Fix
+        # 1. Fix AllowedIPs and kernel routing inside the lab container so VPN traffic is routed correctly
+        # 2. Map external domains (VPN_DOMAIN, MAIN_DOMAIN, etc.) to vps_docker_ip in /etc/hosts for internal access without NAT loopback
+        if tunnel_ip:
+            tunnel_subnet = ".".join(tunnel_ip.split(".")[:2]) + ".0.0/16"
+            self.log(f"[*] Applying WireGuard routing and DNS fix for subnet {tunnel_subnet}...", "info", "configure")
+            
+            vpn_domain = os.environ.get('VPN_DOMAIN', 'vpn.tomweb.fun')
+            main_domain = os.environ.get('MAIN_DOMAIN', 'tomweb.fun')
+            code_domain = os.environ.get('CODE_DOMAIN', 'tomweb.fun')
+            mqs_domain = os.environ.get('MQS_DOMAIN', 'mq.tomweb.fun')
+            
+            fix_cmd = (
+                f'sed -i \'s/AllowedIPs.*/AllowedIPs = {tunnel_subnet}/g\' /etc/wireguard/wg0.conf && '
+                f'wg set wg0 peer {server_pub_key} allowed-ips {tunnel_subnet} && '
+                f'ip route add {tunnel_subnet} dev wg0 metric 10 2>/dev/null || true && '
+                f'echo "{vps_docker_ip}\t{vpn_domain} {main_domain} {code_domain} {mqs_domain}" >> /etc/hosts'
+            )
+            self.run(f'docker exec {instance_id} bash -c "{fix_cmd}"', capture=False)
         
         # Phase 8: TRAEFIK
         self.log("[*] Finalizing Traefik routing...", "info", "traefik")

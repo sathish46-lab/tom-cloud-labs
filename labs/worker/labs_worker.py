@@ -27,7 +27,7 @@ def reap_expired_challenges():
                 client.admin.command('ping')
             except Exception:
                 client = pymongo.MongoClient(
-                    "mongodb://admin:Tombootroot@docker_tomlabs_mongodb:27017/?authSource=admin",
+                    "mongodb://admin:Tombootroot@TomCloudLab_mongodb:27017/?authSource=admin",
                     serverSelectionTimeoutMS=2000
                 )
                 

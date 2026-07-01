@@ -104,7 +104,7 @@ cd opt/labs-control-panel/
 cp config.example.json config.json
 ```
 3. Open `config.json` and adjust the variables based on your target environment:
-   * **Production:** Use the production subnet (`10.20.128.`) and Docker network (`docker_tomlabs_net`).
+   * **Production:** Use the production subnet (`10.20.128.`) and Docker network (`TomCloudLab_backend`).
    * **Local Development:** Match your local `docker-compose.yml` settings (e.g., `10.20.144.` and `TomCloudLab`).
 
 ---

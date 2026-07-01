@@ -51,7 +51,7 @@ services:
 
   mongodb:
     image: mongo:8.0
-    container_name: docker_tomlabs_mongodb
+    container_name: TomCloudLab_mongodb
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: Tombootroot
@@ -67,7 +67,7 @@ services:
 
   # gitlab:
   #   image: 'gitlab/gitlab-ce:latest'
-  #   container_name: docker_tomlabs_gitlab
+  #   container_name: TomCloudLab_gitlab
   #   restart: always
   #   hostname: 'git.tomweb.in'
   #   environment:

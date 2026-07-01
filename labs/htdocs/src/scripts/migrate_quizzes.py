@@ -12,7 +12,7 @@ try:
     print(f"Connected to MongoDB via {mongo_uri}")
 except Exception:
     # Fallback for container execution
-    mongo_uri = "mongodb://admin:Tombootroot@docker_tomlabs_mongodb:27017/?authSource=admin"
+    mongo_uri = "mongodb://admin:Tombootroot@TomCloudLab_mongodb:27017/?authSource=admin"
     try:
         client = pymongo.MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
         client.server_info()

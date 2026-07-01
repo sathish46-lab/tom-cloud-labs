@@ -48,7 +48,7 @@ class BaseOrchestrator:
         # Fallback Logic for local development/bootstrapping
         try:
             # Try Docker Internal Network
-            self.mongo_client = pymongo.MongoClient("mongodb://admin:Tombootroot@docker_tomlabs_mongodb:27017/?authSource=admin", serverSelectionTimeoutMS=2000)
+            self.mongo_client = pymongo.MongoClient("mongodb://admin:Tombootroot@TomCloudLab_mongodb:27017/?authSource=admin", serverSelectionTimeoutMS=2000)
             self.mongo_client.admin.command('ping')
             self.db = self.mongo_client.tom_labs_db 
         except Exception:
