@@ -384,9 +384,10 @@ class Lab(BaseOrchestrator):
         
         # Phase 7.5: Post-link WireGuard Routing & DNS Fix
         # 1. Fix AllowedIPs and kernel routing inside the lab container so VPN traffic is routed correctly
-        # 2. Map external domains (VPN_DOMAIN, MAIN_DOMAIN, etc.) to vps_docker_ip in /etc/hosts for internal access without NAT loopback
+        # 2. Map VPN_DOMAIN to tunnel_gw in /etc/hosts for internal VPN access without NAT loopback
         if tunnel_ip:
             tunnel_subnet = ".".join(tunnel_ip.split(".")[:2]) + ".0.0/16"
+            tunnel_gw = ".".join(tunnel_ip.split(".")[:3]) + ".1"
             self.log(f"[*] Applying WireGuard routing and DNS fix for subnet {tunnel_subnet}...", "info", "configure")
             
             vpn_domain = os.environ.get('VPN_DOMAIN', 'vpn.tomweb.fun')
@@ -398,7 +399,7 @@ class Lab(BaseOrchestrator):
                 f'sed -i \'s/AllowedIPs.*/AllowedIPs = {tunnel_subnet}/g\' /etc/wireguard/wg0.conf && '
                 f'wg set wg0 peer {server_pub_key} allowed-ips {tunnel_subnet} && '
                 f'ip route add {tunnel_subnet} dev wg0 metric 10 2>/dev/null || true && '
-                f'echo "{vps_docker_ip}\t{vpn_domain} {main_domain} {code_domain} {mqs_domain}" >> /etc/hosts'
+                f'echo "{tunnel_gw}\t{vpn_domain}" >> /etc/hosts'
             )
             self.run(f'docker exec {instance_id} bash -c "{fix_cmd}"', capture=False)
         
