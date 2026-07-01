@@ -300,7 +300,10 @@ class Lab(BaseOrchestrator):
             'network_name': self.config.get('docker_network_name', 'bridge')
         }
         
-        result = self.docker.run_command(self.config.get('docker_run'), mapping)
+        docker_run_cmd = self.config.get('docker_run')
+        if '--add-host' not in docker_run_cmd and 'vpn_domain' in mapping and 'tunnel_gw' in mapping:
+            docker_run_cmd = docker_run_cmd.replace('--cap-add=NET_ADMIN', f'--add-host {{vpn_domain}}:{{tunnel_gw}} --cap-add=NET_ADMIN')
+        result = self.docker.run_command(docker_run_cmd, mapping)
         if not result:
             self.log("FATAL: Container failed to start (docker run failed).", "error", "container")
             return
