@@ -14234,7 +14234,7 @@ body {
 /* Global Card Base Styling - HEAVY BLUR, LOW TRANSPARENCY */
 .mode-selector-card,
 .bg-selector-card {
-  background: rgba(15, 23, 42, 0.95) !important;
+  background: var(--cui-dropdown-bg, #0f172a) !important;
   backdrop-filter: blur(25px) saturate(200%) !important;
   -webkit-backdrop-filter: blur(25px) saturate(200%) !important;
   border: 1px solid rgba(var(--cui-primary-rgb, 139, 145, 249), 0.4) !important;
@@ -14245,7 +14245,7 @@ body {
 /* Light Mode Card Base */
 [data-coreui-theme=light] .mode-selector-card,
 [data-coreui-theme=light] .bg-selector-card {
-  background: rgba(255, 255, 255, 0.98) !important;
+  background: var(--cui-dropdown-bg, #ffffff) !important;
   backdrop-filter: blur(20px) saturate(160%) !important;
   -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
   border-color: rgba(0, 0, 0, 0.08) !important;

@@ -10,7 +10,20 @@ service ssh start
 # 2. Configure WireGuard Mesh Networking
 if [ -f /etc/wireguard/wg0.conf ]; then
     echo "[*] Activating WireGuard Mesh..."
-    wg-quick up wg0 || true
+    # Clean up any stale/broken interface from previous boot states
+    ip link delete dev wg0 2>/dev/null || true
+    
+    # Retry loop to handle networking race conditions during boot
+    for i in {1..5}; do
+        if wg-quick up wg0 2>/dev/null; then
+            echo "[+] WireGuard started successfully on attempt $i."
+            break
+        else
+            echo "[-] WireGuard attempt $i failed, retrying in 2s..."
+            ip link delete dev wg0 2>/dev/null || true
+            sleep 2
+        fi
+    done
     
     # Ensure all traffic within the lab network is routed through the tunnel
     TUNNEL_PREFIX=$(echo "${VPS_DOCKER_IP:-172.30.0.1}" | awk -F. '{print $1"."$2"."$3"."}')

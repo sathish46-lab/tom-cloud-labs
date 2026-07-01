@@ -16,7 +16,20 @@ service apache2 restart
 # Configure WireGuard if config exists
 if [ -f /etc/wireguard/wg0.conf ]; then
     echo "[*] Starting WireGuard..."
-    wg-quick up wg0 || true
+    # Clean up any stale/broken interface from previous boot states
+    ip link delete dev wg0 2>/dev/null || true
+    
+    # Retry loop to handle networking race conditions during boot
+    for i in {1..5}; do
+        if wg-quick up wg0 2>/dev/null; then
+            echo "[+] WireGuard started successfully on attempt $i."
+            break
+        else
+            echo "[-] WireGuard attempt $i failed, retrying in 2s..."
+            ip link delete dev wg0 2>/dev/null || true
+            sleep 2
+        fi
+    done
     
     # Ensure the container knows to route VPN traffic to the VPS container
     TUNNEL_PREFIX=$(echo "${VPS_DOCKER_IP:-172.30.0.1}" | awk -F. '{print $1"."$2"."$3"."}')
