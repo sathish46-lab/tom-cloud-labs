@@ -365,10 +365,10 @@ if [ -z "$DOCKER_NETWORK" ] || [ "$DOCKER_NETWORK" = "null" ]; then
     DOCKER_NETWORK=$(jq -r '.docker_network_name // empty' /var/www/env.json 2>/dev/null)
 fi
 if [ -z "$DOCKER_NETWORK" ] || [ "$DOCKER_NETWORK" = "null" ]; then
-    DOCKER_NETWORK=$(docker network ls --format '{{.Name}}' | grep -E "(Dev_lab|TomCloudLab_backend)" | head -n 1)
+    DOCKER_NETWORK=$(docker network ls --format '{{.Name}}' | grep -E "(labs_frontend|Dev_lab|TomCloudLab_backend)" | head -n 1)
 fi
 if [ -z "$DOCKER_NETWORK" ] || [ "$DOCKER_NETWORK" = "null" ]; then
-    DOCKER_NETWORK="Dev_lab"
+    DOCKER_NETWORK="labs_frontend"
 fi
 
 # Detect Docker bridge interface for forwarding rules
@@ -959,10 +959,10 @@ if [ -z "$DOCKER_NETWORK" ] || [ "$DOCKER_NETWORK" = "null" ]; then
     DOCKER_NETWORK=$(jq -r '.docker_network_name // empty' /var/www/env.json 2>/dev/null)
 fi
 if [ -z "$DOCKER_NETWORK" ] || [ "$DOCKER_NETWORK" = "null" ]; then
-    DOCKER_NETWORK=$(docker network ls --format '{{.Name}}' | grep -E "(Dev_lab|TomCloudLab_backend)" | head -n 1)
+    DOCKER_NETWORK=$(docker network ls --format '{{.Name}}' | grep -E "(labs_frontend|Dev_lab|TomCloudLab_backend)" | head -n 1)
 fi
 if [ -z "$DOCKER_NETWORK" ] || [ "$DOCKER_NETWORK" = "null" ]; then
-    DOCKER_NETWORK="Dev_lab"
+    DOCKER_NETWORK="labs_frontend"
 fi
 
 BRIDGE_ID=$(docker network inspect "$DOCKER_NETWORK" -f '{{.Id}}' 2>/dev/null | cut -c1-12)
@@ -1168,7 +1168,7 @@ OUTER_EOF_COMPOSE
 
     log "Generating config.json..."
     DOCKER_NETWORK_CONF=$(jq -r '.docker_network_name // empty' ./env.json 2>/dev/null)
-    [ -z "$DOCKER_NETWORK_CONF" ] && DOCKER_NETWORK_CONF="Dev_lab"
+    [ -z "$DOCKER_NETWORK_CONF" ] && DOCKER_NETWORK_CONF="labs_frontend"
     DOCKER_IP_CONF=$(jq -r '.docker_ip // empty' ./env.json 2>/dev/null)
     [ -z "$DOCKER_IP_CONF" ] && DOCKER_IP_CONF="172.19.0."
     TUNNEL_IP_CONF=$(jq -r '.tunnel_ip // empty' ./env.json 2>/dev/null)
