@@ -21,7 +21,7 @@ echo "    | |  | |__| || |  | |     | |____ / ____ \| |_) |"
 echo "    |_|   \____/ |_|  |_|     |______/_/    \_\____/ v2.0"
 echo -e "${NC}"
 
-echo -e "${GREEN}Welcome to your Tom Essentials Lab, ${YELLOW}${USER_NAME}${GREEN}!${NC}"
+echo -e "${GREEN}Welcome to your Tom Docker Lab, ${YELLOW}${USER_NAME}${GREEN}!${NC}"
 echo "----------------------------------------------------------------"
 echo -e " ${CYAN}* Status:${NC}    System is up and ready."
 echo -e " ${CYAN}* Uptime:${NC}    ${UPTIME}"

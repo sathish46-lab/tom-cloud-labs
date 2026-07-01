@@ -10,7 +10,7 @@
     "pids_limit": 100
   },
   "network": {
-    "hostname": "essentials",
+    "hostname": "dockerlab",
     "exposed_ports": []
   },
   "storage": {
