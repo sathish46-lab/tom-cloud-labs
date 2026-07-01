@@ -390,13 +390,10 @@ class Lab(BaseOrchestrator):
             tunnel_gw = ".".join(tunnel_ip.split(".")[:3]) + ".1"
             self.log(f"[*] Applying WireGuard routing and DNS fix for subnet {tunnel_subnet}...", "info", "configure")
             
-            vpn_domain = os.environ.get('VPN_DOMAIN', 'vpn.tomweb.fun')
-            main_domain = os.environ.get('MAIN_DOMAIN', 'tomweb.fun')
-            code_domain = os.environ.get('CODE_DOMAIN', 'tomweb.fun')
-            mqs_domain = os.environ.get('MQS_DOMAIN', 'mq.tomweb.fun')
+            vpn_domain = os.environ.get('VPN_DOMAIN', 'vpn.tomweb.in')
             
             fix_cmd = (
-                f'sed -i \'s/AllowedIPs.*/AllowedIPs = {tunnel_subnet}/g\' /etc/wireguard/wg0.conf && '
+                f'sed -i \'s#AllowedIPs.*#AllowedIPs = {tunnel_subnet}#g\' /etc/wireguard/wg0.conf && '
                 f'wg set wg0 peer {server_pub_key} allowed-ips {tunnel_subnet} && '
                 f'ip route add {tunnel_subnet} dev wg0 metric 10 2>/dev/null || true && '
                 f'echo "{tunnel_gw}\t{vpn_domain}" >> /etc/hosts'
