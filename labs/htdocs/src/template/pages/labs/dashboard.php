@@ -7,19 +7,19 @@
     $user = Session::getUser();
     $currentUsername = $user->getUsername();
 
+    $labType = 'essentials';
+    if ($fullHash === $user->getLabHash('minio')) {
+        $labType = 'minio';
+    } elseif ($fullHash === $user->getLabHash('n8n')) {
+        $labType = 'n8n';
+    } elseif ($fullHash === $user->getLabHash('docker_lab')) {
+        $labType = 'docker_lab';
+    }
+
     if (!$labData) {
-        if ($fullHash === $user->getLabHash('minio')) {
-            $labType = 'minio';
-        } elseif ($fullHash === $user->getLabHash('n8n')) {
-            $labType = 'n8n';
-        } elseif ($fullHash === $user->getLabHash('docker_lab')) {
-            $labType = 'docker_lab';
-        } else {
-            $labType = 'essentials';
-        }
         $status = 'not_deployed';
     } else {
-        $labType = $labData['lab_type'] ?? 'essentials';
+        $labType = $labData['lab_type'] ?? $labType;
         $status = $labData['status'] ?? 'offline';
     }
     

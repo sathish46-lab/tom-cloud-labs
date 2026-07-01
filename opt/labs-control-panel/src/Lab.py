@@ -848,15 +848,20 @@ done
         templates = [d for d in os.listdir(templates_dir) if os.path.isdir(os.path.join(templates_dir, d)) and not d.startswith('__')]
         
         self.log("Checking Lab Image Status:", "info")
-        print("-" * 50)
-        print(f"{'Template Name':<20} | {'Image Tag':<15} | {'Status'}")
-        print("-" * 50)
+        print("-" * 70)
+        print(f"{'Template Name':<20} | {'Image Tag':<15} | {'Image ID':<15} | {'Status'}")
+        print("-" * 70)
 
         for t in templates:
             tag = f"{t}:lab"
+            code, img_id_out = self.run(f"docker images -q {tag}", capture=True)
+            img_id = img_id_out.strip() if img_id_out else "N/A"
+            if len(img_id) > 12:
+                img_id = img_id[:12]
+            
             status = "✅ Built" if self.docker.image_exists(tag) else "❌ Missing"
-            print(f"{t:<20} | {tag:<15} | {status}")
-        print("-" * 50 + "\n")
+            print(f"{t:<20} | {tag:<15} | {img_id:<15} | {status}")
+        print("-" * 70 + "\n")
     
     def get_workers(self):
         """Check how many Python worker processes are currently alive via systemd."""

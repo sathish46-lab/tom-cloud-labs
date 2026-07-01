@@ -140,38 +140,27 @@
 
 <!-- Redeploy Modal -->
 <div class="modal fade" id="redeployModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
         <div class="modal-content border-0 shadow-lg rounded-4">
             <div class="modal-header border-0 pt-4 px-4">
-                <h5 class="modal-title fw-bold">Confirm Redeploy?</h5>
+                <h5 class="modal-title fw-bold">Confirm <?= $isRunning ? 'Redeploy' : 'Deploy' ?>?</h5>
                 <button type="button" class="btn-close btn-close-white" data-coreui-dismiss="modal"></button>
             </div>
             <div class="modal-body px-4">
-                <div class="mb-4">
-                    <p class="mb-2 fw-bold small">When can you re-deploy?</p>
-                    <ul class="small opacity-75 ps-3">
-                        <li>If server is not responding</li>
-                        <li>If you messed up badly</li>
-                        <li>You want to change it's configuration</li>
-                    </ul>
-                    <p class="small text-danger mt-3 mb-0">
-                        <strong>Note:</strong> When you redeploy, all the files outside your home directory will be destroyed.
-                    </p>
-                </div>
-
-                <hr class="border-secondary opacity-25 mb-4">
+                
+                <p class="mb-3 mt-2" style="font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--bs-secondary);">NETWORKING</p>
 
                 <div class="row mb-3 align-items-center">
-                    <label class="col-sm-3 small fw-bold text-secondary text-sm-end">Reallocate IP</label>
+                    <label class="col-sm-4 small fw-bold text-secondary">Reallocate IP</label>
                     <div class="col-sm-8">
-                        <input type="text" class="form-control bg-body-tertiary border-0 shadow-none opacity-75" value="<?= $deviceIp ?? '' ?>" readonly>
+                        <input type="text" class="form-control bg-transparent border-secondary border-opacity-25 shadow-none rounded-pill px-3 text-white" value="<?= $deviceIp ?? '' ?>" readonly>
                     </div>
                 </div>
 
                 <div id="vsc_domain_wrapper" class="row mb-3 align-items-center">
-                    <label class="col-sm-3 small fw-bold text-secondary text-sm-end">Domain for VS Code Web</label>
+                    <label class="col-sm-4 small fw-bold text-secondary">Domain for VS Code Web</label>
                     <div class="col-sm-8">
-                        <select id="vsc_domain_selector" class="form-select bg-body-tertiary border-0 shadow-none" onchange="updateDomainAvailability()">
+                        <select id="vsc_domain_selector" class="form-select bg-transparent border-secondary border-opacity-25 shadow-none rounded-pill px-3 text-white" onchange="updateDomainAvailability()">
                             <?php 
                                 $fullHash = $labData['instance_hash'] ?? $fullHash;
                                 $currentCodeDomain = $labData['code_domain'] ?? ($fullHash . '.tomweb.shop');
@@ -193,16 +182,21 @@
                     </div>
                 </div>
 
+                <?php $isExposed = (isset($labData['expose_web']) && $labData['expose_web'] === true); ?>
+                <?php if (\TomLabs\Labs\LabFeatures::supports($labData['lab_type'] ?? 'essentials', 'expose_web')): ?>
+                
+                <p class="mb-3 mt-4" style="font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--bs-secondary);">PUBLIC EXPOSURE</p>
+
                 <div id="expose_web_wrapper" class="row mb-3 align-items-center">
-                    <label class="col-sm-3 small fw-bold text-secondary text-sm-end">Expose to Web</label>
+                    <label class="col-sm-4 small fw-bold text-secondary">Expose to Web (port 80)</label>
                     <div class="col-sm-8">
-                        <?php $isExposed = (isset($labData['expose_web']) && $labData['expose_web'] === true); ?>
-                        <select id="expose_web_toggle" class="form-select bg-body-tertiary border-0  shadow-none" onchange="toggleDomainSection()">
+                        <select id="expose_web_toggle" class="form-select bg-transparent border-secondary border-opacity-25 shadow-none rounded-pill px-3 text-white" onchange="toggleDomainSection()">
                             <option value="false" <?= !$isExposed ? 'selected' : '' ?>>Private, not exposed</option>
                             <option value="true" <?= $isExposed ? 'selected' : '' ?>>Public, 80 exposed over 443</option>
                         </select>
                     </div>
                 </div>
+                <?php endif; ?>
 
                 <!-- Custom MinIO Domain Selection (Hidden by default, toggled via JS) -->
                 <div id="minio_domain_wrapper" style="display: none;">
@@ -214,9 +208,9 @@
                     ?>
 
                     <div class="row mb-3 align-items-center">
-                        <label class="col-sm-3 small fw-bold text-secondary text-sm-end">Domain</label>
+                        <label class="col-sm-4 small fw-bold text-secondary">Domain</label>
                         <div class="col-sm-8">
-                            <select id="minio_console_domain" class="form-select bg-body-tertiary border-0 shadow-none" onchange="updateDomainAvailability()">
+                            <select id="minio_console_domain" class="form-select bg-transparent border-secondary border-opacity-25 shadow-none rounded-pill px-3 text-white" onchange="updateDomainAvailability()">
                                 <?php 
                                     $mDomains = $db->domains->find(['user_id' => Session::getUser()->getUserId(), 'verified' => true]);
                                     $foundConsole = false;
@@ -273,9 +267,9 @@
                     ?>
 
                     <div class="row mb-3 align-items-center">
-                        <label class="col-sm-3 small fw-bold text-secondary text-sm-end">n8n Domain</label>
+                        <label class="col-sm-4 small fw-bold text-secondary">n8n Domain</label>
                         <div class="col-sm-8">
-                            <select id="n8n_domain_selector" class="form-select bg-body-tertiary border-0 shadow-none" onchange="updateDomainAvailability()">
+                            <select id="n8n_domain_selector" class="form-select bg-transparent border-secondary border-opacity-25 shadow-none rounded-pill px-3 text-white" onchange="updateDomainAvailability()">
                                 <?php 
                                     $nDomains = $db->domains->find(['user_id' => Session::getUser()->getUserId(), 'verified' => true]);
                                     $foundN8n = false;
@@ -303,26 +297,24 @@
                     <hr class="border-secondary opacity-25 my-3">
                 </div>
 
-                <div id="domain_selection_wrapper" class="row mb-3 align-items-center" style="display: <?= $isExposed ? 'flex' : 'none' ?>;">
-    <label class="col-sm-3 small fw-bold text-secondary text-sm-end">Choose Domains</label>
+                <div id="domain_selection_wrapper" class="row mb-3 align-items-start" style="display: <?= $isExposed ? 'flex' : 'none' ?>;">
+    <label class="col-sm-4 small fw-bold text-secondary mt-2">Choose Domains</label>
     
     <div class="col-sm-8 position-relative">
-        <div class="form-control bg-body-tertiary border-secondary border-opacity-10 p-2 d-flex flex-column justify-content-center gap-2" 
-             style="min-height: 50px; cursor: text;" onclick="document.getElementById('domain_search').focus()">
+        <div class="form-control bg-transparent border-secondary border-opacity-25 rounded-4 p-2 d-flex flex-wrap align-content-start gap-1 transition-all" 
+             style="min-height: 80px; cursor: text;" onclick="document.getElementById('domain_search').focus()" id="domain_search_container">
             
-            <div id="selected_domains_display" class="d-flex flex-wrap gap-1"></div>
+            <div id="selected_domains_display" style="display: contents;"></div>
 
-            <div class="d-flex align-items-center">
-                <input type="text" id="domain_search" 
-                       class="flex-grow-1 bg-transparent border-0 shadow-none small p-0" 
-                       style="outline: none; color: var(--cui-body-color); line-height: 1.5;"
-                       placeholder="Click to select domains..." 
-                       onkeyup="filterDomains()"
-                       onclick="event.stopPropagation()">
-                
-                <div class="ms-2" style="cursor: pointer;" onclick="toggleDomainDropdown(event)">
-                    <i class='bx bx-chevron-down fs-5 opacity-50 transition-icon' id="dropdown_arrow"></i>
-                </div>
+            <input type="text" id="domain_search" 
+                   class="flex-grow-1 bg-transparent border-0 shadow-none small px-1 m-0 text-white" 
+                   style="outline: none; line-height: 1.5; min-width: 150px;"
+                   placeholder="Click to select domains..." 
+                   onkeyup="filterDomains()"
+                   onclick="event.stopPropagation()">
+            
+            <div class="ms-auto pe-1 d-flex align-items-start" style="cursor: pointer;" onclick="toggleDomainDropdown(event)">
+                <i class='bx bx-chevron-down fs-5 opacity-50 transition-icon mt-1' id="dropdown_arrow"></i>
             </div>
         </div>
 
@@ -352,18 +344,111 @@
             </div>
         </div>
         
-        <div class="form-text small opacity-50 mt-2">
+        <div class="form-text small opacity-50 mt-2 px-1">
             Your lab's port 80 will be visible over the chosen domain with automatic SSL certificates.
         </div>
-    </div>
+    </div> <!-- Close col-sm-8 -->
+</div> <!-- Close domain_selection_wrapper row -->
+        
+<?php if (\TomLabs\Labs\LabFeatures::supports($labData['lab_type'] ?? 'essentials', 'http_proxies')): ?>
+<div id="http_proxies_wrapper">
+<p class="mb-3 mt-4" style="font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--bs-secondary);">HTTP PROXIES</p>
+<div class="form-text small opacity-50 mb-3 px-1">
+    Reverse-proxy any port to one or more of your domains over HTTP &mdash; TLS is terminated for you at the edge.
 </div>
+        
+        <div id="deploy-proxy-container">
+            <?php
+                $httpProxies = [];
+                if (isset($labData['http_proxies'])) {
+                    $httpProxies = (array)$labData['http_proxies'];
+                }
+                
+                // Fetch user's domains for the select dropdown
+                $proxyUserDomains = [];
+                $proxyDomainsCursor = $db->domains->find(['user_id' => Session::getUser()->getUserId(), 'verified' => true]);
+                foreach ($proxyDomainsCursor as $d) {
+                    $proxyUserDomains[] = (string)$d['domain'];
+                }
+                
+                if (empty($httpProxies)):
+            ?>
+            <div class="row align-items-center mb-3 proxy-row" data-index="0">
+                <label class="col-sm-4 small fw-bold text-secondary">Port & Domains</label>
+                <div class="col-sm-8">
+                    <div class="row g-2">
+                        <div class="col-md-4 col-12 mb-2 mb-md-0">
+                            <input type="number" name="deploy_proxy_port[]" class="form-control bg-transparent rounded-pill border-secondary border-opacity-25 shadow-none px-3 proxy-port text-white" placeholder="Port" min="1" max="65535">
+                        </div>
+                        <div class="col-md-6 col-10">
+                            <select name="deploy_proxy_domain[]" class="form-select bg-transparent rounded-pill border-secondary border-opacity-25 shadow-none px-3 proxy-domain-select text-white">
+                                <option value="">Select Domain...</option>
+                                <?php foreach ($proxyUserDomains as $ud): ?>
+                                    <option value="<?= htmlspecialchars($ud) ?>"><?= htmlspecialchars($ud) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-2 col-2 d-flex justify-content-end">
+                            <button type="button" class="btn rounded-circle d-flex align-items-center justify-content-center p-0 btn-remove-proxy border-secondary border-opacity-25 bg-body-tertiary" style="width: 36px; height: 36px; color: #be185d;" onclick="removeProxyRow(this)">
+                                <i class='bx bx-trash'></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
+            <?php else: ?>
+                <?php foreach ($httpProxies as $idx => $proxy): ?>
+                <div class="row align-items-center mb-3 proxy-row" data-index="<?= $idx ?>">
+                    <label class="col-sm-4 small fw-bold text-secondary">Port & Domains</label>
+                    <div class="col-sm-8">
+                        <div class="row g-2">
+                            <div class="col-md-4 col-12 mb-2 mb-md-0">
+                                <input type="number" name="deploy_proxy_port[]" class="form-control bg-transparent rounded-pill border-secondary border-opacity-25 shadow-none px-3 proxy-port text-white" placeholder="Port" min="1" max="65535" value="<?= (int)($proxy['port'] ?? '') ?>">
+                            </div>
+                            <div class="col-md-6 col-10">
+                                <select name="deploy_proxy_domain[]" class="form-select bg-transparent rounded-pill border-secondary border-opacity-25 shadow-none px-3 proxy-domain-select text-white">
+                                    <option value="">Select Domain...</option>
+                                    <?php foreach ($proxyUserDomains as $ud): ?>
+                                        <option value="<?= htmlspecialchars($ud) ?>" <?= ((string)($proxy['domain'] ?? '') === $ud) ? 'selected' : '' ?>><?= htmlspecialchars($ud) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-2 col-2 d-flex justify-content-end">
+                                <button type="button" class="btn rounded-circle d-flex align-items-center justify-content-center p-0 btn-remove-proxy border-secondary border-opacity-25 bg-body-tertiary" style="width: 36px; height: 36px; color: #be185d;" onclick="removeProxyRow(this)">
+                                    <i class='bx bx-trash'></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+        <div class="mt-2 row mb-2">
+            <div class="col-sm-4"></div>
+            <div class="col-sm-8">
+                <button type="button" class="btn rounded-pill px-4 py-1.5 d-inline-flex align-items-center gap-2" style="border: 1px solid #22c55e; color: #22c55e; background: transparent; font-size: 0.9rem;" onclick="addDeployProxyRow()">
+                    <i class='bx bx-message-square-add'></i> Add HTTP Proxy
+                </button>
+            </div>
+        </div>
+        </div>
+        <?php endif; ?>
 
-           <div class="modal-footer border-0 pb-4 px-4">
+        <div class="d-flex align-items-start gap-2 mt-4 mb-2 px-1">
+            <i class='bx bxs-info-square text-secondary opacity-50' style="font-size: 14px; margin-top: 2px;"></i>
+            <div class="text-secondary opacity-75" style="font-size: 11px; line-height: 1.6;">
+                <?= $isRunning ? 'Redeploy' : 'Deploy' ?> gives your lab a fresh instance &mdash; files outside your home directory are wiped, and changes here take effect on this <?= $isRunning ? 'redeploy' : 'deploy' ?>. More settings &mdash; passwords, startup script &mdash; live in the <span class="text-decoration-underline">Preferences</span> tab.
+            </div>
+        </div>
+
+    </div>
+    
+    <div class="modal-footer border-0 pb-4 px-4">
                 <button type="button" 
-                        class="btn btn-warning fw-bold px-4 text-dark rounded-pill" 
+                        class="btn <?= $isRunning ? 'btn-warning' : 'btn-success' ?> fw-bold px-4 text-dark rounded-pill" 
                         id="redeploy-confirm-btn">
-                    Confirm Redeploy
+                    Confirm <?= $isRunning ? 'Redeploy' : 'Deploy' ?>
                 </button>
                 <button type="button" class="btn btn-secondary px-4 rounded-pill" data-coreui-dismiss="modal">Cancel</button>
             </div>

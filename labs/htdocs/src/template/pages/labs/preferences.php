@@ -7,31 +7,19 @@
     $user = Session::getUser();
     $currentUsername = $user->getUsername();
 
+    $labType = 'essentials';
+    if ($fullHash === $user->getLabHash('minio')) {
+        $labType = 'minio';
+    } elseif ($fullHash === $user->getLabHash('n8n')) {
+        $labType = 'n8n';
+    } elseif ($fullHash === $user->getLabHash('docker_lab')) {
+        $labType = 'docker_lab';
+    }
+
     if (!$labData) {
-        if ($fullHash === $user->getLabHash('minio')) {
-            $labType = 'minio';
-        } elseif ($fullHash === $user->getLabHash('n8n')) {
-            $labType = 'n8n';
-        } elseif ($fullHash === $user->getLabHash('docker_lab')) {
-            $labType = 'docker_lab';
-        } else {
-            $labType = 'essentials';
-        }
         $status = 'not_deployed';
     } else {
-        if (!empty($labData['lab_type'])) {
-            $labType = $labData['lab_type'];
-        } else {
-            if ($fullHash === $user->getLabHash('minio')) {
-                $labType = 'minio';
-            } elseif ($fullHash === $user->getLabHash('n8n')) {
-                $labType = 'n8n';
-            } elseif ($fullHash === $user->getLabHash('docker_lab')) {
-                $labType = 'docker_lab';
-            } else {
-                $labType = 'essentials';
-            }
-        }
+        $labType = $labData['lab_type'] ?? $labType;
         $status = $labData['status'] ?? 'offline';
     }
     
@@ -51,7 +39,7 @@
         'minio' => [
             'title'   => 'MinIO S3 Storage',
             'desc'    => 'MinIO is a high-performance, S3-compatible object storage solution for machine learning, analytics, and application data workloads, released under the GNU AGPL v3.0.',
-            'icon'    => Session::cdn3('logo/logo.png'),
+            'icon'    => Session::cdn3('icons/minio_avatar_small.png'),
             // 'icon' => 'bxl-docker',
             'color'   => '#00a6e0',
             'action'  => ' Launch',
@@ -314,50 +302,63 @@
                                 if (empty($httpProxies)):
                             ?>
                             <div class="row align-items-center mb-3 proxy-row" data-index="0">
-                                <div class="col-md-4 col-12 mb-2 mb-md-0">
-                                    <input type="number" name="proxy_port[]" class="form-control bg-dark bg-opacity-50 rounded-pill border-secondary border-opacity-25 text-white px-3 proxy-port" placeholder="Port (e.g. 8080)" min="1" max="65535">
-                                </div>
-                                <div class="col-md-7 col-10">
-                                    <select name="proxy_domain[]" class="form-select bg-dark bg-opacity-50 rounded-pill border-secondary border-opacity-25 text-white px-3 proxy-domain-select">
-                                        <option value="">Select Domain...</option>
-                                        <?php foreach ($userDomains as $ud): ?>
-                                            <option value="<?= htmlspecialchars($ud) ?>"><?= htmlspecialchars($ud) ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                                <div class="col-md-1 col-2 d-flex justify-content-end">
-                                    <button type="button" class="btn rounded-circle d-flex align-items-center justify-content-center p-0 btn-remove-proxy" style="width: 36px; height: 36px; border: 1px solid #be185d; color: #be185d; background: transparent;" onclick="removeProxyRow(this)">
-                                        <i class='bx bx-trash'></i>
-                                    </button>
+                                <label class="col-sm-4 small fw-bold text-secondary">Port & Domains</label>
+                                <div class="col-sm-8">
+                                    <div class="row g-2">
+                                        <div class="col-md-4 col-12 mb-2 mb-md-0">
+                                            <input type="number" name="proxy_port[]" class="form-control bg-body-tertiary rounded-pill border-secondary border-opacity-25 shadow-none px-3 proxy-port" placeholder="Port (e.g. 8080)" min="1" max="65535">
+                                        </div>
+                                        <div class="col-md-6 col-10">
+                                            <select name="proxy_domain[]" class="form-select bg-body-tertiary rounded-pill border-secondary border-opacity-25 shadow-none px-3 proxy-domain-select">
+                                                <option value="">Select Domain...</option>
+                                                <?php foreach ($userDomains as $ud): ?>
+                                                    <option value="<?= htmlspecialchars($ud) ?>"><?= htmlspecialchars($ud) ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2 col-2 d-flex justify-content-end">
+                                            <button type="button" class="btn rounded-circle d-flex align-items-center justify-content-center p-0 btn-remove-proxy border-secondary border-opacity-25 bg-body-tertiary" style="width: 36px; height: 36px; color: #be185d;" onclick="removeProxyRow(this)">
+                                                <i class='bx bx-trash'></i>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <?php else: ?>
                                 <?php foreach ($httpProxies as $idx => $proxy): ?>
                                 <div class="row align-items-center mb-3 proxy-row" data-index="<?= $idx ?>">
-                                    <div class="col-md-4 col-12 mb-2 mb-md-0">
-                                        <input type="number" name="proxy_port[]" class="form-control bg-dark bg-opacity-50 rounded-pill border-secondary border-opacity-25 text-white px-3 proxy-port" placeholder="Port (e.g. 8080)" min="1" max="65535" value="<?= (int)($proxy['port'] ?? '') ?>">
-                                    </div>
-                                    <div class="col-md-7 col-10">
-                                        <select name="proxy_domain[]" class="form-select bg-dark bg-opacity-50 rounded-pill border-secondary border-opacity-25 text-white px-3 proxy-domain-select">
-                                            <option value="">Select Domain...</option>
-                                            <?php foreach ($userDomains as $ud): ?>
-                                                <option value="<?= htmlspecialchars($ud) ?>" <?= ((string)($proxy['domain'] ?? '') === $ud) ? 'selected' : '' ?>><?= htmlspecialchars($ud) ?></option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-1 col-2 d-flex justify-content-end">
-                                        <button type="button" class="btn rounded-circle d-flex align-items-center justify-content-center p-0 btn-remove-proxy" style="width: 36px; height: 36px; border: 1px solid #be185d; color: #be185d; background: transparent;" onclick="removeProxyRow(this)">
-                                            <i class='bx bx-trash'></i>
-                                        </button>
+                                    <label class="col-sm-4 small fw-bold text-secondary">Port & Domains</label>
+                                    <div class="col-sm-8">
+                                        <div class="row g-2">
+                                            <div class="col-md-4 col-12 mb-2 mb-md-0">
+                                                <input type="number" name="proxy_port[]" class="form-control bg-body-tertiary rounded-pill border-secondary border-opacity-25 shadow-none px-3 proxy-port" placeholder="Port (e.g. 8080)" min="1" max="65535" value="<?= (int)($proxy['port'] ?? '') ?>">
+                                            </div>
+                                            <div class="col-md-6 col-10">
+                                                <select name="proxy_domain[]" class="form-select bg-body-tertiary rounded-pill border-secondary border-opacity-25 shadow-none px-3 proxy-domain-select">
+                                                    <option value="">Select Domain...</option>
+                                                    <?php foreach ($userDomains as $ud): ?>
+                                                        <option value="<?= htmlspecialchars($ud) ?>" <?= ((string)($proxy['domain'] ?? '') === $ud) ? 'selected' : '' ?>><?= htmlspecialchars($ud) ?></option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-2 col-2 d-flex justify-content-end">
+                                                <button type="button" class="btn rounded-circle d-flex align-items-center justify-content-center p-0 btn-remove-proxy border-secondary border-opacity-25 bg-body-tertiary" style="width: 36px; height: 36px; color: #be185d;" onclick="removeProxyRow(this)">
+                                                    <i class='bx bx-trash'></i>
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <?php endforeach; ?>
                             <?php endif; ?>
                         </div>
-                        <div class="mt-2">
-                            <button type="button" class="btn rounded-pill px-4 py-1.5 d-inline-flex align-items-center gap-2" style="border: 1px solid #ea580c; color: #ea580c; background: transparent; font-size: 0.9rem;" onclick="addProxyRow()">
-                                <i class='bx bx-message-square-add'></i> Add HTTP Proxy
-                            </button>
+                        <div class="mt-2 row">
+                            <div class="col-sm-4"></div>
+                            <div class="col-sm-8">
+                                <button type="button" class="btn rounded-pill px-4 py-1.5 d-inline-flex align-items-center gap-2" style="border: 1px solid #22c55e; color: #22c55e; background: transparent; font-size: 0.9rem;" onclick="addProxyRow()">
+                                    <i class='bx bx-message-square-add'></i> Add HTTP Proxy
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

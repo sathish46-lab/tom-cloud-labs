@@ -24,12 +24,13 @@ $labData = $db->deployed_labs->findOne(['instance_hash' => $instanceHash]);
 
 // 2. If Lab is new, identify type by hash comparison
 if (!$labData) {
+    $labType = 'essentials';
     if ($instanceHash === $user->getLabHash('minio')) {
         $labType = 'minio';
-    } elseif ($instanceHash === $user->getLabHash('docker')) {
-        $labType = 'docker';
-    } else {
-        $labType = 'essentials';
+    } elseif ($instanceHash === $user->getLabHash('n8n')) {
+        $labType = 'n8n';
+    } elseif ($instanceHash === $user->getLabHash('docker_lab')) {
+        $labType = 'docker_lab';
     }
     
     // Create a "Virtual" lab object with the ACTUAL hash
@@ -40,7 +41,16 @@ if (!$labData) {
         'internal_ip' => '0.0.0.0'
     ];
 } else {
-    $labType = $labData['lab_type'] ?? 'essentials';
+    // If it exists in DB, ensure we grab the right labType by hash if it's missing in DB
+    $labType = 'essentials';
+    if ($instanceHash === $user->getLabHash('minio')) {
+        $labType = 'minio';
+    } elseif ($instanceHash === $user->getLabHash('n8n')) {
+        $labType = 'n8n';
+    } elseif ($instanceHash === $user->getLabHash('docker_lab')) {
+        $labType = 'docker_lab';
+    }
+    $labType = $labData['lab_type'] ?? $labType;
     $instanceHash = $labData['instance_hash'];
 }
 

@@ -24,10 +24,10 @@ class LabFeatures {
      * Edit this map to control what each lab type can use.
      */
     private const LAB_FEATURES = [
-        'essentials' => ['always_on', 'http_proxies', 'startup_script'],
+        'essentials' => ['always_on', 'http_proxies', 'startup_script', 'expose_web'],
         'minio'      => ['always_on'],
         'n8n'        => [],
-        'docker_lab' => ['always_on', 'http_proxies', 'startup_script']
+        'docker_lab' => ['always_on', 'startup_script']
     ];
 
     /**

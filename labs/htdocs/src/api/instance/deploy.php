@@ -38,6 +38,24 @@ try {
     }
     $code_domain = (!empty($_POST['code_domain'])) ? $_POST['code_domain'] : ($instanceHash . ".tomweb.shop");
     
+    // HTTP Proxies
+    $httpProxies = $existing['http_proxies'] ?? [];
+    if (\TomLabs\Labs\LabFeatures::supports($labName, 'http_proxies')) {
+        if (isset($_POST['deploy_proxy_port']) && is_array($_POST['deploy_proxy_port']) && isset($_POST['deploy_proxy_domain']) && is_array($_POST['deploy_proxy_domain'])) {
+            $httpProxies = [];
+            foreach ($_POST['deploy_proxy_port'] as $idx => $port) {
+                $port = (int)$port;
+                $domain = trim((string)($_POST['deploy_proxy_domain'][$idx] ?? ''));
+                if ($port > 0 && $port <= 65535 && !empty($domain)) {
+                    $httpProxies[] = [
+                        'port' => $port,
+                        'domain' => $domain
+                    ];
+                }
+            }
+        }
+    }
+    
     // error_log("PHPLOG: User selected domain: " . $code_domain);
 
     if (!$existing || empty($existing['internal_ip'])) {
@@ -56,6 +74,7 @@ try {
                 'domains'       => $user_domains,
                 'code_domain'   => $code_domain,
                 'expose_web'    => $expose_web,
+                'http_proxies'  => $httpProxies,
                 'status'        => 'deploying',
                 'created_at'    => time(),
                 'storage_path'  => "labs_storage_" . $instanceHash
@@ -93,6 +112,7 @@ try {
                 'domains'     => $user_domains, 
                 'expose_web'  => $expose_web,
                 'code_domain' => $code_domain,
+                'http_proxies'=> $httpProxies,
                 'storage_path'=> "labs_storage_" . $instanceHash,
                 'status'      => 'deploying'
             ],

@@ -611,9 +611,14 @@ async function handleDeploy(btn, labType) {
     const type = labType || window.LAB_TYPE || "essentials";
 
     // 1. Reset Modal State
-    document.getElementById("domain_dropdown").style.display = "none";
-    document.getElementById("dropdown_arrow").classList.remove("bx-chevron-up");
-    document.getElementById("dropdown_arrow").classList.add("bx-chevron-down");
+    const domainDropdown = document.getElementById("domain_dropdown");
+    if (domainDropdown) domainDropdown.style.display = "none";
+    
+    const dropdownArrow = document.getElementById("dropdown_arrow");
+    if (dropdownArrow) {
+      dropdownArrow.classList.remove("bx-chevron-up");
+      dropdownArrow.classList.add("bx-chevron-down");
+    }
 
     // Custom Domain Visibility for MinIO & n8n
     const minioWrapper = document.getElementById("minio_domain_wrapper");
@@ -621,6 +626,7 @@ async function handleDeploy(btn, labType) {
     const vscWrapper = document.getElementById("vsc_domain_wrapper");
     const exposeWrapper = document.getElementById("expose_web_wrapper");
     const domainSelectionWrapper = document.getElementById("domain_selection_wrapper");
+    const httpProxiesWrapper = document.getElementById("http_proxies_wrapper");
 
     if (type === 'minio') {
       if (minioWrapper) minioWrapper.style.display = 'block';
@@ -628,19 +634,22 @@ async function handleDeploy(btn, labType) {
       if (vscWrapper) vscWrapper.style.display = 'none';
       if (exposeWrapper) exposeWrapper.style.display = 'none';
       if (domainSelectionWrapper) domainSelectionWrapper.style.display = 'none';
+      if (httpProxiesWrapper) httpProxiesWrapper.style.display = 'none';
     } else if (type === 'n8n') {
       if (minioWrapper) minioWrapper.style.display = 'none';
       if (n8nWrapper) n8nWrapper.style.display = 'block';
       if (vscWrapper) vscWrapper.style.display = 'none';
       if (exposeWrapper) exposeWrapper.style.display = 'none';
       if (domainSelectionWrapper) domainSelectionWrapper.style.display = 'none';
+      if (httpProxiesWrapper) httpProxiesWrapper.style.display = 'none';
     } else {
       if (minioWrapper) minioWrapper.style.display = 'none';
       if (n8nWrapper) n8nWrapper.style.display = 'none';
       if (vscWrapper) vscWrapper.style.display = 'flex';
       if (exposeWrapper) exposeWrapper.style.display = 'flex';
-
-      const isExposed = document.getElementById("expose_web_toggle").value === 'true';
+      if (httpProxiesWrapper) httpProxiesWrapper.style.display = 'block';
+      const exposeToggle = document.getElementById("expose_web_toggle");
+      const isExposed = exposeToggle ? exposeToggle.value === 'true' : false;
       if (domainSelectionWrapper) domainSelectionWrapper.style.display = isExposed ? 'flex' : 'none';
     }
 
@@ -675,7 +684,8 @@ async function executeRedeploy(labType) {
 
   // 1. Collect form data
   const vscDomain = document.getElementById("vsc_domain_selector").value;
-  const exposeWeb = document.getElementById("expose_web_toggle").value;
+  const exposeToggleEl = document.getElementById("expose_web_toggle");
+  const exposeWeb = exposeToggleEl ? exposeToggleEl.value : "false";
   const checkedDomains = modalEl.querySelectorAll(".domain-selector:checked");
   const domains = Array.from(checkedDomains).map((cb) => cb.value);
 
@@ -683,7 +693,11 @@ async function executeRedeploy(labType) {
   const minioConsole = document.getElementById("minio_console_domain").value;
   const minioApi = document.getElementById("minio_api_domain").value;
   // Collect n8n specific domains
-  const n8nDomain = document.getElementById("n8n_domain_selector") ? document.getElementById("n8n_domain_selector").value : '';
+  const n8nDomain = document.getElementById("n8n_domain_selector") ? document.getElementById("n8n_domain_selector").value : "";
+
+  // Collect proxy inputs if present
+  const proxyPorts = Array.from(modalEl.querySelectorAll("input[name='deploy_proxy_port[]']")).map(el => el.value);
+  const proxyDomains = Array.from(modalEl.querySelectorAll("select[name='deploy_proxy_domain[]']")).map(el => el.value);
 
   modal.hide();
   Dashboard.isProcessing = true;
@@ -724,6 +738,13 @@ async function executeRedeploy(labType) {
   }
 
   domains.forEach((d) => formData.append("domains[]", d));
+
+  proxyPorts.forEach((port, idx) => {
+    if (port && proxyDomains[idx]) {
+      formData.append("deploy_proxy_port[]", port);
+      formData.append("deploy_proxy_domain[]", proxyDomains[idx]);
+    }
+  });
 
   const response = await fetch("/api/instance/deploy", {
     method: "POST",
@@ -1038,11 +1059,11 @@ function updateSelectedDomains() {
     checkedBoxes.forEach((checkbox) => {
       const chip = document.createElement("span");
       chip.className =
-        "badge bg-dark bg-opacity-50 border border-white border-opacity-10 rounded-pill d-inline-flex align-items-center px-3 py-1 me-1 mb-1";
+        "border border-secondary border-opacity-25 rounded text-white opacity-75 d-inline-flex align-items-center px-2 py-1";
       chip.style.fontSize = "11px";
       chip.innerHTML = `
-                <span class="text-white opacity-75">${checkbox.value}</span>
-                <i class='bx bx-x ms-2' style="cursor:pointer" onclick="removeDomainChip('${checkbox.id}'); event.stopPropagation();"></i>
+                <span>${checkbox.value}</span>
+                <i class='bx bx-x ms-1 opacity-50 hover-opacity-100 transition-all' style="cursor:pointer; font-size: 14px;" onclick="removeDomainChip('${checkbox.id}'); event.stopPropagation();"></i>
             `;
       display.appendChild(chip);
     });
@@ -1079,11 +1100,11 @@ function selectAllDomains() {
  * Toggle domain section visibility based on "Expose to Web" choice
  */
 function toggleDomainSection() {
-  const isPublic =
-    document.getElementById("expose_web_toggle").value === "true";
+  const exposeToggle = document.getElementById("expose_web_toggle");
+  const isExposed = exposeToggle && exposeToggle.value === "true";
   const wrapper = document.getElementById("domain_selection_wrapper");
 
-  if (isPublic) {
+  if (isExposed) {
     wrapper.style.display = "flex";
     wrapper.classList.replace("animate__fadeOut", "animate__fadeIn");
   } else {
@@ -1091,7 +1112,8 @@ function toggleDomainSection() {
 
     // Delay display:none to allow animation
     setTimeout(() => {
-      if (document.getElementById("expose_web_toggle").value === "false") {
+      const exposeToggleEl = document.getElementById("expose_web_toggle");
+      if (exposeToggleEl && exposeToggleEl.value === "false") {
         wrapper.style.display = "none";
       }
     }, 500);
@@ -1620,4 +1642,48 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initChallengeSearch);
 } else {
     initChallengeSearch();
+}
+
+function addDeployProxyRow() {
+    const list = document.getElementById('deploy-proxy-container');
+    if (!list) return;
+    const existingRows = list.querySelectorAll('.proxy-row');
+    const idx = existingRows.length;
+    
+    let optionsHtml = '<option value="">Select Domain...</option>';
+    if (window.USER_DOMAINS) {
+        window.USER_DOMAINS.forEach(d => {
+            optionsHtml += `<option value="${d}">${d}</option>`;
+        });
+    } else {
+        const firstSelect = list.querySelector('.proxy-domain-select');
+        if (firstSelect) {
+            optionsHtml = firstSelect.innerHTML;
+        }
+    }
+    
+    const row = document.createElement('div');
+    row.className = 'row align-items-center mb-3 proxy-row';
+    row.setAttribute('data-index', idx);
+    row.innerHTML = `
+        <label class="col-sm-4 small fw-bold text-secondary">Port & Domains</label>
+        <div class="col-sm-8">
+            <div class="row g-2">
+                <div class="col-md-4 col-12 mb-2 mb-md-0">
+                    <input type="number" name="deploy_proxy_port[]" class="form-control bg-transparent rounded-pill border-secondary border-opacity-25 shadow-none px-3 proxy-port text-white" placeholder="Port" min="1" max="65535">
+                </div>
+                <div class="col-md-6 col-10">
+                    <select name="deploy_proxy_domain[]" class="form-select bg-transparent rounded-pill border-secondary border-opacity-25 shadow-none px-3 proxy-domain-select text-white">
+                        ${optionsHtml}
+                    </select>
+                </div>
+                <div class="col-md-2 col-2 d-flex justify-content-end">
+                    <button type="button" class="btn rounded-circle d-flex align-items-center justify-content-center p-0 btn-remove-proxy border-secondary border-opacity-25 bg-body-tertiary" style="width: 36px; height: 36px; color: #be185d;" onclick="removeProxyRow(this)">
+                        <i class='bx bx-trash'></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    list.appendChild(row);
 }
