@@ -25,7 +25,19 @@ require_once __DIR__ . '/labs/LabFeatures.php';
 require_once __DIR__ . '/labs/LabTemplateConfig.php';
 
 # Git version detection
-$repo_root = '/var/www/labs'; 
+$possible_roots = [
+    realpath(__DIR__ . '/../../../..'), // Dev_lab environment
+    realpath(__DIR__ . '/../../..'),    // Typical production environment
+    '/var/www/labs'                     // Fallback
+];
+
+$repo_root = '/var/www/labs';
+foreach ($possible_roots as $root) {
+    if ($root && (is_dir($root . '/.git') || file_exists($root . '/.version'))) {
+        $repo_root = $root;
+        break;
+    }
+}
 $version_file = $repo_root . '/.version';
 
 global $git_version;
@@ -36,7 +48,7 @@ if (file_exists($version_file)) {
 } else {
     // Priority 2: Try running git command (Local fallback)
     $git_bin = '/usr/bin/git'; 
-    $cmd = "$git_bin -C " . escapeshellarg($repo_root) . " describe --always 2>&1";
+    $cmd = "$git_bin -C " . escapeshellarg($repo_root) . " describe --tags --always 2>&1";
     exec($cmd, $version_mini_hash, $return_var);
     
     if ($return_var === 0 && !empty($version_mini_hash[0])) {

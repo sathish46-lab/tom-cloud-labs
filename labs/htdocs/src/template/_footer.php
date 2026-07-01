@@ -17,7 +17,7 @@
             Page Rendered in <?= Session::getRenderTime() ?>
         </span>
         <span class="text-info">
-           |  v0.0.1-beta-<?= Session::getVersion() ?>
+           |  <?= Session::getVersion() ?>
         </span>
     </div>
 </footer>
