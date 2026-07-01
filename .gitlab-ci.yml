@@ -24,8 +24,8 @@ deploy_to_tomcloud_lab:
   script:
     - echo "Starting deployment to TomCloudLab..."
     
-    # 0. Generate version file based on current commit
-    - git rev-parse --short HEAD > labs/.version
+    # 0. Generate version file based on current commit and tags
+    - git describe --tags --always > labs/.version
     
     # 1. Sync the 'labs' folder. 
     # We exclude 'vendor' and 'node_modules' so production dependencies stay safe.
