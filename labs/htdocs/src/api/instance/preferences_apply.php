@@ -48,7 +48,9 @@ try {
 
     // Sanitize HTTP proxies
     $httpProxies = [];
-    if (isset($input['http_proxies']) && is_array($input['http_proxies'])) {
+    if (!\TomLabs\Labs\LabTemplateConfig::supportsFeature($labName, 'http_proxies')) {
+        $httpProxies = $existing['http_proxies'] ?? [];
+    } elseif (isset($input['http_proxies']) && is_array($input['http_proxies'])) {
         foreach ($input['http_proxies'] as $proxy) {
             $port = isset($proxy['port']) ? (int)$proxy['port'] : 0;
             $domain = isset($proxy['domain']) ? trim((string)$proxy['domain']) : '';
@@ -61,8 +63,18 @@ try {
         }
     }
 
-    $alwaysOn = !empty($input['always_on']);
-    $initScript = isset($input['init_script']) ? (string)$input['init_script'] : '#!/bin/bash';
+    // Sanitize always_on
+    if (!\TomLabs\Labs\LabTemplateConfig::supportsFeature($labName, 'always_on')) {
+        $alwaysOn = $existing['always_on'] ?? false;
+    } else {
+        $alwaysOn = !empty($input['always_on']);
+    }
+
+    if (!\TomLabs\Labs\LabTemplateConfig::supportsFeature($labName, 'startup_script')) {
+        $initScript = $existing['init_script'] ?? '#!/bin/bash';
+    } else {
+        $initScript = isset($input['init_script']) ? (string)$input['init_script'] : '#!/bin/bash';
+    }
 
     $updateData = [
         'http_proxies' => $httpProxies,

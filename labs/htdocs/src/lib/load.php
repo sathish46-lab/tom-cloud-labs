@@ -21,6 +21,7 @@ require_once __DIR__ . '/core/DatabaseConnection.class.php';
 require_once __DIR__ . '/core/Session.class.php';
 require_once __DIR__ . '/core/UserSession.class.php';
 require_once __DIR__ . '/core/WebAPI.class.php';
+require_once __DIR__ . '/labs/LabFeatures.php';
 require_once __DIR__ . '/labs/LabTemplateConfig.php';
 
 # Git version detection

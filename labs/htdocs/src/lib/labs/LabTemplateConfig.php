@@ -72,6 +72,7 @@ class LabTemplateConfig {
                 ];
                 break;
 
+            case 'docker_lab':
             case 'essentials':
             default:
                 $codeServerUrl = $creds['code_server_url'] ?? "https://{$labData['instance_hash']}.tomweb.shop";
@@ -91,5 +92,13 @@ class LabTemplateConfig {
             'title' => ucfirst($labType) . " Connection Details",
             'fields' => $fields
         ];
+    }
+
+    /**
+     * Check if a lab type supports a specific feature.
+     * Delegates to LabFeatures — edit LabFeatures.php to change per-lab support.
+     */
+    public static function supportsFeature(string $labType, string $feature): bool {
+        return LabFeatures::supports($labType, $feature);
     }
 }

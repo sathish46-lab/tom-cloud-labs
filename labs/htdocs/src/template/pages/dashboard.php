@@ -816,9 +816,9 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                                  <div class="d-flex align-items-center gap-2">
                                                                      <!-- Soft OS container -->
                                                                      <?php 
-                                                                         $bgMap = ['essentials' => '#e95420', 'minio' => '#2f3542', 'n8n' => '#ff6b81'];
+                                                                         $bgMap = ['essentials' => '#e95420', 'minio' => '#2f3542', 'n8n' => '#ff6b81', 'docker_lab' => '#2496ed'];
                                                                          $bgColor = $bgMap[$lab['type']] ?? '#2f3542';
-                                                                         $typeIconMap = ['essentials' => 'bxl-tux', 'minio' => 'bx-cube', 'n8n' => 'bx-git-repo-forked'];
+                                                                         $typeIconMap = ['essentials' => 'bxl-tux', 'minio' => 'bx-cube', 'n8n' => 'bx-git-repo-forked', 'docker_lab' => 'bxl-docker'];
                                                                          $iconClass = $typeIconMap[$lab['type']] ?? 'bxl-ubuntu';
                                                                      ?>
                                                                      <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" 

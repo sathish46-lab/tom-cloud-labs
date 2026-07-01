@@ -12,6 +12,8 @@
             $labType = 'minio';
         } elseif ($fullHash === $user->getLabHash('n8n')) {
             $labType = 'n8n';
+        } elseif ($fullHash === $user->getLabHash('docker_lab')) {
+            $labType = 'docker_lab';
         } else {
             $labType = 'essentials';
         }
@@ -24,6 +26,8 @@
                 $labType = 'minio';
             } elseif ($fullHash === $user->getLabHash('n8n')) {
                 $labType = 'n8n';
+            } elseif ($fullHash === $user->getLabHash('docker_lab')) {
+                $labType = 'docker_lab';
             } else {
                 $labType = 'essentials';
             }
@@ -60,6 +64,14 @@
             'color'   => '#ea4b71',
             'action'  => 'Launch',
             'action_icon' => 'bx-network-chart'
+        ],
+        'docker_lab' => [
+            'title'   => 'Tom Docker Lab',
+            'desc'    => 'Ubuntu 24.10 environment equipped with full Docker-in-Docker capabilities.',
+            'icon'    => 'bxl-docker',
+            'color'   => '#2496ed',
+            'action'  => 'Code',
+            'action_icon' => 'bx-code-alt'
         ]
     ];
 
@@ -239,11 +251,17 @@
             </div>
         </div>
         
-        <?php $showHttpProxies = defined('Constants::FEATURE_HTTP_PROXIES') && Constants::FEATURE_HTTP_PROXIES; ?>
+        <?php 
+            $showAlwaysOn      = \TomLabs\Labs\LabTemplateConfig::supportsFeature($labType, 'always_on');
+            $showHttpProxies   = \TomLabs\Labs\LabTemplateConfig::supportsFeature($labType, 'http_proxies'); 
+            $showStartupScript = \TomLabs\Labs\LabTemplateConfig::supportsFeature($labType, 'startup_script');
+        ?>
         <!-- Side-by-Side: HTTP Proxies & Lifecycle Section -->
+        <?php if ($showAlwaysOn || $showHttpProxies): ?>
         <div class="row mt-4">
+            <?php if ($showAlwaysOn): ?>
             <!-- Left Side: Lifecycle -->
-            <div class="col-md-<?= $showHttpProxies ? '5' : '12' ?>">
+            <div class="col-md-<?= ($showAlwaysOn && $showHttpProxies) ? '5' : '12' ?>">
                 <div class="card border-0 shadow-sm glass-card rounded-4 mb-4" style="height: calc(100% - 1.5rem);">
                     <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2">
                         <h6 class="fw-bold mb-1 text-uppercase ls-1 small">Lifecycle</h6>
@@ -262,10 +280,11 @@
                     </div>
                 </div>
             </div>
+            <?php endif; ?>
 
             <?php if ($showHttpProxies): ?>
             <!-- Right Side: HTTP Proxies -->
-            <div class="col-md-7">
+            <div class="col-md-<?= ($showAlwaysOn && $showHttpProxies) ? '7' : '12' ?>">
                 <div class="card border-0 shadow-sm glass-card rounded-4 mb-4" style="height: calc(100% - 1.5rem);">
                     <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2">
                         <h6 class="fw-bold mb-1">HTTP Proxies</h6>
@@ -345,7 +364,9 @@
             </div>
             <?php endif; ?>
         </div>
+        <?php endif; ?>
 
+        <?php if ($showStartupScript): ?>
         <!-- Startup Script Section -->
         <div class="row mt-2">
             <div class="col-12">
@@ -427,6 +448,7 @@
                 </div>
             </div>
         </div>
+        <?php endif; ?>
 
         <!-- Save / Apply Buttons -->
         <div class="row mt-2 mb-4">

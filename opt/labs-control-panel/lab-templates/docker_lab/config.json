@@ -1,0 +1,31 @@
+{
+  "lab_name": "Tom Docker Lab",
+  "lab_id": "docker_lab",
+  "docker_run": "docker run --privileged --detach --name {lab_name} --memory='{memory}' --cpus='{cpus}' --network {network_name} --ip {ip} --add-host {vpn_domain}:{tunnel_gw} --cap-add=NET_ADMIN --device=/dev/net/tun --sysctl net.ipv6.conf.all.disable_ipv6=1 -v {storage}:{mount_target} --hostname {host_name} {image}",
+  "version": 1.0,
+  "stability": "beta",
+  "resources": {
+    "memory": "2g",
+    "cpus": "0.5",
+    "pids_limit": 100
+  },
+  "network": {
+    "hostname": "essentials",
+    "exposed_ports": []
+  },
+  "storage": {
+    "mount_target": "/home/{user}"
+  },
+  "scripts": {
+    "linkuser": "/var/labsdata/scripts/linkuser.sh",
+    "entry": "/var/labsdata/scripts/entry.sh"
+  },
+  "services": {
+    "code": { "port": 8080, "middlewares": ["code-headers@file"] },
+    "web":  { "port": 80 }
+  },
+  "credentials_template": {
+    "code_server_pass": "{password}",
+    "su_pass": "{su_pass}"
+  }
+}

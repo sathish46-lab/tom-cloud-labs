@@ -24,6 +24,9 @@ if (!$input || empty($input['hash'])) {
 }
 
 $labName = $input['lab'] ?? 'essentials';
+if (!\TomLabs\Labs\LabTemplateConfig::supportsFeature($labName, 'startup_script')) {
+    echo json_encode(['status' => 'error', 'error' => 'Startup script feature is not supported for this lab type']); exit;
+}
 $instanceHash = $user->getLabHash($labName);
 
 if ($instanceHash !== $input['hash']) {

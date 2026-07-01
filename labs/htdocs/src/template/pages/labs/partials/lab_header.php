@@ -67,8 +67,8 @@
 
                     <!-- Badges -->
                     <div class="d-flex flex-wrap align-items-center gap-2">
-                        <span class="badge bg-primary-gradient rounded-pill px-3 py-1">BETA</span>
-                        <span class="badge bg-warning-gradient rounded-pill px-3 py-1">PUBLIC</span>
+                        <span class="badge bg-primary-gradient rounded-pill px-3 py-1">beta</span>
+                        <span class="badge bg-warning-gradient rounded-pill px-3 py-1">public</span>
                         <span class="badge bg-<?= $isRunning ? 'success' : 'danger' ?>-gradient rounded-pill px-3 py-1"><?= strtoupper($status) ?></span>
                     </div>
                 </div>

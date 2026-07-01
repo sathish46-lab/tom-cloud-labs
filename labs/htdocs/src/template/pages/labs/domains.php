@@ -12,6 +12,8 @@
             $labType = 'minio';
         } elseif ($fullHash === $user->getLabHash('n8n')) {
             $labType = 'n8n';
+        } elseif ($fullHash === $user->getLabHash('docker_lab')) {
+            $labType = 'docker_lab';
         } else {
             $labType = 'essentials';
         }
@@ -50,6 +52,14 @@
             'color'   => '#ea4b71',
             'action'  => ' Launch',
             'action_icon' => 'bx-network-chart'
+        ],
+        'docker_lab' => [
+            'title'   => 'Tom Docker Lab',
+            'desc'    => 'Ubuntu 24.10 environment equipped with full Docker-in-Docker capabilities.',
+            'icon'    => 'bxl-docker',
+            'color'   => '#2496ed',
+            'action'  => 'Code',
+            'action_icon' => 'bx-code-alt'
         ]
     ];
 

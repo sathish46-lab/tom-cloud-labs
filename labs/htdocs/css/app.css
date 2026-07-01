@@ -14480,7 +14480,7 @@ body {
 
 /* Global Badge Refinement */
 .badge {
-  text-transform: uppercase;
+  text-transform: lowercase;
   font-size: 0.65rem !important;
   border-radius: 50px !important;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);

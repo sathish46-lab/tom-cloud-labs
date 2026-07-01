@@ -13,7 +13,7 @@ $labTemplates = [
     ['id' => 'essentials', 'name' => 'Essentials Lab', 'icon' => 'tux', 'badges' => ['free', 'beta']],
     ['id' => 'minio', 'name' => 'MinIO S3 Storage', 'icon' => 'docker', 'badges' => ['S3', 'beta']],
     ['id' => 'n8n', 'name' => 'n8n Workflow Lab', 'icon' => 'git-repo-forked', 'badges' => ['workflow', 'beta']],
-    // ['id' => 'docker', 'name' => 'Docker Lab', 'icon' => 'docker', 'badges' => ['beta']]
+    ['id' => 'docker_lab', 'name' => 'Tom Docker Lab', 'icon' => 'docker', 'badges' => ['docker', 'beta']]
 ];
 $labsList = [];
 foreach ($labTemplates as $tmpl) {

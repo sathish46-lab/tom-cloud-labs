@@ -40,5 +40,7 @@ class Constants
      * Feature Flags
      * Used to easily toggle UI features across the application.
      * -------------------------------------------------------------------- */
-    const FEATURE_HTTP_PROXIES = false;
+    const FEATURE_HTTP_PROXIES = true;
+    const FEATURE_STARTUP_SCRIPT = true;
+    const FEATURE_ALWAYS_ON = true;
 }
