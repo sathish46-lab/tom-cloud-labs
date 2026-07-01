@@ -281,6 +281,9 @@ class Lab(BaseOrchestrator):
 
         # Phase 5: CONTAINER
         self.log(f"Provisioning {lab_spec.get('lab_name', template_name)}: {mem} RAM, {cpu} CPU", "info", "container")
+        tunnel_prefix = self.config.get('tunnel_ip', '172.30.0.')
+        tunnel_gw = f"{tunnel_prefix}1"
+        vpn_domain = os.environ.get('VPN_DOMAIN', 'vpn.tomweb.in')
         mapping = {
             "lab_name": instance_id, 
             "memory": mem,
@@ -291,6 +294,8 @@ class Lab(BaseOrchestrator):
             "image": f"{template_name}:lab", 
             "ip": docker_ip, 
             "vps_docker_ip": vps_docker_ip,
+            "tunnel_gw": tunnel_gw,
+            "vpn_domain": vpn_domain,
             "host_name": f"{lab_spec.get('network', {}).get('hostname', 'essentials')}.{instance_id}.{os.environ.get('CODE_DOMAIN', 'tomweb.fun')}",
             'network_name': self.config.get('docker_network_name', 'bridge')
         }
@@ -393,10 +398,11 @@ class Lab(BaseOrchestrator):
             vpn_domain = os.environ.get('VPN_DOMAIN', 'vpn.tomweb.in')
             
             fix_cmd = (
-                f'sed -i \'s#AllowedIPs.*#AllowedIPs = {tunnel_subnet}#g\' /etc/wireguard/wg0.conf && '
-                f'wg set wg0 peer {server_pub_key} allowed-ips {tunnel_subnet} && '
-                f'ip route add {tunnel_subnet} dev wg0 metric 10 2>/dev/null || true && '
-                f'echo "{tunnel_gw}\t{vpn_domain}" >> /etc/hosts'
+                f'sed -i \'s#AllowedIPs.*#AllowedIPs = {tunnel_subnet}#g\' /etc/wireguard/wg0.conf 2>/dev/null || true; '
+                f'wg set wg0 peer {server_pub_key} allowed-ips {tunnel_subnet} 2>/dev/null || true; '
+                f'ip route add {tunnel_subnet} dev wg0 metric 10 2>/dev/null || true; '
+                f'grep -q "::1" /etc/hosts || echo -e "::1\\tlocalhost ip6-localhost ip6-loopback\\nfe00::0\\tip6-localnet\\nff00::0\\tip6-mcastprefix\\nff02::1\\tip6-allnodes\\nff02::2\\tip6-allrouters" >> /etc/hosts 2>/dev/null || true; '
+                f'grep -q "{vpn_domain}" /etc/hosts || echo "{tunnel_gw}\t{vpn_domain}" >> /etc/hosts 2>/dev/null || true'
             )
             self.run(f'docker exec {instance_id} bash -c "{fix_cmd}"', capture=False)
         

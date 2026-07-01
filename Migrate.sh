@@ -1186,7 +1186,7 @@ OUTER_EOF_COMPOSE
   "docker_network_name": "$DOCKER_NETWORK_CONF",
   "orchestrator_container": "$DOCKER_NETWORK_CONF",
   "docker_build": "docker build -t {image_tag} {path}",
-  "docker_run": "docker run --detach --name {lab_name} --memory='{memory}' --cpus='{cpus}' --network {network_name} --ip {ip} --cap-add=NET_ADMIN --device=/dev/net/tun --sysctl net.ipv6.conf.all.disable_ipv6=1 -v {storage}:{mount_target} --hostname {host_name} {image}",
+  "docker_run": "docker run --detach --name {lab_name} --memory='{memory}' --cpus='{cpus}' --network {network_name} --ip {ip} --add-host {vpn_domain}:{tunnel_gw} --cap-add=NET_ADMIN --device=/dev/net/tun --sysctl net.ipv6.conf.all.disable_ipv6=1 -v {storage}:{mount_target} --hostname {host_name} {image}",
   "docker_stop_rm": "docker stop {lab_name} && sudo docker rm -f {lab_name}",
   "docker_ps": "docker ps --format '{{.Names}}'",
   "docker_exec": "docker exec -d {lab_name} {script}",
