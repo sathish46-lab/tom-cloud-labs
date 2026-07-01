@@ -97,4 +97,4 @@ networks:
     driver: bridge
   labs_frontend:
     name: labs_frontend
-    driver: bridge
+    external: true
