@@ -359,18 +359,33 @@ if [ -f /etc/wireguard/wg0.conf ]; then
     EXISTING_PEERS=$(awk '/^\[Peer\]/,0' /etc/wireguard/wg0.conf)
 fi
 
+# Detect Docker network name from config.json or env.json
+DOCKER_NETWORK=$(jq -r '.docker_network_name // empty' /opt/labs-control-panel/config.json 2>/dev/null)
+if [ -z "$DOCKER_NETWORK" ] || [ "$DOCKER_NETWORK" = "null" ]; then
+    DOCKER_NETWORK=$(jq -r '.docker_network_name // empty' /var/www/env.json 2>/dev/null)
+fi
+if [ -z "$DOCKER_NETWORK" ] || [ "$DOCKER_NETWORK" = "null" ]; then
+    DOCKER_NETWORK=$(docker network ls --format '{{.Name}}' | grep -E "(Dev_lab|TomCloudLab_backend)" | head -n 1)
+fi
+if [ -z "$DOCKER_NETWORK" ] || [ "$DOCKER_NETWORK" = "null" ]; then
+    DOCKER_NETWORK="Dev_lab"
+fi
+
 # Detect Docker bridge interface for forwarding rules
-DOCKER_BRIDGE=$(docker network inspect TomCloudLab --format '{{.Id}}' 2>/dev/null | cut -c1-12)
+DOCKER_BRIDGE=$(docker network inspect "$DOCKER_NETWORK" --format '{{.Id}}' 2>/dev/null | cut -c1-12)
 if [ -n "$DOCKER_BRIDGE" ]; then
     BRIDGE_IF="br-${DOCKER_BRIDGE}"
 else
     BRIDGE_IF=""
 fi
 
-# Fetch tunnel prefix from config
-TUNNEL_PREFIX=$(jq -r '.tunnel_ip' /opt/labs-control-panel/config.json 2>/dev/null)
+# Fetch tunnel prefix from config or env.json
+TUNNEL_PREFIX=$(jq -r '.tunnel_ip // empty' /opt/labs-control-panel/config.json 2>/dev/null)
 if [ -z "$TUNNEL_PREFIX" ] || [ "$TUNNEL_PREFIX" = "null" ]; then
-    echo "FATAL: tunnel_ip not set in config.json"
+    TUNNEL_PREFIX=$(jq -r '.tunnel_ip // empty' /var/www/env.json 2>/dev/null)
+fi
+if [ -z "$TUNNEL_PREFIX" ] || [ "$TUNNEL_PREFIX" = "null" ]; then
+    echo "FATAL: tunnel_ip not set in config.json or env.json"
     exit 1
 fi
 TUNNEL_IP="${TUNNEL_PREFIX}1/16"
@@ -410,6 +425,33 @@ fi
 sed -i '/^$/{ N; /^\n$/d }' /etc/wireguard/wg0.conf
 chmod 600 /etc/wireguard/wg0.conf
 echo "[INFO] WireGuard config regenerated (peers preserved)."
+
+# WireGuard Endpoint Resolution (Docker vs VPS mode)
+WG_MODE="${WIREGUARD_MODE:-docker}"
+WG_PORT=$(jq -r '.wireguard_endpoint_port // 51820' /var/www/env.json 2>/dev/null || echo "51820")
+
+if [ "$WG_MODE" = "vps" ]; then
+    # VPS mode: prefer VPS_PUBLIC_IP env var, fallback to auto-detect
+    if [ -n "$VPS_PUBLIC_IP" ]; then
+        WG_ENDPOINT="${VPS_PUBLIC_IP}:${WG_PORT}"
+        echo "[INFO] WireGuard Mode: VPS (using VPS_PUBLIC_IP=${VPS_PUBLIC_IP})"
+    else
+        DETECTED_IP=$(curl -s --max-time 5 ifconfig.me 2>/dev/null || echo "")
+        if [ -n "$DETECTED_IP" ]; then
+            WG_ENDPOINT="${DETECTED_IP}:${WG_PORT}"
+            echo "[INFO] WireGuard Mode: VPS (auto-detected IP=${DETECTED_IP})"
+        else
+            WG_ENDPOINT="${VPN_DOMAIN}:${WG_PORT}"
+            echo "[WARN] WireGuard Mode: VPS — IP detection failed, falling back to VPN_DOMAIN (${VPN_DOMAIN})"
+        fi
+    fi
+else
+    # Docker mode: use DDNS domain (Cloudflare)
+    WG_ENDPOINT="${VPN_DOMAIN}:${WG_PORT}"
+    echo "[INFO] WireGuard Mode: Docker/DDNS (Endpoint: ${WG_ENDPOINT})"
+fi
+
+export WG_ENDPOINT
 
 # 2. Generate Apache Configuration Files
 echo "[INFO] Generating Apache VirtualHosts..."
@@ -640,7 +682,7 @@ if [ ! -f "/var/www/env.json" ]; then
         "host": "127.0.0.1",
         "port": 5672,
         "user": "admin",
-        "password": "$MQ_PASS"
+        "password": "RootTom@46"
     }
 }
 EOF
@@ -658,6 +700,16 @@ if [ -f "/var/www/env.json" ]; then
         echo "[INFO] Injecting WireGuard Public Key into env.json..."
         # Use jq to update/add the key
         jq --arg key "$WG_PUBKEY" '.wireguard_public_key = $key' /var/www/env.json > /var/www/env.json.tmp && \
+        mv /var/www/env.json.tmp /var/www/env.json
+        chown www-data:www-data /var/www/env.json
+    fi
+
+    # Dynamically inject WireGuard Endpoint & Mode into env.json
+    if [ -n "$WG_ENDPOINT" ]; then
+        echo "[INFO] Injecting WireGuard Endpoint ($WG_ENDPOINT) into env.json..."
+        jq --arg ep "$WG_ENDPOINT" --arg mode "$WG_MODE" --arg port "$WG_PORT" \
+           '.wireguard_endpoint = $ep | .wireguard_mode = $mode | .wireguard_endpoint_port = ($port | tonumber)' \
+           /var/www/env.json > /var/www/env.json.tmp && \
         mv /var/www/env.json.tmp /var/www/env.json
         chown www-data:www-data /var/www/env.json
     fi
@@ -770,7 +822,7 @@ OUTER_EOF_ENTRYPOINT
     log "Generating init-services.sh..."
     cat <<'OUTER_EOF_SETUP' > init-services.sh
 #!/bin/bash
-# /usr/local/bin/container-setup.sh
+# /usr/local/bin/init-services.sh
 
 # This script is executed by systemd after MongoDB and RabbitMQ start.
 
@@ -794,36 +846,44 @@ if systemctl is-active --quiet rabbitmq-server; then
         sleep 2
     done
     rabbitmq-plugins enable rabbitmq_management rabbitmq_stomp rabbitmq_web_stomp || true
-    if ! rabbitmqctl list_users | grep -qw "^admin"; then
+    # Create RabbitMQ Admin User and verify it exists
+    until rabbitmqctl list_users | grep -qw "^admin"; do
         echo "[INFO] Creating RabbitMQ Admin User..."
-        rabbitmqctl add_user admin $MQ_PASS
-        rabbitmqctl set_user_tags admin administrator
-    fi
-    rabbitmqctl set_user_tags admin administrator
-    rabbitmqctl set_permissions -p / admin ".*" ".*" ".*"
+        rabbitmqctl add_user admin RootTom@46 || true
+        sleep 2
+    done
+
+    # Set and verify permissions for the Admin User
+    until rabbitmqctl list_permissions -p / | grep -qw "^admin"; do
+        echo "[INFO] Setting RabbitMQ Admin Permissions..."
+        rabbitmqctl set_user_tags admin administrator || true
+        rabbitmqctl set_permissions -p / admin ".*" ".*" ".*" || true
+        sleep 2
+    done
+    echo "[INFO] RabbitMQ Admin User verified and permissions applied."
 fi
 
 # 1.5. MySQL Configuration
 if systemctl is-active --quiet mysql; then
     echo "[INFO] Configuring MySQL Root password..."
     # Set local root password
-    mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '$DB_PASS'; FLUSH PRIVILEGES;" 2>/dev/null || true
+    mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'tomlabs_root_secret'; FLUSH PRIVILEGES;" 2>/dev/null || true
     # Create wildcard root user for access over Docker network
-    mysql -u root -p$DB_PASS -e "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '$DB_PASS'; GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;" 2>/dev/null || true
+    mysql -u root -ptomlabs_root_secret -e "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'tomlabs_root_secret'; GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;" 2>/dev/null || true
 fi
 
 # 1.6. MariaDB Configuration (Port 3307)
 if systemctl is-active --quiet mariadb; then
     echo "[INFO] Configuring MariaDB Root password..."
-    mysql --port=3307 -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '$DB_PASS'; FLUSH PRIVILEGES;" 2>/dev/null || true
-    mysql --port=3307 -u root -p$DB_PASS -e "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '$DB_PASS'; GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;" 2>/dev/null || true
+    mysql --port=3307 -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'tomlabs_root_secret'; FLUSH PRIVILEGES;" 2>/dev/null || true
+    mysql --port=3307 -u root -ptomlabs_root_secret -e "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'tomlabs_root_secret'; GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;" 2>/dev/null || true
 fi
 
 # 1.7. PostgreSQL Configuration
 if systemctl is-active --quiet postgresql; then
     echo "[INFO] Configuring PostgreSQL Admin password..."
-    sudo -u postgres psql -c "CREATE ROLE tomlabs_admin WITH LOGIN SUPERUSER PASSWORD '$DB_PASS';" 2>/dev/null || true
-    sudo -u postgres psql -c "ALTER ROLE tomlabs_admin WITH PASSWORD '$DB_PASS';" 2>/dev/null || true
+    sudo -u postgres psql -c "CREATE ROLE tomlabs_admin WITH LOGIN SUPERUSER PASSWORD 'tomlabs_root_secret';" 2>/dev/null || true
+    sudo -u postgres psql -c "ALTER ROLE tomlabs_admin WITH PASSWORD 'tomlabs_root_secret';" 2>/dev/null || true
 fi
 
 # 1.8. Redis Configuration
@@ -893,19 +953,28 @@ fi
 # 6. Re-apply Host Routing for Existing Lab Peers
 echo "[INFO] Recovering host routes for deployed labs..."
 
-# Detect the bridge interface from config
-DOCKER_NETWORK=$(jq -r '.docker_network_name' /opt/labs-control-panel/config.json 2>/dev/null)
+# Detect the bridge interface from config or env.json
+DOCKER_NETWORK=$(jq -r '.docker_network_name // empty' /opt/labs-control-panel/config.json 2>/dev/null)
 if [ -z "$DOCKER_NETWORK" ] || [ "$DOCKER_NETWORK" = "null" ]; then
-    DOCKER_NETWORK="TomCloudLab"
+    DOCKER_NETWORK=$(jq -r '.docker_network_name // empty' /var/www/env.json 2>/dev/null)
+fi
+if [ -z "$DOCKER_NETWORK" ] || [ "$DOCKER_NETWORK" = "null" ]; then
+    DOCKER_NETWORK=$(docker network ls --format '{{.Name}}' | grep -E "(Dev_lab|TomCloudLab_backend)" | head -n 1)
+fi
+if [ -z "$DOCKER_NETWORK" ] || [ "$DOCKER_NETWORK" = "null" ]; then
+    DOCKER_NETWORK="Dev_lab"
 fi
 
 BRIDGE_ID=$(docker network inspect "$DOCKER_NETWORK" -f '{{.Id}}' 2>/dev/null | cut -c1-12)
 if [ -n "$BRIDGE_ID" ]; then
     BRIDGE_IF="br-${BRIDGE_ID}"
     
-    TUNNEL_PREFIX=$(jq -r '.tunnel_ip' /opt/labs-control-panel/config.json 2>/dev/null)
+    TUNNEL_PREFIX=$(jq -r '.tunnel_ip // empty' /opt/labs-control-panel/config.json 2>/dev/null)
     if [ -z "$TUNNEL_PREFIX" ] || [ "$TUNNEL_PREFIX" = "null" ]; then
-        echo "FATAL: tunnel_ip not set in config.json"
+        TUNNEL_PREFIX=$(jq -r '.tunnel_ip // empty' /var/www/env.json 2>/dev/null)
+    fi
+    if [ -z "$TUNNEL_PREFIX" ] || [ "$TUNNEL_PREFIX" = "null" ]; then
+        echo "FATAL: tunnel_ip not set in config.json or env.json"
         exit 1
     fi
     TUNNEL_SUBNET="${TUNNEL_PREFIX}0/16"
@@ -921,15 +990,22 @@ if [ -n "$BRIDGE_ID" ]; then
         iptables -t nat -A POSTROUTING -s "$TUNNEL_SUBNET" -o eth0 -j MASQUERADE 2>/dev/null
     
     # For each WireGuard peer, re-create the host route to its Docker container
-    # Peer AllowedIPs (172.30.x.y) maps to Docker IP (10.30.0.y) where y is the last octet
+    # Peer AllowedIPs maps to Docker IP
     if wg show wg0 allowed-ips 2>/dev/null | grep -q '/32'; then
         wg show wg0 allowed-ips | while read -r _pubkey allowed_ip_cidr; do
             # Extract just the IP (strip /32)
             tunnel_ip=$(echo "$allowed_ip_cidr" | sed 's|/32||')
             if [ -n "$tunnel_ip" ] && [ "$tunnel_ip" != "${TUNNEL_PREFIX}1" ]; then
-                # Derive Docker IP: last octet of tunnel IP -> 172.19.0.{last_octet}
+                # Derive Docker IP: last octet of tunnel IP -> {DOCKER_IP_PREFIX}{last_octet}
+                DOCKER_IP_PREFIX=$(jq -r '.docker_ip // empty' /opt/labs-control-panel/config.json 2>/dev/null)
+                if [ -z "$DOCKER_IP_PREFIX" ] || [ "$DOCKER_IP_PREFIX" = "null" ]; then
+                    DOCKER_IP_PREFIX=$(jq -r '.docker_ip // empty' /var/www/env.json 2>/dev/null)
+                fi
+                if [ -z "$DOCKER_IP_PREFIX" ] || [ "$DOCKER_IP_PREFIX" = "null" ]; then
+                    DOCKER_IP_PREFIX="172.19.0."
+                fi
                 last_octet=$(echo "$tunnel_ip" | awk -F. '{print $4}')
-                docker_ip="172.19.0.${last_octet}"
+                docker_ip="${DOCKER_IP_PREFIX}${last_octet}"
                 
                 # Check if the container with this Docker IP exists and is running
                 if docker network inspect "$DOCKER_NETWORK" --format '{{range .Containers}}{{.IPv4Address}} {{end}}' 2>/dev/null | grep -q "$docker_ip"; then
@@ -1091,6 +1167,13 @@ OUTER_EOF_COMPOSE
     fi
 
     log "Generating config.json..."
+    DOCKER_NETWORK_CONF=$(jq -r '.docker_network_name // empty' ./env.json 2>/dev/null)
+    [ -z "$DOCKER_NETWORK_CONF" ] && DOCKER_NETWORK_CONF="Dev_lab"
+    DOCKER_IP_CONF=$(jq -r '.docker_ip // empty' ./env.json 2>/dev/null)
+    [ -z "$DOCKER_IP_CONF" ] && DOCKER_IP_CONF="172.19.0."
+    TUNNEL_IP_CONF=$(jq -r '.tunnel_ip // empty' ./env.json 2>/dev/null)
+    [ -z "$TUNNEL_IP_CONF" ] && TUNNEL_IP_CONF="172.31.0."
+
     cat <<OUTER_EOF_CONFIG > ./opt/labs-control-panel/config.json
 {
   "labctl_path": "/usr/local/bin/labsctl",
@@ -1098,10 +1181,10 @@ OUTER_EOF_COMPOSE
   "storage_path": "/var/tomlabs/storage/{user}",
   "app_log": "/var/log/labs/labctl.log",
   "config_path": "/etc/labs-control-panel/config.json",
-  "docker_ip": "172.19.0.",
-  "tunnel_ip": "172.30.0.",
-  "docker_network_name": "TomCloudLab",
-  "orchestrator_container": "TomCloudLab",
+  "docker_ip": "$DOCKER_IP_CONF",
+  "tunnel_ip": "$TUNNEL_IP_CONF",
+  "docker_network_name": "$DOCKER_NETWORK_CONF",
+  "orchestrator_container": "$DOCKER_NETWORK_CONF",
   "docker_build": "docker build -t {image_tag} {path}",
   "docker_run": "docker run --detach --name {lab_name} --memory='{memory}' --cpus='{cpus}' --network {network_name} --ip {ip} --cap-add=NET_ADMIN --device=/dev/net/tun --sysctl net.ipv6.conf.all.disable_ipv6=1 -v {storage}:{mount_target} --hostname {host_name} {image}",
   "docker_stop_rm": "docker stop {lab_name} && sudo docker rm -f {lab_name}",

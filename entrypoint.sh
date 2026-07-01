@@ -35,18 +35,33 @@ if [ -f /etc/wireguard/wg0.conf ]; then
     EXISTING_PEERS=$(awk '/^\[Peer\]/,0' /etc/wireguard/wg0.conf)
 fi
 
+# Detect Docker network name from config.json or env.json
+DOCKER_NETWORK=$(jq -r '.docker_network_name // empty' /opt/labs-control-panel/config.json 2>/dev/null)
+if [ -z "$DOCKER_NETWORK" ] || [ "$DOCKER_NETWORK" = "null" ]; then
+    DOCKER_NETWORK=$(jq -r '.docker_network_name // empty' /var/www/env.json 2>/dev/null)
+fi
+if [ -z "$DOCKER_NETWORK" ] || [ "$DOCKER_NETWORK" = "null" ]; then
+    DOCKER_NETWORK=$(docker network ls --format '{{.Name}}' | grep -E "(Dev_lab|TomCloudLab_backend)" | head -n 1)
+fi
+if [ -z "$DOCKER_NETWORK" ] || [ "$DOCKER_NETWORK" = "null" ]; then
+    DOCKER_NETWORK="Dev_lab"
+fi
+
 # Detect Docker bridge interface for forwarding rules
-DOCKER_BRIDGE=$(docker network inspect Dev_lab --format '{{.Id}}' 2>/dev/null | cut -c1-12)
+DOCKER_BRIDGE=$(docker network inspect "$DOCKER_NETWORK" --format '{{.Id}}' 2>/dev/null | cut -c1-12)
 if [ -n "$DOCKER_BRIDGE" ]; then
     BRIDGE_IF="br-${DOCKER_BRIDGE}"
 else
     BRIDGE_IF=""
 fi
 
-# Fetch tunnel prefix from config
-TUNNEL_PREFIX=$(jq -r '.tunnel_ip' /opt/labs-control-panel/config.json 2>/dev/null)
+# Fetch tunnel prefix from config or env.json
+TUNNEL_PREFIX=$(jq -r '.tunnel_ip // empty' /opt/labs-control-panel/config.json 2>/dev/null)
 if [ -z "$TUNNEL_PREFIX" ] || [ "$TUNNEL_PREFIX" = "null" ]; then
-    echo "FATAL: tunnel_ip not set in config.json"
+    TUNNEL_PREFIX=$(jq -r '.tunnel_ip // empty' /var/www/env.json 2>/dev/null)
+fi
+if [ -z "$TUNNEL_PREFIX" ] || [ "$TUNNEL_PREFIX" = "null" ]; then
+    echo "FATAL: tunnel_ip not set in config.json or env.json"
     exit 1
 fi
 TUNNEL_IP="${TUNNEL_PREFIX}1/16"

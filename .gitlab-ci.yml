@@ -19,6 +19,8 @@ deploy_to_tomcloud_lab:
       - "vpn-api/**/*"
       - "opt/**/*"
       - "session.json"
+      - "init-services.sh"
+      - "entrypoint.sh"
   script:
     - echo "Starting deployment to TomCloudLab..."
     
@@ -38,5 +40,9 @@ deploy_to_tomcloud_lab:
     
     # 4. Sync the 'session.json' configuration
     - cp session.json /Users/sathish/Downloads/TomCloudLab/session.json
+    
+    # 5. Sync the startup scripts to ensure environments are identical
+    - cp init-services.sh /Users/sathish/Downloads/TomCloudLab/init-services.sh
+    - cp entrypoint.sh /Users/sathish/Downloads/TomCloudLab/entrypoint.sh
     
     - echo "Deployment of labs, vpn-api, and opt completed successfully!"

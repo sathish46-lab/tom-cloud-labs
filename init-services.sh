@@ -1,5 +1,5 @@
 #!/bin/bash
-# /usr/local/bin/container-setup.sh
+# /usr/local/bin/init-services.sh
 
 # This script is executed by systemd after MongoDB and RabbitMQ start.
 
@@ -130,8 +130,14 @@ fi
 # 6. Re-apply Host Routing for Existing Lab Peers
 echo "[INFO] Recovering host routes for deployed labs..."
 
-# Detect the bridge interface from config
-DOCKER_NETWORK=$(jq -r '.docker_network_name' /opt/labs-control-panel/config.json 2>/dev/null)
+# Detect the bridge interface from config or env.json
+DOCKER_NETWORK=$(jq -r '.docker_network_name // empty' /opt/labs-control-panel/config.json 2>/dev/null)
+if [ -z "$DOCKER_NETWORK" ] || [ "$DOCKER_NETWORK" = "null" ]; then
+    DOCKER_NETWORK=$(jq -r '.docker_network_name // empty' /var/www/env.json 2>/dev/null)
+fi
+if [ -z "$DOCKER_NETWORK" ] || [ "$DOCKER_NETWORK" = "null" ]; then
+    DOCKER_NETWORK=$(docker network ls --format '{{.Name}}' | grep -E "(Dev_lab|TomCloudLab_backend)" | head -n 1)
+fi
 if [ -z "$DOCKER_NETWORK" ] || [ "$DOCKER_NETWORK" = "null" ]; then
     DOCKER_NETWORK="Dev_lab"
 fi
@@ -140,9 +146,12 @@ BRIDGE_ID=$(docker network inspect "$DOCKER_NETWORK" -f '{{.Id}}' 2>/dev/null | 
 if [ -n "$BRIDGE_ID" ]; then
     BRIDGE_IF="br-${BRIDGE_ID}"
     
-    TUNNEL_PREFIX=$(jq -r '.tunnel_ip' /opt/labs-control-panel/config.json 2>/dev/null)
+    TUNNEL_PREFIX=$(jq -r '.tunnel_ip // empty' /opt/labs-control-panel/config.json 2>/dev/null)
     if [ -z "$TUNNEL_PREFIX" ] || [ "$TUNNEL_PREFIX" = "null" ]; then
-        echo "FATAL: tunnel_ip not set in config.json"
+        TUNNEL_PREFIX=$(jq -r '.tunnel_ip // empty' /var/www/env.json 2>/dev/null)
+    fi
+    if [ -z "$TUNNEL_PREFIX" ] || [ "$TUNNEL_PREFIX" = "null" ]; then
+        echo "FATAL: tunnel_ip not set in config.json or env.json"
         exit 1
     fi
     TUNNEL_SUBNET="${TUNNEL_PREFIX}0/16"
@@ -158,15 +167,22 @@ if [ -n "$BRIDGE_ID" ]; then
         iptables -t nat -A POSTROUTING -s "$TUNNEL_SUBNET" -o eth0 -j MASQUERADE 2>/dev/null
     
     # For each WireGuard peer, re-create the host route to its Docker container
-    # Peer AllowedIPs (172.30.x.y) maps to Docker IP (10.30.0.y) where y is the last octet
+    # Peer AllowedIPs maps to Docker IP
     if wg show wg0 allowed-ips 2>/dev/null | grep -q '/32'; then
         wg show wg0 allowed-ips | while read -r _pubkey allowed_ip_cidr; do
             # Extract just the IP (strip /32)
             tunnel_ip=$(echo "$allowed_ip_cidr" | sed 's|/32||')
             if [ -n "$tunnel_ip" ] && [ "$tunnel_ip" != "${TUNNEL_PREFIX}1" ]; then
-                # Derive Docker IP: last octet of tunnel IP -> 172.19.0.{last_octet}
+                # Derive Docker IP: last octet of tunnel IP -> {DOCKER_IP_PREFIX}{last_octet}
+                DOCKER_IP_PREFIX=$(jq -r '.docker_ip // empty' /opt/labs-control-panel/config.json 2>/dev/null)
+                if [ -z "$DOCKER_IP_PREFIX" ] || [ "$DOCKER_IP_PREFIX" = "null" ]; then
+                    DOCKER_IP_PREFIX=$(jq -r '.docker_ip // empty' /var/www/env.json 2>/dev/null)
+                fi
+                if [ -z "$DOCKER_IP_PREFIX" ] || [ "$DOCKER_IP_PREFIX" = "null" ]; then
+                    DOCKER_IP_PREFIX="172.19.0."
+                fi
                 last_octet=$(echo "$tunnel_ip" | awk -F. '{print $4}')
-                docker_ip="172.19.0.${last_octet}"
+                docker_ip="${DOCKER_IP_PREFIX}${last_octet}"
                 
                 # Check if the container with this Docker IP exists and is running
                 if docker network inspect "$DOCKER_NETWORK" --format '{{range .Containers}}{{.IPv4Address}} {{end}}' 2>/dev/null | grep -q "$docker_ip"; then
