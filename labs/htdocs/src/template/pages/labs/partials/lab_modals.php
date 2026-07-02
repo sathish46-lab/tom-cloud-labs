@@ -183,7 +183,7 @@
                 </div>
 
                 <?php $isExposed = (isset($labData['expose_web']) && $labData['expose_web'] === true); ?>
-                <?php if (\TomLabs\Labs\LabFeatures::supports($labData['lab_type'] ?? 'essentials', 'expose_web')): ?>
+                <?php if (\TomLabs\Labs\LabFeatures::supports($labType, 'expose_web')): ?>
                 
                 <p class="mb-3 mt-4" style="font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--bs-secondary);">PUBLIC EXPOSURE</p>
 
@@ -208,7 +208,7 @@
                     ?>
 
                     <div class="row mb-3 align-items-center">
-                        <label class="col-sm-4 small fw-bold text-secondary">Domain</label>
+                        <label class="col-sm-4 small fw-bold text-secondary">Domain for MinIO Console<br><span class="fw-normal opacity-75">(Port 9001)</span></label>
                         <div class="col-sm-8">
                             <select id="minio_console_domain" class="form-select bg-transparent border-secondary border-opacity-25 shadow-none rounded-pill px-3 text-white" onchange="updateDomainAvailability()">
                                 <?php 
@@ -235,12 +235,38 @@
                             </select>
                         </div>
                     </div>
+                    
+                    <div class="row mb-3 align-items-center">
+                        <label class="col-sm-4 small fw-bold text-secondary">Domain for MinIO S3 Endpoint<br><span class="fw-normal opacity-75">(Port 9000)</span></label>
+                        <div class="col-sm-8">
+                            <select id="minio_api_domain" class="form-select bg-transparent border-secondary border-opacity-25 shadow-none rounded-pill px-3 text-white" onchange="updateDomainAvailability()">
+                                <?php 
+                                    $mDomainsApi = $db->domains->find(['user_id' => Session::getUser()->getUserId(), 'verified' => true]);
+                                    $foundApi = false;
+                                    
+                                    // A. User Domains
+                                    foreach($mDomainsApi as $d) {
+                                        $isSel = ($d['domain'] === $currApi);
+                                        if($isSel) $foundApi = true;
+                                        echo "<option value=\"{$d['domain']}\" ".($isSel ? 'selected' : '').">{$d['domain']}</option>";
+                                    }
 
-                    <!-- Hidden API Endpoint (Auto-managed) -->
-                    <input type="hidden" id="minio_api_domain" value="<?= $sysApi ?>">
+                                    // B. System Default (Always available)
+                                    $isSysSelApi = ($currApi === $sysApi);
+                                    if($isSysSelApi) $foundApi = true;
+                                    echo "<option value=\"{$sysApi}\" ".($isSysSelApi ? 'selected' : '')."> {$sysApi}</option>";
+
+                                    // C. Recovery
+                                    if(!$foundApi) {
+                                        echo "<option value=\"{$currApi}\" selected> {$currApi}</option>";
+                                    }
+                                ?>
+                            </select>
+                        </div>
+                    </div>
                     
                     <div class="form-text small opacity-50 mb-3">
-                        MinIO Console will be available at the selected domain. API Endpoint is auto-configured to: <?= $sysApi ?>
+                        MinIO Console and S3 API can optionally use the same custom domain.
                     </div>
                     <hr class="border-secondary opacity-25 my-3">
                 </div>
@@ -350,7 +376,7 @@
     </div> <!-- Close col-sm-8 -->
 </div> <!-- Close domain_selection_wrapper row -->
         
-<?php if (\TomLabs\Labs\LabFeatures::supports($labData['lab_type'] ?? 'essentials', 'http_proxies')): ?>
+<?php if (\TomLabs\Labs\LabFeatures::supports($labType, 'http_proxies')): ?>
 <div id="http_proxies_wrapper">
 <p class="mb-3 mt-4" style="font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--bs-secondary);">HTTP PROXIES</p>
 <div class="form-text small opacity-50 mb-3 px-1">

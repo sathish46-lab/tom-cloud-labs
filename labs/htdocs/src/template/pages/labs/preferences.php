@@ -25,6 +25,20 @@
     
     // Define isRunning for the status dot and buttons
     $isRunning = ($status === 'running');
+    
+    // Determine init script path based on lab type
+    $initScriptPath = "/home/{$currentUsername}/init.sh";
+    $initScriptName = "init.sh";
+    if ($labType === 'minio') {
+        $initScriptPath = "/home/{$currentUsername}/.init/minio.sh";
+        $initScriptName = "minio.sh";
+    } elseif ($labType === 'docker_lab') {
+        $initScriptPath = "/home/{$currentUsername}/.init/docker.sh";
+        $initScriptName = "docker.sh";
+    } elseif ($labType === 'n8n') {
+        $initScriptPath = "/home/{$currentUsername}/.init/n8n.sh";
+        $initScriptName = "n8n.sh";
+    }
 
     // 2. UI CONFIGS
     $uiConfigs = [
@@ -377,7 +391,7 @@
                             <div class="d-flex align-items-center gap-2 mb-1">
                                 <i class='bx bx-terminal text-muted'></i>
                                 <span class="fw-bold small">Startup Script</span>
-                                <span class="text-muted small font-monospace">/home/<?= htmlspecialchars($currentUsername) ?>/init.sh</span>
+                                <span class="text-muted small font-monospace"><?= htmlspecialchars($initScriptPath) ?></span>
                             </div>
                         </div>
                         <span class="text-muted small fst-italic">Runs as root on every (re)deploy</span>
@@ -463,7 +477,7 @@
                             <div style="max-width: 600px;">
                                 <h6 class="mb-1 fw-bold text-warning" style="font-size: 0.85rem; letter-spacing: 0.5px; text-transform: uppercase;">Fast Apply Note</h6>
                                 <p class="text-body-secondary mb-0 small" style="font-size: 0.82rem; line-height: 1.45;">
-                                    Applying preferences updates HTTP proxy routes and runs <code class="text-warning font-monospace px-1.5 py-0.5 rounded">init.sh</code> immediately. This action does not perform a slow, full container redeployment.
+                                    Applying preferences updates HTTP proxy routes and runs <code class="text-warning font-monospace px-1.5 py-0.5 rounded"><?= htmlspecialchars($initScriptName) ?></code> immediately. This action does not perform a slow, full container redeployment.
                                 </p>
                             </div>
                         </div>
@@ -489,22 +503,4 @@
 </script>
 
 <?php include __DIR__ . '/partials/lab_modals.php'; ?>
-<div class="server-logs-panel shadow-lg">
-    <div class="logs-header">
-        <div class="logs-title d-flex align-items-center gap-2">
-            <i class='bx bx-terminal fs-5'></i>
-            <i class="bx bxs-circle" id="mq-status-dot" style="font-size: 8px;"></i>
-            <span class="small fw-bold ls-1 opacity-75">Server Logs</span>
-            
-            <div class="terminal-info-wrapper ms-1">
-                <i class='bx bx-info-circle opacity-50' style="font-size: 14px;"></i>
-                <div class="terminal-tooltip">
-                    You cannot type anything here, this is a terminal to watch server logs
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="logs-body" id="terminal-viewport" style="overflow-y: auto;">
-        <div id="live-logs-container" class="small"></div>
-    </div>
-</div>
+<?php include __DIR__ . '/partials/server_logs.php'; ?>

@@ -405,22 +405,4 @@
         </div>
 
 <?php include __DIR__ . '/partials/lab_modals.php'; ?>
-<div class="server-logs-panel shadow-lg">
-    <div class="logs-header">
-        <div class="logs-title d-flex align-items-center gap-2">
-            <i class='bx bx-terminal fs-5'></i>
-            <i class="bx bxs-circle" id="mq-status-dot" style="font-size: 8px;"></i>
-            <span class="small fw-bold ls-1 opacity-75">Server Logs</span>
-            
-            <div class="terminal-info-wrapper ms-1">
-                <i class='bx bx-info-circle opacity-50' style="font-size: 14px;"></i>
-                <div class="terminal-tooltip">
-                    You cannot type anything here, this is a terminal to watch server logs
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="logs-body" id="terminal-viewport" style="overflow-y: auto;">
-        <div id="live-logs-container" class="small"></div>
-    </div>
-</div>
+<?php include __DIR__ . '/partials/server_logs.php'; ?>

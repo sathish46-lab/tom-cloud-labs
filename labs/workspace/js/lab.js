@@ -1217,9 +1217,10 @@ function updateDomainAvailability() {
         const currentUsage = currentSelections[domain];
 
         let usageText = '';
-        if (dbUsage && dbUsage.usage !== 'MinIO Console') {
+        // Allow S3 API and MinIO Console to use the same domain
+        if (dbUsage && dbUsage.usage !== 'MinIO Console' && dbUsage.usage !== 'S3 API') {
           usageText = ` (Used: ${dbUsage.usage} in ${dbUsage.lab_type} lab)`;
-        } else if (currentUsage && currentUsage.usage !== 'MinIO Console') {
+        } else if (currentUsage && currentUsage.usage !== 'MinIO Console' && currentUsage.usage !== 'S3 API') {
           usageText = ` (Used: ${currentUsage.usage})`;
         }
 
@@ -1243,9 +1244,10 @@ function updateDomainAvailability() {
         const currentUsage = currentSelections[domain];
 
         let usageText = '';
-        if (dbUsage && dbUsage.usage !== 'S3 API') {
+        // Allow S3 API and MinIO Console to use the same domain
+        if (dbUsage && dbUsage.usage !== 'S3 API' && dbUsage.usage !== 'MinIO Console') {
           usageText = ` (Used: ${dbUsage.usage} in ${dbUsage.lab_type} lab)`;
-        } else if (currentUsage && currentUsage.usage !== 'S3 API') {
+        } else if (currentUsage && currentUsage.usage !== 'S3 API' && currentUsage.usage !== 'MinIO Console') {
           usageText = ` (Used: ${currentUsage.usage})`;
         }
 
@@ -1687,3 +1689,67 @@ function addDeployProxyRow() {
     `;
     list.appendChild(row);
 }
+
+// Server Logs Toggle
+document.addEventListener("DOMContentLoaded", function() {
+    const logsBody = document.getElementById('terminal-viewport');
+    const toggleBtn = document.getElementById('serverLogsToggleBtn');
+    const chevrons = document.querySelectorAll('.server-logs-chevron');
+
+    function setMinimizedState(isMinimized) {
+        if (isMinimized) {
+            logsBody.classList.add('logs-minimized');
+            chevrons.forEach(chevron => {
+                chevron.classList.remove('bx-chevron-down');
+                chevron.classList.add('bx-chevron-up');
+            });
+        } else {
+            logsBody.classList.remove('logs-minimized');
+            chevrons.forEach(chevron => {
+                chevron.classList.remove('bx-chevron-up');
+                chevron.classList.add('bx-chevron-down');
+            });
+        }
+    }
+
+    if (toggleBtn && logsBody) {
+        // Retrieve state directly from the HTML injected by PHP
+        const isMinimized = toggleBtn.getAttribute('data-minimized') === 'true';
+        
+        // Ensure scroll to bottom happens when new logs arrive if minimized
+        const observer = new MutationObserver(() => {
+            if (toggleBtn.getAttribute('data-minimized') === 'true') {
+                logsBody.scrollTop = logsBody.scrollHeight;
+            }
+        });
+        observer.observe(document.getElementById('live-logs-container'), { childList: true, subtree: true });
+        
+        if (isMinimized) {
+            // Already set by PHP classes, just ensure scroll is at bottom initially
+            setTimeout(() => { logsBody.scrollTop = logsBody.scrollHeight; }, 100);
+        }
+
+        toggleBtn.addEventListener('click', async function(e) {
+            // Prevent toggling if clicked on tooltip icon
+            if(e.target.closest('.terminal-info-wrapper')) return;
+
+            const willMinimize = !logsBody.classList.contains('logs-minimized');
+            setMinimizedState(willMinimize);
+            toggleBtn.setAttribute('data-minimized', willMinimize ? 'true' : 'false');
+            
+            // Save state in the database via the API
+            const formData = new FormData();
+            formData.append('preference_id', 'labs_serverlogs_min');
+            formData.append('value', willMinimize ? '1' : '0');
+            
+            try {
+                await fetch('/api/user/preference_save', {
+                    method: 'POST',
+                    body: formData
+                });
+            } catch (error) {
+                console.error("Failed to save UI preference:", error);
+            }
+        });
+    }
+});

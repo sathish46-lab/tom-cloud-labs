@@ -299,6 +299,14 @@
                             <span class="small fw-semibold">Plain Theme Color</span>
                         </a>
 
+                        <?php if (Session::getUser()?->getRole() === 'superuser'): ?>
+                        <div class="dropdown-divider mx-n3 my-2"></div>
+                        <a class="dropdown-item d-flex align-items-center px-2 py-2 rounded pointer text-warning" href="/admin/users">
+                            <i class="bx bx-crown fs-5 me-2"></i>
+                            <span class="small fw-bold">Admin Panel</span>
+                        </a>
+                        <?php endif; ?>
+
                         <div class="dropdown-divider mx-n3 my-2"></div>
 
                         <a class="dropdown-item d-flex align-items-center px-2 py-2 rounded text-danger fw-bold"

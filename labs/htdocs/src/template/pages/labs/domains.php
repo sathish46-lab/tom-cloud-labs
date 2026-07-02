@@ -100,8 +100,8 @@
 
 <!-- Modals moved to lab_modals.php -->
     <div class="container-fluid py-3 p-0">
-        <!-- Masonry Grid for Domains -->
-        <div class="row row-cols-1 row-cols-md-3 g-3" id="masonry-area">
+        <!-- Grid for Domains -->
+        <div class="row row-cols-1 row-cols-md-3 g-4 align-items-start" id="masonry-area" data-masonry='{"percentPosition": true }'>
            <?php 
                 // Filter DomainManager's map for this specific instance (includes http proxies)
                 $instanceDomains = [];
@@ -135,28 +135,72 @@
                 </div>
             <?php else: ?>
                 <?php foreach($instanceDomains as $dom => $info): ?>
+                <?php 
+                    $usageStr = $info['usage'] ?? 'Public Exposure';
+                    $isProxy = false;
+                    $portStr = '';
+                    $usageLabel = 'Port 80 Public';
+                    $headerBg = '#22c55e'; // Green
+                    $headerIcon = 'bx-globe';
+                    $borderColor = 'rgba(34, 197, 94, 0.3)';
+
+                    if (strpos($usageStr, 'HTTP Proxy') !== false) {
+                        $isProxy = true;
+                        $usageLabel = 'Your Proxy';
+                        $headerBg = '#3b82f6'; // Blue
+                        $headerIcon = 'bx-share';
+                        $borderColor = 'rgba(59, 130, 246, 0.3)';
+                        if (preg_match('/Port\s+(\d+)/', $usageStr, $matches)) {
+                            $portStr = $matches[1];
+                        }
+                    } elseif (strpos($usageStr, 'VS Code Web') !== false) {
+                        $usageLabel = 'VS Code Editor';
+                        $headerBg = '#a855f7'; // Purple
+                        $headerIcon = 'bx-code-alt';
+                        $borderColor = 'rgba(168, 85, 247, 0.3)';
+                    } elseif (strpos($usageStr, 'MinIO') !== false || strpos($usageStr, 'S3 API') !== false) {
+                        $usageLabel = $usageStr;
+                        $headerBg = '#eab308'; // Yellow
+                        $headerIcon = 'bx-hdd';
+                        $borderColor = 'rgba(234, 179, 8, 0.3)';
+                    }
+                    
+                    // Determine if custom domain (simple check: does it not contain tomweb.fun or selfmade?)
+                    $isCustom = (strpos($dom, 'tomweb') === false && strpos($dom, 'selfmade') === false && strpos($dom, 'zeal') === false);
+                    $domainBadge = $isCustom ? 'custom' : 'selfmade';
+                    $domainBadgeBg = $isCustom ? '#f59e0b' : '#22c55e';
+                ?>
                 <div class="col">
-                    <div class="card h-100 border-0 shadow-sm rounded-4 position-relative overflow-hidden bg-dark">
-                        <div class="bg-success p-2 d-flex align-items-center gap-2">
-                            <i class="bx bx-globe text-white fs-5"></i>
-                            <span class="text-white fw-bold"><?= htmlspecialchars($info['usage'] ?? 'Public Exposure') ?></span>
+                    <div class="card border-0 rounded-4 position-relative overflow-hidden" style="background: rgba(20, 20, 20, 0.8); border: 1px solid <?= $borderColor ?> !important; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+                        <div class="px-3 py-2 d-flex align-items-center gap-2" style="background: <?= $headerBg ?>;">
+                            <i class="bx <?= $headerIcon ?> text-white fs-6"></i>
+                            <span class="text-white fw-bold small"><?= htmlspecialchars($usageLabel) ?></span>
                         </div>
                         
-                        <div class="card-body p-4 d-flex flex-column">
-                            <h5 class="fw-bold mb-3 text-truncate" title="<?= htmlspecialchars($dom) ?>">
-                                <a href="https://<?= htmlspecialchars($dom) ?>" target="_blank" class="text-warning text-decoration-none">
+                        <div class="card-body p-3 d-flex flex-column">
+                            <h6 class="fw-bold mb-2" style="word-break: break-all;">
+                                <a href="https://<?= htmlspecialchars($dom) ?>" target="_blank" class="text-decoration-none" style="color: #a5b4fc; font-size: 1rem;">
                                     <?= htmlspecialchars($dom) ?>
                                 </a>
-                            </h5>   
+                            </h6>   
                             
-                            <div class="d-flex gap-2 mb-4">
-                                <span class="badge rounded-pill bg-success px-3">TomLab</span>
-                                <span class="badge rounded-pill bg-success px-3">verified</span>
-                                <span class="badge rounded-pill bg-success px-3">active</span>
+                            <div class="d-flex flex-wrap gap-2 mb-2">
+                                <span class="badge rounded-pill" style="background: <?= $domainBadgeBg ?>; color: <?= $isCustom ? '#000' : '#fff' ?>; padding: 0.2rem 0.5rem; font-size: 0.65rem; letter-spacing: 0.5px;"><?= $domainBadge ?></span>
+                                <span class="badge rounded-pill" style="background: #06b6d4; color: #000; padding: 0.2rem 0.5rem; font-size: 0.65rem; letter-spacing: 0.5px;">verified</span>
+                                <span class="badge rounded-pill" style="background: #14b8a6; color: #000; padding: 0.2rem 0.5rem; font-size: 0.65rem; letter-spacing: 0.5px;">active</span>
                             </div>
 
                             <div class="mt-auto">
-                                <p class="small text-secondary mb-1 fw-bold">Service: <?= htmlspecialchars($info['lab_type'] ?? $labType) ?></p>
+                                <div class="mb-1">
+                                    <span class="small text-secondary fw-bold d-block" style="font-size: 0.7rem;">Service:</span>
+                                    <span class="small fw-bold" style="color: #06b6d4; font-size: 0.75rem;">TomCloudLab</span>
+                                </div>
+                                <?php if ($isProxy && !empty($portStr)): ?>
+                                <div>
+                                    <span class="small text-secondary fw-bold d-block" style="font-size: 0.7rem;">Port:</span>
+                                    <span class="small fw-bold" style="color: #06b6d4; font-size: 0.75rem;"><?= htmlspecialchars($portStr) ?></span>
+                                </div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -211,22 +255,25 @@
     </div>
 
 <?php include __DIR__ . '/partials/lab_modals.php'; ?>
-<div class="server-logs-panel shadow-lg">
-    <div class="logs-header">
-        <div class="logs-title d-flex align-items-center gap-2">
-            <i class='bx bx-terminal fs-5'></i>
-            <i class="bx bxs-circle" id="mq-status-dot" style="font-size: 8px;"></i>
-            <span class="small fw-bold ls-1 opacity-75">Server Logs</span>
-            
-            <div class="terminal-info-wrapper ms-1">
-                <i class='bx bx-info-circle opacity-50' style="font-size: 14px;"></i>
-                <div class="terminal-tooltip">
-                    You cannot type anything here, this is a terminal to watch server logs
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="logs-body" id="terminal-viewport" style="overflow-y: auto;">
-        <div id="live-logs-container" class="small"></div>
-    </div>
-</div>
+<?php include __DIR__ . '/partials/server_logs.php'; ?>
+
+<script>
+    (function() {
+        var initDomainsMasonry = function() {
+            var grid = document.querySelector('#masonry-area');
+            if (grid && typeof Masonry !== 'undefined') {
+                new Masonry(grid, {
+                    percentPosition: true
+                });
+            }
+        };
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initDomainsMasonry);
+        } else {
+            initDomainsMasonry();
+        }
+        // Fallback for dynamic content/images
+        setTimeout(initDomainsMasonry, 500);
+    })();
+</script>

@@ -18,28 +18,35 @@ $serverIP = $dm->getServerIP();
             </p>
         </div>
         <div class="col-lg-5 text-end mt-3 mt-lg-0">
-            <div class="d-flex align-items-center justify-content-end gap-2 mb-2">
-                <button class="btn btn-warning fw-bold px-4 rounded-pill shadow-sm" style="font-size: 0.8rem; height: 38px; white-space: nowrap;" 
-                        id="btnTroubleshootAll" onclick="SSLManager.troubleshootAll()">
-                    <i class="bx bx-search-alt me-1"></i> Troubleshoot
-                </button>
-                <button class="btn btn-primary fw-bold px-4 rounded-pill shadow-sm" style="font-size: 0.8rem; height: 38px; white-space: nowrap;" 
-                        id="btnRefresh" onclick="SSLManager.refresh()">
-                    <i class="bx bx-refresh me-1"></i> Refresh
-                </button>
+            <div class="d-flex flex-column align-items-end">
+                <div class="btn-group shadow-sm mb-2" role="group">
+                    <button class="btn btn-warning fw-bold px-4" style="font-size: 0.8rem; height: 38px; color: #000; border-top-left-radius: 50rem !important; border-bottom-left-radius: 50rem !important;" 
+                            id="btnTroubleshootAll" onclick="SSLManager.troubleshootAll()">
+                        Troubleshoot
+                    </button>
+                    <button class="btn fw-bold px-4" style="font-size: 0.8rem; height: 38px; background-color: #00d4a8; border-color: #00d4a8; color: #000;" 
+                            id="btnRefresh" onclick="SSLManager.refresh()">
+                        Refresh
+                    </button>
+                    <button class="btn px-3" style="font-size: 0.8rem; height: 38px; background-color: #6edff6; border-color: #6edff6; color: #000; border-top-right-radius: 50rem !important; border-bottom-right-radius: 50rem !important;"
+                            data-coreui-toggle="tooltip" data-coreui-placement="top" title="How does SSL work here?"
+                            onclick="new coreui.Modal(document.getElementById('sslHelpModal')).show();">
+                        <i class="bx bx-info-circle fw-bold"></i>
+                    </button>
+                </div>
+                <div class="small text-secondary opacity-60 text-end" style="font-size: 0.75rem;">
+                    Certificate data is cached for up to 15 minutes.<br>
+                    Use Refresh to fetch the latest state.
+                </div>
+                <?php if ($autoManaged > 0): ?>
+                <div class="mt-2 text-end">
+                    <a href="#" class="small text-success text-decoration-underline fw-semibold" style="font-size: 0.78rem;" 
+                       onclick="SSLManager.toggleAutoManaged(); return false;">
+                        Show <?php echo htmlspecialchars((string)$autoManaged); ?> auto-managed certificate(s)
+                    </a>
+                </div>
+                <?php endif; ?>
             </div>
-            <div class="small text-secondary opacity-60" style="font-size: 0.75rem;">
-                Certificate data is cached for up to 15 minutes.<br>
-                Use Refresh to fetch the latest state.
-            </div>
-            <?php if ($autoManaged > 0): ?>
-            <div class="mt-2">
-                <a href="#" class="small text-info text-decoration-none fw-semibold" style="font-size: 0.78rem;" 
-                   onclick="SSLManager.toggleAutoManaged(); return false;">
-                    Show <?php echo htmlspecialchars((string)$autoManaged); ?> auto-managed certificate(s)
-                </a>
-            </div>
-            <?php endif; ?>
         </div>
     </div>
 </div>
@@ -60,8 +67,10 @@ $serverIP = $dm->getServerIP();
         </div>
     </div>
     <?php else: ?>
-    <?php foreach ($certs as $index => $cert): ?>
-    <div class="col-xl-4 col-md-6">
+    <?php foreach ($certs as $index => $cert): 
+        $isAutoManaged = (!empty($cert['resolver']) && stripos($cert['resolver'], 'custom') === false);
+    ?>
+    <div class="col-xl-4 col-md-6 <?php echo $isAutoManaged ? 'd-none auto-managed-card' : ''; ?>">
         <div class="card border-0 shadow-lg rounded-4 h-100 ssl-cert-card glass-card" data-cert-index="<?php echo (int)$index; ?>">
             <div class="card-body d-flex justify-content-between align-items-start p-3">
                 <div class="w-100" style="margin-bottom: 6px;">
@@ -85,7 +94,44 @@ $serverIP = $dm->getServerIP();
                             } else {
                                 $badges[] = 'orphaned';
                             }
+
+                            // Add auto-managed indicator
+                            if (!empty($cert['resolver']) && stripos($cert['resolver'], 'custom') === false) {
+                                $badges[] = 'auto-managed';
+                            }
+
+                            // Add wildcard indicator
+                            $hasWildcard = false;
+                            if (strpos($cert['main_domain'], '*') !== false) {
+                                $hasWildcard = true;
+                            } else {
+                                foreach (($cert['sans'] ?? []) as $san) {
+                                    if (strpos($san, '*') !== false) {
+                                        $hasWildcard = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if ($hasWildcard) {
+                                $badges[] = 'wildcard';
+                            }
                         }
+
+                        // Apply dynamic modifications (so dev-mocked badges get updated too)
+                        $finalBadges = [];
+                        foreach ($badges as $badge) {
+                            if (strtolower($badge) === 'in use') {
+                                $labTypeMatch = '';
+                                if (!empty($cert['used_by']) && preg_match('/\((\w+)\s*lab/', $cert['used_by'], $m)) {
+                                    $labTypeMatch = strtolower($m[1]);
+                                }
+                                $finalBadges[] = $labTypeMatch ? 'in use - ' . $labTypeMatch : 'in use';
+                            } else {
+                                $finalBadges[] = $badge;
+                            }
+                        }
+                        $badges = $finalBadges;
+
                         foreach ($badges as $badge): 
                             $badgeClass = 'bg-secondary';
                             $textClass = 'text-white';
@@ -101,6 +147,19 @@ $serverIP = $dm->getServerIP();
                             } elseif (stripos($badge, 'in use') !== false) {
                                 $badgeClass = 'bg-primary';
                                 $textClass = 'text-white';
+                                if (!empty($cert['used_by_hash'])) {
+                                    $tooltipAttr = 'data-coreui-toggle="tooltip" title="Instance hash: ' . htmlspecialchars($cert['used_by_hash']) . '"';
+                                } else {
+                                    $tooltipAttr = 'data-coreui-toggle="tooltip" title="Currently in use by a running lab."';
+                                }
+                            } elseif (stripos($badge, 'auto-managed') !== false) {
+                                $badgeClass = 'bg-info bg-opacity-25';
+                                $textClass = 'text-info';
+                                $tooltipAttr = 'data-coreui-toggle="tooltip" title="Certificate is managed automatically by the platform"';
+                            } elseif (stripos($badge, 'wildcard') !== false) {
+                                $badgeClass = 'bg-purple';
+                                $textClass = 'text-white';
+                                $tooltipAttr = 'data-coreui-toggle="tooltip" title="Wildcard certificate covering all subdomains"';
                             } elseif (stripos($badge, 'orphaned') !== false || stripos($badge, 'available') !== false) {
                                 $badgeClass = 'bg-warning';
                                 $textClass = 'text-dark';
@@ -205,7 +264,7 @@ $serverIP = $dm->getServerIP();
 
 <!-- Troubleshoot Modal -->
 <div class="modal fade" id="sslTroubleshootModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+    <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
         <div class="modal-content border-0 shadow-lg rounded-4">
             <div class="modal-header border-0 pt-4 px-4">
                 <h4 class="modal-title fw-bold">
@@ -626,11 +685,29 @@ const SSLManager = {
     },
 
     toggleAutoManaged() {
-        // Currently shows all certs; this could filter to only auto-managed ones
-        // For now, just scroll to the cards
-        const container = document.getElementById('ssl-cards-container');
-        if (container) {
-            container.scrollIntoView({ behavior: 'smooth' });
+        const cards = document.querySelectorAll('.auto-managed-card');
+        const link = document.querySelector('a[onclick="SSLManager.toggleAutoManaged(); return false;"]');
+        let isShowing = false;
+        
+        cards.forEach(card => {
+            if (card.classList.contains('d-none')) {
+                card.classList.remove('d-none', 'animate__animated', 'animate__fadeIn');
+                // Trigger reflow
+                void card.offsetWidth;
+                card.classList.add('animate__animated', 'animate__fadeIn');
+                isShowing = true;
+            } else {
+                card.classList.add('d-none');
+                isShowing = false;
+            }
+        });
+        
+        if (link) {
+            if (isShowing) {
+                link.innerHTML = 'Hide auto-managed certificate(s)';
+            } else {
+                link.innerHTML = 'Show ' + cards.length + ' auto-managed certificate(s)';
+            }
         }
     }
 };

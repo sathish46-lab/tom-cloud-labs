@@ -6,44 +6,50 @@
  */
 
 function get_config($key) {
-    $path = '/var/www/env.json';
-
-    if (!file_exists($path)) {
-        // Fallback to local workspace
-        $localPath = __DIR__ . '/../../../../env.json';
-        if (file_exists($localPath)) $path = $localPath;
-        else return null;
+    static $config_cache = null;
+    
+    if ($config_cache === null) {
+        $path = '/var/www/env.json';
+        if (!file_exists($path)) {
+            // Fallback to local workspace
+            $localPath = __DIR__ . '/../../../../env.json';
+            if (file_exists($localPath)) $path = $localPath;
+            else {
+                $config_cache = [];
+                return null;
+            }
+        }
+        $data = file_get_contents($path);
+        $config_cache = json_decode($data, true) ?: [];
     }
     
-    $data = file_get_contents($path);
-    $array = json_decode($data, true);
-    return isset($array[$key]) ? $array[$key] : null;
+    return isset($config_cache[$key]) ? $config_cache[$key] : null;
 }
 
 function get_session_config($key) {
-    $path = '/var/www/session.json';
+    static $session_cache = null;
 
-    if (!file_exists($path)) {
-        // Fallback to local workspace
-        $localPath = __DIR__ . '/../../../../session.json';
-        if (file_exists($localPath)) $path = $localPath;
-        else {
-            error_log("CONFIG ERROR: session.json not found at " . $path . " or fallback " . $localPath);
-            return null;
+    if ($session_cache === null) {
+        $path = '/var/www/session.json';
+        if (!file_exists($path)) {
+            // Fallback to local workspace
+            $localPath = __DIR__ . '/../../../../session.json';
+            if (file_exists($localPath)) $path = $localPath;
+            else {
+                $session_cache = [];
+                return null;
+            }
+        }
+        $data = @file_get_contents($path);
+        if ($data === false) {
+            error_log("CONFIG ERROR: Could not read session.json at " . $path);
+            $session_cache = [];
+        } else {
+            $session_cache = json_decode($data, true) ?: [];
         }
     }
-
-    $data = @file_get_contents($path);
-    if ($data === false) {
-        error_log("CONFIG ERROR: Could not read session.json at " . $path);
-        return null;
-    }
-    $array = json_decode($data, true);
-    if ($array === null) {
-        error_log("CONFIG ERROR: session.json is not valid JSON at " . $path);
-        return null;
-    }
-    return isset($array[$key]) ? $array[$key] : null;
+    
+    return isset($session_cache[$key]) ? $session_cache[$key] : null;
 }
 
 /**

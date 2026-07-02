@@ -98,8 +98,8 @@ try {
     // Check HTTP Proxies
     $oldProxies = $existing['http_proxies'] ?? [];
     // Normalize arrays for comparison
-    $oldProxiesJson = json_encode(array_values((array)$oldProxies));
-    $newProxiesJson = json_encode(array_values($httpProxies));
+    $oldProxiesJson = json_encode($oldProxies);
+    $newProxiesJson = json_encode($httpProxies);
     if ($oldProxiesJson !== $newProxiesJson) {
         $changedDetails[] = "HTTP Proxies";
     }
@@ -118,8 +118,7 @@ try {
     
     // Check Sudo Password
     if (isset($input['su_pass'])) {
-        // Handle BSONDocument correctly
-        $staged = isset($existing['staged_preferences']) ? (array)$existing['staged_preferences'] : [];
+        $staged = $existing['staged_preferences'] ?? [];
         $oldSuPass = $staged['su_pass'] ?? '';
         if (trim((string)$input['su_pass']) !== $oldSuPass) {
             $changedDetails[] = "Sudo Password";
@@ -128,7 +127,7 @@ try {
     
     // Check Code-Server Password
     if (isset($input['code_server_pass'])) {
-        $staged = isset($existing['staged_preferences']) ? (array)$existing['staged_preferences'] : [];
+        $staged = $existing['staged_preferences'] ?? [];
         $oldCodePass = $staged['code_server_pass'] ?? '';
         if (trim((string)$input['code_server_pass']) !== $oldCodePass) {
             $changedDetails[] = "Code-Server Password";
@@ -178,7 +177,7 @@ try {
         'queued'  => true
     ]);
 
-} catch (Exception $e) {
+} catch (\Throwable $e) {
     http_response_code(500);
     echo json_encode(['status' => 'error', 'error' => $e->getMessage()]);
 }

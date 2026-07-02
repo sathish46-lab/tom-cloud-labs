@@ -38,9 +38,7 @@ class Constants
 
     /* ----------------------------------------------------------------------
      * Feature Flags
-     * Used to easily toggle UI features across the application.
+     * Note: Feature flags have been migrated to the database and are now
+     * controlled via the Admin Panel (stored in global_settings).
      * -------------------------------------------------------------------- */
-    const FEATURE_HTTP_PROXIES = true;
-    const FEATURE_STARTUP_SCRIPT = true;
-    const FEATURE_ALWAYS_ON = true;
 }

@@ -20,55 +20,99 @@ namespace TomLabs\Labs;
 class LabFeatures {
 
     /**
-     * Per-lab supported feature list.
-     * Edit this map to control what each lab type can use.
+     * Fallback per-lab supported feature list if not found in DB.
      */
-    private const LAB_FEATURES = [
+    private const FALLBACK_LAB_FEATURES = [
         'essentials' => ['always_on', 'http_proxies', 'startup_script', 'expose_web'],
-        'minio'      => ['always_on'],
-        'n8n'        => [],
+        'minio'      => ['always_on', 'startup_script'],
+        'n8n'        => ['always_on', 'startup_script'],
         'docker_lab' => ['always_on', 'startup_script']
     ];
 
-    /**
-     * Default features for unknown/new lab types not listed above.
-     * Safe baseline — only always_on until explicitly configured.
-     */
-    private const DEFAULT_FEATURES = ['always_on'];
+    private const FALLBACK_DEFAULT = ['always_on'];
+    
+    // In-memory cache to prevent multiple DB queries per request
+    private static $cache = null;
+
+    private static function loadConfig(): void {
+        if (self::$cache !== null) return;
+        
+        self::$cache = [
+            'master_switches' => [],
+            'global_overrides' => [],
+            'lab_matrix' => []
+        ];
+
+        try {
+            $db = \DatabaseConnection::getDefaultDatabase();
+            
+            // Load master kill switches
+            $masterDoc = $db->global_settings->findOne(['_id' => 'master_switches']);
+            self::$cache['master_switches'] = ($masterDoc && is_object($masterDoc) && method_exists($masterDoc, 'getArrayCopy')) ? $masterDoc->getArrayCopy() : ((array)$masterDoc ?: []);
+
+            // Load global overrides
+            $globalDoc = $db->global_settings->findOne(['_id' => 'lab_features']); // keeping this id for backward compatibility
+            self::$cache['global_overrides'] = ($globalDoc && is_object($globalDoc) && method_exists($globalDoc, 'getArrayCopy')) ? $globalDoc->getArrayCopy() : ((array)$globalDoc ?: []);
+
+            // Load lab feature matrix
+            $matrixDoc = $db->global_settings->findOne(['_id' => 'lab_feature_matrix']);
+            self::$cache['lab_matrix'] = ($matrixDoc && is_object($matrixDoc) && method_exists($matrixDoc, 'getArrayCopy')) ? $matrixDoc->getArrayCopy() : ((array)$matrixDoc ?: []);
+            
+        } catch (\Exception $e) {
+            // Silently fallback to defaults if DB fails
+        }
+    }
 
     /**
      * Get the supported feature list for a lab type.
      */
     public static function getSupportedFeatures(string $labType): array {
-        return self::LAB_FEATURES[$labType] ?? self::DEFAULT_FEATURES;
+        self::loadConfig();
+        
+        // 1. Check DB Lab Matrix
+        if (!empty(self::$cache['lab_matrix']) && isset(self::$cache['lab_matrix'][$labType])) {
+            $labFeatures = self::$cache['lab_matrix'][$labType];
+            return (is_object($labFeatures) && method_exists($labFeatures, 'getArrayCopy')) ? $labFeatures->getArrayCopy() : (array)$labFeatures;
+        }
+
+        // 2. Fallback to hardcoded defaults
+        return self::FALLBACK_LAB_FEATURES[$labType] ?? self::FALLBACK_DEFAULT;
     }
 
-    /**
-     * Check if a lab type supports a specific feature.
-     * Respects global master kill switches in Constants first.
-     */
     public static function supports(string $labType, string $feature): bool {
-        // 1. Global master kill switches (Constants.class.php)
-        if ($feature === 'always_on'
-            && defined('\Constants::FEATURE_ALWAYS_ON')
-            && !\Constants::FEATURE_ALWAYS_ON
-        ) {
+        self::loadConfig();
+
+        // 1. Master Kill Switches (DB) - if false, turn off for everyone
+        if (isset(self::$cache['master_switches'][$feature]) && self::$cache['master_switches'][$feature] === false) {
             return false;
         }
-        if ($feature === 'http_proxies'
-            && defined('\Constants::FEATURE_HTTP_PROXIES')
-            && !\Constants::FEATURE_HTTP_PROXIES
-        ) {
-            return false;
-        }
-        if ($feature === 'startup_script'
-            && defined('\Constants::FEATURE_STARTUP_SCRIPT')
-            && !\Constants::FEATURE_STARTUP_SCRIPT
-        ) {
-            return false;
+        
+        // Backward compatibility with Constants (if DB is not configured yet)
+        if (!isset(self::$cache['master_switches'][$feature])) {
+            if ($feature === 'always_on' && defined('\Constants::FEATURE_ALWAYS_ON') && !\Constants::FEATURE_ALWAYS_ON) return false;
+            if ($feature === 'http_proxies' && defined('\Constants::FEATURE_HTTP_PROXIES') && !\Constants::FEATURE_HTTP_PROXIES) return false;
+            if ($feature === 'startup_script' && defined('\Constants::FEATURE_STARTUP_SCRIPT') && !\Constants::FEATURE_STARTUP_SCRIPT) return false;
         }
 
-        // 2. Per-lab config map above
+        // 2. Check Global DB Overrides (enabled for ALL users/labs)
+        if (!empty(self::$cache['global_overrides']) && isset(self::$cache['global_overrides'][$feature]) && self::$cache['global_overrides'][$feature] === true) {
+            return true;
+        }
+
+        // 3. Check User-Specific Overrides (enabled for this specific user for ALL labs)
+        if (class_exists('\Session') && \Session::getAuthStatus() === \Constants::STATUS_LOGGEDIN) {
+            $user = \Session::getUser();
+            if ($user) {
+                $userDoc = $user->getLabFeatures(); // __call maps to lab_features
+                $userFeatures = ($userDoc && is_object($userDoc) && method_exists($userDoc, 'getArrayCopy')) ? $userDoc->getArrayCopy() : ((array)$userDoc ?: []);
+                
+                if (!empty($userFeatures) && isset($userFeatures[$feature]) && $userFeatures[$feature] === true) {
+                    return true;
+                }
+            }
+        }
+
+        // 4. Per-lab config map (from DB or fallback)
         return in_array($feature, self::getSupportedFeatures($labType), true);
     }
 }
