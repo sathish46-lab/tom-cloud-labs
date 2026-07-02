@@ -93,7 +93,10 @@ public function getUser() {
             // STORE TOKEN IN DATABASE (Supports multi-device login)
             $instance->usersCollection->updateOne(
                 ['email' => $email],
-                ['$push' => ['session_tokens' => $sessionToken]]
+                [
+                    '$push' => ['session_tokens' => $sessionToken],
+                    '$set' => ['last_login' => time()]
+                ]
             );
 
             // SET THE NEW SECURE TOKEN COOKIE

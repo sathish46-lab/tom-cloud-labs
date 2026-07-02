@@ -35,10 +35,15 @@ if ($submittedOtp !== $userDoc['two_factor_otp']) {
 try {
     $db->users->updateOne(
         ['email' => $email],
-        ['$unset' => [
-            'two_factor_otp' => '',
-            'two_factor_expires' => ''
-        ]]
+        [
+            '$unset' => [
+                'two_factor_otp' => '',
+                'two_factor_expires' => ''
+            ],
+            '$set' => [
+                'last_login' => time()
+            ]
+        ]
     );
 
     $username = $userDoc['username']; 

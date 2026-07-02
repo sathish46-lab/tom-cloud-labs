@@ -227,6 +227,12 @@ public function getAuthUrl($metadata) {
             return null; 
         }
 
+        // Update last_login
+        $this->db->users->updateOne(
+            ['email' => $userinfo->email],
+            ['$set' => ['last_login' => time()]]
+        );
+
         // CHROME FIX: Set session AND persistent cookie
         $username = $user['username'];
         $_SESSION['username']    = $username;
