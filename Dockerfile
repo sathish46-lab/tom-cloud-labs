@@ -89,6 +89,9 @@ RUN wget -O /var/www/adminer/index.php https://github.com/vrana/adminer/releases
 RUN echo "Listen 8080\nListen 8081\nListen 8082\n<IfModule ssl_module>\n    Listen 4431\n</IfModule>" > /etc/apache2/ports.conf
 RUN touch /etc/apache2/code_server_map.txt
 
+# Increase Apache MaxRequestWorkers to prevent 502 Bad Gateway under load
+RUN sed -i 's/MaxRequestWorkers.*/MaxRequestWorkers 400/' /etc/apache2/mods-available/mpm_prefork.conf
+
 # Traefik configuration
 RUN touch /etc/traefik/acme.json && chmod 600 /etc/traefik/acme.json
 RUN echo "entryPoints:\n  web:\n    address: \":80\"\n  websecure:\n    address: \":443\"\nproviders:\n  file:\n    directory: \"/etc/traefik/dynamic_conf\"\n    watch: true" > /etc/traefik/traefik.yml

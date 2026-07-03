@@ -1,4 +1,12 @@
 /**
+ * Wrapped with IIFE Error Boundary
+ */
+try {
+  (function() {
+    "use strict";
+
+
+/**
  * macOS Style Background Parallax Initializer
  */
 const TomParallax = {
@@ -43,4 +51,15 @@ const TomParallax = {
 };
 
 // Start Parallax when DOM is ready
-document.addEventListener("DOMContentLoaded", () => TomParallax.init());
+window.onPageLoad( () => TomParallax.init());
+
+
+    
+
+    // --- Explicit Window Exports for Inline HTML ---
+    window.TomParallax = TomParallax;
+
+  })();
+} catch (e) {
+  console.error("[Fatal Error in parallax.js]", e);
+}

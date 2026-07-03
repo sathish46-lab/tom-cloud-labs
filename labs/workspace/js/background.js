@@ -1,3 +1,11 @@
+/**
+ * Wrapped with IIFE Error Boundary
+ */
+try {
+  (function() {
+    "use strict";
+
+
 var TomBG = {
   // Theme configuration is now loaded securely from the server via API
   themes: {},
@@ -8,21 +16,13 @@ var TomBG = {
   init: function () {
     var _this = this;
 
-    // Fetch dynamic theme config securely
-    fetch('/api/user/get_themes')
-      .then(function(res) { return res.json(); })
-      .then(function(data) {
-        _this.themes = data;
-        
-        // Check for forced mode (Login Page) before looking at localStorage
-        var saved = localStorage.getItem("tom-labs-bg-mode") || "spiderman";
-        var modeToUse = window.FORCED_BG_MODE || saved;
-
-        _this.apply(modeToUse);
-      })
-      .catch(function(err) {
-        console.error("Failed to load background themes dynamically", err);
-      });
+    // Use preloaded themes injected by PHP to prevent FOUC / slow visual blur load
+    _this.themes = window.TOM_THEMES || {};
+    
+    // Apply background instantly from localStorage
+    var saved = localStorage.getItem("tom-labs-bg-mode") || "spiderman";
+    var modeToUse = window.FORCED_BG_MODE || saved;
+    _this.apply(modeToUse);
 
     // Watch for theme changes (Light/Dark mode toggle) to update colors instantly
     var _this = this;
@@ -814,7 +814,7 @@ var TomBG = {
       var color = localStorage.getItem("tom-labs-plain-color") || "#0b1e36";
       if (sc) sc.style.display = "none";
       scene.style.display = "none";
-      document.body.style.background = "";
+      document.body.style.setProperty('background-color', 'var(--cui-body-bg)', 'important');
       root.classList.add("mode-plain");
 
       var safeColor = isLight ? this.ensureLightness(color, 0.95) : this.ensureDarkness(color, 0.2);
@@ -847,18 +847,18 @@ var TomBG = {
 
       setVar("--glass-bg", isLight ? "#ffffff" : this.hexToRgba(safeColor, 0.88));
       setVar("--glass-bg-solid", isLight ? "#ffffff" : this.hexToRgba(safeColor, 0.96));
-      setVar("--cui-card-bg", isLight ? "#ffffff" : this.hexToRgba(this.adjustColor(safeColor, 4), 0.65));
-      setVar("--cui-card-bg-solid", isLight ? "#ffffff" : this.hexToRgba(this.adjustColor(safeColor, 3), 0.98));
-      setVar("--cui-body-bg", safeColor);
+      setVar("--cui-card-bg", isLight ? "#ffffff" : this.hexToRgba(this.adjustColor(safeColor, 6), 0.65));
+      setVar("--cui-card-bg-solid", isLight ? "#ffffff" : this.hexToRgba(this.adjustColor(safeColor, 5), 0.98));
+      setVar("--cui-body-bg", isLight ? safeColor : this.adjustColor(safeColor, 3));
       setVar("--cui-primary", primaryColor);
       setVar("--cui-primary-rgb", pRGB);
-      setVar("--cui-sidebar-bg", isLight ? "#ffffff" : this.hexToRgba(this.adjustColor(safeColor, 1.5), 0.98));
-      setVar("--cui-header-bg", isLight ? "#ffffff" : this.hexToRgba(this.adjustColor(safeColor, 1), 0.92));
+      setVar("--cui-sidebar-bg", isLight ? "#ffffff" : this.hexToRgba(safeColor, 0.98));
+      setVar("--cui-header-bg", isLight ? "#ffffff" : this.hexToRgba(safeColor, 0.92));
 
       if (typeof TomParallax !== "undefined") TomParallax.destroy();
     } else {
       scene.style.display = "block";
-      document.body.style.background = "transparent";
+      document.body.style.setProperty('background', 'transparent', 'important');
       if (sc) {
         sc.style.display = "block";
         sc.style.opacity = "0";
@@ -1047,6 +1047,29 @@ var TomBG = {
 
     localStorage.setItem("tom-labs-bg-mode", mode);
     this.apply(mode);
+
+    if (mode !== "plain") {
+      // Force instant save and full page reload for image backgrounds
+      var plainColor = localStorage.getItem("tom-labs-plain-color");
+      var accentColor = localStorage.getItem("tom-labs-accent-color");
+      var customSlots = [];
+      var customThemes = [];
+      for (var i = 0; i < 10; i++) {
+        customSlots.push(localStorage.getItem("tom-labs-custom-color-" + i));
+        customThemes.push(localStorage.getItem("tom-labs-custom-theme-" + i));
+      }
+      fetch('/api/account/theme_save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: mode, plainColor: plainColor, accentColor: accentColor, customSlots: customSlots, customThemes: customThemes
+        })
+      }).finally(function() {
+        window.location.reload();
+      });
+      return;
+    }
+
     this.syncToServer();
 
     // Update thumbnails UI for the new Mega Dropdown
@@ -1239,7 +1262,7 @@ var TomBG = {
   }
 };
 
-document.addEventListener("DOMContentLoaded", function () { TomBG.init(); });
+window.onPageLoad( function () { TomBG.init(); });
 
 /**
  * Theme & Visuals Controller (Migrated from _master.php for Grunt Workflow)
@@ -1282,28 +1305,37 @@ window.TomVisuals = {
   toggleBlur: function (enable) {
     if (enable) {
       document.documentElement.classList.add('glass-mode');
-      localStorage.setItem('tom-labs-visual-blur', 'true');
     } else {
       document.documentElement.classList.remove('glass-mode');
-      localStorage.setItem('tom-labs-visual-blur', 'false');
     }
+    
+    // Save to Database
+    var data = new FormData();
+    data.append('preference_id', 'visual_blur');
+    data.append('value', enable ? 'true' : 'false');
+    fetch('/api/user/preference_save', {
+      method: 'POST',
+      body: data
+    }).catch(console.error);
   },
   switchBGTheme: function (theme) {
     var darkGrid = document.getElementById('bg-grid-dark');
     var lightGrid = document.getElementById('bg-grid-light');
     if (!darkGrid || !lightGrid) return;
-
+    
     var themeToPreview = theme;
     if (theme === 'auto') {
       themeToPreview = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
-
+    
     if (themeToPreview === 'light') {
       darkGrid.style.display = 'none';
+      darkGrid.classList.add('d-none');
       lightGrid.style.display = 'grid';
       lightGrid.classList.remove('d-none');
     } else {
       lightGrid.style.display = 'none';
+      lightGrid.classList.add('d-none');
       darkGrid.style.display = 'grid';
       darkGrid.classList.remove('d-none');
     }
@@ -1311,11 +1343,22 @@ window.TomVisuals = {
   syncUI: function () {
     var blurToggle = document.getElementById('visualBlurToggle');
     if (blurToggle) {
-      var savedBlur = localStorage.getItem('tom-labs-visual-blur');
-      blurToggle.checked = (savedBlur !== 'false');
+      // Sync from server-rendered HTML class instead of local storage
+      blurToggle.checked = document.documentElement.classList.contains('glass-mode');
     }
-    var savedTheme = localStorage.getItem('tom-labs-theme') || 'dark';
+    var savedTheme = document.documentElement.getAttribute('data-coreui-theme') || 'dark';
     this.switchBGTheme(savedTheme);
     window.updateThemeIcon(savedTheme);
   }
 };
+
+
+    
+
+    // --- Explicit Window Exports for Inline HTML ---
+    window.TomBG = TomBG;
+
+  })();
+} catch (e) {
+  console.error("[Fatal Error in background.js]", e);
+}

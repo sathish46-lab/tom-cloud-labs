@@ -81,17 +81,6 @@
     $domainUsageMap = $dm->getDomainUsageMap($user->getUserId());
 ?>
 
-<script>
-    window.SESSION_HASH = "<?= $fullHash ?>";
-    window.LAB_USER = "<?= htmlspecialchars($currentUsername) ?>";
-    window.CODE_SERVER_URL = "<?= $creds['code_server_url'] ?? '' ?>";
-    // CRITICAL: Set the global lab type
-    window.LAB_TYPE = "<?= $labType ?>"; 
-    // Inject Lab Config for JS Access
-    window.LAB_CONFIG = <?= json_encode($labConfig) ?>;
-    // CRITICAL: Inject cross-lab domain usage map
-    window.DOMAIN_USAGE_MAP = <?= json_encode($domainUsageMap) ?>;
-</script>
 
 <?php 
     $current_page = 'domains';
@@ -258,22 +247,12 @@
 <?php include __DIR__ . '/partials/server_logs.php'; ?>
 
 <script>
-    (function() {
-        var initDomainsMasonry = function() {
-            var grid = document.querySelector('#masonry-area');
-            if (grid && typeof Masonry !== 'undefined') {
-                new Masonry(grid, {
-                    percentPosition: true
-                });
-            }
-        };
-        // Initialize when DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initDomainsMasonry);
-        } else {
-            initDomainsMasonry();
+    window.onPageLoad(function() {
+        var grid = document.querySelector('#masonry-area');
+        if (grid && typeof Masonry !== 'undefined') {
+            new Masonry(grid, {
+                percentPosition: true
+            });
         }
-        // Fallback for dynamic content/images
-        setTimeout(initDomainsMasonry, 500);
-    })();
+    });
 </script>

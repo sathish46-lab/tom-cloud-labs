@@ -4,22 +4,38 @@
 }
 
 .config-view {
-    background: #000;
-    border: 1px solid #363131;
+    background: #000 !important;
+    border: 1px solid #363131 !important;
     padding: 22px;
     border-radius: 12px;
     font-family: monospace;
-    color: #fff;
+    color: #fff !important;
 }
 
 .config-header {
-    color: #50fa7b;
+    color: #50fa7b !important;
 }
 
 .config-label {
-    color: #00d4ff;
+    color: #00d4ff !important;
 }
 
 .config-value {
-    color: #ffcc00;
+    color: #ffcc00 !important;
+}
+
+// Card Entrance Animation
+@keyframes flipInCard {
+    0% {
+        opacity: 0;
+        transform: perspective(1200px) rotateX(-20deg) translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: perspective(1200px) rotateX(0deg) translateY(0);
+    }
+}
+
+.card-entrance {
+    animation: flipInCard 0.5s cubic-bezier(0.4, 0, 0.2, 1) backwards;
 }

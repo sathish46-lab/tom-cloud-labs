@@ -1,43 +1,59 @@
+/**
+ * Wrapped with IIFE Error Boundary
+ */
+try {
+  (function() {
+    "use strict";
+
+
 // ========================================================================
 // Dashboard — Workspace Polling & Insights Animations
 // ========================================================================
 
 (function () {
-    let pollingIntervals = {};
+    let dashboardPollingInterval = null;
 
-    function startMetricsPolling(hash) {
-        if (pollingIntervals[hash]) return; // Avoid duplicate intervals
+    window.initDashboardPolling = function () {
+        if (dashboardPollingInterval) return; // Prevent duplicate intervals
 
-        function fetchMetrics() {
-            fetch(`/api/instance/stats?hash=${hash}`)
+        function fetchDashboardMetrics() {
+            fetch(`/api/dashboard/stats`)
                 .then(res => res.json())
-                .then(stats => {
-                    const cpuEl = document.getElementById(`cpu-${hash}`);
-                    const memEl = document.getElementById(`mem-${hash}`);
-                    const loadEl = document.getElementById(`load-${hash}`);
+                .then(data => {
+                    if (!data.labs || !data.labs.all_labs) return;
+                    
+                    data.labs.all_labs.forEach(lab => {
+                        const hash = lab.hash;
+                        const stats = lab.metrics;
+                        if (!hash || !stats) return;
 
-                    if (stats.CPUPerc && cpuEl) cpuEl.textContent = stats.CPUPerc;
-                    if (stats.MemUsage && memEl) {
-                        const usage = stats.MemUsage.split(' / ')[0];
-                        memEl.textContent = usage;
-                    }
-                    if (stats.Load1 !== undefined && loadEl) {
-                        const loadAvg = `${stats.Load1.toFixed(2)}, ${stats.Load5.toFixed(2)}, ${stats.Load15.toFixed(2)}`;
-                        loadEl.textContent = loadAvg;
-                    }
+                        const cpuEl = document.getElementById(`cpu-${hash}`);
+                        const memEl = document.getElementById(`mem-${hash}`);
+                        const loadEl = document.getElementById(`load-${hash}`);
+
+                        if (stats.CPUPerc && cpuEl) cpuEl.textContent = stats.CPUPerc;
+                        if (stats.MemUsage && memEl) {
+                            const usage = stats.MemUsage.split(' / ')[0];
+                            memEl.textContent = usage;
+                        }
+                        if (stats.Load1 !== undefined && loadEl) {
+                            const loadAvg = `${stats.Load1.toFixed(2)}, ${stats.Load5.toFixed(2)}, ${stats.Load15.toFixed(2)}`;
+                            loadEl.textContent = loadAvg;
+                        }
+                    });
                 })
                 .catch(() => { });
         }
-        fetchMetrics();
-        pollingIntervals[hash] = setInterval(fetchMetrics, 5000);
-    }
+        
+        fetchDashboardMetrics();
+        dashboardPollingInterval = setInterval(fetchDashboardMetrics, 5000);
+    };
 
-    // Export initialization function globally
-    window.initDashboardPolling = function (hashes) {
-        if (Array.isArray(hashes)) {
-            hashes.forEach(hash => {
-                startMetricsPolling(hash);
-            });
+    // To allow stopping it on HTMX page transitions if needed
+    window.stopDashboardPolling = function() {
+        if (dashboardPollingInterval) {
+            clearInterval(dashboardPollingInterval);
+            dashboardPollingInterval = null;
         }
     };
 
@@ -136,7 +152,7 @@
     };
 
     // Restore previously active tab on page load
-    document.addEventListener('DOMContentLoaded', function () {
+    window.onPageLoad( function () {
         try {
             const savedTab = localStorage.getItem('active_continue_tab');
             if (savedTab) {
@@ -151,3 +167,13 @@
     });
 })();
 
+
+
+    
+
+    // --- Explicit Window Exports for Inline HTML ---
+
+  })();
+} catch (e) {
+  console.error("[Fatal Error in dashboard.js]", e);
+}

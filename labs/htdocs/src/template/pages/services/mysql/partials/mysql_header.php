@@ -16,7 +16,7 @@ $current_tab = $current_tab ?? 'dashboard';
                     MySQL is the world's most popular open source database. With its proven performance, reliability and ease-of-use, MySQL has become the leading database choice for web-based applications, used by high profile web properties including Facebook, Twitter, YouTube, Yahoo! and many more. Additionally, it is an extremely popular choice as embedded database, distributed by thousands of ISVs and OEMs. MySQL is a key part of LAMP (Linux, Apache, MySQL, PHP / Perl / Python), the fast growing open source enterprise software stack.
                 </p>
                 <div class="d-flex gap-2 mt-2">
-                    <button class="btn btn-primary rounded-pill px-4" style="background: #6366f1; border-color: #6366f1; font-size: 0.85rem;" onclick="openAddUserModal()">Add User</button>
+                    <button class="btn btn-primary rounded-pill px-4" style="background: #6366f1; border-color: #6366f1; font-size: 0.85rem;" onclick="openAddMySQLUserModal()">Add User</button>
                     <a href="/services/mysql/database" class="btn btn-outline-light rounded-pill px-4 text-decoration-none" style="border-color: rgba(255,255,255,0.2); font-size: 0.85rem;">Manage Database</a>
                 </div>
             </div>

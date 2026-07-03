@@ -1,4 +1,12 @@
 /**
+ * Wrapped with IIFE Error Boundary
+ */
+try {
+  (function() {
+    "use strict";
+
+
+/**
  * Learn AI Application UI Logic
  */
 (function () {
@@ -374,7 +382,7 @@
 
     // Initialize
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => LearnApp.init());
+        window.onPageLoad( () => LearnApp.init());
     } else {
         LearnApp.init();
     }
@@ -385,3 +393,13 @@
     // Re-check for resizers after a small delay in case of late rendering
     setTimeout(() => { if (!LearnApp.isInitialized) LearnApp.init(); }, 1000);
 })();
+
+
+    
+
+    // --- Explicit Window Exports for Inline HTML ---
+
+  })();
+} catch (e) {
+  console.error("[Fatal Error in learnAI.js]", e);
+}

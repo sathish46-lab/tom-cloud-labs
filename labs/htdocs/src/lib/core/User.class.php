@@ -9,6 +9,13 @@ class User {
         $this->user = $this->db->users->findOne(['email' => $email]);
     }
 
+    public function setUiPreference($key, $value) {
+        if (!isset($this->user['ui_preferences'])) {
+            $this->user['ui_preferences'] = [];
+        }
+        $this->user['ui_preferences'][$key] = $value;
+    }
+
     public function __call($method, $args) {
         if (substr($method, 0, 3) == "get") {
             // Converts "getUserId" to "user_id"

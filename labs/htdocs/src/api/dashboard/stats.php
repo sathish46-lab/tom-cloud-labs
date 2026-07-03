@@ -45,15 +45,29 @@ $deployedLabs = $db->deployed_labs->find(
     ['sort' => ['created_at' => -1]]
 );
 
+$cacheFile = '/dev/shm/docker_stats.json';
+$allStats = file_exists($cacheFile) ? json_decode(file_get_contents($cacheFile), true) : [];
+
 $labsList = [];
 foreach ($deployedLabs as $lab) {
-$labsList[] = [
-    'name' => ucfirst($lab['lab_type'] ?? 'Lab'),
-    'ip' => $lab['internal_ip'] ?? 'Unknown',
-    'status' => $lab['status'] ?? 'unknown',
-    'hash' => $lab['instance_hash'] ?? '',
-    'type' => $lab['lab_type'] ?? 'unknown'
-];
+    $hash = $lab['instance_hash'] ?? '';
+    
+    // Retrieve real-time metrics for this specific lab from memory cache
+    $metrics = ['status' => 'offline'];
+    if (isset($allStats[$hash])) {
+        $metrics = $allStats[$hash];
+    } else if (isset($allStats['ctf-' . $hash])) {
+        $metrics = $allStats['ctf-' . $hash];
+    }
+
+    $labsList[] = [
+        'name' => ucfirst($lab['lab_type'] ?? 'Lab'),
+        'ip' => $lab['internal_ip'] ?? 'Unknown',
+        'status' => $lab['status'] ?? 'unknown',
+        'hash' => $hash,
+        'type' => $lab['lab_type'] ?? 'unknown',
+        'metrics' => $metrics
+    ];
 }
 
 // 5. Get ALL domains

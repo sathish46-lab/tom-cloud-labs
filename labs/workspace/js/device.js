@@ -1,3 +1,11 @@
+/**
+ * Wrapped with IIFE Error Boundary
+ */
+try {
+  (function() {
+    "use strict";
+
+
 let activeConfigRaw = "";
 
 function toggleManualKey() {
@@ -46,28 +54,26 @@ function showConfig(name, configRaw) {
 
     const qrEl = document.getElementById("qrcode");
     qrEl.innerHTML = "";
+    
+    // Add a mandatory white "quiet zone" padding around the QR code. 
+    // Scanners fail if the black edges bleed into a dark UI background.
+    qrEl.style.padding = "10px";
+    qrEl.style.backgroundColor = "#ffffff";
+    qrEl.style.borderRadius = "8px";
+    qrEl.style.display = "inline-block";
+    
+    // Strict WireGuard Scanners fail if the QR code is damaged by a logo, or if there are weird line endings.
+    // We normalize the string to strict \n and trim it.
+    const cleanConfig = activeConfigRaw.trim().replace(/\r\n/g, '\n');
+    
     const qrcode = new QRCode(qrEl, {
-        text: activeConfigRaw,
-        width: 200,
-        height: 200,
-        correctLevel: QRCode.CorrectLevel.H
+        text: cleanConfig,
+        width: 256,  
+        height: 256,
+        // Level M provides the perfect balance of readability and block size
+        correctLevel: QRCode.CorrectLevel.M 
     });
-
-    setTimeout(() => {
-        const canvas = qrEl.querySelector('canvas');
-        if (canvas) {
-            const ctx = canvas.getContext('2d');
-            const center = canvas.width / 2;
-            const bSize = canvas.width * 0.28;
-            ctx.fillStyle = "#ffffff";
-            ctx.fillRect(center - bSize / 2, center - bSize / 2, bSize, bSize);
-            ctx.fillStyle = "#0b0e14";
-            ctx.font = "bold 16px Arial";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText("TOM", center, center);
-        }
-    }, 120);
+    
     new coreui.Modal(document.getElementById('configModal')).show();
 }
 
@@ -116,8 +122,40 @@ if (vpnForm) {
                 method: 'POST',
                 body: new FormData(this)
             });
-            if ((await res.json()).status === 'success') window.location.reload();
+            if (res.ok) {
+                const htmlText = await res.text();
+                const container = document.getElementById('devices-container');
+                if (container && htmlText.trim()) {
+                    container.insertAdjacentHTML('beforeend', htmlText);
+                }
+                
+                const modalEl = document.getElementById('addDeviceModal');
+                if (modalEl) {
+                    const modal = coreui.Modal.getInstance(modalEl);
+                    if (modal) {
+                        modal.hide();
+                    } else {
+                        // Fallback: click the dismiss button
+                        const dismissBtn = modalEl.querySelector('[data-coreui-dismiss="modal"]');
+                        if (dismissBtn) dismissBtn.click();
+                    }
+                    
+                    // Reset form
+                    this.reset();
+                    document.getElementById('hiddenPubKey').value = "";
+                    document.getElementById('hiddenPrivKey').value = "";
+                    
+                    // Show success toast or alert
+                    console.log("Device added successfully!");
+                } else {
+                    window.location.reload();
+                }
+            } else {
+                const errorMsg = await res.text();
+                alert("Error: " + (errorMsg || "Unknown Error"));
+            }
         } catch (err) {
+            console.error(err);
             alert("Network Error");
         } finally {
             btn.disabled = false;
@@ -126,22 +164,81 @@ if (vpnForm) {
     });
 }
 
-async function deleteDevice(dbId, pubKey) {
-    if (!confirm("Delete this device?")) return;
-    const res = await fetch('/api/vpn/delete', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            id: dbId,
-            public_key: pubKey
-        })
+let currentDeleteDeviceId = null;
+let currentDeleteDevicePubKey = null;
+
+async function deleteDevice(dbId, pubKey, deviceName, ipAddress) {
+    currentDeleteDeviceId = dbId;
+    currentDeleteDevicePubKey = pubKey;
+    
+    // Update modal content
+    const titleSpan = document.getElementById('deleteDeviceModalTitleName');
+    const bodySpan = document.getElementById('deleteDeviceModalBodyName');
+    const ipSpan = document.getElementById('deleteDeviceModalIp');
+    
+    if (titleSpan) titleSpan.textContent = deviceName || 'Device';
+    if (bodySpan) bodySpan.textContent = deviceName || 'this device';
+    if (ipSpan) ipSpan.textContent = ipAddress || 'Unknown IP';
+    
+    // Show Trash Bin (lid open, waiting)
+    if (window.TrashBin) window.TrashBin.show();
+    
+    // Show Modal
+    const modalEl = document.getElementById('confirmDeleteDeviceModal');
+    const deleteModal = new coreui.Modal(modalEl);
+    deleteModal.show();
+    
+    // Hide bin if modal is dismissed (cancel / backdrop click / ESC)
+    modalEl.addEventListener('hidden.coreui.modal', function onHide() {
+        modalEl.removeEventListener('hidden.coreui.modal', onHide);
+        if (window.TrashBin) window.TrashBin.hide();
     });
-    if ((await res.json()).status === 'success') window.location.reload();
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+async function confirmDeleteDeviceAction() {
+    const confirmBtn = document.getElementById('confirmDeleteDeviceBtn');
+    if (!confirmBtn) return;
+    
+    const modalEl = document.getElementById('confirmDeleteDeviceModal');
+    const deleteModal = coreui.Modal.getInstance(modalEl) || new coreui.Modal(modalEl);
+    
+    const originalText = confirmBtn.innerHTML;
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin me-1'></i> Deleting...";
+
+    try {
+        const res = await fetch('/api/vpn/delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                id: currentDeleteDeviceId,
+                public_key: currentDeleteDevicePubKey
+            })
+        });
+        const resData = await res.json();
+        if (resData.status === 'success') {
+            deleteModal.hide();
+            const card = document.getElementById(`device-card-${currentDeleteDeviceId}`);
+            if (card) {
+                window.TrashBin.animateDelete(card, "Device successfully deleted.");
+            } else {
+                window.location.reload();
+            }
+        } else {
+            if (window.TomNotify) window.TomNotify.show(resData.error || 'Failed to delete device', 'Error', 'error', 3000);
+        }
+    } catch (e) {
+        if (window.TomNotify) window.TomNotify.show('Connection error.', 'Error', 'error', 3000);
+    } finally {
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = originalText;
+    }
+}
+window.confirmDeleteDeviceAction = confirmDeleteDeviceAction;
+
+window.onPageLoad( () => {
     let statsInterval = null;
 
     async function fetchStats() {
@@ -226,3 +323,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+
+    
+
+    // --- Explicit Window Exports for Inline HTML ---
+    window.copyConfig = copyConfig;
+    window.activeConfigRaw = activeConfigRaw;
+    window.showConfig = showConfig;
+    window.openVPNConnectionModal = openVPNConnectionModal;
+    window.vpnForm = vpnForm;
+    window.toggleManualKey = toggleManualKey;
+    window.downloadTunnel = downloadTunnel;
+    window.generateWGKeypair = generateWGKeypair;
+    window.deleteDevice = deleteDevice;
+
+  })();
+} catch (e) {
+  console.error("[Fatal Error in device.js]", e);
+}

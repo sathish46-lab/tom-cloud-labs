@@ -1,4 +1,12 @@
 /**
+ * Wrapped with IIFE Error Boundary
+ */
+try {
+  (function() {
+    "use strict";
+
+
+/**
  * SIDEBAR PERSISTENCE LOGIC
  * Manages the state of the sidebar (narrow/hidden) across page loads.
  */
@@ -16,14 +24,47 @@
         document.documentElement.classList.remove('sidebar-init-hidden');
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    window.onPageLoad( () => {
+        let saveTimeoutNarrow;
+        let saveTimeoutHidden;
+        let prevNarrow = sidebarEl.classList.contains('sidebar-narrow-unfoldable') || sidebarEl.classList.contains('sidebar-narrow');
+        let prevHidden = sidebarEl.classList.contains('hide') || sidebarEl.classList.contains('sidebar-hide');
+
         const observer = new MutationObserver(() => {
             const isNarrow = sidebarEl.classList.contains('sidebar-narrow-unfoldable') ||
                 sidebarEl.classList.contains('sidebar-narrow');
-            localStorage.setItem('tom-labs-sidebar-narrow', isNarrow);
+                
+            if (prevNarrow !== isNarrow) {
+                prevNarrow = isNarrow;
+                
+                clearTimeout(saveTimeoutNarrow);
+                saveTimeoutNarrow = setTimeout(() => {
+                    var data = new FormData();
+                    data.append('preference_id', 'sidebar_unfoldable');
+                    data.append('value', isNarrow ? 'true' : 'false');
+                    fetch('/api/user/preference_save', {
+                        method: 'POST',
+                        body: data
+                    }).catch(console.error);
+                }, 500);
+            }
 
             const isHidden = sidebarEl.classList.contains('hide') || sidebarEl.classList.contains('sidebar-hide');
-            localStorage.setItem('tom-labs-sidebar-hidden', isHidden);
+            
+            if (prevHidden !== isHidden) {
+                prevHidden = isHidden;
+                
+                clearTimeout(saveTimeoutHidden);
+                saveTimeoutHidden = setTimeout(() => {
+                    var data = new FormData();
+                    data.append('preference_id', 'sidebar_hidden');
+                    data.append('value', isHidden ? 'true' : 'false');
+                    fetch('/api/user/preference_save', {
+                        method: 'POST',
+                        body: data
+                    }).catch(console.error);
+                }, 500);
+            }
         });
 
         observer.observe(sidebarEl, {
@@ -32,3 +73,13 @@
         });
     });
 })();
+
+
+    
+
+    // --- Explicit Window Exports for Inline HTML ---
+
+  })();
+} catch (e) {
+  console.error("[Fatal Error in sidebar.js]", e);
+}

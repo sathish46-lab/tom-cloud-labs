@@ -22,7 +22,7 @@ $initialQuote = $heroQuotes[array_rand($heroQuotes)];
 
 ob_start();
 ?>
-<body class="page-portfolio"> 
+<div class="page-portfolio" hx-boost="false" style="width: 100%;">
 
 <header class="portfolio-header" style="border-radius: 20px; display: flex; align-items: center; width: 95%; max-width: 1400px;">
     <a href="/" class="header-logo" style="display: flex; align-items: center; gap: 12px; text-decoration: none; flex-shrink: 0;">
@@ -745,6 +745,7 @@ ob_start();
       });
   });
 </script>
+</div>
 <?php
 Session::set('page_content', ob_get_clean());
 Session::loadMaster();

@@ -1,3 +1,11 @@
+/**
+ * Wrapped with IIFE Error Boundary
+ */
+try {
+  (function() {
+    "use strict";
+
+
 // ========================================================================
 // Preferences — HTTP Proxies, Lifecycle, Startup Script
 // ========================================================================
@@ -269,7 +277,7 @@ async function runInitScript() {
 }
 
 // Attach domain conflict checker and auto-password generation to elements on load
-document.addEventListener('DOMContentLoaded', function() {
+window.onPageLoad( function() {
     document.querySelectorAll('.proxy-domain-select').forEach(function(sel) {
         sel.addEventListener('change', function() { checkProxyDomainConflict(this); });
     });
@@ -321,4 +329,25 @@ function copyFromInput(inputId) {
     const input = document.getElementById(inputId);
     copyText(input.value);
 }
-document.addEventListener('DOMContentLoaded', updateProxyDomainOptions);
+window.onPageLoad( updateProxyDomainOptions);
+
+
+    
+
+    // --- Explicit Window Exports for Inline HTML ---
+    window.generateNewPassword = generateNewPassword;
+    window.collectPreferencesData = collectPreferencesData;
+    window.runInitScript = runInitScript;
+    window.copyFromInput = copyFromInput;
+    window.savePreferences = savePreferences;
+    window.applyAndRedeploy = applyAndRedeploy;
+    window.updateProxyDomainOptions = updateProxyDomainOptions;
+    window.checkProxyDomainConflict = checkProxyDomainConflict;
+    window.togglePasswordVisibility = togglePasswordVisibility;
+    window.addProxyRow = addProxyRow;
+    window.removeProxyRow = removeProxyRow;
+
+  })();
+} catch (e) {
+  console.error("[Fatal Error in preferences.js]", e);
+}

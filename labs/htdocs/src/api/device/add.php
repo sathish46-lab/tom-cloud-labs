@@ -7,24 +7,43 @@ if (!Session::getUser()) {
     die("Unauthorized");
 }
 
-$resources = Session::get('network_resources', []); 
+$user = Session::getUser();
+$db = DatabaseConnection::getDefaultDatabase();
+
+$dbResources = VPN::request('ip', 'all', ['device' => 'wg0']);
+$allNodes = $dbResources['nodes'] ?? [];
+
+$activeMetadata = $db->devices->find(['user_id' => $user->getUserId()])->toArray();
+$allocatedIps = array_map(function($d) { return $d['assigned_ip'] ?? ''; }, $activeMetadata);
+
+$resources = [];
+foreach ($allNodes as $node) {
+    if (isset($node['email']) && $node['email'] === $user->getEmail()) {
+        if (!in_array($node['ip_addr'], $allocatedIps)) {
+            $resources[] = $node;
+        }
+    }
+}
 $defaultIp = !empty($resources) ? end($resources)['ip_addr'] : "";
 ?>
-                <div class="modal-body p-4">
-                    <p class="text-secondary small mb-4">You can add devices to connect to your labs, allowing them to
-                        communicate with our services. To get started, please provide the details of the device below.
+                <div class="modal-body px-4 pt-4 pb-2">
+                    <p class="small opacity-75 mb-3" style="line-height: 1.5; font-size: 0.8rem;">
+                        You can add devices to connect to your labs, allowing them to communicate with our services. To get started, please provide the details of the device below.
                     </p>
 
-                    <div class="row mb-4 align-items-center">
-                        <div class="col-md-4"><label class="form-label-horizontal">Device Name</label></div>
-                        <div class="col-md-8"><input type="text" class="form-control" name="device_name" required
-                                placeholder="e.g. My Laptop"></div>
+                    <hr class="border-secondary opacity-25 mb-3">
+
+                    <div class="row mb-2 align-items-center">
+                        <label class="col-sm-4 small fw-bold" style="font-size: 0.8rem;">Device Name</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control bg-transparent text-white border-secondary shadow-none px-3 rounded-pill" style="border-radius: 12px !important; border: 1px solid rgba(255,255,255,0.2); font-size: 0.85rem;" name="device_name" required placeholder="e.g. My Laptop">
+                        </div>
                     </div>
 
-                    <div class="row mb-4 align-items-center">
-                        <div class="col-md-4"><label class="form-label-horizontal">Device Type</label></div>
-                        <div class="col-md-8">
-                            <select class="form-select" name="device_type">
+                    <div class="row mb-2 align-items-center">
+                        <label class="col-sm-4 small fw-bold" style="font-size: 0.8rem;">Device Type</label>
+                        <div class="col-sm-8">
+                            <select class="form-select bg-transparent text-white border-secondary shadow-none px-3 rounded-pill" style="border-radius: 12px !important; border: 1px solid rgba(255,255,255,0.2); font-size: 0.85rem;" name="device_type">
                                 <option value="Mobile">Mobile</option>
                                 <option value="Laptop">Laptop</option>
                                 <option value="Desktop">Desktop</option>
@@ -35,67 +54,65 @@ $defaultIp = !empty($resources) ? end($resources)['ip_addr'] : "";
                         </div>
                     </div>
 
-                    <div class="row mb-4 align-items-center">
-                        <div class="col-md-4"><label class="form-label-horizontal">Reallocate IP</label></div>
-                        <div class="col-md-8">
-                            <select class="form-select" name="reallocate_ip">
-                                <?php if(empty($resources)): ?>
+                    <div class="row mb-2 align-items-center">
+                        <label class="col-sm-4 small fw-bold" style="font-size: 0.8rem;">Reallocate IP</label>
+                        <div class="col-sm-8">
+                            <select class="form-select bg-transparent text-white border-secondary shadow-none px-3 rounded-pill" style="border-radius: 12px !important; border: 1px solid rgba(255,255,255,0.2); font-size: 0.85rem;" name="reallocate_ip">
                                 <option value="">Assign New IP Address</option>
-                                <?php else: ?>
                                 <?php foreach ($resources as $res): ?>
                                 <option value="<?= $res['ip_addr'] ?>"
                                     <?= $res['ip_addr'] == $defaultIp ? 'selected' : '' ?>>
                                     <?= $res['ip_addr'] ?>
                                 </option>
                                 <?php endforeach; ?>
-                                <?php endif; ?>
                             </select>
                         </div>
                     </div>
 
-                    <div class="mb-2">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="autoGenCheck" checked
-                                onchange="toggleManualKey()">
-                            <label class="form-check-label small text-secondary" for="autoGenCheck">
-                                Auto Generate Keypair (Note: Your PrivateKey will be generated and managed by us, inturn
-                                you can download the tunnel file or scan QR to configure VPN without hassle).
-                            </label>
+                    <div class="row mb-2">
+                        <div class="col-sm-4"></div>
+                        <div class="col-sm-8">
+                            <div class="form-check mt-1">
+                                <input class="form-check-input" type="checkbox" id="autoGenCheck" checked onchange="toggleManualKey()">
+                                <label class="form-check-label opacity-75" for="autoGenCheck" style="line-height: 1.4; font-size: 0.75rem;">
+                                    Auto Generate Keypair (Note: Your PrivateKey will be generated and managed by us, inturn you can download the tunnel file or scan QR to configure VPN without hassle).
+                                </label>
+                            </div>
                         </div>
                     </div>
 
-                    <div id="manualKeyArea" style="display:none" class="mb-4">
+                    <div id="manualKeyArea" style="display:none" class="mb-2">
                         <div class="row align-items-center">
-                            <div class="col-md-4"><label class="form-label-horizontal">Wireguard Public Key</label>
+                            <label class="col-sm-4 small fw-bold" style="font-size: 0.8rem;">Wireguard Public Key</label>
+                            <div class="col-sm-8">
+                                <textarea class="form-control bg-transparent text-white border-secondary shadow-none py-2 px-3 rounded-4 font-monospace" style="border-radius: 12px !important; border: 1px solid rgba(255,255,255,0.2); font-size: 0.8rem;" id="inputPubKey" rows="2" placeholder="Paste your Public Key here"></textarea>
                             </div>
-                            <div class="col-md-8"><textarea class="form-control font-monospace" id="inputPubKey"
-                                    rows="2" placeholder="Paste your Public Key here"></textarea></div>
                         </div>
                     </div>
 
                     <input type="hidden" name="public_key" id="hiddenPubKey">
                     <input type="hidden" name="private_key" id="hiddenPrivKey">
 
-                    <div class="mt-4 border-top border-light border-opacity-10 pt-4">
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="is_primary" id="primaryCheck">
-                            <label class="form-check-label small text-secondary" for="primaryCheck">Primary
-                                Device</label>
-                        </div>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="is_trusted" id="trustedCheck">
-                            <label class="form-check-label small text-secondary" for="trustedCheck">Trusted
-                                Device</label>
-                        </div>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="reserve_allocated" id="reserveCheck">
-                            <label class="form-check-label small text-secondary" for="reserveCheck">Reserve IP when
-                                Allocated</label>
+                    <div class="row mb-1 mt-1">
+                        <div class="col-sm-4"></div>
+                        <div class="col-sm-8">
+                            <div class="form-check mb-1">
+                                <input class="form-check-input" type="checkbox" name="is_primary" id="primaryCheck">
+                                <label class="form-check-label opacity-75" for="primaryCheck" style="font-size: 0.8rem;">Primary Device</label>
+                            </div>
+                            <div class="form-check mb-1">
+                                <input class="form-check-input" type="checkbox" name="is_trusted" id="trustedCheck">
+                                <label class="form-check-label opacity-75" for="trustedCheck" style="font-size: 0.8rem;">Trusted Device</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="reserve_allocated" id="reserveCheck">
+                                <label class="form-check-label opacity-75" for="reserveCheck" style="font-size: 0.8rem;">Reserve IP when Allocated</label>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer border-0 p-4 pt-0 d-flex gap-2">
-                    <button type="submit" class="btn btn-warning fw-bold px-5 py-2 text-dark">Verify and Add</button>
-                    <button type="button" class="btn btn-secondary px-4 py-2"
-                        data-coreui-dismiss="modal">Cancel</button>
+
+                <div class="modal-footer border-0 pb-4 px-4 gap-2">
+                    <button type="submit" class="btn btn-warning fw-bold px-4 text-dark rounded-pill" style="font-size: 0.85rem;">Verify and Add</button>
+                    <button type="button" class="btn btn-secondary px-4 rounded-pill" data-coreui-dismiss="modal" style="font-size: 0.85rem;">Cancel</button>
                 </div>

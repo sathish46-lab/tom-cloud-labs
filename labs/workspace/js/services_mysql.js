@@ -6,16 +6,16 @@ try {
     "use strict";
 
 
-// --- PostgreSQL User Management ---
+// --- MySQL User Management ---
 
-function openAddPostgreSQLUserModal() {
+function openAddMySQLUserModal() {
     const modal = new coreui.Modal(document.getElementById('addUserModal'));
     document.getElementById('new-mysql-username').value = '';
     document.getElementById('new-mysql-password').value = '';
     modal.show();
 }
 
-async function submitCreatePostgreSQLUser() {
+async function submitCreateMySQLUser() {
     const username = document.getElementById('new-mysql-username').value;
     const password = document.getElementById('new-mysql-password').value;
     const btn = document.getElementById('btn-submit-user');
@@ -30,7 +30,7 @@ async function submitCreatePostgreSQLUser() {
         btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Adding...';
         btn.disabled = true;
 
-        const response = await fetch('/api/services/postgresql/user_create', {
+        const response = await fetch('/api/services/mysql/user_create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password })
@@ -51,13 +51,13 @@ async function submitCreatePostgreSQLUser() {
     }
 }
 
-async function deletePostgreSQLUser(username) {
+async function deleteMySQLUser(username) {
     if (!confirm(`Are you absolutely sure you want to permanently delete the user "${username}" AND all of their databases? This action cannot be undone.`)) {
         return;
     }
 
     try {
-        const response = await fetch('/api/services/postgresql/user_delete', {
+        const response = await fetch('/api/services/mysql/user_delete', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username })
@@ -66,7 +66,7 @@ async function deletePostgreSQLUser(username) {
         const data = await response.json();
 
         if (data.success) {
-            window.location.href = '/services/postgresql';
+            window.location.href = '/services/mysql';
         } else {
             alert('Error: ' + (data.error || 'Failed to delete user'));
         }
@@ -75,11 +75,11 @@ async function deletePostgreSQLUser(username) {
     }
 }
 
-// --- PostgreSQL Database Management ---
+// --- MySQL Database Management ---
 
 var currentTargetUser = '';
 
-function openCreatePostgreSQLDbModal(username) {
+function openCreateMySQLDbModal(username) {
     currentTargetUser = username;
     document.getElementById('lbl-create-db-user').innerText = username;
     document.getElementById('db-prefix').innerText = username + '_';
@@ -89,7 +89,7 @@ function openCreatePostgreSQLDbModal(username) {
     modal.show();
 }
 
-async function submitCreatePostgreSQLDb() {
+async function submitCreateMySQLDb() {
     const rawDbName = document.getElementById('new-db-name').value;
     const btn = document.getElementById('btn-submit-db');
     const originalText = btn.innerHTML;
@@ -103,11 +103,11 @@ async function submitCreatePostgreSQLDb() {
         btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Creating...';
         btn.disabled = true;
 
-        const response = await fetch('/api/services/postgresql/db_create', {
+        const response = await fetch('/api/services/mysql/db_create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
-                postgresql_username: currentTargetUser,
+                mysql_username: currentTargetUser,
                 db_name: rawDbName 
             })
         });
@@ -127,7 +127,7 @@ async function submitCreatePostgreSQLDb() {
     }
 }
 
-async function submitCreatePostgreSQLDbInline() {
+async function submitCreateMySQLDbInline() {
     const username = document.getElementById('select-db-user').value;
     const rawDbName = document.getElementById('new-db-name').value;
     const collation = document.getElementById('new-db-collation').value;
@@ -143,11 +143,11 @@ async function submitCreatePostgreSQLDbInline() {
         btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Creating...';
         btn.disabled = true;
 
-        const response = await fetch('/api/services/postgresql/db_create', {
+        const response = await fetch('/api/services/mysql/db_create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
-                postgresql_username: username,
+                mysql_username: username,
                 db_name: rawDbName,
                 collation: collation
             })
@@ -158,7 +158,7 @@ async function submitCreatePostgreSQLDbInline() {
         if (data.success) {
             // Re-fetch databases dynamically instead of reload
             document.getElementById('new-db-name').value = '';
-            switchPostgreSQLUser(username);
+            switchMySQLUser(username);
         } else {
             alert('Error: ' + (data.error || 'Failed to create database'));
         }
@@ -170,7 +170,7 @@ async function submitCreatePostgreSQLDbInline() {
     }
 }
 
-async function switchPostgreSQLUser(username) {
+async function switchMySQLUser(username) {
     if (!username) return;
 
     // Update URL without reload
@@ -180,13 +180,13 @@ async function switchPostgreSQLUser(username) {
     const prefixEl = document.getElementById('db-prefix');
     if (prefixEl) prefixEl.innerText = username + '_';
 
-    const grid = document.getElementById('postgresql_db_list');
+    const grid = document.getElementById('mysql_db_list');
     if (!grid) return;
 
     grid.innerHTML = '<div class="col-12 text-center py-4"><i class="bx bx-loader-alt bx-spin text-primary" style="font-size: 2rem;"></i><p class="text-secondary mt-2">Loading databases...</p></div>';
 
     try {
-        const response = await fetch('/api/services/postgresql/check?user=' + encodeURIComponent(username));
+        const response = await fetch('/api/services/mysql/check?user=' + encodeURIComponent(username));
         const data = await response.json();
 
         if (data.result && Array.isArray(data.result)) {
@@ -194,7 +194,7 @@ async function switchPostgreSQLUser(username) {
                 grid.innerHTML = '<div class="col-12 text-center py-4"><p class="text-secondary" style="font-size: 0.9rem;">No databases found for this user.</p></div>';
             } else {
                 grid.innerHTML = data.result.map(dbObj => `
-                    <div class="col postgresql_db" id="postgresql_database_${dbObj.db_name}">
+                    <div class="col mysql_db" id="mysql_database_${dbObj.db_name}">
                         <div class="card simple-whitebg h-100">
                             <div class="card-body">
 
@@ -207,7 +207,7 @@ async function switchPostgreSQLUser(username) {
                                 </div>
 
                                 <div class="d-grid">
-                                    <button class="btn btn-sm btn-outline-danger btn-delete" data-dbname="${dbObj.db_name}" onclick="deletePostgreSQLDb('${dbObj.db_name}')">
+                                    <button class="btn btn-sm btn-outline-danger btn-delete" data-dbname="${dbObj.db_name}" onclick="deleteMySQLDb('${dbObj.db_name}')">
                                         Drop Database
                                     </button>
                                 </div>
@@ -225,13 +225,13 @@ async function switchPostgreSQLUser(username) {
     }
 }
 
-async function deletePostgreSQLDb(dbName) {
+async function deleteMySQLDb(dbName) {
     if (!confirm(`Are you absolutely sure you want to permanently drop the database "${dbName}"? This action cannot be undone.`)) {
         return;
     }
 
     try {
-        const response = await fetch('/api/services/postgresql/db_delete', {
+        const response = await fetch('/api/services/mysql/db_delete', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ db_name: dbName })
@@ -253,17 +253,17 @@ async function deletePostgreSQLDb(dbName) {
     
 
     // --- Explicit Window Exports for Inline HTML ---
-    window.openAddPostgreSQLUserModal = openAddPostgreSQLUserModal;
-    window.openCreatePostgreSQLDbModal = openCreatePostgreSQLDbModal;
-    window.deletePostgreSQLUser = deletePostgreSQLUser;
-    window.submitCreatePostgreSQLDbInline = submitCreatePostgreSQLDbInline;
-    window.deletePostgreSQLDb = deletePostgreSQLDb;
-    window.submitCreatePostgreSQLDb = submitCreatePostgreSQLDb;
-    window.submitCreatePostgreSQLUser = submitCreatePostgreSQLUser;
+    window.switchMySQLUser = switchMySQLUser;
+    window.deleteMySQLUser = deleteMySQLUser;
+    window.openAddMySQLUserModal = openAddMySQLUserModal;
+    window.submitCreateMySQLDb = submitCreateMySQLDb;
+    window.openCreateMySQLDbModal = openCreateMySQLDbModal;
+    window.deleteMySQLDb = deleteMySQLDb;
+    window.submitCreateMySQLUser = submitCreateMySQLUser;
+    window.submitCreateMySQLDbInline = submitCreateMySQLDbInline;
     window.currentTargetUser = currentTargetUser;
-    window.switchPostgreSQLUser = switchPostgreSQLUser;
 
   })();
 } catch (e) {
-  console.error("[Fatal Error in services_postgresql.js]", e);
+  console.error("[Fatal Error in services_mysql.js]", e);
 }

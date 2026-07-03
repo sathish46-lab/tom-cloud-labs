@@ -54,114 +54,7 @@ function timeAgo($timestamp) {
 
 <div class="row g-4 mb-4">
     <?php foreach (Session::get('user_domains') as $d): ?>
-    <div class="col-xl-4 col-md-6">
-        <div class="card border-0 shadow-lg rounded-4 h-100 domain-card glass-card">
-            <div class="card-body d-flex justify-content-between align-items-start p-3">
-                <div class="w-100" style="margin-bottom: 6px;">
-                    <div class="fw-bold mb-2" style="font-size: 1.15rem; letter-spacing: -0.3px;">
-                        <a style="text-decoration: none; color: #3498db;" target="_blank" href="https://<?= $d['domain'] ?>">
-                            <?= $d['domain'] ?>
-                        </a>
-                    </div>
-
-                    <div style="margin-bottom: 14px;" class="d-flex gap-1 flex-wrap">
-                        <?php if (strtolower($d['type']) == 'custom'): ?>
-                            <span class="badge bg-info text-dark rounded-pill fw-bold" style="font-size: 8px; padding: 2px 6px; text-transform: capitalize;">Custom</span>
-                        <?php else: ?>
-                            <span class="badge bg-primary rounded-pill fw-bold" style="font-size: 8px; padding: 2px 6px; text-transform: capitalize;"><?= strtolower($d['type']) == 'Tom' ? 'Tom' : $d['type'] ?></span>
-                        <?php endif; ?>
-                        
-                        <?php if ($d['verified']): ?>
-                            <span class="badge bg-success rounded-pill fw-bold" style="font-size: 8px; padding: 2px 6px; text-transform: capitalize;">Verified</span>
-                        <?php else: ?>
-                            <span class="badge bg-warning text-dark rounded-pill fw-bold" style="font-size: 8px; padding: 2px 6px; text-transform: capitalize;">DNS Pending</span>
-                        <?php endif; ?>
-                        
-                        <?php 
-                            // Add usage status badge
-                            $dm = new DomainManager();
-                            $usageInfo = $dm->getDomainUsage(Session::getUser()->getUserId(), $d['domain']);
-                            if ($usageInfo && isset($usageInfo['status']) && $usageInfo['status'] === 'running'): 
-                        ?>
-                            <span class="badge bg-primary text-white rounded-pill fw-bold text-lowercase" style="font-size: 8px; padding: 2px 6px;">in use</span>
-                        <?php else: ?>
-                            <span class="badge bg-warning text-dark rounded-pill fw-bold text-lowercase" style="font-size: 8px; padding: 2px 6px;">orphaned</span>
-                            <span class="badge bg-danger text-white rounded-pill fw-bold text-lowercase" style="font-size: 8px; padding: 2px 6px;">not in use</span>
-                        <?php endif; ?>
-                        
-                        <?php
-                            // Check if this domain has a valid SSL certificate
-                            $certIndex = -1;
-                            $hasValidSsl = false;
-                            foreach ($certs as $idx => $cert) {
-                                if (in_array($d['domain'], $cert['sans'])) {
-                                    $certIndex = $idx;
-                                    $hasValidSsl = $cert['is_valid'];
-                                    break;
-                                }
-                            }
-                            if ($certIndex >= 0):
-                        ?>
-                            <a href="/ssl" class="badge <?= $hasValidSsl ? 'bg-success' : 'bg-danger' ?> text-white rounded-pill fw-bold text-decoration-none text-lowercase" style="font-size: 8px; padding: 2px 6px; transition: all 0.2s;">
-                                ssl <?= $hasValidSsl ? 'valid' : 'invalid' ?>
-                            </a>
-                        <?php endif; ?>
-                    </div>
-
-                    <div style="font-size: 0.8rem; line-height: 1.2; color: var(--glass-text);">
-                        <div class="mb-1">
-                            <b style="color: var(--glass-text-muted); font-weight: 600;">Common Name:</b> 
-                            <span class="ms-1"><?= explode('.', $d['domain'])[0] ?></span>
-                        </div>
-                        
-                        <div class="mb-1">
-                            <b style="color: var(--glass-text-muted); font-weight: 600;">Domain Name:</b> 
-                            <span class="ms-1" style="color: #3498db;"><?= $d['domain'] ?></span>
-                        </div>
-                        
-                        <div class="mb-1">
-                            <b style="color: var(--glass-text-muted); font-weight: 600;">A Record:</b> 
-                            <span class="ms-1"><?php $dm = new DomainManager(); echo $dm->getServerIP(); ?></span>
-                        </div>
-                        
-                        <div class="mb-1">
-                            <b style="color: var(--glass-text-muted); font-weight: 600;">Service:</b> 
-                            <span class="ms-1"><?= (strtolower($d['type']) == 'tom') ? 'Tom Lab' : 'Custom' ?></span>
-                        </div>
-                        
-                        <?php 
-                            $usageInfo = $dm->getDomainUsage(Session::getUser()->getUserId(), $d['domain']);
-                            if ($usageInfo && isset($usageInfo['status']) && $usageInfo['status'] === 'running'): 
-                        ?>
-                            <div class="mb-1">
-                                <b style="color: var(--glass-text-muted); font-weight: 600;">Currently Used:</b> 
-                                <span class="text-success ms-1"><?= $usageInfo['usage'] ?> (<?= $usageInfo['lab_type'] ?> lab)</span>
-                            </div>
-                        <?php else: ?>
-                            <div class="mb-1">
-                                <b style="color: var(--glass-text-muted); font-weight: 600;">Currently Used:</b> 
-                                <span class="ms-1 opacity-50 text-lowercase">(not in use)</span>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-
-                <div class="dropdown">
-                    <button class="action-dots p-0 opacity-50 shadow-none border-0 d-flex align-items-center justify-content-center" 
-                            data-coreui-toggle="dropdown" 
-                            style="width: 32px; height: 32px; transition: all 0.2s; background: none; border: none;">
-                        <i class='bx bx-dots-vertical-rounded fs-4' style="color: var(--glass-icon);"></i>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="min-width: 8rem; border-radius: 12px; padding: 8px; background: var(--cui-dropdown-bg); backdrop-filter: blur(10px);">
-                        <?php if (!$d['verified']): ?>
-                            <li><a class="dropdown-item rounded-3 mb-1 px-3 py-2 d-flex align-items-center" href="#" onclick="verifyDomain('<?= $d['_id'] ?>')" style="font-size: 0.8rem;"><i class='bx bx-check-shield me-2 text-primary'></i> Verify</a></li>
-                        <?php endif; ?>
-                        <li><a class="dropdown-item text-danger rounded-3 px-3 py-2 d-flex align-items-center" href="#" onclick="removeDomain('<?= $d['_id'] ?>')" style="font-size: 0.8rem;"><i class='bx bx-trash me-2'></i> Delete</a></li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
+    <?php include __DIR__ . '/../partials/_domain_card.php'; ?>
     <?php endforeach; ?>
 </div>
 
@@ -181,4 +74,25 @@ function timeAgo($timestamp) {
             </div>
         </div>
     </div>
+</div>
+
+<div class="modal fade" id="confirmDeleteDomainModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg rounded-4 border-0 glass-card" style="backdrop-filter: blur(15px);">
+        <div class="modal-header border-0 pb-2">
+            <h4 class="modal-title fw-bold m-0" style="color: var(--glass-text); letter-spacing: -0.5px; font-size: 1.5rem;">Delete Domain</h4>
+        </div>
+        <div class="modal-body py-3 border-top border-bottom" style="border-color: var(--cui-border-color-translucent) !important;">
+            <p class="mb-0 opacity-75" style="color: var(--glass-text); font-size: 0.95rem; line-height: 1.6;">
+                You are about to delete a registered domain: <span id="deleteDomainModalName" class="text-info fw-bold font-monospace"></span>. 
+                You will no longer be able to communicate via this domain.<br>
+                Are you sure to continue?
+            </p>
+        </div>
+        <div class="modal-footer border-0 pt-3 pb-1 d-flex justify-content-end gap-3">
+            <button type="button" class="btn px-4 rounded-pill fw-bold border-0 shadow-sm" data-coreui-dismiss="modal" style="background: var(--cui-secondary-bg); color: var(--glass-text); font-size: 0.9rem;">Cancel</button>
+            <button type="button" class="btn text-white px-4 rounded-pill fw-bold border-0" id="confirmDeleteDomainBtn" onclick="confirmDeleteDomainAction()" style="background: #e63946; font-size: 0.9rem; box-shadow: 0 4px 15px rgba(230,57,70,0.3);">Delete</button>
+        </div>
+    </div>
+  </div>
 </div>

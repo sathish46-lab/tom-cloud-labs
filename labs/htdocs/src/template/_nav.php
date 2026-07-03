@@ -161,7 +161,7 @@ $current = Session::getCurrentFile();
             <i class="bx bx-menu fs-4 text-secondary"></i>
         </button>
         <button class="sidebar-toggler ms-auto me-2" type="button" data-coreui-toggle="unfoldable"
-            data-coreui-target="#sidebar" onclick="console.log('Sidebar fold/unfold button triggered!'); debugger;"></button>
+            data-coreui-target="#sidebar"></button>
     </div>
     </div>
 </div>
@@ -197,4 +197,92 @@ $current = Session::getCurrentFile();
     showSet(!isCollapsed());
   });
 })();
+
+// HTMX Sidebar Active State Sync
+document.addEventListener('htmx:afterSettle', function() {
+    const path = window.location.pathname;
+    document.querySelectorAll('.sidebar-nav .nav-link').forEach(link => {
+        link.classList.remove('active');
+        const href = link.getAttribute('href');
+        if (href && href !== '#' && href !== '/') {
+            if (path === href || path.startsWith(href + '/')) {
+                link.classList.add('active');
+            }
+        } else if (href === '/' && path === '/') {
+            link.classList.add('active');
+        }
+    });
+
+    // HTMX Breadcrumb Sync
+    const tmpl = document.getElementById('htmx-breadcrumb-data');
+    if (tmpl) {
+        const title = tmpl.dataset.title || '';
+        const breadcrumbOl = document.querySelector('.header .breadcrumb');
+        if (breadcrumbOl && title) {
+            const parts = title.split(' / ').map(p => p.trim());
+            if (parts[0].toLowerCase() !== 'home') parts.unshift('Home');
+
+            // Extract context from current URL
+            const curPath = window.location.pathname;
+            const pathParts = curPath.split('/').filter(Boolean);
+            const isLabContext = pathParts[0] === 'labs';
+            const isChallengeContext = pathParts[0] === 'challenges';
+            // Hash is typically the last segment: /labs/domains/{hash}
+            const contextHash = (isLabContext || isChallengeContext) && pathParts.length >= 3 ? pathParts[pathParts.length - 1] : null;
+
+            let html = '';
+            parts.forEach((part, i) => {
+                const isLast = (i === parts.length - 1);
+                const lower = part.toLowerCase();
+                let href = '#';
+
+                // Context-aware URL mapping (mirrors server-side _sitenav.php logic)
+                if (isLast) {
+                    href = curPath;
+                } else if (lower === 'home') {
+                    href = '/';
+                } else if (lower === 'dashboard') {
+                    if (isLabContext && contextHash) href = '/labs/dashboard/' + contextHash;
+                    else if (isChallengeContext && contextHash) href = '/challenges/dashboard/' + contextHash;
+                    else href = '/dashboard';
+                } else if (lower === 'lab' || lower === 'labs') {
+                    href = '/labs';
+                } else if (lower === 'challenge' || lower === 'challenges') {
+                    href = '/challenges';
+                } else if (lower === 'services' || lower === 'service') {
+                    href = '/services';
+                } else if (lower.includes('domain')) {
+                    if (isLabContext && contextHash) href = '/labs/domains/' + contextHash;
+                    else href = '/domains';
+                } else if (lower.includes('pref')) {
+                    if (isLabContext && contextHash) href = '/labs/preferences/' + contextHash;
+                } else if (lower.includes('device')) {
+                    href = '/devices';
+                } else if (lower.includes('network')) {
+                    href = '/network';
+                } else if (lower.includes('ssl')) {
+                    href = '/ssl';
+                } else if (lower === 'quiz') {
+                    href = '/quiz';
+                } else if (lower.includes('account')) {
+                    href = '/account';
+                } else if (lower.includes('admin')) {
+                    href = '/admin';
+                } else if (lower.includes('achieve') && isChallengeContext && contextHash) {
+                    href = '/challenges/achievements/' + contextHash;
+                } else if (lower.includes('leader') && isChallengeContext && contextHash) {
+                    href = '/challenges/leaderboard/' + contextHash;
+                }
+
+                if (isLast) {
+                    html += '<li class="breadcrumb-item active"><a href="' + href + '" class="text-decoration-none small fw-bold theme-text transition-all">' + part + '</a></li>';
+                } else {
+                    html += '<li class="breadcrumb-item"><a href="' + href + '" class="text-decoration-none hover-theme-text small fw-medium transition-all" style="color: var(--glass-text-muted);">' + part + '</a></li>';
+                }
+            });
+            breadcrumbOl.innerHTML = html;
+        }
+        tmpl.remove();
+    }
+});
 </script>

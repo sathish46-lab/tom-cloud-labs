@@ -577,7 +577,14 @@ body::before {
   border-radius: 1.25rem;
   position: relative;
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Fix for Chrome rendering bug: backdrop-filter breaks during opacity/transform animations */
+  :root.glass-mode &.card-entrance {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
 
   /* Fallback for when Visual Blur is OFF */
   :root:not(.glass-mode) & {

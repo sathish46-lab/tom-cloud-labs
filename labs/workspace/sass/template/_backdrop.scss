@@ -24,7 +24,6 @@
 .modal-content {
     background-color: var(--glass-bg) !important;
     transition:
-        backdrop-filter 0.4s cubic-bezier(0.4, 0, 0.2, 1),
         background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
         box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1),
         border 0.4s cubic-bezier(0.4, 0, 0.2, 1);

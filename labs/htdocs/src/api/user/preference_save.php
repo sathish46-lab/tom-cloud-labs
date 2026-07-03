@@ -26,6 +26,9 @@ try {
         ['$set' => ["ui_preferences.{$preference_id}" => $value]]
     );
 
+    // Keep the active PHP session in sync so it applies on reload
+    $user->setUiPreference($preference_id, $value);
+
     echo json_encode([
         'status' => 'success',
         'message' => 'Preference saved successfully',

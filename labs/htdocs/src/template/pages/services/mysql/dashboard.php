@@ -63,7 +63,7 @@ require_once __DIR__ . '/partials/mysql_header.php';
                         <h5 class="card-title fw-bold text-white mb-0 d-inline-block me-2" style="font-size: 1.1rem;">MySQL Server Users</h5>
                         <span class="text-secondary" style="font-size: 0.8rem;">(Maximum 5 users)</span>
                     </div>
-                    <button class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); border: none; font-size: 0.8rem; font-weight: 600;" onclick="openAddUserModal()"><i class='bx bx-plus'></i> Add User</button>
+                    <button class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); border: none; font-size: 0.8rem; font-weight: 600;" onclick="openAddMySQLUserModal()"><i class='bx bx-plus'></i> Add User</button>
                 </div>
                 <div class="card-body px-4 pb-4">
                     <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
@@ -140,7 +140,7 @@ require_once __DIR__ . '/partials/mysql_header.php';
       </div>
       <div class="modal-footer border-top-0 pt-0">
         <button type="button" class="btn btn-link text-secondary text-decoration-none" data-coreui-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-primary rounded-pill px-4" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); border: none;" onclick="submitCreateUser()" id="btn-submit-user">Add User</button>
+        <button type="button" class="btn btn-primary rounded-pill px-4" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); border: none;" onclick="submitCreateMySQLUser()" id="btn-submit-user">Add User</button>
       </div>
     </div>
   </div>

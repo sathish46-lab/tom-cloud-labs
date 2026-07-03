@@ -1,4 +1,12 @@
 /**
+ * Wrapped with IIFE Error Boundary
+ */
+try {
+  (function() {
+    "use strict";
+
+
+/**
  * ============================================================================
  * TOM LABS - MESSAGE QUEUE CLIENT (MQ)
  * ============================================================================
@@ -410,4 +418,20 @@ if (typeof module !== "undefined" && module.exports) {
     ActivityTracker,
     MQUtils,
   };
+}
+
+
+    
+
+    // --- Explicit Window Exports for Inline HTML ---
+    window.ActivityTracker = ActivityTracker;
+    window.LogSocket = LogSocket;
+    window.MQUtils = MQUtils;
+    window.NativeSocketClient = NativeSocketClient;
+    window.TomSocketClient = TomSocketClient;
+    window.OverviewSocket = OverviewSocket;
+
+  })();
+} catch (e) {
+  console.error("[Fatal Error in mq.js]", e);
 }

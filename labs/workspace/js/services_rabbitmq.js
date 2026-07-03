@@ -1,3 +1,11 @@
+/**
+ * Wrapped with IIFE Error Boundary
+ */
+try {
+  (function() {
+    "use strict";
+
+
 // --- RabbitMQ User Management ---
 
 function openAddRabbitMQUserModal() {
@@ -239,4 +247,23 @@ async function deleteRabbitMQDb(dbName) {
     } catch (e) {
         alert('Network error occurred.');
     }
+}
+
+
+    
+
+    // --- Explicit Window Exports for Inline HTML ---
+    window.submitCreateRabbitMQUser = submitCreateRabbitMQUser;
+    window.submitCreateRabbitMQVhost = submitCreateRabbitMQVhost;
+    window.openCreateRabbitMQVhostModal = openCreateRabbitMQVhostModal;
+    window.switchRabbitMQUser = switchRabbitMQUser;
+    window.openAddRabbitMQUserModal = openAddRabbitMQUserModal;
+    window.deleteRabbitMQUser = deleteRabbitMQUser;
+    window.deleteRabbitMQDb = deleteRabbitMQDb;
+    window.currentTargetUser = currentTargetUser;
+    window.submitCreateRabbitMQVhostInline = submitCreateRabbitMQVhostInline;
+
+  })();
+} catch (e) {
+  console.error("[Fatal Error in services_rabbitmq.js]", e);
 }

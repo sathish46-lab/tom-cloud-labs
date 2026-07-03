@@ -2,9 +2,10 @@
 require_once __DIR__ . '/../../../src/load.php';
 require_once __DIR__ . '/../../../src/lib/core/VPN.class.php';
 
-header('Content-Type: application/json');
 if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    echo json_encode(['status' => 'error', 'error' => 'Unauthorized']); exit;
+    http_response_code(401);
+    echo 'Unauthorized';
+    exit;
 }
 
 $user = Session::getUser();
@@ -17,7 +18,9 @@ $deviceType = $_POST['device_type'] ?? 'Mobile';
 $selectedIp = $_POST['reallocate_ip'] ?? null;
 
 if (empty($publicKey)) {
-    echo json_encode(['status' => 'error', 'error' => 'Public Key is required.']); exit;
+    http_response_code(400);
+    echo 'Public Key is required.';
+    exit;
 }
 
 // 1. Provision the peer in the WireGuard Kernel
@@ -48,7 +51,30 @@ if (isset($response['result']) && $response['result'] !== false) {
         ['upsert' => true]
     );
 
-    echo json_encode(['status' => 'success', 'ip' => $assignedIp]);
+    // 3. Render the HTML card for dynamic frontend insertion
+    ob_start();
+    // Reconstruct the device array format expected by the template
+    $device = [
+        '_id' => (string)($user->getUserId()), // mock id or fetch it
+        'public_key' => $publicKey,
+        'device_name' => $deviceName,
+        'device_type' => $deviceType,
+        'status' => 'offline',
+        'assigned_ip' => $assignedIp,
+        'origin_ip' => 'N/A',
+        'rx' => '0 B',
+        'tx' => '0 B'
+    ];
+    // Actually, we should fetch the inserted document to get its real _id
+    $insertedDevice = $db->devices->findOne(['user_id' => $user->getUserId(), 'public_key' => $publicKey]);
+    if ($insertedDevice) {
+        $device = $insertedDevice;
+    }
+    include __DIR__ . '/../../template/partials/_device_card.php';
+    $html = ob_get_clean();
+
+    echo $html;
 } else {
-    echo json_encode(['status' => 'error', 'error' => $response['error'] ?? 'Kernel Error']);
+    http_response_code(400);
+    echo $response['error'] ?? 'Kernel Error';
 }

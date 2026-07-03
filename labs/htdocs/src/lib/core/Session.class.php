@@ -250,6 +250,32 @@ class Session
             return;
         }
         self::set('master_rendered', true);
+
+        // --- HTMX SPA Interception ---
+        // If this is an HTMX request (and specifically a boosted one to be safe, though HX-Request suffices), 
+        // we skip the master layout (header, sidebar, footer) and just return the content.
+        if (isset($_SERVER['HTTP_HX_REQUEST']) && $_SERVER['HTTP_HX_REQUEST'] == 'true') {
+            if (defined('IS_LANDING_PAGE') || defined('IS_LOGIN_PAGE') || defined('IS_HOME_PAGE')) {
+                header('HX-Redirect: ' . $_SERVER['REQUEST_URI']);
+                exit;
+            }
+            // Send the title so HTMX can update the browser tab automatically
+            if (!empty(self::$pageTitle)) {
+                echo "<title>" . htmlspecialchars(self::$pageTitle) . "</title>";
+            }
+
+            // Send breadcrumb data for client-side update
+            echo '<template id="htmx-breadcrumb-data" data-title="' . htmlspecialchars(self::$pageTitle ?? '') . '"></template>';
+            
+            // Output specific page content
+            if (!self::get('brokenPage', false)) {
+                self::generatePageBody();
+            } else {
+                self::loadTemplate('_error');
+            }
+            return; // Exit here, bypassing _master.php completely!
+        }
+        
         // This was the specific line causing your error
         include __DIR__ . '/../../template/_master.php';
     }

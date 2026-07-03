@@ -201,6 +201,12 @@ html.glass-mode[data-coreui-theme="light"] .sidebar-inner-layer {
     margin: 0 auto !important;
 }
 
+/* Hide the header-toggler (left menu icon) in the footer when collapsed */
+.sidebar-narrow .sidebar-footer .header-toggler,
+.sidebar-narrow-unfoldable:not(:hover) .sidebar-footer .header-toggler {
+    display: none !important;
+}
+
 /* 2. PROGRESS BAR STYLING */
 .stats-progress-bg {
     height: 6px;

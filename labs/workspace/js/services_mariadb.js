@@ -1,3 +1,11 @@
+/**
+ * Wrapped with IIFE Error Boundary
+ */
+try {
+  (function() {
+    "use strict";
+
+
 // --- MariaDB User Management ---
 
 function openAddMariaDBUserModal() {
@@ -239,4 +247,23 @@ async function deleteMariaDBDb(dbName) {
     } catch (e) {
         alert('Network error occurred.');
     }
+}
+
+
+    
+
+    // --- Explicit Window Exports for Inline HTML ---
+    window.switchMariaDBUser = switchMariaDBUser;
+    window.deleteMariaDBUser = deleteMariaDBUser;
+    window.openAddMariaDBUserModal = openAddMariaDBUserModal;
+    window.submitCreateMariaDBDb = submitCreateMariaDBDb;
+    window.openCreateMariaDBDbModal = openCreateMariaDBDbModal;
+    window.deleteMariaDBDb = deleteMariaDBDb;
+    window.submitCreateMariaDBUser = submitCreateMariaDBUser;
+    window.submitCreateMariaDBDbInline = submitCreateMariaDBDbInline;
+    window.currentTargetUser = currentTargetUser;
+
+  })();
+} catch (e) {
+  console.error("[Fatal Error in services_mariadb.js]", e);
 }

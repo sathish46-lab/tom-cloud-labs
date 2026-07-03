@@ -1,6 +1,7 @@
 <?php
 // Retrieve the merged device data from the Session
 $resources = Session::get('network_resources', []); 
+Session::addCustomJs('/js/network.js');
 ?>
 
 <div class="lab-header-section mb-4 px-4">
@@ -21,7 +22,7 @@ $resources = Session::get('network_resources', []);
         $serviceType = $res['service_type'] ?? 'vpn_device';
         $label = $res['label'] ?? (($res['service_type'] == 'essential_lab') ? 'Essential Lab' : 'VPN Device');
     ?>
-    <div class="col-12 col-md-4 col-xl-3">
+    <div class="col-12 col-md-4 col-xl-3 card-entrance" id="ip-card-<?= str_replace('.', '-', $res['ip_addr']) ?>">
         <div class="card shadow-lg rounded-4 p-3 border-0 glass-card h-100">
             <div class="mb-3">
                 <div class="d-flex justify-content-between align-items-center mb-2">
@@ -44,7 +45,7 @@ $resources = Session::get('network_resources', []);
                 <?php else: ?>
                     <button class="btn btn-sm btn-outline-danger border-0 fw-bold"
                         style="font-size: 0.75rem;"
-                        onclick="releaseIp('<?= $res['ip_addr'] ?>', '<?= $serviceType ?>')">
+                        onclick="releaseIp('<?= $res['ip_addr'] ?>', '<?= $serviceType ?>', '<?= str_replace('.', '-', $res['ip_addr']) ?>', this)">
                         <i class='bx bx-trash-alt me-1'></i> Release IP
                     </button>
                 <?php endif; ?>
@@ -54,37 +55,22 @@ $resources = Session::get('network_resources', []);
     <?php endforeach; ?>
 </div>
 
-<script>
-/**
- * Professional IP Release Logic
- * This triggers a full ownership wipe in the VPN database.
- */
-async function releaseIp(ip, type) {
-    if (!confirm("Permanently release " + ip +
-            "? This IP will be removed from your account and available for others.")) return;
-
-    try {
-        const res = await fetch('/api/vpn/release-ip', {
-            method: 'POST',
-            body: JSON.stringify({
-                ip: ip,
-                type: type
-            }),
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        const data = await res.json();
-
-        if (data.success) {
-            // Smooth reload to update the UI grid
-            window.location.reload();
-        } else {
-            alert("Error: " + (data.error || "Failed to release the IP address."));
-        }
-    } catch (e) {
-        console.error("Network error during IP release:", e);
-        alert("Network error: Could not connect to the VPN API.");
-    }
-}
-</script>
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg rounded-4 border-0 glass-card" style="backdrop-filter: blur(15px);">
+        <div class="modal-header border-0 pb-2">
+            <h4 class="modal-title fw-bold m-0" style="color: var(--glass-text); letter-spacing: -0.5px; font-size: 1.5rem;">Confirm Delete</h4>
+        </div>
+        <div class="modal-body py-3 border-top border-bottom" style="border-color: var(--cui-border-color-translucent) !important;">
+            <p class="mb-0 opacity-75" style="color: var(--glass-text); font-size: 0.95rem; line-height: 1.6;">
+                You are about to delete the IP address: <span id="deleteModalIp" class="text-info fw-bold font-monospace"></span>. 
+                You will lose this IP address and it will be allocated to someone else on demand. But this is not a bad thing :)
+            </p>
+        </div>
+        <div class="modal-footer border-0 pt-3 pb-1 d-flex justify-content-end gap-3">
+            <button type="button" class="btn px-4 rounded-pill fw-bold border-0 shadow-sm" data-coreui-dismiss="modal" style="background: var(--cui-secondary-bg); color: var(--glass-text); font-size: 0.9rem;">Cancel</button>
+            <button type="button" class="btn text-white px-4 rounded-pill fw-bold border-0" id="confirmDeleteBtn" onclick="confirmReleaseIp()" style="background: #e63946; font-size: 0.9rem; box-shadow: 0 4px 15px rgba(230,57,70,0.3);">Delete</button>
+        </div>
+    </div>
+  </div>
+</div>

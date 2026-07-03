@@ -28,7 +28,7 @@
 
 <div class="row g-4 mb-4">
     <?php foreach(Session::get('labs_list', []) as $lab): ?>
-    <div class="col-12 col-md-4">
+    <div class="col-12 col-md-4 card-entrance">
         <div class="card h-100 border-0 shadow-lg rounded-4 glass-card position-relative">
             
             <div class="position-absolute end-0 top-50 translate-middle-y pe-3 opacity-10" style="z-index: 1;">
@@ -170,6 +170,3 @@
         </div>
     </div>
 </div>
-
-<script src="workspace/js/connection_info.js"></script>
-<script src="workspace/js/lab_code.js"></script>

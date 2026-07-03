@@ -310,7 +310,7 @@
                         <div class="dropdown-divider mx-n3 my-2"></div>
 
                         <a class="dropdown-item d-flex align-items-center px-2 py-2 rounded text-danger fw-bold"
-                            href="?logout=1">
+                            href="?logout=1" hx-boost="false">
                             <i class="bx bx-log-out-circle fs-5 me-2"></i>
                             <span class="small">Logout</span>
                         </a>

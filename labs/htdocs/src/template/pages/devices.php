@@ -32,87 +32,15 @@ $defaultIp = !empty($resources) ? end($resources)['ip_addr'] : "";
 </div>
 
 <div class="row g-4" id="devices-container">
-    <?php foreach ($devices as $device): 
-        $dbId = is_array($device['_id']) ? ($device['_id']['$oid'] ?? '') : (string)$device['_id'];
-        $displayStatus = ucfirst(strtolower($device['status'])); 
-    ?>
-    <div class="col-12 col-md-4 device-row" data-pubkey="<?= $device['public_key'] ?>">
-        <div class="card shadow-lg rounded-4 overflow-hidden border-0 glass-card h-100">
-            <div class="card-body p-3">
-                <div class="d-flex justify-content-between align-items-start">
-                    <h5 class="fw-bold m-0 text-truncate" style="text-transform: none; color: var(--glass-text); font-size: 1.15rem; letter-spacing: -0.3px;">
-                        <?= htmlspecialchars($device['device_name']) ?></h5>
-                    <div class="dropdown">
-                        <button class="action-dots p-0 opacity-50 shadow-none border-0 d-flex align-items-center justify-content-center" 
-                                data-coreui-toggle="dropdown" 
-                                style="width: 32px; height: 32px; transition: all 0.2s; background: none; border: none;">
-                            <i class='bx bx-dots-vertical-rounded fs-4' style="color: var(--glass-icon);"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="min-width: 10rem; border-radius: 12px; padding: 8px; background: var(--cui-dropdown-bg); backdrop-filter: blur(10px);">
-                            <li><a class="dropdown-item rounded-3 mb-1 px-2 py-1" href="javascript:void(0)" style="font-size: 0.75rem;"
-                                    onclick="openVPNConnectionModal('<?= $dbId ?>', '<?= htmlspecialchars($device['device_name']) ?>')"><i
-                                        class='bx bx-qr-scan me-2 text-primary'></i> Config</a></li>
-                            <li><a class="dropdown-item rounded-3 mb-1 px-2 py-1" href="javascript:void(0)" style="font-size: 0.75rem;"
-                                    onclick="downloadTunnel('<?= htmlspecialchars($device['device_name']) ?>', '<?= $dbId ?>')"><i
-                                        class='bx bx-download me-2 text-info'></i> Download</a></li>
-                            <li><a class="dropdown-item text-danger rounded-3 px-2 py-1" href="javascript:void(0)" style="font-size: 0.75rem;"
-                                    onclick="deleteDevice('<?= $dbId ?>', '<?= $device['public_key'] ?>')"><i
-                                        class='bx bx-trash me-2'></i> Delete</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="d-flex gap-1 flex-wrap mb-2">
-                    <?php 
-                        $type = strtolower($device['device_type'] ?? 'mobile');
-                        $typeClass = 'bg-primary';
-                        $typeIcon = 'bx-mobile-alt';
-                        
-                        if ($type === 'laptop') { $typeClass = 'bg-info text-dark'; $typeIcon = 'bx-laptop'; }
-                        elseif ($type === 'desktop') { $typeClass = 'bg-success'; $typeIcon = 'bx-desktop'; }
-                        elseif ($type === 'tablet') { $typeClass = 'bg-warning text-dark'; $typeIcon = 'bx-tab'; }
-                        elseif ($type === 'server') { $typeClass = 'bg-dark border border-secondary'; $typeIcon = 'bx-server'; }
-                        elseif ($type === 'iot') { $typeClass = 'bg-danger'; $typeIcon = 'bx-chip'; }
-                    ?>
-                    <span class="badge rounded-pill <?= $typeClass ?> fw-bold" style="font-size: 8px; padding: 2px 6px; text-transform: capitalize;">
-                        <i class='bx <?= $typeIcon ?> me-1'></i> <?= $type ?>
-                    </span>
-                    <?php 
-                        $status = strtolower($device['status'] ?? 'offline');
-                        $statusClass = ($status === 'online') ? 'bg-success' : 'bg-danger';
-                        $statusIcon = ($status === 'online') ? 'bx-wifi' : 'bx-wifi-off';
-                    ?>
-                    <span class="badge rounded-pill status-pill <?= $statusClass ?> fw-bold" style="font-size: 8px; padding: 2px 6px; text-transform: capitalize;">
-                        <i class='bx <?= $statusIcon ?> me-1'></i> <?= $status ?>
-                    </span>
-                </div>
-                <div class="small stats-area" style="font-size: 0.75rem;">
-                    <div class="d-flex justify-content-between mb-1">
-                        <span style="color: var(--glass-text-muted);">Device IP:</span> 
-                        <span class="theme-text font-monospace" style="color: var(--glass-text);"><?= $device['assigned_ip'] ?></span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-1">
-                        <span style="color: var(--glass-text-muted);">Origin:</span> 
-                        <span class="origin-val theme-text" style="color: var(--glass-text);"><?= $device['origin_ip'] ?></span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-1">
-                        <span style="color: var(--glass-text-muted);">Received:</span> 
-                        <span class="rx-val theme-text"><?= $device['rx'] ?></span>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <span style="color: var(--glass-text-muted);">Sent:</span> 
-                        <span class="tx-val theme-text"><?= $device['tx'] ?></span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <?php foreach ($devices as $device): ?>
+    <?php include __DIR__ . '/../partials/_device_card.php'; ?>
     <?php endforeach; ?>
 </div>
 
 <div class="modal fade" id="addDeviceModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <form id="vpnAddForm">
+            <form id="vpnAddForm" hx-boost="false">
                 <div class="modal-header border-bottom border-light border-opacity-10 p-4">
                     <h5 class="modal-title fw-bold">Add Device</h5>
                     <button type="button" class="btn-close" data-coreui-dismiss="modal"></button>
@@ -153,4 +81,28 @@ $defaultIp = !empty($resources) ? end($resources)['ip_addr'] : "";
                     data-coreui-dismiss="modal">Okay</button></div>
         </div>
     </div>
+</div>
+
+<div class="modal fade" id="confirmDeleteDeviceModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg rounded-4 border-0 glass-card" style="backdrop-filter: blur(15px);">
+        <div class="modal-header border-0 pb-2">
+            <h4 class="modal-title fw-bold m-0" style="color: var(--glass-text); letter-spacing: -0.5px; font-size: 1.5rem;">Delete Device: <span id="deleteDeviceModalTitleName"></span></h4>
+        </div>
+        <div class="modal-body py-3 border-top border-bottom" style="border-color: var(--cui-border-color-translucent) !important;">
+            <p class="mb-2 opacity-75" style="color: var(--glass-text); font-size: 0.95rem; line-height: 1.6;">
+                You are about to delete a registered device named <strong id="deleteDeviceModalBodyName" class="text-white"></strong>. 
+                You will no longer be able to communicate via this device and you will lose your IP address If its not reserved.
+            </p>
+            <p class="mb-0 opacity-75" style="color: var(--glass-text); font-size: 0.95rem;">
+                Current IP: <span id="deleteDeviceModalIp" class="text-info fw-bold font-monospace"></span>.<br>
+                Are you sure to continue?
+            </p>
+        </div>
+        <div class="modal-footer border-0 pt-3 pb-1 d-flex justify-content-end gap-3">
+            <button type="button" class="btn px-4 rounded-pill fw-bold border-0 shadow-sm" data-coreui-dismiss="modal" style="background: var(--cui-secondary-bg); color: var(--glass-text); font-size: 0.9rem;">Cancel</button>
+            <button type="button" class="btn text-white px-4 rounded-pill fw-bold border-0" id="confirmDeleteDeviceBtn" onclick="confirmDeleteDeviceAction()" style="background: #e63946; font-size: 0.9rem; box-shadow: 0 4px 15px rgba(230,57,70,0.3);">Delete</button>
+        </div>
+    </div>
+  </div>
 </div>

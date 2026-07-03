@@ -354,7 +354,7 @@ window.showResult = function() {
     if (resultMsg) resultMsg.innerText = msg;
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+window.onPageLoad( () => {
     // Only init if we're on the quiz evaluation page
     if (document.getElementById('quiz-start-view')) {
         initProgressBar();

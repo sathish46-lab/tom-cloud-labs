@@ -1,11 +1,11 @@
 <?php
+ob_start();
 require_once "../../load.php";
 require_once "../../lib/core/DomainManager.class.php";
 
-header('Content-Type: application/json');
-
 if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+    http_response_code(401);
+    echo 'Unauthorized';
     exit;
 }
 
@@ -16,7 +16,8 @@ $domain = trim(strtolower($data['domain'] ?? ''));
 $type = $data['type'] ?? 'custom';
 
 if (empty($domain)) {
-    echo json_encode(['success' => false, 'error' => 'Domain name is required.']);
+    http_response_code(400);
+    echo 'Domain name is required.';
     exit;
 }
 
@@ -31,7 +32,8 @@ try {
         ]);
         
         if ($tomDomainCount >= 20) {
-            echo json_encode(['success' => false, 'error' => 'Domain limit reached. You can only create up to 20 Tom domains. Custom domains are unlimited.']);
+            http_response_code(400);
+            echo 'Domain limit reached. You can only create up to 20 Tom domains. Custom domains are unlimited.';
             exit;
         }
     }
@@ -44,20 +46,36 @@ try {
     $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
     $inserted_domain = $db->domains->findOne(['domain' => $domain]);
     
-    if ($inserted_domain['verified']) {
-        echo json_encode([
-            'success' => true, 
-            'verified' => true,
-            'message' => 'Domain verified and added successfully!'
-        ]);
+    if ($inserted_domain) {
+        ob_start();
+        $d = $inserted_domain;
+        // Make sure $d['_id'] is a string for JS compatibility
+        if (isset($d['_id']) && is_object($d['_id'])) {
+            $d['_id'] = (string)$d['_id'];
+        }
+        include __DIR__ . '/../../template/partials/_domain_card.php';
+        $html = ob_get_clean();
     } else {
-        echo json_encode([
-            'success' => true, 
-            'verified' => false,
-            'message' => 'Domain added but NOT verified. Please point A record to ' . $dm->getServerIP()
-        ]);
+        $html = '';
+    }
+
+    // Ensure no PHP warnings/notices corrupt the HTML output
+    if (ob_get_length()) ob_clean();
+
+    // Since we are returning pure HTML, if it's verified we could optionally add an HX-Trigger header or similar.
+    // For now, just return the HTML directly. If not verified, we can append a warning div or return a special header.
+    if (!$inserted_domain['verified']) {
+        // Send a custom header that the frontend can read if it wants to show the warning
+        header('X-Domain-Verified: false');
+    } else {
+        header('X-Domain-Verified: true');
     }
     
-} catch (Exception $e) {
-    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    echo $html;
+    
+} catch (\Throwable $e) {
+    // Clean buffer to prevent HTML pollution
+    if (ob_get_length()) ob_clean();
+    http_response_code(400);
+    echo $e->getMessage();
 }

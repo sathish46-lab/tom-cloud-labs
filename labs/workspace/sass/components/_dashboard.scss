@@ -606,3 +606,17 @@ html[data-coreui-theme="light"] .active-lab-item-card {
   -ms-overflow-style: none !important;  /* IE and Edge */
   scrollbar-width: none !important;  /* Firefox */
 }
+/* Domain Card Static Shadows */
+:root .card.glass-card.domain-card {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+:root[data-coreui-theme="dark"] .card.glass-card.domain-card {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+:root.glass-mode .card.glass-card.domain-card {
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
+}

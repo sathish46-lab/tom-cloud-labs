@@ -1,9 +1,43 @@
 <?php
 // Start the timer at the earliest possible moment
 define('PAGE_START_TIME', microtime(true));
+
+$serverTheme = [];
+$uiPreferences = [];
+require_once $_SERVER['DOCUMENT_ROOT'] . '/src/config/themes.php';
+
+if (Session::getAuthStatus() == Constants::STATUS_LOGGEDIN) {
+    $user = Session::getUser();
+    if ($user) {
+        $serverTheme = $user->getThemePreferences() ?? [];
+        $uiPreferences = $user->getUiPreferences() ?? [];
+    }
+}
+
+$coreUiTheme = $serverTheme['theme'] ?? 'dark';
+if ($coreUiTheme === 'auto') {
+    // Default to dark server-side if auto, JS will correct it
+    $coreUiTheme = 'dark';
+}
+
+$mode = $serverTheme['mode'] ?? 'spiderman';
+if (defined('IS_LOGIN_PAGE') && IS_LOGIN_PAGE === true) {
+    $mode = 'spiderman';
+}
+
+$isGlassMode = ($uiPreferences['visual_blur'] ?? 'true') !== 'false';
+$isSidebarNarrow = ($uiPreferences['sidebar_unfoldable'] ?? 'false') === 'true';
+$isSidebarHidden = ($uiPreferences['sidebar_hidden'] ?? 'false') === 'true';
+
+$htmlClasses = [];
+if ($isGlassMode) $htmlClasses[] = 'glass-mode'; // Disabled as requested
+if ($mode === 'plain') $htmlClasses[] = 'mode-plain';
+if ($isSidebarNarrow) $htmlClasses[] = 'sidebar-init-narrow';
+if ($isSidebarHidden) $htmlClasses[] = 'sidebar-init-hidden';
+$classString = implode(' ', $htmlClasses);
 ?>
 <!DOCTYPE html>
-<html lang="en" data-coreui-theme="dark">
+<html lang="en" data-coreui-theme="<?= $coreUiTheme ?>" class="<?= $classString ?>">
 
 <head>
     <meta charset="utf-8">
@@ -14,6 +48,9 @@ define('PAGE_START_TIME', microtime(true));
     <link rel="shortcut icon" type="image/png" href="<?= Session::cdn3('logo/favicon.png') ?>">
 
     <script type="text/javascript">
+    // Pre-load themes to prevent slow visual blur application on page load
+    window.TOM_THEMES = <?= json_encode($tomThemes) ?>;
+    
     window.addEventListener('load', function() {
         // Wait 2000 milliseconds (2 seconds) AFTER the page loads to inject the tracker.
         // This guarantees the browser stops the loading spinner completely.
@@ -26,17 +63,16 @@ define('PAGE_START_TIME', microtime(true));
         }, 2000); 
     });
     </script>
-
-    <?php
-    $serverTheme = [];
-    if (Session::getAuthStatus() == Constants::STATUS_LOGGEDIN) {
-        $user = Session::getUser();
-        if ($user) {
-            $serverTheme = $user->getThemePreferences() ?? [];
-        }
-    }
-    ?>
     <script>
+        /**
+         * HTMX SPA Compatibility Helper
+         * Ensures JS initializes both on direct hits and HTMX swaps.
+         */
+        window.onPageLoad = function(callback) {
+            document.addEventListener('DOMContentLoaded', callback);
+            document.addEventListener('htmx:afterSettle', callback);
+        };
+
         /**
          * Fast-track state recovery to prevent UI Flicker
          * Runs before ANY CSS is parsed to eliminate flashes
@@ -50,6 +86,7 @@ define('PAGE_START_TIME', microtime(true));
 
             // 1. Sync Server Preferences to LocalStorage (Server is Source of Truth)
             const serverTheme = <?= json_encode($serverTheme) ?>;
+            
             if (serverTheme && serverTheme.mode) localStorage.setItem('tom-labs-bg-mode', serverTheme.mode);
             if (serverTheme && serverTheme.plain_color) localStorage.setItem('tom-labs-plain-color', serverTheme.plain_color);
             if (serverTheme && serverTheme.custom_slots && Array.isArray(serverTheme.custom_slots)) {
@@ -70,26 +107,10 @@ define('PAGE_START_TIME', microtime(true));
                 (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') :
                 savedTheme;
             document.documentElement.setAttribute('data-coreui-theme', themeToApply);
-
-            let mode = localStorage.getItem("tom-labs-bg-mode") || "spiderman";
-            
-            // Forced state for login page
-            <?php if (defined('IS_LOGIN_PAGE') && IS_LOGIN_PAGE === true): ?>
-            mode = "spiderman";
-            document.documentElement.classList.add('glass-mode');
-            window.FORCED_BG_MODE = "spiderman";
-            <?php endif; ?>
-
-            document.documentElement.classList.toggle("mode-plain", mode === "plain");
-
-            const isNarrow = localStorage.getItem('tom-labs-sidebar-narrow') === 'true';
-            if (isNarrow) document.documentElement.classList.add('sidebar-init-narrow');
             
             const isHidden = localStorage.getItem('tom-labs-sidebar-hidden') === 'true';
             if (isHidden) document.documentElement.classList.add('sidebar-init-hidden');
             
-            const savedBlur = localStorage.getItem('tom-labs-visual-blur');
-            if (savedBlur !== 'false') document.documentElement.classList.add('glass-mode');
         })();
     </script>
 
@@ -199,6 +220,8 @@ define('PAGE_START_TIME', microtime(true));
     <!-- Professional Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@coreui/coreui@5.0.2/dist/css/coreui.min.css" rel="stylesheet">
 
@@ -211,12 +234,16 @@ define('PAGE_START_TIME', microtime(true));
     <link rel="stylesheet" href="<?= Session::cacheCDN($css) ?>?v=<?= time() ?>">
     <?php endforeach; ?>
 
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href='https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <script src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/@coreui/chartjs/dist/js/coreui-chartjs.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/parallax/3.1.0/parallax.min.js"></script>
+    
+    <!-- HTMX for SPA Navigation -->
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/htmx-ext-head-support@2.0.4/head-support.js" defer></script>
 
     <?php
     $mode = $serverTheme['mode'] ?? 'spiderman';
@@ -242,9 +269,13 @@ define('PAGE_START_TIME', microtime(true));
         $c7Dark = tomAdjustColorLightness($safeColorDark, -5);
         
         $glassBgDark = tomHexToRgbaString($safeColorDark, 0.88);
-        $cardBgDark = tomHexToRgbaString(tomAdjustColorLightness($safeColorDark, 4), 0.65);
-        $sidebarBgDark = tomHexToRgbaString(tomAdjustColorLightness($safeColorDark, 1.5), 0.98);
-        $headerBgDark = tomHexToRgbaString(tomAdjustColorLightness($safeColorDark, 1), 0.92);
+        $glassBgSolidDark = tomHexToRgbaString($safeColorDark, 0.96);
+        $cardBgDark = tomHexToRgbaString(tomAdjustColorLightness($safeColorDark, 6), 0.65);
+        $cardBgSolidDark = tomHexToRgbaString(tomAdjustColorLightness($safeColorDark, 5), 0.98);
+        $bodyBgDark = tomAdjustColorLightness($safeColorDark, 3);
+        $sidebarBgDark = tomHexToRgbaString($safeColorDark, 0.98);
+        $headerBgDark = tomHexToRgbaString($safeColorDark, 0.92);
+
         $primaryRgb = implode(',', tomHexToRgbArray($accentColor));
 
         // Light Mode logic for Plain
@@ -257,6 +288,14 @@ define('PAGE_START_TIME', microtime(true));
         $c5Light = "#ffffff";
         $c6Light = $baseLight;
         $c7Light = tomAdjustColorLightness($baseLight, -3);
+        
+        $glassBgLight = "#ffffff";
+        $glassBgSolidLight = "#ffffff";
+        $cardBgLight = "#ffffff";
+        $cardBgSolidLight = "#ffffff";
+        $bodyBgLight = $safeColorLight;
+        $sidebarBgLight = "#ffffff";
+        $headerBgLight = "#ffffff";
     } else {
         $themeConfig = $tomThemes[$mode] ?? $tomThemes['spiderman'];
         $themeColor = $themeConfig['color'] ?? '#0b1e36';
@@ -274,9 +313,13 @@ define('PAGE_START_TIME', microtime(true));
         $c7Dark = $c4Dark;
         
         $glassBgDark = tomHexToRgbaString($safeColorDark, 0.85);
+        $glassBgSolidDark = tomHexToRgbaString($safeColorDark, 0.94);
         $cardBgDark = tomHexToRgbaString($safeColorDark, 0.20);
+        $cardBgSolidDark = tomHexToRgbaString($safeColorDark, 0.95);
+        $bodyBgDark = $safeColorDark;
         $sidebarBgDark = tomHexToRgbaString($safeColorDark, 0.95);
         $headerBgDark = tomHexToRgbaString($safeColorDark, 0.85);
+        
         $primaryRgb = implode(',', tomHexToRgbArray($accentColor));
 
         // Light Mode logic for Image Themes (Fallback approximation)
@@ -288,6 +331,14 @@ define('PAGE_START_TIME', microtime(true));
         $c5Light = "#ffffff";
         $c6Light = "#ffffff";
         $c7Light = "#ffffff";
+        
+        $glassBgLight = "rgba(255, 255, 255, 0.79)";
+        $glassBgSolidLight = tomHexToRgbaString(tomEnsureLightness($themeColor, 0.92), 0.94);
+        $cardBgLight = "rgba(255, 255, 255, 0.7)";
+        $cardBgSolidLight = tomHexToRgbaString(tomEnsureLightness($themeColor, 0.96), 0.94);
+        $bodyBgLight = $safeColorLight;
+        $sidebarBgLight = "rgba(255, 255, 255, 0.6)";
+        $headerBgLight = "rgba(255, 255, 255, 0.4)";
     }
     ?>
     <!-- Inject perfectly calculated gradient on the server to prevent ANY flash -->
@@ -302,13 +353,15 @@ define('PAGE_START_TIME', microtime(true));
             --c6: <?= $c6Dark ?>;
             --c7: <?= $c7Dark ?>;
             --glass-bg: <?= $glassBgDark ?>;
+            --glass-bg-solid: <?= $glassBgSolidDark ?>;
             --cui-card-bg: <?= $cardBgDark ?>;
+            --cui-card-bg-solid: <?= $cardBgSolidDark ?>;
             --cui-sidebar-bg: <?= $sidebarBgDark ?>;
             --cui-header-bg: <?= $headerBgDark ?>;
             --accent-color: <?= $accentColor ?>;
             --cui-primary: <?= $accentColor ?>;
             --cui-primary-rgb: <?= $primaryRgb ?>;
-            --cui-body-bg: <?= $safeColorDark ?>;
+            --cui-body-bg: <?= $bodyBgDark ?>;
         }
         html[data-coreui-theme="light"] {
             --c1: <?= $c1Light ?>;
@@ -318,32 +371,58 @@ define('PAGE_START_TIME', microtime(true));
             --c5: <?= $c5Light ?>;
             --c6: <?= $c6Light ?>;
             --c7: <?= $c7Light ?>;
-            --glass-bg: #ffffff;
-            --cui-card-bg: #ffffff;
-            --cui-sidebar-bg: #ffffff;
-            --cui-header-bg: #ffffff;
+            --glass-bg: <?= $glassBgLight ?>;
+            --glass-bg-solid: <?= $glassBgSolidLight ?>;
+            --cui-card-bg: <?= $cardBgLight ?>;
+            --cui-card-bg-solid: <?= $cardBgSolidLight ?>;
+            --cui-sidebar-bg: <?= $sidebarBgLight ?>;
+            --cui-header-bg: <?= $headerBgLight ?>;
             --accent-color: <?= $accentColor ?>;
             --cui-primary: <?= $accentColor ?>;
             --cui-primary-rgb: <?= $primaryRgb ?>;
-            --cui-body-bg: <?= $safeColorLight ?>;
+            --cui-body-bg: <?= $bodyBgLight ?>;
         }
         html[data-coreui-theme="dark"] .btn-primary { color: #ffffff !important; }
         html[data-coreui-theme="dark"] .badge.bg-primary { color: #ffffff !important; }
         html[data-coreui-theme="light"] .btn-primary { color: #ffffff !important; }
         html[data-coreui-theme="light"] .badge.bg-primary { color: #ffffff !important; }
 
-        html.mode-plain body { transition: none !important; }
-        html.mode-plain #scene, html.mode-plain .scenery-container { display: none !important; }
-
-        <?php if ($mode !== 'plain'): ?>
+        <?php if ($mode === 'plain'): ?>
+        /* Unified Seamless Look for Plain Theme (Instantly rendered via PHP) */
+        body { 
+            transition: none !important; 
+            background-color: var(--cui-body-bg) !important;
+        }
+        #scene, .scenery-container { 
+            display: none !important; 
+        }
+        html[data-coreui-theme="dark"] .sidebar {
+            border-right: none !important;
+        }
+        html[data-coreui-theme="dark"] .header {
+            border-bottom: none !important;
+        }
+        html[data-coreui-theme="dark"] .sidebar-nav .nav-link.active {
+            background: rgba(255, 255, 255, 0.08) !important;
+            color: var(--cui-primary) !important;
+            border-radius: 8px;
+            margin: 0 8px;
+        }
+        html[data-coreui-theme="dark"] .sidebar-nav .nav-link.active .nav-icon {
+            color: var(--cui-primary) !important;
+        }
+        <?php else: ?>
         body { background: transparent !important; }
         <?php endif; ?>
     </style>
 </head>
 
-<body>
+<body <?php if (!defined("IS_LANDING_PAGE") && !defined("IS_LOGIN_PAGE") && !defined("IS_HOME_PAGE")): ?> hx-boost="true" hx-ext="head-support" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-indicator="#main-content" <?php endif; ?>>
+    <!-- Global HTMX Top Loading Bar -->
+    <div id="htmx-top-progress"></div>
+
     <?php if (!defined('IS_LANDING_PAGE') || IS_LANDING_PAGE === false): ?>
-    <div id="scene" style="<?= $mode !== 'plain' ? 'display: block;' : '' ?>">
+    <div id="scene" style="<?= $mode !== 'plain' ? 'display: block;' : 'display: none;' ?>">
         <div class="bg-cover bg-img-1" data-depth="0.8" style="<?= isset($assets[0]) ? "background-image: url('{$assets[0]}'); display: block;" : '' ?>"></div>
         <div class="bg-cover bg-img-2" data-depth="0.5" style="<?= isset($assets[1]) ? "background-image: url('{$assets[1]}'); display: block;" : '' ?>"></div>
         <div class="bg-cover bg-img-3" data-depth="0.3" style="<?= isset($assets[2]) ? "background-image: url('{$assets[2]}'); display: block;" : '' ?>"></div>
@@ -369,7 +448,7 @@ define('PAGE_START_TIME', microtime(true));
     <?php if (!defined('IS_HOME_PAGE')): Session::getSiteNav(); endif; ?>
 
     <div class="body flex-grow-1 bg-transparent"> 
-        <div class="container-fluid <?= (Session::get('is_learn_ai') || defined('IS_HOME_PAGE')) ? 'p-0' : 'px-4' ?> bg-transparent">
+        <div id="main-content" class="container-fluid <?= (Session::get('is_learn_ai') || defined('IS_HOME_PAGE')) ? 'p-0' : 'px-4' ?> bg-transparent">
                 <?php
                     if (!Session::get('brokenPage', false)) {
                         echo Session::generatePageBody();
@@ -435,11 +514,11 @@ define('PAGE_START_TIME', microtime(true));
         mq_domain: <?= json_encode(get_config('mq_domain') ?: '') ?>
     };
     </script>
-    <script src="<?= Session::cacheCDN("/js/app.js") ?>"></script>
+    <script src="/js/app.js?v=<?= time() ?>"></script>
 
     <script>
     // Initialize all tooltips globally with body container to fix positioning issues
-    document.addEventListener('DOMContentLoaded', function() {
+    window.onPageLoad(function() {
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-coreui-toggle="tooltip"]'));
         tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new coreui.Tooltip(tooltipTriggerEl, {
@@ -538,7 +617,7 @@ define('PAGE_START_TIME', microtime(true));
         };
 
         // Auto-trigger from PHP Sessions
-        document.addEventListener('DOMContentLoaded', () => {
+        window.onPageLoad(() => {
             <?php 
             $flashTypes = ['success' => 'Success', 'error' => 'Failed', 'info' => 'Notice', 'warning' => 'Warning'];
             foreach ($flashTypes as $key => $title):
@@ -549,7 +628,7 @@ define('PAGE_START_TIME', microtime(true));
         });
 
         // Sync UI on load
-        document.addEventListener('DOMContentLoaded', function() {
+        window.onPageLoad(function() {
             if (window.TomVisuals) window.TomVisuals.syncUI();
         });
     </script>
@@ -562,8 +641,8 @@ define('PAGE_START_TIME', microtime(true));
     <?php include __DIR__ . '/_session_expired_popup.php'; ?>
     
     <!-- Masonry Layout Library -->
-    <script src="https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.min.js"></script>
-    <script src="https://unpkg.com/imagesloaded@5/imagesloaded.pkgd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/masonry-layout@4/dist/masonry.pkgd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/imagesloaded@5/imagesloaded.pkgd.min.js"></script>
 
     <!-- SNA Liquid Refraction Filter -->
     <svg style="display:none;" aria-hidden="true">
@@ -572,6 +651,81 @@ define('PAGE_START_TIME', microtime(true));
             <feDisplacementMap in="SourceGraphic" in2="noise" scale="12" xChannelSelector="R" yChannelSelector="G" />
         </filter>
     </svg>
+    
+    <style>
+        /* HTMX content swap — instant feel, no sluggish fade */
+        .htmx-request#main-content {
+            opacity: 0.85;
+            pointer-events: none;
+            transition: opacity 50ms ease-out;
+        }
+        #main-content {
+            transition: opacity 30ms ease-in;
+        }
+        .htmx-indicator {
+            display: none;
+        }
+        .htmx-request .htmx-indicator {
+            display: inline-block;
+        }
+        /* Top Progress Bar Styles */
+        #htmx-top-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #a855f7, #3b82f6, #06b6d4);
+            z-index: 99999;
+            width: 0%;
+            opacity: 0;
+            pointer-events: none;
+            box-shadow: 0 0 10px rgba(168, 85, 247, 0.7);
+            /* Reset state: no transition so it instantly snaps back to 0 width invisibly */
+        }
+
+        /* When request is active (added via JS) */
+        #htmx-top-progress.htmx-running {
+            display: block;
+            opacity: 1;
+            width: 80%;
+            transition: width 5s cubic-bezier(0.1, 0.8, 0.2, 1), opacity 150ms ease-out;
+        }
+
+        /* When request finishes (added via JS) */
+        #htmx-top-progress.htmx-complete {
+            display: block;
+            opacity: 0;
+            width: 100%;
+            transition: width 200ms ease-out, opacity 400ms ease-out 150ms;
+        }
+    </style>
+    
+    <script>
+        // Start the progress bar animation
+        document.body.addEventListener('htmx:beforeRequest', function() {
+            const bar = document.getElementById('htmx-top-progress');
+            if (bar) {
+                bar.classList.remove('htmx-complete');
+                // Force a reflow to ensure it resets to 0 instantly before animating
+                void bar.offsetWidth; 
+                bar.classList.add('htmx-running');
+            }
+        });
+
+        // Smoothly finish the progress bar animation
+        document.body.addEventListener('htmx:afterRequest', function() {
+            const bar = document.getElementById('htmx-top-progress');
+            if (bar) {
+                bar.classList.remove('htmx-running');
+                bar.classList.add('htmx-complete');
+                
+                // After the fade out finishes, remove the class to reset width back to 0 invisibly
+                setTimeout(() => {
+                    bar.classList.remove('htmx-complete');
+                }, 600);
+            }
+        });
+    </script>
 </body>
 
 </html>

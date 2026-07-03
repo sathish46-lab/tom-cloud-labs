@@ -4,48 +4,75 @@ $reqId = $_SERVER['UNIQUE_ID'] ?? 'N/A';
 ?>
 <style>
 .error-card {
-    background: rgba(10, 15, 25, 0.85);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 16px;
     padding: 3rem;
     max-width: 900px;
     margin: 4rem auto;
-    color: #e2e8f0;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    color: #333;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(10px);
     position: relative;
     z-index: 100;
 }
+html[data-coreui-theme="dark"] .error-card {
+    background: rgba(10, 15, 25, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
 .error-header {
     display: flex;
     align-items: center;
     gap: 2rem;
     margin-bottom: 2rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
     padding-bottom: 2rem;
 }
+html[data-coreui-theme="dark"] .error-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
 .error-title {
     font-size: 4rem;
     font-weight: 700;
     margin: 0;
+    color: #1e293b;
+}
+html[data-coreui-theme="dark"] .error-title {
     color: #f1f5f9;
 }
+
 .error-subtitle h4 {
     margin: 0 0 0.5rem 0;
     font-size: 1.5rem;
+    color: #334155;
+}
+html[data-coreui-theme="dark"] .error-subtitle h4 {
     color: #f1f5f9;
 }
+
 .error-subtitle p {
     margin: 0;
-    color: #94a3b8;
+    color: #64748b;
     font-size: 0.95rem;
 }
+html[data-coreui-theme="dark"] .error-subtitle p {
+    color: #94a3b8;
+}
+
 .req-id {
     font-family: monospace;
-    color: #cbd5e1;
+    color: #94a3b8;
     font-size: 0.85rem;
     margin-top: 1rem;
 }
+html[data-coreui-theme="dark"] .req-id {
+    color: #cbd5e1;
+}
+
 .error-trace-container {
     font-family: 'Consolas', 'Monaco', monospace;
     font-size: 0.85rem;
@@ -53,33 +80,64 @@ $reqId = $_SERVER['UNIQUE_ID'] ?? 'N/A';
     overflow-x: auto;
 }
 .trace-headline {
-    color: #e2e8f0;
+    color: #334155;
     margin-bottom: 1rem;
 }
-.trace-message {
-    color: #ff7b72; /* Red for the actual error message */
-}
-.trace-line {
-    padding-left: 1rem;
-    color: #c9d1d9;
-}
-.trace-keyword {
-    color: #ff7b72;
-}
-.trace-function {
-    color: #79c0ff; /* Cyan for function names */
-}
-.trace-file {
+html[data-coreui-theme="dark"] .trace-headline {
     color: #e2e8f0;
 }
-.trace-line-num {
+
+.trace-message {
+    color: #dc2626; /* Red */
+}
+html[data-coreui-theme="dark"] .trace-message {
     color: #ff7b72;
 }
+
+.trace-line {
+    padding-left: 1rem;
+    color: #475569;
+}
+html[data-coreui-theme="dark"] .trace-line {
+    color: #c9d1d9;
+}
+
+.trace-keyword {
+    color: #dc2626;
+}
+html[data-coreui-theme="dark"] .trace-keyword {
+    color: #ff7b72;
+}
+
+.trace-function {
+    color: #0284c7; /* Cyan/Blue */
+}
+html[data-coreui-theme="dark"] .trace-function {
+    color: #79c0ff;
+}
+
+.trace-file {
+    color: #334155;
+}
+html[data-coreui-theme="dark"] .trace-file {
+    color: #e2e8f0;
+}
+
+.trace-line-num {
+    color: #dc2626;
+}
+html[data-coreui-theme="dark"] .trace-line-num {
+    color: #ff7b72;
+}
+
 .raw-trace {
     margin-top: 2rem;
-    color: #8b949e;
+    color: #94a3b8;
     white-space: pre-wrap;
     font-size: 0.8rem;
+}
+html[data-coreui-theme="dark"] .raw-trace {
+    color: #8b949e;
 }
 </style>
 

@@ -1234,7 +1234,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
     </div>
 </div>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+window.onPageLoad(function() {
     // Initialize premium lab metrics polling
     if (typeof window.initDashboardPolling === 'function') {
         window.initDashboardPolling(<?= json_encode(array_column($labsList, 'hash')) ?>);

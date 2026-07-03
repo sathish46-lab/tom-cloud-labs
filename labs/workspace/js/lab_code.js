@@ -1,3 +1,11 @@
+/**
+ * Wrapped with IIFE Error Boundary
+ */
+try {
+  (function() {
+    "use strict";
+
+
 function openCodeModal(hash, name, status) {
     // 1. Set static info
     const modalEl = document.getElementById('codeInfoModal');
@@ -93,4 +101,15 @@ function openCodeModal(hash, name, status) {
             alert('Network error');
             modal.hide();
         });
+}
+
+
+    
+
+    // --- Explicit Window Exports for Inline HTML ---
+    window.openCodeModal = openCodeModal;
+
+  })();
+} catch (e) {
+  console.error("[Fatal Error in lab_code.js]", e);
 }

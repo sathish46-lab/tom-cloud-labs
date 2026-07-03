@@ -1,3 +1,11 @@
+/**
+ * Wrapped with IIFE Error Boundary
+ */
+try {
+  (function() {
+    "use strict";
+
+
 // --- MongoDB User Management ---
 
 function openAddMongoDBUserModal() {
@@ -239,4 +247,23 @@ async function deleteMongoDBDb(dbName) {
     } catch (e) {
         alert('Network error occurred.');
     }
+}
+
+
+    
+
+    // --- Explicit Window Exports for Inline HTML ---
+    window.deleteMongoDBDb = deleteMongoDBDb;
+    window.submitCreateMongoDBUser = submitCreateMongoDBUser;
+    window.switchMongoDBUser = switchMongoDBUser;
+    window.deleteMongoDBUser = deleteMongoDBUser;
+    window.submitCreateMongoDBDb = submitCreateMongoDBDb;
+    window.openAddMongoDBUserModal = openAddMongoDBUserModal;
+    window.submitCreateMongoDBDbInline = submitCreateMongoDBDbInline;
+    window.openCreateMongoDBDbModal = openCreateMongoDBDbModal;
+    window.currentTargetUser = currentTargetUser;
+
+  })();
+} catch (e) {
+  console.error("[Fatal Error in services_mongodb.js]", e);
 }

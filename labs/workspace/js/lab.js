@@ -1,4 +1,12 @@
 /**
+ * Wrapped with IIFE Error Boundary
+ */
+try {
+  (function() {
+    "use strict";
+
+
+/**
  * ============================================================================
  * TOM LABS - LAB DASHBOARD CONTROLLER
  * ============================================================================
@@ -1376,7 +1384,7 @@ function launchService(btn, type) {
 /* ============================================================================
  * UTILITIES: Clipboard Handling
  * ============================================================================ */
-document.addEventListener('DOMContentLoaded', () => {
+window.onPageLoad( () => {
   // Global handler for .clipboard buttons
   document.body.addEventListener('click', async (e) => {
     const btn = e.target.closest('.clipboard');
@@ -1442,7 +1450,7 @@ document.addEventListener('DOMContentLoaded', () => {
 /**
  * Initialize dashboard when DOM is ready
  */
-document.addEventListener("DOMContentLoaded", () => {
+window.onPageLoad( () => {
   Dashboard.init();
 
   // Close dropdown when clicking outside
@@ -1641,7 +1649,7 @@ function initChallengeSearch() {
 }
 
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initChallengeSearch);
+    window.onPageLoad( initChallengeSearch);
 } else {
     initChallengeSearch();
 }
@@ -1691,7 +1699,7 @@ function addDeployProxyRow() {
 }
 
 // Server Logs Toggle
-document.addEventListener("DOMContentLoaded", function() {
+window.onPageLoad( function() {
     const logsBody = document.getElementById('terminal-viewport');
     const toggleBtn = document.getElementById('serverLogsToggleBtn');
     const chevrons = document.querySelectorAll('.server-logs-chevron');
@@ -1753,3 +1761,32 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 });
+
+
+    
+
+    // --- Explicit Window Exports for Inline HTML ---
+    window.focusSearch = focusSearch;
+    window.Dashboard = Dashboard;
+    window.showDropdown = showDropdown;
+    window.filterDomains = filterDomains;
+    window.toggleDomainSection = toggleDomainSection;
+    window.executeStop = executeStop;
+    window.domainDropdownOpen = domainDropdownOpen;
+    window.executeRedeploy = executeRedeploy;
+    window.toggleDomainDropdown = toggleDomainDropdown;
+    window.launchCodeIDE = launchCodeIDE;
+    window.selectAllDomains = selectAllDomains;
+    window.launchService = launchService;
+    window.initChallengeSearch = initChallengeSearch;
+    window.updateDomainAvailability = updateDomainAvailability;
+    window.addDeployProxyRow = addDeployProxyRow;
+    window.updateSelectedDomains = updateSelectedDomains;
+    window.handleStop = handleStop;
+    window.removeDomainChip = removeDomainChip;
+    window.handleDeploy = handleDeploy;
+
+  })();
+} catch (e) {
+  console.error("[Fatal Error in lab.js]", e);
+}

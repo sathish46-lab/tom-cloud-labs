@@ -1,3 +1,11 @@
+/**
+ * Wrapped with IIFE Error Boundary
+ */
+try {
+  (function() {
+    "use strict";
+
+
 // --- Redis User Management ---
 
 function openAddRedisUserModal() {
@@ -65,4 +73,17 @@ async function deleteRedisUser(username) {
     } catch (e) {
         alert('Network error occurred.');
     }
+}
+
+
+    
+
+    // --- Explicit Window Exports for Inline HTML ---
+    window.deleteRedisUser = deleteRedisUser;
+    window.openAddRedisUserModal = openAddRedisUserModal;
+    window.submitCreateRedisUser = submitCreateRedisUser;
+
+  })();
+} catch (e) {
+  console.error("[Fatal Error in services_redis.js]", e);
 }

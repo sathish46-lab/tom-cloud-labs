@@ -1,4 +1,12 @@
 /**
+ * Wrapped with IIFE Error Boundary
+ */
+try {
+  (function() {
+    "use strict";
+
+
+/**
  * Copies raw text string to clipboard and shows toast
  */
 function copyText(text, toastMsg = "Text copied to clipboard!") {
@@ -93,4 +101,17 @@ function showToast(message) {
     } catch (e) {
         console.error(e);
     }
+}
+
+    
+
+    // --- Explicit Window Exports for Inline HTML ---
+    window.copyText = copyText;
+    window.showToast = showToast;
+    window.fallbackCopyText = fallbackCopyText;
+    window.copyValue = copyValue;
+
+  })();
+} catch (e) {
+  console.error("[Fatal Error in copy.js]", e);
 }

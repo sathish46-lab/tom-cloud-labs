@@ -1,3 +1,11 @@
+/**
+ * Wrapped with IIFE Error Boundary
+ */
+try {
+  (function() {
+    "use strict";
+
+
 function openConnectionModal(hash, name, status) {
     // 1. Set static info
     document.getElementById('modalLabName').textContent = name;
@@ -98,4 +106,15 @@ function renderConnectionFields(fields, container) {
     });
     html += '</div>';
     container.innerHTML = html;
+}
+
+    
+
+    // --- Explicit Window Exports for Inline HTML ---
+    window.openConnectionModal = openConnectionModal;
+    window.renderConnectionFields = renderConnectionFields;
+
+  })();
+} catch (e) {
+  console.error("[Fatal Error in connection_info.js]", e);
 }

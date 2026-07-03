@@ -90,7 +90,7 @@ require_once __DIR__ . '/partials/mysql_header.php';
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <button class="btn rounded-pill px-4 shadow-sm text-white" style="background-color: #6366f1; border: none; font-size: 0.85rem; font-weight: 600;" onclick="submitCreateDbInline()">
+                        <button class="btn rounded-pill px-4 shadow-sm text-white" style="background-color: #6366f1; border: none; font-size: 0.85rem; font-weight: 600;" onclick="submitCreateMySQLDbInline()">
                             Create Database
                         </button>
                     </div>

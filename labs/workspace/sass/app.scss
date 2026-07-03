@@ -26,6 +26,7 @@
 @use "components/dashboard";
 @use "components/sidebar";
 @use "components/devices";
+@use "components/trash_bin";
 // 2. Global Performance & Smooth Rendering Optimizations
 html {
   scroll-behavior: smooth;
@@ -96,7 +97,7 @@ body {
 /* 3. Dashboard Stat Cards Inner */
 .stat-card-inner {
   box-shadow: rgba(0, 0, 0, 0.4) 0px 4px 12px, rgba(0, 0, 0, 0.2) 0px 1px 3px !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
 
   &:hover {

@@ -1,6 +1,5 @@
 <?php
 Session::addMetaTag('<title>Services - Tom Labs</title>');
-Session::addCustomJs('/js/services.js');
 Session::addCustomJs('/js/copy.js');
 ?>
 
@@ -23,7 +22,7 @@ Session::addCustomJs('/js/copy.js');
     <div class="services-grid-sizer col-12 col-md-4" style="height: 0; padding: 0; margin: 0; border: 0;"></div>
 
     <!-- MySQL Server Card -->
-    <div class="col-12 col-md-4 services-card-item">
+    <div class="col-12 col-md-4 services-card-item card-entrance">
         <div class="card border border-light border-opacity-10 shadow-lg position-relative overflow-hidden" style="background: #111827; border-radius: 12px;">
             <div class="card-body p-3 position-relative z-1">
                 <div class="d-flex align-items-center mb-4">
@@ -75,7 +74,7 @@ Session::addCustomJs('/js/copy.js');
     </div>
 
     <!-- Adminer Card -->
-    <div class="col-12 col-md-4 services-card-item">
+    <div class="col-12 col-md-4 services-card-item card-entrance">
         <div class="card border border-light border-opacity-10 shadow-lg position-relative overflow-hidden" style="background: #111827; border-radius: 12px;">
             <div class="card-body p-3 position-relative z-1">
                 <div class="d-flex align-items-center mb-4">
@@ -127,12 +126,12 @@ Session::addCustomJs('/js/copy.js');
 
     
     <!-- MariaDB Server Card -->
-    <div class="col-12 col-md-4 services-card-item">
+    <div class="col-12 col-md-4 services-card-item card-entrance">
         <div class="card border border-light border-opacity-10 shadow-lg position-relative overflow-hidden" style="background: #111827; border-radius: 12px;">
             <div class="card-body p-3 position-relative z-1">
                 <div class="d-flex align-items-center mb-4">
                     <div class="bg-white p-2 rounded me-3 shadow-sm d-flex justify-content-center align-items-center" style="width: 54px; height: 54px;">
-                        <img src="https://mariadb.org/wp-content/uploads/2019/11/mariadb-seal-browntext.png" alt="MariaDB" class="img-fluid" style="max-height: 36px; object-fit: contain;">
+                        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/mariadb/mariadb-original-wordmark.svg" alt="MariaDB" class="img-fluid" style="max-height: 36px; object-fit: contain;">
                     </div>
                     <div>
                         <h5 class="card-title fw-bold mb-1 text-white" style="font-size: 1.1rem;">MariaDB Server</h5>
@@ -179,7 +178,7 @@ Session::addCustomJs('/js/copy.js');
     </div>
 
     <!-- PostgreSQL Server Card -->
-    <div class="col-12 col-md-4 services-card-item">
+    <div class="col-12 col-md-4 services-card-item card-entrance">
         <div class="card border border-light border-opacity-10 shadow-lg position-relative overflow-hidden" style="background: #111827; border-radius: 12px;">
             <div class="card-body p-3 position-relative z-1">
                 <div class="d-flex align-items-center mb-4">
@@ -231,12 +230,12 @@ Session::addCustomJs('/js/copy.js');
     </div>
 
     <!-- MongoDB Server Card -->
-    <div class="col-12 col-md-4 services-card-item">
+    <div class="col-12 col-md-4 services-card-item card-entrance">
         <div class="card border border-light border-opacity-10 shadow-lg position-relative overflow-hidden" style="background: #111827; border-radius: 12px;">
             <div class="card-body p-3 position-relative z-1">
                 <div class="d-flex align-items-center mb-4">
                     <div class="bg-white p-2 rounded me-3 shadow-sm d-flex justify-content-center align-items-center" style="width: 54px; height: 54px;">
-                        <img src="https://webassets.mongodb.com/_com_assets/cms/mongodb_logo1-76twgcu2pi.png" alt="MongoDB" class="img-fluid" style="max-height: 36px; object-fit: contain;">
+                        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/mongodb/mongodb-original-wordmark.svg" alt="MongoDB" class="img-fluid" style="max-height: 36px; object-fit: contain;">
                     </div>
                     <div>
                         <h5 class="card-title fw-bold mb-1 text-white" style="font-size: 1.1rem;">MongoDB Server</h5>
@@ -283,7 +282,7 @@ Session::addCustomJs('/js/copy.js');
     </div>
 
     <!-- RabbitMQ Server Card -->
-    <div class="col-12 col-md-4 services-card-item">
+    <div class="col-12 col-md-4 services-card-item card-entrance">
         <div class="card border border-light border-opacity-10 shadow-lg position-relative overflow-hidden" style="background: #111827; border-radius: 12px;">
             <div class="card-body p-3 position-relative z-1">
                 <div class="d-flex align-items-center mb-4">
@@ -335,12 +334,12 @@ Session::addCustomJs('/js/copy.js');
     </div>
 
     <!-- Redis Server Card -->
-    <div class="col-12 col-md-4 services-card-item">
+    <div class="col-12 col-md-4 services-card-item card-entrance">
         <div class="card border border-light border-opacity-10 shadow-lg position-relative overflow-hidden" style="background: #111827; border-radius: 12px;">
             <div class="card-body p-3 position-relative z-1">
                 <div class="d-flex align-items-center mb-4">
                     <div class="bg-white p-2 rounded me-3 shadow-sm d-flex justify-content-center align-items-center" style="width: 54px; height: 54px;">
-                        <img src="https://upload.wikimedia.org/wikipedia/en/6/6b/Redis_Logo.svg" alt="Redis" class="img-fluid" style="max-height: 36px; object-fit: contain;">
+                        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/redis/redis-original-wordmark.svg" alt="Redis" class="img-fluid" style="max-height: 36px; object-fit: contain;">
                     </div>
                     <div>
                         <h5 class="card-title fw-bold mb-1 text-white" style="font-size: 1.1rem;">Redis Server</h5>
@@ -393,67 +392,3 @@ Session::addCustomJs('/js/copy.js');
 .hover-white:hover { color: #ffffff !important; }
 </style>
 
-<script>
-function initServicesGridMasonry() {
-    const grid = document.querySelector('#services-masonry-grid');
-    if (!grid) return;
-
-    const msnry = new Masonry(grid, {
-        itemSelector: '.services-card-item',
-        columnWidth: '.services-grid-sizer',
-        percentPosition: true,
-        transitionDuration: '0.4s'
-    });
-
-    if (typeof imagesLoaded !== 'undefined') {
-        imagesLoaded(grid).on('progress', () => {
-            msnry.layout();
-        });
-    }
-
-    grid.msnry = msnry;
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    initServicesGridMasonry();
-
-    const observer = new MutationObserver((mutations) => {
-        const grid = document.querySelector('#services-masonry-grid');
-        if (grid && grid.msnry) grid.msnry.layout();
-    });
-
-    const container = document.getElementById('services-masonry-grid');
-    if (container) {
-        observer.observe(container, { childList: true, subtree: true });
-
-        const visibilityObserver = new IntersectionObserver((entries) => {
-            if (entries[0].isIntersecting) {
-                if (container.msnry) container.msnry.layout();
-            }
-        }, { threshold: 0.1 });
-        visibilityObserver.observe(container);
-    }
-
-    const themeObserver = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            if (mutation.attributeName === 'data-coreui-theme') {
-                setTimeout(() => {
-                    const grid = document.querySelector('#services-masonry-grid');
-                    if (grid && grid.msnry) grid.msnry.layout();
-                }, 150);
-            }
-        });
-    });
-    themeObserver.observe(document.documentElement, { attributes: true });
-});
-
-// Force masonry layout re-calculation on complete window load
-window.addEventListener('load', () => {
-    setTimeout(() => {
-        const grid = document.querySelector('#services-masonry-grid');
-        if (grid && grid.msnry) {
-            grid.msnry.layout();
-        }
-    }, 100);
-});
-</script>
