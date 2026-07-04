@@ -45,7 +45,7 @@ $subtopics = $topic['subtopics'] ?? [];
                     <li><a class="dropdown-item" href="#">Recent in All</a></li>
                     <li><hr class="dropdown-divider opacity-10"></li>
                     <?php foreach ($subtopics as $sub): ?>
-                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="launchQuiz('<?= $sub['hash'] ?? $sub['_id'] ?>')">Recent in <?= $sub['title'] ?></a></li>
+                        <li><a class="dropdown-item" href="/quiz/<?= $topic['hash'] ?? $topic['_id'] ?>/Recent/<?= $sub['hash'] ?? $sub['_id'] ?>">Recent in <?= $sub['title'] ?></a></li>
                     <?php endforeach; ?>
                 </ul>
             </div>
@@ -72,12 +72,15 @@ $subtopics = $topic['subtopics'] ?? [];
                 <?php else: ?>
                     <?php foreach ($subtopics as $sub): ?>
                     <div class="col">
-                        <div class="card p-4 blur d-flex align-items-stretch hvr-grow" style="background-color: rgba(255, 255, 255, 0.3) !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2) !important; height: 100%; cursor: pointer;" onclick="launchQuiz('<?= $sub['hash'] ?? $sub['_id'] ?>')">
+                        <a href="/quiz/<?= $topic['hash'] ?? $topic['_id'] ?>/Recent/<?= $sub['hash'] ?? $sub['_id'] ?>" class="card p-4 blur d-flex align-items-stretch hvr-grow text-decoration-none text-reset" style="background-color: rgba(255, 255, 255, 0.3) !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2) !important; height: 100%; cursor: pointer;">
                             <div class="card-body p-0 align-self-start justify-self-start">
-                                <h4 class="card-title fw-semibold"><?= $sub['title'] ?></h4>
-                                <p class="card-text text-body-secondary pt-1"><?= $sub['desc'] ?></p>
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="bx <?= $sub['icon'] ?? 'bx-book-open' ?> fs-3 me-2" style="color: var(--cui-primary);"></i>
+                                    <h5 class="card-title fw-bold mb-0"><?= $sub['title'] ?></h5>
+                                </div>
+                                <p class="card-text text-body-secondary small mb-0 opacity-75"><?= $sub['desc'] ?></p>
                             </div>
-                        </div>
+                        </a>
                     </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
@@ -165,10 +168,7 @@ function initQuizMasonry() {
     observer.observe(document.documentElement, { attributes: true });
 }
 
-function launchQuiz(subtopicId) {
-    const parentId = '<?= $topic['hash'] ?? $topic['_id'] ?>';
-    window.location.href = `/quiz/${parentId}/Recent/${subtopicId}`;
-}
+
 
 // Handle initial tab from server-side session
 document.addEventListener('DOMContentLoaded', () => {

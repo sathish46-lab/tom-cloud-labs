@@ -162,7 +162,7 @@ if ($hasCompletedBefore) {
                             <i class="bx bxs-gift me-1"></i> Perfect Score! You earned <span id="zeal-earned">0</span> Zeal 🔥 and <span id="jolt-earned">0</span> Jolt ⚡️
                         </p>
                         <div class="d-flex justify-content-center gap-3">
-                            <button class="btn btn-success rounded-pill px-5 py-2 fw-bold transition-all" onclick="location.reload()">Retake Quiz</button>
+                            <button class="btn btn-success rounded-pill px-5 py-2 fw-bold transition-all" onclick="htmx.ajax('GET', location.href, '#main-content')">Retake Quiz</button>
                             <a href="/quiz" class="btn btn-outline-secondary rounded-pill px-5 py-2 fw-bold">Back to Hub</a>
                         </div>
                     </div>

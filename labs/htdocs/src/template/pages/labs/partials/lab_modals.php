@@ -150,7 +150,7 @@
                 
                 <p class="mb-3 mt-2" style="font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--bs-secondary);">NETWORKING</p>
 
-                <div class="row mb-3 align-items-center">
+                <div class="row mb-2 align-items-center">
                     <label class="col-sm-4 small fw-bold text-secondary">Reallocate IP</label>
                     <div class="col-sm-8">
                         <input type="text" class="form-control bg-transparent border-secondary border-opacity-25 shadow-none rounded-pill px-3 text-white" value="<?= $deviceIp ?? '' ?>" readonly>
@@ -185,7 +185,7 @@
                 <?php $isExposed = (isset($labData['expose_web']) && $labData['expose_web'] === true); ?>
                 <?php if (\TomLabs\Labs\LabFeatures::supports($labType, 'expose_web')): ?>
                 
-                <p class="mb-3 mt-4" style="font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--bs-secondary);">PUBLIC EXPOSURE</p>
+                <p class="mb-2 mt-3" style="font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--bs-secondary);">PUBLIC EXPOSURE</p>
 
                 <div id="expose_web_wrapper" class="row mb-3 align-items-center">
                     <label class="col-sm-4 small fw-bold text-secondary">Expose to Web (port 80)</label>
@@ -378,7 +378,7 @@
         
 <?php if (\TomLabs\Labs\LabFeatures::supports($labType, 'http_proxies')): ?>
 <div id="http_proxies_wrapper">
-<p class="mb-3 mt-4" style="font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--bs-secondary);">HTTP PROXIES</p>
+<p class="mb-2 mt-3" style="font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--bs-secondary);">HTTP PROXIES</p>
 <div class="form-text small opacity-50 mb-3 px-1">
     Reverse-proxy any port to one or more of your domains over HTTP &mdash; TLS is terminated for you at the edge.
 </div>

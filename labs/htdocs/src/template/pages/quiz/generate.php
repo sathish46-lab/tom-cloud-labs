@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     statusText.innerText = 'Success! Redirecting...';
                     
                     setTimeout(() => {
-                        window.location.href = `/quiz/v/${data.result_hash}`;
+                        htmx.ajax('GET', `/quiz/v/${data.result_hash}`, {target: '#main-content'});
                     }, 1000);
                 } else if (data.generation_failed) {
                     statusText.innerText = 'Error: ' + (data.status_text || 'Generation failed.');

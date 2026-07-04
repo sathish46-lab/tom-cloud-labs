@@ -151,12 +151,12 @@
             <div class="row row-cols-1 row-cols-md-3 g-3">
                 <?php foreach ($categories as $cat): ?>
                 <div class="col">
-                    <div class="card p-4 blur d-flex align-items-stretch hvr-grow" style="background-color: rgba(255, 255, 255, 0.3) !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2) !important; height: 100%; cursor: pointer;" onclick="startQuiz('<?= $cat['hash'] ?? $cat['_id'] ?>')">
+                    <a href="/quiz/<?= $cat['hash'] ?? $cat['_id'] ?>" class="card p-4 blur d-flex align-items-stretch hvr-grow text-decoration-none text-reset" style="background-color: rgba(255, 255, 255, 0.3) !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2) !important; height: 100%; cursor: pointer;">
                         <div class="card-body p-0 align-self-start justify-self-start">
                             <h5 class="card-title fw-bold mb-2"><?= $cat['title'] ?></h5>
                             <p class="card-text text-body-secondary small mb-0 opacity-75"><?= $cat['desc'] ?></p>
                         </div>
-                    </div>
+                    </a>
                 </div>
                 <?php endforeach; ?>
             </div>
@@ -165,10 +165,5 @@
     </div>
 </div>
 
-<script>
-function startQuiz(id) {
-    console.log("Navigating to Topic ID:", id);
-    window.location.href = "/quiz/" + id;
-}
-</script>
+
 

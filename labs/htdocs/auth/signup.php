@@ -1,5 +1,12 @@
 <?php
 require_once '../src/load.php';
+
+// Force full page reload if accessed via HTMX
+if (isset($_SERVER['HTTP_HX_REQUEST']) && $_SERVER['HTTP_HX_REQUEST'] == 'true') {
+    header('HX-Redirect: /signup');
+    exit;
+}
+
 use Auth\GoogleAuth;
 
 // 1. Initialize Google Auth
@@ -18,7 +25,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email'], $_POST['pass
     $last_name = trim($_POST['last_name'] ?? '');
 
     $existingUser = $db->users->findOne(['$or' => [['email' => $email], ['username' => $username]]]);
-    if ($existingUser) {
+    
+    if (!preg_match('/^[a-zA-Z0-9_]{3,20}$/', $username)) {
+        $error = "Username must be 3-20 characters and contain only letters, numbers, and underscores.";
+    } elseif ($existingUser) {
         $error = "Username or Email already exists.";
     } else {
         $token = bin2hex(random_bytes(32));
@@ -53,8 +63,38 @@ define('IS_LOGIN_PAGE', true);
 Session::$pageTitle = "Register";
 Session::set('seo_description', 'Create a free Tom Labs account to start deploying your own automated lab environments today.');
 Session::set('seo_keywords', 'Register, Sign Up, Tom Labs, Create Account');
-ob_start();
 ?>
+<!DOCTYPE html>
+<html lang="en" data-coreui-theme="dark">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <meta name="description" content="<?= Session::get('seo_description') ?>">
+    <meta name="keywords" content="<?= Session::get('seo_keywords') ?>">
+    <title><?= Session::$pageTitle ?></title>
+    <link rel="icon" type="image/png" href="<?= Session::cdn3('logo/favicon.png') ?>">
+    
+    <!-- CoreUI & Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/@coreui/coreui@5.0.2/dist/css/coreui.min.css" rel="stylesheet">
+    
+    <!-- Fonts and Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href='https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    
+    <style>
+        body { 
+            margin: 0; padding: 0; 
+            background-color: #0f172a; 
+            color: white; 
+            font-family: 'Ubuntu', sans-serif; 
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at top right, rgba(56, 189, 248, 0.15), transparent 500px),
+                              radial-gradient(circle at bottom left, rgba(251, 146, 60, 0.15), transparent 500px);
+        }
+        a { text-decoration: none; }
+    </style>
+</head>
+<body>
 
 
 
@@ -208,6 +248,5 @@ ob_start();
     </div>
 </div>
 
-<?php
-Session::set('page_content', ob_get_clean());
-Session::loadMaster();
+</body>
+</html>

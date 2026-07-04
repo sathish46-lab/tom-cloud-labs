@@ -19,10 +19,30 @@ $heroQuotes = [
     [ "p1" => "Master the Cloud", "p2" => "Your Technical Playground" ]
 ];
 $initialQuote = $heroQuotes[array_rand($heroQuotes)];
-
-ob_start();
 ?>
-<div class="page-portfolio" hx-boost="false" style="width: 100%;">
+<!DOCTYPE html>
+<html lang="en" data-coreui-theme="dark">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <meta name="description" content="<?= Session::get('seo_description') ?>">
+    <meta name="keywords" content="<?= Session::get('seo_keywords') ?>">
+    <title><?= Session::$pageTitle ?></title>
+    <link rel="icon" type="image/png" href="<?= Session::cdn3('logo/favicon.png') ?>">
+    
+    <!-- Fonts and Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href='https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    
+    <!-- Landing Page CSS -->
+    <link rel="stylesheet" href="/css/landing.css?v=<?= time() ?>">
+    <style>
+        body { margin: 0; padding: 0; background-color: #0f172a; color: white; font-family: 'Ubuntu', sans-serif; overflow-x: hidden; }
+        a { text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="page-portfolio" style="width: 100%;">
 
 <header class="portfolio-header" style="border-radius: 20px; display: flex; align-items: center; width: 95%; max-width: 1400px;">
     <a href="/" class="header-logo" style="display: flex; align-items: center; gap: 12px; text-decoration: none; flex-shrink: 0;">
@@ -744,8 +764,5 @@ ob_start();
           }
       });
   });
-</script>
-</div>
-<?php
-Session::set('page_content', ob_get_clean());
-Session::loadMaster();
+</body>
+</html>

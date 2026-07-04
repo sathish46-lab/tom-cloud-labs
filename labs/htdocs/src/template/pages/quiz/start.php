@@ -501,7 +501,7 @@ function pollStatus(jobId) {
                 if (job.generation_success && job.result_hash) {
                     if (sText) sText.innerText = 'Generation Complete!';
                     setTimeout(() => {
-                        window.location.href = `/quiz/v/${job.result_hash}`;
+                        htmx.ajax('GET', `/quiz/v/${job.result_hash}`, {target: '#main-content'});
                     }, 800);
                 } else if (job.generation_failed) {
                     showError(job.error || 'AI Generation failed.');

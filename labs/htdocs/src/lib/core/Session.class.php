@@ -264,8 +264,10 @@ class Session
                 echo "<title>" . htmlspecialchars(self::$pageTitle) . "</title>";
             }
 
-            // Send breadcrumb data for client-side update
-            echo '<template id="htmx-breadcrumb-data" data-title="' . htmlspecialchars(self::$pageTitle ?? '') . '"></template>';
+            // Send breadcrumb data via OOB for client-side update
+            echo '<ol id="main-breadcrumb" class="breadcrumb my-0" hx-swap-oob="true">';
+            include __DIR__ . '/../../template/partials/_breadcrumb.php';
+            echo '</ol>';
             
             // Output specific page content
             if (!self::get('brokenPage', false)) {
@@ -399,6 +401,7 @@ class Session
                 if (file_exists($templateRoot . 'dashboard.php')) {
                     include $templateRoot . 'dashboard.php';
                 }
+                include __DIR__ . '/../../template/_session_expired_popup.php';
             }
         } catch (Throwable $e) {
             // Gracefully catch any exceptions/errors thrown during page rendering

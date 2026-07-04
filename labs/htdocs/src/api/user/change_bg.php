@@ -8,6 +8,9 @@ if (!Session::getUser()) {
 }
 
 $swatches = [
+    ['name' => 'Dark Green', 'bg' => '#064e3b', 'light' => '#ecfdf5', 'accent' => '#10b981'],
+    ['name' => 'Pine',       'bg' => '#0a1914', 'light' => '#f0fdf4', 'accent' => '#22c55e'],
+    ['name' => 'Emerald',    'bg' => '#022c22', 'light' => '#e6fcf5', 'accent' => '#20c997'],
     ['name' => 'Sunset',   'bg' => '#2a2a2a', 'light' => '#faf7f4', 'accent' => '#FF6B1A'],
     ['name' => 'Ocean',    'bg' => '#1a2238', 'light' => '#f0f4ff', 'accent' => '#4A90D9'],
     ['name' => 'Forest',   'bg' => '#1a2a1a', 'light' => '#f0fff4', 'accent' => '#4CAF50'],

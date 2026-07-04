@@ -21,9 +21,6 @@ if ($coreUiTheme === 'auto') {
 }
 
 $mode = $serverTheme['mode'] ?? 'spiderman';
-if (defined('IS_LOGIN_PAGE') && IS_LOGIN_PAGE === true) {
-    $mode = 'spiderman';
-}
 
 $isGlassMode = ($uiPreferences['visual_blur'] ?? 'true') !== 'false';
 $isSidebarNarrow = ($uiPreferences['sidebar_unfoldable'] ?? 'false') === 'true';
@@ -51,17 +48,17 @@ $classString = implode(' ', $htmlClasses);
     // Pre-load themes to prevent slow visual blur application on page load
     window.TOM_THEMES = <?= json_encode($tomThemes) ?>;
     
-    window.addEventListener('load', function() {
-        // Wait 2000 milliseconds (2 seconds) AFTER the page loads to inject the tracker.
-        // This guarantees the browser stops the loading spinner completely.
-        setTimeout(function() {
-            (function(c,l,a,r,i,t,y){
-                c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-                t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-                y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-            })(window, document, "clarity", "script", "xf2vp1zlg2");
-        }, 2000); 
-    });
+    // window.addEventListener('load', function() {
+    //     // Wait 2000 milliseconds (2 seconds) AFTER the page loads to inject the tracker.
+    //     // This guarantees the browser stops the loading spinner completely.
+    //     setTimeout(function() {
+    //         (function(c,l,a,r,i,t,y){
+    //             c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    //             t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    //             y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    //         })(window, document, "clarity", "script", "xf2vp1zlg2");
+    //     }, 2000); 
+    // });
     </script>
     <script>
         /**
@@ -226,9 +223,7 @@ $classString = implode(' ', $htmlClasses);
     <link href="https://cdn.jsdelivr.net/npm/@coreui/coreui@5.0.2/dist/css/coreui.min.css" rel="stylesheet">
 
 
-    <?php if (!defined('IS_LANDING_PAGE') || IS_LANDING_PAGE === false): ?>
     <link rel="stylesheet" href="/css/app.css?v=<?= time() ?>">
-    <?php endif; ?>
 
     <?php foreach (Session::$customCss as $css): ?>
     <link rel="stylesheet" href="<?= Session::cacheCDN($css) ?>?v=<?= time() ?>">
@@ -247,9 +242,6 @@ $classString = implode(' ', $htmlClasses);
 
     <?php
     $mode = $serverTheme['mode'] ?? 'spiderman';
-    if (defined('IS_LOGIN_PAGE') && IS_LOGIN_PAGE === true) {
-        $mode = 'spiderman';
-    }
 
     require_once __DIR__ . '/tom_color_utils.php';
     require_once __DIR__ . '/../config/themes.php';
@@ -417,31 +409,17 @@ $classString = implode(' ', $htmlClasses);
     </style>
 </head>
 
-<body <?php if (!defined("IS_LANDING_PAGE") && !defined("IS_LOGIN_PAGE") && !defined("IS_HOME_PAGE")): ?> hx-boost="true" hx-ext="head-support" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-indicator="#main-content" <?php endif; ?>>
+<body <?php if (!defined("IS_HOME_PAGE")): ?> hx-boost="true" hx-ext="head-support" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-indicator="#main-content" <?php endif; ?>>
     <!-- Global HTMX Top Loading Bar -->
     <div id="htmx-top-progress"></div>
 
-    <?php if (!defined('IS_LANDING_PAGE') || IS_LANDING_PAGE === false): ?>
     <div id="scene" style="<?= $mode !== 'plain' ? 'display: block;' : 'display: none;' ?>">
         <div class="bg-cover bg-img-1" data-depth="0.8" style="<?= isset($assets[0]) ? "background-image: url('{$assets[0]}'); display: block;" : '' ?>"></div>
         <div class="bg-cover bg-img-2" data-depth="0.5" style="<?= isset($assets[1]) ? "background-image: url('{$assets[1]}'); display: block;" : '' ?>"></div>
         <div class="bg-cover bg-img-3" data-depth="0.3" style="<?= isset($assets[2]) ? "background-image: url('{$assets[2]}'); display: block;" : '' ?>"></div>
         <div class="bg-cover bg-img-4" data-depth="0.1" style="<?= isset($assets[3]) ? "background-image: url('{$assets[3]}'); display: block;" : '' ?>"></div>
     </div>
-    <?php endif; ?>
 
-    <?php if (defined('IS_LOGIN_PAGE') && IS_LOGIN_PAGE === true): ?>
-    <div class="container">
-        <?php echo Session::get('page_content'); ?>
-    </div>
-
-    <?php elseif (defined('IS_LANDING_PAGE') && IS_LANDING_PAGE === true): ?>
-    <div class="landing-wrapper">
-        <?php echo Session::get('page_content'); ?>
-    </div>
-    <?php if (!Session::get('footer', false)) { echo Session::generateFooter(); } ?>
-
-    <?php else: ?>
     <?php if (!defined('IS_HOME_PAGE')): Session::getNav(); endif; ?>
 
     <div class="wrapper d-flex flex-column min-vh-100 bg-transparent" style="<?= defined('IS_HOME_PAGE') ? '--cui-sidebar-occupy-start: 0px;' : '' ?>"> 
@@ -507,7 +485,7 @@ $classString = implode(' ', $htmlClasses);
     </div>
 
 
-    <?php endif; ?>
+
 
     <script>
     window.TOM_CONFIG = {
@@ -539,7 +517,6 @@ $classString = implode(' ', $htmlClasses);
         <?php endif; ?>
     });
     </script>
-    <?php if (!defined('IS_LOGIN_PAGE') || IS_LOGIN_PAGE === false): ?>
     <script>
         /**
          * TomNotify - Premium Stackable Notification System
@@ -632,7 +609,7 @@ $classString = implode(' ', $htmlClasses);
             if (window.TomVisuals) window.TomVisuals.syncUI();
         });
     </script>
-    <?php endif; ?>
+
 
     <?php 
     // This translates your indented Session::$ConsoleLogs into JS
@@ -674,12 +651,12 @@ $classString = implode(' ', $htmlClasses);
             top: 0;
             left: 0;
             height: 3px;
-            background: linear-gradient(90deg, #a855f7, #3b82f6, #06b6d4);
+            background: linear-gradient(90deg, #f7b655ff, #9cf63bff, #06d493ff);
             z-index: 99999;
             width: 0%;
             opacity: 0;
             pointer-events: none;
-            box-shadow: 0 0 10px rgba(168, 85, 247, 0.7);
+            box-shadow: 0 0 10px rgba(247, 185, 85, 0.7);
             /* Reset state: no transition so it instantly snaps back to 0 width invisibly */
         }
 

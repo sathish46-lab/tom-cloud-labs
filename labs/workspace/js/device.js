@@ -102,11 +102,11 @@ async function downloadTunnel(name, deviceId) {
     }
 }
 
-const vpnForm = document.getElementById('vpnAddForm');
-if (vpnForm) {
-    vpnForm.addEventListener('submit', async function (e) {
+document.addEventListener('submit', async function (e) {
+    if (e.target && e.target.id === 'vpnAddForm') {
         e.preventDefault();
-        const btn = this.querySelector('button[type="submit"]');
+        const form = e.target;
+        const btn = form.querySelector('button[type="submit"]');
         if (document.getElementById('autoGenCheck').checked) {
             const keys = generateWGKeypair();
             document.getElementById('hiddenPrivKey').value = keys.private;
@@ -120,7 +120,7 @@ if (vpnForm) {
         try {
             const res = await fetch('/api/vpn/add', {
                 method: 'POST',
-                body: new FormData(this)
+                body: new FormData(form)
             });
             if (res.ok) {
                 const htmlText = await res.text();
@@ -141,7 +141,7 @@ if (vpnForm) {
                     }
                     
                     // Reset form
-                    this.reset();
+                    form.reset();
                     document.getElementById('hiddenPubKey').value = "";
                     document.getElementById('hiddenPrivKey').value = "";
                     
@@ -161,8 +161,8 @@ if (vpnForm) {
             btn.disabled = false;
             btn.innerText = 'Verify and Add';
         }
-    });
-}
+    }
+});
 
 let currentDeleteDeviceId = null;
 let currentDeleteDevicePubKey = null;
@@ -332,7 +332,6 @@ window.onPageLoad( () => {
     window.activeConfigRaw = activeConfigRaw;
     window.showConfig = showConfig;
     window.openVPNConnectionModal = openVPNConnectionModal;
-    window.vpnForm = vpnForm;
     window.toggleManualKey = toggleManualKey;
     window.downloadTunnel = downloadTunnel;
     window.generateWGKeypair = generateWGKeypair;

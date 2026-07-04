@@ -270,6 +270,8 @@ http:
       headers:
         customRequestHeaders:
           X-Forwarded-Proto: "https"
+    compress-responses:
+      compress: {}
     vpn-headers:
       headers:
         customRequestHeaders:
