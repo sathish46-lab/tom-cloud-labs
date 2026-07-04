@@ -137,7 +137,13 @@ html.glass-mode .card,
 html.glass-mode .sidebar,
 html.glass-mode .header,
 html.glass-mode .footer,
-html.glass-mode .modal-content {
+html.glass-mode .modal-content,
+body.hwa-enabled .lab-header-section,
+body.hwa-enabled .card,
+body.hwa-enabled .sidebar,
+body.hwa-enabled .header,
+body.hwa-enabled .footer,
+body.hwa-enabled .modal-content {
     /* The Glass Effect: Strong frosted glass blur */
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);

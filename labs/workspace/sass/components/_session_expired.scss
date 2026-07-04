@@ -16,6 +16,17 @@
   justify-content: center;
   animation: sessionFadeIn 0.4s ease-out;
 
+  @at-root body:has(#session-expired-overlay) {
+    overflow: hidden !important;
+
+    .sidebar,
+    .header,
+    .footer,
+    .wrapper {
+      display: none !important;
+    }
+  }
+
   .popup-content {
     background: linear-gradient(145deg, #1a2c48, #0b1e36);
     border: 2px solid rgba(255, 165, 0, 0.4);

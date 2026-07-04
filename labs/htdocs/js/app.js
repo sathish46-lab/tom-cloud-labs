@@ -1678,8 +1678,16 @@ window.TomVisuals = {
   toggleBlur: function (enable) {
     if (enable) {
       document.documentElement.classList.add('glass-mode');
+      if (document.body) {
+        document.body.classList.add('hwa-enabled');
+        document.body.classList.remove('hwa-disabled');
+      }
     } else {
       document.documentElement.classList.remove('glass-mode');
+      if (document.body) {
+        document.body.classList.remove('hwa-enabled');
+        document.body.classList.add('hwa-disabled');
+      }
     }
     
     // Save to Database
@@ -2080,6 +2088,7 @@ try {
                     if (data.active_days > 0 && activeDays && footer) {
                         activeDays.textContent = data.active_days + ' active days';
                         footer.style.cssText = '';
+                        footer.classList.remove('d-none');
                         footer.classList.add('d-flex');
                     }
                     if (data.last_seen && lastSeen) {
@@ -2288,7 +2297,7 @@ document.addEventListener('submit', async function (e) {
                 
                 const modalEl = document.getElementById('addDeviceModal');
                 if (modalEl) {
-                    const modal = coreui.Modal.getInstance(modalEl);
+                    const modal = coreui.Modal.getInstance(modalEl) || coreui.Modal.getOrCreateInstance(modalEl);
                     if (modal) {
                         modal.hide();
                     } else {
@@ -2460,24 +2469,24 @@ window.onPageLoad( () => {
         startPolling();
     }
 
-    // Dynamic loader for Add Device Modal
-    const addDeviceModal = document.getElementById('addDeviceModal');
-    if (addDeviceModal) {
-        addDeviceModal.addEventListener('show.coreui.modal', function() {
-            const content = document.getElementById('addDeviceModalContent');
-            if (!content || content.getAttribute('data-loaded') === 'true') return;
-            
-            fetch('/api/device/add')
-                .then(res => res.text())
-                .then(html => {
-                    content.innerHTML = html;
-                    content.setAttribute('data-loaded', 'true');
-                })
-                .catch(err => {
-                    console.error(err);
-                    content.innerHTML = '<div class="p-4 text-danger text-center">Failed to load form.</div>';
-                });
-        });
+});
+
+// Global Dynamic loader for Add Device Modal (Works across HTMX swaps)
+document.addEventListener('show.coreui.modal', function(e) {
+    if (e.target && e.target.id === 'addDeviceModal') {
+        const content = document.getElementById('addDeviceModalContent');
+        if (!content || content.getAttribute('data-loaded') === 'true') return;
+        
+        fetch('/api/device/add')
+            .then(res => res.text())
+            .then(html => {
+                content.innerHTML = html;
+                content.setAttribute('data-loaded', 'true');
+            })
+            .catch(err => {
+                console.error(err);
+                content.innerHTML = '<div class="p-4 text-danger text-center">Failed to load form.</div>';
+            });
     }
 });
 
@@ -2549,7 +2558,7 @@ async function addDomain() {
       // Hide modal using CoreUI API
       const modalEl = document.getElementById('addDomainModal');
       if (modalEl) {
-          const modal = coreui.Modal.getInstance(modalEl);
+          const modal = coreui.Modal.getInstance(modalEl) || coreui.Modal.getOrCreateInstance(modalEl);
           if (modal) {
               modal.hide();
           } else {
@@ -2666,24 +2675,22 @@ async function verifyDomain(domainId) {
   }
 }
 
-window.onPageLoad( function() {
-  const modal = document.getElementById('addDomainModal');
-  if (modal) {
-    modal.addEventListener('show.coreui.modal', function() {
-      const content = document.getElementById('addDomainModalContent');
-      if (!content || content.getAttribute('data-loaded') === 'true') return;
-      
-      fetch('/api/domain/add')
-        .then(res => res.text())
-        .then(html => {
-          content.innerHTML = html;
-          content.setAttribute('data-loaded', 'true');
-        })
-        .catch(err => {
-          console.error(err);
-          content.innerHTML = '<div class="p-4 text-danger text-center">Failed to load form.</div>';
-        });
-    });
+// Global Dynamic loader for Add Domain Modal (Works across HTMX swaps)
+document.addEventListener('show.coreui.modal', function(e) {
+  if (e.target && e.target.id === 'addDomainModal') {
+    const content = document.getElementById('addDomainModalContent');
+    if (!content || content.getAttribute('data-loaded') === 'true') return;
+    
+    fetch('/api/domain/add')
+      .then(res => res.text())
+      .then(html => {
+        content.innerHTML = html;
+        content.setAttribute('data-loaded', 'true');
+      })
+      .catch(err => {
+        console.error(err);
+        content.innerHTML = '<div class="p-4 text-danger text-center">Failed to load form.</div>';
+      });
   }
 });
 
@@ -8197,7 +8204,7 @@ try {
         var startY = cardRect.top + cardRect.height / 2 - 25;
         // Exact center of the bin's open mouth (canvas is 250px tall)
         var targetX = canvasRect.left + (canvasRect.width / 2) - 25;
-        var targetY = canvasRect.top + 58;
+        var targetY = canvasRect.top + 80;
         
         var dx = targetX - startX;
         var dy = targetY - startY;

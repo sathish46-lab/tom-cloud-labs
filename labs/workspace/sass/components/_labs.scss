@@ -1,0 +1,87 @@
+/* ==========================================================================
+   Labs Page Component & Modal Classes
+   ========================================================================== */
+.labs-page-title {
+  font-size: 1.8rem !important;
+  letter-spacing: -0.5px !important;
+}
+
+.labs-page-desc {
+  font-size: 0.85rem !important;
+  line-height: 1.7 !important;
+  letter-spacing: 0.2px !important;
+}
+
+.running-stat-wrapper {
+  min-width: 140px !important;
+}
+
+.running-stat-val {
+  font-size: 2.2rem !important;
+  line-height: 1 !important;
+}
+
+.running-stat-total {
+  font-size: 1.1rem !important;
+  font-weight: 500 !important;
+  margin-top: 8px !important;
+}
+
+.running-stat-progress {
+  height: 6px !important;
+  max-width: 120px !important;
+}
+
+.running-stat-label {
+  font-size: 9px !important;
+  letter-spacing: 0.8px !important;
+}
+
+/* Lab Card Styles */
+.lab-card-bg-icon {
+  z-index: 1 !important;
+}
+
+.lab-card-icon-lg {
+  font-size: 140px !important;
+  color: currentColor !important;
+}
+
+.lab-card-content {
+  z-index: 2 !important;
+}
+
+.lab-card-title {
+  color: var(--glass-text) !important;
+  letter-spacing: -0.2px !important;
+}
+
+.terminal-tooltip-title {
+  font-size: 10px !important;
+}
+
+.badge-lab-tag {
+  font-size: 9px !important;
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+}
+
+.badge-lab-status {
+  font-size: 10px !important;
+}
+
+/* Modals & JS Toggle Helpers */
+.modal-code-access {
+  background: rgba(15, 15, 20, 0.98) !important;
+  backdrop-filter: blur(20px) !important;
+}
+
+.modal-connection-info {
+  background: rgba(20, 20, 25, 0.95) !important;
+  backdrop-filter: blur(20px) !important;
+}
+
+/* Used for elements controlled by JS style.display - DO NOT add !important */
+.initially-hidden {
+  display: none;
+}

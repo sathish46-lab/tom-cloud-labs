@@ -103,16 +103,16 @@
             ?>
                 <div class="d-flex justify-content-center align-items-center vh-10 w-100">
                     <div class="card p-3 text-center shadow-lg border-0 rounded-4 bg-dark bg-opacity-25" 
-                        style="max-width: 400px; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1) !important;">
+                        class="empty-domains-card">
                         
                         <div class="mb-3 mx-auto">
                             <div class="empty-state-glow"></div>
-                            <i class='bx bx-globe text-white opacity-50' style="font-size: 3.5rem;"></i>
+                            <i class='bx bx-globe text-white opacity-50' ></i>
                         </div>
 
                         <h4 class="fw-bold text-white mb-3">No Domains Associated Yet</h4>
                         
-                        <p class="text-secondary mb-2 mx-auto small" style="line-height: 1.6; opacity: 0.8;">
+                        <p class="text-secondary mb-2 mx-auto small empty-domains-text">
                             Deploy this lab to see associated domains here. Once deployed, your domains will be automatically configured and displayed on this page.
                         </p>
 
@@ -160,34 +160,34 @@
                     $domainBadgeBg = $isCustom ? '#f59e0b' : '#22c55e';
                 ?>
                 <div class="col">
-                    <div class="card border-0 rounded-4 position-relative overflow-hidden" style="background: rgba(20, 20, 20, 0.8); border: 1px solid <?= $borderColor ?> !important; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+                    <div class="card border-0 rounded-4 position-relative overflow-hidden lab-domain-item-card" style="border: 1px solid <?= $borderColor ?> !important;">
                         <div class="px-3 py-2 d-flex align-items-center gap-2" style="background: <?= $headerBg ?>;">
                             <i class="bx <?= $headerIcon ?> text-white fs-6"></i>
                             <span class="text-white fw-bold small"><?= htmlspecialchars($usageLabel) ?></span>
                         </div>
                         
                         <div class="card-body p-3 d-flex flex-column">
-                            <h6 class="fw-bold mb-2" style="word-break: break-all;">
-                                <a href="https://<?= htmlspecialchars($dom) ?>" target="_blank" class="text-decoration-none" style="color: #a5b4fc; font-size: 1rem;">
+                            <h6 class="fw-bold mb-2 text-break">
+                                <a href="https://<?= htmlspecialchars($dom) ?>" target="_blank" class="text-decoration-none lab-domain-link">
                                     <?= htmlspecialchars($dom) ?>
                                 </a>
                             </h6>   
                             
                             <div class="d-flex flex-wrap gap-2 mb-2">
-                                <span class="badge rounded-pill" style="background: <?= $domainBadgeBg ?>; color: <?= $isCustom ? '#000' : '#fff' ?>; padding: 0.2rem 0.5rem; font-size: 0.65rem; letter-spacing: 0.5px;"><?= $domainBadge ?></span>
-                                <span class="badge rounded-pill" style="background: #06b6d4; color: #000; padding: 0.2rem 0.5rem; font-size: 0.65rem; letter-spacing: 0.5px;">verified</span>
-                                <span class="badge rounded-pill" style="background: #14b8a6; color: #000; padding: 0.2rem 0.5rem; font-size: 0.65rem; letter-spacing: 0.5px;">active</span>
+                                <span class="badge rounded-pill badge-domain-pill" style="background: <?= $domainBadgeBg ?>; color: <?= $isCustom ? '#000' : '#fff' ?>;"><?= $domainBadge ?></span>
+                                <span class="badge rounded-pill badge-cyan-pill">verified</span>
+                                <span class="badge rounded-pill badge-teal-pill">active</span>
                             </div>
 
                             <div class="mt-auto">
                                 <div class="mb-1">
-                                    <span class="small text-secondary fw-bold d-block" style="font-size: 0.7rem;">Service:</span>
-                                    <span class="small fw-bold" style="color: #06b6d4; font-size: 0.75rem;">TomCloudLab</span>
+                                    <span class="small text-secondary fw-bold d-block stat-label-mini">Service:</span>
+                                    <span class="small fw-bold stat-val-cyan">TomCloudLab</span>
                                 </div>
                                 <?php if ($isProxy && !empty($portStr)): ?>
                                 <div>
-                                    <span class="small text-secondary fw-bold d-block" style="font-size: 0.7rem;">Port:</span>
-                                    <span class="small fw-bold" style="color: #06b6d4; font-size: 0.75rem;"><?= htmlspecialchars($portStr) ?></span>
+                                    <span class="small text-secondary fw-bold d-block stat-label-mini">Port:</span>
+                                    <span class="small fw-bold stat-val-cyan"><?= htmlspecialchars($portStr) ?></span>
                                 </div>
                                 <?php endif; ?>
                             </div>
@@ -211,7 +211,7 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <h6 class="mb-2">Domain Types</h6>
-                                <ul class="list-unstyled mb-0" style="line-height: 1.6;">
+                                <ul class="list-unstyled mb-0 list-line-16">
                                     <li class="mb-1">
                                         <span class="badge bg-success-gradient me-2">Port 80 Public</span>
                                         <span class="small">Port 80/443 (Essentials lab)</span>
@@ -228,7 +228,7 @@
                             </div>
                             <div class="col-md-6">
                                 <h6 class="mb-2">How to Manage</h6>
-                                <ul class="small mb-0" style="line-height: 1.6;">
+                                <ul class="small mb-0 list-line-16">
                                     <li class="mb-1"><strong>Redeploy</strong> to change domains</li>
                                     <li class="mb-1">Tom Lab domains auto-configured with SSL</li>
                                     <li class="mb-1">Custom domains need DNS A record</li>

@@ -5,12 +5,12 @@
             <div class="d-flex align-items-center gap-4">
                 <!-- Avatar Section -->
                 <div class="position-relative flex-shrink-0">
-                    <div class="avatar" style="height: 5.5rem; width: 5.5rem">
-                        <div class="avatar-img d-flex align-items-center justify-content-center bg-dark bg-opacity-25 rounded-circle p-2" style="width: 100%; height: 100%;">
+                    <div class="avatar lab-header-avatar">
+                        <div class="avatar-img d-flex align-items-center justify-content-center bg-dark bg-opacity-25 rounded-circle p-2" >
                             <?php if (strpos($cfg['icon'], 'http') === 0): ?>
-                                <img src="<?= $cfg['icon'] ?>" style="width: 100%; height: 100%; object-fit: contain;">
+                                <img src="<?= $cfg['icon'] ?>" >
                             <?php else: ?>
-                                <i class="bx <?= $cfg['icon'] ?>" style="font-size: 3.8rem; color: var(--glass-text);"></i>
+                                <i class="bx <?= $cfg['icon'] ?>" ></i>
                             <?php endif; ?>
                         </div>
                         <span class="avatar-status <?= $isRunning ? 'bg-success' : 'bg-secondary' ?> border-dark ring-2 position-absolute bottom-0 end-0 mb-1 me-1 p-1"></span>
@@ -20,7 +20,7 @@
                 <!-- Info Section -->
                 <div class="d-flex flex-column gap-1">
                     <!-- Title -->
-                    <h3 class="fw-bold mb-0 ls-tight" style="color: var(--glass-text);"><?= $cfg['title'] ?></h3>
+                    <h3 class="fw-bold mb-0 ls-tight lab-header-title"><?= $cfg['title'] ?></h3>
                     
                     <!-- Meta Info (ID, Instance & Share Group) -->
                     <div class="d-flex flex-wrap align-items-center gap-2 small">
@@ -61,7 +61,7 @@
                     </div>
 
                     <!-- Description -->
-                    <p class=" small" style="max-width: 650px; line-height: 1.5; color: var(--glass-text-muted);">
+                    <p class="small lab-header-desc">
                         <?= $cfg['desc'] ?>
                     </p>
 
@@ -77,8 +77,7 @@
             <!-- Action Buttons -->
             <div class="btn-group shadow-sm rounded-pill overflow-hidden me-5" role="group">
                 <?php if($isRunning): ?>
-                    <button class="btn px-3 py-1.5 fw-bold hover-scale border-0 d-flex align-items-center gap-2" 
-                            style="background: #f36d1f; color: #fff;"
+                    <button class="btn px-3 py-1.5 fw-bold hover-scale border-0 d-flex align-items-center gap-2 btn-lab-launch"
                             onclick="launchService(this, '<?= $labType ?>')"
                             data-tooltip="Launch Cloud IDE / Code Server"
                             data-coreui-toggle="loading-button" data-coreui-spinner-type="grow">
@@ -87,8 +86,7 @@
                     </button>
                 <?php endif; ?>
                 
-                <button class="btn btn-success btn-redeploy-lab px-3 py-1.5 fw-bold hover-scale border-0 d-flex align-items-center gap-2" 
-                        style="background: #34d399; border: none; color: #000;"
+                <button class="btn btn-success btn-redeploy-lab px-3 py-1.5 fw-bold hover-scale border-0 d-flex align-items-center gap-2 btn-lab-deploy"
                         onclick="handleDeploy(this, '<?= $labType ?>')"
                         data-tooltip="<?= $isRunning ? 'Redeploy for a fresh instance' : 'Deploy this lab' ?>"
                         data-coreui-toggle="loading-button" data-coreui-spinner-type="grow">
@@ -97,12 +95,11 @@
                 </button>
 
                 <?php if($isRunning): ?>
-                    <button id="btn-stop-action" class="btn px-3 py-1.5 fw-bold hover-scale border-0 d-flex align-items-center gap-2" 
-                            style="background: #ef4444; color: #fff;"
+                    <button id="btn-stop-action" class="btn px-3 py-1.5 fw-bold hover-scale border-0 d-flex align-items-center gap-2 btn-lab-stop"
                             onclick="handleStop()"
                             data-tooltip="Stop Instance Immediately"
                             data-coreui-toggle="loading-button" data-coreui-spinner-type="grow">
-                        <i class='bx bx-stop-circle fs-6' style="filter: brightness(0) invert(1);"></i>
+                        <i class='bx bx-stop-circle fs-6' ></i>
                         <span class="small">Stop</span>
                     </button>
                 <?php endif; ?>

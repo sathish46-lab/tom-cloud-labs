@@ -628,7 +628,7 @@
         var startY = cardRect.top + cardRect.height / 2 - 25;
         // Exact center of the bin's open mouth (canvas is 250px tall)
         var targetX = canvasRect.left + (canvasRect.width / 2) - 25;
-        var targetY = canvasRect.top + 58;
+        var targetY = canvasRect.top + 80;
         
         var dx = targetX - startX;
         var dy = targetY - startY;

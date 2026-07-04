@@ -1,0 +1,37 @@
+/* ==========================================================================
+   Network Page & IP Reservation Card Classes
+   ========================================================================== */
+.network-header-title {
+  font-size: 1.8rem !important;
+  letter-spacing: -0.5px !important;
+}
+
+.network-header-desc {
+  font-size: 0.85rem !important;
+  line-height: 1.7 !important;
+  letter-spacing: 0.2px !important;
+}
+
+.ip-card-title {
+  color: var(--glass-text) !important;
+  font-size: 1.1rem !important;
+}
+
+.badge-ip-label {
+  background: var(--cui-secondary-bg, rgba(128, 128, 128, 0.1)) !important;
+  color: var(--cui-body-color, inherit) !important;
+  border-color: var(--cui-border-color, rgba(128, 128, 128, 0.2)) !important;
+  font-size: 10px !important;
+  padding: 4px 10px !important;
+  text-transform: capitalize !important;
+}
+
+.badge-ip-status {
+  font-size: 10px !important;
+  padding: 4px 10px !important;
+  text-transform: capitalize !important;
+}
+
+.btn-ip-action {
+  font-size: 0.75rem !important;
+}

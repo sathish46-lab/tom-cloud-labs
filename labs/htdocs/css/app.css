@@ -15872,7 +15872,13 @@ html.glass-mode .card,
 html.glass-mode .sidebar,
 html.glass-mode .header,
 html.glass-mode .footer,
-html.glass-mode .modal-content {
+html.glass-mode .modal-content,
+body.hwa-enabled .lab-header-section,
+body.hwa-enabled .card,
+body.hwa-enabled .sidebar,
+body.hwa-enabled .header,
+body.hwa-enabled .footer,
+body.hwa-enabled .modal-content {
   /* The Glass Effect: Strong frosted glass blur */
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
@@ -16996,6 +17002,16 @@ html.glass-mode .server-logs-panel {
   justify-content: center;
   animation: sessionFadeIn 0.4s ease-out;
 }
+body:has(#session-expired-overlay) {
+  overflow: hidden !important;
+}
+body:has(#session-expired-overlay) .sidebar,
+body:has(#session-expired-overlay) .header,
+body:has(#session-expired-overlay) .footer,
+body:has(#session-expired-overlay) .wrapper {
+  display: none !important;
+}
+
 #session-expired-overlay .popup-content {
   background: linear-gradient(145deg, #1a2c48, #0b1e36);
   border: 2px solid rgba(255, 165, 0, 0.4);
@@ -17149,15 +17165,31 @@ html.glass-mode .server-logs-panel {
 .mode-plain[data-coreui-theme=light] .sidebar-nav .nav-group-toggle::after {
   filter: invert(0.3);
 }
-.mode-plain[data-coreui-theme=dark] .card {
-  background: var(--cui-card-bg, rgba(255, 255, 255, 0.03)) !important;
-}
-:root:not(.glass-mode) .mode-plain[data-coreui-theme=dark] .card {
-  background: var(--cui-card-bg-solid, #0d121b) !important;
-}
-.mode-plain[data-coreui-theme=dark] .card {
+.mode-plain[data-coreui-theme=dark] .card,
+.mode-plain[data-coreui-theme=dark] .glass-card,
+.mode-plain[data-coreui-theme=dark] .lab-card-main {
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  box-shadow: rgba(0, 0, 0, 0.4) 0px 8px 24px, rgba(255, 255, 255, 0.03) 0px 0px 12px !important;
+  box-shadow: rgba(0, 0, 0, 0.4) 0px 12px 28px, rgba(255, 255, 255, 0.03) 0px 0px 16px !important;
+}
+:root.glass-mode .mode-plain[data-coreui-theme=dark] .card, body.hwa-enabled .mode-plain[data-coreui-theme=dark] .card,
+:root.glass-mode .mode-plain[data-coreui-theme=dark] .glass-card,
+body.hwa-enabled .mode-plain[data-coreui-theme=dark] .glass-card,
+:root.glass-mode .mode-plain[data-coreui-theme=dark] .lab-card-main,
+body.hwa-enabled .mode-plain[data-coreui-theme=dark] .lab-card-main {
+  background: rgba(0, 0, 0, 0.65) !important;
+  backdrop-filter: saturate(200%) blur(18px) !important;
+  -webkit-backdrop-filter: saturate(200%) blur(18px) !important;
+}
+:root:not(.glass-mode) .mode-plain[data-coreui-theme=dark] .card, body.hwa-disabled .mode-plain[data-coreui-theme=dark] .card,
+:root:not(.glass-mode) .mode-plain[data-coreui-theme=dark] .glass-card,
+body.hwa-disabled .mode-plain[data-coreui-theme=dark] .glass-card,
+:root:not(.glass-mode) .mode-plain[data-coreui-theme=dark] .lab-card-main,
+body.hwa-disabled .mode-plain[data-coreui-theme=dark] .lab-card-main {
+  background: var(--cui-card-bg-solid, #0d121b) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: rgba(0, 0, 0, 0.45) 0px 12px 28px, inset 0 0 0 1px rgba(255, 255, 255, 0.04) !important;
 }
 .mode-plain[data-coreui-theme=dark] .sidebar {
   border-right: 1px solid rgba(255, 255, 255, 0.04);
@@ -17165,13 +17197,8 @@ html.glass-mode .server-logs-panel {
 .mode-plain[data-coreui-theme=dark] .header {
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
-:root.glass-mode .mode-plain[data-coreui-theme=dark] .header {
+:root.glass-mode .mode-plain[data-coreui-theme=dark] .header, body.hwa-enabled .mode-plain[data-coreui-theme=dark] .header {
   backdrop-filter: blur(12px);
-}
-.mode-plain[data-coreui-theme=dark] .lab-card-main {
-  background: var(--cui-card-bg-solid, rgba(0, 0, 0, 0.4)) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow: rgba(0, 0, 0, 0.4) 0px 12px 28px, rgba(255, 255, 255, 0.03) 0px 0px 16px !important;
 }
 
 .home-grid-container {
@@ -17913,6 +17940,9 @@ html[data-coreui-theme=light] .continue-tab-switcher-container {
   font-weight: 600 !important;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
+.continue-tab-btn i {
+  font-size: 0.9rem !important;
+}
 .continue-tab-btn.active {
   font-weight: 700 !important;
   background: var(--tab-btn-active-bg) !important;
@@ -17954,7 +17984,29 @@ html[data-coreui-theme=light] .continue-activity-card:hover {
   border-color: rgba(0, 0, 0, 0.1) !important;
   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.04) !important;
 }
+.continue-activity-card {
+  border-radius: 16px !important;
+}
+.continue-activity-card .activity-icon-circle {
+  width: 36px;
+  height: 36px;
+}
+.continue-activity-card .activity-icon-circle i {
+  font-size: 1.1rem !important;
+}
+.continue-activity-card .activity-title {
+  font-size: 0.78rem !important;
+}
+.continue-activity-card .activity-meta, .continue-activity-card .activity-progress-meta {
+  font-size: 0.65rem !important;
+}
+.continue-activity-card .activity-tag {
+  font-size: 0.58rem !important;
+  padding: 2px 5px !important;
+}
 .continue-activity-card .progress {
+  height: 3px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
   overflow: visible;
 }
 .continue-activity-card .progress .progress-bar {
@@ -17963,7 +18015,7 @@ html[data-coreui-theme=light] .continue-activity-card:hover {
 }
 
 /* Inner active lab cards styling with high contrast in both dark and light modes */
-.active-lab-item-card {
+.active-lab-item-card, .challenge-item-card {
   --lab-card-bg: rgba(255, 255, 255, 0.035);
   --lab-card-border: rgba(255, 255, 255, 0.08);
   --lab-card-text: #ffffff;
@@ -17973,40 +18025,40 @@ html[data-coreui-theme=light] .continue-activity-card:hover {
   border-radius: 12px;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
-.active-lab-item-card:hover {
+.active-lab-item-card:hover, .challenge-item-card:hover {
   transform: translateY(-2px);
   background: rgba(255, 255, 255, 0.07) !important;
   border-color: rgba(255, 255, 255, 0.15) !important;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
 }
 
-html[data-coreui-theme=light] .active-lab-item-card {
+html[data-coreui-theme=light] .active-lab-item-card, html[data-coreui-theme=light] .challenge-item-card {
   --lab-card-bg: rgba(0, 0, 0, 0.03);
   --lab-card-border: rgba(0, 0, 0, 0.08);
   --lab-card-text: #2f3542;
   --lab-card-text-muted: rgba(47, 53, 66, 0.6);
 }
-html[data-coreui-theme=light] .active-lab-item-card:hover {
+html[data-coreui-theme=light] .active-lab-item-card:hover, html[data-coreui-theme=light] .challenge-item-card:hover {
   background: rgba(0, 0, 0, 0.05) !important;
   border-color: rgba(0, 0, 0, 0.12) !important;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
 }
 
 /* Override inline text and labels in light mode for readability */
-.active-lab-item-card span.text-white:not(.badge) {
+.active-lab-item-card span.text-white:not(.badge), .challenge-item-card span.text-white:not(.badge) {
   color: var(--lab-card-text) !important;
 }
 
-.active-lab-item-card div.text-white {
+.active-lab-item-card div.text-white, .challenge-item-card div.text-white {
   color: var(--lab-card-text) !important;
 }
 
-.active-lab-item-card div.text-opacity-40 {
+.active-lab-item-card div.text-opacity-40, .challenge-item-card div.text-opacity-40 {
   opacity: 1 !important;
   color: var(--lab-card-text-muted) !important;
 }
 
-.active-lab-item-card p.text-white-50 {
+.active-lab-item-card p.text-white-50, .challenge-item-card p.text-white-50 {
   color: var(--lab-card-text-muted) !important;
   opacity: 1 !important;
 }
@@ -18070,6 +18122,512 @@ html[data-coreui-theme=light] .active-lab-item-card:hover {
 
 :root.glass-mode .card.glass-card.domain-card {
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+/* ==========================================================================
+   Dashboard Micro-Typography & Utility Classes (Refactoring Inline Styles)
+   ========================================================================== */
+.fs-7 {
+  font-size: 0.78rem !important;
+}
+
+.fs-8 {
+  font-size: 0.72rem !important;
+}
+
+.fs-9 {
+  font-size: 0.65rem !important;
+}
+
+.fs-10 {
+  font-size: 0.58rem !important;
+}
+
+.fs-11 {
+  font-size: 0.55rem !important;
+}
+
+.bg-purple {
+  background-color: #6f32cf !important;
+}
+
+.text-purple {
+  color: #b53bf6 !important;
+}
+
+.border-purple {
+  border-color: #a55eea !important;
+}
+
+/* Profile Banner & Top Section */
+.profile-banner-card .avatar-img {
+  width: 58px;
+  height: 58px;
+  object-fit: cover;
+}
+.profile-banner-card .online-dot {
+  width: 12px;
+  height: 12px;
+  transform: translate(1px, 1px);
+}
+.profile-banner-card .greeting-title {
+  letter-spacing: -0.3px;
+  font-size: 1.05rem;
+}
+.profile-banner-card .greeting-sub {
+  font-size: 0.78rem;
+}
+.profile-banner-card .profile-link-btn {
+  font-size: 0.75rem;
+  backdrop-filter: blur(10px);
+}
+.profile-banner-card .stats-row .stat-val {
+  letter-spacing: -0.5px;
+  font-family: sans-serif;
+}
+.profile-banner-card .stats-row .stat-lbl {
+  font-size: 0.76rem;
+}
+.profile-banner-card .stats-row i {
+  font-size: 1.25rem;
+}
+.profile-banner-card .pills-row .badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.profile-banner-card .nav-actions-row .btn {
+  font-size: 0.72rem;
+  border: none !important;
+}
+
+/* Clan Card */
+.clan-card {
+  border-radius: 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.8) 100%), url("/assets/Background_Img/clan_zero_byte.png") no-repeat center !important;
+  background-size: cover !important;
+}
+.clan-card .clan-logo-circle {
+  width: 52px;
+  height: 52px;
+  border-color: #00d2d3 !important;
+  border-width: 2px !important;
+  box-shadow: 0 0 15px rgba(0, 210, 211, 0.6) !important;
+}
+.clan-card .clan-logo-circle span {
+  font-size: 1.15rem;
+  letter-spacing: -1px;
+  font-family: sans-serif;
+  text-shadow: 0 0 8px rgba(0, 210, 211, 0.5);
+}
+.clan-card .clan-title {
+  letter-spacing: -0.5px;
+  font-size: 1.1rem;
+}
+.clan-card .clan-handle {
+  font-size: 0.75rem;
+}
+.clan-card .clan-stats-grid {
+  padding: 12px 16px !important;
+}
+.clan-card .clan-stats-grid .stat-val {
+  font-size: 0.8rem;
+  font-family: sans-serif;
+}
+.clan-card .clan-stats-grid .stat-val i {
+  font-size: 0.85rem;
+}
+.clan-card .clan-stats-grid .stat-lbl {
+  font-size: 0.58rem;
+  font-weight: 500;
+}
+.clan-card .clan-action-btn {
+  background-color: #6f32cf !important;
+  color: #ffffff !important;
+  font-size: 0.78rem;
+}
+
+/* Device & Domain Setup Cards */
+.device-card .card-header-title, .domain-card .card-header-title {
+  letter-spacing: -0.3px;
+  font-size: 1.05rem;
+}
+.device-card .card-header-title i, .domain-card .card-header-title i {
+  font-size: 0.9rem;
+}
+.device-card .card-header-sub, .domain-card .card-header-sub {
+  font-size: 0.85rem;
+}
+.device-card .card-header-count, .domain-card .card-header-count {
+  font-size: 0.75rem;
+}
+.device-card .device-list, .device-card .domain-list, .domain-card .device-list, .domain-card .domain-list {
+  max-height: 155px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.continue-learning-card .card-header-title {
+  font-size: 1.15rem !important;
+  letter-spacing: -0.5px !important;
+}
+.continue-learning-card .card-header-sub {
+  font-size: 0.72rem !important;
+}
+
+.active-lab-item-card .server-icon-circle, .challenge-item-card .server-icon-circle {
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15) !important;
+}
+.active-lab-item-card .server-icon-circle i, .challenge-item-card .server-icon-circle i {
+  font-size: 1.15rem;
+}
+.active-lab-item-card .server-title, .challenge-item-card .server-title {
+  font-size: 0.85rem !important;
+  letter-spacing: -0.2px;
+}
+.active-lab-item-card .server-status, .challenge-item-card .server-status {
+  font-size: 0.6rem !important;
+  letter-spacing: 0.5px;
+}
+.active-lab-item-card .server-ip, .challenge-item-card .server-ip {
+  font-size: 0.88rem !important;
+  letter-spacing: 0.5px;
+}
+.active-lab-item-card .server-ip-lbl, .challenge-item-card .server-ip-lbl {
+  font-size: 0.55rem !important;
+  letter-spacing: 0.5px;
+}
+.active-lab-item-card .btn-copy i, .challenge-item-card .btn-copy i {
+  font-size: 0.9rem;
+}
+
+.active-domain-item-card {
+  gap: 8px !important;
+}
+.active-domain-item-card .domain-icon-circle {
+  width: 28px;
+  height: 28px;
+  background: rgba(46, 134, 222, 0.12) !important;
+  border: 1px solid rgba(46, 134, 222, 0.25) !important;
+}
+.active-domain-item-card .domain-icon-circle i {
+  font-size: 0.85rem;
+  color: #2e86de !important;
+}
+.active-domain-item-card .domain-scroll-wrap {
+  flex: 1;
+  overflow: hidden;
+}
+.active-domain-item-card .domain-scroll-wrap .domain-name-scroll {
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.active-domain-item-card .domain-scroll-wrap .domain-name-scroll h6 {
+  font-size: 0.75rem !important;
+  letter-spacing: -0.2px;
+  display: inline;
+}
+.active-domain-item-card .domain-type-badge {
+  color: #2e86de !important;
+  font-size: 0.55rem !important;
+  letter-spacing: 0.5px;
+}
+.active-domain-item-card .domain-ip {
+  font-size: 0.78rem !important;
+  letter-spacing: 0.3px;
+}
+.active-domain-item-card .domain-ip-lbl {
+  font-size: 0.5rem !important;
+  letter-spacing: 0.5px;
+}
+
+/* ==========================================================================
+   Refactored CoreUI & Component Helper Classes (Machine Labs, Challenges, Recommended, Sidebar)
+   ========================================================================== */
+.card-title-md {
+  font-size: 0.95rem !important;
+}
+
+.min-h-220 {
+  min-height: 220px !important;
+}
+
+.min-w-0 {
+  min-width: 0 !important;
+}
+
+.badge-live {
+  font-size: 0.55rem !important;
+  letter-spacing: 0.5px !important;
+  padding: 0.15rem 0.5rem !important;
+}
+
+.labs-scroll-container {
+  max-height: 220px !important;
+  overflow-y: auto !important;
+}
+
+.challenge-scroll-container {
+  max-height: 380px !important;
+  overflow-y: auto !important;
+  padding-right: 4px !important;
+}
+
+.active-lab-item-card, .challenge-item-card {
+  backdrop-filter: blur(6px) !important;
+}
+.active-lab-item-card .lab-icon-circle, .challenge-item-card .lab-icon-circle {
+  width: 32px !important;
+  height: 32px !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15) !important;
+}
+.active-lab-item-card .lab-icon-circle i, .challenge-item-card .lab-icon-circle i {
+  font-size: 1.1rem !important;
+}
+.active-lab-item-card .lab-title, .challenge-item-card .lab-title {
+  font-size: 0.76rem !important;
+  letter-spacing: -0.15px !important;
+  line-height: 1.2 !important;
+}
+.active-lab-item-card .badge-beta, .challenge-item-card .badge-beta {
+  font-size: 0.38rem !important;
+  padding: 1px 4.5px !important;
+  background-color: #a55eea !important;
+  border: 0 !important;
+  line-height: 1 !important;
+  text-transform: none !important;
+}
+.active-lab-item-card .badge-status, .challenge-item-card .badge-status {
+  font-size: 0.38rem !important;
+  padding: 1px 4.5px !important;
+  background-color: #2ed573 !important;
+  border: 0 !important;
+  color: #000 !important;
+  line-height: 1 !important;
+  text-transform: none !important;
+}
+.active-lab-item-card .stat-col-cpu, .challenge-item-card .stat-col-cpu {
+  min-width: 34px !important;
+}
+.active-lab-item-card .stat-col-mem, .challenge-item-card .stat-col-mem {
+  min-width: 46px !important;
+}
+.active-lab-item-card .stat-col-load, .challenge-item-card .stat-col-load {
+  min-width: 68px !important;
+}
+.active-lab-item-card .stat-val, .challenge-item-card .stat-val {
+  font-size: 0.65rem !important;
+  line-height: 1.1 !important;
+  letter-spacing: -0.1px !important;
+}
+.active-lab-item-card .stat-lbl, .challenge-item-card .stat-lbl {
+  font-size: 0.46rem !important;
+  letter-spacing: 0.2px !important;
+  margin-top: 1px !important;
+}
+.active-lab-item-card .btn-lab-action, .challenge-item-card .btn-lab-action {
+  padding: 3px 9px !important;
+  border: 0 !important;
+  font-size: 0.58rem !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  text-transform: none !important;
+}
+.active-lab-item-card .btn-lab-action i, .challenge-item-card .btn-lab-action i {
+  font-size: 0.72rem !important;
+}
+.active-lab-item-card .btn-lab-dashboard, .challenge-item-card .btn-lab-dashboard {
+  background-color: #2ed573 !important;
+  color: #000 !important;
+}
+.active-lab-item-card .btn-lab-code, .challenge-item-card .btn-lab-code {
+  background-color: #ffa502 !important;
+  color: #000 !important;
+}
+.active-lab-item-card .btn-lab-info, .challenge-item-card .btn-lab-info {
+  width: 18px !important;
+  height: 18px !important;
+  padding: 0 !important;
+  background-color: #2e86de !important;
+  color: #fff !important;
+}
+.active-lab-item-card .btn-lab-info i, .challenge-item-card .btn-lab-info i {
+  font-size: 0.72rem !important;
+}
+
+/* Challenge Labs Item Card */
+.challenge-item-card {
+  border-radius: 50px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  padding-right: 8px !important;
+}
+.challenge-item-card .challenge-img-circle {
+  width: 36px !important;
+  height: 36px !important;
+  border: 2px solid rgba(255, 255, 255, 0.1) !important;
+}
+.challenge-item-card .challenge-title {
+  font-size: 0.72rem !important;
+  letter-spacing: -0.15px !important;
+  line-height: 1.15 !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+.challenge-item-card .challenge-badge-diff {
+  font-size: 0.45rem !important;
+  padding: 2px 5px !important;
+  color: #fff !important;
+  line-height: 1 !important;
+  text-transform: lowercase !important;
+  letter-spacing: 0.2px !important;
+}
+.challenge-item-card .challenge-badge-status {
+  font-size: 0.45rem !important;
+  padding: 2px 5px !important;
+  background-color: #2ed573 !important;
+  color: #fff !important;
+  line-height: 1 !important;
+  text-transform: lowercase !important;
+  letter-spacing: 0.2px !important;
+}
+.challenge-item-card .btn-challenge-action {
+  width: 30px !important;
+  height: 30px !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
+.challenge-item-card .btn-challenge-action i {
+  font-size: 1.1rem !important;
+}
+.challenge-item-card .btn-challenge-dash {
+  background-color: #2ed573 !important;
+  color: #1e272e !important;
+}
+.challenge-item-card .btn-challenge-target {
+  background-color: #a55eea !important;
+  color: #fff !important;
+}
+.challenge-item-card .btn-challenge-trophy {
+  background-color: #0abde3 !important;
+  color: #1e272e !important;
+}
+
+.challenge-empty-state {
+  font-size: 0.78rem !important;
+}
+
+.btn-deploy-challenge {
+  font-size: 0.72rem !important;
+  color: #a55eea !important;
+  border-color: rgba(165, 94, 234, 0.3) !important;
+  background: rgba(165, 94, 234, 0.05) !important;
+  width: 100% !important;
+  letter-spacing: 0.3px !important;
+}
+
+/* Recommended Section Cards */
+.badge-purple-subtle {
+  background-color: rgba(111, 50, 207, 0.1) !important;
+  color: #a55eea !important;
+  border-color: rgba(165, 94, 234, 0.2) !important;
+}
+
+.badge-blue-subtle {
+  background-color: rgba(46, 134, 222, 0.1) !important;
+  color: #2e86de !important;
+  border-color: rgba(46, 134, 222, 0.2) !important;
+}
+
+.continue-activity-card .activity-icon-circle {
+  width: 36px !important;
+  height: 36px !important;
+}
+.continue-activity-card .activity-badge {
+  font-size: 0.58rem !important;
+  padding: 2.5px 6px !important;
+}
+.continue-activity-card .activity-title {
+  line-height: 1.35 !important;
+  min-height: 38px !important;
+  font-size: 0.78rem !important;
+}
+.continue-activity-card .activity-sub {
+  font-size: 0.65rem !important;
+}
+
+/* Right Sidebar Components */
+.sidebar-box-title {
+  font-size: 0.9rem !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
+}
+
+.recent-activity-item .activity-dot {
+  width: 28px !important;
+  height: 28px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+.recent-activity-item .activity-dot i {
+  font-size: 0.85rem !important;
+}
+.recent-activity-item .activity-text {
+  line-height: 1.35 !important;
+}
+.recent-activity-item .activity-time {
+  font-size: 0.7rem !important;
+}
+
+#smart-insights-card .insights-title, .smart-insights-card .insights-title {
+  font-size: 0.95rem !important;
+  letter-spacing: 0.3px !important;
+}
+#smart-insights-card .insights-subtitle, .smart-insights-card .insights-subtitle {
+  font-size: 0.78rem !important;
+}
+#smart-insights-card .insights-peak, .smart-insights-card .insights-peak {
+  font-size: 1.5rem !important;
+  letter-spacing: -0.5px !important;
+}
+#smart-insights-card .insights-chart, .smart-insights-card .insights-chart {
+  height: 48px !important;
+  gap: 1.5px !important;
+  padding-bottom: 0 !important;
+}
+#smart-insights-card .insights-bar, .smart-insights-card .insights-bar {
+  flex: 1 !important;
+  min-width: 0 !important;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px 2px 0 0 !important;
+  transition: height 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), background 0.3s ease, box-shadow 0.3s ease;
+}
+#smart-insights-card .insights-labels, .smart-insights-card .insights-labels {
+  height: 16px !important;
+  font-size: 0.62rem !important;
+  color: rgba(255, 255, 255, 0.35) !important;
+  font-style: italic !important;
+  font-weight: 500 !important;
+}
+#smart-insights-card .insights-footer-text, .smart-insights-card .insights-footer-text {
+  font-size: 0.68rem !important;
+  color: rgba(255, 255, 255, 0.35) !important;
+}
+
+/* Modals */
+.glass-modal-content {
+  backdrop-filter: blur(20px) !important;
 }
 
 /* Sidebar Layout Fix: Ensure Footer and Stats stay at bottom */
@@ -18330,6 +18888,664 @@ html.glass-mode[data-coreui-theme=light] .sidebar-inner-layer {
 }
 .card-entrance {
   animation: flipInCard 0.5s cubic-bezier(0.4, 0, 0.2, 1) backwards;
+}
+
+/* ==========================================================================
+   Devices Page & Device Card Helper Classes
+   ========================================================================== */
+.devices-header-title {
+  font-size: 1.8rem !important;
+  letter-spacing: -0.5px !important;
+}
+
+.devices-header-desc {
+  font-size: 0.85rem !important;
+  line-height: 1.7 !important;
+  letter-spacing: 0.2px !important;
+}
+.devices-header-desc a {
+  text-decoration: none !important;
+}
+
+.btn-add-device {
+  font-size: 0.8rem !important;
+  height: 38px !important;
+  white-space: nowrap !important;
+}
+
+.spinner-loader-icon {
+  font-size: 3rem !important;
+}
+
+.loading-form-text {
+  font-size: 0.8rem !important;
+}
+
+.glass-modal-content {
+  backdrop-filter: blur(15px) !important;
+}
+
+.modal-title-delete {
+  color: var(--glass-text) !important;
+  letter-spacing: -0.5px !important;
+  font-size: 1.5rem !important;
+}
+
+.border-translucent {
+  border-color: var(--cui-border-color-translucent) !important;
+}
+
+.modal-body-desc {
+  color: var(--glass-text) !important;
+  font-size: 0.95rem !important;
+  line-height: 1.6 !important;
+}
+
+.modal-body-ip {
+  color: var(--glass-text) !important;
+  font-size: 0.95rem !important;
+}
+
+.btn-modal-cancel {
+  background: var(--cui-secondary-bg) !important;
+  color: var(--glass-text) !important;
+  font-size: 0.9rem !important;
+}
+
+.btn-modal-delete {
+  background: #e63946 !important;
+  font-size: 0.9rem !important;
+  box-shadow: 0 4px 15px rgba(230, 57, 70, 0.3) !important;
+}
+
+/* Device Card Partial Styles */
+.device-row .device-card-title {
+  text-transform: none !important;
+  color: var(--glass-text) !important;
+  font-size: 1.15rem !important;
+  letter-spacing: -0.3px !important;
+}
+.device-row .action-dots {
+  width: 32px !important;
+  height: 32px !important;
+  transition: all 0.2s !important;
+  background: none !important;
+  border: none !important;
+}
+.device-row .action-dots i {
+  color: var(--glass-icon) !important;
+}
+.device-row .dropdown-menu {
+  min-width: 10rem !important;
+  border-radius: 12px !important;
+  padding: 8px !important;
+  background: var(--cui-dropdown-bg) !important;
+  backdrop-filter: blur(10px) !important;
+}
+.device-row .dropdown-menu .dropdown-item {
+  font-size: 0.75rem !important;
+}
+.device-row .badge {
+  font-size: 8px !important;
+  padding: 2px 6px !important;
+  text-transform: capitalize !important;
+}
+.device-row .stats-area {
+  font-size: 0.75rem !important;
+}
+.device-row .stats-area span:first-child {
+  color: var(--glass-text-muted) !important;
+}
+.device-row .stats-area .theme-text {
+  color: var(--glass-text) !important;
+}
+
+/* ==========================================================================
+   Network Page & IP Reservation Card Classes
+   ========================================================================== */
+.network-header-title {
+  font-size: 1.8rem !important;
+  letter-spacing: -0.5px !important;
+}
+
+.network-header-desc {
+  font-size: 0.85rem !important;
+  line-height: 1.7 !important;
+  letter-spacing: 0.2px !important;
+}
+
+.ip-card-title {
+  color: var(--glass-text) !important;
+  font-size: 1.1rem !important;
+}
+
+.badge-ip-label {
+  background: var(--cui-secondary-bg, rgba(128, 128, 128, 0.1)) !important;
+  color: var(--cui-body-color, inherit) !important;
+  border-color: var(--cui-border-color, rgba(128, 128, 128, 0.2)) !important;
+  font-size: 10px !important;
+  padding: 4px 10px !important;
+  text-transform: capitalize !important;
+}
+
+.badge-ip-status {
+  font-size: 10px !important;
+  padding: 4px 10px !important;
+  text-transform: capitalize !important;
+}
+
+.btn-ip-action {
+  font-size: 0.75rem !important;
+}
+
+/* ==========================================================================
+   Domains Page & Domain Card Helper Classes
+   ========================================================================== */
+.domains-header-title {
+  font-size: 1.8rem !important;
+  letter-spacing: -0.5px !important;
+}
+
+.domains-header-desc {
+  font-size: 0.85rem !important;
+  line-height: 1.7 !important;
+  letter-spacing: 0.2px !important;
+}
+
+.btn-add-domain {
+  font-size: 0.8rem !important;
+  height: 38px !important;
+  white-space: nowrap !important;
+}
+
+.domains-limit-text {
+  font-size: 0.85rem !important;
+}
+
+/* Domain Card Partial Styles */
+.domain-card-wrapper .domain-card-title {
+  text-transform: none !important;
+  color: var(--glass-text) !important;
+  font-size: 1.15rem !important;
+  letter-spacing: -0.3px !important;
+}
+.domain-card-wrapper .badge-domain-type {
+  font-size: 0.65rem !important;
+  padding: 3px 8px !important;
+}
+.domain-card-wrapper .action-dots {
+  width: 32px !important;
+  height: 32px !important;
+  transition: all 0.2s !important;
+  background: none !important;
+  border: none !important;
+}
+.domain-card-wrapper .action-dots i {
+  color: var(--glass-icon) !important;
+}
+.domain-card-wrapper .dropdown-menu {
+  min-width: 10rem !important;
+  border-radius: 12px !important;
+  padding: 8px !important;
+  background: var(--cui-dropdown-bg) !important;
+  backdrop-filter: blur(10px) !important;
+}
+.domain-card-wrapper .dropdown-menu .dropdown-item {
+  font-size: 0.75rem !important;
+}
+.domain-card-wrapper .badge:not(.badge-domain-type) {
+  font-size: 8px !important;
+  padding: 2px 6px !important;
+}
+.domain-card-wrapper .badge-status-pill {
+  font-size: 8px !important;
+  padding: 2px 6px !important;
+  transition: all 0.2s !important;
+}
+.domain-card-wrapper .domain-details-area {
+  font-size: 0.8rem !important;
+  line-height: 1.2 !important;
+  color: var(--glass-text) !important;
+}
+.domain-card-wrapper .domain-details-area b {
+  color: var(--glass-text-muted) !important;
+  font-weight: 600 !important;
+}
+.domain-card-wrapper .domain-details-area .domain-name-val {
+  color: #3498db !important;
+}
+
+/* ==========================================================================
+   Labs Page Component & Modal Classes
+   ========================================================================== */
+.labs-page-title {
+  font-size: 1.8rem !important;
+  letter-spacing: -0.5px !important;
+}
+
+.labs-page-desc {
+  font-size: 0.85rem !important;
+  line-height: 1.7 !important;
+  letter-spacing: 0.2px !important;
+}
+
+.running-stat-wrapper {
+  min-width: 140px !important;
+}
+
+.running-stat-val {
+  font-size: 2.2rem !important;
+  line-height: 1 !important;
+}
+
+.running-stat-total {
+  font-size: 1.1rem !important;
+  font-weight: 500 !important;
+  margin-top: 8px !important;
+}
+
+.running-stat-progress {
+  height: 6px !important;
+  max-width: 120px !important;
+}
+
+.running-stat-label {
+  font-size: 9px !important;
+  letter-spacing: 0.8px !important;
+}
+
+/* Lab Card Styles */
+.lab-card-bg-icon {
+  z-index: 1 !important;
+}
+
+.lab-card-icon-lg {
+  font-size: 140px !important;
+  color: currentColor !important;
+}
+
+.lab-card-content {
+  z-index: 2 !important;
+}
+
+.lab-card-title {
+  color: var(--glass-text) !important;
+  letter-spacing: -0.2px !important;
+}
+
+.terminal-tooltip-title {
+  font-size: 10px !important;
+}
+
+.badge-lab-tag {
+  font-size: 9px !important;
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+}
+
+.badge-lab-status {
+  font-size: 10px !important;
+}
+
+/* Modals & JS Toggle Helpers */
+.modal-code-access {
+  background: rgba(15, 15, 20, 0.98) !important;
+  backdrop-filter: blur(20px) !important;
+}
+
+.modal-connection-info {
+  background: rgba(20, 20, 25, 0.95) !important;
+  backdrop-filter: blur(20px) !important;
+}
+
+/* Used for elements controlled by JS style.display - DO NOT add !important */
+.initially-hidden {
+  display: none;
+}
+
+/* ==========================================================================
+   Lab Details & Partials Helper Classes (pages/labs/*)
+   ========================================================================== */
+/* 1. Lab Header Partials */
+.lab-header-avatar {
+  height: 5.5rem !important;
+  width: 5.5rem !important;
+}
+.lab-header-avatar .avatar-img {
+  width: 100% !important;
+  height: 100% !important;
+}
+.lab-header-avatar img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+}
+.lab-header-avatar i {
+  font-size: 3.8rem !important;
+  color: var(--glass-text) !important;
+}
+
+.lab-header-title {
+  color: var(--glass-text) !important;
+}
+
+.lab-header-desc {
+  max-width: 650px !important;
+  line-height: 1.5 !important;
+  color: var(--glass-text-muted) !important;
+}
+
+.btn-lab-launch {
+  background: #f36d1f !important;
+  color: #fff !important;
+}
+
+.btn-lab-deploy {
+  background: #34d399 !important;
+  border: none !important;
+  color: #000 !important;
+}
+
+.btn-lab-stop {
+  background: #ef4444 !important;
+  color: #fff !important;
+}
+.btn-lab-stop i {
+  filter: brightness(0) invert(1) !important;
+}
+
+/* 2. Server Logs Partial */
+.logs-header-clickable {
+  cursor: pointer !important;
+}
+
+.server-logs-panel #mq-status-dot {
+  font-size: 8px !important;
+}
+.server-logs-panel .terminal-info-wrapper i {
+  font-size: 14px !important;
+}
+.server-logs-panel .server-logs-chevron {
+  font-size: 18px !important;
+}
+.server-logs-panel .logs-body {
+  overflow-y: auto !important;
+  transition: height 0.3s ease !important;
+}
+
+/* 3. Lab Dashboard Tab */
+.card-theme-bg {
+  background-color: var(--cui-card-bg) !important;
+}
+
+.input-readonly-opacity {
+  opacity: 0.85 !important;
+}
+
+.badge-offline-pill {
+  font-size: 0.6rem !important;
+}
+
+.chart-container-40 {
+  height: 40px !important;
+}
+
+.chart-container-35 {
+  height: 35px !important;
+}
+
+.stat-progress-bar {
+  height: 4px !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.stat-label-micro {
+  font-size: 9px !important;
+}
+
+.stat-desc-wrap {
+  word-break: break-word !important;
+  line-height: 1.4 !important;
+  opacity: 0.85 !important;
+  min-width: 0 !important;
+}
+
+/* 4. Lab Domains Tab */
+.empty-domains-card {
+  max-width: 400px !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.empty-domains-icon {
+  font-size: 3.5rem !important;
+}
+
+.empty-domains-text {
+  line-height: 1.6 !important;
+  opacity: 0.8 !important;
+}
+
+.lab-domain-item-card {
+  background: rgba(20, 20, 20, 0.8) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
+}
+
+.lab-domain-link {
+  color: #a5b4fc !important;
+  font-size: 1rem !important;
+}
+
+.badge-domain-pill {
+  padding: 0.2rem 0.5rem !important;
+  font-size: 0.65rem !important;
+  letter-spacing: 0.5px !important;
+}
+
+.badge-cyan-pill {
+  background: #06b6d4 !important;
+  color: #000 !important;
+  padding: 0.2rem 0.5rem !important;
+  font-size: 0.65rem !important;
+  letter-spacing: 0.5px !important;
+}
+
+.badge-teal-pill {
+  background: #14b8a6 !important;
+  color: #000 !important;
+  padding: 0.2rem 0.5rem !important;
+  font-size: 0.65rem !important;
+  letter-spacing: 0.5px !important;
+}
+
+.stat-label-mini {
+  font-size: 0.7rem !important;
+}
+
+.stat-val-cyan {
+  color: #06b6d4 !important;
+  font-size: 0.75rem !important;
+}
+
+.list-line-16 {
+  line-height: 1.6 !important;
+}
+
+/* 5. Lab Preferences Tab */
+.pref-icon-link {
+  width: 32px !important;
+  height: 32px !important;
+  text-decoration: none !important;
+}
+
+.pref-vr-line {
+  height: 18px !important;
+}
+
+.pref-warning-box {
+  background-color: rgba(255, 193, 7, 0.1) !important;
+  border-color: rgba(255, 193, 7, 0.3) !important;
+}
+
+.pref-warning-text {
+  line-height: 1.5 !important;
+}
+
+.pref-card-full {
+  height: calc(100% - 1.5rem) !important;
+}
+
+.pref-checkbox-lg {
+  transform: scale(1.1) !important;
+  margin-right: 8px !important;
+}
+
+.text-cyan {
+  color: cyan !important;
+}
+
+/* 6. Lab Modals */
+.btn-modal-green {
+  background-color: #2ecc71 !important;
+  border: none !important;
+}
+
+.btn-modal-gray {
+  background-color: #4b5563 !important;
+  border: none !important;
+}
+
+.btn-modal-blue {
+  background-color: #00a6e0 !important;
+  border: none !important;
+}
+
+.modal-section-title {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 1px !important;
+  color: var(--bs-secondary) !important;
+}
+
+.domain-search-container {
+  min-height: 80px !important;
+  cursor: text !important;
+}
+
+.domain-display-contents {
+  display: contents !important;
+}
+
+.domain-input-field {
+  outline: none !important;
+  line-height: 1.5 !important;
+  min-width: 150px !important;
+}
+
+.cursor-pointer {
+  cursor: pointer !important;
+}
+
+.domain-dropdown-menu {
+  max-height: 250px !important;
+  overflow-y: auto !important;
+  position: absolute !important;
+  z-index: 1050 !important;
+  width: calc(100% - 24px) !important;
+  left: 12px !important;
+}
+
+.text-micro {
+  font-size: 10px !important;
+}
+
+.btn-remove-proxy-icon {
+  width: 36px !important;
+  height: 36px !important;
+  color: #be185d !important;
+}
+
+.btn-add-proxy-row {
+  border: 1px solid #22c55e !important;
+  color: #22c55e !important;
+  background: transparent !important;
+  font-size: 0.9rem !important;
+}
+
+.info-icon-micro {
+  font-size: 14px !important;
+  margin-top: 2px !important;
+}
+
+.info-text-micro {
+  font-size: 11px !important;
+  line-height: 1.6 !important;
+}
+
+.modal-stop-content {
+  background: rgba(25, 10, 10, 0.47) !important;
+  backdrop-filter: blur(20px) !important;
+}
+
+.stop-icon-wrapper {
+  width: 80px !important;
+  height: 80px !important;
+}
+
+.stop-icon-lg {
+  font-size: 3rem !important;
+}
+
+/* Additional Preferences & Modals Styles */
+.pref-desc-sm {
+  font-size: 0.82rem !important;
+  line-height: 1.5 !important;
+}
+
+.pref-script-editor {
+  resize: vertical !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+  tab-size: 4 !important;
+}
+
+.btn-pref-run {
+  background: #16a34a !important;
+  color: #fff !important;
+  font-size: 0.85rem !important;
+}
+
+.pref-warning-icon-wrapper {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  background: rgba(234, 179, 8, 0.15) !important;
+}
+
+.pref-note-max-w {
+  max-width: 600px !important;
+}
+
+.pref-note-title {
+  font-size: 0.85rem !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
+}
+
+.pref-note-desc {
+  font-size: 0.82rem !important;
+  line-height: 1.45 !important;
+}
+
+.btn-pref-save {
+  font-size: 0.9rem !important;
+}
+
+.btn-pref-apply {
+  background: #eab308 !important;
+  color: #1a1a1a !important;
+  font-size: 0.9rem !important;
+  border: none !important;
 }
 
 .trash-bin-zone {

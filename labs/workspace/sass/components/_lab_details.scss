@@ -1,0 +1,354 @@
+/* ==========================================================================
+   Lab Details & Partials Helper Classes (pages/labs/*)
+   ========================================================================== */
+
+/* 1. Lab Header Partials */
+.lab-header-avatar {
+  height: 5.5rem !important;
+  width: 5.5rem !important;
+  
+  .avatar-img {
+    width: 100% !important;
+    height: 100% !important;
+  }
+  
+  img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+  }
+  
+  i {
+    font-size: 3.8rem !important;
+    color: var(--glass-text) !important;
+  }
+}
+
+.lab-header-title {
+  color: var(--glass-text) !important;
+}
+
+.lab-header-desc {
+  max-width: 650px !important;
+  line-height: 1.5 !important;
+  color: var(--glass-text-muted) !important;
+}
+
+.btn-lab-launch {
+  background: #f36d1f !important;
+  color: #fff !important;
+}
+
+.btn-lab-deploy {
+  background: #34d399 !important;
+  border: none !important;
+  color: #000 !important;
+}
+
+.btn-lab-stop {
+  background: #ef4444 !important;
+  color: #fff !important;
+  
+  i {
+    filter: brightness(0) invert(1) !important;
+  }
+}
+
+/* 2. Server Logs Partial */
+.logs-header-clickable {
+  cursor: pointer !important;
+}
+
+.server-logs-panel {
+  #mq-status-dot {
+    font-size: 8px !important;
+  }
+  
+  .terminal-info-wrapper i {
+    font-size: 14px !important;
+  }
+  
+  .server-logs-chevron {
+    font-size: 18px !important;
+  }
+  
+  .logs-body {
+    overflow-y: auto !important;
+    transition: height 0.3s ease !important;
+  }
+}
+
+/* 3. Lab Dashboard Tab */
+.card-theme-bg {
+  background-color: var(--cui-card-bg) !important;
+}
+
+.input-readonly-opacity {
+  opacity: 0.85 !important;
+}
+
+.badge-offline-pill {
+  font-size: 0.6rem !important;
+}
+
+.chart-container-40 {
+  height: 40px !important;
+}
+
+.chart-container-35 {
+  height: 35px !important;
+}
+
+.stat-progress-bar {
+  height: 4px !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.stat-label-micro {
+  font-size: 9px !important;
+}
+
+.stat-desc-wrap {
+  word-break: break-word !important;
+  line-height: 1.4 !important;
+  opacity: 0.85 !important;
+  min-width: 0 !important;
+}
+
+/* 4. Lab Domains Tab */
+.empty-domains-card {
+  max-width: 400px !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.empty-domains-icon {
+  font-size: 3.5rem !important;
+}
+
+.empty-domains-text {
+  line-height: 1.6 !important;
+  opacity: 0.8 !important;
+}
+
+.lab-domain-item-card {
+  background: rgba(20, 20, 20, 0.8) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
+}
+
+.lab-domain-link {
+  color: #a5b4fc !important;
+  font-size: 1rem !important;
+}
+
+.badge-domain-pill {
+  padding: 0.2rem 0.5rem !important;
+  font-size: 0.65rem !important;
+  letter-spacing: 0.5px !important;
+}
+
+.badge-cyan-pill {
+  background: #06b6d4 !important;
+  color: #000 !important;
+  padding: 0.2rem 0.5rem !important;
+  font-size: 0.65rem !important;
+  letter-spacing: 0.5px !important;
+}
+
+.badge-teal-pill {
+  background: #14b8a6 !important;
+  color: #000 !important;
+  padding: 0.2rem 0.5rem !important;
+  font-size: 0.65rem !important;
+  letter-spacing: 0.5px !important;
+}
+
+.stat-label-mini {
+  font-size: 0.7rem !important;
+}
+
+.stat-val-cyan {
+  color: #06b6d4 !important;
+  font-size: 0.75rem !important;
+}
+
+.list-line-16 {
+  line-height: 1.6 !important;
+}
+
+/* 5. Lab Preferences Tab */
+.pref-icon-link {
+  width: 32px !important;
+  height: 32px !important;
+  text-decoration: none !important;
+}
+
+.pref-vr-line {
+  height: 18px !important;
+}
+
+.pref-warning-box {
+  background-color: rgba(255, 193, 7, 0.1) !important;
+  border-color: rgba(255, 193, 7, 0.3) !important;
+}
+
+.pref-warning-text {
+  line-height: 1.5 !important;
+}
+
+.pref-card-full {
+  height: calc(100% - 1.5rem) !important;
+}
+
+.pref-checkbox-lg {
+  transform: scale(1.1) !important;
+  margin-right: 8px !important;
+}
+
+.text-cyan {
+  color: cyan !important;
+}
+
+/* 6. Lab Modals */
+.btn-modal-green {
+  background-color: #2ecc71 !important;
+  border: none !important;
+}
+
+.btn-modal-gray {
+  background-color: #4b5563 !important;
+  border: none !important;
+}
+
+.btn-modal-blue {
+  background-color: #00a6e0 !important;
+  border: none !important;
+}
+
+.modal-section-title {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 1px !important;
+  color: var(--bs-secondary) !important;
+}
+
+.domain-search-container {
+  min-height: 80px !important;
+  cursor: text !important;
+}
+
+.domain-display-contents {
+  display: contents !important;
+}
+
+.domain-input-field {
+  outline: none !important;
+  line-height: 1.5 !important;
+  min-width: 150px !important;
+}
+
+.cursor-pointer {
+  cursor: pointer !important;
+}
+
+.domain-dropdown-menu {
+  max-height: 250px !important;
+  overflow-y: auto !important;
+  position: absolute !important;
+  z-index: 1050 !important;
+  width: calc(100% - 24px) !important;
+  left: 12px !important;
+}
+
+.text-micro {
+  font-size: 10px !important;
+}
+
+.btn-remove-proxy-icon {
+  width: 36px !important;
+  height: 36px !important;
+  color: #be185d !important;
+}
+
+.btn-add-proxy-row {
+  border: 1px solid #22c55e !important;
+  color: #22c55e !important;
+  background: transparent !important;
+  font-size: 0.9rem !important;
+}
+
+.info-icon-micro {
+  font-size: 14px !important;
+  margin-top: 2px !important;
+}
+
+.info-text-micro {
+  font-size: 11px !important;
+  line-height: 1.6 !important;
+}
+
+.modal-stop-content {
+  background: rgba(25, 10, 10, 0.47) !important;
+  backdrop-filter: blur(20px) !important;
+}
+
+.stop-icon-wrapper {
+  width: 80px !important;
+  height: 80px !important;
+}
+
+.stop-icon-lg {
+  font-size: 3rem !important;
+}
+
+/* Additional Preferences & Modals Styles */
+.pref-desc-sm {
+  font-size: 0.82rem !important;
+  line-height: 1.5 !important;
+}
+
+.pref-script-editor {
+  resize: vertical !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+  tab-size: 4 !important;
+}
+
+.btn-pref-run {
+  background: #16a34a !important;
+  color: #fff !important;
+  font-size: 0.85rem !important;
+}
+
+.pref-warning-icon-wrapper {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  background: rgba(234, 179, 8, 0.15) !important;
+}
+
+.pref-note-max-w {
+  max-width: 600px !important;
+}
+
+.pref-note-title {
+  font-size: 0.85rem !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
+}
+
+.pref-note-desc {
+  font-size: 0.82rem !important;
+  line-height: 1.45 !important;
+}
+
+.btn-pref-save {
+  font-size: 0.9rem !important;
+}
+
+.btn-pref-apply {
+  background: #eab308 !important;
+  color: #1a1a1a !important;
+  font-size: 0.9rem !important;
+  border: none !important;
+}

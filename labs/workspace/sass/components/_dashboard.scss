@@ -452,6 +452,7 @@ html[data-coreui-theme="light"] .continue-tab-switcher-container {
   font-size: 0.7rem;
   font-weight: 600 !important;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  i { font-size: 0.9rem !important; }
 
   &.active {
     font-weight: 700 !important;
@@ -506,7 +507,32 @@ html[data-coreui-theme="light"] .continue-tab-switcher-container {
     }
   }
 
+  border-radius: 16px !important;
+
+  .activity-icon-circle {
+    width: 36px;
+    height: 36px;
+    i {
+      font-size: 1.1rem !important;
+    }
+  }
+
+  .activity-title {
+    font-size: 0.78rem !important;
+  }
+
+  .activity-meta, .activity-progress-meta {
+    font-size: 0.65rem !important;
+  }
+
+  .activity-tag {
+    font-size: 0.58rem !important;
+    padding: 2px 5px !important;
+  }
+
   .progress {
+    height: 3px !important;
+    background: rgba(255, 255, 255, 0.08) !important;
     overflow: visible;
 
     .progress-bar {
@@ -619,4 +645,478 @@ html[data-coreui-theme="light"] .active-lab-item-card {
 
 :root.glass-mode .card.glass-card.domain-card {
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+/* ==========================================================================
+   Dashboard Micro-Typography & Utility Classes (Refactoring Inline Styles)
+   ========================================================================== */
+.fs-7 { font-size: 0.78rem !important; }
+.fs-8 { font-size: 0.72rem !important; }
+.fs-9 { font-size: 0.65rem !important; }
+.fs-10 { font-size: 0.58rem !important; }
+.fs-11 { font-size: 0.55rem !important; }
+
+.bg-purple { background-color: #6f32cf !important; }
+.text-purple { color: #b53bf6 !important; }
+.border-purple { border-color: #a55eea !important; }
+
+/* Profile Banner & Top Section */
+.profile-banner-card {
+  .avatar-img {
+    width: 58px;
+    height: 58px;
+    object-fit: cover;
+  }
+  .online-dot {
+    width: 12px;
+    height: 12px;
+    transform: translate(1px, 1px);
+  }
+  .greeting-title {
+    letter-spacing: -0.3px;
+    font-size: 1.05rem;
+  }
+  .greeting-sub {
+    font-size: 0.78rem;
+  }
+  .profile-link-btn {
+    font-size: 0.75rem;
+    backdrop-filter: blur(10px);
+  }
+
+  .stats-row {
+    .stat-val {
+      letter-spacing: -0.5px;
+      font-family: sans-serif;
+    }
+    .stat-lbl {
+      font-size: 0.76rem;
+    }
+    i { font-size: 1.25rem; }
+  }
+
+  .pills-row .badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+  }
+
+  .nav-actions-row .btn {
+    font-size: 0.72rem;
+    border: none !important;
+  }
+}
+
+/* Clan Card */
+.clan-card {
+  border-radius: 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.8) 100%), url('/assets/Background_Img/clan_zero_byte.png') no-repeat center !important;
+  background-size: cover !important;
+
+  .clan-logo-circle {
+    width: 52px;
+    height: 52px;
+    border-color: #00d2d3 !important;
+    border-width: 2px !important;
+    box-shadow: 0 0 15px rgba(0, 210, 211, 0.6) !important;
+    span {
+      font-size: 1.15rem;
+      letter-spacing: -1px;
+      font-family: sans-serif;
+      text-shadow: 0 0 8px rgba(0, 210, 211, 0.5);
+    }
+  }
+
+  .clan-title {
+    letter-spacing: -0.5px;
+    font-size: 1.1rem;
+  }
+  .clan-handle {
+    font-size: 0.75rem;
+  }
+
+  .clan-stats-grid {
+    padding: 12px 16px !important;
+    .stat-val {
+      font-size: 0.8rem;
+      font-family: sans-serif;
+      i { font-size: 0.85rem; }
+    }
+    .stat-lbl {
+      font-size: 0.58rem;
+      font-weight: 500;
+    }
+  }
+
+  .clan-action-btn {
+    background-color: #6f32cf !important;
+    color: #ffffff !important;
+    font-size: 0.78rem;
+  }
+}
+
+/* Device & Domain Setup Cards */
+.device-card, .domain-card {
+  .card-header-title {
+    letter-spacing: -0.3px;
+    font-size: 1.05rem;
+    i { font-size: 0.9rem; }
+  }
+  .card-header-sub {
+    font-size: 0.85rem;
+  }
+  .card-header-count {
+    font-size: 0.75rem;
+  }
+  .device-list, .domain-list {
+    max-height: 155px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+.continue-learning-card {
+  .card-header-title { font-size: 1.15rem !important; letter-spacing: -0.5px !important; }
+  .card-header-sub { font-size: 0.72rem !important; }
+}
+
+.active-lab-item-card {
+  .server-icon-circle {
+    width: 38px;
+    height: 38px;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15) !important;
+    i { font-size: 1.15rem; }
+  }
+  .server-title {
+    font-size: 0.85rem !important;
+    letter-spacing: -0.2px;
+  }
+  .server-status {
+    font-size: 0.6rem !important;
+    letter-spacing: 0.5px;
+  }
+  .server-ip {
+    font-size: 0.88rem !important;
+    letter-spacing: 0.5px;
+  }
+  .server-ip-lbl {
+    font-size: 0.55rem !important;
+    letter-spacing: 0.5px;
+  }
+  .btn-copy i { font-size: 0.9rem; }
+}
+
+.active-domain-item-card {
+  gap: 8px !important;
+  .domain-icon-circle {
+    width: 28px;
+    height: 28px;
+    background: rgba(46, 134, 222, 0.12) !important;
+    border: 1px solid rgba(46, 134, 222, 0.25) !important;
+    i {
+      font-size: 0.85rem;
+      color: #2e86de !important;
+    }
+  }
+  .domain-scroll-wrap {
+    flex: 1;
+    overflow: hidden;
+    .domain-name-scroll {
+      overflow-x: auto;
+      white-space: nowrap;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      h6 {
+        font-size: 0.75rem !important;
+        letter-spacing: -0.2px;
+        display: inline;
+      }
+    }
+  }
+  .domain-type-badge {
+    color: #2e86de !important;
+    font-size: 0.55rem !important;
+    letter-spacing: 0.5px;
+  }
+  .domain-ip {
+    font-size: 0.78rem !important;
+    letter-spacing: 0.3px;
+  }
+  .domain-ip-lbl {
+    font-size: 0.5rem !important;
+    letter-spacing: 0.5px;
+  }
+}
+
+
+
+/* ==========================================================================
+   Refactored CoreUI & Component Helper Classes (Machine Labs, Challenges, Recommended, Sidebar)
+   ========================================================================== */
+.card-title-md { font-size: 0.95rem !important; }
+.min-h-220 { min-height: 220px !important; }
+.min-w-0 { min-width: 0 !important; }
+
+.badge-live {
+  font-size: 0.55rem !important;
+  letter-spacing: 0.5px !important;
+  padding: 0.15rem 0.5rem !important;
+}
+
+.labs-scroll-container {
+  max-height: 220px !important;
+  overflow-y: auto !important;
+}
+
+.challenge-scroll-container {
+  max-height: 380px !important;
+  overflow-y: auto !important;
+  padding-right: 4px !important;
+}
+
+.active-lab-item-card {
+  backdrop-filter: blur(6px) !important;
+  
+  .lab-icon-circle {
+    width: 32px !important;
+    height: 32px !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15) !important;
+    i { font-size: 1.1rem !important; }
+  }
+  
+  .lab-title {
+    font-size: 0.76rem !important;
+    letter-spacing: -0.15px !important;
+    line-height: 1.2 !important;
+  }
+  
+  .badge-beta {
+    font-size: 0.38rem !important;
+    padding: 1px 4.5px !important;
+    background-color: #a55eea !important;
+    border: 0 !important;
+    line-height: 1 !important;
+    text-transform: none !important;
+  }
+  
+  .badge-status {
+    font-size: 0.38rem !important;
+    padding: 1px 4.5px !important;
+    background-color: #2ed573 !important;
+    border: 0 !important;
+    color: #000 !important;
+    line-height: 1 !important;
+    text-transform: none !important;
+  }
+
+  .stat-col-cpu { min-width: 34px !important; }
+  .stat-col-mem { min-width: 46px !important; }
+  .stat-col-load { min-width: 68px !important; }
+  
+  .stat-val {
+    font-size: 0.65rem !important;
+    line-height: 1.1 !important;
+    letter-spacing: -0.1px !important;
+  }
+  
+  .stat-lbl {
+    font-size: 0.46rem !important;
+    letter-spacing: 0.2px !important;
+    margin-top: 1px !important;
+  }
+  
+  .btn-lab-action {
+    padding: 3px 9px !important;
+    border: 0 !important;
+    font-size: 0.58rem !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    text-transform: none !important;
+    i { font-size: 0.72rem !important; }
+  }
+  
+  .btn-lab-dashboard {
+    background-color: #2ed573 !important;
+    color: #000 !important;
+  }
+  
+  .btn-lab-code {
+    background-color: #ffa502 !important;
+    color: #000 !important;
+  }
+  
+  .btn-lab-info {
+    width: 18px !important;
+    height: 18px !important;
+    padding: 0 !important;
+    background-color: #2e86de !important;
+    color: #fff !important;
+    i { font-size: 0.72rem !important; }
+  }
+}
+
+/* Challenge Labs Item Card */
+.challenge-item-card {
+  @extend .active-lab-item-card;
+  border-radius: 50px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  padding-right: 8px !important;
+
+  .challenge-img-circle {
+    width: 36px !important;
+    height: 36px !important;
+    border: 2px solid rgba(255, 255, 255, 0.1) !important;
+  }
+  
+  .challenge-title {
+    font-size: 0.72rem !important;
+    letter-spacing: -0.15px !important;
+    line-height: 1.15 !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+  
+  .challenge-badge-diff {
+    font-size: 0.45rem !important;
+    padding: 2px 5px !important;
+    color: #fff !important;
+    line-height: 1 !important;
+    text-transform: lowercase !important;
+    letter-spacing: 0.2px !important;
+  }
+  
+  .challenge-badge-status {
+    font-size: 0.45rem !important;
+    padding: 2px 5px !important;
+    background-color: #2ed573 !important;
+    color: #fff !important;
+    line-height: 1 !important;
+    text-transform: lowercase !important;
+    letter-spacing: 0.2px !important;
+  }
+  
+  .btn-challenge-action {
+    width: 30px !important;
+    height: 30px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    i { font-size: 1.1rem !important; }
+  }
+  
+  .btn-challenge-dash { background-color: #2ed573 !important; color: #1e272e !important; }
+  .btn-challenge-target { background-color: #a55eea !important; color: #fff !important; }
+  .btn-challenge-trophy { background-color: #0abde3 !important; color: #1e272e !important; }
+}
+
+.challenge-empty-state {
+  font-size: 0.78rem !important;
+}
+
+.btn-deploy-challenge {
+  font-size: 0.72rem !important;
+  color: #a55eea !important;
+  border-color: rgba(165, 94, 234, 0.3) !important;
+  background: rgba(165, 94, 234, 0.05) !important;
+  width: 100% !important;
+  letter-spacing: 0.3px !important;
+}
+
+/* Recommended Section Cards */
+.badge-purple-subtle {
+  background-color: rgba(111, 50, 207, 0.1) !important;
+  color: #a55eea !important;
+  border-color: rgba(165, 94, 234, 0.2) !important;
+}
+
+.badge-blue-subtle {
+  background-color: rgba(46, 134, 222, 0.1) !important;
+  color: #2e86de !important;
+  border-color: rgba(46, 134, 222, 0.2) !important;
+}
+
+.continue-activity-card {
+  .activity-icon-circle {
+    width: 36px !important;
+    height: 36px !important;
+  }
+  
+  .activity-badge {
+    font-size: 0.58rem !important;
+    padding: 2.5px 6px !important;
+  }
+  
+  .activity-title {
+    line-height: 1.35 !important;
+    min-height: 38px !important;
+    font-size: 0.78rem !important;
+  }
+  
+  .activity-sub {
+    font-size: 0.65rem !important;
+  }
+}
+
+/* Right Sidebar Components */
+.sidebar-box-title {
+  font-size: 0.9rem !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
+}
+
+.recent-activity-item {
+  .activity-dot {
+    width: 28px !important;
+    height: 28px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    i { font-size: 0.85rem !important; }
+  }
+  
+  .activity-text {
+    line-height: 1.35 !important;
+  }
+  
+  .activity-time {
+    font-size: 0.7rem !important;
+  }
+}
+
+#smart-insights-card, .smart-insights-card {
+  .insights-title { font-size: 0.95rem !important; letter-spacing: 0.3px !important; }
+  .insights-subtitle { font-size: 0.78rem !important; }
+  .insights-peak { font-size: 1.5rem !important; letter-spacing: -0.5px !important; }
+  .insights-chart { height: 48px !important; gap: 1.5px !important; padding-bottom: 0 !important; }
+  
+  .insights-bar {
+    flex: 1 !important;
+    min-width: 0 !important;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 2px 2px 0 0 !important;
+    transition: height 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), background 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .insights-labels {
+    height: 16px !important;
+    font-size: 0.62rem !important;
+    color: rgba(255, 255, 255, 0.35) !important;
+    font-style: italic !important;
+    font-weight: 500 !important;
+  }
+  
+  .insights-footer-text {
+    font-size: 0.68rem !important;
+    color: rgba(255, 255, 255, 0.35) !important;
+  }
+}
+
+/* Modals */
+.glass-modal-content {
+  backdrop-filter: blur(20px) !important;
 }

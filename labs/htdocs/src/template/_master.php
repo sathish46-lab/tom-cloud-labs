@@ -409,7 +409,7 @@ $classString = implode(' ', $htmlClasses);
     </style>
 </head>
 
-<body <?php if (!defined("IS_HOME_PAGE")): ?> hx-boost="true" hx-ext="head-support" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-indicator="#main-content" <?php endif; ?>>
+<body class="<?= $isGlassMode ? 'hwa-enabled' : 'hwa-disabled' ?>" <?php if (!defined("IS_HOME_PAGE")): ?> hx-boost="true" hx-ext="head-support" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-indicator="#main-content" <?php endif; ?>>
     <!-- Global HTMX Top Loading Bar -->
     <div id="htmx-top-progress"></div>
 

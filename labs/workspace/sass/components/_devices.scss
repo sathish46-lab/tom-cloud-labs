@@ -39,3 +39,122 @@
 .card-entrance {
     animation: flipInCard 0.5s cubic-bezier(0.4, 0, 0.2, 1) backwards;
 }
+
+
+/* ==========================================================================
+   Devices Page & Device Card Helper Classes
+   ========================================================================== */
+.devices-header-title {
+  font-size: 1.8rem !important;
+  letter-spacing: -0.5px !important;
+}
+
+.devices-header-desc {
+  font-size: 0.85rem !important;
+  line-height: 1.7 !important;
+  letter-spacing: 0.2px !important;
+  
+  a {
+    text-decoration: none !important;
+  }
+}
+
+.btn-add-device {
+  font-size: 0.8rem !important;
+  height: 38px !important;
+  white-space: nowrap !important;
+}
+
+.spinner-loader-icon {
+  font-size: 3rem !important;
+}
+
+.loading-form-text {
+  font-size: 0.8rem !important;
+}
+
+.glass-modal-content {
+  backdrop-filter: blur(15px) !important;
+}
+
+.modal-title-delete {
+  color: var(--glass-text) !important;
+  letter-spacing: -0.5px !important;
+  font-size: 1.5rem !important;
+}
+
+.border-translucent {
+  border-color: var(--cui-border-color-translucent) !important;
+}
+
+.modal-body-desc {
+  color: var(--glass-text) !important;
+  font-size: 0.95rem !important;
+  line-height: 1.6 !important;
+}
+
+.modal-body-ip {
+  color: var(--glass-text) !important;
+  font-size: 0.95rem !important;
+}
+
+.btn-modal-cancel {
+  background: var(--cui-secondary-bg) !important;
+  color: var(--glass-text) !important;
+  font-size: 0.9rem !important;
+}
+
+.btn-modal-delete {
+  background: #e63946 !important;
+  font-size: 0.9rem !important;
+  box-shadow: 0 4px 15px rgba(230, 57, 70, 0.3) !important;
+}
+
+/* Device Card Partial Styles */
+.device-row {
+  .device-card-title {
+    text-transform: none !important;
+    color: var(--glass-text) !important;
+    font-size: 1.15rem !important;
+    letter-spacing: -0.3px !important;
+  }
+  
+  .action-dots {
+    width: 32px !important;
+    height: 32px !important;
+    transition: all 0.2s !important;
+    background: none !important;
+    border: none !important;
+    i { color: var(--glass-icon) !important; }
+  }
+  
+  .dropdown-menu {
+    min-width: 10rem !important;
+    border-radius: 12px !important;
+    padding: 8px !important;
+    background: var(--cui-dropdown-bg) !important;
+    backdrop-filter: blur(10px) !important;
+    
+    .dropdown-item {
+      font-size: 0.75rem !important;
+    }
+  }
+  
+  .badge {
+    font-size: 8px !important;
+    padding: 2px 6px !important;
+    text-transform: capitalize !important;
+  }
+  
+  .stats-area {
+    font-size: 0.75rem !important;
+    
+    span:first-child {
+      color: var(--glass-text-muted) !important;
+    }
+    
+    .theme-text {
+      color: var(--glass-text) !important;
+    }
+  }
+}

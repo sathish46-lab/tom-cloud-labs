@@ -103,6 +103,7 @@ try {
                     if (data.active_days > 0 && activeDays && footer) {
                         activeDays.textContent = data.active_days + ' active days';
                         footer.style.cssText = '';
+                        footer.classList.remove('d-none');
                         footer.classList.add('d-flex');
                     }
                     if (data.last_seen && lastSeen) {

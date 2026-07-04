@@ -45,11 +45,11 @@
             </div>
             <div class="modal-footer border-0 pb-4 px-4 gap-2">
                 <button type="button" class="btn btn-success rounded-pill px-4 text-dark fw-bold" 
-                        style="background-color: #2ecc71 !important; border: none;"
+                        class="btn btn-sm btn-modal-green"
                         onclick="launchCodeIDE(event)"> Launch Code IDE
                 </button>
                 <button type="button" class="btn btn-secondary rounded-pill px-4" 
-                        style="background-color: #4b5563 !important; border: none;"
+                        class="btn btn-sm btn-modal-gray"
                         data-coreui-dismiss="modal">
                     Dismiss
                 </button>
@@ -128,7 +128,7 @@
             <div class="modal-footer border-0 pb-4 px-4 gap-2">
                 <button type="button" 
                         class="btn btn-primary rounded-pill px-4 fw-bold text-dark d-flex align-items-center gap-2"
-                        style="background-color: #00a6e0 !important; border: none;"
+                        class="btn btn-sm btn-modal-blue"
                         onclick="launchCodeIDE(event, '<?= htmlspecialchars($correctMinioConsoleUrl) ?>')">
                     <i class='bx bx-window-open'></i> Open Console
                 </button>
@@ -148,7 +148,7 @@
             </div>
             <div class="modal-body px-4">
                 
-                <p class="mb-3 mt-2" style="font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--bs-secondary);">NETWORKING</p>
+                <p class="mb-3 mt-2 modal-section-title">NETWORKING</p>
 
                 <div class="row mb-2 align-items-center">
                     <label class="col-sm-4 small fw-bold text-secondary">Reallocate IP</label>
@@ -185,7 +185,7 @@
                 <?php $isExposed = (isset($labData['expose_web']) && $labData['expose_web'] === true); ?>
                 <?php if (\TomLabs\Labs\LabFeatures::supports($labType, 'expose_web')): ?>
                 
-                <p class="mb-2 mt-3" style="font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--bs-secondary);">PUBLIC EXPOSURE</p>
+                <p class="mb-2 mt-3 modal-section-title">PUBLIC EXPOSURE</p>
 
                 <div id="expose_web_wrapper" class="row mb-3 align-items-center">
                     <label class="col-sm-4 small fw-bold text-secondary">Expose to Web (port 80)</label>
@@ -199,7 +199,7 @@
                 <?php endif; ?>
 
                 <!-- Custom MinIO Domain Selection (Hidden by default, toggled via JS) -->
-                <div id="minio_domain_wrapper" style="display: none;">
+                <div id="minio_domain_wrapper" class="initially-hidden">
                     <hr class="border-secondary opacity-25 my-3">
                     <p class="small fw-bold text-info mb-3"><i class='bx bx-server me-1'></i> MinIO Configuration</p>
                     
@@ -272,7 +272,7 @@
                 </div>
 
                 <!-- Custom n8n Domain Selection (Hidden by default, toggled via JS) -->
-                <div id="n8n_domain_wrapper" style="display: none;">
+                <div id="n8n_domain_wrapper" class="initially-hidden">
                     <hr class="border-secondary opacity-25 my-3">
                     <p class="small fw-bold text-danger mb-3"><i class='bx bx-network-chart me-1'></i> n8n Configuration</p>
                     
@@ -328,27 +328,27 @@
     
     <div class="col-sm-8 position-relative">
         <div class="form-control bg-transparent border-secondary border-opacity-25 rounded-4 p-2 d-flex flex-wrap align-content-start gap-1 transition-all" 
-             style="min-height: 80px; cursor: text;" onclick="document.getElementById('domain_search').focus()" id="domain_search_container">
+             class="form-control domain-search-container" onclick="document.getElementById('domain_search').focus()" id="domain_search_container">
             
-            <div id="selected_domains_display" style="display: contents;"></div>
+            <div id="selected_domains_display" class="domain-display-contents"></div>
 
             <input type="text" id="domain_search" 
                    class="flex-grow-1 bg-transparent border-0 shadow-none small px-1 m-0 text-white" 
-                   style="outline: none; line-height: 1.5; min-width: 150px;"
+                   class="border-0 bg-transparent text-white domain-input-field"
                    placeholder="Click to select domains..." 
                    onkeyup="filterDomains()"
                    onclick="event.stopPropagation()">
             
-            <div class="ms-auto pe-1 d-flex align-items-start" style="cursor: pointer;" onclick="toggleDomainDropdown(event)">
+            <div class="ms-auto pe-1 d-flex align-items-start cursor-pointer" onclick="toggleDomainDropdown(event)">
                 <i class='bx bx-chevron-down fs-5 opacity-50 transition-icon mt-1' id="dropdown_arrow"></i>
             </div>
         </div>
 
         <div id="domain_dropdown" class="border border-secondary border-opacity-10 rounded-3 mt-1 p-2 shadow-lg bg-body-tertiary" 
-             style="display: none; max-height: 250px; overflow-y: auto; position: absolute; z-index: 1050; width: calc(100% - 24px); left: 12px;">
+             class="initially-hidden domain-dropdown-menu">
             <div class="px-2 py-1 mb-1 d-flex justify-content-between align-items-center">
                 <button type="button" class="btn btn-sm btn-link text-primary p-0 text-decoration-none small" onclick="selectAllDomains()">Select all</button>
-                <span class="text-muted" style="font-size: 10px;">Verified Domains</span>
+                <span class="text-muted text-micro">Verified Domains</span>
             </div>
             <hr class="border-secondary opacity-25 my-1">
             <div id="domain_list">
@@ -358,7 +358,7 @@
                     foreach($userDomains as $d): 
                         $isChecked = in_array($d['domain'], $currentLabDomains);
                 ?>
-                    <div class="form-check domain-item p-2 rounded mx-1 mb-1" style="cursor: pointer;" onclick="toggleCheckbox('dom_<?= $d['_id'] ?>')">
+                    <div class="form-check domain-item p-2 rounded mx-1 mb-1 cursor-pointer" onclick="toggleCheckbox('dom_<?= $d['_id'] ?>')">
                         <input class="form-check-input domain-selector ms-0 me-2" type="checkbox" 
                                value="<?= $d['domain'] ?>" id="dom_<?= $d['_id'] ?>"
                                <?= $isChecked ? 'checked' : '' ?> onchange="updateSelectedDomains()" onclick="event.stopPropagation()">
@@ -378,7 +378,7 @@
         
 <?php if (\TomLabs\Labs\LabFeatures::supports($labType, 'http_proxies')): ?>
 <div id="http_proxies_wrapper">
-<p class="mb-2 mt-3" style="font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--bs-secondary);">HTTP PROXIES</p>
+<p class="mb-2 mt-3 modal-section-title">HTTP PROXIES</p>
 <div class="form-text small opacity-50 mb-3 px-1">
     Reverse-proxy any port to one or more of your domains over HTTP &mdash; TLS is terminated for you at the edge.
 </div>
@@ -415,7 +415,7 @@
                             </select>
                         </div>
                         <div class="col-md-2 col-2 d-flex justify-content-end">
-                            <button type="button" class="btn rounded-circle d-flex align-items-center justify-content-center p-0 btn-remove-proxy border-secondary border-opacity-25 bg-body-tertiary" style="width: 36px; height: 36px; color: #be185d;" onclick="removeProxyRow(this)">
+                            <button type="button" class="btn rounded-circle d-flex align-items-center justify-content-center p-0 btn-remove-proxy border-secondary border-opacity-25 bg-body-tertiary btn-remove-proxy-icon" onclick="removeProxyRow(this)">
                                 <i class='bx bx-trash'></i>
                             </button>
                         </div>
@@ -440,7 +440,7 @@
                                 </select>
                             </div>
                             <div class="col-md-2 col-2 d-flex justify-content-end">
-                                <button type="button" class="btn rounded-circle d-flex align-items-center justify-content-center p-0 btn-remove-proxy border-secondary border-opacity-25 bg-body-tertiary" style="width: 36px; height: 36px; color: #be185d;" onclick="removeProxyRow(this)">
+                                <button type="button" class="btn rounded-circle d-flex align-items-center justify-content-center p-0 btn-remove-proxy border-secondary border-opacity-25 bg-body-tertiary btn-remove-proxy-icon" onclick="removeProxyRow(this)">
                                     <i class='bx bx-trash'></i>
                                 </button>
                             </div>
@@ -453,7 +453,7 @@
         <div class="mt-2 row mb-2">
             <div class="col-sm-4"></div>
             <div class="col-sm-8">
-                <button type="button" class="btn rounded-pill px-4 py-1.5 d-inline-flex align-items-center gap-2" style="border: 1px solid #22c55e; color: #22c55e; background: transparent; font-size: 0.9rem;" onclick="addDeployProxyRow()">
+                <button type="button" class="btn rounded-pill px-4 py-1.5 d-inline-flex align-items-center gap-2 btn-add-proxy-row" onclick="addDeployProxyRow()">
                     <i class='bx bx-message-square-add'></i> Add HTTP Proxy
                 </button>
             </div>
@@ -462,8 +462,8 @@
         <?php endif; ?>
 
         <div class="d-flex align-items-start gap-2 mt-4 mb-2 px-1">
-            <i class='bx bxs-info-square text-secondary opacity-50' style="font-size: 14px; margin-top: 2px;"></i>
-            <div class="text-secondary opacity-75" style="font-size: 11px; line-height: 1.6;">
+            <i class='bx bxs-info-square text-secondary opacity-50 info-icon-micro'></i>
+            <div class="text-secondary opacity-75 info-text-micro">
                 <?= $isRunning ? 'Redeploy' : 'Deploy' ?> gives your lab a fresh instance &mdash; files outside your home directory are wiped, and changes here take effect on this <?= $isRunning ? 'redeploy' : 'deploy' ?>. More settings &mdash; passwords, startup script &mdash; live in the <span class="text-decoration-underline">Preferences</span> tab.
             </div>
         </div>
@@ -484,15 +484,15 @@
 <!-- Stop Lab Confirmation Modal -->
 <div class="modal fade" id="stopModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden" style="background: rgba(25, 10, 10, 0.47) !important; backdrop-filter: blur(20px);">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden modal-stop-content">
             <div class="modal-header border-0 pt-4 px-4">
                 <h5 class="modal-title fw-bold text-white mb-0">Decommission Lab?</h5>
                 <button type="button" class="btn-close btn-close-white" data-coreui-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
                 <div class="text-center mb-4">
-                    <div class="bg-danger bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
-                        <i class='bx bx-power-off text-danger' style="font-size: 3rem;"></i>
+                    <div class="bg-danger bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3 stop-icon-wrapper">
+                        <i class='bx bx-power-off text-danger stop-icon-lg'></i>
                     </div>
                     <h6 class="text-white fw-bold mb-2">Are you sure you want to stop this instance?</h6>
                     <p class="text-secondary small mb-0 px-3">

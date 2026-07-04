@@ -1305,8 +1305,16 @@ window.TomVisuals = {
   toggleBlur: function (enable) {
     if (enable) {
       document.documentElement.classList.add('glass-mode');
+      if (document.body) {
+        document.body.classList.add('hwa-enabled');
+        document.body.classList.remove('hwa-disabled');
+      }
     } else {
       document.documentElement.classList.remove('glass-mode');
+      if (document.body) {
+        document.body.classList.remove('hwa-enabled');
+        document.body.classList.add('hwa-disabled');
+      }
     }
     
     // Save to Database

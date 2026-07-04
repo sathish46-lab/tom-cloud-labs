@@ -26,6 +26,10 @@
 @use "components/dashboard";
 @use "components/sidebar";
 @use "components/devices";
+@use "components/network";
+@use "components/domains";
+@use "components/labs";
+@use "components/lab_details";
 @use "components/trash_bin";
 // 2. Global Performance & Smooth Rendering Optimizations
 html {

@@ -87,7 +87,7 @@
     $stagedPasswordNames = [];
     
     if (isset($staged['su_pass']) && $staged['su_pass'] !== $sudoPass) {
-        $stagedPasswordNames[] = '<span class="fw-bold" style="color: cyan;">Sudo Password</span>';
+        $stagedPasswordNames[] = '<span class="fw-bold text-cyan">Sudo Password</span>';
     }
     $sudoPassInput = $staged['su_pass'] ?? '';
 
@@ -136,19 +136,19 @@
                                 <input type="password" id="sudo-pass-input" class="form-control bg-transparent border-0 text-white fw-bold font-monospace" value="<?= htmlspecialchars($sudoPassInput) ?>" placeholder="Auto-generate like <?= htmlspecialchars($currentUsername) ?>@098">
                                 <div class="d-flex align-items-center gap-1 pe-1">
                                     <button type="button" class="btn btn-link text-secondary p-0 d-flex align-items-center justify-content-center" 
-                                            style="width: 32px; height: 32px; text-decoration: none;"
+                                            class="pref-icon-link"
                                             onclick="togglePasswordVisibility('sudo-pass-input', this)">
                                         <i class='bx bx-hide fs-5'></i>
                                     </button>
-                                    <div class="vr bg-secondary opacity-25" style="height: 18px;"></div>
+                                    <div class="vr bg-secondary opacity-25 pref-vr-line"></div>
                                     <button type="button" class="btn btn-link text-secondary p-0 d-flex align-items-center justify-content-center" 
-                                            style="width: 32px; height: 32px; text-decoration: none;"
+                                            class="pref-icon-link"
                                             onclick="generateNewPassword('sudo-pass-input')">
                                         <i class='bx bx-refresh fs-5'></i>
                                     </button>
-                                    <div class="vr bg-secondary opacity-25" style="height: 18px;"></div>
+                                    <div class="vr bg-secondary opacity-25 pref-vr-line"></div>
                                     <button type="button" class="btn btn-link text-secondary p-0 d-flex align-items-center justify-content-center" 
-                                            style="width: 32px; height: 32px; text-decoration: none;"
+                                            class="pref-icon-link"
                                             onclick="copyFromInput('sudo-pass-input')">
                                         <i class='bx bx-copy fs-5'></i>
                                     </button>
@@ -162,7 +162,7 @@
                             if($codeServerPass): 
                                 $codeServerPassInput = $staged['code_server_pass'] ?? '';
                                 if (isset($staged['code_server_pass']) && $staged['code_server_pass'] !== $codeServerPass) {
-                                    $stagedPasswordNames[] = '<span class="fw-bold" style="color: cyan;">Code-Server Password</span>';
+                                    $stagedPasswordNames[] = '<span class="fw-bold text-cyan">Code-Server Password</span>';
                                 }
                         ?>
                         <div class="mb-4">
@@ -172,19 +172,19 @@
                                 <input type="password" id="code-server-pass-input" class="form-control bg-transparent border-0 text-white fw-bold font-monospace" value="<?= htmlspecialchars($codeServerPassInput) ?>" placeholder="Auto-generate random password">
                                 <div class="d-flex align-items-center gap-1 pe-1">
                                     <button type="button" class="btn btn-link text-secondary p-0 d-flex align-items-center justify-content-center" 
-                                            style="width: 32px; height: 32px; text-decoration: none;"
+                                            class="pref-icon-link"
                                             onclick="togglePasswordVisibility('code-server-pass-input', this)">
                                         <i class='bx bx-hide fs-5'></i>
                                     </button>
-                                    <div class="vr bg-secondary opacity-25" style="height: 18px;"></div>
+                                    <div class="vr bg-secondary opacity-25 pref-vr-line"></div>
                                     <button type="button" class="btn btn-link text-secondary p-0 d-flex align-items-center justify-content-center" 
-                                            style="width: 32px; height: 32px; text-decoration: none;"
+                                            class="pref-icon-link"
                                             onclick="generateNewPassword('code-server-pass-input')">
                                         <i class='bx bx-refresh fs-5'></i>
                                     </button>
-                                    <div class="vr bg-secondary opacity-25" style="height: 18px;"></div>
+                                    <div class="vr bg-secondary opacity-25 pref-vr-line"></div>
                                     <button type="button" class="btn btn-link text-secondary p-0 d-flex align-items-center justify-content-center" 
-                                            style="width: 32px; height: 32px; text-decoration: none;"
+                                            class="pref-icon-link"
                                             onclick="copyFromInput('code-server-pass-input')">
                                         <i class='bx bx-copy fs-5'></i>
                                     </button>
@@ -196,9 +196,9 @@
 
                         <?php if (!empty($stagedPasswordNames)): ?>
                         <?php $changedNamesStr = implode(' and ', $stagedPasswordNames); ?>
-                        <div class="d-flex align-items-center p-3 mb-0 mt-3 border rounded-3" style="background-color: rgba(255, 193, 7, 0.1); border-color: rgba(255, 193, 7, 0.3) !important;">
+                        <div class="d-flex align-items-center p-3 mb-0 mt-3 border rounded-3 pref-warning-box">
                             <i class='bx bx-error-circle fs-4 me-3 text-warning'></i>
-                            <div class="small text-warning fw-medium" style="line-height: 1.5;">
+                            <div class="small text-warning fw-medium pref-warning-text">
                                 Your <?= $changedNamesStr ?> is not updated in your lab. You need to redeploy for changes to take effect. The currently active password is shown in your dashboard.
                             </div>
                         </div>
@@ -234,7 +234,7 @@
                                                 <input type="<?= $field['type'] === 'password' ? 'password' : 'text' ?>" 
                                                     class="form-control rounded-pill border-secondary bg-body-tertiary text-body px-3 <?= isset($field['mono']) ? 'font-monospace' : '' ?>" 
                                                     value="<?= htmlspecialchars($field['value']) ?>" 
-                                                    readonly style="opacity: 0.85;">
+                                                    readonly class="input-readonly-opacity">
                                                 
                                                 <?php if(isset($field['copy']) && $field['copy']): ?>
                                                     <button class="btn btn-outline-secondary ms-2 rounded-pill px-3" 
@@ -264,7 +264,7 @@
             <?php if ($showAlwaysOn): ?>
             <!-- Left Side: Lifecycle -->
             <div class="col-md-<?= ($showAlwaysOn && $showHttpProxies) ? '5' : '12' ?>">
-                <div class="card border-0 shadow-sm glass-card rounded-4 mb-4" style="height: calc(100% - 1.5rem);">
+                <div class="card border-0 shadow-sm glass-card rounded-4 mb-4 pref-card-full">
                     <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2">
                         <h6 class="fw-bold mb-1 text-uppercase ls-1 small">Lifecycle</h6>
                     </div>
@@ -272,10 +272,10 @@
                         <div>
                             <div class="form-check form-switch mb-3">
                                 <?php $alwaysOn = ($labData && isset($labData['always_on'])) ? (bool)$labData['always_on'] : false; ?>
-                                <input class="form-check-input" type="checkbox" id="always-on-toggle" <?= $alwaysOn ? 'checked' : '' ?> style="transform: scale(1.1); margin-right: 8px;">
+                                <input class="form-check-input pref-checkbox-lg" type="checkbox" id="always-on-toggle" <?= $alwaysOn ? 'checked' : '' ?>>
                                 <label class="form-check-label fw-bold small" for="always-on-toggle">Keep this instance running (Always-on)</label>
                             </div>
-                            <p class="text-body-secondary small mb-0" style="font-size: 0.82rem; line-height: 1.5;">
+                            <p class="text-body-secondary small mb-0 pref-desc-sm">
                                 When enabled, a background worker monitors this lab and automatically restarts it within ~10 minutes if it stops. The instance will not auto-expire.
                             </p>
                         </div>
@@ -287,7 +287,7 @@
             <?php if ($showHttpProxies): ?>
             <!-- Right Side: HTTP Proxies -->
             <div class="col-md-<?= ($showAlwaysOn && $showHttpProxies) ? '7' : '12' ?>">
-                <div class="card border-0 shadow-sm glass-card rounded-4 mb-4" style="height: calc(100% - 1.5rem);">
+                <div class="card border-0 shadow-sm glass-card rounded-4 mb-4 pref-card-full">
                     <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2">
                         <h6 class="fw-bold mb-1">HTTP Proxies</h6>
                         <p class="small text-muted mb-0">Reverse-proxy ports to your domains over HTTP. TLS is terminated at the edge.</p>
@@ -331,7 +331,7 @@
                                             </select>
                                         </div>
                                         <div class="col-md-2 col-2 d-flex justify-content-end">
-                                            <button type="button" class="btn rounded-circle d-flex align-items-center justify-content-center p-0 btn-remove-proxy border-secondary border-opacity-25 bg-body-tertiary" style="width: 36px; height: 36px; color: #be185d;" onclick="removeProxyRow(this)">
+                                            <button type="button" class="btn rounded-circle d-flex align-items-center justify-content-center p-0 btn-remove-proxy border-secondary border-opacity-25 bg-body-tertiary btn-remove-proxy-icon" onclick="removeProxyRow(this)">
                                                 <i class='bx bx-trash'></i>
                                             </button>
                                         </div>
@@ -356,7 +356,7 @@
                                                 </select>
                                             </div>
                                             <div class="col-md-2 col-2 d-flex justify-content-end">
-                                                <button type="button" class="btn rounded-circle d-flex align-items-center justify-content-center p-0 btn-remove-proxy border-secondary border-opacity-25 bg-body-tertiary" style="width: 36px; height: 36px; color: #be185d;" onclick="removeProxyRow(this)">
+                                                <button type="button" class="btn rounded-circle d-flex align-items-center justify-content-center p-0 btn-remove-proxy border-secondary border-opacity-25 bg-body-tertiary btn-remove-proxy-icon" onclick="removeProxyRow(this)">
                                                     <i class='bx bx-trash'></i>
                                                 </button>
                                             </div>
@@ -413,7 +413,7 @@
                             <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
                             <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/shell/shell.min.js"></script>
 
-                            <textarea id="init-script-editor" class="form-control font-monospace bg-dark text-white border-0 rounded-3 p-3" rows="10" style="resize: vertical; font-size: 13px; line-height: 1.6; tab-size: 4;"><?= htmlspecialchars($initScript) ?></textarea>
+                            <textarea id="init-script-editor" class="form-control font-monospace bg-dark text-white border-0 rounded-3 p-3 pref-script-editor" rows="10"><?= htmlspecialchars($initScript) ?></textarea>
 
                             <script>
                                 document.addEventListener("DOMContentLoaded", function() {
@@ -455,7 +455,7 @@
                             </script>
                         </div>
                         <div class="d-flex justify-content-end mt-2">
-                            <button type="button" class="btn btn-sm rounded-pill px-3 d-inline-flex align-items-center gap-1" style="background: #16a34a; color: #fff; font-size: 0.85rem;" onclick="runInitScript()">
+                            <button type="button" class="btn btn-sm rounded-pill px-3 d-inline-flex align-items-center gap-1 btn-pref-run" onclick="runInitScript()">
                                 <i class='bx bx-play'></i> Run now
                             </button>
                         </div>
@@ -471,21 +471,21 @@
                 <div class="card border-0 shadow-sm glass-card rounded-4 p-4">
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
                         <div class="d-flex align-items-start gap-3">
-                            <div class="text-warning rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; min-width: 36px; background: rgba(234, 179, 8, 0.15);">
+                            <div class="text-warning rounded-circle d-flex align-items-center justify-content-center pref-warning-icon-wrapper">
                                 <i class='bx bx-info-circle fs-4'></i>
                             </div>
-                            <div style="max-width: 600px;">
-                                <h6 class="mb-1 fw-bold text-warning" style="font-size: 0.85rem; letter-spacing: 0.5px; text-transform: uppercase;">Fast Apply Note</h6>
-                                <p class="text-body-secondary mb-0 small" style="font-size: 0.82rem; line-height: 1.45;">
+                            <div class="pref-note-max-w">
+                                <h6 class="mb-1 fw-bold text-warning pref-note-title">Fast Apply Note</h6>
+                                <p class="text-body-secondary mb-0 small pref-note-desc">
                                     Applying preferences updates HTTP proxy routes and runs <code class="text-warning font-monospace px-1.5 py-0.5 rounded"><?= htmlspecialchars($initScriptName) ?></code> immediately. This action does not perform a slow, full container redeployment.
                                 </p>
                             </div>
                         </div>
                         <div class="d-flex gap-3 mt-3 mt-md-0 align-self-end align-self-md-center">
-                            <button type="button" id="btn-save-preferences" class="btn btn-secondary rounded-pill px-4 py-2 d-inline-flex align-items-center gap-2 fw-bold" style="font-size: 0.9rem;" onclick="savePreferences()">
+                            <button type="button" id="btn-save-preferences" class="btn btn-secondary rounded-pill px-4 py-2 d-inline-flex align-items-center gap-2 fw-bold btn-pref-save" onclick="savePreferences()">
                                 <i class='bx bx-save'></i> Save Preferences
                             </button>
-                            <button type="button" id="btn-apply-redeploy" class="btn rounded-pill px-4 py-2 d-inline-flex align-items-center gap-2 fw-bold" style="background: #eab308; color: #1a1a1a; font-size: 0.9rem; border: none;" onclick="applyAndRedeploy()">
+                            <button type="button" id="btn-apply-redeploy" class="btn rounded-pill px-4 py-2 d-inline-flex align-items-center gap-2 fw-bold btn-pref-apply" onclick="applyAndRedeploy()">
                                 <i class='bx bxs-zap'></i> Fast Apply Now
                             </button>
                         </div>

@@ -131,7 +131,7 @@ document.addEventListener('submit', async function (e) {
                 
                 const modalEl = document.getElementById('addDeviceModal');
                 if (modalEl) {
-                    const modal = coreui.Modal.getInstance(modalEl);
+                    const modal = coreui.Modal.getInstance(modalEl) || coreui.Modal.getOrCreateInstance(modalEl);
                     if (modal) {
                         modal.hide();
                     } else {
@@ -303,24 +303,24 @@ window.onPageLoad( () => {
         startPolling();
     }
 
-    // Dynamic loader for Add Device Modal
-    const addDeviceModal = document.getElementById('addDeviceModal');
-    if (addDeviceModal) {
-        addDeviceModal.addEventListener('show.coreui.modal', function() {
-            const content = document.getElementById('addDeviceModalContent');
-            if (!content || content.getAttribute('data-loaded') === 'true') return;
-            
-            fetch('/api/device/add')
-                .then(res => res.text())
-                .then(html => {
-                    content.innerHTML = html;
-                    content.setAttribute('data-loaded', 'true');
-                })
-                .catch(err => {
-                    console.error(err);
-                    content.innerHTML = '<div class="p-4 text-danger text-center">Failed to load form.</div>';
-                });
-        });
+});
+
+// Global Dynamic loader for Add Device Modal (Works across HTMX swaps)
+document.addEventListener('show.coreui.modal', function(e) {
+    if (e.target && e.target.id === 'addDeviceModal') {
+        const content = document.getElementById('addDeviceModalContent');
+        if (!content || content.getAttribute('data-loaded') === 'true') return;
+        
+        fetch('/api/device/add')
+            .then(res => res.text())
+            .then(html => {
+                content.innerHTML = html;
+                content.setAttribute('data-loaded', 'true');
+            })
+            .catch(err => {
+                console.error(err);
+                content.innerHTML = '<div class="p-4 text-danger text-center">Failed to load form.</div>';
+            });
     }
 });
 

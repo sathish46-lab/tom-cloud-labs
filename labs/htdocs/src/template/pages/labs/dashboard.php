@@ -131,7 +131,7 @@
     <div class="container-fluid  py-3 p-0">
         <div class="row g-4">
             <div class="col-lg-6">
-                <div class="card mb-4 border-0 shadow-sm rounded-4" style="background-color: var(--cui-card-bg);">
+                <div class="card mb-4 border-0 shadow-sm rounded-4 card-theme-bg">
                     <div class="card-header bg-transparent border-0 pt-4 ">
                         <h6 class="fw-bold mb-0 text-body-emphasis">Lab Information <span
                             class="small text-body-secondary ms-1">Readme</span></h6>
@@ -163,7 +163,7 @@
                                                     <input type="<?= $field['type'] === 'password' ? 'password' : 'text' ?>" 
                                                         class="form-control rounded-pill border-secondary bg-body-tertiary text-body px-3 <?= isset($field['mono']) ? 'font-monospace' : '' ?>" 
                                                         value="<?= htmlspecialchars($field['value']) ?>" 
-                                                        readonly style="opacity: 0.85;">
+                                                        readonly class="input-readonly-opacity">
                                                     
                                                     <?php if(isset($field['copy']) && $field['copy']): ?>
                                                         <button class="btn btn-outline-secondary ms-2 rounded-pill px-3" 
@@ -187,7 +187,7 @@
                     <div class="card-header bg-transparent border-0 pt-4 px-4">
                         <h6 class="fw-bold mb-0">IO Stats <span class="small text-muted ms-1">Net and Block</span>
                         <?php if (!$isRunning): ?>
-                            <span class="badge bg-secondary rounded-pill ms-2" style="font-size: 0.6rem;">Offline</span>
+                            <span class="badge bg-secondary rounded-pill ms-2 badge-offline-pill">Offline</span>
                         <?php endif; ?>
                         </h6>
                     </div>
@@ -197,7 +197,7 @@
                                 <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100 text-center stat-card-inner">
                                     <div class="text-muted small text-uppercase fw-bold mb-2">Net IO</div>
                                     <div class="fw-bold text-white mb-2" id="stat-net-io">0B / 0B</div>
-                                    <div style="height:40px;">
+                                    <div class="chart-container-40">
                                         <canvas id="chart-net-io"></canvas>
                                     </div>
                                 </div>
@@ -206,7 +206,7 @@
                                 <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100 text-center stat-card-inner">
                                     <div class="text-muted small text-uppercase fw-bold mb-2">Block IO</div>
                                     <div class="fw-bold text-white mb-2" id="stat-block-io">0B / 0B</div>
-                                    <div style="height:40px;">
+                                    <div class="chart-container-40">
                                         <canvas id="chart-block-io"></canvas>
                                     </div>
                                 </div>
@@ -237,7 +237,7 @@
                                             <span id="stat-cpu-usage">0.00%</span> <small class="text-muted ms-1">CPU LOAD</small>
                                         </span>
                                     </div>
-                                    <div class="progress" style="height: 4px; background: rgba(255,255,255,0.1);">
+                                    <div class="progress stat-progress-bar">
                                         <div class="progress-bar bg-info" id="stat-cpu-bar" style="width: 0%"></div>
                                     </div>
                                     <div class="small text-muted mt-2 text-start" id="stat-pid-container" style="display: <?= $isRunning ? 'block' : 'none' ?>;">PID Count: <span id="stat-pid-count">0</span></div>
@@ -250,7 +250,7 @@
                                             <span id="stat-mem-perc">0.00%</span> <small class="text-muted ms-1">MEMORY USAGE</small>
                                         </span>
                                     </div>
-                                    <div class="progress" style="height: 4px; background: rgba(255,255,255,0.1);">
+                                    <div class="progress stat-progress-bar">
                                         <div class="progress-bar bg-warning" id="stat-mem-bar" style="width: 0%"></div>
                                     </div>
                                     <div class="small text-muted mt-2 text-start" id="stat-mem-info"> </div>
@@ -260,30 +260,30 @@
                         <div class="row g-2">
                             <div class="col-4">
                                 <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100 text-center stat-card-inner">
-                                    <div class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 9px;">1 Min Avg
+                                    <div class="text-muted small text-uppercase fw-bold mb-1 stat-label-micro">1 Min Avg
                                     </div>
                                     <div class="fw-bold text-white small" id="stat-load-1">0.0000</div>
-                                    <div style="height:35px;">
+                                    <div class="chart-container-35">
                                         <canvas id="chart-avg-1"></canvas>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-4">
                                 <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100 text-center stat-card-inner">
-                                    <div class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 9px;">5 Min Avg
+                                    <div class="text-muted small text-uppercase fw-bold mb-1 stat-label-micro">5 Min Avg
                                     </div>
                                     <div class="fw-bold text-white small" id="stat-load-5">0.0000</div>
-                                    <div style="height:35px;">
+                                    <div class="chart-container-35">
                                         <canvas id="chart-avg-5"></canvas>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-4">
                                 <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100 text-center stat-card-inner">
-                                    <div class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 9px;">15 Min Avg
+                                    <div class="text-muted small text-uppercase fw-bold mb-1 stat-label-micro">15 Min Avg
                                     </div>
                                     <div class="fw-bold text-white small" id="stat-load-15">0.0000</div>
-                                    <div style="height:35px;">
+                                    <div class="chart-container-35">
                                         <canvas id="chart-avg-15"></canvas>
                                     </div>
                                 </div>
@@ -299,30 +299,30 @@
                         <div class="row g-3">
                             <div class="col-4 text-center">
                                 <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100 text-center stat-card-inner">
-                                    <div class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 9px;">CPU Peak
+                                    <div class="text-muted small text-uppercase fw-bold mb-1 stat-label-micro">CPU Peak
                                     </div>
                                     <div class="fw-bold text-white" id="stat-peak-cpu">0.00%</div>
-                                    <div class="mt-2" style="height:40px;">
+                                    <div class="mt-2 chart-container-40">
                                         <canvas id="chart-peak-cpu"></canvas>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-4 text-center">
                                 <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100 text-center stat-card-inner">
-                                    <div class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 9px;">PID Max
+                                    <div class="text-muted small text-uppercase fw-bold mb-1 stat-label-micro">PID Max
                                     </div>
                                     <div class="fw-bold text-white" id="stat-max-pid">0</div>
-                                    <div class="mt-2" style="height:40px;">
+                                    <div class="mt-2 chart-container-40">
                                         <canvas id="chart-max-pid"></canvas>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-4 text-center">
                                 <div class="p-3 rounded-4 bg-dark bg-opacity-25 border border-white border-opacity-10 h-100 text-center stat-card-inner">
-                                    <div class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 9px;">Memory High
+                                    <div class="text-muted small text-uppercase fw-bold mb-1 stat-label-micro">Memory High
                                     </div>
                                     <div class="fw-bold text-white" id="stat-high-mem">0.00 MB</div>
-                                    <div class="mt-2" style="height:40px;">
+                                    <div class="mt-2 chart-container-40">
                                         <canvas id="chart-high-mem"></canvas>
                                     </div>
                                 </div>
@@ -386,10 +386,10 @@
                                         <?php foreach(array_slice($prefLogs, 0, 10) as $log): ?>
                                             <div class="list-group-item bg-transparent border-bottom border-success border-opacity-10 py-2 px-0 d-flex gap-3 align-items-center">
                                                 <i class='bx bx-cog text-primary fs-5'></i>
-                                                <div class="overflow-hidden flex-grow-1" style="min-width: 0;">
+                                                <div class="overflow-hidden flex-grow-1" >
                                                     <div class="fw-bold text-body small text-truncate"><?= htmlspecialchars($log['action']) ?></div>
                                                     <div class="text-muted small opacity-75 mb-1 text-truncate"><?= htmlspecialchars($log['user']) ?> &bull; <?= timeAgo($log['timestamp']) ?></div>
-                                                    <div class="small text-secondary" style="word-break: break-word; line-height: 1.4; opacity: 0.85;">
+                                                    <div class="small text-secondary stat-desc-wrap">
                                                         <?= ucfirst(strtolower(htmlspecialchars($log['details'] ?? 'Applied Preferences'))) ?>
                                                     </div>
                                                 </div>

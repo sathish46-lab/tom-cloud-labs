@@ -290,7 +290,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
     <div class="row g-4 mb-4">
         <!-- Profile Banner -->
         <div class="col-12 col-xl-8">
-            <div class="card border-0 glass-card position-relative overflow-hidden h-100">
+            <div class="card border-0 glass-card position-relative overflow-hidden h-100 profile-banner-card">
                 <!-- Glowing Layered Liquid Waves (Background Visual Elements) -->
                 <div class="wave-wrapper">
                     <svg class="wave-svg" viewBox="0 0 1600 220" preserveAspectRatio="none">
@@ -316,81 +316,81 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                     </svg>
                 </div>
                 
-                <div class="card-body p-4 d-flex flex-column position-relative" style="z-index: 2;">
+                <div class="card-body p-4 d-flex flex-column position-relative z-2">
                     <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 mb-3">
                         <div class="d-flex align-items-center gap-3">
                             <div class="position-relative">
-                                <img src="<?= $avatar ?>" alt="Profile" class="rounded-circle border border-2 border-white border-opacity-10 shadow" style="width: 58px; height: 58px; object-fit: cover;">
-                                <span class="position-absolute bottom-0 end-0 bg-success border border-2 border-dark rounded-circle" style="width: 12px; height: 12px; transform: translate(1px, 1px);"></span>
+                                <img src="<?= $avatar ?>" alt="Profile" class="rounded-circle border border-2 border-white border-opacity-10 shadow avatar-img">
+                                <span class="position-absolute bottom-0 end-0 bg-success border border-2 border-dark rounded-circle online-dot"></span>
                             </div>
                             <div>
-                                <h5 class="fw-semibold mb-0 text-white-90" style="letter-spacing: -0.3px; font-size: 1.05rem;"><?= $greetingText ?></h5>
-                                <p class="mb-0 text-white text-opacity-50 small mt-0.5" style="font-size: 0.78rem;">5 lessons in progress — keep going!</p>
+                                <h5 class="fw-semibold mb-0 text-white-90 greeting-title"><?= $greetingText ?></h5>
+                                <p class="mb-0 text-white text-opacity-50 small mt-0.5 greeting-sub">5 lessons in progress — keep going!</p>
                             </div>
                         </div>
                         <div>
-                            <a href="/profile" class="btn btn-sm bg-white bg-opacity-10 text-white rounded-pill px-3 py-1.5 fw-semibold border border-white border-opacity-10 transition-all hover-lift" style="font-size: 0.75rem; backdrop-filter: blur(10px);">
+                            <a href="/profile" class="btn btn-sm bg-white bg-opacity-10 text-white rounded-pill px-3 py-1.5 fw-semibold border border-white border-opacity-10 transition-all hover-lift profile-link-btn">
                                 <i class='bx bx-user me-1 align-middle'></i> Profile
                             </a>
                         </div>
                     </div>
 
                     <!-- Stats Row -->
-                    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-                        <div class="d-flex align-items-center gap-1.5 me-3">
-                            <i class='bx bxs-hot animate-pulse align-middle' style="font-size: 1.25rem; color: #ff763b !important;"></i>
-                            <span class="fw-bold text-white fs-5 align-middle" style="letter-spacing: -0.5px; font-family: sans-serif;"><?= number_format($zeal) ?></span>
-                            <span class="text-white text-opacity-45 align-middle ms-1" style="font-size: 0.76rem;">zeal</span>
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-3 stats-row">
+                        <div class="d-flex align-items-center gap-1 me-3">
+                            <i class='bx bxs-hot animate-pulse align-middle text-warning'></i>
+                            <span class="fw-bold text-white fs-5 align-middle stat-val"><?= number_format($zeal) ?></span>
+                            <span class="text-white text-opacity-45 align-middle ms-1 stat-lbl">zeal</span>
                         </div>
-                        <div class="d-flex align-items-center gap-1.5 me-3">
-                            <i class='bx bxs-zap align-middle' style="font-size: 1.25rem; color: #b53bf6 !important;"></i>
-                            <span class="fw-bold text-white fs-5 align-middle" style="letter-spacing: -0.5px; font-family: sans-serif;"><?= number_format($jolt) ?></span>
-                            <span class="text-white text-opacity-45 align-middle ms-1" style="font-size: 0.76rem;">jolt</span>
+                        <div class="d-flex align-items-center gap-1 me-3">
+                            <i class='bx bxs-zap align-middle text-purple'></i>
+                            <span class="fw-bold text-white fs-5 align-middle stat-val"><?= number_format($jolt) ?></span>
+                            <span class="text-white text-opacity-45 align-middle ms-1 stat-lbl">jolt</span>
                         </div>
-                        <div class="d-flex align-items-center gap-1.5">
-                            <i class='bx bxs-medal align-middle' style="font-size: 1.25rem; color: #3b82f6 !important;"></i>
-                            <span class="fw-bold text-white fs-5 align-middle" style="letter-spacing: -0.5px; font-family: sans-serif;">#3</span>
-                            <span class="text-white text-opacity-45 align-middle ms-1" style="font-size: 0.76rem;">Rank</span>
+                        <div class="d-flex align-items-center gap-1">
+                            <i class='bx bxs-medal align-middle text-info'></i>
+                            <span class="fw-bold text-white fs-5 align-middle stat-val">#3</span>
+                            <span class="text-white text-opacity-45 align-middle ms-1 stat-lbl">Rank</span>
                         </div>
                     </div>
 
                     <!-- Dynamic Pills Row -->
-                    <div class="d-flex flex-wrap gap-2.5 mb-4">
-                        <span class="badge rounded-pill px-3 py-1.5 d-flex align-items-center gap-1" style="font-size: 0.72rem; font-weight: 600; border: 1px solid rgba(46, 213, 115, 0.35) !important; color: #2ed573 !important; background-color: rgba(46, 213, 115, 0.08) !important;">
-                            <i class='bx bx-check-circle fs-6 me-0.5 align-middle'></i> <?= $finishedQuizzes ?> Quizzes
+                    <div class="d-flex flex-wrap gap-2 mb-4 pills-row">
+                        <span class="badge rounded-pill px-3 py-1.5 d-flex align-items-center gap-1 bg-success bg-opacity-10 text-success border border-success border-opacity-25">
+                            <i class='bx bx-check-circle fs-6 me-1 align-middle'></i> <?= $finishedQuizzes ?> Quizzes
                         </span>
-                        <span class="badge rounded-pill px-3 py-1.5 d-flex align-items-center gap-1" style="font-size: 0.72rem; font-weight: 600; border: 1px solid rgba(255, 71, 87, 0.35) !important; color: #ff4757 !important; background-color: rgba(255, 71, 87, 0.08) !important;">
-                            <i class='bx bx-swords fs-6 me-0.5 align-middle'></i> 0 Challenges
+                        <span class="badge rounded-pill px-3 py-1.5 d-flex align-items-center gap-1 bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">
+                            <i class='bx bx-swords fs-6 me-1 align-middle'></i> 0 Challenges
                         </span>
-                        <span class="badge rounded-pill px-3 py-1.5 d-flex align-items-center gap-1" style="font-size: 0.72rem; font-weight: 600; border: 1px solid rgba(165, 94, 234, 0.35) !important; color: #a55eea !important; background-color: rgba(165, 94, 234, 0.08) !important;">
-                            <i class='bx bx-terminal fs-6 me-0.5 align-middle'></i> 0 Code Solved
+                        <span class="badge rounded-pill px-3 py-1.5 d-flex align-items-center gap-1 bg-purple bg-opacity-10 text-purple border border-purple border-opacity-25">
+                            <i class='bx bx-terminal fs-6 me-1 align-middle'></i> 0 Code Solved
                         </span>
-                        <span class="badge rounded-pill px-3 py-1.5 d-flex align-items-center gap-1" style="font-size: 0.72rem; font-weight: 600; border: 1px solid rgba(30, 144, 255, 0.35) !important; color: #1e90ff !important; background-color: rgba(30, 144, 255, 0.08) !important;">
-                            <i class='bx bx-book-open fs-6 me-0.5 align-middle'></i> 0 Lessons
+                        <span class="badge rounded-pill px-3 py-1.5 d-flex align-items-center gap-1 bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">
+                            <i class='bx bx-book-open fs-6 me-1 align-middle'></i> 0 Lessons
                         </span>
-                        <span class="badge rounded-pill px-3 py-1.5 d-flex align-items-center gap-1" style="font-size: 0.72rem; font-weight: 600; border: 1px solid rgba(255, 165, 2, 0.35) !important; color: #ffa502 !important; background-color: rgba(255, 165, 2, 0.08) !important;">
-                            <i class='bx bx-trophy fs-6 me-0.5 align-middle'></i> 0 Achievements
+                        <span class="badge rounded-pill px-3 py-1.5 d-flex align-items-center gap-1 bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25">
+                            <i class='bx bx-trophy fs-6 me-1 align-middle'></i> 0 Achievements
                         </span>
                     </div>
 
                     <!-- Navigation Action Buttons -->
-                    <div class="d-flex flex-wrap gap-2 pt-2" style="z-index: 3;">
-                        <a href="/learn" class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold hover-lift transition-all" style="font-size: 0.72rem; background-color: #6f32cf !important; color: #ffffff !important; border: none !important;">
+                    <div class="d-flex flex-wrap gap-2 pt-2 nav-actions-row position-relative z-3">
+                        <a href="/learn" class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold hover-lift transition-all bg-purple text-white">
                             <i class='bx bxs-brain me-1 align-middle'></i> AI Learning
                         </a>
-                        <a href="/labs" class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold hover-lift transition-all" style="font-size: 0.72rem; background-color: #2ed573 !important; color: #ffffff !important; border: none !important;">
+                        <a href="/labs" class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold hover-lift transition-all bg-success text-white">
                             <i class='bx bx-desktop me-1 align-middle'></i> Labs
                         </a>
-                        <a href="#" class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold hover-lift transition-all" style="font-size: 0.72rem; background-color: #1e90ff !important; color: #ffffff !important; border: none !important;">
+                        <a href="#" class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold hover-lift transition-all bg-primary text-white">
                             <i class='bx bx-code-alt me-1 align-middle'></i> Code Arena
                         </a>
-                        <a href="#" class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold hover-lift transition-all" style="font-size: 0.72rem; background-color: #ffa502 !important; color: #ffffff !important; border: none !important;">
+                        <a href="#" class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold hover-lift transition-all bg-warning text-white">
                             <i class='bx bx-map-alt me-1 align-middle'></i> Roadmaps
                         </a>
-                        <a href="/quiz" class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold hover-lift transition-all" style="font-size: 0.72rem; background-color: #ff4757 !important; color: #ffffff !important; border: none !important;">
+                        <a href="/quiz" class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold hover-lift transition-all bg-danger text-white">
                             <i class='bx bx-check-square me-1 align-middle'></i> Quizzes
                         </a>
-                        <a href="#" class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold hover-lift transition-all" style="font-size: 0.72rem; background-color: rgba(255, 255, 255, 0.12) !important; color: #ffffff !important; border: none !important; backdrop-filter: blur(5px);">
+                        <a href="#" class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold hover-lift transition-all bg-white bg-opacity-10 text-white">
                             <i class='bx bx-chat me-1 align-middle'></i> Discuss
                         </a>
                     </div>
@@ -400,64 +400,64 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
 
         <!-- Clan Card -->
         <div class="col-12 col-xl-4">
-            <div class="card border-0 position-relative overflow-hidden h-100 clan-card" style="background: linear-gradient(180deg, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.8) 100%), url('/assets/Background_Img/clan_zero_byte.png') no-repeat center; background-size: cover; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.08) !important;">
+            <div class="card border-0 position-relative overflow-hidden h-100 clan-card">
                 
-                <div class="card-body p-4 d-flex flex-column justify-content-between position-relative" style="z-index: 2;">
+                <div class="card-body p-4 d-flex flex-column justify-content-between position-relative z-2">
                     <div class="d-flex align-items-center gap-3 mb-3">
                         <div class="position-relative">
-                            <div class="rounded-circle overflow-hidden d-flex align-items-center justify-content-center bg-dark bg-opacity-70 border shadow" style="width: 52px; height: 52px; border-color: #00d2d3 !important; border-width: 2px !important; box-shadow: 0 0 15px rgba(0, 210, 211, 0.6) !important;">
-                                <span class="fw-bold text-white" style="font-size: 1.15rem; letter-spacing: -1px; font-family: sans-serif; text-shadow: 0 0 8px rgba(0,210,211,0.5);">ZB</span>
+                            <div class="rounded-circle overflow-hidden d-flex align-items-center justify-content-center bg-dark bg-opacity-70 border shadow clan-logo-circle">
+                                <span class="fw-bold text-white">ZB</span>
                             </div>
                         </div>
                         <div>
-                            <h5 class="fw-bold text-white mb-0" style="letter-spacing: -0.5px; font-size: 1.1rem;">Zero Byte</h5>
-                            <p class="mb-0 text-white text-opacity-40 small" style="font-size: 0.75rem;">@<?= $username ?></p>
+                            <h5 class="fw-bold text-white mb-0 clan-title">Zero Byte</h5>
+                            <p class="mb-0 text-white text-opacity-40 small clan-handle">@<?= $username ?></p>
                         </div>
                     </div>
 
                     <!-- Frosted Glass Stats Grid -->
-                    <div class="rounded-4 my-2 clan-stats-grid" style="padding: 12px 16px;">
+                    <div class="rounded-4 my-2 clan-stats-grid">
                         <!-- Row 1: 3 Columns -->
                         <div class="d-flex justify-content-between align-items-center text-center">
-                            <div style="flex: 1;">
-                                <div class="fw-bold text-white d-flex align-items-center justify-content-center gap-1" style="font-size: 0.8rem; font-family: sans-serif;">
-                                    <i class="bx bxs-hot" style="color: #ff9f43 !important; font-size: 0.85rem;"></i> 15,941
+                            <div class="flex-fill">
+                                <div class="fw-bold text-white d-flex align-items-center justify-content-center gap-1 stat-val">
+                                    <i class="bx bxs-hot text-warning"></i> 15,941
                                 </div>
-                                <div class="text-white text-opacity-45 mt-0.5" style="font-size: 0.58rem; font-weight: 500;">Zeal</div>
+                                <div class="text-white text-opacity-45 mt-1 stat-lbl">Zeal</div>
                             </div>
-                            <div style="flex: 1;">
-                                <div class="fw-bold text-white d-flex align-items-center justify-content-center gap-1" style="font-size: 0.8rem; font-family: sans-serif;">
-                                    <i class="bx bxs-user-detail text-white text-opacity-75" style="font-size: 0.85rem;"></i> 2
+                            <div class="flex-fill">
+                                <div class="fw-bold text-white d-flex align-items-center justify-content-center gap-1 stat-val">
+                                    <i class="bx bxs-user-detail text-white text-opacity-75"></i> 2
                                 </div>
-                                <div class="text-white text-opacity-45 mt-0.5" style="font-size: 0.58rem; font-weight: 500;">Members</div>
+                                <div class="text-white text-opacity-45 mt-1 stat-lbl">Members</div>
                             </div>
-                            <div style="flex: 1;">
-                                <div class="fw-bold text-white d-flex align-items-center justify-content-center gap-1" style="font-size: 0.8rem; font-family: sans-serif;">
-                                    <i class="bx bxs-award text-white text-opacity-75" style="font-size: 0.85rem;"></i> 98
+                            <div class="flex-fill">
+                                <div class="fw-bold text-white d-flex align-items-center justify-content-center gap-1 stat-val">
+                                    <i class="bx bxs-award text-white text-opacity-75"></i> 98
                                 </div>
-                                <div class="text-white text-opacity-45 mt-0.5" style="font-size: 0.58rem; font-weight: 500;">Badges</div>
+                                <div class="text-white text-opacity-45 mt-1 stat-lbl">Badges</div>
                             </div>
                         </div>
                         
                         <!-- Row 2: 2 Columns -->
-                        <div class="d-flex justify-content-around align-items-center text-center mt-2.5 px-3">
-                            <div style="flex: 1;">
-                                <div class="fw-bold text-white d-flex align-items-center justify-content-center gap-1" style="font-size: 0.8rem; font-family: sans-serif;">
-                                    <i class="bx bx-check-square text-white text-opacity-75" style="font-size: 0.85rem;"></i> 35
+                        <div class="d-flex justify-content-around align-items-center text-center mt-3 px-3">
+                            <div class="flex-fill">
+                                <div class="fw-bold text-white d-flex align-items-center justify-content-center gap-1 stat-val">
+                                    <i class="bx bx-check-square text-white text-opacity-75"></i> 35
                                 </div>
-                                <div class="text-white text-opacity-45 mt-0.5" style="font-size: 0.58rem; font-weight: 500;">Missions</div>
+                                <div class="text-white text-opacity-45 mt-1 stat-lbl">Missions</div>
                             </div>
-                            <div style="flex: 1;">
-                                <div class="fw-bold text-white d-flex align-items-center justify-content-center gap-1" style="font-size: 0.8rem; font-family: sans-serif;">
-                                    <i class="bx bx-desktop text-white text-opacity-75" style="font-size: 0.85rem;"></i> 17/56
+                            <div class="flex-fill">
+                                <div class="fw-bold text-white d-flex align-items-center justify-content-center gap-1 stat-val">
+                                    <i class="bx bx-desktop text-white text-opacity-75"></i> 17/56
                                 </div>
-                                <div class="text-white text-opacity-45 mt-0.5" style="font-size: 0.58rem; font-weight: 500;">Labs Done</div>
+                                <div class="text-white text-opacity-45 mt-1 stat-lbl">Labs Done</div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Action Button -->
-                    <a href="#" class="btn btn-sm rounded-pill fw-bold py-2 border-0 d-flex align-items-center justify-content-center gap-1.5 mt-2 transition-all hover-lift" style="background-color: #6f32cf !important; color: #ffffff !important; font-size: 0.78rem;">
+                    <a href="#" class="btn btn-sm rounded-pill fw-bold py-2 border-0 d-flex align-items-center justify-content-center gap-2 mt-2 transition-all hover-lift clan-action-btn">
                         <i class='bx bx-group align-middle'></i> View Clan
                     </a>
                 </div>
@@ -473,23 +473,23 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                     <!-- Title & Switch Tabs -->
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
                         <div>
-                            <h5 class="fw-bold mb-1 text-white" style="letter-spacing: -0.5px; font-size: 1.15rem;">Continue Learning</h5>
-                            <p class="mb-0 text-white text-opacity-40 small" style="font-size: 0.72rem;">Pick up where you left off</p>
+                            <h5 class="fw-bold mb-1 text-white card-header-title">Continue Learning</h5>
+                            <p class="mb-0 text-white text-opacity-40 small card-header-sub">Pick up where you left off</p>
                         </div>
                         
                         <!-- Switch Tabs Selector -->
                         <div class="d-flex gap-2 flex-wrap continue-tab-switcher-container">
                             <button class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold continue-tab-btn" 
                                     onclick="switchContinueTab('setup')" data-tab="setup">
-                                <i class='bx bx-desktop me-1 align-middle' style="font-size: 0.9rem;"></i> Your Setup
+                                <i class='bx bx-desktop me-1 align-middle'></i> Your Setup
                             </button>
                             <button class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold continue-tab-btn active" 
                                     onclick="switchContinueTab('activity')" data-tab="activity">
-                                <i class='bx bx-time-five me-1 align-middle' style="font-size: 0.9rem;"></i> Your Activity
+                                <i class='bx bx-time-five me-1 align-middle'></i> Your Activity
                             </button>
                             <button class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold continue-tab-btn" 
                                     onclick="switchContinueTab('recommended')" data-tab="recommended">
-                                <i class='bx bx-star me-1 align-middle' style="font-size: 0.9rem;"></i> Recommended
+                                <i class='bx bx-star me-1 align-middle'></i> Recommended
                             </button>
                         </div>
                     </div>
@@ -502,23 +502,23 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                             <div class="row g-3">
                                 <!-- Card 1 -->
                                 <div class="col-12 col-md-6 col-lg-4">
-                                    <div class="card h-100 border-0 continue-activity-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05) !important; border-radius: 16px;">
+                                    <div class="card h-100 border-0 continue-activity-card">
                                         <div class="card-body p-3 d-flex gap-3">
-                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: rgba(46, 213, 115, 0.12); border: 1px solid rgba(46, 213, 115, 0.2);">
-                                                <i class='bx bx-book text-success' style="font-size: 1.1rem; color: #2ed573 !important;"></i>
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 activity-icon-circle bg-success bg-opacity-10 border border-success border-opacity-25">
+                                                <i class='bx bx-book text-success'></i>
                                             </div>
                                             <div class="flex-grow-1 min-w-0">
-                                                <h6 class="fw-bold text-white small mb-1 text-truncate" title="Secure Ports and Port Security" style="font-size: 0.78rem;">Secure Ports and Port Security...</h6>
-                                                <div class="text-white text-opacity-40 mb-2" style="font-size: 0.65rem;">Beginner · 2/2 chapters</div>
+                                                <h6 class="fw-bold text-white small mb-1 text-truncate activity-title" title="Secure Ports and Port Security">Secure Ports and Port Security...</h6>
+                                                <div class="text-white text-opacity-40 mb-2 activity-meta">Beginner · 2/2 chapters</div>
                                                 <div class="d-flex flex-wrap gap-1 mb-2.5">
-                                                    <span class="badge rounded bg-success bg-opacity-10 text-success border border-success border-opacity-10 fw-semibold" style="font-size: 0.58rem; padding: 2px 5px;">ports</span>
-                                                    <span class="badge rounded bg-success bg-opacity-10 text-success border border-success border-opacity-10 fw-semibold" style="font-size: 0.58rem; padding: 2px 5px;">port security</span>
+                                                    <span class="badge rounded bg-success bg-opacity-10 text-success border border-success border-opacity-10 fw-semibold activity-tag">ports</span>
+                                                    <span class="badge rounded bg-success bg-opacity-10 text-success border border-success border-opacity-10 fw-semibold activity-tag">port security</span>
                                                 </div>
-                                                <div class="d-flex align-items-center justify-content-between mb-1" style="font-size: 0.65rem;">
+                                                <div class="d-flex align-items-center justify-content-between mb-1 activity-progress-meta">
                                                     <span class="fw-bold text-success">20%</span>
                                                     <span class="text-white text-opacity-35">May 5</span>
                                                 </div>
-                                                <div class="progress" style="height: 3px; background: rgba(255, 255, 255, 0.08);">
+                                                <div class="progress">
                                                     <div class="progress-bar bg-success" role="progressbar" style="width: 20%;" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
                                                 </div>
                                             </div>
@@ -527,23 +527,23 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                 </div>
                                 <!-- Card 2 -->
                                 <div class="col-12 col-md-6 col-lg-4">
-                                    <div class="card h-100 border-0 continue-activity-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05) !important; border-radius: 16px;">
+                                    <div class="card h-100 border-0 continue-activity-card">
                                         <div class="card-body p-3 d-flex gap-3">
-                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: rgba(255, 165, 2, 0.12); border: 1px solid rgba(255, 165, 2, 0.2);">
-                                                <i class='bx bx-code-alt text-warning' style="font-size: 1.1rem; color: #ffa502 !important;"></i>
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 activity-icon-circle bg-warning bg-opacity-10 border border-warning border-opacity-25">
+                                                <i class='bx bx-code-alt text-warning'></i>
                                             </div>
                                             <div class="flex-grow-1 min-w-0">
-                                                <h6 class="fw-bold text-white small mb-1 text-truncate" title="Designing and Managing AI Learning" style="font-size: 0.78rem;">Designing and Managing AI Le...</h6>
-                                                <div class="text-white text-opacity-40 mb-2" style="font-size: 0.65rem;">Intermediate · 7/4 chapters</div>
+                                                <h6 class="fw-bold text-white small mb-1 text-truncate activity-title" title="Designing and Managing AI Learning">Designing and Managing AI Le...</h6>
+                                                <div class="text-white text-opacity-40 mb-2 activity-meta">Intermediate · 7/4 chapters</div>
                                                 <div class="d-flex flex-wrap gap-1 mb-2.5">
-                                                    <span class="badge rounded bg-warning bg-opacity-10 text-warning border border-warning border-opacity-10 fw-semibold" style="font-size: 0.58rem; padding: 2px 5px;">ai-assistant</span>
-                                                    <span class="badge rounded bg-warning bg-opacity-10 text-warning border border-warning border-opacity-10 fw-semibold" style="font-size: 0.58rem; padding: 2px 5px;">database-design</span>
+                                                    <span class="badge rounded bg-warning bg-opacity-10 text-warning border border-warning border-opacity-10 fw-semibold activity-tag">ai-assistant</span>
+                                                    <span class="badge rounded bg-warning bg-opacity-10 text-warning border border-warning border-opacity-10 fw-semibold activity-tag">database-design</span>
                                                 </div>
-                                                <div class="d-flex align-items-center justify-content-between mb-1" style="font-size: 0.65rem;">
+                                                <div class="d-flex align-items-center justify-content-between mb-1 activity-progress-meta">
                                                     <span class="fw-bold text-warning">35%</span>
                                                     <span class="text-white text-opacity-35">Apr 25</span>
                                                 </div>
-                                                <div class="progress" style="height: 3px; background: rgba(255, 255, 255, 0.08);">
+                                                <div class="progress">
                                                     <div class="progress-bar bg-warning" role="progressbar" style="width: 35%;" aria-valuenow="35" aria-valuemin="0" aria-valuemax="100"></div>
                                                 </div>
                                             </div>
@@ -552,23 +552,23 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                 </div>
                                 <!-- Card 3 -->
                                 <div class="col-12 col-md-6 col-lg-4">
-                                    <div class="card h-100 border-0 continue-activity-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05) !important; border-radius: 16px;">
+                                    <div class="card h-100 border-0 continue-activity-card">
                                         <div class="card-body p-3 d-flex gap-3">
-                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: rgba(46, 213, 115, 0.12); border: 1px solid rgba(46, 213, 115, 0.2);">
-                                                <i class='bx bx-book text-success' style="font-size: 1.1rem; color: #2ed573 !important;"></i>
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 activity-icon-circle bg-success bg-opacity-10 border border-success border-opacity-25">
+                                                <i class='bx bx-book text-success'></i>
                                             </div>
                                             <div class="flex-grow-1 min-w-0">
-                                                <h6 class="fw-bold text-white small mb-1 text-truncate" title="Secure Headers: A Beginner's Guide" style="font-size: 0.78rem;">Secure Headers: A Beginner's...</h6>
-                                                <div class="text-white text-opacity-40 mb-2" style="font-size: 0.65rem;">Beginner · 5/3 chapters</div>
+                                                <h6 class="fw-bold text-white small mb-1 text-truncate activity-title" title="Secure Headers: A Beginner's Guide">Secure Headers: A Beginner's...</h6>
+                                                <div class="text-white text-opacity-40 mb-2 activity-meta">Beginner · 5/3 chapters</div>
                                                 <div class="d-flex flex-wrap gap-1 mb-2.5">
-                                                    <span class="badge rounded bg-success bg-opacity-10 text-success border border-success border-opacity-10 fw-semibold" style="font-size: 0.58rem; padding: 2px 5px;">HTTP</span>
-                                                    <span class="badge rounded bg-success bg-opacity-10 text-success border border-success border-opacity-10 fw-semibold" style="font-size: 0.58rem; padding: 2px 5px;">security headers</span>
+                                                    <span class="badge rounded bg-success bg-opacity-10 text-success border border-success border-opacity-10 fw-semibold activity-tag">HTTP</span>
+                                                    <span class="badge rounded bg-success bg-opacity-10 text-success border border-success border-opacity-10 fw-semibold activity-tag">security headers</span>
                                                 </div>
-                                                <div class="d-flex align-items-center justify-content-between mb-1" style="font-size: 0.65rem;">
+                                                <div class="d-flex align-items-center justify-content-between mb-1 activity-progress-meta">
                                                     <span class="fw-bold text-success">63%</span>
                                                     <span class="text-white text-opacity-35">Apr 21</span>
                                                 </div>
-                                                <div class="progress" style="height: 3px; background: rgba(255, 255, 255, 0.08);">
+                                                <div class="progress">
                                                     <div class="progress-bar bg-success" role="progressbar" style="width: 63%;" aria-valuenow="63" aria-valuemin="0" aria-valuemax="100"></div>
                                                 </div>
                                             </div>
@@ -577,23 +577,23 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                 </div>
                                 <!-- Card 4 -->
                                 <div class="col-12 col-md-6 col-lg-4">
-                                    <div class="card h-100 border-0 continue-activity-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05) !important; border-radius: 16px;">
+                                    <div class="card h-100 border-0 continue-activity-card">
                                         <div class="card-body p-3 d-flex gap-3">
-                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: rgba(46, 213, 115, 0.12); border: 1px solid rgba(46, 213, 115, 0.2);">
-                                                <i class='bx bx-book text-success' style="font-size: 1.1rem; color: #2ed573 !important;"></i>
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 activity-icon-circle bg-success bg-opacity-10 border border-success border-opacity-25">
+                                                <i class='bx bx-book text-success'></i>
                                             </div>
                                             <div class="flex-grow-1 min-w-0">
-                                                <h6 class="fw-bold text-white small mb-1 text-truncate" title="Application Security Development" style="font-size: 0.78rem;">Application Security Develop...</h6>
-                                                <div class="text-white text-opacity-40 mb-2" style="font-size: 0.65rem;">Beginner · 9/9 chapters</div>
+                                                <h6 class="fw-bold text-white small mb-1 text-truncate activity-title" title="Application Security Development">Application Security Develop...</h6>
+                                                <div class="text-white text-opacity-40 mb-2 activity-meta">Beginner · 9/9 chapters</div>
                                                 <div class="d-flex flex-wrap gap-1 mb-2.5">
-                                                    <span class="badge rounded bg-success bg-opacity-10 text-success border border-success border-opacity-10 fw-semibold" style="font-size: 0.58rem; padding: 2px 5px;">appsec</span>
-                                                    <span class="badge rounded bg-success bg-opacity-10 text-success border border-success border-opacity-10 fw-semibold" style="font-size: 0.58rem; padding: 2px 5px;">secure coding</span>
+                                                    <span class="badge rounded bg-success bg-opacity-10 text-success border border-success border-opacity-10 fw-semibold activity-tag">appsec</span>
+                                                    <span class="badge rounded bg-success bg-opacity-10 text-success border border-success border-opacity-10 fw-semibold activity-tag">secure coding</span>
                                                 </div>
-                                                <div class="d-flex align-items-center justify-content-between mb-1" style="font-size: 0.65rem;">
+                                                <div class="d-flex align-items-center justify-content-between mb-1 activity-progress-meta">
                                                     <span class="fw-bold text-success">20%</span>
                                                     <span class="text-white text-opacity-35">Apr 20</span>
                                                 </div>
-                                                <div class="progress" style="height: 3px; background: rgba(255, 255, 255, 0.08);">
+                                                <div class="progress">
                                                     <div class="progress-bar bg-success" role="progressbar" style="width: 20%;" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
                                                 </div>
                                             </div>
@@ -602,23 +602,23 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                 </div>
                                 <!-- Card 5 -->
                                 <div class="col-12 col-md-6 col-lg-4">
-                                    <div class="card h-100 border-0 continue-activity-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05) !important; border-radius: 16px;">
+                                    <div class="card h-100 border-0 continue-activity-card">
                                         <div class="card-body p-3 d-flex gap-3">
-                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: rgba(255, 165, 2, 0.12); border: 1px solid rgba(255, 165, 2, 0.2);">
-                                                <i class='bx bx-code-alt text-warning' style="font-size: 1.1rem; color: #ffa502 !important;"></i>
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 activity-icon-circle bg-warning bg-opacity-10 border border-warning border-opacity-25">
+                                                <i class='bx bx-code-alt text-warning'></i>
                                             </div>
                                             <div class="flex-grow-1 min-w-0">
-                                                <h6 class="fw-bold text-white small mb-1 text-truncate" title="WebSockets, STOMP, Message Queues" style="font-size: 0.78rem;">WebSockets, STOMP, Message...</h6>
-                                                <div class="text-white text-opacity-40 mb-2" style="font-size: 0.65rem;">Intermediate · 3/3 chapters</div>
+                                                <h6 class="fw-bold text-white small mb-1 text-truncate activity-title" title="WebSockets, STOMP, Message Queues">WebSockets, STOMP, Message...</h6>
+                                                <div class="text-white text-opacity-40 mb-2 activity-meta">Intermediate · 3/3 chapters</div>
                                                 <div class="d-flex flex-wrap gap-1 mb-2.5">
-                                                    <span class="badge rounded bg-warning bg-opacity-10 text-warning border border-warning border-opacity-10 fw-semibold" style="font-size: 0.58rem; padding: 2px 5px;">WebSocket</span>
-                                                    <span class="badge rounded bg-warning bg-opacity-10 text-warning border border-warning border-opacity-10 fw-semibold" style="font-size: 0.58rem; padding: 2px 5px;">STOMP</span>
+                                                    <span class="badge rounded bg-warning bg-opacity-10 text-warning border border-warning border-opacity-10 fw-semibold activity-tag">WebSocket</span>
+                                                    <span class="badge rounded bg-warning bg-opacity-10 text-warning border border-warning border-opacity-10 fw-semibold activity-tag">STOMP</span>
                                                 </div>
-                                                <div class="d-flex align-items-center justify-content-between mb-1" style="font-size: 0.65rem;">
+                                                <div class="d-flex align-items-center justify-content-between mb-1 activity-progress-meta">
                                                     <span class="fw-bold text-warning">20%</span>
                                                     <span class="text-white text-opacity-35">Apr 20</span>
                                                 </div>
-                                                <div class="progress" style="height: 3px; background: rgba(255, 255, 255, 0.08);">
+                                                <div class="progress">
                                                     <div class="progress-bar bg-warning" role="progressbar" style="width: 20%;" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
                                                 </div>
                                             </div>
@@ -627,10 +627,11 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                 </div>
                             </div>
                             <div class="d-flex justify-content-end mt-3">
-                                <a href="#" class="text-decoration-none small text-info fw-bold hover-theme-text transition-all" style="font-size: 0.75rem;">View all</a>
+                                <a href="#" class="text-decoration-none small text-info fw-bold hover-theme-text transition-all fs-8">View all</a>
                             </div>
                         </div>
 
+                        <!-- Pane 2: Your Setup (DYNAMIC!) -->
                         <!-- Pane 2: Your Setup (DYNAMIC!) -->
                         <div class="continue-tab-pane d-none" id="continue-pane-setup">
                             <div class="row g-4">
@@ -640,15 +641,15 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                         <div class="card-body p-4">
                                             <div class="d-flex justify-content-between align-items-start mb-4">
                                                 <div>
-                                                    <h5 class="fw-bold mb-1 text-white d-flex align-items-center" style="letter-spacing: -0.3px; font-size: 1.05rem;">Connected Devices <i class="bx bx-info-circle ms-1.5 align-middle opacity-50" style="font-size: 0.9rem;" title="Active sandbox containers"></i></h5>
-                                                    <p class="mb-0 text-white text-opacity-40 fw-medium" style="font-size: 0.85rem;">Sandbox Instances</p>
+                                                    <h5 class="fw-bold mb-1 text-white d-flex align-items-center card-header-title">Connected Devices <i class="bx bx-info-circle ms-1.5 align-middle opacity-50" title="Active sandbox containers"></i></h5>
+                                                    <p class="mb-0 text-white text-opacity-40 fw-medium card-header-sub">Sandbox Instances</p>
                                                 </div>
                                                 <div class="text-end">
-                                                    <span class="text-white fw-bold fs-3"><?= sprintf("%02d", $activeLabsCount) ?></span><span class="text-white text-opacity-35 small fw-semibold" style="font-size: 0.75rem;">/<?= $labsLimit ?></span>
+                                                    <span class="text-white fw-bold fs-3"><?= sprintf("%02d", $activeLabsCount) ?></span><span class="text-white text-opacity-35 small fw-semibold card-header-count">/<?= $labsLimit ?></span>
                                                 </div>
                                             </div>
 
-                                            <div class="device-list pe-1" style="max-height: 155px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
+                                            <div class="device-list pe-1">
                                                 <?php if ($activeLabsCount > 0): ?>
                                                     <?php foreach ($labsList as $lab): ?>
                                                     <div class="d-flex align-items-center justify-content-between p-3 rounded active-lab-item-card">
@@ -660,21 +661,21 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                                 $typeIconMap = ['essentials' => 'bxl-tux', 'minio' => 'bx-cube', 'n8n' => 'bx-git-repo-forked'];
                                                                 $iconClass = $typeIconMap[$lab['type']] ?? 'bxl-ubuntu';
                                                             ?>
-                                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; background: <?= $bgColor ?>; border: 1px solid rgba(255, 255, 255, 0.25); box-shadow: 0 3px 8px rgba(0,0,0,0.15);">
-                                                                <i class='bx <?= $iconClass ?> text-white' style="font-size: 1.15rem;"></i>
+                                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 server-icon-circle" style="background: <?= $bgColor ?>;">
+                                                                <i class='bx <?= $iconClass ?> text-white'></i>
                                                             </div>
                                                             <div class="min-w-0">
-                                                                <h6 class="fw-bold text-white mb-0 text-truncate" style="font-size: 0.85rem; letter-spacing: -0.2px;"><?= htmlspecialchars($lab['name']) ?></h6>
-                                                                <span class="text-success fw-bold uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">ONLINE</span>
+                                                                <h6 class="fw-bold text-white mb-0 text-truncate server-title"><?= htmlspecialchars($lab['name']) ?></h6>
+                                                                <span class="text-success fw-bold uppercase server-status">ONLINE</span>
                                                             </div>
                                                         </div>
                                                         <div class="text-end d-flex align-items-center gap-3 flex-shrink-0">
                                                             <div>
-                                                                <div class="text-white font-monospace fw-bold" style="font-size: 0.88rem; letter-spacing: 0.5px;"><?= htmlspecialchars($lab['ip']) ?></div>
-                                                                <div class="text-white text-opacity-40 uppercase fw-bold" style="font-size: 0.55rem; letter-spacing: 0.5px;">INTERNAL IP</div>
+                                                                <div class="text-white font-monospace fw-bold server-ip"><?= htmlspecialchars($lab['ip']) ?></div>
+                                                                <div class="text-white text-opacity-40 uppercase fw-bold server-ip-lbl">INTERNAL IP</div>
                                                             </div>
-                                                            <button class="btn btn-sm btn-link p-0 text-white text-opacity-40 hover-text-white transition-all" onclick="copyText('<?= htmlspecialchars(addslashes($lab['ip'])) ?>', 'IP copied!')">
-                                                                <i class="bx bx-copy" style="font-size: 0.9rem;"></i>
+                                                            <button class="btn btn-sm btn-link p-0 text-white text-opacity-40 hover-text-white transition-all btn-copy" onclick="copyText('<?= htmlspecialchars(addslashes($lab['ip'])) ?>', 'IP copied!')">
+                                                                <i class="bx bx-copy"></i>
                                                             </button>
                                                         </div>
                                                     </div>
@@ -684,21 +685,21 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                     <div class="d-flex align-items-center justify-content-between p-3 rounded active-lab-item-card">
                                                         <div class="d-flex align-items-center gap-3 min-w-0">
                                                             <!-- Circular badge with dynamic server icon -->
-                                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; background: #e95420; border: 1px solid rgba(255, 255, 255, 0.25); box-shadow: 0 3px 8px rgba(0,0,0,0.15);">
-                                                                <i class='bx bxl-tux text-white' style="font-size: 1.15rem;"></i>
+                                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 server-icon-circle" style="background: #e95420;">
+                                                                <i class='bx bxl-tux text-white'></i>
                                                             </div>
                                                             <div class="min-w-0">
-                                                                <h6 class="fw-bold text-white mb-0 text-truncate" style="font-size: 0.85rem; letter-spacing: -0.2px;">Essentials Lab</h6>
-                                                                <span class="text-success fw-bold uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">ONLINE</span>
+                                                                <h6 class="fw-bold text-white mb-0 text-truncate server-title">Essentials Lab</h6>
+                                                                <span class="text-success fw-bold uppercase server-status">ONLINE</span>
                                                             </div>
                                                         </div>
                                                         <div class="text-end d-flex align-items-center gap-3 flex-shrink-0">
                                                             <div>
-                                                                <div class="text-white font-monospace fw-bold" style="font-size: 0.88rem; letter-spacing: 0.5px;">172.30.0.28</div>
-                                                                <div class="text-white text-opacity-40 uppercase fw-bold" style="font-size: 0.55rem; letter-spacing: 0.5px;">INTERNAL IP</div>
+                                                                <div class="text-white font-monospace fw-bold server-ip">172.30.0.28</div>
+                                                                <div class="text-white text-opacity-40 uppercase fw-bold server-ip-lbl">INTERNAL IP</div>
                                                             </div>
-                                                            <button class="btn btn-sm btn-link p-0 text-white text-opacity-40 hover-text-white transition-all" onclick="copyText('172.30.0.28', 'IP copied!')">
-                                                                <i class="bx bx-copy" style="font-size: 0.9rem;"></i>
+                                                            <button class="btn btn-sm btn-link p-0 text-white text-opacity-40 hover-text-white transition-all btn-copy" onclick="copyText('172.30.0.28', 'IP copied!')">
+                                                                <i class="bx bx-copy"></i>
                                                             </button>
                                                         </div>
                                                     </div>
@@ -714,72 +715,72 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                         <div class="card-body p-4">
                                             <div class="d-flex justify-content-between align-items-start mb-4">
                                                 <div>
-                                                    <h5 class="fw-bold mb-1 text-white" style="letter-spacing: -0.3px; font-size: 1.05rem;">Linked Domains</h5>
-                                                    <p class="mb-0 text-white text-opacity-40 fw-medium" style="font-size: 0.85rem;">Active DNS Records</p>
+                                                    <h5 class="fw-bold mb-1 text-white card-header-title">Linked Domains</h5>
+                                                    <p class="mb-0 text-white text-opacity-40 fw-medium card-header-sub">Active DNS Records</p>
                                                 </div>
                                                 <div class="text-end">
-                                                    <span class="text-success fw-bold fs-3"><?= sprintf("%02d", $domainCount) ?></span><span class="text-white text-opacity-35 small fw-semibold" style="font-size: 0.75rem;">/<?= $domainsLimit ?></span>
+                                                    <span class="text-success fw-bold fs-3"><?= sprintf("%02d", $domainCount) ?></span><span class="text-white text-opacity-35 small fw-semibold card-header-count">/<?= $domainsLimit ?></span>
                                                 </div>
                                             </div>
 
-                                            <div class="domain-list pe-1" style="max-height: 155px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
+                                            <div class="domain-list pe-1">
                                                 <?php if ($domainCount > 0): ?>
                                                     <?php foreach ($domains as $d): ?>
-                                                    <div class="d-flex align-items-center justify-content-between p-2 px-3 rounded active-lab-item-card" style="gap: 8px;">
-                                                        <div class="d-flex align-items-center gap-2 min-w-0" style="flex: 1; overflow: hidden;">
-                                                            <!-- Circular blue badge with globe icon (reduced) -->
-                                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 28px; height: 28px; background: rgba(46, 134, 222, 0.12); border: 1px solid rgba(46, 134, 222, 0.25);">
-                                                                <i class='bx bx-globe' style="font-size: 0.85rem; color: #2e86de !important;"></i>
+                                                    <div class="d-flex align-items-center justify-content-between p-2 px-3 rounded active-lab-item-card active-domain-item-card">
+                                                        <div class="d-flex align-items-center gap-2 min-w-0 domain-scroll-wrap">
+                                                            <!-- Circular blue badge with globe icon -->
+                                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 domain-icon-circle">
+                                                                <i class='bx bx-globe'></i>
                                                             </div>
-                                                            <div class="min-w-0" style="overflow: hidden;">
-                                                                <div style="overflow-x: auto; white-space: nowrap; scrollbar-width: none; -ms-overflow-style: none;" title="<?= htmlspecialchars($d['domain']) ?>">
-                                                                    <h6 class="fw-bold text-white mb-0" style="font-size: 0.75rem; letter-spacing: -0.2px; display: inline;"><?= htmlspecialchars($d['domain']) ?></h6>
+                                                            <div class="min-w-0 domain-scroll-wrap">
+                                                                <div class="domain-name-scroll" title="<?= htmlspecialchars($d['domain']) ?>">
+                                                                    <h6 class="fw-bold text-white mb-0"><?= htmlspecialchars($d['domain']) ?></h6>
                                                                 </div>
-                                                                <span class="fw-bold uppercase" style="color: #2e86de !important; font-size: 0.55rem; letter-spacing: 0.5px;">A RECORD</span>
+                                                                <span class="fw-bold uppercase domain-type-badge">A RECORD</span>
                                                             </div>
                                                         </div>
                                                         <div class="text-end flex-shrink-0">
-                                                            <div class="text-white font-monospace fw-bold" style="font-size: 0.78rem; letter-spacing: 0.3px;"><?= htmlspecialchars($d['ip_address'] ?? \TomLabs\Core\Env::get('SERVER_IP')) ?></div>
-                                                            <div class="text-white text-opacity-40 uppercase fw-bold" style="font-size: 0.5rem; letter-spacing: 0.5px;">IP TARGET</div>
+                                                            <div class="text-white font-monospace fw-bold domain-ip"><?= htmlspecialchars($d['ip_address'] ?? \TomLabs\Core\Env::get('SERVER_IP')) ?></div>
+                                                            <div class="text-white text-opacity-40 uppercase fw-bold domain-ip-lbl">IP TARGET</div>
                                                         </div>
                                                     </div>
                                                     <?php endforeach; ?>
                                                 <?php else: ?>
                                                     <!-- Mock matching user screenshot standard setup -->
-                                                    <div class="d-flex align-items-center justify-content-between p-2 px-3 rounded active-lab-item-card" style="gap: 8px;">
-                                                        <div class="d-flex align-items-center gap-2 min-w-0" style="flex: 1; overflow: hidden;">
-                                                            <!-- Circular blue badge with globe icon (reduced) -->
-                                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 28px; height: 28px; background: rgba(46, 134, 222, 0.12); border: 1px solid rgba(46, 134, 222, 0.25);">
-                                                                <i class='bx bx-globe' style="font-size: 0.85rem; color: #2e86de !important;"></i>
+                                                    <div class="d-flex align-items-center justify-content-between p-2 px-3 rounded active-lab-item-card active-domain-item-card">
+                                                        <div class="d-flex align-items-center gap-2 min-w-0 domain-scroll-wrap">
+                                                            <!-- Circular blue badge with globe icon -->
+                                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 domain-icon-circle">
+                                                                <i class='bx bx-globe'></i>
                                                             </div>
-                                                            <div class="min-w-0" style="overflow: hidden;">
-                                                                <div style="overflow-x: auto; white-space: nowrap; scrollbar-width: none; -ms-overflow-style: none;" title="sathish46.selfmade.fun">
-                                                                    <h6 class="fw-bold text-white mb-0" style="font-size: 0.75rem; letter-spacing: -0.2px; display: inline;">sathish46.selfmade.fun</h6>
+                                                            <div class="min-w-0 domain-scroll-wrap">
+                                                                <div class="domain-name-scroll" title="sathish46.selfmade.fun">
+                                                                    <h6 class="fw-bold text-white mb-0">sathish46.selfmade.fun</h6>
                                                                 </div>
-                                                                <span class="fw-bold uppercase" style="color: #2e86de !important; font-size: 0.55rem; letter-spacing: 0.5px;">A RECORD</span>
+                                                                <span class="fw-bold uppercase domain-type-badge">A RECORD</span>
                                                             </div>
                                                         </div>
                                                         <div class="text-end flex-shrink-0">
-                                                            <div class="text-white font-monospace fw-bold" style="font-size: 0.78rem; letter-spacing: 0.3px;"><?= htmlspecialchars(\TomLabs\Core\Env::get('SERVER_IP')) ?></div>
-                                                            <div class="text-white text-opacity-40 uppercase fw-bold" style="font-size: 0.5rem; letter-spacing: 0.5px;">IP TARGET</div>
+                                                            <div class="text-white font-monospace fw-bold domain-ip"><?= htmlspecialchars(\TomLabs\Core\Env::get('SERVER_IP')) ?></div>
+                                                            <div class="text-white text-opacity-40 uppercase fw-bold domain-ip-lbl">IP TARGET</div>
                                                         </div>
                                                     </div>
-                                                    <div class="d-flex align-items-center justify-content-between p-2 px-3 rounded active-lab-item-card" style="gap: 8px;">
-                                                        <div class="d-flex align-items-center gap-2 min-w-0" style="flex: 1; overflow: hidden;">
-                                                            <!-- Circular blue badge with globe icon (reduced) -->
-                                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 28px; height: 28px; background: rgba(46, 134, 222, 0.12); border: 1px solid rgba(46, 134, 222, 0.25);">
-                                                                <i class='bx bx-globe' style="font-size: 0.85rem; color: #2e86de !important;"></i>
+                                                    <div class="d-flex align-items-center justify-content-between p-2 px-3 rounded active-lab-item-card active-domain-item-card">
+                                                        <div class="d-flex align-items-center gap-2 min-w-0 domain-scroll-wrap">
+                                                            <!-- Circular blue badge with globe icon -->
+                                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 domain-icon-circle">
+                                                                <i class='bx bx-globe'></i>
                                                             </div>
-                                                            <div class="min-w-0" style="overflow: hidden;">
-                                                                <div style="overflow-x: auto; white-space: nowrap; scrollbar-width: none; -ms-overflow-style: none;" title="photogram.selfmade.monster">
-                                                                    <h6 class="fw-bold text-white mb-0" style="font-size: 0.75rem; letter-spacing: -0.2px; display: inline;">photogram.selfmade.monster</h6>
+                                                            <div class="min-w-0 domain-scroll-wrap">
+                                                                <div class="domain-name-scroll" title="photogram.selfmade.monster">
+                                                                    <h6 class="fw-bold text-white mb-0">photogram.selfmade.monster</h6>
                                                                 </div>
-                                                                <span class="fw-bold uppercase" style="color: #2e86de !important; font-size: 0.55rem; letter-spacing: 0.5px;">A RECORD</span>
+                                                                <span class="fw-bold uppercase domain-type-badge">A RECORD</span>
                                                             </div>
                                                         </div>
                                                         <div class="text-end flex-shrink-0">
-                                                            <div class="text-white font-monospace fw-bold" style="font-size: 0.78rem; letter-spacing: 0.3px;"><?= htmlspecialchars(\TomLabs\Core\Env::get('SERVER_IP')) ?></div>
-                                                            <div class="text-white text-opacity-40 uppercase fw-bold" style="font-size: 0.5rem; letter-spacing: 0.5px;">IP TARGET</div>
+                                                            <div class="text-white font-monospace fw-bold domain-ip"><?= htmlspecialchars(\TomLabs\Core\Env::get('SERVER_IP')) ?></div>
+                                                            <div class="text-white text-opacity-40 uppercase fw-bold domain-ip-lbl">IP TARGET</div>
                                                         </div>
                                                     </div>
                                                 <?php endif; ?>
@@ -789,22 +790,22 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                 </div>
                             </div> <!-- Close Row 1 (Connected Devices & Linked Domains) -->
 
-                            <div class="row g-3" style="margin-top: 1.5rem !important;"> <!-- Open Row 2 (Machine Labs & Challenge Labs) -->
+                            <div class="row g-3 mt-4"> <!-- Open Row 2 (Machine Labs & Challenge Labs) -->
                                 <!-- Machine Labs Card -->
                                 <div class="col-12 col-md-7 pe-md-1 mb-4 mb-md-0">
                                     <div class="card h-100 border-0 glass-card machine-labs-card">
                                         <div class="card-body p-4">
                                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                                <h6 class="fw-bold mb-0 d-flex align-items-center text-white" style="font-size: 0.95rem;">
+                                                <h6 class="fw-bold mb-0 d-flex align-items-center text-white card-title-md">
                                                     Machine Labs 
-                                                    <span class="badge bg-danger rounded-pill px-2 py-0.5 ms-2 uppercase fw-bold" style="font-size: 0.55rem; letter-spacing: 0.5px;">live</span> 
+                                                    <span class="badge bg-danger rounded-pill ms-2 uppercase fw-bold badge-live">live</span> 
                                                 </h6>
-                                                <div class="small text-white text-opacity-40 fw-medium" style="font-size: 0.72rem;">
+                                                <div class="small text-white text-opacity-40 fw-medium fs-8">
                                                     Limit: <?= $activeLabsCount ?>/<?= $labsLimit ?>
                                                 </div>
                                             </div>
 
-                                            <div id="machine-labs-container" class="d-flex flex-column px-0" style="max-height: 220px; overflow-y: auto;">
+                                            <div id="machine-labs-container" class="d-flex flex-column px-0 labs-scroll-container">
                                                 <?php if (!empty($labsList)): ?>
                                                      <?php foreach ($labsList as $lab): ?>
                                                      <div class="p-3 mb-3 rounded-4 border transition-all hover-scale flex-shrink-0 active-lab-item-card" 
@@ -823,31 +824,31 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                                      ?>
                                                                      <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" 
                                                                           style="width: 32px; height: 32px; background: <?= $bgColor ?>; border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 3px 8px rgba(0,0,0,0.15);">
-                                                                         <i class="bx <?= $iconClass ?> text-white" style="font-size: 1.1rem;"></i>
+                                                                         <i class="bx <?= $iconClass ?> text-white"></i>
                                                                      </div>
                                                                      <!-- Lab details -->
                                                                      <div class="d-flex flex-column gap-0.5">
-                                                                         <span class="text-white fw-bold" style="font-size: 0.76rem; letter-spacing: -0.15px; line-height: 1.2;"><?= $lab['name'] ?> Lab</span>
+                                                                         <span class="text-white fw-bold lab-title"><?= $lab['name'] ?> Lab</span>
                                                                          <div class="d-flex gap-1 align-items-center">
-                                                                             <span class="badge rounded-pill text-white fw-bold" style="font-size: 0.38rem; padding: 1px 4.5px; background-color: #a55eea !important; border: 0; line-height: 1; text-transform: none !important;">beta</span>
-                                                                             <span class="badge rounded-pill text-white fw-bold" style="font-size: 0.38rem; padding: 1px 4.5px; background-color: #2ed573 !important; border: 0; color: #000 !important; line-height: 1; text-transform: none !important;"><?= strtolower($lab['status']) ?></span>
+                                                                             <span class="badge rounded-pill text-white fw-bold badge-beta">beta</span>
+                                                                             <span class="badge rounded-pill text-white fw-bold badge-status"><?= strtolower($lab['status']) ?></span>
                                                                          </div>
                                                                      </div>
                                                                  </div>
 
                                                                  <!-- Right: Stats Row -->
                                                                  <div class="d-flex align-items-center gap-3 text-center">
-                                                                     <div class="d-flex flex-column align-items-center justify-content-center" style="min-width: 34px;">
-                                                                         <div class="fw-bold text-white text-center text-nowrap" id="cpu-<?= $lab['hash'] ?>" style="font-size: 0.65rem; line-height: 1.1; letter-spacing: -0.1px;">0.00%</div>
-                                                                         <div class="text-white text-opacity-40 fw-semibold text-center" style="font-size: 0.46rem; letter-spacing: 0.2px; margin-top: 1px;">CPU</div>
+                                                                     <div class="d-flex flex-column align-items-center justify-content-center stat-col-cpu">
+                                                                         <div class="fw-bold text-white text-center text-nowrap" id="cpu-<?= $lab['hash'] ?>" class="fw-bold text-white text-center text-nowrap stat-val">0.00%</div>
+                                                                         <div class="text-white text-opacity-40 fw-semibold text-center stat-lbl">CPU</div>
                                                                      </div>
-                                                                     <div class="d-flex flex-column align-items-center justify-content-center" style="min-width: 46px;">
-                                                                         <div class="fw-bold text-white text-center text-nowrap" id="mem-<?= $lab['hash'] ?>" style="font-size: 0.65rem; line-height: 1.1; letter-spacing: -0.1px;">0.00%</div>
-                                                                         <div class="text-white text-opacity-40 fw-semibold text-center" style="font-size: 0.46rem; letter-spacing: 0.2px; margin-top: 1px;">Memory</div>
+                                                                     <div class="d-flex flex-column align-items-center justify-content-center stat-col-mem">
+                                                                         <div class="fw-bold text-white text-center text-nowrap" id="mem-<?= $lab['hash'] ?>" class="fw-bold text-white text-center text-nowrap stat-val">0.00%</div>
+                                                                         <div class="text-white text-opacity-40 fw-semibold text-center stat-lbl">Memory</div>
                                                                      </div>
-                                                                     <div class="d-flex flex-column align-items-center justify-content-center" style="min-width: 68px;">
-                                                                         <div class="fw-bold text-white text-center text-nowrap" id="load-<?= $lab['hash'] ?>" style="font-size: 0.65rem; line-height: 1.1; letter-spacing: -0.1px;">0.00, 0.00, 0.00</div>
-                                                                         <div class="text-white text-opacity-40 fw-semibold text-center" style="font-size: 0.46rem; letter-spacing: 0.2px; margin-top: 1px;">Load</div>
+                                                                     <div class="d-flex flex-column align-items-center justify-content-center stat-col-load">
+                                                                         <div class="fw-bold text-white text-center text-nowrap" id="load-<?= $lab['hash'] ?>" class="fw-bold text-white text-center text-nowrap stat-val">0.00, 0.00, 0.00</div>
+                                                                         <div class="text-white text-opacity-40 fw-semibold text-center stat-lbl">Load</div>
                                                                      </div>
                                                                  </div>
                                                              </div>
@@ -855,14 +856,14 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                              <!-- Row 2: Right-aligned Buttons -->
                                                              <div class="d-flex justify-content-end w-100">
                                                                  <div class="d-flex gap-2 align-items-center">
-                                                                     <a href="/labs/dashboard/<?= $lab['hash'] ?>" class="btn btn-sm btn-success rounded-pill d-flex align-items-center gap-1 transition-all hover-scale" style="padding: 3px 9px; background-color: #2ed573 !important; border: 0; color: #000; font-size: 0.58rem; font-weight: 700; line-height: 1; text-transform: none !important;" title="Dashboard">
-                                                                         <i class='bx bx-grid-alt' style="font-size: 0.72rem;"></i> Dashboard
+                                                                     <a href="/labs/dashboard/<?= $lab['hash'] ?>" class="btn btn-sm rounded-pill d-flex align-items-center gap-1 transition-all hover-scale btn-lab-action btn-lab-dashboard" title="Dashboard">
+                                                                         <i class='bx bx-grid-alt'></i> Dashboard
                                                                      </a>
-                                                                     <button onclick="openCodeModal('<?= $lab['hash'] ?>', '<?= $lab['name'] ?> Lab', '<?= strtolower($lab['status']) ?>')" class="btn btn-sm btn-primary border-0 rounded-pill d-flex align-items-center gap-1 transition-all hover-scale" style="padding: 3px 9px; background-color: #ffa502 !important; color: #000; font-size: 0.58rem; font-weight: 700; line-height: 1; text-transform: none !important;" title="Code">
-                                                                         <i class='bx bx-code-alt' style="font-size: 0.72rem;"></i> Code
+                                                                     <button onclick="openCodeModal('<?= $lab['hash'] ?>', '<?= $lab['name'] ?> Lab', '<?= strtolower($lab['status']) ?>')" class="btn btn-sm rounded-pill d-flex align-items-center gap-1 transition-all hover-scale btn-lab-action btn-lab-code" title="Code">
+                                                                         <i class='bx bx-code-alt'></i> Code
                                                                      </button>
-                                                                     <button onclick="openConnectionModal('<?= $lab['hash'] ?>', '<?= $lab['name'] ?> Lab', '<?= strtolower($lab['status']) ?>')" class="btn btn-sm btn-info border-0 rounded-circle d-flex align-items-center justify-content-center transition-all hover-scale" style="width: 18px; height: 18px; padding: 0; background-color: #2e86de !important; color: #fff;" title="Connection Info">
-                                                                         <i class='bx bx-info-circle' style="font-size: 0.72rem;"></i>
+                                                                     <button onclick="openConnectionModal('<?= $lab['hash'] ?>', '<?= $lab['name'] ?> Lab', '<?= strtolower($lab['status']) ?>')" class="btn btn-sm rounded-circle d-flex align-items-center justify-content-center transition-all hover-scale btn-lab-info" title="Connection Info">
+                                                                         <i class='bx bx-info-circle'></i>
                                                                      </button>
                                                                  </div>
                                                              </div>
@@ -871,8 +872,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                      <?php endforeach; ?>
                                                                  <?php else: ?>
                                                     <!-- Fallback static preview matches screenshot exactly -->
-                                                     <div class="p-3 mb-3 rounded-4 border transition-all hover-scale flex-shrink-0 active-lab-item-card" 
-                                                          style="backdrop-filter: blur(2px);">
+                                                     <div class="p-3 mb-3 rounded-4 border transition-all hover-scale flex-shrink-0 active-lab-item-card">
                                                          <div class="d-flex flex-column gap-3 w-100">
                                                              <!-- Row 1: Left Info & Right Stats -->
                                                              <div class="d-flex align-items-center justify-content-between w-100">
@@ -881,31 +881,31 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                                      <!-- Soft OS container -->
                                                                      <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" 
                                                                           style="width: 32px; height: 32px; background: #e95420; border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 3px 8px rgba(0,0,0,0.15);">
-                                                                         <i class="bx bxl-tux text-white" style="font-size: 1.1rem;"></i>
+                                                                         <i class="bx bxl-tux text-white"></i>
                                                                      </div>
                                                                      <!-- Lab details -->
                                                                      <div class="d-flex flex-column gap-0.5">
-                                                                         <span class="text-white fw-bold" style="font-size: 0.76rem; letter-spacing: -0.15px; line-height: 1.2;">Essentials Lab</span>
+                                                                         <span class="text-white fw-bold lab-title">Essentials Lab</span>
                                                                          <div class="d-flex gap-1 align-items-center">
-                                                                             <span class="badge rounded-pill text-white fw-bold" style="font-size: 0.38rem; padding: 1px 4.5px; background-color: #a55eea !important; border: 0; line-height: 1; text-transform: none !important;">beta</span>
-                                                                             <span class="badge rounded-pill text-white fw-bold" style="font-size: 0.38rem; padding: 1px 4.5px; background-color: #2ed573 !important; border: 0; color: #000 !important; line-height: 1; text-transform: none !important;">running</span>
+                                                                             <span class="badge rounded-pill text-white fw-bold badge-beta">beta</span>
+                                                                             <span class="badge rounded-pill text-white fw-bold badge-status">running</span>
                                                                          </div>
                                                                      </div>
                                                                  </div>
 
                                                                  <!-- Right: Stats Row -->
                                                                  <div class="d-flex align-items-center gap-3 text-center">
-                                                                     <div class="d-flex flex-column align-items-center justify-content-center" style="min-width: 34px;">
-                                                                         <div class="fw-bold text-white text-center text-nowrap" id="cpu-2dfa0d10c8ee99549594d584e85c92d3" style="font-size: 0.65rem; line-height: 1.1; letter-spacing: -0.1px;">0.02%</div>
-                                                                         <div class="text-white text-opacity-40 fw-semibold text-center" style="font-size: 0.46rem; letter-spacing: 0.2px; margin-top: 1px;">CPU</div>
+                                                                     <div class="d-flex flex-column align-items-center justify-content-center stat-col-cpu">
+                                                                         <div class="fw-bold text-white text-center text-nowrap" id="cpu-2dfa0d10c8ee99549594d584e85c92d3" class="fw-bold text-white text-center text-nowrap stat-val">0.02%</div>
+                                                                         <div class="text-white text-opacity-40 fw-semibold text-center stat-lbl">CPU</div>
                                                                      </div>
-                                                                     <div class="d-flex flex-column align-items-center justify-content-center" style="min-width: 46px;">
-                                                                         <div class="fw-bold text-white text-center text-nowrap" id="mem-2dfa0d10c8ee99549594d584e85c92d3" style="font-size: 0.65rem; line-height: 1.1; letter-spacing: -0.1px;">3.76%</div>
-                                                                         <div class="text-white text-opacity-40 fw-semibold text-center" style="font-size: 0.46rem; letter-spacing: 0.2px; margin-top: 1px;">Memory</div>
+                                                                     <div class="d-flex flex-column align-items-center justify-content-center stat-col-mem">
+                                                                         <div class="fw-bold text-white text-center text-nowrap" id="mem-2dfa0d10c8ee99549594d584e85c92d3" class="fw-bold text-white text-center text-nowrap stat-val">3.76%</div>
+                                                                         <div class="text-white text-opacity-40 fw-semibold text-center stat-lbl">Memory</div>
                                                                      </div>
-                                                                     <div class="d-flex flex-column align-items-center justify-content-center" style="min-width: 68px;">
-                                                                         <div class="fw-bold text-white text-center text-nowrap" id="load-2dfa0d10c8ee99549594d584e85c92d3" style="font-size: 0.65rem; line-height: 1.1; letter-spacing: -0.1px;">0.00, 0.00, 0.00</div>
-                                                                         <div class="text-white text-opacity-40 fw-semibold text-center" style="font-size: 0.46rem; letter-spacing: 0.2px; margin-top: 1px;">Load</div>
+                                                                     <div class="d-flex flex-column align-items-center justify-content-center stat-col-load">
+                                                                         <div class="fw-bold text-white text-center text-nowrap" id="load-2dfa0d10c8ee99549594d584e85c92d3" class="fw-bold text-white text-center text-nowrap stat-val">0.00, 0.00, 0.00</div>
+                                                                         <div class="text-white text-opacity-40 fw-semibold text-center stat-lbl">Load</div>
                                                                      </div>
                                                                  </div>
                                                              </div>
@@ -913,14 +913,14 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                              <!-- Row 2: Right-aligned Buttons -->
                                                              <div class="d-flex justify-content-end w-100">
                                                                  <div class="d-flex gap-2 align-items-center">
-                                                                     <a href="/labs/dashboard/2dfa0d10c8ee99549594d584e85c92d3" class="btn btn-sm btn-success rounded-pill d-flex align-items-center gap-1 transition-all hover-scale" style="padding: 3px 9px; background-color: #2ed573 !important; border: 0; color: #000; font-size: 0.58rem; font-weight: 700; line-height: 1; text-transform: none !important;" title="Dashboard">
-                                                                         <i class='bx bx-grid-alt' style="font-size: 0.72rem;"></i> Dashboard
+                                                                     <a href="/labs/dashboard/2dfa0d10c8ee99549594d584e85c92d3" class="btn btn-sm rounded-pill d-flex align-items-center gap-1 transition-all hover-scale btn-lab-action btn-lab-dashboard" title="Dashboard">
+                                                                         <i class='bx bx-grid-alt'></i> Dashboard
                                                                      </a>
-                                                                     <button onclick="openCodeModal('2dfa0d10c8ee99549594d584e85c92d3', 'Essentials Lab', 'running')" class="btn btn-sm btn-primary border-0 rounded-pill d-flex align-items-center gap-1 transition-all hover-scale" style="padding: 3px 9px; background-color: #ffa502 !important; color: #000; font-size: 0.58rem; font-weight: 700; line-height: 1; text-transform: none !important;" title="Code">
-                                                                         <i class='bx bx-code-alt' style="font-size: 0.72rem;"></i> Code
+                                                                     <button onclick="openCodeModal('2dfa0d10c8ee99549594d584e85c92d3', 'Essentials Lab', 'running')" class="btn btn-sm rounded-pill d-flex align-items-center gap-1 transition-all hover-scale btn-lab-action btn-lab-code" title="Code">
+                                                                         <i class='bx bx-code-alt'></i> Code
                                                                      </button>
-                                                                     <button onclick="openConnectionModal('2dfa0d10c8ee99549594d584e85c92d3', 'Essentials Lab', 'running')" class="btn btn-sm btn-info border-0 rounded-circle d-flex align-items-center justify-content-center transition-all hover-scale" style="width: 18px; height: 18px; padding: 0; background-color: #2e86de !important; color: #fff;" title="Connection Info">
-                                                                         <i class='bx bx-info-circle' style="font-size: 0.72rem;"></i>
+                                                                     <button onclick="openConnectionModal('2dfa0d10c8ee99549594d584e85c92d3', 'Essentials Lab', 'running')" class="btn btn-sm rounded-circle d-flex align-items-center justify-content-center transition-all hover-scale btn-lab-info" title="Connection Info">
+                                                                         <i class='bx bx-info-circle'></i>
                                                                      </button>
                                                                  </div>
                                                              </div>
@@ -936,31 +936,31 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                 <!-- Challenge Labs Card -->
                                 <div class="col-12 col-md-5 ps-md-1">
                                     <div class="card h-100 border-0 glass-card">
-                                        <div class="card-body p-2 px-3 d-flex flex-column" style="min-height: 220px;">
+                                        <div class="card-body p-2 px-3 d-flex flex-column min-h-220">
                                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                                <h6 class="fw-bold mb-0 d-flex align-items-center text-white" style="font-size: 0.95rem;">
+                                                <h6 class="fw-bold mb-0 d-flex align-items-center text-white card-title-md">
                                                     Challenge Labs 
-                                                    <span class="badge bg-danger rounded-pill px-2 py-0.5 ms-2 uppercase fw-bold" style="font-size: 0.55rem; letter-spacing: 0.5px;">live</span> 
+                                                    <span class="badge bg-danger rounded-pill ms-2 uppercase fw-bold badge-live">live</span> 
                                                 </h6>
                                             </div>
-                                            <div class="d-flex flex-column gap-2 flex-grow-1" style="max-height: 380px; overflow-y: auto; padding-right: 4px;">
+                                            <div class="d-flex flex-column gap-2 flex-grow-1 challenge-scroll-container">
                                                 <?php if (!empty($challengeLabsList)): ?>
                                                     <?php foreach ($challengeLabsList as $clab): ?>
-                                                        <div class="p-3 py-2 mb-3 border transition-all hover-scale flex-shrink-0 active-lab-item-card d-flex align-items-center justify-content-between" style="backdrop-filter: blur(6px); border-radius: 50px; background: rgba(255, 255, 255, 0.05); padding-right: 8px !important;">
+                                                        <div class="p-3 py-2 mb-3 border transition-all hover-scale flex-shrink-0 challenge-item-card d-flex align-items-center justify-content-between">
                                                             
                                                             <!-- Left: Image and Info -->
                                                             <div class="d-flex align-items-center gap-2" style="min-width: 0;">
                                                                 <!-- Avatar/Image -->
-                                                                <div class="rounded-circle overflow-hidden flex-shrink-0" style="width: 36px; height: 36px; border: 2px solid rgba(255,255,255,0.1);">
+                                                                <div class="rounded-circle overflow-hidden flex-shrink-0 challenge-img-circle">
                                                                     <img src="<?= htmlspecialchars($clab['image']) ?>" alt="Challenge" class="w-100 h-100 object-fit-cover" onerror="this.src='/assets/Background_Img/challenges/mystery.png';">
                                                                 </div>
                                                                 
                                                                 <!-- Info -->
-                                                                <div class="d-flex flex-column justify-content-center" style="min-width: 0;">
-                                                                    <span class="text-white fw-bold" style="font-size: 0.72rem; letter-spacing: -0.15px; line-height: 1.15; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" title="<?= htmlspecialchars($clab['name']) ?>"><?= htmlspecialchars($clab['name']) ?></span>
-                                                                    <div class="d-flex gap-1 align-items-center mt-1 flex-nowrap" style="white-space: nowrap;">
-                                                                        <span class="badge rounded-pill text-white fw-bold" style="font-size: 0.45rem; padding: 2px 5px; background-color: <?= $clab['diffColor'] ?> !important; color: #fff !important; line-height: 1; text-transform: lowercase !important; letter-spacing: 0.2px;"><?= htmlspecialchars(strtolower($clab['difficulty'])) ?></span>
-                                                                        <span class="badge rounded-pill text-white fw-bold" style="font-size: 0.45rem; padding: 2px 5px; background-color: #2ed573 !important; color: #fff !important; line-height: 1; text-transform: lowercase !important; letter-spacing: 0.2px;"><?= htmlspecialchars(strtolower($clab['status'])) ?></span>
+                                                                <div class="d-flex flex-column justify-content-center min-w-0">
+                                                                    <span class="text-white fw-bold challenge-title" title="<?= htmlspecialchars($clab['name']) ?>"><?= htmlspecialchars($clab['name']) ?></span>
+                                                                    <div class="d-flex gap-1 align-items-center mt-1 flex-nowrap text-nowrap">
+                                                                        <span class="badge rounded-pill fw-bold challenge-badge-diff" style="background-color: <?= $clab['diffColor'] ?> !important;"><?= htmlspecialchars(strtolower($clab['difficulty'])) ?></span>
+                                                                        <span class="badge rounded-pill fw-bold challenge-badge-status"><?= htmlspecialchars(strtolower($clab['status'])) ?></span>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -968,25 +968,25 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                             <!-- Right: Buttons -->
                                                             <div class="d-flex gap-1 align-items-center flex-shrink-0 ms-1">
                                                                 <!-- Dashboard Button (Green) -->
-                                                                <a href="/challenges/dashboard/<?= $clab['hash'] ?>" class="btn rounded-circle d-flex align-items-center justify-content-center transition-all hover-scale border-0" style="width: 30px; height: 30px; background-color: #2ed573 !important; color: #1e272e; padding: 0;" title="Dashboard">
-                                                                    <i class='bx bxs-grid-alt' style="font-size: 1.1rem;"></i>
+                                                                <a href="/challenges/dashboard/<?= $clab['hash'] ?>" class="btn rounded-circle d-flex align-items-center justify-content-center transition-all hover-scale btn-challenge-action btn-challenge-dash" title="Dashboard">
+                                                                    <i class='bx bxs-grid-alt'></i>
                                                                 </a>
                                                                 <!-- Challenge Button (Purple) -->
-                                                                <a href="/challenges/challenges/<?= $clab['hash'] ?>" class="btn rounded-circle d-flex align-items-center justify-content-center transition-all hover-scale border-0" style="width: 30px; height: 30px; background-color: #a55eea !important; color: #fff; padding: 0;" title="Challenge">
-                                                                    <i class='bx bx-target-lock' style="font-size: 1.1rem;"></i>
+                                                                <a href="/challenges/challenges/<?= $clab['hash'] ?>" class="btn rounded-circle d-flex align-items-center justify-content-center transition-all hover-scale btn-challenge-action btn-challenge-target" title="Challenge">
+                                                                    <i class='bx bx-target-lock'></i>
                                                                 </a>
                                                                 <!-- Leaderboard Button (Blue) -->
-                                                                <a href="/challenges/leaderboard/<?= $clab['hash'] ?>" class="btn rounded-circle d-flex align-items-center justify-content-center transition-all hover-scale border-0" style="width: 30px; height: 30px; background-color: #0abde3 !important; color: #1e272e; padding: 0;" title="Leaderboard">
-                                                                    <i class='bx bxs-trophy' style="font-size: 1.1rem;"></i>
+                                                                <a href="/challenges/leaderboard/<?= $clab['hash'] ?>" class="btn rounded-circle d-flex align-items-center justify-content-center transition-all hover-scale btn-challenge-action btn-challenge-trophy" title="Leaderboard">
+                                                                    <i class='bx bxs-trophy'></i>
                                                                 </a>
                                                             </div>
                                                         </div>
                                                     <?php endforeach; ?>
                                                 <?php else: ?>
-                                                    <div class="text-center text-white text-opacity-35 py-4 small flex-grow-1 d-flex justify-content-center align-items-center" style="font-size: 0.78rem;">
+                                                    <div class="text-center text-white text-opacity-35 py-4 small flex-grow-1 d-flex justify-content-center align-items-center challenge-empty-state">
                                                         No Challenge Labs Running
                                                     </div>
-                                                    <button class="btn btn-sm rounded-pill fw-bold py-1.5 border border-purple border-opacity-30 text-purple hover-bg-purple transition-all align-self-center mt-auto" style="font-size: 0.72rem; color: #a55eea; border-color: rgba(165, 94, 234, 0.3) !important; background: rgba(165, 94, 234, 0.05); width: 100%; letter-spacing: 0.3px;">
+                                                    <button class="btn btn-sm rounded-pill fw-bold py-1.5 transition-all align-self-center mt-auto btn-deploy-challenge">
                                                         Deploy a Challenge Lab
                                                     </button>
                                                 <?php endif; ?>
@@ -1000,90 +1000,90 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                         <!-- Pane 3: Recommended -->
                         <div class="continue-tab-pane d-none" id="continue-pane-recommended">
                             <div class="mb-3">
-                                <h6 class="text-white text-opacity-40 fw-bold small mb-3 uppercase tracking-widest" style="font-size: 0.72rem;">Recommended For You</h6>
+                                <h6 class="text-white text-opacity-40 fw-bold small mb-3 uppercase tracking-widest fs-8">Recommended For You</h6>
                             </div>
                             <div class="row g-3">
                                 <!-- Card 1 -->
                                 <div class="col-12 col-md-6 col-lg-4">
-                                    <div class="card h-100 border-0 continue-activity-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05) !important; border-radius: 16px;">
+                                    <div class="card h-100 border-0 continue-activity-card">
                                         <div class="card-body p-3 d-flex gap-3">
-                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: rgba(255, 165, 2, 0.12); border: 1px solid rgba(255, 165, 2, 0.2);">
-                                                <i class='bx bx-code-alt text-warning' style="font-size: 1.1rem; color: #ffa502 !important;"></i>
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 activity-icon-circle" style="background: rgba(255, 165, 2, 0.12); border: 1px solid rgba(255, 165, 2, 0.2);">
+                                                <i class='bx bx-code-alt text-warning fs-5' style="color: #ffa502 !important;"></i>
                                             </div>
                                             <div class="flex-grow-1 min-w-0">
                                                 <div class="d-flex justify-content-between align-items-center mb-1">
-                                                    <span class="badge rounded bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10 fw-semibold" style="font-size: 0.58rem; padding: 2.5px 6px; background-color: rgba(111, 50, 207, 0.1) !important; color: #a55eea !important; border-color: rgba(165, 94, 234, 0.2) !important;">Next Lesson</span>
+                                                    <span class="badge rounded border fw-semibold activity-badge badge-purple-subtle">Next Lesson</span>
                                                 </div>
-                                                <h6 class="fw-bold text-white small mb-1" style="line-height: 1.35; min-height: 38px; font-size: 0.78rem;">Introduction to Cybersecurity for Beginners</h6>
-                                                <div class="text-white text-opacity-35" style="font-size: 0.65rem;">Beginner</div>
+                                                <h6 class="fw-bold text-white small mb-1 activity-title">Introduction to Cybersecurity for Beginners</h6>
+                                                <div class="text-white text-opacity-35 activity-sub">Beginner</div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 <!-- Card 2 -->
                                 <div class="col-12 col-md-6 col-lg-4">
-                                    <div class="card h-100 border-0 continue-activity-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05) !important; border-radius: 16px;">
+                                    <div class="card h-100 border-0 continue-activity-card">
                                         <div class="card-body p-3 d-flex gap-3">
-                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: rgba(255, 165, 2, 0.12); border: 1px solid rgba(255, 165, 2, 0.2);">
-                                                <i class='bx bx-code-alt text-warning' style="font-size: 1.1rem; color: #ffa502 !important;"></i>
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 activity-icon-circle" style="background: rgba(255, 165, 2, 0.12); border: 1px solid rgba(255, 165, 2, 0.2);">
+                                                <i class='bx bx-code-alt text-warning fs-5' style="color: #ffa502 !important;"></i>
                                             </div>
                                             <div class="flex-grow-1 min-w-0">
                                                 <div class="d-flex justify-content-between align-items-center mb-1">
-                                                    <span class="badge rounded bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10 fw-semibold" style="font-size: 0.58rem; padding: 2.5px 6px; background-color: rgba(111, 50, 207, 0.1) !important; color: #a55eea !important; border-color: rgba(165, 94, 234, 0.2) !important;">Next Lesson</span>
+                                                    <span class="badge rounded border fw-semibold activity-badge badge-purple-subtle">Next Lesson</span>
                                                 </div>
-                                                <h6 class="fw-bold text-white small mb-1 text-truncate" style="line-height: 1.35; min-height: 38px; font-size: 0.78rem;">Elite Ethical Hacking Roadmap: Beginner to...</h6>
-                                                <div class="text-white text-opacity-35" style="font-size: 0.65rem;">Beginner</div>
+                                                <h6 class="fw-bold text-white small mb-1 activity-title text-truncate">Elite Ethical Hacking Roadmap: Beginner to...</h6>
+                                                <div class="text-white text-opacity-35 activity-sub">Beginner</div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 <!-- Card 3 -->
                                 <div class="col-12 col-md-6 col-lg-4">
-                                    <div class="card h-100 border-0 continue-activity-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05) !important; border-radius: 16px;">
+                                    <div class="card h-100 border-0 continue-activity-card">
                                         <div class="card-body p-3 d-flex gap-3">
-                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: rgba(46, 213, 115, 0.12); border: 1px solid rgba(46, 213, 115, 0.2);">
-                                                <i class='bx bx-terminal text-success' style="font-size: 1.1rem; color: #2ed573 !important;"></i>
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 activity-icon-circle" style="background: rgba(46, 213, 115, 0.12); border: 1px solid rgba(46, 213, 115, 0.2);">
+                                                <i class='bx bx-terminal text-success fs-5' style="color: #2ed573 !important;"></i>
                                             </div>
                                             <div class="flex-grow-1 min-w-0">
                                                 <div class="d-flex justify-content-between align-items-center mb-1">
-                                                    <span class="badge rounded bg-success bg-opacity-10 text-success border border-success border-opacity-10 fw-semibold" style="font-size: 0.58rem; padding: 2.5px 6px;">Practice</span>
+                                                    <span class="badge rounded bg-success bg-opacity-10 text-success border border-success border-opacity-10 fw-semibold activity-badge">Practice</span>
                                                 </div>
-                                                <h6 class="fw-bold text-white small mb-1" style="line-height: 1.35; min-height: 38px; font-size: 0.78rem;">Calculate the sum of squares by caching co...</h6>
-                                                <div class="text-white text-opacity-35" style="font-size: 0.65rem;">Easy</div>
+                                                <h6 class="fw-bold text-white small mb-1 activity-title">Calculate the sum of squares by caching co...</h6>
+                                                <div class="text-white text-opacity-35 activity-sub">Easy</div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 <!-- Card 4 -->
                                 <div class="col-12 col-md-6 col-lg-4">
-                                    <div class="card h-100 border-0 continue-activity-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05) !important; border-radius: 16px;">
+                                    <div class="card h-100 border-0 continue-activity-card">
                                         <div class="card-body p-3 d-flex gap-3">
-                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: rgba(46, 213, 115, 0.12); border: 1px solid rgba(46, 213, 115, 0.2);">
-                                                <i class='bx bx-terminal text-success' style="font-size: 1.1rem; color: #2ed573 !important;"></i>
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 activity-icon-circle" style="background: rgba(46, 213, 115, 0.12); border: 1px solid rgba(46, 213, 115, 0.2);">
+                                                <i class='bx bx-terminal text-success fs-5' style="color: #2ed573 !important;"></i>
                                             </div>
                                             <div class="flex-grow-1 min-w-0">
                                                 <div class="d-flex justify-content-between align-items-center mb-1">
-                                                    <span class="badge rounded bg-success bg-opacity-10 text-success border border-success border-opacity-10 fw-semibold" style="font-size: 0.58rem; padding: 2.5px 6px;">Practice</span>
+                                                    <span class="badge rounded bg-success bg-opacity-10 text-success border border-success border-opacity-10 fw-semibold activity-badge">Practice</span>
                                                 </div>
-                                                <h6 class="fw-bold text-white small mb-1" style="line-height: 1.35; min-height: 38px; font-size: 0.78rem;">Place stones strategically to cross river ...</h6>
-                                                <div class="text-white text-opacity-35" style="font-size: 0.65rem;">Easy</div>
+                                                <h6 class="fw-bold text-white small mb-1 activity-title">Place stones strategically to cross river ...</h6>
+                                                <div class="text-white text-opacity-35 activity-sub">Easy</div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 <!-- Card 5 -->
                                 <div class="col-12 col-md-6 col-lg-4">
-                                    <div class="card h-100 border-0 continue-activity-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05) !important; border-radius: 16px;">
+                                    <div class="card h-100 border-0 continue-activity-card">
                                         <div class="card-body p-3 d-flex gap-3">
-                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: rgba(46, 134, 222, 0.12); border: 1px solid rgba(46, 134, 222, 0.2);">
-                                                <i class='bx bx-chat text-info' style="font-size: 1.1rem; color: #2e86de !important;"></i>
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 activity-icon-circle" style="background: rgba(46, 134, 222, 0.12); border: 1px solid rgba(46, 134, 222, 0.2);">
+                                                <i class='bx bx-chat text-info fs-5' style="color: #2e86de !important;"></i>
                                             </div>
                                             <div class="flex-grow-1 min-w-0">
                                                 <div class="d-flex justify-content-between align-items-center mb-1">
-                                                    <span class="badge rounded bg-info bg-opacity-10 text-info border border-info border-opacity-10 fw-semibold" style="font-size: 0.58rem; padding: 2.5px 6px; background-color: rgba(46, 134, 222, 0.1) !important; color: #2e86de !important; border-color: rgba(46, 134, 222, 0.2) !important;">Join Discussion</span>
+                                                    <span class="badge rounded border fw-semibold activity-badge badge-blue-subtle">Join Discussion</span>
                                                 </div>
-                                                <h6 class="fw-bold text-white small mb-1" style="line-height: 1.35; min-height: 38px; font-size: 0.78rem;">Community Discussions</h6>
-                                                <div class="text-white text-opacity-35" style="font-size: 0.65rem;">Ask questions, share knowledge</div>
+                                                <h6 class="fw-bold text-white small mb-1 activity-title">Community Discussions</h6>
+                                                <div class="text-white text-opacity-35 activity-sub">Ask questions, share knowledge</div>
                                             </div>
                                         </div>
                                     </div>
@@ -1102,17 +1102,17 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
         <!-- Box 1: Recent Activity -->
         <div class="card border-0 glass-card">
             <div class="card-body p-4">
-                <h6 class="fw-bold text-body mb-4" style="font-size: 0.9rem; letter-spacing: 0.5px; text-transform: uppercase;">Recent Activity</h6>
+                <h6 class="fw-bold text-body mb-4 sidebar-box-title">Recent Activity</h6>
                 <div class="d-flex flex-column gap-3">
                     <?php if (!empty($activitiesList)): ?>
                         <?php foreach ($activitiesList as $act): ?>
-                        <div class="d-flex align-items-start gap-3 small">
-                            <div class="rounded-circle mt-1" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: <?= $act['bg'] ?> !important; border: 1px solid <?= $act['border'] ?> !important; flex-shrink: 0;">
-                                <i class='<?= $act['icon'] ?>' style="color: <?= $act['color'] ?> !important; font-size: 0.85rem;"></i>
+                        <div class="d-flex align-items-start gap-3 small recent-activity-item">
+                            <div class="rounded-circle mt-1 activity-dot" style="background: <?= $act['bg'] ?> !important; border: 1px solid <?= $act['border'] ?> !important;">
+                                <i class='<?= $act['icon'] ?>' style="color: <?= $act['color'] ?> !important;"></i>
                             </div>
                             <div>
-                                <span class="text-body fw-medium d-block mb-1" style="line-height: 1.35;"><?= $act['text'] ?></span>
-                                <span class="text-body-secondary opacity-50" style="font-size: 0.7rem;"><?= formatActivityTime($act['timestamp']) ?></span>
+                                <span class="text-body fw-medium d-block mb-1 activity-text"><?= $act['text'] ?></span>
+                                <span class="text-body-secondary opacity-50 activity-time"><?= formatActivityTime($act['timestamp']) ?></span>
                             </div>
                         </div>
                         <?php endforeach; ?>
@@ -1127,32 +1127,32 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
         </div>
 
         <!-- Box 2: Smart Insights (Dynamic) -->
-        <div class="card border-0 glass-card position-relative overflow-hidden" id="smart-insights-card">
-            <div class="card-body p-3 pt-3 pb-2 position-relative">
-                <h6 class="fw-bold mb-1.5 text-body" style="font-size: 0.95rem; letter-spacing: 0.3px;">Smart Insights</h6>
-                <p class="mb-1 text-body-secondary" id="insights-subtitle" style="font-size: 0.78rem;">Analyzing your activity...</p>
-                <h2 class="fw-bold mb-0 text-body" id="insights-peak-label" style="font-size: 1.5rem; letter-spacing: -0.5px;">
+        <div class="card border-0 glass-card position-relative overflow-hidden smart-insights-card" id="smart-insights-card">
+            <div class="card-body p-4 position-relative">
+                <h6 class="fw-bold mb-2 text-body insights-title">Smart Insights</h6>
+                <p class="mb-1 text-body-secondary insights-subtitle" id="insights-subtitle">Analyzing your activity...</p>
+                <h2 class="fw-bold mb-0 text-body insights-peak" id="insights-peak-label">
                     <span class="placeholder-glow"><span class="placeholder col-6 rounded"></span></span>
                 </h2>
                 
                 <!-- Bar Chart -->
-                <div class="d-flex align-items-end mt-2" style="height: 48px; gap: 1.5px; padding-bottom: 0;" id="insights-bars-container">
+                <div class="d-flex align-items-end mt-2 insights-chart" id="insights-bars-container">
                     <?php for ($i = 0; $i < 24; $i++): ?>
-                    <div class="insights-bar" data-hour="<?= $i ?>" style="flex: 1; height: 4%; min-width: 0; background: rgba(255,255,255,0.08); border-radius: 2px 2px 0 0; transition: height 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), background 0.3s ease, box-shadow 0.3s ease;"></div>
+                    <div class="insights-bar" data-hour="<?= $i ?>" style="height: 4%;"></div>
                     <?php endfor; ?>
                 </div>
 
                 <!-- Time Labels -->
-                <div class="position-relative mt-1 w-100" style="height: 16px; font-size: 0.62rem; color: rgba(255,255,255,0.35); font-style: italic; font-weight: 500;">
+                <div class="position-relative mt-1 w-100 insights-labels">
                     <span class="position-absolute text-body-secondary" style="left: 0;">12a</span>
                     <span class="position-absolute text-body-secondary" style="left: 25%; transform: translateX(-50%);">6a</span>
                     <span class="position-absolute text-body-secondary" style="left: 50%; transform: translateX(-50%);">12p</span>
                     <span class="position-absolute text-body-secondary" style="left: 75%; transform: translateX(-50%);">6p</span>
                 </div>
 
-                <div class="d-flex justify-content-between align-items-center mt-1" id="insights-footer" style="display: none !important;">
-                    <span class="small" id="insights-active-days" style="font-size: 0.68rem; color: rgba(255,255,255,0.35);"></span>
-                    <span class="small" id="insights-last-seen" style="font-size: 0.68rem; color: rgba(255,255,255,0.35);"></span>
+                <div class="d-flex justify-content-between align-items-center mt-1 d-none" id="insights-footer">
+                    <span class="small insights-footer-text" id="insights-active-days"></span>
+                    <span class="small insights-footer-text" id="insights-last-seen"></span>
                 </div>
             </div>
         </div>
@@ -1160,12 +1160,12 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
         <!-- Box 3: Upcoming Events -->
         <div class="card border-0 glass-card">
             <div class="card-body p-4">
-                <h6 class="fw-bold text-body d-flex align-items-center gap-2 mb-3" style="font-size: 0.9rem; letter-spacing: 0.5px; text-transform: uppercase;">
+                <h6 class="fw-bold text-body d-flex align-items-center gap-2 mb-3 sidebar-box-title">
                     <i class='bx bx-calendar-event fs-5 opacity-75'></i> Upcoming Events
                 </h6>
                 <div class="py-2">
                     <p class="text-body-secondary small mb-2">No upcoming events</p>
-                    <a href="#" class="text-decoration-none small text-info fw-medium hover-theme-text transition-all" style="font-size: 0.8rem;">
+                    <a href="#" class="text-decoration-none small text-info fw-medium hover-theme-text transition-all fs-7">
                         View all events <i class='bx bx-right-arrow-alt align-middle'></i>
                     </a>
                 </div>
@@ -1178,7 +1178,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
 <!-- Code Info Modal (Simplified IDE Launch) -->
 <div class="modal fade" id="codeInfoModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden bg-body-tertiary" style="backdrop-filter: blur(20px);">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden bg-body-tertiary glass-modal-content">
             <div class="modal-header border-0 p-4 pb-0">
                 <h5 class="modal-title fw-bold text-body mb-0">Code Server Access</h5>
                 <button type="button" class="btn-close" data-coreui-dismiss="modal" aria-label="Close"></button>
@@ -1190,11 +1190,11 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                 <div id="codeModalLoading" class="text-center py-5">
                     <div class="spinner-grow text-primary" role="status"></div>
                 </div>
-                <div id="codeModalOffline" class="text-center py-5" style="display: none;">
+                <div id="codeModalOffline" class="text-center py-5 d-none">
                     <i class='bx bx-power-off text-danger fs-1 mb-3'></i>
                     <h6 class="text-body fw-bold">Instance is Offline</h6>
                 </div>
-                <div id="codeModalContent" style="display: none;">
+                <div id="codeModalContent" class="d-none">
                     <div id="codeFields"></div>
                 </div>
             </div>
@@ -1209,7 +1209,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
 <!-- Technical Connection Info Modal -->
 <div class="modal fade" id="connectionInfoModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden bg-body-tertiary" style="backdrop-filter: blur(20px);">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden bg-body-tertiary glass-modal-content">
             <div class="modal-header border-0 p-4 pb-0">
                 <h5 class="modal-title fw-bold text-body mb-0">Technical Connection Info</h5>
                 <button type="button" class="btn-close" data-coreui-dismiss="modal" aria-label="Close"></button>
@@ -1219,11 +1219,11 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                     <span class="badge rounded-pill bg-info bg-opacity-10 text-info border border-info border-opacity-25 px-3 py-2" id="modalLabName">Lab Name</span>
                 </div>
                 <div id="modalLoading" class="text-center py-5"><div class="spinner-border text-info" role="status"></div></div>
-                <div id="modalOffline" class="text-center py-5" style="display: none;">
+                <div id="modalOffline" class="text-center py-5 d-none">
                     <i class='bx bx-server text-muted fs-1 mb-3'></i>
                     <h6 class="text-body fw-bold">Offline</h6>
                 </div>
-                <div id="modalContent" style="display: none;">
+                <div id="modalContent" class="d-none">
                     <div id="connectionFields"></div>
                 </div>
             </div>

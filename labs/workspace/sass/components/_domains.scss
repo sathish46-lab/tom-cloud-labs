@@ -1,0 +1,85 @@
+/* ==========================================================================
+   Domains Page & Domain Card Helper Classes
+   ========================================================================== */
+.domains-header-title {
+  font-size: 1.8rem !important;
+  letter-spacing: -0.5px !important;
+}
+
+.domains-header-desc {
+  font-size: 0.85rem !important;
+  line-height: 1.7 !important;
+  letter-spacing: 0.2px !important;
+}
+
+.btn-add-domain {
+  font-size: 0.8rem !important;
+  height: 38px !important;
+  white-space: nowrap !important;
+}
+
+.domains-limit-text {
+  font-size: 0.85rem !important;
+}
+
+/* Domain Card Partial Styles */
+.domain-card-wrapper {
+  .domain-card-title {
+    text-transform: none !important;
+    color: var(--glass-text) !important;
+    font-size: 1.15rem !important;
+    letter-spacing: -0.3px !important;
+  }
+  
+  .badge-domain-type {
+    font-size: 0.65rem !important;
+    padding: 3px 8px !important;
+  }
+  
+  .action-dots {
+    width: 32px !important;
+    height: 32px !important;
+    transition: all 0.2s !important;
+    background: none !important;
+    border: none !important;
+    i { color: var(--glass-icon) !important; }
+  }
+  
+  .dropdown-menu {
+    min-width: 10rem !important;
+    border-radius: 12px !important;
+    padding: 8px !important;
+    background: var(--cui-dropdown-bg) !important;
+    backdrop-filter: blur(10px) !important;
+    
+    .dropdown-item {
+      font-size: 0.75rem !important;
+    }
+  }
+  
+  .badge:not(.badge-domain-type) {
+    font-size: 8px !important;
+    padding: 2px 6px !important;
+  }
+
+  .badge-status-pill {
+    font-size: 8px !important;
+    padding: 2px 6px !important;
+    transition: all 0.2s !important;
+  }
+  
+  .domain-details-area {
+    font-size: 0.8rem !important;
+    line-height: 1.2 !important;
+    color: var(--glass-text) !important;
+    
+    b {
+      color: var(--glass-text-muted) !important;
+      font-weight: 600 !important;
+    }
+    
+    .domain-name-val {
+      color: #3498db !important;
+    }
+  }
+}
