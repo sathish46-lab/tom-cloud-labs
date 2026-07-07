@@ -375,7 +375,7 @@ function initModal() {
         // Move modal to body so it's not trapped inside containers
         // with backdrop-filter/transform that break position:fixed
         document.body.appendChild(modalEl);
-        generationModal = coreui.Modal.getOrCreateInstance(modalEl);
+        generationModal = coreui.Modal.getInstance(modalEl) || new coreui.Modal(modalEl);
         generationModal.hide();
     }
 }
@@ -428,7 +428,7 @@ window.triggerGeneration = function () {
         return;
     }
     
-    const modalInstance = coreui.Modal.getOrCreateInstance(modalEl);
+    const modalInstance = coreui.Modal.getInstance(modalEl) || new coreui.Modal(modalEl);
     if (modalInstance) modalInstance.show();
 };
 

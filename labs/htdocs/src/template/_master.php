@@ -388,9 +388,9 @@ $classString = implode(' ', $htmlClasses);
         #scene, .scenery-container { 
             display: none !important; 
         }
-        html[data-coreui-theme="dark"] .sidebar {
+        /* html[data-coreui-theme="dark"] .sidebar {
             border-right: none !important;
-        }
+        } */
         html[data-coreui-theme="dark"] .header {
             border-bottom: none !important;
         }
@@ -504,6 +504,34 @@ $classString = implode(' ', $htmlClasses);
                 trigger: 'hover'
             });
         });
+
+        // Smart Header Positioning:
+        // If main content exceeds viewport (scrollable), switch header to static so it scrolls naturally
+        // with the page and prevents card hover z-index overlap. If content fits screen, keep it sticky at top.
+        function updateHeaderScrollMode() {
+            var header = document.querySelector('.header');
+            if (!header) return;
+            var isScrollable = document.documentElement.scrollHeight > (window.innerHeight + 15);
+            if (isScrollable) {
+                header.style.setProperty('position', 'static', 'important');
+            } else {
+                header.style.setProperty('position', 'sticky', 'important');
+                header.style.setProperty('top', '0', 'important');
+            }
+        }
+        updateHeaderScrollMode();
+        window.addEventListener('resize', updateHeaderScrollMode);
+        setTimeout(updateHeaderScrollMode, 250);
+        setTimeout(updateHeaderScrollMode, 800);
+
+        if (window.headerObserver) window.headerObserver.disconnect();
+        var mainContent = document.getElementById('main-content');
+        if (mainContent && window.MutationObserver) {
+            window.headerObserver = new MutationObserver(function() {
+                updateHeaderScrollMode();
+            });
+            window.headerObserver.observe(mainContent, { childList: true, subtree: true, attributes: true });
+        }
 
         // Silent Activity Tracker — fire-and-forget for Smart Insights
         <?php if (Session::getAuthStatus() == Constants::STATUS_LOGGEDIN): ?>
@@ -678,30 +706,69 @@ $classString = implode(' ', $htmlClasses);
     </style>
     
     <script>
-        // Start the progress bar animation
-        document.body.addEventListener('htmx:beforeRequest', function() {
+        // Prevent HTMX from attempting to AJAX-load non-HTMX full pages (like /home, /, /logout)
+        // especially during browser Back/Forward (history.back()) navigations!
+        function handleNonHtmxNavigation(evt) {
+            const path = evt.detail.path || evt.detail.requestConfig?.path || window.location.pathname || '';
+            if (path === '/' || path === '/home' || path.startsWith('/home?') || path.startsWith('/logout')) {
+                evt.preventDefault();
+                window.location.href = path;
+                return true;
+            }
+            return false;
+        }
+
+        document.body.addEventListener('htmx:historyCacheMiss', handleNonHtmxNavigation);
+        document.body.addEventListener('htmx:historyRestore', handleNonHtmxNavigation);
+
+        let htmxProgressStartTime = 0;
+        function startHtmxProgress() {
             const bar = document.getElementById('htmx-top-progress');
             if (bar) {
+                htmxProgressStartTime = Date.now();
                 bar.classList.remove('htmx-complete');
-                // Force a reflow to ensure it resets to 0 instantly before animating
                 void bar.offsetWidth; 
                 bar.classList.add('htmx-running');
             }
-        });
+        }
 
-        // Smoothly finish the progress bar animation
-        document.body.addEventListener('htmx:afterRequest', function() {
-            const bar = document.getElementById('htmx-top-progress');
-            if (bar) {
-                bar.classList.remove('htmx-running');
-                bar.classList.add('htmx-complete');
-                
-                // After the fade out finishes, remove the class to reset width back to 0 invisibly
-                setTimeout(() => {
-                    bar.classList.remove('htmx-complete');
-                }, 600);
+        document.body.addEventListener('htmx:beforeHistoryRestore', function(evt) {
+            if (!handleNonHtmxNavigation(evt)) {
+                startHtmxProgress();
             }
         });
+
+        document.body.addEventListener('htmx:beforeRequest', function(evt) {
+            if (!handleNonHtmxNavigation(evt)) {
+                startHtmxProgress();
+            }
+        });
+
+        window.addEventListener('popstate', function() {
+            startHtmxProgress();
+        });
+
+        // Smoothly finish the progress bar animation on ANY completion, swap, settle, history restore, or error!
+        function finishHtmxProgress() {
+            const bar = document.getElementById('htmx-top-progress');
+            if (bar && bar.classList.contains('htmx-running')) {
+                const elapsed = Date.now() - htmxProgressStartTime;
+                const minDuration = 150; // Ensure it stays visible for at least 150ms so fast cached navigations show the bar!
+                const delay = Math.max(0, minDuration - elapsed);
+                setTimeout(() => {
+                    bar.classList.remove('htmx-running');
+                    bar.classList.add('htmx-complete');
+                    setTimeout(() => {
+                        bar.classList.remove('htmx-complete');
+                    }, 600);
+                }, delay);
+            }
+        }
+
+        ['htmx:afterRequest', 'htmx:afterSettle', 'htmx:afterSwap', 'htmx:historyRestore', 'htmx:requestError', 'htmx:sendError', 'htmx:responseError', 'htmx:abort'].forEach(evtName => {
+            document.body.addEventListener(evtName, finishHtmxProgress);
+        });
+        window.addEventListener('popstate', () => setTimeout(finishHtmxProgress, 300));
     </script>
 </body>
 

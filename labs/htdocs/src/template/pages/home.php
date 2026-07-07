@@ -3,62 +3,148 @@ $user = Session::getUser();
 $userName = $user ? $user->getUserName() : "User";
 $avatar = Session::getAvatar();
 
-// Load dynamic navigation items
-$gridItems = include __DIR__ . '/../../config/home_nav.php';
-
 // Greeting logic
 $hour = date('H');
-if ($hour < 12) $greeting = "Morning, legend";
-elseif ($hour < 17) $greeting = "Afternoon, legend";
-elseif ($hour < 21) $greeting = "Evening, legend";
-else $greeting = "Winding down";
+if ($hour < 12) $greeting = "Morning, champ, ⚡";
+elseif ($hour < 17) $greeting = "Afternoon, champ, ⚡";
+elseif ($hour < 21) $greeting = "Evening, champ, ⚡";
+else $greeting = "Night, champ, ⚡";
 ?>
 
 
 
 <div class="container-fluid min-vh-100 d-flex flex-column align-items-center justify-content-center py-2 position-relative overflow-hidden">
-    <!-- Premium Ambient Background Orbs -->
-    <div class="scenery-orb-1"></div>
-    <div class="scenery-orb-2"></div>
 
     <!-- User Header Section -->
-    <div class="text-center mb-5 home-fade-in">
-        <div class="home-avatar mb-3 position-relative d-inline-block">
-            <img src="<?= $avatar ?>" alt="Profile" class="rounded-circle shadow-lg border border-2 border-white border-opacity-10" style="width: 64px; height: 64px; object-fit: cover;">
-            <div class="position-absolute bottom-0 end-0 bg-success rounded-circle border border-2 border-dark" style="width: 14px; height: 14px;"></div>
+    <div class="text-center mb-3 home-fade-in">
+        <div class="home-avatar">
+            <img src="<?= $avatar ?>" alt="Profile" class="home-avatar-img">
+            <div class="home-avatar-dot"></div>
         </div>
         <?php 
         $fullName = $user->getFullName();
         $displayTitle = !empty($fullName) ? $fullName : $user->getUsername();
         ?>
-        <h1 class="fw-bold mb-1" style="font-size: 1.6rem; letter-spacing: -0.5px; color: var(--cui-body-color);">
-            <?= $greeting ?>, <span class="theme-text text-uppercase"><?= htmlspecialchars($displayTitle) ?></span>!
+        <h1 class="home-greeting-title">
+            <?= $greeting ?> <span class="theme-text text-uppercase"><?= htmlspecialchars($displayTitle) ?></span> ✨!
         </h1>
-        <p class="small mb-3" style="font-size: 0.85rem; opacity: 0.7; color: var(--cui-body-color-muted);">State of the art laboratories at the hands and homes of every learner!</p>
-        <div class="d-flex justify-content-center gap-3 align-items-center">
-            <span class="badge rounded-pill home-plan-badge px-3 py-2">
-                <i class='bx bxs-check-circle me-1' style="color: #f9ca24;"></i> PRO PLAN
+        <p class="home-greeting-sub">State of the art laboratories at the hands and homes of every learner!</p>
+        <div class="d-flex flex-column align-items-center">
+            <span class="home-plan-badge">
+                <i class='bx bxs-check-circle'></i> Pro Plan
             </span>
-            <a href="/logout" class="btn rounded-circle d-flex align-items-center justify-content-center shadow-sm border p-0" style="width: 35px; height: 35px; position: relative; z-index: 100; --cui-btn-border-color: rgba(255,255,255,0.1); --cui-btn-bg: rgba(255,255,255,0.05); --cui-btn-hover-bg: rgba(231,76,60,0.15); --cui-btn-hover-border-color: rgba(231,76,60,0.3); --cui-btn-color: rgba(255,255,255,0.7); --cui-btn-hover-color: #e74c3c;">
-                <i class='bx bx-log-out-circle' style="font-size: 1.2rem;"></i>
+            <a href="/logout" class="home-signout-link">
+                <i class='bx bx-log-out'></i> Sign out
             </a>
         </div>
     </div>
 
     <!-- Main Navigation Grid -->
-    <div class="row g-4 w-100 justify-content-center home-grid-container" style="max-width: 1100px;">
-        <?php foreach ($gridItems as $idx => $item): ?>
-            <div class="col-6 col-md-4 col-lg-2-4">
-                <a href="<?= $item['url'] ?>" class="card home-nav-card border-0 text-decoration-none h-100" style="--card-accent: <?= $item['color'] ?>; animation-delay: <?= $idx * 0.05 ?>s;">
-                    <div class="card-body">
-                        <div class="card-icon-ring">
-                            <i class='bx <?= $item['icon'] ?>' style="color: <?= $item['color'] ?>;"></i>
-                        </div>
-                        <h5 class="card-title"><?= $item['title'] ?></h5>
-                        <p class="card-text text-center"><?= $item['desc'] ?></p>
-                    </div>
-                </a>
+    <div class="launcher-grid mb-4">
+        <a href="/dashboard" class="launcher-card card blur hvr-grow">
+            <div class="launcher-icon-wrapper">
+                <svg class="launcher-icon"><use xlink:href="/assets/icons/sprites/free.svg#cil-speedometer"></use></svg>
             </div>
-        <?php endforeach; ?>
+            <span class="launcher-label">Dashboard</span>
+            <span class="launcher-sub">Your control center</span>
+        </a>
+        <a href="/labs" class="launcher-card card blur hvr-grow">
+            <div class="launcher-icon-wrapper">
+                <svg class="launcher-icon"><use xlink:href="/assets/icons/sprites/free.svg#cil-devices"></use></svg>
+            </div>
+            <span class="launcher-label">Machine Labs</span>
+            <span class="launcher-sub">Deploy & practice</span>
+        </a>
+        <a href="/challenges" class="launcher-card card blur hvr-grow">
+            <div class="launcher-icon-wrapper">
+                <svg class="launcher-icon"><use xlink:href="/assets/icons/sprites/free.svg#cil-shield-alt"></use></svg>
+            </div>
+            <span class="launcher-label">Challenge Labs</span>
+            <span class="launcher-sub">CTF & security</span>
+        </a>
+        <a href="/quiz" class="launcher-card card blur hvr-grow">
+            <div class="launcher-icon-wrapper">
+                <svg class="launcher-icon"><use xlink:href="/assets/icons/sprites/free.svg#cil-task"></use></svg>
+            </div>
+            <span class="launcher-label">Spot Quiz</span>
+            <span class="launcher-sub">Test your knowledge</span>
+        </a>
+        <a href="#" class="launcher-card card blur hvr-grow">
+            <div class="launcher-icon-wrapper">
+                <svg class="launcher-icon"><use xlink:href="/assets/icons/sprites/free.svg#cil-code"></use></svg>
+            </div>
+            <span class="launcher-label">Code Arena</span>
+            <span class="launcher-sub">Solve & compete</span>
+        </a>
+        <a href="/learn" class="launcher-card card blur hvr-grow">
+            <div class="launcher-icon-wrapper">
+                <svg class="launcher-icon"><use xlink:href="/assets/icons/sprites/free.svg#cil-education"></use></svg>
+            </div>
+            <span class="launcher-label">Learn AI</span>
+            <span class="launcher-sub">AI-powered lessons</span>
+        </a>
+        <a href="#" class="launcher-card card blur hvr-grow">
+            <div class="launcher-icon-wrapper">
+                <svg class="launcher-icon"><use xlink:href="/assets/icons/sprites/free.svg#cil-map"></use></svg>
+            </div>
+            <span class="launcher-label">Roadmaps</span>
+            <span class="launcher-sub">Learning paths</span>
+        </a>
+        <a href="#" class="launcher-card card blur hvr-grow">
+            <div class="launcher-icon-wrapper">
+                <svg class="launcher-icon"><use xlink:href="/assets/icons/sprites/free.svg#cil-chat-bubble"></use></svg>
+            </div>
+            <span class="launcher-label">Discussions</span>
+            <span class="launcher-sub">Ask & answer</span>
+        </a>
+        <a href="#" class="launcher-card card blur hvr-grow">
+            <div class="launcher-icon-wrapper">
+                <svg class="launcher-icon"><use xlink:href="/assets/icons/sprites/free.svg#cil-people"></use></svg>
+            </div>
+            <span class="launcher-label">Clubs</span>
+            <span class="launcher-sub">Find your people</span>
+        </a>
+        <a href="#" class="launcher-card card blur hvr-grow">
+            <div class="launcher-icon-wrapper">
+                <svg class="launcher-icon"><use xlink:href="/assets/icons/sprites/free.svg#cil-calendar"></use></svg>
+            </div>
+            <span class="launcher-label">Events</span>
+            <span class="launcher-sub">Hackathons & more</span>
+        </a>
+        <a href="#" class="launcher-card card blur hvr-grow">
+            <div class="launcher-icon-wrapper">
+                <svg class="launcher-icon"><use xlink:href="/assets/icons/sprites/free.svg#cil-notes"></use></svg>
+            </div>
+            <span class="launcher-label">Syllabus AI</span>
+            <span class="launcher-sub">Exam prep & study</span>
+        </a>
+        <a href="/devices" class="launcher-card card blur hvr-grow">
+            <div class="launcher-icon-wrapper">
+                <svg class="launcher-icon"><use xlink:href="/assets/icons/sprites/free.svg#cil-laptop"></use></svg>
+            </div>
+            <span class="launcher-label">My Devices</span>
+            <span class="launcher-sub">Manage connections</span>
+        </a>
+        <a href="#" class="launcher-card card blur hvr-grow">
+            <div class="launcher-icon-wrapper">
+                <svg class="launcher-icon"><use xlink:href="/assets/icons/sprites/free.svg#cil-bolt"></use></svg>
+            </div>
+            <span class="launcher-label">Feeling Lucky</span>
+            <span class="launcher-sub">Personalized picks</span>
+        </a>
+        <a href="#" class="launcher-card card blur hvr-grow">
+            <div class="launcher-icon-wrapper">
+                <svg class="launcher-icon"><use xlink:href="/assets/icons/sprites/free.svg#cil-chart-line"></use></svg>
+            </div>
+            <span class="launcher-label">Leaderboard</span>
+            <span class="launcher-sub">Rankings & stats</span>
+        </a>
+        <a href="#" class="launcher-card card blur hvr-grow">
+            <div class="launcher-icon-wrapper">
+                <svg class="launcher-icon"><use xlink:href="/assets/icons/sprites/free.svg#cil-flag-alt"></use></svg>
+            </div>
+            <span class="launcher-label">Clans</span>
+            <span class="launcher-sub">Team up for CTF</span>
+        </a>
     </div>
 </div>

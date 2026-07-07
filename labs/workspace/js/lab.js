@@ -374,13 +374,17 @@ const Dashboard = {
       }
     };
 
-    // 2. Handle Visibility Changes to save resources
+    // 2. Handle Visibility & HTMX Navigation Changes to save resources
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) {
         stop();
       } else {
         start();
       }
+    });
+
+    document.addEventListener("htmx:beforeSwap", () => {
+      stop();
     });
 
     // Start initially if visible

@@ -105,7 +105,7 @@ foreach ($titleParts as $index => $part) {
     }
 
     $href = $url ? $url : '#';
-    $boostAttr = ($href === '/') ? ' hx-boost="false"' : '';
+    $boostAttr = ($href === '/' || $href === '/home' || stripos($href, '/logout') !== false) ? ' hx-boost="false"' : '';
     
     if ($isLast) {
         echo '<li class="breadcrumb-item active"><a href="' . $href . '"' . $boostAttr . ' class="text-decoration-none small fw-bold theme-text transition-all">' . htmlspecialchars($displayPart) . '</a></li>';

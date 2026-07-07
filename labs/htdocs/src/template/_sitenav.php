@@ -12,8 +12,8 @@
 
             <!-- Back Button -->
             <button class="btn btn-link p-0 text-secondary hover-text-white d-flex align-items-center justify-content-center rounded-circle border border-white border-opacity-10 text-decoration-none shadow-none" 
-                    onclick="history.back()" 
-                    style="width: 32px; height: 32px; transition: all 0.2s;">
+                    onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href = '/home'; }" 
+                    style="width: 32px; height: 32px; transition: all 0.2s;" title="Go Back">
                 <i class="bx bx-left-arrow-alt fs-4"></i>
             </button>
 

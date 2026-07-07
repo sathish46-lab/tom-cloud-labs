@@ -17,6 +17,11 @@ try {
         if (dashboardPollingInterval) return; // Prevent duplicate intervals
 
         function fetchDashboardMetrics() {
+            if (!document.getElementById('insights-subtitle') && !document.querySelector('[id^="cpu-"]')) {
+                window.stopDashboardPolling();
+                return;
+            }
+
             fetch(`/api/dashboard/stats`)
                 .then(res => res.json())
                 .then(data => {
@@ -56,6 +61,10 @@ try {
             dashboardPollingInterval = null;
         }
     };
+
+    document.addEventListener('htmx:beforeSwap', () => {
+        window.stopDashboardPolling();
+    });
 
     // Initialize Smart Insights activity graph
     window.initDashboardInsights = function () {

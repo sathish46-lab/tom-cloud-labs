@@ -31,12 +31,13 @@
 @use "components/labs";
 @use "components/lab_details";
 @use "components/trash_bin";
+@use "components/account";
 // 2. Global Performance & Smooth Rendering Optimizations
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
-}
+}s
 
 body {
   -webkit-font-smoothing: antialiased;

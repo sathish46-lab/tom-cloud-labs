@@ -1,6 +1,118 @@
 // ========================================================================
-// Launcher & Card — Ultra Compact Grid (One-Screen Layout)
+// Launcher & Card — Ultra Compact Grid (One-Screen Apple Pro Vibe)
 // ========================================================================
+
+// ---------- Home Header & Avatar Styling (Strict No Inline Styles Policy) ----------
+.home-avatar {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 0.35rem !important;
+
+  .home-avatar-img {
+    width: 56px !important;
+    height: 56px !important;
+    object-fit: cover !important;
+    border-radius: 50% !important;
+    border: 2px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4) !important;
+  }
+
+  .home-avatar-dot {
+    position: absolute;
+    bottom: 1px;
+    right: 1px;
+    width: 11px !important;
+    height: 11px !important;
+    background-color: #2ecc71 !important;
+    border-radius: 50% !important;
+    border: 2px solid #16181e !important;
+    box-shadow: 0 0 6px rgba(46, 204, 113, 0.8);
+  }
+}
+
+.home-greeting-title {
+  font-weight: 800 !important;
+  font-size: 1.4rem !important;
+  letter-spacing: -0.5px !important;
+  color: #fff !important;
+  margin-bottom: 0.15rem !important;
+}
+
+.home-greeting-sub {
+  font-size: 0.82rem !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+  margin-bottom: 0.75rem !important;
+}
+
+.home-plan-badge {
+  background-color: rgba(39, 174, 96, 0.15) !important;
+  color: #2ecc71 !important;
+  border: 1px solid rgba(46, 204, 113, 0.3) !important;
+  padding: 0.35rem 1rem !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.3px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  border-radius: 50rem !important;
+
+  i {
+    color: #2ecc71 !important;
+    margin-right: 0.35rem !important;
+    font-size: 1rem !important;
+  }
+}
+
+.home-signout-link {
+  color: rgba(255, 255, 255, 0.55) !important;
+  font-size: 0.78rem !important;
+  text-decoration: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  margin-top: 0.3rem !important;
+  font-weight: 500 !important;
+  transition: color 0.2s ease !important;
+
+  &:hover {
+    color: #e74c3c !important;
+  }
+}
+
+// ---------- Launcher Grid Container ----------
+.launcher-grid {
+  display: grid !important;
+  grid-template-columns: repeat(5, 1fr) !important;
+  gap: 1rem !important;
+  width: 100% !important;
+  max-width: 1000px !important;
+  margin: 0 auto !important;
+
+  @media (max-width: 991px) {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+
+  @media (max-width: 575px) {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  // Permanent Accent Colors per Card (Strict No Inline Styles Policy)
+  a:nth-child(1)  { --card-accent: #00d2ff; } // Dashboard
+  a:nth-child(2)  { --card-accent: #27ae60; } // Machine Labs
+  a:nth-child(3)  { --card-accent: #e74c3c; } // Challenge Labs
+  a:nth-child(4)  { --card-accent: #f39c12; } // Spot Quiz
+  a:nth-child(5)  { --card-accent: #f1c40f; } // Code Arena
+  a:nth-child(6)  { --card-accent: #3498db; } // Learn AI
+  a:nth-child(7)  { --card-accent: #16a085; } // Roadmaps
+  a:nth-child(8)  { --card-accent: #9b59b6; } // Discussions
+  a:nth-child(9)  { --card-accent: #ff4757; } // Clubs
+  a:nth-child(10) { --card-accent: #ffa502; } // Events
+  a:nth-child(11) { --card-accent: #ff6b6b; } // Syllabus AI
+  a:nth-child(12) { --card-accent: #1e90ff; } // My Devices
+  a:nth-child(13) { --card-accent: #a55eea; } // Feeling Lucky
+  a:nth-child(14) { --card-accent: #f9ca24; } // Leaderboard
+  a:nth-child(15) { --card-accent: #ff4757; } // Clans
+}
 
 .home-grid-container {
   display: flex !important;
@@ -21,7 +133,7 @@
   }
 }
 
-// ---------- Ultra Compact Card ----------
+// ---------- Ultra Compact Card (Solid #16181e Apple Pro Vibe) ----------
 .launcher-card.card,
 .home-nav-card.card {
   --glow-color: var(--card-accent, rgba(100, 200, 255, 0.4));
@@ -30,77 +142,90 @@
   flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
+  padding: 12px 8px !important;
 
   width: 100% !important;
-  min-height: 110px !important; // Ultra compact height
+  min-height: 115px !important;
 
-  /* Background, blur, border, and border-radius are now inherited from _backdrop.scss to support .glass-mode */
-  padding: 12px 8px !important; // Minimal padding
+  /* Solid clean dark slate background with subtle accent border */
+  background: #16181e !important;
+  background-color: #16181e !important;
+  border: 1px solid var(--glow-color) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25) !important;
+
   position: relative;
-  transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.3s cubic-bezier(0.165, 0.84, 0.44, 1), background-color 0.3s cubic-bezier(0.165, 0.84, 0.44, 1), border-color 0.3s cubic-bezier(0.165, 0.84, 0.44, 1), opacity 0.3s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+  transition: box-shadow 0.25s ease, background-color 0.25s ease, border-color 0.25s ease, transform 0.2s ease !important;
   text-decoration: none !important;
+  overflow: hidden;
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 100%;
-    background: radial-gradient(circle at 50% -5%, var(--glow-color) 0%, transparent 60%);
-    opacity: 0.5;
-    z-index: 1;
+  // HWA-Disabled fallback
+  body.hwa-disabled &,
+  html:not(.glass-mode) & {
+    background: #16181e !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
   }
 
-  // Icon Ring
+  // Icon Ring (Reduced dimensions)
   .card-icon-ring,
-  .icon-wrapper {
-    width: 36px !important; // Ultra small ring
-    height: 36px !important;
+  .icon-wrapper,
+  .launcher-icon-wrapper {
+    width: 38px !important;
+    height: 38px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 12px;
     margin: 0 auto 8px auto !important;
     z-index: 2;
+    transition: all 0.25s ease;
 
-    i {
-      font-size: 1.3rem !important; // Smaller icons
+    i, svg, .launcher-icon {
+      width: 20px !important;
+      height: 20px !important;
+      font-size: 1.25rem !important;
       color: var(--glow-color) !important;
-      filter: drop-shadow(0 0 6px var(--glow-color));
+      fill: var(--glow-color) !important;
+      filter: drop-shadow(0 0 4px var(--glow-color));
+      transition: all 0.25s ease;
     }
   }
 
   // Typography
   .card-title,
-  h5 {
+  h5,
+  .launcher-label {
     font-weight: 700 !important;
-    font-size: 0.82rem !important; // Compact title
+    font-size: 0.82rem !important;
     color: #fff !important;
     margin-bottom: 2px !important;
     letter-spacing: -0.01em !important;
     z-index: 2;
     text-align: center !important;
     width: 100% !important;
+    display: block !important;
   }
 
   .card-text,
-  p {
-    font-size: 0.6rem !important; // Tiny text
-    color: rgba(255, 255, 255, 0.4) !important;
+  p,
+  .launcher-sub {
+    font-size: 0.68rem !important;
+    color: rgba(255, 255, 255, 0.55) !important;
     margin: 0 auto !important;
-    line-height: 1.1 !important;
+    line-height: 1.2 !important;
     z-index: 2;
-    white-space: nowrap; // Keep it on one line to save vertical space
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    width: 90% !important;
+    width: 95% !important;
     text-align: center !important;
+    display: block !important;
   }
 
-  // ---------- Entrance Animation (Matches Test File) ----------
+  // ---------- Entrance Animation ----------
   opacity: 0;
   animation: homeCardSlideUp 0.6s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
   will-change: transform, opacity;
@@ -111,15 +236,17 @@
     transform: none !important;
   }
 
-  // Hover Effect
+  // Clean, Subtle Hover (No jumping, no curve color, no glowing blurs!)
   &:hover {
-    transform: scale(1.04) translateY(-4px) !important;
-    border-color: rgba(255, 255, 255, 0.3) !important;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25) !important;
-    background-color: var(--glass-bg-hover, rgba(255, 255, 255, 0.05)) !important;
+    border-color: var(--glow-color) !important;
+    background-color: #1a1d24 !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35), 0 0 12px var(--glow-color) !important;
 
-    &::before {
-      opacity: 0.8;
+    .card-icon-ring,
+    .icon-wrapper,
+    .launcher-icon-wrapper {
+      background: rgba(255, 255, 255, 0.08) !important;
+      border-color: var(--glow-color) !important;
     }
   }
 }
@@ -139,7 +266,7 @@
 
 // Adjust Header to save more space
 .home-fade-in {
-  margin-bottom: 1.5rem !important; // Reduce margin below header
+  margin-bottom: 1rem !important; // Reduce margin below header
 
   h1 {
     font-size: 1.4rem !important;
@@ -186,17 +313,20 @@
     }
 
     .card-title,
-    h5 {
+    h5,
+    .launcher-label {
       color: #1a1a2e !important;
     }
 
     .card-text,
-    p {
+    p,
+    .launcher-sub {
       color: rgba(26, 26, 46, 0.6) !important;
     }
 
     .card-icon-ring,
-    .icon-wrapper {
+    .icon-wrapper,
+    .launcher-icon-wrapper {
       background: rgba(0, 0, 0, 0.03) !important;
       border: 1px solid rgba(0, 0, 0, 0.06) !important;
     }
@@ -447,17 +577,20 @@
     }
 
     .card-title,
-    h5 {
+    h5,
+    .launcher-label {
         color: #ffffff !important;
     }
 
     .card-text,
-    p {
+    p,
+    .launcher-sub {
         color: rgba(255, 255, 255, 0.6) !important;
     }
 
     .card-icon-ring,
-    .icon-wrapper {
+    .icon-wrapper,
+    .launcher-icon-wrapper {
         background: rgba(255, 255, 255, 0.04) !important;
         border: 1px solid rgba(255, 255, 255, 0.06) !important;
     }

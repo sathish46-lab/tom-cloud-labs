@@ -25,43 +25,43 @@ $is2faEnabled = $user?->getTwoFactorEnabled() ?? false;
                 <form id="profileUpdateForm">
                     <div class="d-flex align-items-center mb-3 pb-2 border-bottom border-secondary border-opacity-10">
                         <div class="position-relative me-3 dropdown">
-                            <img id="profileAvatarImg" src="<?= $avatar ?>" class="rounded-circle shadow-sm" width="60" height="60" style="object-fit: cover;">
-                            <button type="button" class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 shadow dropdown-toggle no-caret" style="width:24px; height:24px; padding:0; display:flex; align-items:center; justify-content:center;" title="Change Profile Picture" data-coreui-toggle="dropdown" aria-expanded="false">
-                                <i class='bx bx-camera' style="font-size: 0.75rem;"></i>
+                            <img id="profileAvatarImg" src="<?= $avatar ?>" class="rounded-circle shadow-sm account-avatar-img" width="60" height="60">
+                            <button type="button" class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 shadow dropdown-toggle no-caret account-avatar-camera-btn" title="Change Profile Picture" data-coreui-toggle="dropdown" aria-expanded="false">
+                                <i class='bx bx-camera account-fs-xs'></i>
                             </button>
-                            <ul class="dropdown-menu dropdown-menu-dark shadow-sm border border-secondary border-opacity-10" style="font-size: 0.75rem; background: #191c24; min-width: 150px;">
+                            <ul class="dropdown-menu dropdown-menu-dark shadow-sm border border-secondary border-opacity-10 account-avatar-dropdown">
                                 <li><a class="dropdown-item py-2" href="#" onclick="document.getElementById('avatarUploadInput').click(); return false;"><i class="bx bx-upload me-2 text-primary"></i> Upload Device</a></li>
                                 <li><a class="dropdown-item py-2" href="#" onclick="openChooseAvatarModal(); return false;"><i class="bx bx-image me-2 text-warning"></i> Choose Uploads</a></li>
                             </ul>
                             <input type="file" id="avatarUploadInput" class="d-none" accept="image/png, image/jpeg, image/gif, image/webp">
                         </div>
                         <div>
-                            <h6 class="fw-bold mb-0" style="font-size: 0.9rem;">Profile Picture</h6>
-                            <p class="small text-secondary mb-0" style="font-size: 0.75rem;">JPG, GIF or PNG. Max size of 800K</p>
+                            <h6 class="fw-bold mb-0 account-fs-md">Profile Picture</h6>
+                            <p class="small text-secondary mb-0 account-fs-xs">JPG, GIF or PNG. Max size of 800K</p>
                         </div>
                     </div>
                     
                     <div class="row g-2 mb-2">
                         <div class="col-md-6">
-                            <label class="form-label small fw-bold text-secondary mb-1" style="font-size: 0.75rem;">First Name</label>
+                            <label class="form-label small fw-bold text-secondary mb-1 account-fs-xs">First Name</label>
                             <input type="text" class="form-control form-control-sm" name="first_name" placeholder="First Name" value="<?= htmlspecialchars($firstName) ?>">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-bold text-secondary mb-1" style="font-size: 0.75rem;">Last Name</label>
+                            <label class="form-label small fw-bold text-secondary mb-1 account-fs-xs">Last Name</label>
                             <input type="text" class="form-control form-control-sm" name="last_name" placeholder="Last Name" value="<?= htmlspecialchars($lastName) ?>">
                         </div>
                     </div>
                     
                     <div class="mb-2">
-                        <label class="form-label small fw-bold text-secondary mb-1" style="font-size: 0.75rem;">Username</label>
+                        <label class="form-label small fw-bold text-secondary mb-1 account-fs-xs">Username</label>
                         <input type="text" class="form-control form-control-sm" value="<?= htmlspecialchars($username) ?>" readonly>
-                        <div class="form-text small opacity-75" style="font-size: 0.7rem;">Username cannot be changed.</div>
+                        <div class="form-text small opacity-75 account-fs-xxs">Username cannot be changed.</div>
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-secondary mb-1" style="font-size: 0.75rem;">Email Address</label>
+                        <label class="form-label small fw-bold text-secondary mb-1 account-fs-xs">Email Address</label>
                         <input type="email" class="form-control form-control-sm" value="<?= htmlspecialchars($email) ?>" readonly>
-                        <div class="form-text small opacity-75" style="font-size: 0.7rem;">Email Address cannot be changed.</div>
+                        <div class="form-text small opacity-75 account-fs-xxs">Email Address cannot be changed.</div>
                     </div>
                     
                     <button type="submit" id="saveProfileBtn" class="btn btn-sm btn-primary fw-bold px-3 rounded-pill shadow-sm">Save Changes</button>
@@ -76,9 +76,9 @@ $is2faEnabled = $user?->getTwoFactorEnabled() ?? false;
                     <h6 class="fw-bold mb-0 d-flex align-items-center">
                         <i class='bx bx-key fs-5 me-2 text-info'></i> SSH Keys
                     </h6>
-                    <p class="text-secondary small mb-0" style="font-size: 0.7rem;">Manage authorized keys for accessing environments.</p>
+                    <p class="text-secondary small mb-0 account-fs-xxs">Manage authorized keys for accessing environments.</p>
                 </div>
-                <button class="btn btn-primary btn-sm fw-bold px-3 py-1 rounded-pill shadow-sm transition-all" style="font-size: 0.75rem;" id="show-add-key-btn">
+                <button class="btn btn-primary btn-sm fw-bold px-3 py-1 rounded-pill shadow-sm transition-all account-fs-xs" id="show-add-key-btn">
                     <i class='bx bx-plus me-1'></i> Add
                 </button>
             </div>
@@ -86,28 +86,28 @@ $is2faEnabled = $user?->getTwoFactorEnabled() ?? false;
                 
                 <!-- Add Key Form Section -->
                 <div id="add-key-section" class="mb-3 d-none animate__animated animate__fadeIn border border-info border-opacity-25 rounded-4 p-3 bg-info bg-opacity-10 shadow-sm">
-                    <h6 class="fw-bold mb-3 d-flex align-items-center" style="font-size: 0.8rem;">
+                    <h6 class="fw-bold mb-3 d-flex align-items-center account-fs-sm">
                         <i class='bx bx-lock-open-alt text-info me-2'></i> Register Key
                     </h6>
                     <form id="sshAddForm">
                         <div class="row g-2 mb-3">
                             <div class="col-md-6">
-                                <label class="fw-bold text-secondary small mb-1" style="font-size: 0.7rem;">Key Label</label>
+                                <label class="fw-bold text-secondary small mb-1 account-fs-xxs">Key Label</label>
                                 <input type="text" class="form-control form-control-sm" name="title" required placeholder="e.g. MacBook">
                             </div>
                             <div class="col-md-6">
-                                <label class="fw-bold text-secondary small mb-1" style="font-size: 0.7rem;">Expiration</label>
+                                <label class="fw-bold text-secondary small mb-1 account-fs-xxs">Expiration</label>
                                 <input type="date" class="form-control form-control-sm" id="ssh-expiration" name="expiration_date">
                             </div>
                             <div class="col-12">
-                                <label class="fw-bold text-secondary small mb-1" style="font-size: 0.7rem;">Key Content</label>
+                                <label class="fw-bold text-secondary small mb-1 account-fs-xxs">Key Content</label>
                                 <textarea class="form-control form-control-sm font-monospace" name="key" rows="3" required placeholder="ssh-rsa ..."></textarea>
                             </div>
                         </div>
                         <div class="d-flex gap-2 justify-content-end pt-2 border-top border-info border-opacity-10">
-                            <button type="button" class="btn btn-sm btn-secondary px-3 rounded-pill" style="font-size: 0.75rem;"
+                            <button type="button" class="btn btn-sm btn-secondary px-3 rounded-pill account-fs-xs"
                                 onclick="document.getElementById('add-key-section').classList.add('d-none')">Cancel</button>
-                            <button type="submit" id="save-key-btn" class="btn btn-sm btn-warning fw-bold px-3 text-dark rounded-pill shadow-sm" style="font-size: 0.75rem;">
+                            <button type="submit" id="save-key-btn" class="btn btn-sm btn-warning fw-bold px-3 text-dark rounded-pill shadow-sm account-fs-xs">
                                 Save Key
                             </button>
                         </div>
@@ -116,7 +116,7 @@ $is2faEnabled = $user?->getTwoFactorEnabled() ?? false;
                 
                 <!-- Keys Table -->
                 <div class="table-responsive rounded-3 border border-secondary border-opacity-10 shadow-sm">
-                    <table class="table table-hover align-middle mb-0 table-sm" style="font-size: 0.75rem;">
+                    <table class="table table-hover align-middle mb-0 table-sm account-table">
                         <thead class="table-dark">
                             <tr>
                                 <th class="ps-2 py-2">Label</th>
@@ -135,9 +135,9 @@ $is2faEnabled = $user?->getTwoFactorEnabled() ?? false;
                             </tr>
                             <?php else: foreach ($sshKeys as $key): ?>
                             <tr>
-                                <td class="ps-2 fw-bold text-truncate" style="max-width: 80px;" title="<?= htmlspecialchars($key['title']) ?>"><?= htmlspecialchars($key['title']) ?></td>
-                                <td><code class="small text-info px-1 py-0.5 bg-info bg-opacity-10 rounded" style="font-size: 0.65rem;" title="<?= $key['fingerprint'] ?>"><?= substr($key['fingerprint'], 0, 10) ?>...</code></td>
-                                <td class="fw-semibold <?= $key['expires_at'] && $key['expires_at'] < time() ? 'text-danger' : 'text-warning' ?>" style="font-size: 0.7rem;">
+                                <td class="ps-2 fw-bold text-truncate account-key-title" title="<?= htmlspecialchars($key['title']) ?>"><?= htmlspecialchars($key['title']) ?></td>
+                                <td><code class="small text-info px-1 py-0.5 bg-info bg-opacity-10 rounded account-fs-tiny" title="<?= $key['fingerprint'] ?>"><?= substr($key['fingerprint'], 0, 10) ?>...</code></td>
+                                <td class="fw-semibold <?= $key['expires_at'] && $key['expires_at'] < time() ? 'text-danger' : 'text-warning' ?> account-fs-xxs">
                                     <?= $key['expires_at'] ? date('d M Y', $key['expires_at']) : 'Never' ?>
                                 </td>
                                 <td class="text-end pe-2">
@@ -166,19 +166,22 @@ $is2faEnabled = $user?->getTwoFactorEnabled() ?? false;
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h5 class="fw-bold m-0 d-flex align-items-center">
                                 <i class='bx bx-server fs-4 me-2 text-warning'></i> Storage & Files
+                                <button type="button" class="btn btn-sm btn-link text-secondary p-0 ms-2 border-0" onclick="refreshGallery(this)" title="Refresh Files">
+                                    <i class='bx bx-refresh fs-4'></i>
+                                </button>
                             </h5>
                             <!-- Circular progress on the right -->
                             <div class="d-flex align-items-center gap-2">
                                 <div class="text-end">
-                                    <div class="fw-bold text-white" style="font-size: 0.75rem;"><span id="storage-used-text">Loading...</span></div>
-                                    <div class="text-secondary" style="font-size: 0.65rem;">of 2 GB used</div>
+                                    <div class="fw-bold text-white account-fs-xs"><span id="storage-used-text">Loading...</span></div>
+                                    <div class="text-secondary account-fs-tiny">of 2 GB used</div>
                                 </div>
-                                <div class="position-relative d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                                <div class="position-relative d-flex align-items-center justify-content-center account-storage-wrapper">
                                     <svg width="36" height="36" viewBox="0 0 36 36" class="transform-rotate-n90">
                                         <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255, 255, 255, 0.05)" stroke-width="3"></circle>
-                                        <circle id="storage-circle-progress" cx="18" cy="18" r="15" fill="none" stroke="#ffc107" stroke-width="3" stroke-dasharray="94.2" stroke-dashoffset="94.2" stroke-linecap="round" style="transition: stroke-dashoffset 0.3s ease;"></circle>
+                                        <circle id="storage-circle-progress" cx="18" cy="18" r="15" fill="none" stroke="#ffc107" stroke-width="3" stroke-dasharray="94.2" stroke-dashoffset="94.2" stroke-linecap="round" class="account-storage-circle"></circle>
                                     </svg>
-                                    <div class="position-absolute" style="font-size: 0.65rem; font-weight: bold; color: #ffc107;" id="storage-percent-text">0%</div>
+                                    <div class="position-absolute account-storage-text" id="storage-percent-text">0%</div>
                                 </div>
                             </div>
                         </div>
@@ -186,9 +189,9 @@ $is2faEnabled = $user?->getTwoFactorEnabled() ?? false;
                         <!-- File Manager Toolbar -->
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <div class="d-flex gap-1" id="file-tabs">
-                                <button type="button" class="btn btn-xs btn-outline-warning active rounded-pill px-2 py-0.5" style="font-size: 0.7rem;" onclick="switchFilter('all')" id="tab-all">All 0</button>
-                                <button type="button" class="btn btn-xs btn-outline-warning rounded-pill px-2 py-0.5" style="font-size: 0.7rem;" onclick="switchFilter('images')" id="tab-images">Images 0</button>
-                                <button type="button" class="btn btn-xs btn-outline-warning rounded-pill px-2 py-0.5" style="font-size: 0.7rem;" onclick="switchFilter('others')" id="tab-others">Others 0</button>
+                                <button type="button" class="btn btn-xs btn-outline-warning active rounded-pill px-2 py-0.5 account-tab-btn" onclick="switchFilter('all')" id="tab-all">All 0</button>
+                                <button type="button" class="btn btn-xs btn-outline-warning rounded-pill px-2 py-0.5 account-tab-btn" onclick="switchFilter('images')" id="tab-images">Images 0</button>
+                                <button type="button" class="btn btn-xs btn-outline-warning rounded-pill px-2 py-0.5 account-tab-btn" onclick="switchFilter('others')" id="tab-others">Others 0</button>
                             </div>
                             <div class="btn-group" role="group">
                                 <button type="button" class="btn btn-xs btn-outline-secondary py-0.5 px-2" id="btn-view-grid" onclick="switchView('grid')" title="Grid View">
@@ -206,10 +209,10 @@ $is2faEnabled = $user?->getTwoFactorEnabled() ?? false;
                         </div>
                         
                         <div class="d-flex justify-content-end border-top border-secondary border-opacity-10 pt-3">
-                            <button class="btn btn-outline-warning rounded-pill fw-bold btn-sm shadow-sm px-3" onclick="document.getElementById('genericUploadInput').click()">
+                            <button class="btn btn-outline-warning rounded-pill fw-bold btn-sm shadow-sm px-3" id="btnUploadGallery" onclick="document.getElementById('genericUploadInput').click()">
                                 <i class='bx bx-cloud-upload me-1'></i> Upload new
                             </button>
-                            <input type="file" id="genericUploadInput" class="d-none">
+                            <input type="file" id="genericUploadInput" class="d-none" multiple>
                         </div>
                     </div>
                 </div>
@@ -227,14 +230,14 @@ $is2faEnabled = $user?->getTwoFactorEnabled() ?? false;
                                 <i class='bx bxs-badge-check text-success fs-1 me-3'></i>
                                 <div>
                                     <div class="fw-bold text-success mb-1">Account Verified</div>
-                                    <div class="small text-success text-opacity-75" style="line-height: 1.2;">Your email address has been successfully verified.</div>
+                                    <div class="small text-success text-opacity-75 account-verify-text">Your email address has been successfully verified.</div>
                                 </div>
                             </div>
                         </div>
                         <div class="d-flex justify-content-between align-items-center mt-4 pt-2">
                             <div>
                                 <div class="fw-bold small mb-1">Two-Factor Authentication</div>
-                                <div class="small text-secondary" style="font-size: 0.75rem;">Add an extra layer of security</div>
+                                <div class="small text-secondary account-fs-xs">Add an extra layer of security</div>
                             </div>
                             <?php if ($is2faEnabled): ?>
                                 <div class="d-flex align-items-center gap-2">
@@ -252,9 +255,9 @@ $is2faEnabled = $user?->getTwoFactorEnabled() ?? false;
                                 <h6 class="fw-bold mb-0 text-warning"><i class='bx bx-envelope me-1'></i> Enter OTP</h6>
                                 <span class="badge bg-danger text-white rounded-pill" id="timer-2fa">01:00</span>
                             </div>
-                            <p class="small text-secondary mb-3" style="font-size:0.75rem;">A 6-digit code has been sent to your email. It expires in exactly 1 minute.</p>
+                            <p class="small text-secondary mb-3 account-fs-xs">A 6-digit code has been sent to your email. It expires in exactly 1 minute.</p>
                             <form id="form-2fa-verify" class="d-flex gap-2">
-                                <input type="text" class="form-control form-control-sm text-center fw-bold fs-5 tracking-widest" name="otp" id="input-otp-2fa" maxlength="6" placeholder="------" required autocomplete="off" style="letter-spacing: 5px;">
+                                <input type="text" class="form-control form-control-sm text-center fw-bold fs-5 tracking-widest account-otp-input" name="otp" id="input-otp-2fa" maxlength="6" placeholder="------" required autocomplete="off">
                                 <button type="submit" class="btn btn-sm btn-warning fw-bold px-3 text-dark rounded-pill" id="btn-verify-2fa">Verify</button>
                             </form>
                             <div id="msg-2fa-error" class="text-danger small mt-2 d-none fw-bold"></div>
@@ -270,13 +273,13 @@ $is2faEnabled = $user?->getTwoFactorEnabled() ?? false;
 <!-- Choose Existing Avatar Modal -->
 <div class="modal fade" id="chooseAvatarModal" tabindex="-1" aria-labelledby="chooseAvatarModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-md">
-        <div class="modal-content border-0 shadow glass-card rounded-4 text-white" style="background: rgba(25, 28, 36, 0.95); backdrop-filter: blur(10px);">
+        <div class="modal-content border-0 shadow glass-card rounded-4 text-white account-modal-content">
             <div class="modal-header border-bottom border-secondary border-opacity-10">
-                <h5 class="modal-title fw-bold" id="chooseAvatarModalLabel" style="font-size: 1rem;">Choose from uploads</h5>
+                <h5 class="modal-title fw-bold account-modal-title" id="chooseAvatarModalLabel">Choose from uploads</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-3">
-                <div class="row g-2 overflow-y-auto px-1" id="choose-avatar-grid" style="max-height: 300px; scrollbar-width: thin;">
+                <div class="row g-2 overflow-y-auto px-1 account-grid-scroll" id="choose-avatar-grid">
                     <!-- Injected dynamically via JS -->
                 </div>
             </div>
@@ -287,28 +290,28 @@ $is2faEnabled = $user?->getTwoFactorEnabled() ?? false;
 <!-- Avatar Crop Modal -->
 <div class="modal fade" id="avatarCropModal" tabindex="-1" aria-labelledby="avatarCropModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow glass-card rounded-4 text-white" style="background: rgba(25, 28, 36, 0.95); backdrop-filter: blur(10px);">
+        <div class="modal-content border-0 shadow glass-card rounded-4 text-white account-modal-content">
             <div class="modal-header border-bottom border-secondary border-opacity-10">
                 <h5 class="modal-title fw-bold" id="avatarCropModalLabel">Position and size your new avatar</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
-                <div class="avatar-crop-container position-relative overflow-hidden rounded-3 mb-4" style="height: 350px; background: #000; cursor: move; user-select: none; touch-action: none;">
+                <div class="avatar-crop-container position-relative overflow-hidden rounded-3 mb-4 account-crop-container">
                     <!-- Grid background overlay (checkerboard) -->
                     <div class="avatar-crop-grid position-absolute w-100 h-100 opacity-25"></div>
                     <!-- Image to crop -->
-                    <img id="avatarCropPreviewImg" class="position-absolute" style="max-width: none; transform-origin: 0 0; transition: transform 0.05s ease-out;" src="" alt="Preview">
+                    <img id="avatarCropPreviewImg" class="position-absolute account-crop-preview" src="" alt="Preview">
                     <!-- Visible Blue boundary crop box -->
-                    <div class="avatar-crop-box position-absolute start-50 top-50 translate-middle border border-2 border-primary rounded-1 shadow" style="width: 220px; height: 220px; pointer-events: none; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6) !important;"></div>
+                    <div class="avatar-crop-box position-absolute start-50 top-50 translate-middle border border-2 border-primary rounded-1 shadow account-crop-box"></div>
                 </div>
                 
                 <!-- Zoom controls -->
                 <div class="d-flex align-items-center justify-content-center gap-3 mb-2">
-                    <button type="button" class="btn btn-outline-secondary btn-sm rounded-circle d-flex align-items-center justify-content-center" id="btnCropZoomOut" style="width: 36px; height: 36px;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm rounded-circle d-flex align-items-center justify-content-center account-crop-btn" id="btnCropZoomOut">
                         <i class='bx bx-zoom-out fs-5'></i>
                     </button>
                     <input type="range" class="form-range flex-grow-1" id="cropZoomSlider" min="0.1" max="3" step="0.01" value="1">
-                    <button type="button" class="btn btn-outline-secondary btn-sm rounded-circle d-flex align-items-center justify-content-center" id="btnCropZoomIn" style="width: 36px; height: 36px;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm rounded-circle d-flex align-items-center justify-content-center account-crop-btn" id="btnCropZoomIn">
                         <i class='bx bx-zoom-in fs-5'></i>
                     </button>
                 </div>
@@ -319,70 +322,8 @@ $is2faEnabled = $user?->getTwoFactorEnabled() ?? false;
         </div>
     </div>
 </div>
-
-<style>
-.no-caret::after {
-    display: none !important;
-}
-.transform-rotate-n90 {
-    transform: rotate(-90deg);
-}
-.gallery-card {
-    background: #111418;
-    border-radius: 8px;
-    padding: 6px;
-    position: relative;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    transition: all 0.2s ease;
-}
-[data-coreui-theme="light"] .gallery-card {
-    background: #f8f9fa;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-}
-.gallery-card:hover {
-    border-color: rgba(255, 255, 255, 0.2);
-}
-[data-coreui-theme="light"] .gallery-card:hover {
-    border-color: rgba(0, 0, 0, 0.2);
-}
-.gallery-card:hover .delete-overlay {
-    opacity: 1;
-}
-.delete-overlay {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    opacity: 0;
-    transition: opacity 0.2s;
-    background: rgba(0,0,0,0.6);
-    border-radius: 50%;
-}
-.gallery-thumb {
-    width: 100%;
-    height: 60px;
-    border-radius: 5px;
-    object-fit: cover;
-    background: #1a1d21;
-    margin-bottom: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.avatar-crop-grid {
-    background-image: linear-gradient(45deg, #222 25%, transparent 25%), 
-                      linear-gradient(-45deg, #222 25%, transparent 25%), 
-                      linear-gradient(45deg, transparent 75%, #222 75%), 
-                      linear-gradient(-45deg, transparent 75%, #222 75%);
-    background-size: 20px 20px;
-    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-}
-.avatar-crop-container {
-    box-shadow: inset 0 0 15px rgba(0,0,0,0.9);
-}
-</style>
-
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+(function initAccountScripts() {
     const showBtn = document.getElementById('show-add-key-btn');
     const section = document.getElementById('add-key-section');
     const expInput = document.getElementById('ssh-expiration');
@@ -402,7 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // AVATAR UPLOAD & CROP HANDLING
     const cropModalEl = document.getElementById('avatarCropModal');
-    const cropModal = coreui.Modal.getOrCreateInstance(cropModalEl);
+    const cropModal = cropModalEl ? (coreui.Modal.getInstance(cropModalEl) || new coreui.Modal(cropModalEl)) : null;
     const cropPreviewImg = document.getElementById('avatarCropPreviewImg');
     const zoomSlider = document.getElementById('cropZoomSlider');
     const zoomInBtn = document.getElementById('btnCropZoomIn');
@@ -606,6 +547,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (result.status === 'success') {
                     imgElement.src = result.avatar_url;
                     imgElement.style.opacity = '1';
+                    document.querySelectorAll('#profileAvatarImg, .dropdown-toggle img, .header-avatar, img[alt*="Avatar"], img[src*="avatar"]').forEach(img => {
+                        if (img) img.src = result.avatar_url;
+                    });
                     cropModal.hide();
                     avatarInput.value = '';
                 } else {
@@ -646,6 +590,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (result.status === 'success') {
                 saveProfileBtn.innerHTML = '<i class="bx bx-check me-1"></i> Saved!';
                 saveProfileBtn.classList.replace('btn-primary', 'btn-success');
+                const fname = profileForm.querySelector('[name="first_name"]')?.value || '';
+                const lname = profileForm.querySelector('[name="last_name"]')?.value || '';
+                const fullName = (fname + ' ' + lname).trim();
+                if (fullName) {
+                    document.querySelectorAll('.user-name, .profile-name, #header-user-name').forEach(el => {
+                        if (el) el.innerText = fullName;
+                    });
+                }
                 setTimeout(() => {
                     saveProfileBtn.innerHTML = originalText;
                     saveProfileBtn.classList.replace('btn-success', 'btn-primary');
@@ -686,8 +638,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json();
 
             if (result.status === 'success') {
-                // Success: Reload page normally to see the new key in the table
-                window.location.reload();
+                // Success: Update partial page to see the new key in the table without reload
+                if (window.htmx) {
+                    htmx.ajax('GET', location.pathname + location.search, '#main-content');
+                } else {
+                    window.location.reload();
+                }
             } else {
                 alert('Error: ' + result.error);
                 saveBtn.disabled = false;
@@ -705,27 +661,54 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchGallery();
     
     document.getElementById('genericUploadInput').addEventListener('change', async function(e) {
-        if (!this.files || !this.files[0]) return;
-        const file = this.files[0];
-        if (file.size > 5 * 1024 * 1024) {
-            alert('File size exceeds 5MB limit.');
-            this.value = ''; return;
+        if (!this.files || !this.files.length) return;
+        
+        const uploadBtn = document.getElementById('btnUploadGallery') || document.querySelector('button[onclick*="genericUploadInput"]');
+        const originalBtnHtml = uploadBtn ? uploadBtn.innerHTML : '';
+        if (uploadBtn) {
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = `<i class='bx bx-loader-alt bx-spin me-1'></i> Uploading (${this.files.length})...`;
         }
-        
-        const formData = new FormData();
-        formData.append('file', file);
-        
-        try {
-            const response = await fetch('/api/account/upload_file', { method: 'POST', body: formData });
-            const result = await response.json();
-            if (result.status === 'success') {
-                fetchGallery(); // Refresh gallery
-            } else {
-                alert('Upload Error: ' + result.error);
+
+        let successCount = 0;
+        let errorMessages = [];
+
+        for (let i = 0; i < this.files.length; i++) {
+            const file = this.files[i];
+            if (file.size > 5 * 1024 * 1024) {
+                errorMessages.push(`"${file.name}": exceeds 5MB limit.`);
+                continue;
             }
-        } catch (error) {
-            alert('Upload failed.');
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch('/api/account/upload_file', { method: 'POST', body: formData });
+                const result = await response.json();
+                if (result.status === 'success') {
+                    successCount++;
+                } else {
+                    errorMessages.push(`"${file.name}": ${result.error}`);
+                }
+            } catch (error) {
+                errorMessages.push(`"${file.name}": Upload network error.`);
+            }
         }
+
+        if (uploadBtn) {
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = originalBtnHtml;
+        }
+
+        if (successCount > 0) {
+            await fetchGallery(); // Refresh gallery with new files
+        }
+
+        if (errorMessages.length > 0) {
+            alert("Some files could not be uploaded:\n\n" + errorMessages.join("\n"));
+        }
+
         this.value = '';
     });
 
@@ -861,7 +844,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     timerDisplay.innerText = "Verified!";
                     timerDisplay.classList.replace('bg-danger', 'bg-success');
                     timerDisplay.classList.replace('bg-warning', 'bg-success');
-                    setTimeout(() => window.location.reload(), 1000);
+                    setTimeout(() => {
+                        if (window.htmx) {
+                            htmx.ajax('GET', location.pathname + location.search, '#main-content');
+                        } else {
+                            window.location.reload();
+                        }
+                    }, 1000);
                 } else {
                     msg2faError.innerText = result.error;
                     msg2faError.classList.remove('d-none');
@@ -876,12 +865,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
     }
-});
 
 let allFiles = [];
 let currentFilter = 'all'; // 'all', 'images', 'others'
 let currentView = 'grid'; // 'grid', 'list'
 let selectedFileIndex = 0;
+let renderedFileCount = 6;
+
+window.refreshGallery = async function(btn) {
+    if (btn) {
+        const icon = btn.querySelector('i');
+        if (icon) icon.classList.add('bx-spin');
+    }
+    await fetchGallery();
+    if (btn) {
+        const icon = btn.querySelector('i');
+        if (icon) icon.classList.remove('bx-spin');
+    }
+};
 
 async function fetchGallery() {
     try {
@@ -904,14 +905,17 @@ async function fetchGallery() {
             renderFileExplorer();
         } else {
             document.getElementById('storage-used-text').innerText = 'Error';
-            document.getElementById('file-explorer-container').innerHTML = `<div class="col-12 text-center text-danger small py-4">Failed to load files: ${result.error}</div>`;
+            document.getElementById('file-explorer-container').innerHTML = `<div class="col-12 text-center text-danger small py-4">Failed to load files: ${result.error} <button class="btn btn-sm btn-link text-warning p-0 ms-1" onclick="fetchGallery()">Retry</button></div>`;
+            if (window.TomNotify) window.TomNotify.show("Failed to load storage files: " + (result.error || "Unknown error"), "Warning", "warning", 4000);
         }
     } catch(err) {
         console.error('Failed to load gallery', err);
         document.getElementById('storage-used-text').innerText = 'Error';
-        document.getElementById('file-explorer-container').innerHTML = `<div class="col-12 text-center text-danger small py-4">Network error loading files.</div>`;
+        document.getElementById('file-explorer-container').innerHTML = `<div class="col-12 text-center text-danger small py-4">Network error loading files. <button class="btn btn-sm btn-link text-warning p-0 ms-1" onclick="fetchGallery()">Retry</button></div>`;
+        if (window.TomNotify) window.TomNotify.show("Error loading storage files. Click refresh or retry.", "Warning", "warning", 4000);
     }
 }
+window.fetchGallery = fetchGallery;
 
 function getFilteredFiles() {
     if (currentFilter === 'images') {
@@ -922,7 +926,10 @@ function getFilteredFiles() {
     return allFiles;
 }
 
-function renderFileExplorer() {
+function renderFileExplorer(resetCount = true) {
+    if (resetCount) {
+        renderedFileCount = 6;
+    }
     const imgCount = allFiles.filter(f => f.is_image).length;
     const otherCount = allFiles.filter(f => !f.is_image).length;
     document.getElementById('tab-all').innerText = `All ${allFiles.length}`;
@@ -931,33 +938,50 @@ function renderFileExplorer() {
     
     ['all', 'images', 'others'].forEach(t => {
         const btn = document.getElementById(`tab-${t}`);
-        if (t === currentFilter) {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
+        if (btn) {
+            if (t === currentFilter) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
         }
     });
     
     if (currentView === 'grid') {
-        document.getElementById('btn-view-grid').classList.add('active');
-        document.getElementById('btn-view-list').classList.remove('active');
+        document.getElementById('btn-view-grid')?.classList.add('active');
+        document.getElementById('btn-view-list')?.classList.remove('active');
     } else {
-        document.getElementById('btn-view-grid').classList.remove('active');
-        document.getElementById('btn-view-list').classList.add('active');
+        document.getElementById('btn-view-grid')?.classList.remove('active');
+        document.getElementById('btn-view-list')?.classList.add('active');
     }
     
     const filtered = getFilteredFiles();
     const container = document.getElementById('file-explorer-container');
+    if (!container) return;
+
+    const scrollBox = container.querySelector('.account-grid-scroll-sm, .account-table-scroll');
+    const oldScrollTop = (scrollBox && !resetCount) ? scrollBox.scrollTop : 0;
+    
     container.innerHTML = '';
     
     if (filtered.length === 0) {
         container.innerHTML = '<div class="col-12 text-center text-secondary small py-4">No files found.</div>';
         return;
     }
+
+    const displayedFiles = filtered.slice(0, renderedFileCount);
+    const hasMore = filtered.length > renderedFileCount;
+    const loadMoreBtnHtml = hasMore ? `
+        <div class="col-12 text-center py-2 border-top border-secondary border-opacity-10 mt-2">
+            <button type="button" class="btn btn-xs btn-outline-warning rounded-pill px-3 py-1 account-fs-xs" onclick="loadMoreGalleryFiles()">
+                <i class='bx bx-down-arrow-alt me-1'></i>Showing ${displayedFiles.length} of ${filtered.length} — Scroll or Click for more (6)
+            </button>
+        </div>` : '';
     
     if (currentView === 'grid') {
-        let gridHtml = '<div class="row g-2 px-1" style="max-height: 220px; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin;">';
-        filtered.forEach((file, index) => {
+        let gridHtml = '<div class="row g-2 px-1 account-grid-scroll-sm" onscroll="handleGalleryScroll(this)">';
+        displayedFiles.forEach((file) => {
+            const index = filtered.indexOf(file);
             let thumbHtml = '';
             if(file.is_image) {
                 thumbHtml = `<img src="${file.url}" class="gallery-thumb" alt="${file.name}">`;
@@ -969,14 +993,15 @@ function renderFileExplorer() {
             <div class="col-4">
                 <div class="gallery-card cursor-pointer" onclick="selectGridFile('${file.name}')">
                     ${thumbHtml}
-                    <div class="fw-bold small text-truncate" style="max-width: 100%; font-size:0.75rem;" title="${file.name}">${file.name}</div>
+                    <div class="fw-bold small text-truncate account-fs-xs" title="${file.name}">${file.name}</div>
                     <div class="d-flex align-items-center justify-content-between mt-1">
-                        <span class="text-secondary" style="font-size:0.65rem;">${file.size_formatted}</span>
-                        <div class="rounded-circle bg-success" style="width:6px; height:6px;"></div>
+                        <span class="text-secondary account-fs-tiny">${file.size_formatted}</span>
+                        <div class="rounded-circle bg-success account-dot-sm"></div>
                     </div>
                 </div>
             </div>`;
         });
+        gridHtml += loadMoreBtnHtml;
         gridHtml += '</div>';
         container.innerHTML = gridHtml;
     } else {
@@ -987,8 +1012,8 @@ function renderFileExplorer() {
         
         let listHtml = `<div class="row g-3">
             <div class="col-md-7 col-lg-8 border-end border-secondary border-opacity-10 pe-md-3">
-                <div class="table-responsive rounded-3 border border-secondary border-opacity-10 shadow-sm" style="max-height: 340px; overflow-y: auto; scrollbar-width: thin;">
-                    <table class="table table-hover align-middle mb-0 table-sm" style="font-size: 0.8rem; background: transparent;">
+                <div class="table-responsive rounded-3 border border-secondary border-opacity-10 shadow-sm account-table-scroll" onscroll="handleGalleryScroll(this)">
+                    <table class="table table-hover align-middle mb-0 table-sm account-table-sm">
                         <thead class="table-dark">
                             <tr>
                                 <th class="ps-2">Name</th>
@@ -999,7 +1024,8 @@ function renderFileExplorer() {
                         </thead>
                         <tbody>`;
         
-        filtered.forEach((file, index) => {
+        displayedFiles.forEach((file) => {
+            const index = filtered.indexOf(file);
             const isSelected = index === selectedFileIndex ? 'table-active fw-bold' : '';
             const formatTime = new Date(file.modified * 1000).toLocaleString('en-US', {
                 month: 'short',
@@ -1009,12 +1035,12 @@ function renderFileExplorer() {
                 hour12: false
             });
             
-            let fileIcon = file.is_image ? `<img src="${file.url}" width="20" height="20" class="rounded me-2" style="object-fit: cover;">` : `<i class='bx bxs-file text-secondary fs-5 me-2'></i>`;
+            let fileIcon = file.is_image ? `<img src="${file.url}" width="20" height="20" class="rounded me-2 account-file-icon-img">` : `<i class='bx bxs-file text-secondary fs-5 me-2'></i>`;
             
             listHtml += `
             <tr class="${isSelected} cursor-pointer" onclick="selectListFile(${index})">
                 <td class="ps-2">
-                    <div class="d-flex align-items-center text-truncate" style="max-width: 140px;" title="${file.name}">
+                    <div class="d-flex align-items-center text-truncate account-file-name-truncate" title="${file.name}">
                         ${fileIcon}
                         <span class="text-truncate">${file.name}</span>
                     </div>
@@ -1029,13 +1055,13 @@ function renderFileExplorer() {
             </tr>`;
         });
         
-        listHtml += `</tbody></table></div></div>`;
+        listHtml += `</tbody></table>${loadMoreBtnHtml}</div></div>`;
         
         if (selectedFile) {
             const uploadDate = new Date(selectedFile.modified * 1000).toLocaleString();
             let detailPreview = selectedFile.is_image ? 
-                `<img src="${selectedFile.url}" class="img-fluid rounded mb-3 border border-secondary border-opacity-25" style="max-height: 100px; object-fit: cover; width: 100%;">` : 
-                `<div class="d-flex align-items-center justify-content-center bg-dark bg-opacity-20 rounded mb-3 border border-secondary border-opacity-25" style="height: 100px; width: 100%;">
+                `<img src="${selectedFile.url}" class="img-fluid rounded mb-3 border border-secondary border-opacity-25 account-file-preview-img">` : 
+                `<div class="d-flex align-items-center justify-content-center bg-dark bg-opacity-20 rounded mb-3 border border-secondary border-opacity-25 account-file-preview-box">
                     <i class='bx bxs-file-blank fs-1 text-secondary opacity-50'></i>
                  </div>`;
             
@@ -1045,28 +1071,28 @@ function renderFileExplorer() {
                     <div class="card-body p-0">
                         ${detailPreview}
                         <div class="mb-2">
-                            <div class="text-secondary small fw-bold text-uppercase" style="font-size: 0.65rem;">Filename</div>
-                            <div class="text-truncate fw-bold" id="detail-name" style="font-size: 0.75rem;" title="${selectedFile.name}">${selectedFile.name}</div>
+                            <div class="text-secondary small fw-bold text-uppercase account-fs-tiny">Filename</div>
+                            <div class="text-truncate fw-bold account-fs-xs" id="detail-name" title="${selectedFile.name}">${selectedFile.name}</div>
                         </div>
                         <div class="row g-2 mb-2">
                             <div class="col-6">
-                                <div class="text-secondary small fw-bold text-uppercase" style="font-size: 0.65rem;">Size</div>
-                                <div class="fw-semibold" style="font-size: 0.7rem;">${selectedFile.size_formatted}</div>
+                                <div class="text-secondary small fw-bold text-uppercase account-fs-tiny">Size</div>
+                                <div class="fw-semibold account-fs-xxs">${selectedFile.size_formatted}</div>
                             </div>
                             <div class="col-6">
-                                <div class="text-secondary small fw-bold text-uppercase" style="font-size: 0.65rem;">Type</div>
-                                <div class="fw-semibold text-uppercase" style="font-size: 0.7rem;">${selectedFile.ext || 'File'}</div>
+                                <div class="text-secondary small fw-bold text-uppercase account-fs-tiny">Type</div>
+                                <div class="fw-semibold text-uppercase account-fs-xxs">${selectedFile.ext || 'File'}</div>
                             </div>
                             <div class="col-12 mt-1">
-                                <div class="text-secondary small fw-bold text-uppercase" style="font-size: 0.65rem;">Uploaded</div>
-                                <div class="fw-semibold opacity-75" style="font-size: 0.7rem;">${uploadDate}</div>
+                                <div class="text-secondary small fw-bold text-uppercase account-fs-tiny">Uploaded</div>
+                                <div class="fw-semibold opacity-75 account-fs-xxs">${uploadDate}</div>
                             </div>
                         </div>
                         
                         <div class="d-flex flex-wrap gap-1 mt-2 pt-2 border-top border-secondary border-opacity-10">
-                            <button class="btn btn-xs btn-outline-warning rounded-pill fw-bold" style="font-size: 0.65rem; padding: 2px 8px;" onclick="renameFilePrompt('${selectedFile.name}')">Rename</button>
-                            <button class="btn btn-xs btn-outline-danger rounded-pill fw-bold" style="font-size: 0.65rem; padding: 2px 8px;" onclick="deleteGalleryFile('${selectedFile.name}')">Delete</button>
-                            <button class="btn btn-xs btn-outline-info rounded-pill fw-bold" style="font-size: 0.65rem; padding: 2px 8px;" onclick="copyFileUrl('${selectedFile.url}', this)">Copy URL</button>
+                            <button class="btn btn-xs btn-outline-warning rounded-pill fw-bold account-action-btn" onclick="renameFilePrompt('${selectedFile.name}')">Rename</button>
+                            <button class="btn btn-xs btn-outline-danger rounded-pill fw-bold account-action-btn" onclick="deleteGalleryFile('${selectedFile.name}')">Delete</button>
+                            <button class="btn btn-xs btn-outline-info rounded-pill fw-bold account-action-btn" onclick="copyFileUrl('${selectedFile.url}', this)">Copy URL</button>
                         </div>
                     </div>
                 </div>
@@ -1076,22 +1102,41 @@ function renderFileExplorer() {
         listHtml += `</div>`;
         container.innerHTML = listHtml;
     }
+
+    if (!resetCount) {
+        const newScrollBox = container.querySelector('.account-grid-scroll-sm, .account-table-scroll');
+        if (newScrollBox) newScrollBox.scrollTop = oldScrollTop;
+    }
 }
+
+window.handleGalleryScroll = function(el) {
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 30) {
+        window.loadMoreGalleryFiles();
+    }
+};
+
+window.loadMoreGalleryFiles = function() {
+    const filtered = getFilteredFiles();
+    if (renderedFileCount < filtered.length) {
+        renderedFileCount += 6;
+        renderFileExplorer(false);
+    }
+};
 
 window.switchFilter = function(filter) {
     currentFilter = filter;
     selectedFileIndex = 0;
-    renderFileExplorer();
+    renderFileExplorer(true);
 };
 
 window.switchView = function(view) {
     currentView = view;
-    renderFileExplorer();
+    renderFileExplorer(true);
 };
 
 window.selectListFile = function(index) {
     selectedFileIndex = index;
-    renderFileExplorer();
+    renderFileExplorer(false);
 };
 
 window.selectGridFile = function(filename) {
@@ -1100,7 +1145,7 @@ window.selectGridFile = function(filename) {
     if (idx !== -1) {
         selectedFileIndex = idx;
         currentView = 'list';
-        renderFileExplorer();
+        renderFileExplorer(false);
     }
 };
 
@@ -1166,7 +1211,7 @@ window.copyFileUrl = function(relativeUrl, btnEl) {
     }
 };
 
-async function deleteGalleryFile(filename) {
+window.deleteGalleryFile = async function deleteGalleryFile(filename) {
     if(!confirm('Are you sure you want to delete ' + filename + '?')) return;
     try {
         const res = await fetch('/api/account/delete_file', {
@@ -1192,8 +1237,9 @@ window.openChooseAvatarModal = function() {
     
     if (images.length === 0) {
         grid.innerHTML = '<div class="col-12 text-center text-secondary small py-4">No uploaded images found. Upload a file first.</div>';
-        const chooseModal = coreui.Modal.getOrCreateInstance(document.getElementById('chooseAvatarModal'));
-        chooseModal.show();
+        const chooseModalEl = document.getElementById('chooseAvatarModal');
+        const chooseModal = chooseModalEl ? (coreui.Modal.getInstance(chooseModalEl) || new coreui.Modal(chooseModalEl)) : null;
+        if (chooseModal) chooseModal.show();
         return;
     }
     
@@ -1201,25 +1247,28 @@ window.openChooseAvatarModal = function() {
         const cardHtml = `
         <div class="col-4 col-sm-3">
             <div class="gallery-card cursor-pointer p-1 text-center border border-secondary border-opacity-10 rounded" onclick="selectExistingAvatar('${img.url}')">
-                <img src="${img.url}" class="rounded w-100 mb-1" style="height: 50px; object-fit: cover;">
-                <div class="text-truncate small opacity-75" style="font-size: 0.65rem;" title="${img.name}">${img.name}</div>
+                <img src="${img.url}" class="rounded w-100 mb-1 account-gallery-img-sm">
+                <div class="text-truncate small opacity-75 account-fs-tiny" title="${img.name}">${img.name}</div>
             </div>
         </div>`;
         grid.insertAdjacentHTML('beforeend', cardHtml);
     });
     
-    const chooseModal = coreui.Modal.getOrCreateInstance(document.getElementById('chooseAvatarModal'));
-    chooseModal.show();
+    const chooseModalEl = document.getElementById('chooseAvatarModal');
+    const chooseModal = chooseModalEl ? (coreui.Modal.getInstance(chooseModalEl) || new coreui.Modal(chooseModalEl)) : null;
+    if (chooseModal) chooseModal.show();
 };
 
 window.selectExistingAvatar = function(imgUrl) {
-    const chooseModal = coreui.Modal.getOrCreateInstance(document.getElementById('chooseAvatarModal'));
-    chooseModal.hide();
+    const chooseModalEl = document.getElementById('chooseAvatarModal');
+    const chooseModal = chooseModalEl ? (coreui.Modal.getInstance(chooseModalEl) || new coreui.Modal(chooseModalEl)) : null;
+    if (chooseModal) chooseModal.hide();
     
     const cropPreviewImg = document.getElementById('avatarCropPreviewImg');
     const zoomSlider = document.getElementById('cropZoomSlider');
     const cropContainer = document.querySelector('.avatar-crop-container');
-    const cropModal = coreui.Modal.getOrCreateInstance(document.getElementById('avatarCropModal'));
+    const cropModalEl = document.getElementById('avatarCropModal');
+    const cropModal = cropModalEl ? (coreui.Modal.getInstance(cropModalEl) || new coreui.Modal(cropModalEl)) : null;
     
     cropPreviewImg.src = imgUrl;
     cropPreviewImg.onload = function() {
@@ -1248,7 +1297,7 @@ window.selectExistingAvatar = function(imgUrl) {
     };
 };
 
-async function deleteKey(id) {
+window.deleteKey = async function deleteKey(id) {
     if (!confirm("Revoke this SSH key? Your labs will be synchronized automatically.")) return;
 
 
@@ -1262,6 +1311,13 @@ async function deleteKey(id) {
         })
     });
     const result = await res.json();
-    if (result.status === 'success') window.location.reload();
-}
+    if (result.status === 'success') {
+        if (window.htmx) {
+            htmx.ajax('GET', location.pathname + location.search, '#main-content');
+        } else {
+            window.location.reload();
+        }
+    }
+};
+})();
 </script>

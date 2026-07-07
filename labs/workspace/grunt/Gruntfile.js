@@ -15,6 +15,7 @@ module.exports = function (grunt) {
           "node_modules/@coreui/chartjs/dist/js/coreui-chartjs.js",
           "node_modules/@coreui/utils/dist/umd/index.js",
           "node_modules/three/build/three.min.js",
+          "node_modules/three/examples/js/loaders/STLLoader.js",
 
           "../js/*.js",
           "../js/**/*.js",

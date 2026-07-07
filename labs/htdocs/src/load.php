@@ -24,6 +24,9 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// 1.5 Global Request Rate Limiter (Runs early to reject DDoS/flooding without database overhead)
+require_once __DIR__ . '/utils/ratelimit.php';
+
 // 2. Load Composer and Libraries FIRST (before using any classes)
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/utils/common.php'; 

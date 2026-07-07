@@ -289,13 +289,17 @@ window.onPageLoad( () => {
         }
     }
 
-    // 5. Visibility Handler
+    // 5. Visibility & HTMX Navigation Handlers
     document.addEventListener("visibilitychange", () => {
         if (document.hidden) {
             stopPolling();
         } else {
             startPolling(); // Resumes and fetches immediately
         }
+    });
+
+    document.addEventListener("htmx:beforeSwap", () => {
+        stopPolling();
     });
 
     // Start if visible
