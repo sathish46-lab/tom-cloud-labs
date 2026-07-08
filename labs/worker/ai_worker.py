@@ -4,6 +4,8 @@ import os
 import sys
 import time
 import requests
+import redis
+import markdown
 import google.generativeai as genai
 from pymongo import MongoClient
 from bson.objectid import ObjectId
@@ -30,11 +32,21 @@ AMQP_PORT = config.get('amqp_port', 5672)
 AMQP_USER = config.get('amqp_user', 'admin')
 AMQP_PASS = config.get('amqp_pass', 'RootTom@46')
 QUEUE_NAME = 'ai_jobs'
+CONTENT_QUEUE_NAME = 'ai_content_jobs'
+
+# Redis Config
+try:
+    redis_client = redis.Redis(host='127.0.0.1', port=6379, db=0, decode_responses=True)
+    redis_client.ping()
+    print("Redis connection established.", flush=True)
+except Exception as e:
+    print(f"Redis connection warning: {e}", flush=True)
+    redis_client = None
 
 # Gemini Config
 print("Configuring Gemini API...", flush=True)
 genai.configure(api_key=config.get('ai_api_key'))
-model = genai.GenerativeModel('gemini-1.5-flash')
+model = genai.GenerativeModel('gemini-2.5-flash')
 print("Gemini model initialized.", flush=True)
 
 # MongoDB Config
@@ -257,7 +269,7 @@ def stream_lm_studio(query, url, stream_callback, history=None):
         stream_callback(f"Failed to connect to LM Studio: {e}\nPlease check if it is running and accessible at {url}", is_final=False)
         return ""
 
-def stream_to_user(channel, session_id, message_id, chunk_text, is_final=False):
+def stream_to_user(channel, session_id, message_id, chunk_text, is_final=False, topic_prefix="ai_stream"):
     """Publish a stream chunk to a specific topic"""
     try:
         if is_final:
@@ -274,7 +286,7 @@ def stream_to_user(channel, session_id, message_id, chunk_text, is_final=False):
             })
         
         # Using amq.topic for routing to browser session
-        routing_key = f"ai_stream.{session_id}"
+        routing_key = f"{topic_prefix}.{session_id}"
         channel.basic_publish(exchange='amq.topic', routing_key=routing_key, body=payload)
     except Exception as e:
         print(f"Failed to stream to user: {e}")
@@ -395,6 +407,93 @@ def process_ai_job(ch, method, properties, body):
         ch.basic_ack(delivery_tag=method.delivery_tag)
         print(" [x] AI Job Done")
 
+def process_content_job(ch, method, properties, body):
+    """Callback function to generate human-like tutorial chapter content and stream it"""
+    try:
+        job = json.loads(body)
+        print(f" [x] Processing Content Generation Job: {job}")
+        
+        session_id = job.get('session_id')
+        message_id = job.get('message_id', 'content_msg')
+        chapter_id = job.get('chapter_id')
+        user_id = job.get('user_id')
+        custom_prompt = job.get('custom_prompt', '')
+
+        if not chapter_id or not session_id:
+            print("Missing chapter_id or session_id, skipping...")
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+            return
+
+        chapter = db.ai_chapters.find_one({"_id": ObjectId(chapter_id)})
+        if not chapter:
+            print(f"Chapter {chapter_id} not found")
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+            return
+
+        lesson = db.ai_lessons.find_one({"_id": chapter.get('lesson_id')})
+        lesson_title = lesson.get('title', 'AI & Software Development') if lesson else 'AI Course'
+        module_name = chapter.get('module_name', 'Module 1')
+        chapter_title = chapter.get('title', 'Lesson Chapter')
+
+        # Human Tutor Prompt Tuning
+        prompt = (
+            f"Act as an exceptionally experienced, engaging human senior mentor and tech educator teaching a live course on '{lesson_title}'.\n"
+            f"You are currently writing the official lesson material for the chapter: '{chapter_title}' (part of '{module_name}').\n\n"
+            "CRITICAL INSTRUCTIONS FOR YOUR TONE AND STYLE:\n"
+            "1. Write like a warm, relatable human mentor explaining practical engineering concepts clearly. Avoid robotic AI phrases (e.g. 'Delve into', 'In conclusion', 'As an AI').\n"
+            "2. Keep the content focused, practical, and highly digestible (concise enough for rapid testing and focused learning, no unnecessary filler).\n"
+            "3. Use structured Markdown:\n"
+            "   - Start directly with Level 2 (`##`) and Level 3 (`###`) subheadings.\n"
+            "   - Provide clean real-world examples and bullet points.\n"
+            "4. SYNTAX HIGHLIGHTING & CODE BLOCKS: Whenever you include code examples or commands in ANY language (Python, JavaScript, PHP, SQL, Bash, JSON, C++, Go, Rust, HTML/CSS, etc.), YOU MUST enclose them in standard Markdown fenced code blocks with the exact language name explicitly specified on the opening backticks (e.g. ```python, ```javascript, ```php, ```sql, ```bash). Every code block must have a valid language tag.\n"
+        )
+        if custom_prompt:
+            prompt += f"\nSpecific focus requested by the user: {custom_prompt}\n"
+
+        stream_to_user(ch, session_id, message_id, "", is_final=False, topic_prefix="content_stream")
+
+        full_content = ""
+        response = model.generate_content(prompt, stream=True)
+        for chunk in response:
+            if chunk.text:
+                full_content += chunk.text
+                stream_to_user(ch, session_id, message_id, chunk.text, topic_prefix="content_stream")
+
+        stream_to_user(ch, session_id, message_id, "", is_final=True, topic_prefix="content_stream")
+        print(" [✓] Content Generation Stream completed.")
+
+        if full_content.strip():
+            # Parse Markdown to HTML
+            rendered_html = markdown.markdown(
+                full_content,
+                extensions=['fenced_code', 'tables', 'nl2br', 'sane_lists']
+            )
+
+            # Save to MongoDB
+            db.ai_chapters.update_one(
+                {'_id': ObjectId(chapter_id)},
+                {'$set': {
+                    'content': full_content,
+                    'content_html': rendered_html,
+                    'content_updated_at': int(time.time())
+                }}
+            )
+            print(f" [✓] Updated MongoDB ai_chapters with generated content & pre-rendered HTML for chapter {chapter_id}")
+
+            # Save to Redis Cache
+            if redis_client:
+                try:
+                    redis_client.setex(f"learn:content:{chapter_id}", 86400, rendered_html)
+                    print(f" [✓] Cached rendered HTML in Redis key learn:content:{chapter_id}")
+                except Exception as re:
+                    print(f" [!] Redis cache error: {re}")
+
+    except Exception as e:
+        print(f" [!] Error processing content job: {e}")
+    finally:
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+        print(" [x] Content Generation Job Done")
+
 def main():
     while True:
         try:
@@ -405,15 +504,17 @@ def main():
             channel = connection.channel()
             print("RabbitMQ connection established.", flush=True)
 
-            # Declare the AI jobs queue
+            # Declare queues
             channel.queue_declare(queue=QUEUE_NAME, durable=True)
+            channel.queue_declare(queue=CONTENT_QUEUE_NAME, durable=True)
             
             # Fair dispatch
             channel.basic_qos(prefetch_count=1)
             
-            print(f" [*] AI Worker waiting for jobs in '{QUEUE_NAME}'.", flush=True)
+            print(f" [*] AI Worker waiting for jobs in '{QUEUE_NAME}' & '{CONTENT_QUEUE_NAME}'.", flush=True)
             
             channel.basic_consume(queue=QUEUE_NAME, on_message_callback=process_ai_job)
+            channel.basic_consume(queue=CONTENT_QUEUE_NAME, on_message_callback=process_content_job)
             channel.start_consuming()
             
         except pika.exceptions.AMQPConnectionError:

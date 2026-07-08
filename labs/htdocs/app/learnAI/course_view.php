@@ -14,6 +14,6 @@ if (!$lesson_id) {
 
 Session::$pageTitle = "Lesson Details | Learn AI";
 Session::set('is_learn_ai', true);
-Session::set('footer', true);
+// Session::set('footer', true);
 Session::addCustomJs('/js/learnAI/layout.js');
 Session::loadMaster();

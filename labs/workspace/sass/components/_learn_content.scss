@@ -1,0 +1,86 @@
+/* LearnAI Chapter Content Styling */
+
+#chapterContentContainer {
+    color: #e2e8f0;
+
+    h1, h2, h3, h4, h5, h6 {
+        color: #ffffff;
+        font-weight: 700;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        line-height: 1.3;
+    }
+
+    h2 {
+        font-size: 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding-bottom: 0.5rem;
+    }
+
+    h3 {
+        font-size: 1.25rem;
+        color: #93c5fd;
+    }
+
+    p {
+        margin-bottom: 1.25rem;
+        line-height: 1.75;
+    }
+
+    ul, ol {
+        margin-bottom: 1.5rem;
+        padding-left: 1.5rem;
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+    }
+
+    /* Code Block & Editor Wrapper Styling */
+    pre {
+        background: #0d1117;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 0.75rem;
+        padding: 2.75rem 1.25rem 1.25rem 1.25rem;
+        margin: 1.5rem 0;
+        overflow-x: auto;
+        position: relative;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+
+        code {
+            background: transparent !important;
+            padding: 0 !important;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+    }
+
+    /* Inline Code */
+    p code, li code {
+        background: rgba(255, 255, 255, 0.1);
+        color: #f87171;
+        padding: 0.15rem 0.4rem;
+        border-radius: 0.35rem;
+        font-size: 0.875em;
+    }
+
+    /* Tables in Markdown */
+    table {
+        width: 100%;
+        margin: 1.5rem 0;
+        border-collapse: collapse;
+
+        th, td {
+            padding: 0.75rem 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: left;
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-weight: 600;
+        }
+    }
+}

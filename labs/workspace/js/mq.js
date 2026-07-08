@@ -117,7 +117,9 @@ const TomSocketClient = function () {
         // Use /topic/ instead of /exchange/ for better stability and resource management
         // This maps to amq.topic exchange in RabbitMQ
         let destination;
-        if (exchange.startsWith('logs.') || exchange.startsWith('ai_stream.')) {
+        if (exchange.startsWith('/')) {
+          destination = exchange;
+        } else if (exchange.startsWith('logs.') || exchange.startsWith('ai_stream.') || exchange.startsWith('content_stream.')) {
           destination = `/topic/${exchange}`;
         } else {
           destination = `/exchange/${exchange}/#`;

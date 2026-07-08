@@ -187,10 +187,14 @@ window.copyToClipboard = (text, label = 'Information') => {
 window.onPageLoad(function() {
     if (window.TomVisuals && typeof window.TomVisuals.syncUI === 'function') window.TomVisuals.syncUI();
 
-    const pageFooter = document.querySelector('footer.footer');
-    if (pageFooter) {
-        const isAppView = document.querySelector('.learn-app-wrapper') || document.querySelector('.quiz-container');
-        pageFooter.style.display = isAppView ? 'none' : '';
+    if (!document.querySelector('.stable-app-view')) {
+        document.body.style.removeProperty('overflow');
+        document.body.style.removeProperty('height');
+        const mainWrapper = document.querySelector('.wrapper');
+        if (mainWrapper) {
+            mainWrapper.style.removeProperty('overflow');
+            mainWrapper.style.removeProperty('height');
+        }
     }
 
     document.body.addEventListener("tomNotify", function(evt) {

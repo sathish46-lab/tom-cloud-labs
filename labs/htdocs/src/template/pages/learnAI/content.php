@@ -49,23 +49,51 @@ try {
 $userAvatar = Session::getAvatar();
 $userAvatarStyle = Session::getAvatarStyle();
 $aiAvatar = "/assets/logo/logo.png";
+
+$userObj = Session::getUser();
+$userUiPrefs = $userObj ? ($userObj->getUiPreferences() ?? []) : [];
+$dbSizesRaw = $userUiPrefs['learnAiThreePanelSizes'] ?? null;
+$dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizesRaw;
 ?>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<?php if (is_array($dbSizesArr) && count($dbSizesArr) === 3): ?>
+<style>
+:root {
+    --outlineSidebar-saved-width: <?= round($dbSizesArr[0], 2) ?>%;
+    --courseSidebar-saved-width: <?= round($dbSizesArr[0], 2) ?>%;
+    --paneAI-saved-width: <?= round($dbSizesArr[2], 2) ?>%;
+}
+</style>
+<?php endif; ?>
 
 <script>
 // Anti-Flicker: Apply saved pane widths and exact viewport height immediately before paint
 (function() {
-    ['outlineSidebar', 'courseSidebar', 'paneAI'].forEach(id => {
-        const savedWidth = localStorage.getItem('learn-pane-' + id);
-        if (savedWidth) {
-            document.documentElement.style.setProperty('--' + id + '-saved-width', savedWidth + 'px');
-        }
-    });
+    const prefs = (window.TOM_CONFIG && window.TOM_CONFIG.ui_preferences) || {};
+
+    let threePanelSizes = sessionStorage.getItem('learnAiThreePanelSizes') || prefs['learnAiThreePanelSizes'];
+    if (threePanelSizes && typeof threePanelSizes !== 'string') threePanelSizes = JSON.stringify(threePanelSizes);
+    if (threePanelSizes) {
+        sessionStorage.setItem('learnAiThreePanelSizes', threePanelSizes);
+        try {
+            const arr = JSON.parse(threePanelSizes);
+            if (Array.isArray(arr) && arr.length === 3) {
+                document.documentElement.style.setProperty('--outlineSidebar-saved-width', arr[0] + '%');
+                document.documentElement.style.setProperty('--courseSidebar-saved-width', arr[0] + '%');
+                document.documentElement.style.setProperty('--paneAI-saved-width', arr[2] + '%');
+            }
+        } catch (e) {}
+    }
+
     const headerHeight = 64; // 4rem header height
-    document.documentElement.style.setProperty('--app-height', (window.innerHeight - headerHeight) + 'px');
+    const footerHeight = 38; // footer height
+    document.documentElement.style.setProperty('--app-height', (window.innerHeight - headerHeight - footerHeight) + 'px');
 })();
 </script>
 
-<div class="learn-app-wrapper quiz-container stable-app-view d-flex flex-column overflow-hidden bg-transparent" style="height: var(--app-height, 75vh);">
+<div class="learn-app-wrapper stable-app-view d-flex flex-column overflow-hidden bg-transparent" style="height: var(--app-height, 75vh);">
     <!-- Main App Body -->
     <div class="flex-grow-1 d-flex flex-row overflow-hidden p-0 gap-0">
         
@@ -73,14 +101,14 @@ $aiAvatar = "/assets/logo/logo.png";
         <div id="outlineSidebar" class="pane-outline d-flex flex-column h-100 transition-all" style="width: var(--outlineSidebar-saved-width, 70px); min-width: 70px;" data-state="collapsed">
             <div class="card h-100 border-secondary border-opacity-10 rounded-4 shadow-sm d-flex flex-column overflow-hidden">
                 <div class="card-body p-2 d-flex flex-column align-items-center py-3 overflow-hidden">
-                    <!-- Top Actions -->
-                    <div class="d-flex flex-column align-items-center gap-3 mb-4 w-100">
-                        <a href="/learn/lesson/<?= $lesson['_id'] ?>" class="btn btn-dark rounded-circle border-secondary border-opacity-25 p-2" title="Back to Overview">
-                            <i class="bx bx-left-arrow-alt fs-5"></i>
-                        </a>
+                    <!-- Compact View (Shown when collapsed) -->
+                    <div class="outline-compact d-flex flex-column gap-3 align-items-center w-100 overflow-auto no-scrollbar flex-grow-1">
+                        <button class="btn btn-sm btn-outline-secondary rounded-circle border-opacity-10 p-2 d-flex align-items-center justify-content-center" title="Favorite">
+                            <i class="bx bx-heart fs-5"></i>
+                        </button>
                         
-                        <div class="sidebar-progress-circle d-flex align-items-center justify-content-center position-relative" style="width: 45px; height: 45px;">
-                            <svg width="45" height="45" viewBox="0 0 45 45">
+                        <div class="sidebar-progress-circle d-flex align-items-center justify-content-center position-relative" style="width: 42px; height: 42px;">
+                            <svg width="42" height="42" viewBox="0 0 45 45">
                                 <circle cx="22.5" cy="22.5" r="18" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3" />
                                 <circle cx="22.5" cy="22.5" r="18" fill="none" stroke="var(--cui-primary)" stroke-width="3" stroke-dasharray="113" stroke-dashoffset="<?= 113 - (113 * $lesson['progress'] / 100) ?>" stroke-linecap="round" transform="rotate(-90 22.5 22.5)" />
                             </svg>
@@ -90,10 +118,12 @@ $aiAvatar = "/assets/logo/logo.png";
                         <button class="btn btn-link text-secondary p-0" onclick="toggleOutline()" title="Quick Outline">
                             <i class="bx bx-list-ul fs-4"></i>
                         </button>
-                    </div>
+                        <a href="/learn/lesson/<?= $lesson['_id'] ?>" class="btn btn-link text-secondary p-0" title="Map View">
+                            <i class="bx bx-share-alt fs-4"></i>
+                        </a>
 
-                    <!-- Compact View (Numbers) -->
-                    <div class="outline-compact d-flex flex-column gap-2 align-items-center w-100 overflow-auto no-scrollbar flex-grow-1">
+                        <div class="border-top border-secondary border-opacity-10 w-50 my-1"></div>
+
                         <?php foreach ($chapters as $chap): ?>
                             <a href="/learn/lesson/<?= $lesson['_id'] ?>/chapter/<?= $chap['_id'] ?>" 
                                class="btn btn-sm <?= $chap['_id'] == $chapter['_id'] ? 'btn-primary shadow-sm' : 'btn-outline-secondary border-0 opacity-50' ?> rounded-circle p-0 d-flex align-items-center justify-content-center" 
@@ -104,11 +134,33 @@ $aiAvatar = "/assets/logo/logo.png";
                         <?php endforeach; ?>
                     </div>
 
-                    <!-- Full View (Hidden by default) -->
-                    <div class="outline-full d-none w-100 h-100 flex-column overflow-hidden text-start p-2">
-                        <div class="d-flex justify-content-between align-items-center mb-4 px-2">
-                            <h6 class="fw-bold m-0 small text-primary-emphasis text-uppercase ls-1">Outline</h6>
-                            <button class="btn btn-sm btn-link text-secondary p-0" onclick="toggleOutline()"><i class="bx bx-chevron-left fs-4"></i></button>
+                    <!-- Full View (Shown when expanded) -->
+                    <div class="outline-full d-none w-100 h-100 flex-column overflow-hidden text-start p-3">
+                        <div class="d-flex justify-content-between align-items-start mb-3 gap-2">
+                            <h6 class="fw-bold m-0 small text-light lh-base"><?= $lesson['title'] ?></h6>
+                            <button class="btn btn-sm btn-outline-secondary rounded-circle border-opacity-10 flex-shrink-0"><i class="bx bx-heart"></i></button>
+                        </div>
+
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4 pb-3 border-bottom border-secondary border-opacity-10">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="sidebar-progress-circle d-flex align-items-center justify-content-center position-relative" style="width: 38px; height: 38px;">
+                                    <svg width="38" height="38" viewBox="0 0 45 45">
+                                        <circle cx="22.5" cy="22.5" r="18" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3" />
+                                        <circle cx="22.5" cy="22.5" r="18" fill="none" stroke="var(--cui-primary)" stroke-width="3" stroke-dasharray="113" stroke-dashoffset="<?= 113 - (113 * $lesson['progress'] / 100) ?>" stroke-linecap="round" transform="rotate(-90 22.5 22.5)" />
+                                    </svg>
+                                    <span class="position-absolute small fw-bold" style="font-size: 0.6rem;"><?= $lesson['progress'] ?>%</span>
+                                </div>
+                                <span class="small fw-bold text-light">Completed</span>
+                            </div>
+
+                            <div class="d-flex gap-2 align-items-center">
+                                <button class="btn btn-sm btn-dark border border-secondary border-opacity-25 rounded-pill px-3 py-1 d-flex align-items-center gap-2 active">
+                                    <i class="bx bx-list-ul"></i> Outline
+                                </button>
+                                <a href="/learn/lesson/<?= $lesson['_id'] ?>" class="btn btn-sm btn-outline-secondary border-0 rounded-pill px-3 py-1 d-flex align-items-center gap-2 text-secondary">
+                                    <i class="bx bx-share-alt"></i> Map
+                                </a>
+                            </div>
                         </div>
                         <div class="list-group list-group-flush overflow-auto custom-scrollbar flex-grow-1">
                             <?php foreach ($chapters as $chap): ?>
@@ -145,14 +197,38 @@ $aiAvatar = "/assets/logo/logo.png";
                         <span class="text-secondary small d-block mb-1" style="font-size: 0.7rem;"><?= $chapter['module_name'] ?></span>
                         <h4 class="card-title fw-bold m-0 text-truncate" style="max-width: 400px;"><?= $chapter['title'] ?></h4>
                     </div>
-                    <div class="d-flex gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <button id="btnGenerateContent" class="btn btn-sm btn-outline-primary rounded-pill px-3 d-flex align-items-center gap-1 border-opacity-25" data-chapter-id="<?= $chapter_id ?>" title="Generate human-like tutorial content">
+                            <i class="bx bx-magic-wand"></i> <span>Generate Content</span>
+                        </button>
                         <button class="btn btn-sm btn-outline-secondary rounded-circle border-opacity-10 p-2"><i class="bx bx-share-alt"></i></button>
                         <button class="btn btn-sm btn-outline-success rounded-circle border-opacity-10 p-2"><i class="bx bx-check"></i></button>
                     </div>
                 </div>
-                <div class="card-body p-3 p-lg-5 flex-grow-1 overflow-auto custom-scrollbar">
-                    <div class="chapter-text-content lh-lg" style="font-size: 1.05rem;">
-                        <?= $chapter['content'] ?>
+                <div class="card-body p-3 p-lg-5 flex-grow-1 overflow-auto custom-scrollbar position-relative">
+                    <!-- Generation Loading Skeleton -->
+                    <div id="contentGeneratingStatus" class="d-none alert alert-dark border-secondary border-opacity-25 rounded-3 mb-4 d-flex align-items-center gap-3">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                        <span class="small text-secondary">Senior Mentor is crafting practical tutorial material...</span>
+                    </div>
+
+                    <div id="chapterContentContainer" class="chapter-text-content lh-lg" style="font-size: 1.05rem;" data-raw-md="<?= htmlspecialchars($chapter['content'] ?? '') ?>">
+                        <?php if (!empty($chapter['content_html']) && $chapter['content_html'] !== '...'): ?>
+                            <?= $chapter['content_html'] ?>
+                        <?php elseif (!empty($chapter['content']) && $chapter['content'] !== '...'): ?>
+                            <div class="raw-markdown-fallback"><?= htmlspecialchars($chapter['content']) ?></div>
+                        <?php else: ?>
+                            <div id="emptyContentPrompt" class="text-center py-5 my-4">
+                                <div class="mb-3">
+                                    <i class="bx bx-book-open text-secondary opacity-50" style="font-size: 3.5rem;"></i>
+                                </div>
+                                <h5 class="fw-bold text-white mb-2">Ready to Learn?</h5>
+                                <p class="text-secondary small mb-4">Click below to generate practical, human-like tutorial content with live code blocks.</p>
+                                <button class="btn btn-primary rounded-pill px-4 btn-trigger-generate">
+                                    <i class="bx bx-magic-wand me-1"></i> Generate Chapter Material
+                                </button>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

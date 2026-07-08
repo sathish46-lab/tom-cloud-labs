@@ -9,19 +9,44 @@ $modules = [];
 foreach ($chapters as $chapter) {
     $modules[$chapter['module_name']][] = $chapter;
 }
+
+$userObj = Session::getUser();
+$userUiPrefs = $userObj ? ($userObj->getUiPreferences() ?? []) : [];
+$dbSizesRaw = $userUiPrefs['learnAiThreePanelSizes'] ?? null;
+$dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizesRaw;
 ?>
+<?php if (is_array($dbSizesArr) && count($dbSizesArr) === 3): ?>
+<style>
+:root {
+    --outlineSidebar-saved-width: <?= round($dbSizesArr[0], 2) ?>%;
+    --courseSidebar-saved-width: <?= round($dbSizesArr[0], 2) ?>%;
+    --paneAI-saved-width: <?= round($dbSizesArr[2], 2) ?>%;
+}
+</style>
+<?php endif; ?>
 
 <script>
 // Anti-Flicker: Apply saved pane widths and exact viewport height immediately before paint
 (function() {
-    ['outlineSidebar', 'courseSidebar', 'paneAI'].forEach(id => {
-        const savedWidth = localStorage.getItem('learn-pane-' + id);
-        if (savedWidth) {
-            document.documentElement.style.setProperty('--' + id + '-saved-width', savedWidth + 'px');
-        }
-    });
+    const prefs = (window.TOM_CONFIG && window.TOM_CONFIG.ui_preferences) || {};
+
+    let threePanelSizes = sessionStorage.getItem('learnAiThreePanelSizes') || prefs['learnAiThreePanelSizes'];
+    if (threePanelSizes && typeof threePanelSizes !== 'string') threePanelSizes = JSON.stringify(threePanelSizes);
+    if (threePanelSizes) {
+        sessionStorage.setItem('learnAiThreePanelSizes', threePanelSizes);
+        try {
+            const arr = JSON.parse(threePanelSizes);
+            if (Array.isArray(arr) && arr.length === 3) {
+                document.documentElement.style.setProperty('--courseSidebar-saved-width', arr[0] + '%');
+                document.documentElement.style.setProperty('--outlineSidebar-saved-width', arr[0] + '%');
+                document.documentElement.style.setProperty('--paneAI-saved-width', arr[2] + '%');
+            }
+        } catch (e) {}
+    }
+
     const headerHeight = 64; // 4rem header height
-    document.documentElement.style.setProperty('--app-height', (window.innerHeight - headerHeight) + 'px');
+    const footerHeight = 38; // footer height
+    document.documentElement.style.setProperty('--app-height', (window.innerHeight - headerHeight - footerHeight) + 'px');
 })();
 </script>
 
@@ -36,12 +61,25 @@ foreach ($chapters as $chapter) {
                         <button class="btn btn-sm btn-outline-secondary rounded-circle border-opacity-10"><i class="bx bx-heart"></i></button>
                     </div>
 
-                    <div class="mb-4">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="small fw-bold text-success" style="font-size: 0.75rem;"><i class="bx bxs-check-circle me-1"></i> <?= $lesson['progress'] ?>% Completed</span>
+                    <div class="d-flex align-items-center justify-content-between flex-nowrap gap-2 mb-4 pb-3 border-bottom border-secondary border-opacity-10">
+                        <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                            <div class="sidebar-progress-circle d-flex align-items-center justify-content-center position-relative" style="width: 36px; height: 36px;">
+                                <svg width="36" height="36" viewBox="0 0 45 45">
+                                    <circle cx="22.5" cy="22.5" r="18" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3" />
+                                    <circle cx="22.5" cy="22.5" r="18" fill="none" stroke="var(--cui-primary)" stroke-width="3" stroke-dasharray="113" stroke-dashoffset="<?= 113 - (113 * $lesson['progress'] / 100) ?>" stroke-linecap="round" transform="rotate(-90 22.5 22.5)" />
+                                </svg>
+                                <span class="position-absolute small fw-bold" style="font-size: 0.6rem;"><?= $lesson['progress'] ?>%</span>
+                            </div>
+                            <span class="small fw-bold text-light">Completed</span>
                         </div>
-                        <div class="progress bg-secondary bg-opacity-25 rounded-pill" style="height: 5px;">
-                            <div class="progress-bar bg-success rounded-pill" style="width: <?= $lesson['progress'] ?>%"></div>
+
+                        <div class="d-flex gap-1 align-items-center flex-shrink-0">
+                            <button class="btn btn-sm btn-dark border border-secondary border-opacity-25 rounded-pill px-2 py-1 d-flex align-items-center gap-1 active" style="font-size: 0.75rem;">
+                                <i class="bx bx-list-ul"></i> Outline
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary border-0 rounded-pill px-2 py-1 d-flex align-items-center gap-1 text-secondary" style="font-size: 0.75rem;">
+                                <i class="bx bx-share-alt"></i> Map
+                            </button>
                         </div>
                     </div>
 

@@ -21,12 +21,23 @@ try {
         initialWidth: 0,
 
         init: function () {
+            if (!document.querySelector('.stable-app-view')) {
+                document.body.style.removeProperty('overflow');
+                document.body.style.removeProperty('height');
+                const mainWrapper = document.querySelector('.wrapper');
+                if (mainWrapper) {
+                    mainWrapper.style.removeProperty('overflow');
+                    mainWrapper.style.removeProperty('height');
+                }
+            }
+
             const appWrapper = document.querySelector('.learn-app-wrapper');
             if (!appWrapper) return;
 
             this.restorePaneWidths();
             this.adjustVHE(appWrapper);
             this.initAIChat();
+            this.initContentGenerator();
 
             if (!this.isInitialized) {
                 this.initResizers();
@@ -38,31 +49,85 @@ try {
             }
         },
 
-        // Save and Restore Pane Widths
+        // Save and Restore Pane Widths & Three Panel Sizes to DB / Storage
+        savePreferenceToDB: function (key, value) {
+            clearTimeout(this._dbSyncTimeout);
+            this._pendingPrefs = this._pendingPrefs || {};
+            this._pendingPrefs[key] = value;
+            this._dbSyncTimeout = setTimeout(() => {
+                const prefs = { ...this._pendingPrefs };
+                this._pendingPrefs = {};
+                Object.keys(prefs).forEach(k => {
+                    const fd = new FormData();
+                    fd.append('preference_id', k);
+                    fd.append('value', prefs[k]);
+                    fetch('/api/user/preference_save.php', { method: 'POST', body: fd }).catch(() => {});
+                });
+            }, 300);
+        },
+
         savePaneWidth: function (id, width) {
-            localStorage.setItem(`learn-pane-${id}`, width);
-            // Also sync to document root for immediate CSS consumption
             document.documentElement.style.setProperty(`--${id}-saved-width`, width + 'px');
+            localStorage.removeItem(`learn-pane-${id}`);
+            sessionStorage.removeItem(`learn-pane-${id}`);
+
+            // Compute and save ONLY learnAiThreePanelSizes
+            const wrapper = document.querySelector('.learn-app-wrapper');
+            if (wrapper) {
+                const totalW = wrapper.offsetWidth || window.innerWidth;
+                const p1El = document.getElementById('outlineSidebar') || document.getElementById('courseSidebar');
+                const p3El = document.getElementById('paneAI');
+                if (p1El && p3El && totalW > 0) {
+                    const w1 = p1El.offsetWidth;
+                    const w3 = p3El.offsetWidth;
+                    const w2 = Math.max(10, totalW - w1 - w3);
+                    const pct1 = (w1 / totalW) * 100;
+                    const pct2 = (w2 / totalW) * 100;
+                    const pct3 = (w3 / totalW) * 100;
+                    const sizesStr = JSON.stringify([pct1, pct2, pct3]);
+                    localStorage.removeItem('learnAiThreePanelSizes');
+                    sessionStorage.setItem('learnAiThreePanelSizes', sizesStr);
+                    this.savePreferenceToDB('learnAiThreePanelSizes', sizesStr);
+                }
+            }
         },
 
         restorePaneWidths: function () {
-            const panes = ['outlineSidebar', 'courseSidebar', 'paneAI'];
-            panes.forEach(id => {
-                const target = document.getElementById(id);
-                const savedWidth = localStorage.getItem(`learn-pane-${id}`);
-                if (target && savedWidth) {
-                    target.style.width = savedWidth + 'px';
-                    target.style.flexBasis = savedWidth + 'px';
-                    // Update CSS variable as well
-                    document.documentElement.style.setProperty(`--${id}-saved-width`, savedWidth + 'px');
+            const prefs = (window.TOM_CONFIG && window.TOM_CONFIG.ui_preferences) || {};
 
-                    // Update outline state if applicable
-                    if (id === 'outlineSidebar') {
-                        const widthNum = parseInt(savedWidth);
-                        this.setOutlineState(target, widthNum > 180 ? 'expanded' : 'collapsed');
-                    }
-                }
+            ['outlineSidebar', 'courseSidebar', 'paneAI'].forEach(id => {
+                localStorage.removeItem(`learn-pane-${id}`);
+                sessionStorage.removeItem(`learn-pane-${id}`);
             });
+
+            localStorage.removeItem('learnAiThreePanelSizes');
+            let threePanelSizes = sessionStorage.getItem('learnAiThreePanelSizes') || prefs['learnAiThreePanelSizes'];
+            if (threePanelSizes && typeof threePanelSizes !== 'string') threePanelSizes = JSON.stringify(threePanelSizes);
+            if (threePanelSizes) {
+                sessionStorage.setItem('learnAiThreePanelSizes', threePanelSizes);
+                try {
+                    const arr = JSON.parse(threePanelSizes);
+                    if (Array.isArray(arr) && arr.length === 3) {
+                        const p1El = document.getElementById('outlineSidebar') || document.getElementById('courseSidebar');
+                        const p3El = document.getElementById('paneAI');
+                        if (p1El) {
+                            p1El.style.width = arr[0] + '%';
+                            p1El.style.flexBasis = arr[0] + '%';
+                            document.documentElement.style.setProperty(`--${p1El.id}-saved-width`, arr[0] + '%');
+                            if (p1El.id === 'outlineSidebar') {
+                                const wrapperW = p1El.parentElement ? p1El.parentElement.offsetWidth : window.innerWidth;
+                                const p1Px = (arr[0] / 100) * wrapperW;
+                                this.setOutlineState(p1El, p1Px > 180 ? 'expanded' : 'collapsed');
+                            }
+                        }
+                        if (p3El) {
+                            p3El.style.width = arr[2] + '%';
+                            p3El.style.flexBasis = arr[2] + '%';
+                            document.documentElement.style.setProperty('--paneAI-saved-width', arr[2] + '%');
+                        }
+                    }
+                } catch (e) {}
+            }
         },
 
         // Draggable Resizers Logic (Hardened with Anchors & Delegation)
@@ -211,11 +276,10 @@ try {
             const header = document.querySelector('header.header');
             const footer = document.querySelector('footer.footer');
 
-            const headerHeight = header ? header.offsetHeight : 0;
-            const headerMB = header ? (parseFloat(window.getComputedStyle(header).marginBottom) || 0) : 0;
-            const footerHeight = (footer && footer.style.display !== 'none' && window.getComputedStyle(footer).display !== 'none') ? footer.offsetHeight : 0;
+            const headerHeight = header ? (header.offsetHeight || 64) : 64;
+            const footerHeight = footer ? (footer.offsetHeight || 38) : 38;
 
-            const availableHeight = window.innerHeight - headerHeight - footerHeight - headerMB;
+            const availableHeight = window.innerHeight - headerHeight - footerHeight;
             document.documentElement.style.setProperty('--app-height', `${availableHeight}px`);
 
             if (appWrapper.classList.contains('stable-app-view')) {
@@ -376,6 +440,157 @@ try {
 
             chatHistory.appendChild(msgDiv);
             chatHistory.scrollTop = chatHistory.scrollHeight;
+        },
+
+        renderMarkdownWithHighlighting: function(markdownText, container) {
+            if (!container) return;
+            if (typeof marked !== 'undefined') {
+                container.innerHTML = marked.parse(markdownText);
+            } else {
+                container.innerText = markdownText;
+                return;
+            }
+
+            if (typeof hljs !== 'undefined') {
+                container.querySelectorAll('pre code').forEach((el) => {
+                    hljs.highlightElement(el);
+                });
+            }
+
+            // Add Copy buttons to code blocks
+            container.querySelectorAll('pre').forEach((pre) => {
+                if (pre.querySelector('.btn-copy-code')) return;
+                pre.style.position = 'relative';
+
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'btn btn-sm btn-dark btn-copy-code border border-secondary border-opacity-25';
+                copyBtn.innerHTML = '<i class="bx bx-copy"></i> Copy';
+                copyBtn.style.position = 'absolute';
+                copyBtn.style.top = '0.5rem';
+                copyBtn.style.right = '0.5rem';
+                copyBtn.style.zIndex = '5';
+
+                copyBtn.addEventListener('click', () => {
+                    const codeText = pre.querySelector('code')?.innerText || pre.innerText;
+                    navigator.clipboard.writeText(codeText).then(() => {
+                        copyBtn.innerHTML = '<i class="bx bx-check text-success"></i> Copied!';
+                        setTimeout(() => { copyBtn.innerHTML = '<i class="bx bx-copy"></i> Copy'; }, 2000);
+                    });
+                });
+
+                pre.appendChild(copyBtn);
+            });
+        },
+
+        initContentGenerator: function () {
+            const container = document.getElementById('chapterContentContainer');
+            if (!container) return;
+
+            // Check if there is raw fallback markdown to highlight immediately
+            const rawFallback = container.querySelector('.raw-markdown-fallback');
+            if (rawFallback) {
+                const md = rawFallback.innerText;
+                this.renderMarkdownWithHighlighting(md, container);
+            } else {
+                // Even if HTML is server-rendered, apply Highlight.js & Copy buttons to code blocks
+                if (typeof hljs !== 'undefined') {
+                    container.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
+                }
+                container.querySelectorAll('pre').forEach((pre) => {
+                    if (pre.querySelector('.btn-copy-code')) return;
+                    pre.style.position = 'relative';
+
+                    const copyBtn = document.createElement('button');
+                    copyBtn.className = 'btn btn-sm btn-dark btn-copy-code border border-secondary border-opacity-25';
+                    copyBtn.innerHTML = '<i class="bx bx-copy"></i> Copy';
+                    copyBtn.style.position = 'absolute';
+                    copyBtn.style.top = '0.5rem';
+                    copyBtn.style.right = '0.5rem';
+                    copyBtn.style.zIndex = '5';
+
+                    copyBtn.addEventListener('click', () => {
+                        const codeText = pre.querySelector('code')?.innerText || pre.innerText;
+                        navigator.clipboard.writeText(codeText).then(() => {
+                            copyBtn.innerHTML = '<i class="bx bx-check text-success"></i> Copied!';
+                            setTimeout(() => { copyBtn.innerHTML = '<i class="bx bx-copy"></i> Copy'; }, 2000);
+                        });
+                    });
+
+                    pre.appendChild(copyBtn);
+                });
+            }
+
+            const triggerGenerate = (chapterId) => {
+                if (!chapterId) return;
+                const statusDiv = document.getElementById('contentGeneratingStatus');
+                if (statusDiv) statusDiv.classList.remove('d-none');
+
+                // Clear prompt
+                const emptyPrompt = document.getElementById('emptyContentPrompt');
+                if (emptyPrompt) emptyPrompt.remove();
+
+                const sessionId = 'content_sess_' + Math.random().toString(36).substr(2, 9);
+                const messageId = 'content_msg_' + Math.random().toString(36).substr(2, 9);
+
+                let accumulatedMd = "";
+
+                // Subscribe to streaming topic
+                if (typeof TomSocketClient !== 'undefined') {
+                    const contentSocket = new TomSocketClient();
+                    contentSocket.connect('/topic/content_stream.' + sessionId, (frame) => {
+                        try {
+                            let payload = frame;
+                            if (typeof frame === 'string') {
+                                try { payload = JSON.parse(frame); } catch(e) {}
+                            } else if (frame && frame.body) {
+                                try { payload = JSON.parse(frame.body); } catch(e) {}
+                            }
+                            if (payload && payload.type === 'text_delta') {
+                                accumulatedMd += payload.data;
+                                this.renderMarkdownWithHighlighting(accumulatedMd, container);
+                            } else if (payload && payload.type === 'stream_end') {
+                                if (statusDiv) statusDiv.classList.add('d-none');
+                                this.renderMarkdownWithHighlighting(accumulatedMd, container);
+                            }
+                        } catch (e) {
+                            console.error('Content stream error:', e);
+                        }
+                    });
+                }
+
+                // Call generate API
+                fetch('/src/api/learnAI/content_generate.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        chapter_id: chapterId,
+                        session_id: sessionId,
+                        message_id: messageId
+                    })
+                })
+                    .then(res => res.json())
+                    .catch(err => {
+                        console.error('Content generate trigger failed:', err);
+                        if (statusDiv) statusDiv.classList.add('d-none');
+                    });
+            };
+
+            const btnHeader = document.getElementById('btnGenerateContent');
+            if (btnHeader) {
+                btnHeader.addEventListener('click', () => {
+                    const chId = btnHeader.getAttribute('data-chapter-id');
+                    triggerGenerate(chId);
+                });
+            }
+
+            const btnEmpty = container.querySelector('.btn-trigger-generate');
+            if (btnEmpty) {
+                btnEmpty.addEventListener('click', () => {
+                    const chId = btnHeader ? btnHeader.getAttribute('data-chapter-id') : null;
+                    triggerGenerate(chId);
+                });
+            }
         }
     };
 

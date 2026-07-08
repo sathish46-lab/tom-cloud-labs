@@ -547,7 +547,8 @@ $classString = implode(' ', $htmlClasses);
 
     <script>
     window.TOM_CONFIG = {
-        mq_domain: <?= json_encode(get_config('mq_domain') ?: '') ?>
+        mq_domain: <?= json_encode(get_config('mq_domain') ?: '') ?>,
+        ui_preferences: <?= json_encode($uiPreferences ?? []) ?>
     };
     </script>
     <script src="<?= Session::cacheCDN('/js/app.js') ?>"></script>
