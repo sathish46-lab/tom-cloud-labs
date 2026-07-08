@@ -7,6 +7,11 @@ if (isset($_SERVER['HTTP_HX_REQUEST']) && $_SERVER['HTTP_HX_REQUEST'] == 'true')
     exit;
 }
 
+// Prevent BFCache and caching of login page
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+header('Expires: Thu, 01 Jan 1970 00:00:00 GMT');
+
 use Auth\GoogleAuth;
 
 $google = new GoogleAuth();
@@ -77,7 +82,7 @@ Session::set('seo_keywords', 'Sign In, Tom Labs Login, Virtual Labs, Secure Acce
         a { text-decoration: none; }
     </style>
 </head>
-<body>
+<body data-no-boost="true" hx-boost="false">
 
 
 <div class="min-vh-100 d-flex align-items-center">
@@ -228,7 +233,7 @@ Session::set('seo_keywords', 'Sign In, Tom Labs Login, Virtual Labs, Secure Acce
                                 <div class="mb-3">
                                     <div class="d-flex justify-content-between">
                                         <label class="small fw-bold text-secondary mb-1">PASSWORD</label>
-                                        <a href="#" class="small text-warning text-decoration-none">Forgot?</a>
+                                        <a href="/forgot" data-no-boost="true" rel="external" class="small text-warning text-decoration-none">Forgot?</a>
                                     </div>
                                     <div class="input-group">
                                         <span class="input-group-text bg-transparent border-end-0">

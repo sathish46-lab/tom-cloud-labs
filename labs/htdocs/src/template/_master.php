@@ -2,6 +2,11 @@
 // Start the timer at the earliest possible moment
 define('PAGE_START_TIME', microtime(true));
 
+// Prevent BFCache from caching protected pages
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+header('Expires: Thu, 01 Jan 1970 00:00:00 GMT');
+
 $serverTheme = [];
 $uiPreferences = [];
 require_once $_SERVER['DOCUMENT_ROOT'] . '/src/config/themes.php';
@@ -45,6 +50,13 @@ $classString = implode(' ', $htmlClasses);
     <link rel="shortcut icon" type="image/png" href="<?= Session::cdn3('logo/favicon.png') ?>">
 
     <script type="text/javascript">
+    // Prevent BFCache from showing stale logged-in pages when pressing browser Back button
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted) {
+            window.location.reload();
+        }
+    });
+
     // Pre-load themes to prevent slow visual blur application on page load
     window.TOM_THEMES = <?= json_encode($tomThemes) ?>;
     
@@ -223,10 +235,11 @@ $classString = implode(' ', $htmlClasses);
     <link href="https://cdn.jsdelivr.net/npm/@coreui/coreui@5.0.2/dist/css/coreui.min.css" rel="stylesheet">
 
 
-    <link rel="stylesheet" href="/css/app.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="<?= Session::cacheCDN('/css/app.css') ?>">
+    <link rel="stylesheet" href="<?= Session::cacheCDN('/css/htmx-progress.css') ?>">
 
     <?php foreach (Session::$customCss as $css): ?>
-    <link rel="stylesheet" href="<?= Session::cacheCDN($css) ?>?v=<?= time() ?>">
+    <link rel="stylesheet" href="<?= Session::cacheCDN($css) ?>">
     <?php endforeach; ?>
 
     <link href='https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
@@ -409,7 +422,7 @@ $classString = implode(' ', $htmlClasses);
     </style>
 </head>
 
-<body class="<?= $isGlassMode ? 'hwa-enabled' : 'hwa-disabled' ?>" <?php if (!defined("IS_HOME_PAGE")): ?> hx-boost="true" hx-ext="head-support" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-indicator="#main-content" <?php endif; ?>>
+<body class="<?= $isGlassMode ? 'hwa-enabled' : 'hwa-disabled' ?>" data-version="<?= htmlspecialchars(Session::getVersion()) ?>" <?php if (!defined("IS_HOME_PAGE")): ?> hx-boost="true" hx-ext="head-support" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-indicator="#main-content" <?php endif; ?>>
     <!-- Global HTMX Top Loading Bar -->
     <div id="htmx-top-progress"></div>
 
@@ -420,13 +433,13 @@ $classString = implode(' ', $htmlClasses);
         <div class="bg-cover bg-img-4" data-depth="0.1" style="<?= isset($assets[3]) ? "background-image: url('{$assets[3]}'); display: block;" : '' ?>"></div>
     </div>
 
-    <?php if (!defined('IS_HOME_PAGE')): Session::getNav(); endif; ?>
+    <?php if (!defined('IS_HOME_PAGE') && !Session::get('show_session_expired', false)): Session::getNav(); endif; ?>
 
-    <div class="wrapper d-flex flex-column min-vh-100 bg-transparent" style="<?= defined('IS_HOME_PAGE') ? '--cui-sidebar-occupy-start: 0px;' : '' ?>"> 
-    <?php if (!defined('IS_HOME_PAGE')): Session::getSiteNav(); endif; ?>
+    <div class="wrapper d-flex flex-column min-vh-100 bg-transparent" style="<?= (defined('IS_HOME_PAGE') || Session::get('show_session_expired', false)) ? '--cui-sidebar-occupy-start: 0px;' : '' ?>"> 
+    <?php if (!defined('IS_HOME_PAGE') && !Session::get('show_session_expired', false)): Session::getSiteNav(); endif; ?>
 
-    <div class="body flex-grow-1 bg-transparent"> 
-        <div id="main-content" class="container-fluid <?= (Session::get('is_learn_ai') || defined('IS_HOME_PAGE')) ? 'p-0' : 'px-4' ?> bg-transparent">
+    <div class="body flex-grow-1 bg-transparent <?= Session::get('show_session_expired', false) ? 'd-flex align-items-center justify-content-center p-0 m-0' : '' ?>"> 
+        <div id="main-content" class="container-fluid <?= (defined('IS_HOME_PAGE') || Session::get('show_session_expired', false)) ? 'p-0' : 'px-4' ?> bg-transparent">
                 <?php
                     if (!Session::get('brokenPage', false)) {
                         echo Session::generatePageBody();
@@ -437,7 +450,7 @@ $classString = implode(' ', $htmlClasses);
             </div>
         </div>
 
-        <?php if (!Session::get('footer', false) && !defined('IS_HOME_PAGE')) { echo Session::generateFooter(); } ?>
+        <?php if (!Session::get('footer', false) && !defined('IS_HOME_PAGE') && !Session::get('show_session_expired', false)) { echo Session::generateFooter(); } ?>
     </div>
     <!-- Premium Stackable Notification Container -->
     <div id="notification-container" class="toast-container position-fixed top-0 end-0 p-3" style="margin-top: 4rem; z-index: 100000 !important; pointer-events: none;">
@@ -484,6 +497,51 @@ $classString = implode(' ', $htmlClasses);
         </div>
     </div>
 
+    <!-- Visuals Recommendation Modal (GPU Capability Info) -->
+    <div class="modal fade" id="visualsRecommendationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow-lg" style="background: rgba(var(--cui-body-bg-rgb, 11, 30, 54), 0.96); backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px); border: 1px solid rgba(var(--cui-emphasis-color-rgb, 255, 255, 255), 0.1) !important;">
+                <div class="modal-header border-0 pt-4 px-4 pb-2">
+                    <h5 class="fw-bold m-0 text-body-emphasis">Visuals Recommendation</h5>
+                    <button type="button" class="btn-close" data-coreui-dismiss="modal" style="filter: var(--cui-btn-close-white-filter, none);"></button>
+                </div>
+                <div class="modal-body p-4 pt-2">
+                    <p class="small text-secondary mb-4">
+                        This website use Blur effects for background. This effect is only available if your browser supports WebGL and your GPU is a high performance one. You can check your GPU info below.
+                    </p>
+                    <div class="border rounded-3 overflow-hidden mb-4" style="border-color: rgba(255, 255, 255, 0.1) !important;">
+                        <table class="table table-borderless mb-0 small">
+                            <tbody>
+                                <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
+                                    <td class="py-2 px-3 text-secondary">WebGL Support</td>
+                                    <td class="py-2 px-3 fw-semibold" id="gpuModalWebGL">Yes</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
+                                    <td class="py-2 px-3 text-secondary">High Performance GPU</td>
+                                    <td class="py-2 px-3 fw-semibold" id="gpuModalHighPerf">Yes</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
+                                    <td class="py-2 px-3 text-secondary">GPU Vendor</td>
+                                    <td class="py-2 px-3 text-body-emphasis" id="gpuModalVendor">-</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-3 text-secondary">Renderer</td>
+                                    <td class="py-2 px-3 text-body-emphasis" id="gpuModalRenderer">-</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="small text-secondary mb-4">
+                        Note: This info is only for recommendation purpose. You can still use this website without WebGL support or High Performance GPU. However, some visual effects may not work properly.
+                    </p>
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btn-warning rounded-pill px-4 fw-semibold small" data-coreui-dismiss="modal">Okay</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
 
 
@@ -492,158 +550,26 @@ $classString = implode(' ', $htmlClasses);
         mq_domain: <?= json_encode(get_config('mq_domain') ?: '') ?>
     };
     </script>
-    <script src="/js/app.js?v=<?= time() ?>"></script>
+    <script src="<?= Session::cacheCDN('/js/app.js') ?>"></script>
+    <script src="<?= Session::cacheCDN('/js/ui-init.js') ?>"></script>
 
     <script>
-    // Initialize all tooltips globally with body container to fix positioning issues
-    window.onPageLoad(function() {
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-coreui-toggle="tooltip"]'));
-        tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new coreui.Tooltip(tooltipTriggerEl, {
-                container: 'body',
-                trigger: 'hover'
-            });
-        });
-
-        // Smart Header Positioning:
-        // If main content exceeds viewport (scrollable), switch header to static so it scrolls naturally
-        // with the page and prevents card hover z-index overlap. If content fits screen, keep it sticky at top.
-        function updateHeaderScrollMode() {
-            var header = document.querySelector('.header');
-            if (!header) return;
-            var isScrollable = document.documentElement.scrollHeight > (window.innerHeight + 15);
-            if (isScrollable) {
-                header.style.setProperty('position', 'static', 'important');
-            } else {
-                header.style.setProperty('position', 'sticky', 'important');
-                header.style.setProperty('top', '0', 'important');
-            }
-        }
-        updateHeaderScrollMode();
-        window.addEventListener('resize', updateHeaderScrollMode);
-        setTimeout(updateHeaderScrollMode, 250);
-        setTimeout(updateHeaderScrollMode, 800);
-
-        if (window.headerObserver) window.headerObserver.disconnect();
-        var mainContent = document.getElementById('main-content');
-        if (mainContent && window.MutationObserver) {
-            window.headerObserver = new MutationObserver(function() {
-                updateHeaderScrollMode();
-            });
-            window.headerObserver.observe(mainContent, { childList: true, subtree: true, attributes: true });
-        }
-
-        // Silent Activity Tracker — fire-and-forget for Smart Insights
-        <?php if (Session::getAuthStatus() == Constants::STATUS_LOGGEDIN): ?>
-        try {
-            fetch('/api/dashboard/track_activity', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body: 'page=' + encodeURIComponent(window.location.pathname)
-            }).catch(function(){});
-        } catch(e) {}
-        <?php endif; ?>
-    });
-    </script>
-    <script>
-        /**
-         * TomNotify - Premium Stackable Notification System
-         */
-        window.TomNotify = {
-            show: function(message, title = 'Notification', type = 'success', duration = 5000) {
-                const container = document.getElementById('notification-container');
-                if (!container) return;
-
-                const iconMap = {
-                    success: 'bxs-check-circle text-success',
-                    error: 'bxs-error-circle text-danger',
-                    warning: 'bxs-warning text-warning',
-                    info: 'bxs-info-circle text-info'
-                };
-
-                const toastId = 'toast-' + Date.now() + Math.floor(Math.random() * 1000);
-                const icon = iconMap[type] || iconMap.success;
-                const progressColor = type === 'error' ? '#e74c3c' : (type === 'warning' ? '#f1c40f' : 'var(--cui-primary, #8b91f9)');
-
-                const html = `
-                    <div id="${toastId}" class="toast fade border-0 rounded-4 overflow-hidden shadow-lg mb-3" role="alert" aria-live="assertive" aria-atomic="true" data-coreui-autohide="true" data-coreui-delay="${duration}"
-                        style="background: var(--glass-bg, rgba(11, 30, 54, 0.88)); min-width: 320px; pointer-events: auto;">
-                        <div class="toast-header border-0 bg-transparent pt-3 px-3 d-flex align-items-center">
-                            <strong class="me-auto d-flex align-items-center gap-2 fs-6 text-body-emphasis">
-                                <i class="bx ${icon}"></i> 
-                                <span class="ls-tight">${title}</span>
-                            </strong>
-                            <small class="text-body-secondary fw-light" style="font-size: 10px;">now</small>
-                            <button type="button" class="btn-close ms-3 mb-1" style="font-size: 9px; filter: var(--cui-btn-close-white-filter, none);" data-coreui-dismiss="toast"></button>
-                        </div>
-                        <div class="toast-body text-body px-3 pb-3 pt-1">
-                            <span class="small" style="line-height: 1.5; opacity: 0.85;">${message}</span>
-                        </div>
-                        <div class="toast-progress-container" style="height: 3px; background: rgba(var(--cui-emphasis-color-rgb, 255,255,255), 0.05); width: 100%;">
-                            <div class="toast-progress-bar" style="height: 100%; width: 100%; background: ${progressColor}; transition: width ${duration}ms linear;"></div>
-                        </div>
-                    </div>
-                `;
-
-                container.insertAdjacentHTML('afterbegin', html);
-                const toastEl = document.getElementById(toastId);
-                const toast = new coreui.Toast(toastEl, { autohide: true, delay: duration });
-                toast.show();
-
-                // Start progress bar animation
-                setTimeout(() => {
-                    const progressBar = toastEl.querySelector('.toast-progress-bar');
-                    if (progressBar) progressBar.style.width = '0%';
-                }, 50);
-
-                // Clean up DOM after hidden
-                toastEl.addEventListener('hidden.coreui.toast', () => {
-                    toastEl.remove();
-                });
-                
-                // Fallback cleanup if event fails
-                setTimeout(() => {
-                    if (document.getElementById(toastId)) {
-                        toast.hide();
-                        setTimeout(() => {
-                            if (document.getElementById(toastId)) document.getElementById(toastId).remove();
-                        }, 500);
-                    }
-                }, duration + 1000);
-            }
-        };
-
-        // Legacy compatibility
-        window.showToast = (msg) => TomNotify.show(msg, "System", "info");
-        window.copyToClipboard = (text, label = 'Information') => {
-            navigator.clipboard.writeText(text).then(() => {
-                TomNotify.show(`${label} copied to clipboard!`, "Copied", "success", 3000);
-            });
-        };
-
-        // Auto-trigger from PHP Sessions
+        // Auto-trigger flash toasts from PHP Sessions
         window.onPageLoad(() => {
             <?php 
             $flashTypes = ['success' => 'Success', 'error' => 'Failed', 'info' => 'Notice', 'warning' => 'Warning'];
             foreach ($flashTypes as $key => $title):
                 if ($msg = Session::get("toast_$key")): 
             ?>
-                TomNotify.show("<?= htmlspecialchars($msg) ?>", "<?= $title ?>", "<?= $key ?>");
+                if (window.TomNotify) TomNotify.show("<?= htmlspecialchars($msg) ?>", "<?= $title ?>", "<?= $key ?>");
             <?php endif; endforeach; ?>
         });
-
-        // Sync UI on load
-        window.onPageLoad(function() {
-            if (window.TomVisuals) window.TomVisuals.syncUI();
-        });
     </script>
-
 
     <?php 
     // This translates your indented Session::$ConsoleLogs into JS
     Console::flush(); 
     ?>
-    <?php include __DIR__ . '/_session_expired_popup.php'; ?>
     
     <!-- Masonry Layout Library -->
     <script src="https://cdn.jsdelivr.net/npm/masonry-layout@4/dist/masonry.pkgd.min.js"></script>
@@ -656,120 +582,6 @@ $classString = implode(' ', $htmlClasses);
             <feDisplacementMap in="SourceGraphic" in2="noise" scale="12" xChannelSelector="R" yChannelSelector="G" />
         </filter>
     </svg>
-    
-    <style>
-        /* HTMX content swap — instant feel, no sluggish fade */
-        .htmx-request#main-content {
-            opacity: 0.85;
-            pointer-events: none;
-            transition: opacity 50ms ease-out;
-        }
-        #main-content {
-            transition: opacity 30ms ease-in;
-        }
-        .htmx-indicator {
-            display: none;
-        }
-        .htmx-request .htmx-indicator {
-            display: inline-block;
-        }
-        /* Top Progress Bar Styles */
-        #htmx-top-progress {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #f7b655ff, #9cf63bff, #06d493ff);
-            z-index: 99999;
-            width: 0%;
-            opacity: 0;
-            pointer-events: none;
-            box-shadow: 0 0 10px rgba(247, 185, 85, 0.7);
-            /* Reset state: no transition so it instantly snaps back to 0 width invisibly */
-        }
-
-        /* When request is active (added via JS) */
-        #htmx-top-progress.htmx-running {
-            display: block;
-            opacity: 1;
-            width: 80%;
-            transition: width 5s cubic-bezier(0.1, 0.8, 0.2, 1), opacity 150ms ease-out;
-        }
-
-        /* When request finishes (added via JS) */
-        #htmx-top-progress.htmx-complete {
-            display: block;
-            opacity: 0;
-            width: 100%;
-            transition: width 200ms ease-out, opacity 400ms ease-out 150ms;
-        }
-    </style>
-    
-    <script>
-        // Prevent HTMX from attempting to AJAX-load non-HTMX full pages (like /home, /, /logout)
-        // especially during browser Back/Forward (history.back()) navigations!
-        function handleNonHtmxNavigation(evt) {
-            const path = evt.detail.path || evt.detail.requestConfig?.path || window.location.pathname || '';
-            if (path === '/' || path === '/home' || path.startsWith('/home?') || path.startsWith('/logout')) {
-                evt.preventDefault();
-                window.location.href = path;
-                return true;
-            }
-            return false;
-        }
-
-        document.body.addEventListener('htmx:historyCacheMiss', handleNonHtmxNavigation);
-        document.body.addEventListener('htmx:historyRestore', handleNonHtmxNavigation);
-
-        let htmxProgressStartTime = 0;
-        function startHtmxProgress() {
-            const bar = document.getElementById('htmx-top-progress');
-            if (bar) {
-                htmxProgressStartTime = Date.now();
-                bar.classList.remove('htmx-complete');
-                void bar.offsetWidth; 
-                bar.classList.add('htmx-running');
-            }
-        }
-
-        document.body.addEventListener('htmx:beforeHistoryRestore', function(evt) {
-            if (!handleNonHtmxNavigation(evt)) {
-                startHtmxProgress();
-            }
-        });
-
-        document.body.addEventListener('htmx:beforeRequest', function(evt) {
-            if (!handleNonHtmxNavigation(evt)) {
-                startHtmxProgress();
-            }
-        });
-
-        window.addEventListener('popstate', function() {
-            startHtmxProgress();
-        });
-
-        // Smoothly finish the progress bar animation on ANY completion, swap, settle, history restore, or error!
-        function finishHtmxProgress() {
-            const bar = document.getElementById('htmx-top-progress');
-            if (bar && bar.classList.contains('htmx-running')) {
-                const elapsed = Date.now() - htmxProgressStartTime;
-                const minDuration = 150; // Ensure it stays visible for at least 150ms so fast cached navigations show the bar!
-                const delay = Math.max(0, minDuration - elapsed);
-                setTimeout(() => {
-                    bar.classList.remove('htmx-running');
-                    bar.classList.add('htmx-complete');
-                    setTimeout(() => {
-                        bar.classList.remove('htmx-complete');
-                    }, 600);
-                }, delay);
-            }
-        }
-
-        ['htmx:afterRequest', 'htmx:afterSettle', 'htmx:afterSwap', 'htmx:historyRestore', 'htmx:requestError', 'htmx:sendError', 'htmx:responseError', 'htmx:abort'].forEach(evtName => {
-            document.body.addEventListener(evtName, finishHtmxProgress);
-        });
-        window.addEventListener('popstate', () => setTimeout(finishHtmxProgress, 300));
-    </script>
 </body>
 
 </html>

@@ -2,6 +2,37 @@
 require_once 'src/load.php';
 
 // Allow both logged-in and guest users to view the landing page.
+$isSessionExpired = (isset($_GET['session_expired']) && $_GET['session_expired'] == '1') || 
+                    !empty($_COOKIE['show_session_expired']) || 
+                    !empty($_SESSION['show_session_expired']);
+
+if ($isSessionExpired) {
+    if (!empty($_COOKIE['show_session_expired'])) {
+        setcookie('show_session_expired', '', time() - 3600, '/');
+    }
+    if (!empty($_SESSION['show_session_expired'])) {
+        unset($_SESSION['show_session_expired']);
+    }
+    Session::$pageTitle = "Authentication Required | Tom Labs";
+    Session::set('show_session_expired', true);
+    ?>
+    <!DOCTYPE html>
+    <html lang="en" data-coreui-theme="dark">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title><?= Session::$pageTitle ?></title>
+        <link rel="icon" type="image/png" href="<?= Session::cdn3('logo/favicon.png') ?>">
+    </head>
+    <body style="margin:0; padding:0; background:#0f172a;">
+    <?php
+    include __DIR__ . '/src/template/_session_expired_popup.php';
+    ?>
+    </body>
+    </html>
+    <?php
+    exit;
+}
 
 // 2. Set Page Metadata
 Session::$pageTitle = "Tom Labs | Virtual Innovation Hub";
@@ -167,7 +198,7 @@ $initialQuote = $heroQuotes[array_rand($heroQuotes)];
                     <a href="https://sathish46.in" target="_blank" style="text-decoration: none; display: inline-flex; align-items: center; gap: 10px; background: rgba(56, 189, 248, 0.1); padding: 8px 20px; border-radius: 50px; border: 1px solid rgba(56, 189, 248, 0.2); width: fit-content; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(56, 189, 248, 0.2)'; this.style.transform='translateY(-2px)';" onmouseout="this.style.background='rgba(56, 189, 248, 0.1)'; this.style.transform='translateY(0)';">
                         <i class='bx bx-code-alt' style="color: #38bdf8; font-size: 1.3rem;"></i>
                         <span style="color: #cbd5e1; font-size: 0.95rem;">Engineered by</span>
-                        <span style="color: #38bdf8; font-weight: 700; font-family: 'Inter', 'Ubuntu', sans-serif; letter-spacing: 0.5px; font-size: 1.05rem;">Sathish</span>
+                        <span style="color: #38bdf8; font-weight: 700; font-family: 'Inter', 'Ubuntu', sans-serif; letter-spacing: 0.5px; font-size: 1.05rem;">Sathish46</span>
                     </a>
 
                     <!-- Credit Badge -->

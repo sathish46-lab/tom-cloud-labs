@@ -18,7 +18,8 @@ module.exports = function (grunt) {
           "node_modules/three/examples/js/loaders/STLLoader.js",
 
           "../js/*.js",
-          "../js/**/*.js",
+          "../js/quiz/*.js",
+          "!../js/ui-init.js",
         ],
         dest: "../../htdocs/js/app.js",
       },
@@ -66,6 +67,7 @@ module.exports = function (grunt) {
       dist: {
         files: {
           "../../htdocs/css/app.css": "../sass/app.scss",
+          "../../htdocs/css/htmx-progress.css": "../sass/htmx-progress.scss",
         },
       },
     },
@@ -77,6 +79,12 @@ module.exports = function (grunt) {
             flatten: true,
             src: ["node_modules/@coreui/icons/sprites/**"],
             dest: "../../htdocs/assets/icons/",
+          },
+          {
+            expand: true,
+            flatten: true,
+            src: ["../js/ui-init.js"],
+            dest: "../../htdocs/js/",
           },
         ],
       },

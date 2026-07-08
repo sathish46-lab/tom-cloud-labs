@@ -1,0 +1,74 @@
+@charset "UTF-8";
+/* Standalone HTMX Progress & GPU Glass Blur Optimization Styles */
+/* HTMX content swap — instant feel, no sluggish fade */
+.htmx-request#main-content {
+  opacity: 0.85;
+  pointer-events: none;
+  transition: opacity 50ms ease-out;
+}
+
+#main-content {
+  transition: opacity 30ms ease-in;
+}
+
+/*
+ * Glass Blur Double-Buffer for HTMX Swaps
+ * When HTMX swaps content, we hide #main-content (opacity 0) so the GPU
+ * can composite backdrop-filter blur on new cards INVISIBLY, then reveal
+ * the content with blur already fully rendered — no "pop-in" flash.
+ */
+#main-content.glass-swap-pending {
+  opacity: 0 !important;
+  transition: none !important;
+}
+
+#main-content.glass-swap-reveal {
+  opacity: 1;
+  transition: opacity 80ms ease-in !important;
+}
+
+.htmx-indicator {
+  display: none;
+}
+
+.htmx-request .htmx-indicator {
+  display: inline-block;
+}
+
+/* Ensure glass-mode elements always have GPU-optimized blur compositing */
+html.glass-mode .card,
+html.glass-mode .header,
+html.glass-mode .sidebar,
+html.glass-mode .footer {
+  will-change: backdrop-filter;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Top Progress Bar Styles */
+#htmx-top-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #f7b655, #9cf63b, #06d493);
+  z-index: 99999;
+  width: 0%;
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: 0 0 10px rgba(247, 185, 85, 0.7);
+}
+
+#htmx-top-progress.htmx-running {
+  display: block;
+  opacity: 1;
+  width: 80%;
+  transition: width 5s cubic-bezier(0.1, 0.8, 0.2, 1), opacity 150ms ease-out;
+}
+
+#htmx-top-progress.htmx-complete {
+  display: block;
+  opacity: 0;
+  width: 100%;
+  transition: width 200ms ease-out, opacity 400ms ease-out 150ms;
+}

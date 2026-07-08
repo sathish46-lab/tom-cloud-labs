@@ -21,19 +21,21 @@ try {
         initialWidth: 0,
 
         init: function () {
-            if (this.isInitialized) return;
             const appWrapper = document.querySelector('.learn-app-wrapper');
             if (!appWrapper) return;
 
             this.restorePaneWidths();
             this.adjustVHE(appWrapper);
-            this.initResizers();
             this.initAIChat();
 
-            window.addEventListener('resize', () => {
-                this.adjustVHE(appWrapper);
-            });
-            this.isInitialized = true;
+            if (!this.isInitialized) {
+                this.initResizers();
+                window.addEventListener('resize', () => {
+                    const currentWrapper = document.querySelector('.learn-app-wrapper');
+                    if (currentWrapper) this.adjustVHE(currentWrapper);
+                });
+                this.isInitialized = true;
+            }
         },
 
         // Save and Restore Pane Widths
@@ -209,16 +211,14 @@ try {
             const header = document.querySelector('header.header');
             const footer = document.querySelector('footer.footer');
 
-            if (header && footer) {
-                const headerHeight = header.offsetHeight;
-                const footerHeight = footer.offsetHeight;
-                const headerStyle = window.getComputedStyle(header);
-                const headerMB = parseFloat(headerStyle.marginBottom) || 0;
+            const headerHeight = header ? header.offsetHeight : 0;
+            const headerMB = header ? (parseFloat(window.getComputedStyle(header).marginBottom) || 0) : 0;
+            const footerHeight = (footer && footer.style.display !== 'none' && window.getComputedStyle(footer).display !== 'none') ? footer.offsetHeight : 0;
 
-                const availableHeight = window.innerHeight - headerHeight - footerHeight - headerMB;
-                document.documentElement.style.setProperty('--app-height', `${availableHeight}px`);
+            const availableHeight = window.innerHeight - headerHeight - footerHeight - headerMB;
+            document.documentElement.style.setProperty('--app-height', `${availableHeight}px`);
 
-                if (appWrapper.classList.contains('stable-app-view')) {
+            if (appWrapper.classList.contains('stable-app-view')) {
                     document.body.style.height = '100vh';
                     document.body.style.overflow = 'hidden';
                     const mainWrapper = document.querySelector('.wrapper');
@@ -235,7 +235,6 @@ try {
                         mainWrapper.style.overflow = 'visible';
                     }
                 }
-            }
 
             let vh = window.innerHeight * 0.01;
             document.documentElement.style.setProperty('--vh', `${vh}px`);

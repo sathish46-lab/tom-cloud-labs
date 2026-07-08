@@ -67,9 +67,40 @@ if ($totalBytes >= 1073741824) {
     $totalFormatted = round($totalBytes / 1024, 0) . ' KB';
 }
 
+$totalCount = count($filesData);
+$imagesCount = 0;
+$othersCount = 0;
+foreach ($filesData as $f) {
+    if (!empty($f['is_image'])) {
+        $imagesCount++;
+    } else {
+        $othersCount++;
+    }
+}
+
+$filter = $_GET['filter'] ?? 'all';
+$filteredFiles = [];
+foreach ($filesData as $f) {
+    if ($filter === 'images' && empty($f['is_image'])) continue;
+    if ($filter === 'others' && !empty($f['is_image'])) continue;
+    $filteredFiles[] = $f;
+}
+$filteredCount = count($filteredFiles);
+
+$limit = isset($_GET['limit']) ? max(1, (int)$_GET['limit']) : 6;
+$offset = isset($_GET['offset']) ? max(0, (int)$_GET['offset']) : 0;
+
+$pagedFiles = array_slice($filteredFiles, $offset, $limit);
+$hasMore = ($offset + count($pagedFiles)) < $filteredCount;
+
 echo json_encode([
     'status' => 'success', 
-    'files' => $filesData,
+    'files' => $pagedFiles,
+    'total_count' => $totalCount,
+    'images_count' => $imagesCount,
+    'others_count' => $othersCount,
+    'filtered_count' => $filteredCount,
+    'has_more' => $hasMore,
     'storage' => [
         'used_formatted' => $totalFormatted,
         'percent' => $percent

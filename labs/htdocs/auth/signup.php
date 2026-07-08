@@ -173,13 +173,13 @@ Session::set('seo_keywords', 'Register, Sign Up, Tom Labs, Create Account');
                                     <div class="col-6">
                                         <label class="small fw-bold text-secondary mb-1">FIRST NAME</label>
                                         <div class="input-group">
-                                            <input type="text" name="first_name" class="form-control" placeholder="Jane" required>
+                                            <input type="text" name="first_name" class="form-control" placeholder="Tom" required>
                                         </div>
                                     </div>
                                     <div class="col-6">
                                         <label class="small fw-bold text-secondary mb-1">LAST NAME</label>
                                         <div class="input-group">
-                                            <input type="text" name="last_name" class="form-control" placeholder="Doe">
+                                            <input type="text" name="last_name" class="form-control" placeholder="Lab">
                                         </div>
                                     </div>
                                 </div>
@@ -190,7 +190,7 @@ Session::set('seo_keywords', 'Register, Sign Up, Tom Labs, Create Account');
                                         <span class="input-group-text bg-transparent border-end-0">
                                             <i class="bx bx-user"></i>
                                         </span>
-                                        <input type="text" name="username" class="form-control border-start-0 ps-0" placeholder="janedoe" required>
+                                        <input type="text" name="username" class="form-control border-start-0 ps-0" placeholder="TomLab" required>
                                     </div>
                                 </div>
 

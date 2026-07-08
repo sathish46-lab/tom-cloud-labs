@@ -2066,6 +2066,29 @@ window.changeTheme = function (themeName) {
 };
 
 window.TomVisuals = {
+  showRecommendation: function () {
+    var gpuInfo = window.TomGPU ? window.TomGPU.detect() : { webgl: false, highPerf: false, vendor: 'Unknown', renderer: 'Unknown' };
+    var webglEl = document.getElementById('gpuModalWebGL');
+    var perfEl = document.getElementById('gpuModalHighPerf');
+    var vendorEl = document.getElementById('gpuModalVendor');
+    var rendererEl = document.getElementById('gpuModalRenderer');
+    if (webglEl) {
+      webglEl.textContent = gpuInfo.webgl ? 'Yes' : 'No';
+      webglEl.className = 'py-2 px-3 fw-semibold ' + (gpuInfo.webgl ? 'text-success' : 'text-danger');
+    }
+    if (perfEl) {
+      perfEl.textContent = gpuInfo.highPerf ? 'Yes' : 'No';
+      perfEl.className = 'py-2 px-3 fw-semibold ' + (gpuInfo.highPerf ? 'text-success' : 'text-danger');
+    }
+    if (vendorEl) vendorEl.textContent = gpuInfo.vendor;
+    if (rendererEl) rendererEl.textContent = gpuInfo.renderer;
+
+    var modalEl = document.getElementById('visualsRecommendationModal');
+    if (modalEl && typeof coreui !== 'undefined') {
+      var modal = coreui.Modal.getOrCreateInstance(modalEl);
+      modal.show();
+    }
+  },
   toggleBlur: function (enable) {
     if (enable) {
       document.documentElement.classList.add('glass-mode');
@@ -2073,12 +2096,27 @@ window.TomVisuals = {
         document.body.classList.add('hwa-enabled');
         document.body.classList.remove('hwa-disabled');
       }
+      if (window.TomGPU && !window.TomGPU.isCapable()) {
+        var gpuInfo = window.TomGPU.detect();
+        var reason = !gpuInfo.webgl 
+          ? 'Your browser does not support WebGL.' 
+          : 'Your GPU (' + gpuInfo.renderer + ') is not high-performance.';
+        if (typeof window.TomGPU.startUnsupportedCountdown === 'function') {
+          window.TomGPU.startUnsupportedCountdown(reason);
+        }
+      }
     } else {
+      if (window._gpuWarningTimer) {
+        clearInterval(window._gpuWarningTimer);
+        window._gpuWarningTimer = null;
+      }
       document.documentElement.classList.remove('glass-mode');
       if (document.body) {
         document.body.classList.remove('hwa-enabled');
         document.body.classList.add('hwa-disabled');
       }
+      var toggleEl = document.getElementById('visualBlurToggle');
+      if (toggleEl) toggleEl.checked = false;
     }
     
     // Save to Database
@@ -5068,19 +5106,21 @@ try {
         initialWidth: 0,
 
         init: function () {
-            if (this.isInitialized) return;
             const appWrapper = document.querySelector('.learn-app-wrapper');
             if (!appWrapper) return;
 
             this.restorePaneWidths();
             this.adjustVHE(appWrapper);
-            this.initResizers();
             this.initAIChat();
 
-            window.addEventListener('resize', () => {
-                this.adjustVHE(appWrapper);
-            });
-            this.isInitialized = true;
+            if (!this.isInitialized) {
+                this.initResizers();
+                window.addEventListener('resize', () => {
+                    const currentWrapper = document.querySelector('.learn-app-wrapper');
+                    if (currentWrapper) this.adjustVHE(currentWrapper);
+                });
+                this.isInitialized = true;
+            }
         },
 
         // Save and Restore Pane Widths
@@ -5256,16 +5296,14 @@ try {
             const header = document.querySelector('header.header');
             const footer = document.querySelector('footer.footer');
 
-            if (header && footer) {
-                const headerHeight = header.offsetHeight;
-                const footerHeight = footer.offsetHeight;
-                const headerStyle = window.getComputedStyle(header);
-                const headerMB = parseFloat(headerStyle.marginBottom) || 0;
+            const headerHeight = header ? header.offsetHeight : 0;
+            const headerMB = header ? (parseFloat(window.getComputedStyle(header).marginBottom) || 0) : 0;
+            const footerHeight = (footer && footer.style.display !== 'none' && window.getComputedStyle(footer).display !== 'none') ? footer.offsetHeight : 0;
 
-                const availableHeight = window.innerHeight - headerHeight - footerHeight - headerMB;
-                document.documentElement.style.setProperty('--app-height', `${availableHeight}px`);
+            const availableHeight = window.innerHeight - headerHeight - footerHeight - headerMB;
+            document.documentElement.style.setProperty('--app-height', `${availableHeight}px`);
 
-                if (appWrapper.classList.contains('stable-app-view')) {
+            if (appWrapper.classList.contains('stable-app-view')) {
                     document.body.style.height = '100vh';
                     document.body.style.overflow = 'hidden';
                     const mainWrapper = document.querySelector('.wrapper');
@@ -5282,7 +5320,6 @@ try {
                         mainWrapper.style.overflow = 'visible';
                     }
                 }
-            }
 
             let vh = window.innerHeight * 0.01;
             document.documentElement.style.setProperty('--vh', `${vh}px`);

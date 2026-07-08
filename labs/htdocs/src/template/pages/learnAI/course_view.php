@@ -12,7 +12,7 @@ foreach ($chapters as $chapter) {
 ?>
 
 <script>
-// Anti-Flicker: Apply saved pane widths immediately without blocking JS
+// Anti-Flicker: Apply saved pane widths and exact viewport height immediately before paint
 (function() {
     ['outlineSidebar', 'courseSidebar', 'paneAI'].forEach(id => {
         const savedWidth = localStorage.getItem('learn-pane-' + id);
@@ -20,6 +20,8 @@ foreach ($chapters as $chapter) {
             document.documentElement.style.setProperty('--' + id + '-saved-width', savedWidth + 'px');
         }
     });
+    const headerHeight = 64; // 4rem header height
+    document.documentElement.style.setProperty('--app-height', (window.innerHeight - headerHeight) + 'px');
 })();
 </script>
 

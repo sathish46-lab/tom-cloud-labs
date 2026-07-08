@@ -323,23 +323,37 @@ $is2faEnabled = $user?->getTwoFactorEnabled() ?? false;
     </div>
 </div>
 <script>
-(function initAccountScripts() {
+window.allFiles = window.allFiles || [];
+window.currentFilter = window.currentFilter || 'all';
+window.currentView = window.currentView || 'grid';
+window.selectedFileIndex = window.selectedFileIndex || 0;
+window.renderedFileCount = window.renderedFileCount || 6;
+
+function initAccountScripts() {
+    if (window._accountScriptsInitialized) return;
+    if (document.readyState === 'loading' || typeof coreui === 'undefined' || !coreui.Modal) {
+        setTimeout(initAccountScripts, 50);
+        return;
+    }
+    window._accountScriptsInitialized = true;
     const showBtn = document.getElementById('show-add-key-btn');
     const section = document.getElementById('add-key-section');
     const expInput = document.getElementById('ssh-expiration');
     const addForm = document.getElementById('sshAddForm');
     const saveBtn = document.getElementById('save-key-btn');
 
-    showBtn.onclick = () => {
-        section.classList.toggle('d-none');
-        if (!section.classList.contains('d-none')) {
-            const expiry = new Date();
-            expiry.setMonth(expiry.getMonth() + 6);
-            expInput.value = expiry.toISOString().split('T')[0];
-            // Scroll to the section smoothly
-            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    };
+    if (showBtn && section && expInput) {
+        showBtn.onclick = () => {
+            section.classList.toggle('d-none');
+            if (!section.classList.contains('d-none')) {
+                const expiry = new Date();
+                expiry.setMonth(expiry.getMonth() + 6);
+                expInput.value = expiry.toISOString().split('T')[0];
+                // Scroll to the section smoothly
+                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        };
+    }
 
     // AVATAR UPLOAD & CROP HANDLING
     const cropModalEl = document.getElementById('avatarCropModal');
@@ -865,35 +879,69 @@ $is2faEnabled = $user?->getTwoFactorEnabled() ?? false;
             }
         };
     }
+} // end initAccountScripts
+initAccountScripts();
 
-let allFiles = [];
-let currentFilter = 'all'; // 'all', 'images', 'others'
-let currentView = 'grid'; // 'grid', 'list'
-let selectedFileIndex = 0;
-let renderedFileCount = 6;
+window.allFiles = window.allFiles || [];
+window.currentFilter = window.currentFilter || 'all';
+window.currentView = window.currentView || 'grid';
+window.selectedFileIndex = window.selectedFileIndex || 0;
+window.galleryOffset = window.galleryOffset || 0;
+window.galleryLimit = 6;
+window.galleryHasMore = false;
+window.galleryTotalCount = 0;
+window.galleryImagesCount = 0;
+window.galleryOthersCount = 0;
+window.galleryFilteredCount = 0;
+window.isFetchingGallery = false;
+
+let allFiles = window.allFiles;
+let currentFilter = window.currentFilter;
+let currentView = window.currentView;
+let selectedFileIndex = window.selectedFileIndex;
 
 window.refreshGallery = async function(btn) {
+    if (window.isFetchingGallery) return;
     if (btn) {
         const icon = btn.querySelector('i');
         if (icon) icon.classList.add('bx-spin');
     }
-    await fetchGallery();
+    await fetchGallery(true, false);
     if (btn) {
         const icon = btn.querySelector('i');
         if (icon) icon.classList.remove('bx-spin');
     }
 };
 
-async function fetchGallery() {
+async function fetchGallery(resetCount = true, loadMore = false) {
+    if (window.isFetchingGallery) return;
+    window.isFetchingGallery = true;
     try {
-        const res = await fetch('/api/account/list_files');
+        if (resetCount) {
+            window.galleryOffset = 0;
+        } else if (loadMore) {
+            window.galleryOffset += window.galleryLimit;
+        }
+        const res = await fetch(`/api/account/list_files?limit=${window.galleryLimit}&offset=${window.galleryOffset}&filter=${window.currentFilter}`);
         const result = await res.json();
         if(result.status === 'success') {
-            allFiles = result.files;
+            if (resetCount || window.galleryOffset === 0) {
+                allFiles = result.files;
+            } else {
+                allFiles = allFiles.concat(result.files);
+            }
+            window.allFiles = allFiles;
+            window.galleryHasMore = result.has_more;
+            window.galleryTotalCount = result.total_count || allFiles.length;
+            window.galleryImagesCount = result.images_count || 0;
+            window.galleryOthersCount = result.others_count || 0;
+            window.galleryFilteredCount = result.filtered_count || allFiles.length;
             
             // Update Storage Counters
-            document.getElementById('storage-used-text').innerText = result.storage.used_formatted;
-            document.getElementById('storage-percent-text').innerText = result.storage.percent + '%';
+            const usedEl = document.getElementById('storage-used-text');
+            if (usedEl) usedEl.innerText = result.storage.used_formatted;
+            const percentEl = document.getElementById('storage-percent-text');
+            if (percentEl) percentEl.innerText = result.storage.percent + '%';
             
             const circle = document.getElementById('storage-circle-progress');
             if (circle) {
@@ -902,17 +950,19 @@ async function fetchGallery() {
                 circle.style.strokeDashoffset = offset;
             }
             
-            renderFileExplorer();
+            renderFileExplorer(resetCount);
         } else {
             document.getElementById('storage-used-text').innerText = 'Error';
-            document.getElementById('file-explorer-container').innerHTML = `<div class="col-12 text-center text-danger small py-4">Failed to load files: ${result.error} <button class="btn btn-sm btn-link text-warning p-0 ms-1" onclick="fetchGallery()">Retry</button></div>`;
+            document.getElementById('file-explorer-container').innerHTML = `<div class="col-12 text-center text-danger small py-4">Failed to load files: ${result.error} <button class="btn btn-sm btn-link text-warning p-0 ms-1" onclick="fetchGallery(true)">Retry</button></div>`;
             if (window.TomNotify) window.TomNotify.show("Failed to load storage files: " + (result.error || "Unknown error"), "Warning", "warning", 4000);
         }
     } catch(err) {
         console.error('Failed to load gallery', err);
         document.getElementById('storage-used-text').innerText = 'Error';
-        document.getElementById('file-explorer-container').innerHTML = `<div class="col-12 text-center text-danger small py-4">Network error loading files. <button class="btn btn-sm btn-link text-warning p-0 ms-1" onclick="fetchGallery()">Retry</button></div>`;
+        document.getElementById('file-explorer-container').innerHTML = `<div class="col-12 text-center text-danger small py-4">Network error loading files. <button class="btn btn-sm btn-link text-warning p-0 ms-1" onclick="fetchGallery(true)">Retry</button></div>`;
         if (window.TomNotify) window.TomNotify.show("Error loading storage files. Click refresh or retry.", "Warning", "warning", 4000);
+    } finally {
+        window.isFetchingGallery = false;
     }
 }
 window.fetchGallery = fetchGallery;
@@ -927,14 +977,12 @@ function getFilteredFiles() {
 }
 
 function renderFileExplorer(resetCount = true) {
-    if (resetCount) {
-        renderedFileCount = 6;
-    }
-    const imgCount = allFiles.filter(f => f.is_image).length;
-    const otherCount = allFiles.filter(f => !f.is_image).length;
-    document.getElementById('tab-all').innerText = `All ${allFiles.length}`;
-    document.getElementById('tab-images').innerText = `Images ${imgCount}`;
-    document.getElementById('tab-others').innerText = `Others ${otherCount}`;
+    const tabAll = document.getElementById('tab-all');
+    if (tabAll) tabAll.innerText = `All ${window.galleryTotalCount || allFiles.length}`;
+    const tabImages = document.getElementById('tab-images');
+    if (tabImages) tabImages.innerText = `Images ${window.galleryImagesCount || 0}`;
+    const tabOthers = document.getElementById('tab-others');
+    if (tabOthers) tabOthers.innerText = `Others ${window.galleryOthersCount || 0}`;
     
     ['all', 'images', 'others'].forEach(t => {
         const btn = document.getElementById(`tab-${t}`);
@@ -969,12 +1017,13 @@ function renderFileExplorer(resetCount = true) {
         return;
     }
 
-    const displayedFiles = filtered.slice(0, renderedFileCount);
-    const hasMore = filtered.length > renderedFileCount;
+    const displayedFiles = allFiles;
+    const hasMore = window.galleryHasMore;
+    const totalMatching = window.galleryFilteredCount || window.galleryTotalCount;
     const loadMoreBtnHtml = hasMore ? `
         <div class="col-12 text-center py-2 border-top border-secondary border-opacity-10 mt-2">
-            <button type="button" class="btn btn-xs btn-outline-warning rounded-pill px-3 py-1 account-fs-xs" onclick="loadMoreGalleryFiles()">
-                <i class='bx bx-down-arrow-alt me-1'></i>Showing ${displayedFiles.length} of ${filtered.length} — Scroll or Click for more (6)
+            <button type="button" class="btn btn-xs btn-outline-warning rounded-pill px-3 py-1 account-fs-xs" onclick="loadMoreGalleryFiles(this)">
+                <i class='bx bx-down-arrow-alt me-1'></i>Showing ${displayedFiles.length} of ${totalMatching} — Scroll or Click for more (+6)
             </button>
         </div>` : '';
     
@@ -1110,23 +1159,26 @@ function renderFileExplorer(resetCount = true) {
 }
 
 window.handleGalleryScroll = function(el) {
-    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 30) {
+    if (window.isFetchingGallery || !window.galleryHasMore) return;
+    if (el.scrollTop > 20 && el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
         window.loadMoreGalleryFiles();
     }
 };
 
-window.loadMoreGalleryFiles = function() {
-    const filtered = getFilteredFiles();
-    if (renderedFileCount < filtered.length) {
-        renderedFileCount += 6;
-        renderFileExplorer(false);
+window.loadMoreGalleryFiles = async function(btnEl) {
+    if (window.isFetchingGallery || !window.galleryHasMore) return;
+    if (btnEl) {
+        btnEl.disabled = true;
+        btnEl.innerHTML = `<i class='bx bx-loader-alt bx-spin me-1'></i>Loading more files...`;
     }
+    await fetchGallery(false, true);
 };
 
 window.switchFilter = function(filter) {
+    window.currentFilter = filter;
     currentFilter = filter;
     selectedFileIndex = 0;
-    renderFileExplorer(true);
+    fetchGallery(true, false);
 };
 
 window.switchView = function(view) {
@@ -1319,5 +1371,4 @@ window.deleteKey = async function deleteKey(id) {
         }
     }
 };
-})();
 </script>

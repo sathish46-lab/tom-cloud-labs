@@ -37,7 +37,7 @@ html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
-}s
+}
 
 body {
   -webkit-font-smoothing: antialiased;
@@ -111,4 +111,27 @@ body {
     border-color: rgba(var(--cui-primary-rgb), 0.3) !important;
     background-color: rgba(0, 0, 0, 0.35) !important;
   }
+}
+
+/* 4. Full-Bleed Stable App View (Learn AI Lesson Details & Chapter Content) */
+.stable-app-view {
+  margin: 0 -1.5rem 0 -1.5rem !important;
+  padding: 0 !important;
+  width: calc(100% + 3rem) !important;
+  max-width: none !important;
+  height: var(--app-height, calc(100vh - 4rem)) !important;
+
+  /* Frosted glass background layer */
+  background-color: var(--glass-bg, var(--cui-body-bg)) !important;
+
+  :root.glass-mode & {
+    backdrop-filter: blur(var(--glass-blur, 12px));
+    -webkit-backdrop-filter: blur(var(--glass-blur, 12px));
+  }
+}
+
+/* 5. Automatically hide footer on Learn AI app pages and Quiz containers */
+body:has(.learn-app-wrapper) footer.footer,
+body:has(.quiz-container) footer.footer {
+  display: none !important;
 }

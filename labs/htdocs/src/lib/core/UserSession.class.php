@@ -123,6 +123,10 @@ public function getUser() {
         $domain = get_session_domain();
 
         $_SESSION = [];
+        unset($_COOKIE['session_token']);
+        unset($_COOKIE['username']);
+        unset($_COOKIE['sessionHash']);
+        unset($_COOKIE['sessionID']);
 
         // FORCE DELETE TOKEN FROM DATABASE IF PRESENT
         $sessionToken = $_COOKIE['session_token'] ?? null;

@@ -52,7 +52,7 @@ $aiAvatar = "/assets/logo/logo.png";
 ?>
 
 <script>
-// Anti-Flicker: Apply saved pane widths immediately without blocking JS
+// Anti-Flicker: Apply saved pane widths and exact viewport height immediately before paint
 (function() {
     ['outlineSidebar', 'courseSidebar', 'paneAI'].forEach(id => {
         const savedWidth = localStorage.getItem('learn-pane-' + id);
@@ -60,10 +60,12 @@ $aiAvatar = "/assets/logo/logo.png";
             document.documentElement.style.setProperty('--' + id + '-saved-width', savedWidth + 'px');
         }
     });
+    const headerHeight = 64; // 4rem header height
+    document.documentElement.style.setProperty('--app-height', (window.innerHeight - headerHeight) + 'px');
 })();
 </script>
 
-<div class="learn-app-wrapper stable-app-view d-flex flex-column overflow-hidden bg-transparent" style="height: var(--app-height, 75vh);">
+<div class="learn-app-wrapper quiz-container stable-app-view d-flex flex-column overflow-hidden bg-transparent" style="height: var(--app-height, 75vh);">
     <!-- Main App Body -->
     <div class="flex-grow-1 d-flex flex-row overflow-hidden p-0 gap-0">
         

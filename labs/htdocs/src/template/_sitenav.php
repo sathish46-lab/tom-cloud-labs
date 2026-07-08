@@ -156,15 +156,17 @@
                     <div class="dropdown-divider mx-n3 mb-2"></div>
 
                     <div class="list-group list-group-flush">
-                        <div class="dropdown-item d-flex align-items-center px-2 py-2 rounded" onclick="event.stopPropagation()">
-                            <div class="form-check form-switch mb-0 d-flex align-items-center gap-2">
-                                <input class="form-check-input" type="checkbox" role="switch" id="visualBlurToggle" 
-                                    onchange="TomVisuals.toggleBlur(this.checked)">
-                                <label class="form-check-label small fw-semibold d-flex align-items-center gap-1" for="visualBlurToggle">
-                                    Visual Blur 
-                                    <i class='bx bx-info-circle opacity-50 pointer' onclick="TomVisuals.showRecommendation()" style="font-size: 0.8rem;"></i>
+                        <div class="dropdown-item d-flex align-items-center justify-content-between px-2 py-2 rounded" onclick="event.stopPropagation()">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="form-check form-switch m-0 p-0 d-flex align-items-center">
+                                    <input class="form-check-input m-0 pointer" type="checkbox" role="switch" id="visualBlurToggle" style="float: none; margin-left: 0;"
+                                        onchange="TomVisuals.toggleBlur(this.checked); TomVisuals.showRecommendation();">
+                                </div>
+                                <label class="small fw-semibold pointer mb-0" for="visualBlurToggle">
+                                    Visual Blur
                                 </label>
                             </div>
+                            <i class='bx bx-info-circle text-secondary hover-text-white pointer ms-auto' onclick="TomVisuals.showRecommendation()" style="font-size: 1.1rem;" title="Visuals Recommendation"></i>
                         </div>
 
                         <a class="dropdown-item d-flex align-items-center px-2 py-2 rounded"

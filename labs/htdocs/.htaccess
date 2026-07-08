@@ -20,6 +20,8 @@ RewriteRule ^ - [L]
 RewriteRule ^signin$ auth/signin.php [L,QSA]
 RewriteRule ^signup$ auth/signup.php [L,QSA]
 RewriteRule ^logout$ auth/logout.php [L,QSA]
+RewriteRule ^forgot$ auth/forgot.php [L,QSA]
+RewriteRule ^reset$ auth/reset.php [L,QSA]
 
 # 4. Intelligent Folder Routing
 RewriteCond %{DOCUMENT_ROOT}/auth/$1.php -f

@@ -1302,6 +1302,29 @@ window.changeTheme = function (themeName) {
 };
 
 window.TomVisuals = {
+  showRecommendation: function () {
+    var gpuInfo = window.TomGPU ? window.TomGPU.detect() : { webgl: false, highPerf: false, vendor: 'Unknown', renderer: 'Unknown' };
+    var webglEl = document.getElementById('gpuModalWebGL');
+    var perfEl = document.getElementById('gpuModalHighPerf');
+    var vendorEl = document.getElementById('gpuModalVendor');
+    var rendererEl = document.getElementById('gpuModalRenderer');
+    if (webglEl) {
+      webglEl.textContent = gpuInfo.webgl ? 'Yes' : 'No';
+      webglEl.className = 'py-2 px-3 fw-semibold ' + (gpuInfo.webgl ? 'text-success' : 'text-danger');
+    }
+    if (perfEl) {
+      perfEl.textContent = gpuInfo.highPerf ? 'Yes' : 'No';
+      perfEl.className = 'py-2 px-3 fw-semibold ' + (gpuInfo.highPerf ? 'text-success' : 'text-danger');
+    }
+    if (vendorEl) vendorEl.textContent = gpuInfo.vendor;
+    if (rendererEl) rendererEl.textContent = gpuInfo.renderer;
+
+    var modalEl = document.getElementById('visualsRecommendationModal');
+    if (modalEl && typeof coreui !== 'undefined') {
+      var modal = coreui.Modal.getOrCreateInstance(modalEl);
+      modal.show();
+    }
+  },
   toggleBlur: function (enable) {
     if (enable) {
       document.documentElement.classList.add('glass-mode');
@@ -1309,12 +1332,27 @@ window.TomVisuals = {
         document.body.classList.add('hwa-enabled');
         document.body.classList.remove('hwa-disabled');
       }
+      if (window.TomGPU && !window.TomGPU.isCapable()) {
+        var gpuInfo = window.TomGPU.detect();
+        var reason = !gpuInfo.webgl 
+          ? 'Your browser does not support WebGL.' 
+          : 'Your GPU (' + gpuInfo.renderer + ') is not high-performance.';
+        if (typeof window.TomGPU.startUnsupportedCountdown === 'function') {
+          window.TomGPU.startUnsupportedCountdown(reason);
+        }
+      }
     } else {
+      if (window._gpuWarningTimer) {
+        clearInterval(window._gpuWarningTimer);
+        window._gpuWarningTimer = null;
+      }
       document.documentElement.classList.remove('glass-mode');
       if (document.body) {
         document.body.classList.remove('hwa-enabled');
         document.body.classList.add('hwa-disabled');
       }
+      var toggleEl = document.getElementById('visualBlurToggle');
+      if (toggleEl) toggleEl.checked = false;
     }
     
     // Save to Database

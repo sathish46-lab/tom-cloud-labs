@@ -251,6 +251,10 @@ class Session
         }
         self::set('master_rendered', true);
 
+        if (self::getAuthStatus() !== Constants::STATUS_LOGGEDIN && !defined('IS_LOGIN_PAGE') && !defined('IS_LANDING_PAGE')) {
+            self::handleSessionExpired();
+        }
+
         // --- HTMX SPA Interception ---
         // If this is an HTMX request (and specifically a boosted one to be safe, though HX-Request suffices), 
         // we skip the master layout (header, sidebar, footer) and just return the content.
@@ -280,6 +284,38 @@ class Session
         
         // This was the specific line causing your error
         include __DIR__ . '/../../template/_master.php';
+    }
+
+    public static function handleSessionExpired()
+    {
+        setcookie('show_session_expired', '1', time() + 30, '/');
+        self::set('show_session_expired', true);
+        if (isset($_SESSION)) {
+            $_SESSION['show_session_expired'] = true;
+        }
+
+        if (isset($_SERVER['HTTP_HX_REQUEST']) && $_SERVER['HTTP_HX_REQUEST'] == 'true') {
+            header('HX-Trigger: {"tomNotify": {"message": "Your session has expired. Please sign in again.", "title": "Authentication Required", "type": "warning"}}');
+            echo '<div class="alert alert-warning border-0 rounded-4 p-3 my-2 d-flex align-items-center gap-3 shadow-sm" style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3) !important;">
+                <i class="bx bx-error-circle fs-3 text-warning"></i>
+                <div>
+                    <strong class="text-white d-block">Session Expired</strong>
+                    <span class="small text-secondary">Your authentication session has timed out. <a href="/signin" class="text-warning fw-bold text-decoration-underline" data-no-boost="true">Sign in</a> to continue.</span>
+                </div>
+            </div>
+            <script>
+            if (window.TomNotify) {
+                TomNotify.show("Your session has expired. Please sign in again.", "Authentication Required", "warning", 5000);
+            }
+            setTimeout(function() {
+                window.location.href = "/";
+            }, 2000);
+            </script>';
+            exit;
+        } else {
+            header('Location: /');
+            exit;
+        }
     }
 
     public static function generateFooter()
@@ -396,12 +432,8 @@ class Session
                     echo '<div class="alert alert-danger">Error: Template not found for ' . htmlspecialchars($relPath) . '</div>';
                 }
             } else {
-                // Not logged in: Trigger the global professional popup
-                self::set('show_session_expired', true);
-                if (file_exists($templateRoot . 'dashboard.php')) {
-                    include $templateRoot . 'dashboard.php';
-                }
-                include __DIR__ . '/../../template/_session_expired_popup.php';
+                // Not logged in: Trigger session expired handler cleanly without query params
+                self::handleSessionExpired();
             }
         } catch (Throwable $e) {
             // Gracefully catch any exceptions/errors thrown during page rendering

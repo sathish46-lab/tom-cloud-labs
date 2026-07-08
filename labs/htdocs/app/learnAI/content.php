@@ -14,5 +14,6 @@ if (!$chapter_id) {
 
 Session::$pageTitle = "Chapter Content | Learn AI";
 Session::set('is_learn_ai', true);
+Session::set('footer', true);
 Session::addCustomJs('/js/learnAI/layout.js');
 Session::loadMaster();
