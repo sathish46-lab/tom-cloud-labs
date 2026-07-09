@@ -10,6 +10,11 @@ if ($chapter_id) {
 
 $lesson = $chapter ? $db->ai_lessons->findOne(['_id' => $chapter['lesson_id']]) : null;
 $chapters = $lesson ? $db->ai_chapters->find(['lesson_id' => $chapter['lesson_id']], ['sort' => ['order' => 1]])->toArray() : [];
+$modules = [];
+foreach ($chapters as $chapItem) {
+    $modName = !empty($chapItem['module_name']) ? $chapItem['module_name'] : 'General Content';
+    $modules[$modName][] = $chapItem;
+}
 
 $userId = (int)Session::getUser()->getUserId();
 $messages = [];
@@ -63,7 +68,7 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
 :root {
     --outlineSidebar-saved-width: <?= round($dbSizesArr[0], 2) ?>%;
     --courseSidebar-saved-width: <?= round($dbSizesArr[0], 2) ?>%;
-    --paneAI-saved-width: <?= round($dbSizesArr[2], 2) ?>%;
+    --paneAI-saved-width: <?= max(25, round($dbSizesArr[2], 2)) ?>%;
 }
 </style>
 <?php endif; ?>
@@ -82,7 +87,34 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
             if (Array.isArray(arr) && arr.length === 3) {
                 document.documentElement.style.setProperty('--outlineSidebar-saved-width', arr[0] + '%');
                 document.documentElement.style.setProperty('--courseSidebar-saved-width', arr[0] + '%');
-                document.documentElement.style.setProperty('--paneAI-saved-width', arr[2] + '%');
+                const p3Pct = (arr[2] && arr[2] > 12) ? arr[2] : 25;
+                document.documentElement.style.setProperty('--paneAI-saved-width', p3Pct + '%');
+
+                const isExp = (arr[0] / 100) * window.innerWidth > 175;
+                const st = document.createElement('style');
+                st.id = 'learn-panel-zero-flicker';
+                st.innerHTML = `
+                    #learn-panel-1 {
+                        width: ${arr[0]}% !important;
+                        flex-basis: ${arr[0]}% !important;
+                    }
+                    #learn-panel-2 {
+                        width: calc(100% - ${arr[0]}% - ${p3Pct}% - 8px) !important;
+                        flex-basis: calc(100% - ${arr[0]}% - ${p3Pct}% - 8px) !important;
+                    }
+                    #learn-panel-3 {
+                        width: ${p3Pct}% !important;
+                        flex-basis: ${p3Pct}% !important;
+                    }
+                    ${isExp ? `
+                    #learn-panel-1 .outline-compact { display: none !important; }
+                    #learn-panel-1 .outline-full { display: flex !important; }
+                    ` : `
+                    #learn-panel-1 .outline-full { display: none !important; }
+                    #learn-panel-1 .outline-compact { display: flex !important; }
+                    `}
+                `;
+                document.head.appendChild(st);
             }
         } catch (e) {}
     }
@@ -95,150 +127,174 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
 
 <div class="learn-app-wrapper stable-app-view d-flex flex-column overflow-hidden bg-transparent" style="height: var(--app-height, 75vh);">
     <!-- Main App Body -->
-    <div class="flex-grow-1 d-flex flex-row overflow-hidden p-0 gap-0">
+    <div class="flex-grow-1 d-flex flex-row overflow-hidden p-2 gap-0">
         
-        <!-- Pane 1: Collapsible Sidebar (Outline) -->
-        <div id="outlineSidebar" class="pane-outline d-flex flex-column h-100 transition-all" style="width: var(--outlineSidebar-saved-width, 70px); min-width: 70px;" data-state="collapsed">
+        <!-- Panel 1: Collapsible Sidebar -->
+        <div id="learn-panel-1" class="split-panel h-100" style="width: var(--outlineSidebar-saved-width, 68px); min-width: 68px;" data-state="collapsed">
+            <script>
+            (function(){
+                var el = document.getElementById('learn-panel-1');
+                if(!el) return;
+                var prefs = (window.TOM_CONFIG && window.TOM_CONFIG.ui_preferences) || {};
+                var sz = sessionStorage.getItem('learnAiThreePanelSizes') || prefs['learnAiThreePanelSizes'];
+                if(sz && typeof sz !== 'string') sz = JSON.stringify(sz);
+                var isExp = false;
+                if(sz){
+                    try{
+                        var arr = JSON.parse(sz);
+                        if(Array.isArray(arr) && arr.length === 3){
+                            var w = (arr[0]/100)*(el.parentElement ? el.parentElement.offsetWidth : window.innerWidth);
+                            if(w > 110) isExp = true;
+                        }
+                    }catch(e){}
+                }
+                if(isExp){
+                    el.setAttribute('data-state', 'expanded');
+                    el.classList.remove('auto-compact');
+                } else {
+                    el.setAttribute('data-state', 'collapsed');
+                    el.classList.add('auto-compact');
+                    el.style.width = '68px';
+                }
+            })();
+            </script>
             <div class="card h-100 border-secondary border-opacity-10 rounded-4 shadow-sm d-flex flex-column overflow-hidden">
-                <div class="card-body p-2 d-flex flex-column align-items-center py-3 overflow-hidden">
-                    <!-- Compact View (Shown when collapsed) -->
-                    <div class="outline-compact d-flex flex-column gap-3 align-items-center w-100 overflow-auto no-scrollbar flex-grow-1">
-                        <button class="btn btn-sm btn-outline-secondary rounded-circle border-opacity-10 p-2 d-flex align-items-center justify-content-center" title="Favorite">
-                            <i class="bx bx-heart fs-5"></i>
-                        </button>
-                        
-                        <div class="sidebar-progress-circle d-flex align-items-center justify-content-center position-relative" style="width: 42px; height: 42px;">
-                            <svg width="42" height="42" viewBox="0 0 45 45">
-                                <circle cx="22.5" cy="22.5" r="18" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3" />
-                                <circle cx="22.5" cy="22.5" r="18" fill="none" stroke="var(--cui-primary)" stroke-width="3" stroke-dasharray="113" stroke-dashoffset="<?= 113 - (113 * $lesson['progress'] / 100) ?>" stroke-linecap="round" transform="rotate(-90 22.5 22.5)" />
-                            </svg>
-                            <span class="position-absolute small fw-bold" style="font-size: 0.65rem;"><?= $lesson['progress'] ?>%</span>
-                        </div>
-
-                        <button class="btn btn-link text-secondary p-0" onclick="toggleOutline()" title="Quick Outline">
-                            <i class="bx bx-list-ul fs-4"></i>
-                        </button>
-                        <a href="/learn/lesson/<?= $lesson['_id'] ?>" class="btn btn-link text-secondary p-0" title="Map View">
-                            <i class="bx bx-share-alt fs-4"></i>
-                        </a>
-
-                        <div class="border-top border-secondary border-opacity-10 w-50 my-1"></div>
-
-                        <?php foreach ($chapters as $chap): ?>
-                            <a href="/learn/lesson/<?= $lesson['_id'] ?>/chapter/<?= $chap['_id'] ?>" 
-                               class="btn btn-sm <?= $chap['_id'] == $chapter['_id'] ? 'btn-primary shadow-sm' : 'btn-outline-secondary border-0 opacity-50' ?> rounded-circle p-0 d-flex align-items-center justify-content-center" 
-                               style="width: 32px; height: 32px; font-size: 0.75rem;" 
-                               title="<?= $chap['title'] ?>">
-                                <?= $chap['order'] ?>
-                            </a>
-                        <?php endforeach; ?>
-                    </div>
-
-                    <!-- Full View (Shown when expanded) -->
-                    <div class="outline-full d-none w-100 h-100 flex-column overflow-hidden text-start p-3">
-                        <div class="d-flex justify-content-between align-items-start mb-3 gap-2">
-                            <h6 class="fw-bold m-0 small text-light lh-base"><?= $lesson['title'] ?></h6>
-                            <button class="btn btn-sm btn-outline-secondary rounded-circle border-opacity-10 flex-shrink-0"><i class="bx bx-heart"></i></button>
-                        </div>
-
-                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4 pb-3 border-bottom border-secondary border-opacity-10">
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="sidebar-progress-circle d-flex align-items-center justify-content-center position-relative" style="width: 38px; height: 38px;">
-                                    <svg width="38" height="38" viewBox="0 0 45 45">
-                                        <circle cx="22.5" cy="22.5" r="18" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3" />
-                                        <circle cx="22.5" cy="22.5" r="18" fill="none" stroke="var(--cui-primary)" stroke-width="3" stroke-dasharray="113" stroke-dashoffset="<?= 113 - (113 * $lesson['progress'] / 100) ?>" stroke-linecap="round" transform="rotate(-90 22.5 22.5)" />
+                <div class="card-header fs-6 d-flex justify-content-between align-items-center py-2 px-3">
+                    <strong class="text-truncate" title="<?= htmlspecialchars($lesson['title']) ?>"><?= htmlspecialchars($lesson['title']) ?></strong>
+                    <button class="btn btn-link p-0 text-secondary like-lesson-btn" title="Like this lesson">
+                        <i class="bx bx-heart fs-5"></i>
+                    </button>
+                </div>
+                <div class="card-body p-0 overflow-x-auto d-flex flex-column">
+                    <!-- Top section: controls and chapters -->
+                    <div class="lesson-chapters-section">
+                        <div class="d-flex justify-content-center align-items-center p-2 lesson-controls gap-2 border-bottom border-secondary border-opacity-10">
+                            <!-- Like button (shown in compact mode via sna.css) -->
+                            <button class="btn btn-link p-0 text-secondary like-lesson-btn like-lesson-btn-compact" data-tooltip="Like Lesson">
+                                <i class="bx bx-heart fs-5"></i>
+                            </button>
+                            <!-- Circular progress indicator -->
+                            <div class="d-flex align-items-center progress-section gap-2">
+                                <div class="circular-progress d-flex align-items-center justify-content-center position-relative" style="width: 36px; height: 36px;">
+                                    <svg width="36" height="36" viewBox="0 0 45 45">
+                                        <circle cx="22.5" cy="22.5" r="18" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3"></circle>
+                                        <circle cx="22.5" cy="22.5" r="18" fill="none" stroke="var(--cui-primary)" stroke-width="3" stroke-dasharray="113" stroke-dashoffset="<?= 113 - (113 * ($lesson['progress'] ?? 35) / 100) ?>" stroke-linecap="round" transform="rotate(-90 22.5 22.5)"></circle>
                                     </svg>
-                                    <span class="position-absolute small fw-bold" style="font-size: 0.6rem;"><?= $lesson['progress'] ?>%</span>
+                                    <span class="position-absolute small fw-bold" style="font-size: 0.6rem;"><?= $lesson['progress'] ?? 35 ?>%</span>
                                 </div>
-                                <span class="small fw-bold text-light">Completed</span>
+                                <span class="small fw-bold text-light progress-label">Completed</span>
                             </div>
-
-                            <div class="d-flex gap-2 align-items-center">
-                                <button class="btn btn-sm btn-dark border border-secondary border-opacity-25 rounded-pill px-3 py-1 d-flex align-items-center gap-2 active">
-                                    <i class="bx bx-list-ul"></i> Outline
+                            <!-- View switcher buttons -->
+                            <div class="view-buttons d-flex align-items-center">
+                                <button class="btn btn-sm btn-dark border border-secondary border-opacity-25 rounded-pill d-flex align-items-center learn-switch-btn active" data-tooltip="Outline">
+                                    <i class="bx bx-list-ul icon"></i> <span class="btn-label ms-1">Outline</span>
                                 </button>
-                                <a href="/learn/lesson/<?= $lesson['_id'] ?>" class="btn btn-sm btn-outline-secondary border-0 rounded-pill px-3 py-1 d-flex align-items-center gap-2 text-secondary">
-                                    <i class="bx bx-share-alt"></i> Map
+                                <a href="/learn/lesson/<?= $lesson['_id'] ?>" class="btn btn-sm btn-outline-secondary border-0 rounded-pill d-flex align-items-center learn-switch-btn text-secondary" data-tooltip="Map">
+                                    <i class="bx bx-share-alt icon"></i> <span class="btn-label ms-1">Map</span>
                                 </a>
                             </div>
                         </div>
-                        <div class="list-group list-group-flush overflow-auto custom-scrollbar flex-grow-1">
-                            <?php foreach ($chapters as $chap): ?>
-                                <a href="/learn/lesson/<?= $lesson['_id'] ?>/chapter/<?= $chap['_id'] ?>" 
-                                   class="list-group-item list-group-item-action bg-transparent border-0 px-2 py-2 rounded mb-1 d-flex align-items-center gap-2 <?= $chap['_id'] == $chapter['_id'] ? 'active bg-primary bg-opacity-10 text-primary fw-bold' : 'text-secondary' ?>">
-                                    <span class="badge rounded-circle bg-secondary bg-opacity-10 p-1 <?= $chap['_id'] == $chapter['_id'] ? 'text-primary' : 'text-secondary' ?>" style="width: 22px; height: 22px; font-size: 0.65rem;"><?= $chap['order'] ?></span>
-                                    <span class="small text-truncate"><?= $chap['title'] ?></span>
-                                    <?php if ($chap['status'] == 'completed'): ?>
-                                        <i class="bx bxs-check-circle text-success ms-auto small"></i>
-                                    <?php endif; ?>
-                                </a>
-                            <?php endforeach; ?>
+
+                        <div class="accordion accordion-flush" id="accordionFlushExample">
+                            <?php $mod_idx = 1; foreach ($modules as $mod_name => $mod_chapters): ?>
+                                <div class="accordion-item bg-transparent border-bottom border-secondary border-opacity-10">
+                                    <h2 class="accordion-header m-0">
+                                        <button class="accordion-button bg-transparent text-white py-2 px-3 d-flex align-items-center shadow-none <?= $mod_idx > 1 ? 'collapsed' : '' ?>" type="button" data-coreui-toggle="collapse" data-coreui-target="#flush-collapse<?= $mod_idx ?>" aria-expanded="<?= $mod_idx === 1 ? 'true' : 'false' ?>" aria-controls="flush-collapse<?= $mod_idx ?>">
+                                            <span class="accordion-num badge rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;" data-tooltip="<?= htmlspecialchars($mod_name) ?>"><?= $mod_idx ?></span>
+                                            <span class="module-title-text"><?= htmlspecialchars($mod_name) ?></span>
+                                        </button>
+                                    </h2>
+                                    <div id="flush-collapse<?= $mod_idx ?>" class="accordion-collapse collapse <?= $mod_idx === 1 ? 'show' : '' ?>" data-coreui-parent="#accordionFlushExample">
+                                        <div class="accordion-body p-1">
+                                            <?php foreach ($mod_chapters as $chap): ?>
+                                                <a href="/learn/lesson/<?= $lesson['_id'] ?>/chapter/<?= $chap['_id'] ?>" class="btn btn-sm d-flex align-items-center justify-content-between w-100 text-start py-2 px-2 rounded mb-1 learn-accordion-btn <?= ($chap['_id'] ?? '') == ($chapter['_id'] ?? '') ? 'active bg-primary bg-opacity-25 text-white fw-bold' : 'text-secondary' ?>" data-tooltip="<?= htmlspecialchars($chap['title']) ?>">
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <span class="chapter-num-btn badge rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 24px; height: 24px;"><?= $chap['order'] ?></span>
+                                                        <h6 class="m-0 small chapter-title-text <?= ($chap['_id'] ?? '') == ($chapter['_id'] ?? '') ? 'text-white' : 'text-secondary' ?>"><?= htmlspecialchars($chap['title']) ?></h6>
+                                                    </div>
+                                                    <i class="bx <?= ($chap['_id'] ?? '') == ($chapter['_id'] ?? '') ? 'bxs-check-circle text-primary' : 'bx-check-circle opacity-50' ?> icon"></i>
+                                                </a>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php $mod_idx++; endforeach; ?>
                         </div>
                     </div>
 
-                    <!-- Bottom Actions -->
-                    <div class="mt-auto d-flex flex-column align-items-center gap-3 pt-3 border-top border-secondary border-opacity-10 w-100">
-                         <i class="bx bxl-ubuntu text-warning fs-4"></i>
-                         <i class="bx bx-terminal text-secondary fs-4"></i>
-                         <i class="bx bx-info-circle text-secondary fs-4"></i>
+                    <!-- Bottom Lab Section / Actions matching SNA -->
+                    <div class="lesson-lab-section mt-auto d-flex flex-column align-items-center gap-3 pt-3 border-top border-secondary border-opacity-10 w-100">
+                        <i class="bx bxl-ubuntu text-warning fs-4"></i>
+                        <i class="bx bx-terminal text-secondary fs-4"></i>
+                        <i class="bx bx-info-circle text-secondary fs-4"></i>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Resizer 1 -->
-        <div class="pane-resizer h-100" data-target="outlineSidebar"></div>
+        <!-- Resizer 1 (Gutter) -->
+        <div class="gutter gutter-horizontal pane-resizer h-100" style="width: 4px;" data-target="learn-panel-1"></div>
 
-        <!-- Pane 2: Center Content Area -->
-        <div class="pane-content flex-grow-1 h-100 d-flex flex-column overflow-hidden">
+        <!-- Panel 2: Center Content Area -->
+        <div id="learn-panel-2" class="split-panel flex-grow-1 h-100 overflow-hidden" style="width: calc(64% - 2px);">
             <div class="card h-100 border-secondary border-opacity-10 rounded-4 shadow-sm d-flex flex-column overflow-hidden">
-                <div class="card-header bg-transparent border-secondary border-opacity-10 p-3 p-lg-4 d-flex justify-content-between align-items-center">
-                    <div>
-                        <span class="text-secondary small d-block mb-1" style="font-size: 0.7rem;"><?= $chapter['module_name'] ?></span>
-                        <h4 class="card-title fw-bold m-0 text-truncate" style="max-width: 400px;"><?= $chapter['title'] ?></h4>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <button id="btnGenerateContent" class="btn btn-sm btn-outline-primary rounded-pill px-3 d-flex align-items-center gap-1 border-opacity-25" data-chapter-id="<?= $chapter_id ?>" title="Generate human-like tutorial content">
-                            <i class="bx bx-magic-wand"></i> <span>Generate Content</span>
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary rounded-circle border-opacity-10 p-2"><i class="bx bx-share-alt"></i></button>
-                        <button class="btn btn-sm btn-outline-success rounded-circle border-opacity-10 p-2"><i class="bx bx-check"></i></button>
-                    </div>
-                </div>
-                <div class="card-body p-3 p-lg-5 flex-grow-1 overflow-auto custom-scrollbar position-relative">
-                    <!-- Generation Loading Skeleton -->
-                    <div id="contentGeneratingStatus" class="d-none alert alert-dark border-secondary border-opacity-25 rounded-3 mb-4 d-flex align-items-center gap-3">
-                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                        <span class="small text-secondary">Senior Mentor is crafting practical tutorial material...</span>
+                <div class="card-body p-0 overflow-x-auto chapter-card d-flex flex-column h-100">
+                    <div class="p-3 pb-0 d-flex justify-content-between align-items-center border-bottom border-secondary border-opacity-10 flex-shrink-0">
+                        <div class="py-2 d-flex align-items-center gap-3">
+                            <a href="/learn/lesson/<?= $lesson['_id'] ?>" class="btn btn-sm btn-outline-secondary rounded-circle p-2 d-flex align-items-center justify-content-center" title="Back to Course Overview" style="width: 34px; height: 34px;">
+                                <i class="bx bx-left-arrow-alt fs-5"></i>
+                            </a>
+                            <div>
+                                <span class="text-secondary small d-block mb-1" style="font-size: 0.75rem;"><?= htmlspecialchars($chapter['module_name']) ?></span>
+                                <h4 class="fw-bold m-0 text-white"><?= htmlspecialchars($chapter['title']) ?></h4>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <button id="btnGenerateContent" class="btn btn-sm btn-outline-primary rounded-pill px-3 d-flex align-items-center gap-1 border-opacity-25" data-chapter-id="<?= $chapter_id ?>" title="Generate human-like tutorial content">
+                                <i class="bx bx-magic-wand"></i> <span>Generate Content</span>
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary rounded-circle border-opacity-10 p-2"><i class="bx bx-share-alt"></i></button>
+                            <button class="btn btn-sm btn-outline-success rounded-circle border-opacity-10 p-2"><i class="bx bx-check"></i></button>
+                        </div>
                     </div>
 
-                    <div id="chapterContentContainer" class="chapter-text-content lh-lg" style="font-size: 1.05rem;" data-raw-md="<?= htmlspecialchars($chapter['content'] ?? '') ?>">
-                        <?php if (!empty($chapter['content_html']) && $chapter['content_html'] !== '...'): ?>
-                            <?= $chapter['content_html'] ?>
-                        <?php elseif (!empty($chapter['content']) && $chapter['content'] !== '...'): ?>
-                            <div class="raw-markdown-fallback"><?= htmlspecialchars($chapter['content']) ?></div>
-                        <?php else: ?>
-                            <div id="emptyContentPrompt" class="text-center py-5 my-4">
-                                <div class="mb-3">
-                                    <i class="bx bx-book-open text-secondary opacity-50" style="font-size: 3.5rem;"></i>
+                    <div id="map-container" style="display:none"></div>
+
+                    <div class="p-3 p-lg-4 flex-grow-1 overflow-auto custom-scrollbar position-relative">
+                        <!-- Generation Loading Skeleton -->
+                        <div id="contentGeneratingStatus" class="d-none alert alert-dark border-secondary border-opacity-25 rounded-3 mb-4 d-flex align-items-center gap-3">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                            <span class="small text-secondary">Senior Mentor is crafting practical tutorial material...</span>
+                        </div>
+
+                        <div id="chapterContentContainer" class="chapter-text-content lh-lg" style="font-size: 1.05rem;" data-raw-md="<?= htmlspecialchars($chapter['content'] ?? '') ?>">
+                            <?php if (!empty($chapter['content_html']) && $chapter['content_html'] !== '...'): ?>
+                                <?= $chapter['content_html'] ?>
+                            <?php elseif (!empty($chapter['content']) && $chapter['content'] !== '...'): ?>
+                                <div class="raw-markdown-fallback"><?= htmlspecialchars($chapter['content']) ?></div>
+                            <?php else: ?>
+                                <div id="emptyContentPrompt" class="text-center py-5 my-4">
+                                    <div class="mb-3">
+                                        <i class="bx bx-book-open text-secondary opacity-50" style="font-size: 3.5rem;"></i>
+                                    </div>
+                                    <h5 class="fw-bold text-white mb-2">Ready to Learn?</h5>
+                                    <p class="text-secondary small mb-4">Click below to generate practical, human-like tutorial content with live code blocks.</p>
+                                    <button class="btn btn-primary rounded-pill px-4 btn-trigger-generate">
+                                        <i class="bx bx-magic-wand me-1"></i> Generate Chapter Material
+                                    </button>
                                 </div>
-                                <h5 class="fw-bold text-white mb-2">Ready to Learn?</h5>
-                                <p class="text-secondary small mb-4">Click below to generate practical, human-like tutorial content with live code blocks.</p>
-                                <button class="btn btn-primary rounded-pill px-4 btn-trigger-generate">
-                                    <i class="bx bx-magic-wand me-1"></i> Generate Chapter Material
-                                </button>
-                            </div>
-                        <?php endif; ?>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Resizer 2 -->
-        <div class="pane-resizer h-100" data-target="paneAI" data-direction="right"></div>
+        <!-- Resizer 2 (Gutter) -->
+        <div class="gutter gutter-horizontal pane-resizer h-100" style="width: 4px;" data-target="learn-panel-3" data-direction="right"></div>
 
-        <!-- Pane 3: Right AI Assistant -->
-        <div id="paneAI" class="pane-ai d-flex flex-column h-100" style="width: var(--paneAI-saved-width, 350px); min-width: 300px;">
+        <!-- Panel 3: Right AI Assistant -->
+        <div id="learn-panel-3" class="split-panel pane-ai d-flex flex-column h-100" style="width: var(--paneAI-saved-width, 350px); min-width: 300px;">
             <div class="card h-100 border-secondary border-opacity-10 rounded-4 shadow-sm d-flex flex-column overflow-hidden">
                 <div class="card-header bg-dark bg-opacity-25 border-secondary border-opacity-10 py-2 px-3 d-flex align-items-center justify-content-between">
                     <div class="d-flex align-items-center gap-2">
@@ -264,7 +320,7 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
                         <!-- AI Introduction -->
                         <div class="message-row ai-row">
                             <div class="msg-avatar">
-                                <img src="<?= $aiAvatar ?>" alt="AI">
+                                <img src="<?= $aiAvatar ?>" style="width: 30px;" alt="AI">
                             </div>
                             <div class="msg-bubble">
                                 <p class="m-0">Hello! I'm your AI learning assistant. How can I help you understand "<?= htmlspecialchars($chapter['title']) ?>" better today? ✨</p>
@@ -275,7 +331,7 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
                             <!-- RAG Summary of Previous Conversations -->
                             <div class="message-row ai-row">
                                 <div class="msg-avatar">
-                                    <img src="<?= $aiAvatar ?>" alt="AI">
+                                    <img src="<?= $aiAvatar ?>" style="width: 30px;" alt="AI">
                                 </div>
                                 <div class="msg-bubble summary-bubble">
                                     <div class="d-flex align-items-center gap-2 mb-1 cursor-pointer" onclick="this.closest('.summary-bubble').querySelector('.summary-content').classList.toggle('d-none'); this.querySelector('.bx').classList.toggle('bx-chevron-down'); this.querySelector('.bx').classList.toggle('bx-chevron-right');">
@@ -302,7 +358,7 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
                             <?php else: ?>
                                 <div class="message-row ai-row">
                                     <div class="msg-avatar">
-                                        <img src="<?= $aiAvatar ?>" alt="AI">
+                                        <img src="<?= $aiAvatar ?>" style="width: 30px;" alt="AI">
                                     </div>
                                     <div class="msg-bubble">
                                         <p class="m-0"><?= nl2br(htmlspecialchars($msg['content'])) ?></p>

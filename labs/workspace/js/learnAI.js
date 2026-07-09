@@ -1,5 +1,5 @@
 /**
- * Wrapped with IIFE Error Boundary
+ * Wrapped with IIFE Error Boundary - Learn AI
  */
 try {
   (function() {
@@ -38,6 +38,7 @@ try {
             this.adjustVHE(appWrapper);
             this.initAIChat();
             this.initContentGenerator();
+            this.initFloatingTooltips();
 
             if (!this.isInitialized) {
                 this.initResizers();
@@ -47,6 +48,64 @@ try {
                 });
                 this.isInitialized = true;
             }
+        },
+
+        // Top-layer floating tooltip on document.body for narrow Panel 1 icons/numbers
+        initFloatingTooltips: function () {
+            let floatingEl = document.getElementById('learn-first-layer-tooltip');
+            if (!floatingEl) {
+                floatingEl = document.createElement('div');
+                floatingEl.id = 'learn-first-layer-tooltip';
+                floatingEl.style.cssText = 'position: fixed; z-index: 99999999; padding: 6px 12px; background: rgba(15, 17, 23, 0.98); color: #ffffff; font-size: 11px; font-weight: 600; white-space: nowrap; border-radius: 6px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.75); border: 1px solid rgba(255, 255, 255, 0.15); pointer-events: none; opacity: 0; visibility: hidden; transition: opacity 0.15s ease, transform 0.15s ease;';
+                document.body.appendChild(floatingEl);
+            }
+
+            const hideTooltip = () => {
+                floatingEl.style.opacity = '0';
+                floatingEl.style.visibility = 'hidden';
+            };
+
+            document.addEventListener('mouseover', (e) => {
+                const target = e.target.closest('#learn-panel-1 [data-tooltip], #learn-panel-1 [title]');
+                if (!target) return;
+
+                // Remove native browser title to prevent default ugly tooltips
+                if (target.hasAttribute('title')) {
+                    target.setAttribute('data-tooltip', target.getAttribute('title'));
+                    target.removeAttribute('title');
+                }
+                target.removeAttribute('data-coreui-original-title');
+
+                const panel1 = document.getElementById('learn-panel-1');
+                if (!panel1) return;
+
+                // Only show custom floating tooltip if Panel 1 is in narrow / compact mode (<= 175px or collapsed)
+                const isNarrow = panel1.offsetWidth <= 175 || panel1.classList.contains('auto-compact') || panel1.getAttribute('data-state') === 'collapsed';
+                if (!isNarrow) {
+                    hideTooltip();
+                    return;
+                }
+
+                const text = target.getAttribute('data-tooltip');
+                if (!text) return;
+
+                const rect = target.getBoundingClientRect();
+                floatingEl.textContent = text;
+                floatingEl.style.left = (rect.left + rect.width / 2) + 'px';
+                floatingEl.style.top = (rect.top - 8) + 'px';
+                floatingEl.style.transform = 'translate(-50%, -100%)';
+                floatingEl.style.opacity = '1';
+                floatingEl.style.visibility = 'visible';
+            });
+
+            document.addEventListener('mouseout', (e) => {
+                const target = e.target.closest('#learn-panel-1 [data-tooltip], #learn-panel-1 [title]');
+                if (target) {
+                    hideTooltip();
+                }
+            });
+
+            window.addEventListener('scroll', hideTooltip, true);
         },
 
         // Save and Restore Pane Widths & Three Panel Sizes to DB / Storage
@@ -75,15 +134,19 @@ try {
             const wrapper = document.querySelector('.learn-app-wrapper');
             if (wrapper) {
                 const totalW = wrapper.offsetWidth || window.innerWidth;
-                const p1El = document.getElementById('outlineSidebar') || document.getElementById('courseSidebar');
-                const p3El = document.getElementById('paneAI');
-                if (p1El && p3El && totalW > 0) {
+                const p1El = document.getElementById('learn-panel-1') || document.getElementById('outlineSidebar') || document.getElementById('courseSidebar');
+                const p3El = document.getElementById('learn-panel-3') || document.getElementById('paneAI');
+                if (p1El && totalW > 0) {
                     const w1 = p1El.offsetWidth;
-                    const w3 = p3El.offsetWidth;
-                    const w2 = Math.max(10, totalW - w1 - w3);
+                    let existingPct3 = 25;
+                    try {
+                        const prev = JSON.parse(sessionStorage.getItem('learnAiThreePanelSizes') || '[]');
+                        if (Array.isArray(prev) && prev[2] > 10) existingPct3 = prev[2];
+                    } catch(e) {}
+
                     const pct1 = (w1 / totalW) * 100;
-                    const pct2 = (w2 / totalW) * 100;
-                    const pct3 = (w3 / totalW) * 100;
+                    const pct3 = p3El ? Math.max(15, (p3El.offsetWidth / totalW) * 100) : existingPct3;
+                    const pct2 = Math.max(10, 100 - pct1 - pct3);
                     const sizesStr = JSON.stringify([pct1, pct2, pct3]);
                     localStorage.removeItem('learnAiThreePanelSizes');
                     sessionStorage.setItem('learnAiThreePanelSizes', sizesStr);
@@ -108,26 +171,34 @@ try {
                 try {
                     const arr = JSON.parse(threePanelSizes);
                     if (Array.isArray(arr) && arr.length === 3) {
-                        const p1El = document.getElementById('outlineSidebar') || document.getElementById('courseSidebar');
-                        const p3El = document.getElementById('paneAI');
+                        const p1El = document.getElementById('learn-panel-1') || document.getElementById('outlineSidebar') || document.getElementById('courseSidebar');
+                        const p2El = document.getElementById('learn-panel-2');
+                        const p3El = document.getElementById('learn-panel-3') || document.getElementById('paneAI');
+                        const p3Pct = (arr[2] && arr[2] > 12) ? arr[2] : 25;
                         if (p1El) {
                             p1El.style.width = arr[0] + '%';
                             p1El.style.flexBasis = arr[0] + '%';
                             document.documentElement.style.setProperty(`--${p1El.id}-saved-width`, arr[0] + '%');
-                            if (p1El.id === 'outlineSidebar') {
+                            if (p1El.id === 'outlineSidebar' || p1El.id === 'learn-panel-1') {
                                 const wrapperW = p1El.parentElement ? p1El.parentElement.offsetWidth : window.innerWidth;
                                 const p1Px = (arr[0] / 100) * wrapperW;
-                                this.setOutlineState(p1El, p1Px > 180 ? 'expanded' : 'collapsed');
+                                this.setOutlineState(p1El, p1Px > 175 ? 'expanded' : 'collapsed');
                             }
                         }
+                        if (p2El) {
+                            p2El.style.width = `calc(100% - ${arr[0]}% - ${p3Pct}% - 8px)`;
+                            p2El.style.flexBasis = `calc(100% - ${arr[0]}% - ${p3Pct}% - 8px)`;
+                        }
                         if (p3El) {
-                            p3El.style.width = arr[2] + '%';
-                            p3El.style.flexBasis = arr[2] + '%';
-                            document.documentElement.style.setProperty('--paneAI-saved-width', arr[2] + '%');
+                            p3El.style.width = p3Pct + '%';
+                            p3El.style.flexBasis = p3Pct + '%';
+                            document.documentElement.style.setProperty('--paneAI-saved-width', p3Pct + '%');
                         }
                     }
                 } catch (e) {}
             }
+            const zf = document.getElementById('learn-panel-zero-flicker');
+            if (zf) zf.remove();
         },
 
         // Draggable Resizers Logic (Hardened with Anchors & Delegation)
@@ -218,24 +289,25 @@ try {
                 }
 
                 // Standardized constraints
-                if (targetId === 'outlineSidebar') {
-                    newWidth = Math.max(70, Math.min(500, newWidth));
-                    const isCollapsed = target.getAttribute('data-state') === 'collapsed';
-                    if (newWidth > 180 && isCollapsed) {
+                if (targetId === 'learn-panel-1' || targetId === 'outlineSidebar') {
+                    newWidth = Math.max(68, Math.min(500, newWidth));
+                    const isCollapsed = target.getAttribute('data-state') === 'collapsed' || target.classList.contains('auto-compact');
+                    if (newWidth > 110 && isCollapsed) {
                         this.setOutlineState(target, 'expanded');
-                    } else if (newWidth <= 180 && !isCollapsed) {
+                    } else if (newWidth <= 110 && !isCollapsed) {
+                        newWidth = 68;
                         this.setOutlineState(target, 'collapsed');
                     }
-                } else if (targetId === 'courseSidebar') {
-                    newWidth = Math.max(250, Math.min(600, newWidth));
-                } else if (targetId === 'paneAI') {
+                } else if (targetId === 'learn-panel-2' || targetId === 'courseSidebar') {
+                    newWidth = Math.max(250, Math.min(1000, newWidth));
+                } else if (targetId === 'learn-panel-3' || targetId === 'paneAI') {
                     newWidth = Math.max(250, Math.min(800, newWidth));
                 }
 
                 // Double Apply for flexbox and standard layout
                 target.style.width = newWidth + 'px';
                 target.style.flexBasis = newWidth + 'px';
-                target.style.minWidth = '0px'; // Prevent min-width blocking
+                target.style.minWidth = '68px';
                 document.documentElement.style.setProperty(`--${targetId}-saved-width`, newWidth + 'px');
             }
         },
@@ -243,33 +315,42 @@ try {
         setOutlineState: function (sidebar, state) {
             const compactView = sidebar.querySelector('.outline-compact');
             const fullView = sidebar.querySelector('.outline-full');
-            if (!compactView || !fullView) return;
 
             if (state === 'expanded') {
                 sidebar.setAttribute('data-state', 'expanded');
-                compactView.classList.add('d-none');
-                fullView.classList.remove('d-none');
-                fullView.classList.add('d-flex');
+                sidebar.classList.remove('auto-compact');
+                sidebar.style.removeProperty('max-width');
+                if (compactView && fullView) {
+                    compactView.classList.add('d-none');
+                    compactView.classList.remove('d-flex');
+                    fullView.classList.remove('d-none');
+                    fullView.classList.add('d-flex');
+                }
             } else {
                 sidebar.setAttribute('data-state', 'collapsed');
-                fullView.classList.add('d-none');
-                fullView.classList.remove('d-flex');
-                compactView.classList.remove('d-none');
-                compactView.classList.add('d-flex');
+                sidebar.classList.add('auto-compact');
+                sidebar.style.width = '68px';
+                sidebar.style.flexBasis = '68px';
+                if (compactView && fullView) {
+                    fullView.classList.add('d-none');
+                    fullView.classList.remove('d-flex');
+                    compactView.classList.remove('d-none');
+                    compactView.classList.add('d-flex');
+                }
             }
         },
 
         toggleOutline: function () {
-            const sidebar = document.getElementById('outlineSidebar');
+            const sidebar = document.getElementById('learn-panel-1') || document.getElementById('outlineSidebar');
             if (!sidebar) return;
 
-            const isCollapsed = sidebar.getAttribute('data-state') === 'collapsed';
-            const newWidth = isCollapsed ? 300 : 70;
+            const isCollapsed = sidebar.getAttribute('data-state') === 'collapsed' || sidebar.classList.contains('auto-compact');
+            const newWidth = isCollapsed ? 280 : 68;
 
             sidebar.style.width = newWidth + 'px';
             sidebar.style.flexBasis = newWidth + 'px';
             this.setOutlineState(sidebar, isCollapsed ? 'expanded' : 'collapsed');
-            this.savePaneWidth('outlineSidebar', newWidth);
+            this.savePaneWidth(sidebar.id, newWidth);
         },
 
         adjustVHE: function (appWrapper) {

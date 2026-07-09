@@ -20147,6 +20147,390 @@ html.glass-mode[data-coreui-theme=light] .sidebar-inner-layer {
   font-weight: 600;
 }
 
+/* Exact SNA Split Panel Layout & auto-compact styling */
+.split-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gutter.gutter-horizontal,
+.gutter-horizontal {
+  flex-shrink: 0;
+  background-color: transparent !important;
+  border: none !important;
+  cursor: col-resize;
+  position: relative;
+  z-index: 10;
+  transition: background-color 0.15s ease;
+}
+.gutter.gutter-horizontal:hover,
+.gutter-horizontal:hover {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* SNA Individual Rounded Panel Cards Layout */
+.learn-app-wrapper .flex-grow-1 {
+  padding: 0.1rem !important;
+  gap: 0.1rem !important;
+}
+.learn-app-wrapper .split-panel {
+  display: flex;
+  flex-direction: column;
+}
+.learn-app-wrapper .split-panel > .card {
+  border-radius: 24px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: rgba(13, 22, 38, 0.72) !important;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35) !important;
+  overflow: hidden !important;
+  height: 100%;
+}
+.learn-app-wrapper .pane-resizer {
+  width: 10px !important;
+  margin: 0 -5px !important;
+  z-index: 10;
+  cursor: col-resize;
+  background: transparent;
+  transition: background 0.2s ease;
+}
+.learn-app-wrapper .pane-resizer:hover, .learn-app-wrapper .pane-resizer.is-dragging {
+  background: rgba(56, 189, 248, 0.3) !important;
+  border-radius: 4px;
+}
+
+#learn-panel-1 {
+  display: flex;
+  flex-direction: column;
+  min-width: 68px;
+  container-type: inline-size;
+  container-name: learnPanel;
+  overflow: visible !important;
+}
+#learn-panel-1 .card {
+  overflow: visible !important;
+}
+#learn-panel-1 {
+  /* EXPANDED STATE */
+}
+#learn-panel-1[data-state=expanded]:not(.auto-compact) .outline-compact {
+  display: none !important;
+}
+#learn-panel-1[data-state=expanded]:not(.auto-compact) .outline-full {
+  display: flex !important;
+}
+#learn-panel-1[data-state=expanded]:not(.auto-compact) .like-lesson-btn-compact {
+  display: none !important;
+}
+#learn-panel-1[data-state=expanded]:not(.auto-compact) .card-header strong {
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow: visible !important;
+  line-height: 1.35 !important;
+  color: inherit !important;
+}
+#learn-panel-1[data-state=expanded]:not(.auto-compact) .module-title-text,
+#learn-panel-1[data-state=expanded]:not(.auto-compact) .chapter-title-text {
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow: visible !important;
+  line-height: 1.35 !important;
+}
+#learn-panel-1[data-state=expanded]:not(.auto-compact) [data-tooltip]::after,
+#learn-panel-1[data-state=expanded]:not(.auto-compact) [data-tooltip]::before {
+  display: none !important;
+}
+#learn-panel-1[data-state=expanded]:not(.auto-compact) .accordion-button::after {
+  content: "" !important;
+  display: inline-block !important;
+  width: 1rem !important;
+  height: 1rem !important;
+  background-size: 1rem !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%2394a3b8'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e") !important;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  opacity: 0.85 !important;
+  flex-shrink: 0 !important;
+  margin-left: auto !important;
+}
+#learn-panel-1[data-state=expanded]:not(.auto-compact) .accordion-button:not(.collapsed)::after {
+  content: "" !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%2338bdf8'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e") !important;
+  transform: rotate(-180deg) !important;
+  opacity: 1 !important;
+}
+#learn-panel-1[data-state=expanded]:not(.auto-compact) .lesson-controls {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 0.6rem 0.75rem !important;
+  gap: 0.5rem !important;
+  overflow: hidden !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+#learn-panel-1[data-state=expanded]:not(.auto-compact) .lesson-controls .progress-section {
+  display: flex !important;
+  align-items: center !important;
+}
+#learn-panel-1[data-state=expanded]:not(.auto-compact) .lesson-controls .progress-section .progress-label {
+  display: inline !important;
+}
+#learn-panel-1[data-state=expanded]:not(.auto-compact) .lesson-controls .view-buttons {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 0.5rem !important;
+}
+#learn-panel-1[data-state=expanded]:not(.auto-compact) .lesson-controls .view-buttons .learn-switch-btn {
+  padding: 0.25rem 0.75rem !important;
+  font-size: 0.85rem !important;
+  width: auto !important;
+  height: auto !important;
+  border-radius: 50rem !important;
+}
+#learn-panel-1[data-state=expanded]:not(.auto-compact) .lesson-controls .view-buttons .learn-switch-btn .btn-label {
+  display: inline !important;
+}
+#learn-panel-1[data-state=expanded]:not(.auto-compact) {
+  /* MEDIUM WIDTH (176px to 265px): Show 2 lines with text labels */
+}
+@container learnPanel (max-width: 265px) {
+  #learn-panel-1[data-state=expanded]:not(.auto-compact) .lesson-controls {
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.6rem !important;
+  }
+  #learn-panel-1[data-state=expanded]:not(.auto-compact) .lesson-controls .progress-section {
+    margin: 0 !important;
+    justify-content: center !important;
+  }
+  #learn-panel-1[data-state=expanded]:not(.auto-compact) .lesson-controls .view-buttons {
+    justify-content: center !important;
+  }
+}
+#learn-panel-1[data-state=expanded]:not(.auto-compact) {
+  /* NARROW EXPANDED WIDTH (<= 175px): Number-based compact view without ugly narrow text wrapping */
+}
+@container learnPanel (max-width: 175px) {
+  #learn-panel-1[data-state=expanded]:not(.auto-compact) .card-header {
+    display: none !important;
+  }
+  #learn-panel-1[data-state=expanded]:not(.auto-compact) .lesson-controls {
+    padding: 0.6rem 0.5rem !important;
+    gap: 0.6rem !important;
+  }
+  #learn-panel-1[data-state=expanded]:not(.auto-compact) .lesson-controls .like-lesson-btn-compact {
+    display: block !important;
+    margin: 0 auto !important;
+  }
+  #learn-panel-1[data-state=expanded]:not(.auto-compact) .lesson-controls .progress-section .progress-label {
+    display: none !important;
+  }
+  #learn-panel-1[data-state=expanded]:not(.auto-compact) .lesson-controls .view-buttons {
+    gap: 0.5rem !important;
+  }
+  #learn-panel-1[data-state=expanded]:not(.auto-compact) .lesson-controls .view-buttons .learn-switch-btn {
+    padding: 0.4rem !important;
+    font-size: 0 !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  #learn-panel-1[data-state=expanded]:not(.auto-compact) .lesson-controls .view-buttons .learn-switch-btn .icon {
+    margin: 0 !important;
+    font-size: 1.05rem !important;
+  }
+  #learn-panel-1[data-state=expanded]:not(.auto-compact) .lesson-controls .view-buttons .learn-switch-btn .btn-label {
+    display: none !important;
+  }
+  #learn-panel-1[data-state=expanded]:not(.auto-compact) .accordion-button {
+    justify-content: center !important;
+    padding: 0.65rem 0.5rem !important;
+  }
+  #learn-panel-1[data-state=expanded]:not(.auto-compact) .accordion-button .module-title-text {
+    display: none !important;
+  }
+  #learn-panel-1[data-state=expanded]:not(.auto-compact) .accordion-button .accordion-num {
+    margin: 0 auto !important;
+  }
+  #learn-panel-1[data-state=expanded]:not(.auto-compact) .accordion-button::after {
+    background-image: none !important;
+  }
+  #learn-panel-1[data-state=expanded]:not(.auto-compact) .accordion-button:not([data-tooltip])::after {
+    display: none !important;
+  }
+  #learn-panel-1[data-state=expanded]:not(.auto-compact) .learn-accordion-btn {
+    justify-content: center !important;
+    padding: 0.45rem 0.5rem !important;
+    gap: 0.5rem !important;
+  }
+  #learn-panel-1[data-state=expanded]:not(.auto-compact) .learn-accordion-btn .chapter-title-text,
+  #learn-panel-1[data-state=expanded]:not(.auto-compact) .learn-accordion-btn h6, #learn-panel-1[data-state=expanded]:not(.auto-compact) .learn-accordion-btn .h6 {
+    display: none !important;
+  }
+  #learn-panel-1[data-state=expanded]:not(.auto-compact) .learn-accordion-btn .chapter-num-btn {
+    margin: 0 !important;
+  }
+  #learn-panel-1[data-state=expanded]:not(.auto-compact) .learn-accordion-btn i.icon, #learn-panel-1[data-state=expanded]:not(.auto-compact) .learn-accordion-btn svg.icon {
+    display: inline-block !important;
+    margin: 0 !important;
+  }
+}
+#learn-panel-1 {
+  /* COLLAPSED / AUTO-COMPACT STATE */
+}
+#learn-panel-1[data-state=collapsed], #learn-panel-1.auto-compact {
+  width: 68px !important;
+  min-width: 68px !important;
+  flex-basis: 68px !important;
+}
+#learn-panel-1[data-state=collapsed] .outline-compact, #learn-panel-1.auto-compact .outline-compact {
+  display: flex !important;
+}
+#learn-panel-1[data-state=collapsed] .outline-full, #learn-panel-1.auto-compact .outline-full {
+  display: none !important;
+}
+#learn-panel-1[data-state=collapsed] .card-header, #learn-panel-1.auto-compact .card-header {
+  display: none !important;
+}
+#learn-panel-1[data-state=collapsed] .lesson-controls, #learn-panel-1.auto-compact .lesson-controls {
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.75rem !important;
+  padding: 0.75rem 0.5rem !important;
+}
+#learn-panel-1[data-state=collapsed] .lesson-controls .like-lesson-btn-compact, #learn-panel-1.auto-compact .lesson-controls .like-lesson-btn-compact {
+  display: block !important;
+  margin: 0 auto !important;
+}
+#learn-panel-1[data-state=collapsed] .lesson-controls .progress-section, #learn-panel-1.auto-compact .lesson-controls .progress-section {
+  margin: 0 !important;
+  justify-content: center !important;
+}
+#learn-panel-1[data-state=collapsed] .lesson-controls .progress-section .circular-progress, #learn-panel-1.auto-compact .lesson-controls .progress-section .circular-progress {
+  margin: 0 !important;
+}
+#learn-panel-1[data-state=collapsed] .lesson-controls .progress-section .progress-label, #learn-panel-1.auto-compact .lesson-controls .progress-section .progress-label {
+  display: none !important;
+}
+#learn-panel-1[data-state=collapsed] .lesson-controls .view-buttons, #learn-panel-1.auto-compact .lesson-controls .view-buttons {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.75rem !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+#learn-panel-1[data-state=collapsed] .lesson-controls .view-buttons .learn-switch-btn, #learn-panel-1.auto-compact .lesson-controls .view-buttons .learn-switch-btn {
+  padding: 0.4rem !important;
+  font-size: 0 !important;
+  min-width: auto !important;
+  border-radius: 50% !important;
+  width: 30px !important;
+  height: 30px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+#learn-panel-1[data-state=collapsed] .lesson-controls .view-buttons .learn-switch-btn .icon, #learn-panel-1.auto-compact .lesson-controls .view-buttons .learn-switch-btn .icon {
+  margin: 0 !important;
+  font-size: 1.05rem !important;
+}
+#learn-panel-1[data-state=collapsed] .lesson-controls .view-buttons .learn-switch-btn .btn-label, #learn-panel-1.auto-compact .lesson-controls .view-buttons .learn-switch-btn .btn-label {
+  display: none !important;
+}
+#learn-panel-1[data-state=collapsed] .accordion-button, #learn-panel-1.auto-compact .accordion-button {
+  justify-content: center !important;
+  padding: 0.6rem 0.25rem !important;
+  font-size: 0 !important;
+}
+#learn-panel-1[data-state=collapsed] .accordion-button .module-title-text,
+#learn-panel-1[data-state=collapsed] .accordion-button span:not(.accordion-num), #learn-panel-1.auto-compact .accordion-button .module-title-text,
+#learn-panel-1.auto-compact .accordion-button span:not(.accordion-num) {
+  display: none !important;
+}
+#learn-panel-1[data-state=collapsed] .accordion-button::after, #learn-panel-1.auto-compact .accordion-button::after {
+  background-image: none !important;
+}
+#learn-panel-1[data-state=collapsed] .accordion-button:not([data-tooltip])::after, #learn-panel-1.auto-compact .accordion-button:not([data-tooltip])::after {
+  display: none !important;
+}
+#learn-panel-1[data-state=collapsed] .accordion-button .accordion-num, #learn-panel-1.auto-compact .accordion-button .accordion-num {
+  margin: 0 auto !important;
+  width: 28px !important;
+  height: 28px !important;
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+#learn-panel-1[data-state=collapsed] .learn-accordion-btn, #learn-panel-1.auto-compact .learn-accordion-btn {
+  justify-content: center !important;
+  padding: 0.4rem !important;
+}
+#learn-panel-1[data-state=collapsed] .learn-accordion-btn .chapter-title-text,
+#learn-panel-1[data-state=collapsed] .learn-accordion-btn h6, #learn-panel-1[data-state=collapsed] .learn-accordion-btn .h6, #learn-panel-1.auto-compact .learn-accordion-btn .chapter-title-text,
+#learn-panel-1.auto-compact .learn-accordion-btn h6, #learn-panel-1.auto-compact .learn-accordion-btn .h6 {
+  display: none !important;
+}
+#learn-panel-1[data-state=collapsed] .learn-accordion-btn i.icon, #learn-panel-1[data-state=collapsed] .learn-accordion-btn svg.icon, #learn-panel-1.auto-compact .learn-accordion-btn i.icon, #learn-panel-1.auto-compact .learn-accordion-btn svg.icon {
+  display: none !important;
+}
+#learn-panel-1[data-state=collapsed] .learn-accordion-btn .chapter-num-btn, #learn-panel-1.auto-compact .learn-accordion-btn .chapter-num-btn {
+  margin: 0 auto !important;
+  width: 22px !important;
+  height: 22px !important;
+  font-size: 0.7rem !important;
+  font-weight: 600 !important;
+}
+
+.chapter-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: visible !important;
+}
+
+/* Ensure tooltips are not clipped in collapsed or compact panel states */
+#learn-panel-1[data-state=collapsed],
+#learn-panel-1.auto-compact {
+  overflow: visible !important;
+}
+#learn-panel-1[data-state=collapsed] .card, #learn-panel-1[data-state=collapsed] .chapter-card, #learn-panel-1[data-state=collapsed] .card-body, #learn-panel-1[data-state=collapsed] .accordion, #learn-panel-1[data-state=collapsed] .accordion-item,
+#learn-panel-1.auto-compact .card,
+#learn-panel-1.auto-compact .chapter-card,
+#learn-panel-1.auto-compact .card-body,
+#learn-panel-1.auto-compact .accordion,
+#learn-panel-1.auto-compact .accordion-item {
+  overflow: visible !important;
+}
+
+@container learnPanel (max-width: 175px) {
+  .card, .chapter-card, .card-body, .accordion, .accordion-item {
+    overflow: visible !important;
+  }
+}
+/* Suppress native CSS ::after tooltips inside narrow Panel 1 so our top-layer floating JS tooltip handles them cleanly */
+#learn-panel-1[data-state=collapsed] [data-tooltip]::after,
+#learn-panel-1[data-state=collapsed] [data-tooltip]::before,
+#learn-panel-1.auto-compact [data-tooltip]::after,
+#learn-panel-1.auto-compact [data-tooltip]::before {
+  display: none !important;
+}
+
+@container learnPanel (max-width: 175px) {
+  [data-tooltip]::after,
+  [data-tooltip]::before {
+    display: none !important;
+  }
+}
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;

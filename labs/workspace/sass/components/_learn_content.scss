@@ -84,3 +84,428 @@
         }
     }
 }
+
+/* Exact SNA Split Panel Layout & auto-compact styling */
+.split-panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gutter.gutter-horizontal,
+.gutter-horizontal {
+    flex-shrink: 0;
+    background-color: transparent !important;
+    border: none !important;
+    cursor: col-resize;
+    position: relative;
+    z-index: 10;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+        background-color: rgba(255, 255, 255, 0.12) !important;
+    }
+}
+
+/* SNA Individual Rounded Panel Cards Layout */
+.learn-app-wrapper {
+    .flex-grow-1 {
+        padding: 0.1rem !important;
+        gap: 0.1rem !important;
+    }
+
+    .split-panel {
+        display: flex;
+        flex-direction: column;
+
+        > .card {
+            border-radius: 24px !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            background: rgba(13, 22, 38, 0.72) !important;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35) !important;
+            overflow: hidden !important;
+            height: 100%;
+        }
+    }
+
+    .pane-resizer {
+        width: 10px !important;
+        margin: 0 -5px !important;
+        z-index: 10;
+        cursor: col-resize;
+        background: transparent;
+        transition: background 0.2s ease;
+
+        &:hover,
+        &.is-dragging {
+            background: rgba(56, 189, 248, 0.3) !important;
+            border-radius: 4px;
+        }
+    }
+}
+
+#learn-panel-1 {
+    display: flex;
+    flex-direction: column;
+    min-width: 68px;
+    container-type: inline-size;
+    container-name: learnPanel;
+    overflow: visible !important;
+
+    .card {
+        overflow: visible !important;
+    }
+
+    /* EXPANDED STATE */
+    &[data-state="expanded"]:not(.auto-compact) {
+        .outline-compact {
+            display: none !important;
+        }
+        .outline-full {
+            display: flex !important;
+        }
+        .like-lesson-btn-compact {
+            display: none !important;
+        }
+
+        .card-header strong {
+            white-space: normal !important;
+            word-break: break-word !important;
+            overflow: visible !important;
+            line-height: 1.35 !important;
+            color: inherit !important;
+        }
+
+        .module-title-text,
+        .chapter-title-text {
+            white-space: normal !important;
+            word-break: break-word !important;
+            overflow: visible !important;
+            line-height: 1.35 !important;
+        }
+
+        [data-tooltip]::after,
+        [data-tooltip]::before {
+            display: none !important;
+        }
+
+        .accordion-button {
+            &::after {
+                content: "" !important;
+                display: inline-block !important;
+                width: 1rem !important;
+                height: 1rem !important;
+                background-size: 1rem !important;
+                background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%2394a3b8'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e") !important;
+                transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                opacity: 0.85 !important;
+                flex-shrink: 0 !important;
+                margin-left: auto !important;
+            }
+
+            &:not(.collapsed)::after {
+                content: "" !important;
+                background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%2338bdf8'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e") !important;
+                transform: rotate(-180deg) !important;
+                opacity: 1 !important;
+            }
+        }
+
+        .lesson-controls {
+            display: flex !important;
+            flex-direction: row !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            padding: 0.6rem 0.75rem !important;
+            gap: 0.5rem !important;
+            overflow: hidden !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+
+            .progress-section {
+                display: flex !important;
+                align-items: center !important;
+                .progress-label {
+                    display: inline !important;
+                }
+            }
+            .view-buttons {
+                display: flex !important;
+                flex-direction: row !important;
+                gap: 0.5rem !important;
+
+                .learn-switch-btn {
+                    padding: 0.25rem 0.75rem !important;
+                    font-size: 0.85rem !important;
+                    width: auto !important;
+                    height: auto !important;
+                    border-radius: 50rem !important;
+
+                    .btn-label {
+                        display: inline !important;
+                    }
+                }
+            }
+        }
+
+        /* MEDIUM WIDTH (176px to 265px): Show 2 lines with text labels */
+        @container learnPanel (max-width: 265px) {
+            .lesson-controls {
+                flex-direction: column !important;
+                align-items: center !important;
+                justify-content: center !important;
+                gap: 0.6rem !important;
+
+                .progress-section {
+                    margin: 0 !important;
+                    justify-content: center !important;
+                }
+                .view-buttons {
+                    justify-content: center !important;
+                }
+            }
+        }
+
+        /* NARROW EXPANDED WIDTH (<= 175px): Number-based compact view without ugly narrow text wrapping */
+        @container learnPanel (max-width: 175px) {
+            .card-header {
+                display: none !important;
+            }
+
+            .lesson-controls {
+                padding: 0.6rem 0.5rem !important;
+                gap: 0.6rem !important;
+
+                .like-lesson-btn-compact {
+                    display: block !important;
+                    margin: 0 auto !important;
+                }
+
+                .progress-section {
+                    .progress-label {
+                        display: none !important;
+                    }
+                }
+                .view-buttons {
+                    gap: 0.5rem !important;
+
+                    .learn-switch-btn {
+                        padding: 0.4rem !important;
+                        font-size: 0 !important;
+                        width: 32px !important;
+                        height: 32px !important;
+                        border-radius: 50% !important;
+                        display: flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+
+                        .icon {
+                            margin: 0 !important;
+                            font-size: 1.05rem !important;
+                        }
+                        .btn-label {
+                            display: none !important;
+                        }
+                    }
+                }
+            }
+
+            .accordion-button {
+                justify-content: center !important;
+                padding: 0.65rem 0.5rem !important;
+
+                .module-title-text {
+                    display: none !important;
+                }
+                .accordion-num {
+                    margin: 0 auto !important;
+                }
+                &::after {
+                    background-image: none !important;
+                }
+                &:not([data-tooltip])::after {
+                    display: none !important;
+                }
+            }
+
+            .learn-accordion-btn {
+                justify-content: center !important;
+                padding: 0.45rem 0.5rem !important;
+                gap: 0.5rem !important;
+
+                .chapter-title-text,
+                h6, .h6 {
+                    display: none !important;
+                }
+                .chapter-num-btn {
+                    margin: 0 !important;
+                }
+                i.icon, svg.icon {
+                    display: inline-block !important;
+                    margin: 0 !important;
+                }
+            }
+        }
+    }
+
+    /* COLLAPSED / AUTO-COMPACT STATE */
+    &[data-state="collapsed"],
+    &.auto-compact {
+        width: 68px !important;
+        min-width: 68px !important;
+        flex-basis: 68px !important;
+
+        .outline-compact {
+            display: flex !important;
+        }
+        .outline-full {
+            display: none !important;
+        }
+
+        .card-header {
+            display: none !important;
+        }
+
+        .lesson-controls {
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 0.75rem !important;
+            padding: 0.75rem 0.5rem !important;
+
+            .like-lesson-btn-compact {
+                display: block !important;
+                margin: 0 auto !important;
+            }
+
+            .progress-section {
+                margin: 0 !important;
+                justify-content: center !important;
+
+                .circular-progress {
+                    margin: 0 !important;
+                }
+                .progress-label {
+                    display: none !important;
+                }
+            }
+
+            .view-buttons {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 0.75rem !important;
+                justify-content: center !important;
+                align-items: center !important;
+
+                .learn-switch-btn {
+                    padding: 0.4rem !important;
+                    font-size: 0 !important;
+                    min-width: auto !important;
+                    border-radius: 50% !important;
+                    width: 30px !important;
+                    height: 30px !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+
+                    .icon {
+                        margin: 0 !important;
+                        font-size: 1.05rem !important;
+                    }
+                    .btn-label {
+                        display: none !important;
+                    }
+                }
+            }
+        }
+
+        .accordion-button {
+            justify-content: center !important;
+            padding: 0.6rem 0.25rem !important;
+            font-size: 0 !important;
+
+            .module-title-text,
+            span:not(.accordion-num) {
+                display: none !important;
+            }
+            &::after {
+                background-image: none !important;
+            }
+            &:not([data-tooltip])::after {
+                display: none !important;
+            }
+            .accordion-num {
+                margin: 0 auto !important;
+                width: 28px !important;
+                height: 28px !important;
+                font-size: 0.85rem !important;
+                font-weight: 700 !important;
+                background: rgba(255, 255, 255, 0.15) !important;
+                color: #ffffff !important;
+                border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            }
+        }
+
+        .learn-accordion-btn {
+            justify-content: center !important;
+            padding: 0.4rem !important;
+
+            .chapter-title-text,
+            h6, .h6 {
+                display: none !important;
+            }
+            i.icon, svg.icon {
+                display: none !important;
+            }
+            .chapter-num-btn {
+                margin: 0 auto !important;
+                width: 22px !important;
+                height: 22px !important;
+                font-size: 0.7rem !important;
+                font-weight: 600 !important;
+            }
+        }
+    }
+}
+
+.chapter-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: visible !important;
+}
+
+/* Ensure tooltips are not clipped in collapsed or compact panel states */
+#learn-panel-1[data-state="collapsed"],
+#learn-panel-1.auto-compact {
+    overflow: visible !important;
+
+    .card, .chapter-card, .card-body, .accordion, .accordion-item {
+        overflow: visible !important;
+    }
+}
+
+@container learnPanel (max-width: 175px) {
+    .card, .chapter-card, .card-body, .accordion, .accordion-item {
+        overflow: visible !important;
+    }
+}
+
+/* Suppress native CSS ::after tooltips inside narrow Panel 1 so our top-layer floating JS tooltip handles them cleanly */
+#learn-panel-1[data-state="collapsed"] [data-tooltip]::after,
+#learn-panel-1[data-state="collapsed"] [data-tooltip]::before,
+#learn-panel-1.auto-compact [data-tooltip]::after,
+#learn-panel-1.auto-compact [data-tooltip]::before {
+    display: none !important;
+}
+
+@container learnPanel (max-width: 175px) {
+    [data-tooltip]::after,
+    [data-tooltip]::before {
+        display: none !important;
+    }
+}
+
+
