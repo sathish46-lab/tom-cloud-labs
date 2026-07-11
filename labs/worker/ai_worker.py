@@ -3,6 +3,7 @@ import json
 import os
 import sys
 import time
+import datetime
 import requests
 import redis
 try:
@@ -10,6 +11,7 @@ try:
 except ImportError:
     markdown = None
 import google.generativeai as genai
+from google.generativeai import caching as genai_caching
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 
@@ -47,10 +49,76 @@ except Exception as e:
     redis_client = None
 
 # Gemini Config
+GEMINI_MODEL_NAME = 'models/gemini-3.5-flash'
 print("Configuring Gemini API...", flush=True)
 genai.configure(api_key=config.get('ai_api_key'))
-model = genai.GenerativeModel('gemini-3.5-flash')
-print("Gemini model initialized.", flush=True)
+model = genai.GenerativeModel(GEMINI_MODEL_NAME)
+print(f"Gemini model initialized ({GEMINI_MODEL_NAME}).", flush=True)
+
+# ===========================================================================
+# CONTEXT CACHING: Cache system prompt + lesson context for cost savings
+# ===========================================================================
+def get_or_create_cached_context(user_id, lesson_id, system_context_text, history_for_cache):
+    """Get or create a Gemini CachedContent for the system prompt + lesson context.
+    Caches static content so subsequent queries reuse cached tokens (up to 75% cheaper).
+    Returns the cache name (str) or None if caching fails/is unavailable."""
+    cache_redis_key = f"gemini_cache:{user_id}:{lesson_id}"
+    
+    # Try to reuse existing cache from Redis
+    if redis_client:
+        try:
+            existing_cache_name = redis_client.get(cache_redis_key)
+            if existing_cache_name:
+                # Verify it still exists in Gemini
+                try:
+                    cached = genai_caching.CachedContent.get(existing_cache_name)
+                    print(f"   > Reusing existing context cache: {existing_cache_name}")
+                    return existing_cache_name
+                except Exception:
+                    print(f"   > Cached content expired, creating new one...")
+                    redis_client.delete(cache_redis_key)
+        except Exception as e:
+            print(f"   > Redis cache lookup error: {e}")
+    
+    # Build the content to cache (system context + history prefix)
+    # Gemini context caching requires minimum 32,768 tokens, so we include the full context
+    contents_to_cache = [
+        genai.protos.Content(role="user", parts=[genai.protos.Part(text=f"[System Context]: {system_context_text}")]),
+        genai.protos.Content(role="model", parts=[genai.protos.Part(text="Understood. I am locked onto your active lesson, chapter, and lab context.")])
+    ]
+    
+    # Add conversation history as cacheable prefix
+    for msg in history_for_cache:
+        role = msg.get('role', 'user')
+        content = msg.get('content', '')
+        if role == 'system_summary':
+            contents_to_cache.append(genai.protos.Content(role="user", parts=[genai.protos.Part(text=f"[System: Here is a summary of our previous conversation]: {content}")]))
+            contents_to_cache.append(genai.protos.Content(role="model", parts=[genai.protos.Part(text="I understand. I'll keep this context in mind as we continue our conversation.")]))
+        else:
+            gemini_role = 'model' if role in ('assistant', 'model') else 'user'
+            contents_to_cache.append(genai.protos.Content(role=gemini_role, parts=[genai.protos.Part(text=content)]))
+    
+    try:
+        cached_content = genai_caching.CachedContent.create(
+            model=GEMINI_MODEL_NAME,
+            display_name=f"learn_ai_{user_id}_{lesson_id}",
+            contents=contents_to_cache,
+            ttl=datetime.timedelta(minutes=30)
+        )
+        cache_name = cached_content.name
+        print(f"   > Created new context cache: {cache_name}")
+        
+        # Store in Redis with 25 min TTL (slightly less than Gemini's 30 min)
+        if redis_client:
+            try:
+                redis_client.setex(cache_redis_key, 1500, cache_name)
+            except Exception:
+                pass
+        
+        return cache_name
+    except Exception as e:
+        print(f"   > Context caching unavailable (min token threshold not met or API error): {e}")
+        return None
 
 # MongoDB Config
 print(f"Connecting to MongoDB...", flush=True)
@@ -273,15 +341,19 @@ def stream_lm_studio(query, url, stream_callback, history=None):
         stream_callback(f"Failed to connect to LM Studio: {e}\nPlease check if it is running and accessible at {url}", is_final=False)
         return ""
 
-def stream_to_user(channel, session_id, message_id, chunk_text, is_final=False, topic_prefix="ai_stream"):
+def stream_to_user(channel, session_id, message_id, chunk_text, is_final=False, topic_prefix="ai_stream", usage=None, source='llm'):
     """Publish a stream chunk to a specific topic"""
     try:
         if is_final:
-            payload = json.dumps({
+            msg = {
                 'type': 'stream_end',
                 'data': '',
-                'message_id': message_id
-            })
+                'message_id': message_id,
+                'source': source
+            }
+            if usage:
+                msg['usage'] = usage
+            payload = json.dumps(msg)
         else:
             payload = json.dumps({
                 'type': 'text_delta',
@@ -294,6 +366,20 @@ def stream_to_user(channel, session_id, message_id, chunk_text, is_final=False, 
         channel.basic_publish(exchange='amq.topic', routing_key=routing_key, body=payload)
     except Exception as e:
         print(f"Failed to stream to user: {e}")
+
+def send_tool_execution(channel, session_id, message_id, tool_name, tool_output, topic_prefix="ai_stream"):
+    """Send a tool execution event to the frontend"""
+    try:
+        payload = json.dumps({
+            'type': 'tool_execution',
+            'message_id': message_id,
+            'tool_name': tool_name,
+            'tool_output': tool_output
+        })
+        routing_key = f"{topic_prefix}.{session_id}"
+        channel.basic_publish(exchange='amq.topic', routing_key=routing_key, body=payload)
+    except Exception as e:
+        print(f"Failed to send tool execution event: {e}")
 
 def process_ai_job(ch, method, properties, body):
     """Callback function to process an AI generation job"""
@@ -359,6 +445,7 @@ def process_ai_job(ch, method, properties, body):
 
         # 1. Start Streaming from Gemini or LM Studio
         full_content = ""
+        usage_data = None
         
         if ai_model == 'lm_studio':
             lm_studio_url = config.get('lm_studio_url', 'http://172.17.0.1:1234/v1/chat/completions')
@@ -370,34 +457,70 @@ def process_ai_job(ch, method, properties, body):
             lm_history = [{"role": "system", "content": system_context_text}] + history
             full_content = stream_lm_studio(query, lm_studio_url, send_chunk, history=lm_history)
             print(f"   > LM Studio stream completed")
+            # LM Studio: token tracking N/A
+            usage_data = {'source': 'lm_studio'}
         else:
-            # Format history for Gemini API
-            gemini_history = [
-                {"role": "user", "parts": [f"[System Context]: {system_context_text}"]},
-                {"role": "model", "parts": ["Understood. I am locked onto your active lesson, chapter, and lab context."]}
-            ]
-            for msg in history:
-                role = msg.get('role', 'user')
-                content = msg.get('content', '')
-                
-                if role == 'system_summary':
-                    gemini_history.append({"role": "user", "parts": [f"[System: Here is a summary of our previous conversation]: {content}"]})
-                    gemini_history.append({"role": "model", "parts": ["I understand. I'll keep this context in mind as we continue our conversation."]})
-                    continue
-                
-                role = 'model' if role == 'assistant' else role
-                gemini_history.append({"role": role, "parts": [content]})
-                
-            chat_session = model.start_chat(history=gemini_history)
-            response = chat_session.send_message(query, stream=True)
+            # Try to use context caching for cost savings
+            cache_name = get_or_create_cached_context(user_id, lesson_id, system_context_text, history)
+            
+            if cache_name:
+                # Use cached model - only send the new query (not the full history)
+                try:
+                    cached_content = genai_caching.CachedContent.get(cache_name)
+                    cached_model = genai.GenerativeModel.from_cached_content(cached_content=cached_content)
+                    chat_session = cached_model.start_chat(history=[])
+                    response = chat_session.send_message(query, stream=True)
+                    print(f"   > Using cached context for Gemini request")
+                except Exception as e:
+                    print(f"   > Cache model failed, falling back to standard: {e}")
+                    cache_name = None
+            
+            if not cache_name:
+                # Standard path: Format history for Gemini API
+                gemini_history = [
+                    {"role": "user", "parts": [f"[System Context]: {system_context_text}"]},
+                    {"role": "model", "parts": ["Understood. I am locked onto your active lesson, chapter, and lab context."]}
+                ]
+                for msg in history:
+                    role = msg.get('role', 'user')
+                    content = msg.get('content', '')
+                    
+                    if role == 'system_summary':
+                        gemini_history.append({"role": "user", "parts": [f"[System: Here is a summary of our previous conversation]: {content}"]})
+                        gemini_history.append({"role": "model", "parts": ["I understand. I'll keep this context in mind as we continue our conversation."]})
+                        continue
+                    
+                    role = 'model' if role == 'assistant' else role
+                    gemini_history.append({"role": role, "parts": [content]})
+                    
+                chat_session = model.start_chat(history=gemini_history)
+                response = chat_session.send_message(query, stream=True)
+            
             for chunk in response:
                 if chunk.text:
                     full_content += chunk.text
                     stream_to_user(ch, session_id, message_id, chunk.text)
                     print(f"   > Sent chunk: {len(chunk.text)} chars")
+            
+            # Extract token usage metadata from the completed response
+            try:
+                um = response.usage_metadata
+                usage_data = {
+                    'source': 'gemini',
+                    'input_tokens': um.prompt_token_count if um else 0,
+                    'output_tokens': um.candidates_token_count if um else 0,
+                    'cached_tokens': um.cached_content_token_count if um else 0,
+                    'total_tokens': um.total_token_count if um else 0
+                }
+                cache_pct = round((usage_data['cached_tokens'] / usage_data['input_tokens'] * 100), 1) if usage_data['input_tokens'] > 0 else 0
+                usage_data['cache_hit_percent'] = cache_pct
+                print(f"   > Token Usage: input={usage_data['input_tokens']}, output={usage_data['output_tokens']}, cached={usage_data['cached_tokens']} ({cache_pct}%), total={usage_data['total_tokens']}")
+            except Exception as e:
+                print(f"   > Could not extract usage metadata: {e}")
+                usage_data = {'source': 'gemini'}
 
-        # 2. Finalize
-        stream_to_user(ch, session_id, message_id, "", is_final=True)
+        # 2. Finalize with usage data
+        stream_to_user(ch, session_id, message_id, "", is_final=True, usage=usage_data, source=usage_data.get('source', 'llm') if usage_data else 'llm')
         print(" [✓] Stream completed.")
 
         # 3. Persistence: Push new messages to Chat Database
@@ -411,7 +534,7 @@ def process_ai_job(ch, method, properties, body):
                         'messages': {
                             '$each': [
                                 {'role': 'user', 'content': query, 'timestamp': ts},
-                                {'role': 'model', 'content': full_content, 'timestamp': ts + 1}
+                                {'role': 'model', 'content': full_content, 'timestamp': ts + 1, 'usage': usage_data}
                             ]
                         }
                     }},

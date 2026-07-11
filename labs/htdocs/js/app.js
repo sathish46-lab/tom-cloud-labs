@@ -5105,6 +5105,92 @@ try {
         initialAnchor: 0,
         initialWidth: 0,
 
+        // Token usage tracking (cumulative per session)
+        tokenStats: {
+            totalInputTokens: 0,
+            totalOutputTokens: 0,
+            totalCachedTokens: 0,
+            totalTokens: 0,
+            responseCount: 0,
+            history: [] // Per-message token history
+        },
+
+        formatTokenCount: function(num) {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(0) + 'K';
+            return num.toString();
+        },
+
+        updateStatsBar: function(usage) {
+            if (!usage) return;
+
+            // Accumulate tokens
+            if (usage.source !== 'local' && usage.source !== 'lm_studio') {
+                this.tokenStats.totalInputTokens += (usage.input_tokens || 0);
+                this.tokenStats.totalOutputTokens += (usage.output_tokens || 0);
+                this.tokenStats.totalCachedTokens += (usage.cached_tokens || 0);
+                this.tokenStats.totalTokens += (usage.total_tokens || 0);
+            }
+            this.tokenStats.responseCount++;
+
+            // Store per-message history
+            this.tokenStats.history.push({
+                input: usage.input_tokens || 0,
+                output: usage.output_tokens || 0,
+                cached: usage.cached_tokens || 0,
+                cache_pct: usage.cache_hit_percent || 0,
+                source: usage.source || 'unknown',
+                tool: usage.tool_name || null,
+                timestamp: Date.now()
+            });
+
+            // Update DOM elements
+            const inputDisplay = document.getElementById('aiTokensDisplay');
+            const outputDisplay = document.getElementById('aiOutputTokens');
+            const cachedDisplay = document.getElementById('aiCachedTokens');
+            const cachedWrap = document.getElementById('aiCachedTokensWrap');
+            const cacheBadge = document.getElementById('aiCachePercBadge');
+            const progressRing = document.getElementById('aiContextProgressRing');
+
+            if (inputDisplay) {
+                inputDisplay.innerText = `${this.formatTokenCount(this.tokenStats.totalInputTokens)}/1M`;
+            }
+            if (outputDisplay) {
+                outputDisplay.innerText = this.formatTokenCount(this.tokenStats.totalOutputTokens);
+            }
+
+            // Cache badge & ring
+            const totalInput = this.tokenStats.totalInputTokens || 1;
+            const pct = Math.round(this.tokenStats.totalCachedTokens / totalInput * 100);
+
+            if (cachedWrap && cachedDisplay) {
+                cachedWrap.classList.remove('d-none');
+                cachedDisplay.innerText = this.formatTokenCount(this.tokenStats.totalCachedTokens);
+                cachedWrap.title = `Cached tokens: ${this.tokenStats.totalCachedTokens.toLocaleString()} (${pct}% cache hit - cost savings!)`;
+            }
+
+            if (cacheBadge && progressRing) {
+                cacheBadge.innerText = pct + '%';
+                // Calculate dash offset for a circle with r=10 (circumference approx 63)
+                // 100% = offset 0, 0% = offset 63
+                const offset = 63 - (pct / 100) * 63;
+                progressRing.style.strokeDashoffset = offset;
+            }
+
+            // For LM Studio, show N/A style
+            if (usage.source === 'lm_studio') {
+                if (inputDisplay) inputDisplay.innerText = `N/A`;
+                if (outputDisplay) outputDisplay.innerText = `N/A`;
+                if (progressRing) progressRing.style.strokeDashoffset = 63;
+                if (cacheBadge) cacheBadge.innerText = '0%';
+            }
+
+            // For local tool execution, show the ⚡ indicator
+            if (usage.source === 'local' && usage.tool_name) {
+                if (inputDisplay) inputDisplay.innerHTML = `<span class="text-warning"><i class="bx bx-bolt-circle me-1"></i>Local Tool</span>`;
+            }
+        },
+
         init: function () {
             if (!document.querySelector('.stable-app-view')) {
                 document.body.style.removeProperty('overflow');
@@ -5481,15 +5567,38 @@ try {
             if (chatInput.dataset.aiChatInit === 'true') return;
             chatInput.dataset.aiChatInit = 'true';
 
-            // Render existing AI markdown messages from server history
-            chatHistory.querySelectorAll('.ai-row .msg-bubble p').forEach(p => {
-                if (p.innerText.trim()) {
-                    LearnApp.renderMarkdownWithHighlighting(p.innerText, p);
-                }
-            });
+            // Load Chat History Asynchronously
+            const lessonId = document.getElementById('currentLessonId')?.value || '';
+            chatHistory.innerHTML = '<div class="text-center p-3 text-secondary small"><i class="bx bx-loader-alt bx-spin"></i> Loading chat history...</div>';
+            
+            // 4. Load Chat History for this chapter/lesson
+            fetch(`/src/api/learnAI/history.php?lesson_id=${lessonId}&chapter_id=${chapterId}`)
+                .then(r => r.text())
+                .then(html => {
+                    chatHistory.innerHTML = html;
+                    
+                    chatHistory.querySelectorAll('.ai-row .msg-bubble p').forEach(p => {
+                        if (p.innerText.trim()) {
+                            LearnApp.renderMarkdownWithHighlighting(p.innerText, p);
+                        }
+                    });
 
-            // Auto-scroll to bottom to show latest server-rendered messages
-            setTimeout(() => { chatHistory.scrollTop = chatHistory.scrollHeight; }, 100);
+                    // Restore token usage metrics from history
+                    LearnApp.tokenStats.totalInputTokens = 0;
+                    LearnApp.tokenStats.totalOutputTokens = 0;
+                    LearnApp.tokenStats.totalCachedTokens = 0;
+                    chatHistory.querySelectorAll('.ai-row[data-total-tokens]').forEach(row => {
+                        LearnApp.tokenStats.totalInputTokens += parseInt(row.getAttribute('data-input-tokens') || 0, 10);
+                        LearnApp.tokenStats.totalOutputTokens += parseInt(row.getAttribute('data-output-tokens') || 0, 10);
+                        LearnApp.tokenStats.totalCachedTokens += parseInt(row.getAttribute('data-cached-tokens') || 0, 10);
+                    });
+                    LearnApp.updateStatsBar();
+                    
+                    setTimeout(() => { chatHistory.scrollTop = chatHistory.scrollHeight; }, 100);
+                })
+                .catch(err => {
+                    chatHistory.innerHTML = '<div class="text-center p-3 text-danger small">Failed to load chat history.</div>';
+                });
 
             const userSessionId = 'sess_' + Math.random().toString(36).substr(2, 9);
             if (window.aiSocket && typeof window.aiSocket.disconnect === 'function') {
@@ -5501,6 +5610,34 @@ try {
 
             const handleAIStream = (data) => {
                 const aiMsgContainer = document.querySelector('.current-ai-stream');
+
+                if (data.type === 'tool_execution') {
+                    
+                    // Inject tool badge ABOVE the current AI message
+                    if (aiMsgContainer) {
+                        const toolId = 'tool_' + Math.random().toString(36).substr(2, 9);
+                        const toolBadgeDiv = document.createElement('div');
+                        toolBadgeDiv.className = 'tool-badge-wrapper mb-1';
+                        toolBadgeDiv.innerHTML = `
+                            <button class="tool-popover-btn" data-target="${toolId}">
+                                <i class='bx bxs-check-circle text-success me-1'></i>
+                                <i class='bx bxs-terminal me-1'></i> 1 tool
+                            </button>
+                            <div id="${toolId}" class="tool-popover-card">
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <i class='bx bxs-check-circle text-success'></i>
+                                    <strong class="text-white">${data.tool_name || 'Execute'}</strong>
+                                </div>
+                                <div class="text-secondary small">${data.tool_output || 'Executed locally'}</div>
+                            </div>
+                        `;
+                        // Insert before the AI message container
+                        aiMsgContainer.parentNode.insertBefore(toolBadgeDiv, aiMsgContainer);
+                        chatHistory.scrollTop = chatHistory.scrollHeight;
+                    }
+                    return;
+                }
+
                 if (!aiMsgContainer) return;
                 const p = aiMsgContainer.querySelector('p');
 
@@ -5513,6 +5650,11 @@ try {
                     }
                     aiMsgContainer.classList.remove('current-ai-stream');
                     chatHistory.scrollTop = chatHistory.scrollHeight;
+
+                    // Update token stats bar with usage data
+                    if (data.usage) {
+                        LearnApp.updateStatsBar(data.usage);
+                    }
                     return;
                 }
 
@@ -5544,6 +5686,27 @@ try {
 
             // Connect instantly on load
             resetIdleTimer();
+
+            // Event delegation for tool popovers
+            document.addEventListener('click', (e) => {
+                const btn = e.target.closest('.tool-popover-btn');
+                if (btn) {
+                    const targetId = btn.getAttribute('data-target');
+                    const target = document.getElementById(targetId);
+                    if (target) {
+                        // Close others
+                        document.querySelectorAll('.tool-popover-card.show').forEach(card => {
+                            if (card.id !== targetId) card.classList.remove('show');
+                        });
+                        target.classList.toggle('show');
+                    }
+                } else if (!e.target.closest('.tool-popover-card')) {
+                    // Clicked outside, close all
+                    document.querySelectorAll('.tool-popover-card.show').forEach(card => {
+                        card.classList.remove('show');
+                    });
+                }
+            });
 
             // Re-establish/refresh connection idleness on typing
             chatInput.addEventListener('input', resetIdleTimer);
@@ -5604,7 +5767,7 @@ try {
             if (type.includes('ai-row')) {
                 msgDiv.innerHTML = `
                     <div class="msg-avatar">
-                        <img src="${aiAvatar}" alt="AI">
+                        <img src="${aiAvatar}" style="width: 30px;" alt="AI">
                     </div>
                     <div class="msg-bubble">
                         <p class="m-0">${text}</p>
@@ -5615,9 +5778,9 @@ try {
                     <div class="msg-bubble">
                         <p class="m-0">${text}</p>
                     </div>
-                    <div class="msg-avatar shadow-sm border border-secondary border-opacity-25">
-                        <img src="${userAvatar}" style="${userAvatarStyle}" alt="User">
-                    </div>
+                    <!-- <div class="msg-avatar">
+                        <img src="${userAvatar}" style="width: 30px; ${userAvatarStyle}" alt="User">
+                    </div> -->
                 `;
             }
 

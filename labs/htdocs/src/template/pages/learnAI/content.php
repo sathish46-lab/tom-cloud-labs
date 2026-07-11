@@ -17,47 +17,9 @@ foreach ($chapters as $chapItem) {
 }
 
 $userId = (int)Session::getUser()->getUserId();
-$messages = [];
-$hasSummary = false;
-$summaryText = '';
+$userId = (int)Session::getUser()->getUserId();
 
-try {
-    // Single shared chat history per lesson across all chapters
-    $lessonIdStr = (string)($lesson['_id'] ?? '');
-    $chatDoc = $db->ai_chat_history->findOne([
-        'user_id' => $userId,
-        'lesson_id' => $lessonIdStr
-    ]);
-    if (!$chatDoc && !empty($chapter_id)) {
-        // Fallback for previous per-chapter saved chats
-        $chatDoc = $db->ai_chat_history->findOne([
-            'user_id' => $userId,
-            'chapter_id' => (string)$chapter_id
-        ]);
-    }
-
-    if ($chatDoc && isset($chatDoc['messages'])) {
-        foreach ($chatDoc['messages'] as $m) {
-            $msg = (array)$m;
-            if (($msg['role'] ?? '') === 'system_summary') {
-                $hasSummary = true;
-                $summaryText = $msg['content'] ?? '';
-            } else {
-                $messages[] = $msg;
-            }
-        }
-    }
-
-    // Chronological Sort
-    usort($messages, function($a, $b) {
-        $ta = (int)($a['timestamp'] ?? 0);
-        $tb = (int)($b['timestamp'] ?? 0);
-        return $ta - $tb;
-    });
-
-} catch (Exception $e) {
-    // Silence error to keep page alive
-}
+// Note: Chat history is now loaded asynchronously via fetch in learnAI.js
 
 $userAvatar = Session::getAvatar();
 $userAvatarStyle = Session::getAvatarStyle();
@@ -143,35 +105,16 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
     <!-- Main App Body -->
     <div class="flex-grow-1 d-flex flex-row overflow-hidden p-2 gap-0">
         
+<?php
+$isPanel1Expanded = false;
+if (is_array($dbSizesArr) && count($dbSizesArr) === 3 && $dbSizesArr[0] > 10) {
+    $isPanel1Expanded = true;
+}
+$panel1State = $isPanel1Expanded ? 'expanded' : 'collapsed';
+$panel1Class = $isPanel1Expanded ? '' : 'auto-compact';
+?>
         <!-- Panel 1: Collapsible Sidebar -->
-        <div id="learn-panel-1" class="split-panel h-100" style="width: var(--outlineSidebar-saved-width, 68px); min-width: 68px;" data-state="collapsed">
-            <script>
-            (function(){
-                var el = document.getElementById('learn-panel-1');
-                if(!el) return;
-                var prefs = (window.TOM_CONFIG && window.TOM_CONFIG.ui_preferences) || {};
-                var sz = sessionStorage.getItem('learnAiThreePanelSizes') || prefs['learnAiThreePanelSizes'];
-                if(sz && typeof sz !== 'string') sz = JSON.stringify(sz);
-                var isExp = false;
-                if(sz){
-                    try{
-                        var arr = JSON.parse(sz);
-                        if(Array.isArray(arr) && arr.length === 3){
-                            var w = (arr[0]/100)*(el.parentElement ? el.parentElement.offsetWidth : window.innerWidth);
-                            if(w > 110) isExp = true;
-                        }
-                    }catch(e){}
-                }
-                if(isExp){
-                    el.setAttribute('data-state', 'expanded');
-                    el.classList.remove('auto-compact');
-                } else {
-                    el.setAttribute('data-state', 'collapsed');
-                    el.classList.add('auto-compact');
-                    el.style.width = '68px';
-                }
-            })();
-            </script>
+        <div id="learn-panel-1" class="split-panel h-100 <?= $panel1Class ?>" style="width: var(--outlineSidebar-saved-width, 68px); min-width: 68px;" data-state="<?= $panel1State ?>">
             <div class="card h-100 border-secondary border-opacity-10 rounded-4 shadow-sm d-flex flex-column overflow-hidden">
                 <div class="card-header fs-6 d-flex justify-content-between align-items-center py-2 px-3">
                     <strong class="text-truncate" title="<?= htmlspecialchars($lesson['title']) ?>"><?= htmlspecialchars($lesson['title']) ?></strong>
@@ -427,69 +370,45 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
                     <input type="hidden" id="aiAvatarUrl" value="<?= $aiAvatar ?>">
 
                     <div id="aiChatHistory" class="chat-history flex-grow-1 overflow-auto custom-scrollbar p-2 d-flex flex-column gap-2">
-
-
-                        
-                        <?php if ($hasSummary && $summaryText): ?>
-                            <!-- RAG Summary of Previous Conversations -->
-                            <div class="message-row ai-row">
-                                <div class="msg-avatar">
-                                    <img src="<?= $aiAvatar ?>" style="width: 30px;" alt="AI">
-                                </div>
-                                <div class="msg-bubble summary-bubble">
-                                    <div class="d-flex align-items-center gap-2 mb-1 cursor-pointer" onclick="this.closest('.summary-bubble').querySelector('.summary-content').classList.toggle('d-none'); this.querySelector('.bx').classList.toggle('bx-chevron-down'); this.querySelector('.bx').classList.toggle('bx-chevron-right');">
-                                        <i class="bx bx-chevron-right text-info" style="font-size: 0.9rem;"></i>
-                                        <span class="badge bg-info bg-opacity-15 text-info" style="font-size: 0.6rem;">📋 Previous Context Summary</span>
-                                    </div>
-                                    <div class="summary-content d-none">
-                                        <p class="m-0 mt-1 text-secondary" style="font-size: 0.8rem; line-height: 1.5;"><?= nl2br(htmlspecialchars($summaryText)) ?></p>
-                                    </div>
-                                </div>
-                            </div>
-                        <?php endif; ?>
-
-                        <?php foreach ($messages as $msg): ?>
-                            <?php if ($msg['role'] === 'user'): ?>
-                                <div class="message-row user-row ms-auto">
-                                    <div class="msg-bubble">
-                                        <p class="m-0"><?= nl2br(htmlspecialchars($msg['content'])) ?></p>
-                                    </div>
-                                    <div class="msg-avatar shadow-sm border border-secondary border-opacity-25">
-                                        <img src="<?= $userAvatar ?>" style="<?= $userAvatarStyle ?>" alt="User">
-                                    </div>
-                                </div>
-                            <?php else: ?>
-                                <div class="message-row ai-row">
-                                    <div class="msg-avatar">
-                                        <img src="<?= $aiAvatar ?>" style="width: 30px;" alt="AI">
-                                    </div>
-                                    <div class="msg-bubble">
-                                        <p class="m-0"><?= nl2br(htmlspecialchars($msg['content'])) ?></p>
-                                    </div>
-                                </div>
-                            <?php endif; ?>
-                        <?php endforeach; ?>
+                        <!-- Chat history will be loaded here via JS fetch -->
                     </div>
 
-                    <!-- Bottom Input Bar -->
-                    <div class="chat-input-wrapper p-3 border-top border-secondary border-opacity-10 bg-black bg-opacity-10">
-                        <div class="chat-input-pill d-flex align-items-center gap-2 px-3 py-2 rounded-pill shadow-lg">
-                            <div class="input-actions-left d-flex gap-2">
-                                <i class="bx bx-plus-circle text-secondary fs-5 opacity-50 cursor-pointer"></i>
+                    <!-- Bottom Input Bar (from sna.css) -->
+                    <!-- Bottom Input Bar (from sna.css) -->
+                    <div class="input-container">
+                        <div class="unified-input-box simple-blur">
+                            <textarea class="user-text-input" type="text" id="aiChatInput" placeholder="Ask AI ✨" rows="1" style="height: auto; resize: none;"></textarea>
+                            
+                            <div class="token-ribbon">
+                                
+                                <!-- Token Metrics -->
+                                <div class="token-metrics" id="token-metrics">
+                                    <div class="context-progress" data-coreui-toggle="tooltip" data-coreui-original-title="Context window">
+                                        <svg class="progress-ring" width="24" height="24">
+                                            <circle class="progress-ring-bg" cx="12" cy="12" r="10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2"></circle>
+                                            <circle id="aiContextProgressRing" class="progress-ring-circle" cx="12" cy="12" r="10" fill="none" stroke="#0d6efd" stroke-width="2" stroke-dasharray="63" stroke-dashoffset="63" transform="rotate(-90 12 12)" style="transition: stroke-dashoffset 0.3s;"></circle>
+                                        </svg>
+                                        <span id="aiCachePercBadge" class="progress-percentage">0%</span>
+                                    </div>
+                                    <span id="aiTokensDisplay" class="context-value" data-coreui-toggle="tooltip" data-coreui-original-title="Context: 0 / 1M tokens">0/1M</span>
+                                    <span class="token-separator">|</span>
+                                    <span class="token-metric" data-coreui-toggle="tooltip" data-coreui-original-title="Output tokens">
+                                        ↑ <span id="aiOutputTokens" class="output-tokens">0</span>
+                                    </span>
+                                    <span id="aiCachedTokensWrap" class="token-metric cached-metric text-success" data-coreui-toggle="tooltip" data-coreui-original-title="Cached tokens">
+                                        💾 <span id="aiCachedTokens" class="cached-tokens">0</span>
+                                    </span>
+                                    
+                                    <button class="token-history-btn" id="token-history-btn" data-coreui-toggle="tooltip" aria-label="Token history" data-coreui-original-title="Token history">
+                                        <svg class="icon"><use xlink:href="/assets/icons/sprites/free.svg#cil-chart-line"></use></svg>
+                                    </button>
+                                </div>
+
+                                <!-- Send Button -->
+                                <button id="aiChatSend" class="send-button">
+                                    <svg class="nav-icon"><use xlink:href="/assets/icons/sprites/free.svg#cil-paper-plane"></use></svg>
+                                </button>
                             </div>
-                            <input type="text" id="aiChatInput" class="form-control bg-transparent border-0 text-white shadow-none ps-1" placeholder="Ask AI ✨" style="font-size: 0.95rem;">
-                            <button id="aiChatSend" class="btn btn-primary rounded-circle p-0 d-flex align-items-center justify-content-center shadow-lg" style="width: 38px; height: 38px; min-width: 38px;">
-                                <i class="bx bx-up-arrow-alt fs-4"></i>
-                            </button>
-                        </div>
-                        <div class="input-stats-row d-flex align-items-center justify-content-between mt-2 px-3 opacity-50" style="font-size: 0.65rem;">
-                             <div class="d-flex gap-3">
-                                 <span><i class="bx bx-chart me-1"></i> qwen-3-4b</span>
-                                 <span><i class="bx bx-bolt-circle me-1"></i> online</span>
-                             </div>
-                             <div class="d-flex gap-2 align-items-center">
-                                 <i class="bx bx-refresh cursor-pointer fs-6" title="Clear Chat" onclick="if(confirm('Clear history?')) document.getElementById('aiChatHistory').innerHTML=''"></i>
-                             </div>
                         </div>
                     </div>
                 </div>

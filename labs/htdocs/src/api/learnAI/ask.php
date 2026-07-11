@@ -44,6 +44,13 @@ try {
 
     if ($deterministicAnswer !== null) {
         // LAYER 4a: DETERMINISTIC PATH -> Stream local answer immediately via MQ (0 API cost)
+        // Determine which tool was executed for the badge
+        $toolName = 'Local Lookup';
+        $qLower = strtolower(trim($query));
+        if (preg_match('/chapter|lesson|studying/i', $qLower)) $toolName = 'Read Chapter Context';
+        if (preg_match('/lab|running|active/i', $qLower)) $toolName = 'List Labs';
+        if (preg_match('/architecture|tool|access|labsctl/i', $qLower)) $toolName = 'System Architecture';
+
         // 1. Persist deterministic exchange to MongoDB ai_chat_history
         try {
             $db = DatabaseConnection::getDefaultDatabase();
@@ -54,7 +61,7 @@ try {
                     'messages' => [
                         '$each' => [
                             ['role' => 'user', 'content' => $query, 'timestamp' => $ts],
-                            ['role' => 'model', 'content' => $deterministicAnswer, 'timestamp' => $ts + 1]
+                            ['role' => 'model', 'content' => $deterministicAnswer, 'timestamp' => $ts + 1, 'tool' => $toolName]
                         ]
                     ]
                 ]],
@@ -62,14 +69,33 @@ try {
             );
         } catch (Exception $e) {}
 
-        // 2. Stream raw markdown so the client renders it with marked.parse & Prism code highlighting
+        // 2. Send tool execution event first (for the ⚙️ badge)
+        $rabbit->sendMessage([
+            'type' => 'tool_execution',
+            'message_id' => $messageId,
+            'tool_name' => $toolName,
+            'tool_output' => 'Executed locally (0 API cost)'
+        ], "ai_stream.{$sessionId}");
+
+        // 3. Stream raw markdown so the client renders it with marked.parse & Prism code highlighting
         $rabbit->sendMessage([
             'type' => 'text_delta',
             'data' => $deterministicAnswer
         ], "ai_stream.{$sessionId}");
 
+        // 4. Send stream_end with usage data showing 0 API cost
         $rabbit->sendMessage([
-            'type' => 'stream_end'
+            'type' => 'stream_end',
+            'source' => 'local',
+            'usage' => [
+                'source' => 'local',
+                'input_tokens' => 0,
+                'output_tokens' => 0,
+                'cached_tokens' => 0,
+                'total_tokens' => 0,
+                'cache_hit_percent' => 0,
+                'tool_name' => $toolName
+            ]
         ], "ai_stream.{$sessionId}");
 
         echo json_encode([

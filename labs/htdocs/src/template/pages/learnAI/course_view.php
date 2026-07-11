@@ -84,34 +84,16 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
 
 <div class="learn-app-wrapper stable-app-view d-flex flex-column overflow-hidden bg-transparent" style="height: var(--app-height, 75vh);">
     <div class="flex-grow-1 d-flex flex-row overflow-hidden p-2 gap-0">
+<?php
+$isPanel1Expanded = false;
+if (is_array($dbSizesArr) && count($dbSizesArr) === 3 && $dbSizesArr[0] > 10) {
+    $isPanel1Expanded = true;
+}
+$panel1State = $isPanel1Expanded ? 'expanded' : 'collapsed';
+$panel1Class = $isPanel1Expanded ? '' : 'auto-compact';
+?>
         <!-- Panel 1: Collapsible Sidebar -->
-        <div id="learn-panel-1" class="split-panel h-100" style="width: var(--outlineSidebar-saved-width, 68px); min-width: 68px;" data-state="collapsed">
-            <script>
-            (function(){
-                var el = document.getElementById('learn-panel-1');
-                if(!el) return;
-                var prefs = (window.TOM_CONFIG && window.TOM_CONFIG.ui_preferences) || {};
-                var sz = sessionStorage.getItem('learnAiThreePanelSizes') || prefs['learnAiThreePanelSizes'];
-                if(sz && typeof sz !== 'string') sz = JSON.stringify(sz);
-                var isExp = false;
-                if(sz){
-                    try{
-                        var arr = JSON.parse(sz);
-                        if(Array.isArray(arr) && arr.length === 3){
-                            var w = (arr[0]/100)*(el.parentElement ? el.parentElement.offsetWidth : window.innerWidth);
-                            if(w > 175) isExp = true;
-                        }
-                    }catch(e){}
-                }
-                if(isExp){
-                    el.setAttribute('data-state', 'expanded');
-                    el.classList.remove('auto-compact');
-                } else {
-                    el.setAttribute('data-state', 'collapsed');
-                    el.classList.add('auto-compact');
-                }
-            })();
-            </script>
+        <div id="learn-panel-1" class="split-panel h-100 <?= $panel1Class ?>" style="width: var(--outlineSidebar-saved-width, 68px); min-width: 68px;" data-state="<?= $panel1State ?>">
             <div class="card h-100 border-secondary border-opacity-10 rounded-4 shadow-sm d-flex flex-column overflow-hidden">
                 <div class="card-header fs-6 d-flex justify-content-between align-items-center py-2 px-3">
                     <strong class="text-truncate" title="<?= htmlspecialchars($lesson['title']) ?>"><?= htmlspecialchars($lesson['title']) ?></strong>
