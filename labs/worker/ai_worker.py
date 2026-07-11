@@ -5,7 +5,10 @@ import sys
 import time
 import requests
 import redis
-import markdown
+try:
+    import markdown
+except ImportError:
+    markdown = None
 import google.generativeai as genai
 from pymongo import MongoClient
 from bson.objectid import ObjectId
@@ -46,7 +49,7 @@ except Exception as e:
 # Gemini Config
 print("Configuring Gemini API...", flush=True)
 genai.configure(api_key=config.get('ai_api_key'))
-model = genai.GenerativeModel('gemini-2.5-flash')
+model = genai.GenerativeModel('gemini-3.5-flash')
 print("Gemini model initialized.", flush=True)
 
 # MongoDB Config
@@ -138,10 +141,11 @@ def generate_summary_via_gemini(messages_to_summarize):
     
     return None
 
-def maybe_summarize(user_id, chapter_id, ai_model='lm_studio'):
+def maybe_summarize(user_id, lesson_id, chapter_id, ai_model='lm_studio'):
     """Check if conversation needs summarization and perform it if needed"""
     try:
-        chat_doc = db.ai_chat_history.find_one({"user_id": int(user_id), "chapter_id": chapter_id})
+        filter_key = {"user_id": int(user_id), "lesson_id": lesson_id} if lesson_id else {"user_id": int(user_id), "chapter_id": chapter_id}
+        chat_doc = db.ai_chat_history.find_one(filter_key)
         if not chat_doc or 'messages' not in chat_doc:
             return
         
@@ -182,7 +186,7 @@ def maybe_summarize(user_id, chapter_id, ai_model='lm_studio'):
         
         # Atomic replace in MongoDB
         db.ai_chat_history.update_one(
-            {'user_id': int(user_id), 'chapter_id': chapter_id},
+            filter_key,
             {'$set': {
                 'messages': new_messages,
                 'last_summary_at': int(time.time()),
@@ -300,6 +304,7 @@ def process_ai_job(ch, method, properties, body):
         session_id = job.get('session_id')
         message_id = job.get('message_id')
         query = job.get('query')
+        lesson_id = str(job.get('lesson_id', ''))
         chapter_id = job.get('chapter_id', '')
         user_id = job.get('user_id')
         ai_model = job.get('ai_model', 'gemini')
@@ -315,10 +320,14 @@ def process_ai_job(ch, method, properties, body):
             ch.basic_ack(delivery_tag=method.delivery_tag)
             return
 
-        # Fetch Chat History (includes summary if it exists)
+        # Fetch Chat History (single shared chat history per lesson)
         history = []
         if user_id is not None:
-            chat_doc = db.ai_chat_history.find_one({"user_id": user_id, "chapter_id": chapter_id})
+            chat_doc = None
+            if lesson_id:
+                chat_doc = db.ai_chat_history.find_one({"user_id": user_id, "lesson_id": lesson_id})
+            if not chat_doc and chapter_id:
+                chat_doc = db.ai_chat_history.find_one({"user_id": user_id, "chapter_id": chapter_id})
             if chat_doc and 'messages' in chat_doc:
                 full_history = chat_doc['messages']
                 
@@ -335,33 +344,48 @@ def process_ai_job(ch, method, properties, body):
                 
                 print(f"   > Loaded {len(history)} context entries ({len(summary_entries)} summary + {len(recent)} recent of {len(regular_messages)} total)")
 
+        # Build authoritative system context from Layer 5 pre-fetch
+        ctx = job.get('context', {})
+        ch_ctx = ctx.get('chapter_context', {})
+        lab_ctx = ctx.get('lab_context', {})
+        system_context_text = (
+            f"You are the AI Learning Assistant for Tom Cloud Labs. "
+            f"The user is currently studying the lesson '{ch_ctx.get('lesson_title', 'Database Design and Organization')}', "
+            f"Module '{ch_ctx.get('module_name', 'General')}', "
+            f"Chapter '{ch_ctx.get('title', 'Chapter Overview')}'. "
+            f"Their active lab environment is '{lab_ctx.get('name', 'Essentials')}' (IP: {lab_ctx.get('ip', '172.30.0.28')}). "
+            f"CRITICAL RULE: DO NOT spontaneously mention the lesson name, chapter name, module name, or lab IP in your greetings or general responses. ONLY mention this context if the user EXPLICITLY asks about their current lesson, chapter, or lab environment."
+        )
+
         # 1. Start Streaming from Gemini or LM Studio
         full_content = ""
         
         if ai_model == 'lm_studio':
             lm_studio_url = config.get('lm_studio_url', 'http://172.17.0.1:1234/v1/chat/completions')
-            # Provide an immediate stream chunk to show connected
             stream_to_user(ch, session_id, message_id, "", is_final=False)
             
             def send_chunk(text, is_final=False):
                 stream_to_user(ch, session_id, message_id, text, is_final=is_final)
                 
-            full_content = stream_lm_studio(query, lm_studio_url, send_chunk, history=history)
+            lm_history = [{"role": "system", "content": system_context_text}] + history
+            full_content = stream_lm_studio(query, lm_studio_url, send_chunk, history=lm_history)
             print(f"   > LM Studio stream completed")
         else:
             # Format history for Gemini API
-            gemini_history = []
+            gemini_history = [
+                {"role": "user", "parts": [f"[System Context]: {system_context_text}"]},
+                {"role": "model", "parts": ["Understood. I am locked onto your active lesson, chapter, and lab context."]}
+            ]
             for msg in history:
                 role = msg.get('role', 'user')
                 content = msg.get('content', '')
                 
-                # Handle system_summary: inject as a user+model exchange for Gemini context
                 if role == 'system_summary':
                     gemini_history.append({"role": "user", "parts": [f"[System: Here is a summary of our previous conversation]: {content}"]})
                     gemini_history.append({"role": "model", "parts": ["I understand. I'll keep this context in mind as we continue our conversation."]})
                     continue
                 
-                role = 'model' if role == 'assistant' else role # Gemini uses 'model' instead of 'assistant'
+                role = 'model' if role == 'assistant' else role
                 gemini_history.append({"role": role, "parts": [content]})
                 
             chat_session = model.start_chat(history=gemini_history)
@@ -380,8 +404,9 @@ def process_ai_job(ch, method, properties, body):
         if user_id is not None and full_content.strip():
             try:
                 ts = int(time.time())
+                filter_key = {'user_id': user_id, 'lesson_id': lesson_id} if lesson_id else {'user_id': user_id, 'chapter_id': chapter_id}
                 db.ai_chat_history.update_one(
-                    {'user_id': user_id, 'chapter_id': chapter_id},
+                    filter_key,
                     {'$push': {
                         'messages': {
                             '$each': [
@@ -392,10 +417,10 @@ def process_ai_job(ch, method, properties, body):
                     }},
                     upsert=True
                 )
-                print(f" [✓] Persisted chat memory for user {user_id} in chapter '{chapter_id}'")
+                print(f" [✓] Persisted chat memory for user {user_id} in lesson '{lesson_id}'")
                 
                 # 4. RAG Summarization: Check if we need to compress old messages
-                maybe_summarize(user_id, chapter_id, ai_model)
+                maybe_summarize(user_id, lesson_id, chapter_id, ai_model)
                 
             except Exception as e:
                 print(f" [!] Failed to update MongoDB Chat History: {e}")
@@ -464,10 +489,13 @@ def process_content_job(ch, method, properties, body):
 
         if full_content.strip():
             # Parse Markdown to HTML
-            rendered_html = markdown.markdown(
-                full_content,
-                extensions=['fenced_code', 'tables', 'nl2br', 'sane_lists']
-            )
+            if markdown:
+                rendered_html = markdown.markdown(
+                    full_content,
+                    extensions=['fenced_code', 'tables', 'nl2br', 'sane_lists']
+                )
+            else:
+                rendered_html = f'<div class="raw-markdown">{full_content}</div>'
 
             # Save to MongoDB
             db.ai_chapters.update_one(

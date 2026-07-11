@@ -22,13 +22,21 @@ $hasSummary = false;
 $summaryText = '';
 
 try {
-    // Query with consistent integer user_id and exact chapter_id string match
+    // Single shared chat history per lesson across all chapters
+    $lessonIdStr = (string)($lesson['_id'] ?? '');
     $chatDoc = $db->ai_chat_history->findOne([
         'user_id' => $userId,
-        'chapter_id' => (string)$chapter_id
+        'lesson_id' => $lessonIdStr
     ]);
+    if (!$chatDoc && !empty($chapter_id)) {
+        // Fallback for previous per-chapter saved chats
+        $chatDoc = $db->ai_chat_history->findOne([
+            'user_id' => $userId,
+            'chapter_id' => (string)$chapter_id
+        ]);
+    }
 
-    if ($chatDoc && isset($chatDoc['messages']) && is_array($chatDoc['messages'])) {
+    if ($chatDoc && isset($chatDoc['messages'])) {
         foreach ($chatDoc['messages'] as $m) {
             $msg = (array)$m;
             if (($msg['role'] ?? '') === 'system_summary') {
@@ -119,9 +127,15 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
         } catch (e) {}
     }
 
-    const headerHeight = 64; // 4rem header height
-    const footerHeight = 38; // footer height
-    document.documentElement.style.setProperty('--app-height', (window.innerHeight - headerHeight - footerHeight) + 'px');
+    function updateAppHeight() {
+        const header = document.querySelector('header.header');
+        const footer = document.querySelector('footer.footer');
+        const hHeight = header ? header.offsetHeight : 64;
+        const fHeight = footer ? footer.offsetHeight : 38;
+        document.documentElement.style.setProperty('--app-height', Math.max(400, window.innerHeight - hHeight - fHeight) + 'px');
+    }
+    updateAppHeight();
+    window.addEventListener('resize', updateAppHeight);
 })();
 </script>
 
@@ -165,9 +179,9 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
                         <i class="bx bx-heart fs-5"></i>
                     </button>
                 </div>
-                <div class="card-body p-0 overflow-x-auto d-flex flex-column">
-                    <!-- Top section: controls and chapters -->
-                    <div class="lesson-chapters-section">
+                <div class="card-body p-0 overflow-hidden d-flex flex-column">
+                    <!-- Top section: controls and chapters (scrollable independently) -->
+                    <div class="lesson-chapters-section flex-grow-1 overflow-y-auto custom-scrollbar">
                         <div class="d-flex justify-content-center align-items-center p-2 lesson-controls gap-2 border-bottom border-secondary border-opacity-10">
                             <!-- Like button (shown in compact mode via sna.css) -->
                             <button class="btn btn-link p-0 text-secondary like-lesson-btn like-lesson-btn-compact" data-tooltip="Like Lesson">
@@ -200,17 +214,19 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
                                 <div class="accordion-item bg-transparent border-bottom border-secondary border-opacity-10">
                                     <h2 class="accordion-header m-0">
                                         <button class="accordion-button bg-transparent text-white py-2 px-3 d-flex align-items-center shadow-none <?= $mod_idx > 1 ? 'collapsed' : '' ?>" type="button" data-coreui-toggle="collapse" data-coreui-target="#flush-collapse<?= $mod_idx ?>" aria-expanded="<?= $mod_idx === 1 ? 'true' : 'false' ?>" aria-controls="flush-collapse<?= $mod_idx ?>">
-                                            <span class="accordion-num badge rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;" data-tooltip="<?= htmlspecialchars($mod_name) ?>"><?= $mod_idx ?></span>
-                                            <span class="module-title-text"><?= htmlspecialchars($mod_name) ?></span>
+                                            <?php $clean_mod_name = preg_replace('/^\d+[\.\)]\s*/', '', $mod_name); ?>
+                                            <span class="accordion-num badge rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;" data-tooltip="<?= htmlspecialchars($clean_mod_name) ?>"><?= $mod_idx ?></span>
+                                            <span class="module-title-text"><?= htmlspecialchars($clean_mod_name) ?></span>
                                         </button>
                                     </h2>
                                     <div id="flush-collapse<?= $mod_idx ?>" class="accordion-collapse collapse <?= $mod_idx === 1 ? 'show' : '' ?>" data-coreui-parent="#accordionFlushExample">
                                         <div class="accordion-body p-1">
-                                            <?php foreach ($mod_chapters as $chap): ?>
-                                                <a href="/learn/lesson/<?= $lesson['_id'] ?>/chapter/<?= $chap['_id'] ?>" class="btn btn-sm d-flex align-items-center justify-content-between w-100 text-start py-2 px-2 rounded mb-1 learn-accordion-btn <?= ($chap['_id'] ?? '') == ($chapter['_id'] ?? '') ? 'active bg-primary bg-opacity-25 text-white fw-bold' : 'text-secondary' ?>" data-tooltip="<?= htmlspecialchars($chap['title']) ?>">
+                                            <?php $chap_local_idx = 1; foreach ($mod_chapters as $chap): ?>
+                                                <?php $clean_chap_title = preg_replace('/^\d+[\.\)]\s*/', '', $chap['title']); ?>
+                                                <a href="/learn/lesson/<?= $lesson['_id'] ?>/chapter/<?= $chap['_id'] ?>" class="btn btn-sm d-flex align-items-center justify-content-between w-100 text-start py-2 px-2 rounded mb-1 learn-accordion-btn <?= ($chap['_id'] ?? '') == ($chapter['_id'] ?? '') ? 'active bg-primary bg-opacity-25 text-white fw-bold' : 'text-secondary' ?>" data-tooltip="<?= htmlspecialchars($clean_chap_title) ?>">
                                                     <div class="d-flex align-items-center gap-2">
-                                                        <span class="chapter-num-btn badge rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 24px; height: 24px;"><?= $chap['order'] ?></span>
-                                                        <h6 class="m-0 small chapter-title-text <?= ($chap['_id'] ?? '') == ($chapter['_id'] ?? '') ? 'text-white' : 'text-secondary' ?>"><?= htmlspecialchars($chap['title']) ?></h6>
+                                                        <span class="chapter-num-btn badge rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 24px; height: 24px;"><?= $chap_local_idx++ ?></span>
+                                                        <h6 class="m-0 small chapter-title-text <?= ($chap['_id'] ?? '') == ($chapter['_id'] ?? '') ? 'text-white' : 'text-secondary' ?>"><?= htmlspecialchars($clean_chap_title) ?></h6>
                                                     </div>
                                                     <i class="bx <?= ($chap['_id'] ?? '') == ($chapter['_id'] ?? '') ? 'bxs-check-circle text-primary' : 'bx-check-circle opacity-50' ?> icon"></i>
                                                 </a>
@@ -220,13 +236,101 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
                                 </div>
                             <?php $mod_idx++; endforeach; ?>
                         </div>
-                    </div>
 
-                    <!-- Bottom Lab Section / Actions matching SNA -->
-                    <div class="lesson-lab-section mt-auto d-flex flex-column align-items-center gap-3 pt-3 border-top border-secondary border-opacity-10 w-100">
-                        <i class="bx bxl-ubuntu text-warning fs-4"></i>
-                        <i class="bx bx-terminal text-secondary fs-4"></i>
-                        <i class="bx bx-info-circle text-secondary fs-4"></i>
+                        <?php
+                        $labsList = Session::get('labs_list', []);
+                        $currentLab = null;
+                        if (!empty($labsList)) {
+                            foreach ($labsList as $lItem) {
+                                if (($lItem['status'] ?? '') === 'running' && (stripos($lItem['name'] ?? '', 'Essential') !== false || ($lItem['id'] ?? '') === 'essentials')) {
+                                    $currentLab = $lItem;
+                                    break;
+                                }
+                            }
+                            if (!$currentLab) {
+                                foreach ($labsList as $lItem) {
+                                    if (($lItem['status'] ?? '') === 'running') {
+                                        $currentLab = $lItem;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!$currentLab) $currentLab = $labsList[0];
+                        }
+                        if (!$currentLab) {
+                            $currentLab = [
+                                'name' => 'Essentials',
+                                'ip' => '172.30.0.28',
+                                'status' => 'running',
+                                'is_public' => 'public',
+                                'hash' => 'essentials-lab-id',
+                                'icon' => 'tux',
+                                'badges' => ['beta']
+                            ];
+                        }
+                        $labName = $currentLab['name'] ?? 'Essentials';
+                        $labIp = $currentLab['ip'] ?? '172.30.0.28';
+                        $labStatus = $currentLab['status'] ?? 'running';
+                        $labPublic = $currentLab['is_public'] ?? 'public';
+                        $labHash = $currentLab['hash'] ?? 'essentials-lab-id';
+                        $labBadges = $currentLab['badges'] ?? ['beta'];
+
+                        $iconMap = [
+                            'tux'    => 'bxl-tux',
+                            'docker' => 'bxl-docker',
+                            'git-repo-forked' => 'bx-git-repo-forked'
+                        ];
+                        $bxClass = $iconMap[$currentLab['icon'] ?? ''] ?? 'bxl-tux';
+                        ?>
+
+                        <!-- Bottom Lab Section scrolling naturally with chapters -->
+                        <div class="lesson-lab-section mt-auto pt-3 border-top border-secondary border-opacity-10 w-100 px-2 pb-3">
+                            <!-- EXPANDED FULL LAB CARD (Screenshot 1) -->
+                            <div class="outline-full flex-column w-100">
+                                <h6 class="small fw-bold text-white mb-2 px-1">Required Lab</h6>
+                                <div class="lab-card-box rounded-4 overflow-hidden w-100 position-relative shadow-sm" style="background: rgba(45, 25, 30, 0.45); border: 1px solid rgba(255, 255, 255, 0.1);">
+                                    <i class="bx <?= $bxClass ?> position-absolute end-0 top-50 translate-middle-y text-white opacity-10" style="font-size: 5.5rem; pointer-events: none;"></i>
+                                    <div class="p-3 position-relative">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <span class="fw-bold text-white fs-6"><?= htmlspecialchars($labName) ?> Lab</span>
+                                            <i class="bx bx-info-circle small text-secondary ms-1"></i>
+                                        </div>
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <span class="font-monospace text-white fs-6"><?= htmlspecialchars($labIp) ?></span>
+                                            <div class="d-flex align-items-center gap-1">
+                                                <button type="button" class="btn btn-link p-1 text-secondary hover-text-white" onclick="navigator.clipboard.writeText('<?= htmlspecialchars($labIp) ?>')" title="Copy IP"><i class="bx bx-copy fs-5"></i></button>
+                                                <a href="/labs/dashboard/<?= htmlspecialchars($labHash) ?>" class="btn btn-link p-1 text-secondary hover-text-white" title="Open Lab"><i class="bx bx-share fs-5"></i></a>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex flex-wrap align-items-center gap-1">
+                                            <?php foreach ($labBadges as $badge): ?>
+                                                <span class="badge rounded-pill px-2 py-1 small fw-bold" style="background-color: #6366f1 !important; color: #fff;"><?= htmlspecialchars($badge) ?></span>
+                                            <?php endforeach; ?>
+                                            <span class="badge rounded-pill bg-warning text-dark px-2 py-1 small fw-bold"><?= htmlspecialchars($labPublic) ?></span>
+                                            <span class="badge rounded-pill bg-success text-white px-2 py-1 small fw-bold"><?= htmlspecialchars($labStatus) ?></span>
+                                        </div>
+                                    </div>
+                                    <!-- Action Buttons Bar matching Screenshot 1 -->
+                                    <div class="d-flex border-top border-secondary border-opacity-25" style="background: rgba(15, 23, 42, 0.85);">
+                                        <button type="button" class="btn btn-link flex-fill py-2 text-white border-end border-secondary border-opacity-25 d-flex align-items-center justify-content-center" style="background-color: #6366f1;" onclick="openCodeModal('<?= $labHash ?>', '<?= addslashes($labName) ?> Lab', '<?= $labStatus ?>')" title="Terminal"><i class="bx bx-terminal fs-5"></i></button>
+                                        <a href="/labs/dashboard/<?= htmlspecialchars($labHash) ?>" class="btn btn-link flex-fill py-2 text-white border-end border-secondary border-opacity-25 d-flex align-items-center justify-content-center" style="background-color: #10b981;" title="Ports & Services"><i class="bx bx-grid-alt fs-5"></i></a>
+                                        <button type="button" class="btn btn-link flex-fill py-2 text-white d-flex align-items-center justify-content-center" style="background-color: #06b6d4;" onclick="openConnectionModal('<?= $labHash ?>', '<?= addslashes($labName) ?> Lab', '<?= $labStatus ?>')" title="Lab Info"><i class="bx bx-info-circle fs-5"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- COMPACT LAB ICONS ONLY (Screenshot 2) -->
+                            <div class="outline-compact flex-column align-items-center gap-2 w-100">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 38px; height: 38px; background: rgba(234, 88, 12, 0.2); border: 2px solid #ea580c;" data-tooltip="<?= htmlspecialchars($labName) ?> Lab (<?= htmlspecialchars($labIp) ?>)">
+                                    <i class="bx <?= $bxClass ?> fs-4 text-white"></i>
+                                </div>
+                                <div class="d-flex flex-column rounded-pill p-1 gap-1 border border-secondary border-opacity-25 shadow-sm" style="background: rgba(15, 23, 42, 0.85);">
+                                    <button type="button" class="btn btn-sm rounded-pill d-flex align-items-center justify-content-center p-0 text-white" style="background-color: #6366f1; width: 34px; height: 26px;" onclick="openCodeModal('<?= $labHash ?>', '<?= addslashes($labName) ?> Lab', '<?= $labStatus ?>')" data-tooltip="Terminal"><i class="bx bx-terminal fs-6"></i></button>
+                                    <a href="/labs/dashboard/<?= htmlspecialchars($labHash) ?>" class="btn btn-sm rounded-pill d-flex align-items-center justify-content-center p-0 text-white" style="background-color: #10b981; width: 34px; height: 26px;" data-tooltip="Ports & Services"><i class="bx bx-grid-alt fs-6"></i></a>
+                                    <button type="button" class="btn btn-sm rounded-pill d-flex align-items-center justify-content-center p-0 text-white" style="background-color: #06b6d4; width: 34px; height: 26px;" onclick="openConnectionModal('<?= $labHash ?>', '<?= addslashes($labName) ?> Lab', '<?= $labStatus ?>')" data-tooltip="Lab Info"><i class="bx bx-info-circle fs-6"></i></button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -260,17 +364,22 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
 
                     <div id="map-container" style="display:none"></div>
 
-                    <div class="p-3 p-lg-4 flex-grow-1 overflow-auto custom-scrollbar position-relative">
+                    <div class="p-3 flex-grow-1 overflow-auto custom-scrollbar position-relative">
                         <!-- Generation Loading Skeleton -->
                         <div id="contentGeneratingStatus" class="d-none alert alert-dark border-secondary border-opacity-25 rounded-3 mb-4 d-flex align-items-center gap-3">
                             <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
                             <span class="small text-secondary">Senior Mentor is crafting practical tutorial material...</span>
                         </div>
 
-                        <div id="chapterContentContainer" class="chapter-text-content lh-lg" style="font-size: 1.05rem;" data-raw-md="<?= htmlspecialchars($chapter['content'] ?? '') ?>">
-                            <?php if (!empty($chapter['content_html']) && $chapter['content_html'] !== '...'): ?>
+                        <?php
+                        $isDummyFallback = !empty($chapter['content']) && strpos($chapter['content'], 'Welcome to this chapter on') !== false;
+                        $hasRealHtml = !empty($chapter['content_html']) && $chapter['content_html'] !== '...' && strpos($chapter['content_html'], 'Welcome to this chapter on') === false;
+                        $hasRealMd = !empty($chapter['content']) && $chapter['content'] !== '...' && !$isDummyFallback;
+                        ?>
+                        <div id="chapterContentContainer" class="chapter-text-content lh-lg" style="font-size: 1.05rem;" data-raw-md="<?= htmlspecialchars((!$hasRealHtml && $hasRealMd) ? $chapter['content'] : '') ?>">
+                            <?php if ($hasRealHtml): ?>
                                 <?= $chapter['content_html'] ?>
-                            <?php elseif (!empty($chapter['content']) && $chapter['content'] !== '...'): ?>
+                            <?php elseif ($hasRealMd): ?>
                                 <div class="raw-markdown-fallback"><?= htmlspecialchars($chapter['content']) ?></div>
                             <?php else: ?>
                                 <div id="emptyContentPrompt" class="text-center py-5 my-4">
@@ -304,28 +413,22 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
                     </div>
                     <div class="d-flex gap-2 align-items-center">
                          <select id="aiModelSelect" class="form-select form-select-sm bg-transparent text-secondary border-0 p-0 me-1" style="font-size: 0.7rem; width: auto; cursor: pointer;">
-                             <option value="lm_studio">LM Studio</option>
                              <option value="gemini">Gemini</option>
+                             <option value="lm_studio">LM Studio</option>
                          </select>
                          <i class="bx bx-refresh text-secondary cursor-pointer fs-6 opacity-50 hover-opacity-100" title="Clear Chat" onclick="if(confirm('Clear?')) document.getElementById('aiChatHistory').innerHTML=''"></i>
                     </div>
                 </div>
                 <div class="card-body p-0 d-flex flex-column flex-grow-1 overflow-hidden position-relative">
+                    <input type="hidden" id="currentLessonId" value="<?= $lesson['_id'] ?? '' ?>">
                     <input type="hidden" id="currentChapterId" value="<?= $chapter['_id'] ?? '' ?>">
                     <input type="hidden" id="userAvatarUrl" value="<?= $userAvatar ?>">
                     <input type="hidden" id="userAvatarStyle" value="<?= $userAvatarStyle ?>">
                     <input type="hidden" id="aiAvatarUrl" value="<?= $aiAvatar ?>">
 
                     <div id="aiChatHistory" class="chat-history flex-grow-1 overflow-auto custom-scrollbar p-2 d-flex flex-column gap-2">
-                        <!-- AI Introduction -->
-                        <div class="message-row ai-row">
-                            <div class="msg-avatar">
-                                <img src="<?= $aiAvatar ?>" style="width: 30px;" alt="AI">
-                            </div>
-                            <div class="msg-bubble">
-                                <p class="m-0">Hello! I'm your AI learning assistant. How can I help you understand "<?= htmlspecialchars($chapter['title']) ?>" better today? ✨</p>
-                            </div>
-                        </div>
+
+
                         
                         <?php if ($hasSummary && $summaryText): ?>
                             <!-- RAG Summary of Previous Conversations -->
@@ -405,6 +508,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+
+<!-- Code + Connection modals (API-driven, shared partial) -->
+<?php include __DIR__ . '/../labs/partials/lab_action_modals.php'; ?>
 
 <style>
 /* App Layout Overrides */

@@ -19,16 +19,16 @@ $user = Session::getUser();
                 
                 <div class="card bg-dark border-secondary border-opacity-10 rounded-4 shadow-lg overflow-hidden">
                     <div class="card-body p-0">
-                        <textarea class="form-control bg-transparent text-white border-0 p-3" 
+                        <textarea id="aiLessonPrompt" class="form-control bg-transparent text-white border-0 p-3" 
                                   placeholder="Search lessons or describe a topic..." 
                                   rows="2" style="resize: none; font-size: 1rem;"></textarea>
                         <div class="d-flex align-items-center justify-content-end p-2 bg-dark bg-opacity-25 border-top border-secondary border-opacity-10">
-                            <select class="form-select form-select-sm bg-dark text-white border-secondary border-opacity-25 rounded-pill me-2" style="width: auto; font-size: 0.75rem;">
-                                <option>Beginner</option>
-                                <option>Intermediate</option>
-                                <option>Advanced</option>
+                            <select id="aiLessonLevel" class="form-select form-select-sm bg-dark text-white border-secondary border-opacity-25 rounded-pill me-2" style="width: auto; font-size: 0.75rem;">
+                                <option value="Beginner">Beginner</option>
+                                <option value="Intermediate">Intermediate</option>
+                                <option value="Advanced">Advanced</option>
                             </select>
-                            <button class="btn btn-primary btn-sm rounded-circle shadow-sm" style="width: 32px; height: 32px; padding: 0;">
+                            <button id="btnGenerateLesson" type="button" class="btn btn-primary btn-sm rounded-circle shadow-sm" style="width: 32px; height: 32px; padding: 0;">
                                  <i class="bx bx-send"></i>
                             </button>
                         </div>
@@ -105,13 +105,72 @@ $user = Session::getUser();
     </div>
 </div>
 
+<!-- AI Lesson Generation Progress Modal Card -->
+<div class="modal fade" id="lessonGenModal" tabindex="-1" aria-hidden="true" data-coreui-backdrop="static" data-coreui-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-secondary border-opacity-25 shadow-lg rounded-4 overflow-hidden bg-dark text-white">
+            <div class="modal-header border-0 p-4 pb-0 d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill px-3 py-1">
+                        <i class="bx bx-bot me-1"></i> Learn AI Generator
+                    </span>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-coreui-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <div class="ai-icon-wrapper my-3 position-relative d-inline-flex align-items-center justify-content-center">
+                    <div class="ai-ring"></div>
+                    <i class="bx bx-chip text-primary fs-1 position-relative z-1"></i>
+                </div>
+
+                <h5 class="fw-bold mb-1 text-white" id="lessonGenTopicDisplay">Curating AI Learning Path...</h5>
+                <p class="text-secondary small mb-4" id="lessonGenLevelDisplay">Professional Interactive Course</p>
+
+                <div class="mb-2 d-flex justify-content-between align-items-center">
+                    <span class="text-secondary small" id="lessonGenStatus">Initializing AI engine...</span>
+                    <span class="fw-bold text-primary small" id="lessonGenPercent">5%</span>
+                </div>
+                <div class="progress bg-secondary bg-opacity-25 rounded-pill mb-4" style="height: 6px;">
+                    <div id="lessonGenProgress" class="progress-bar progress-bar-striped progress-bar-animated bg-primary rounded-pill" role="progressbar" style="width: 5%"></div>
+                </div>
+
+                <!-- Live Job Status Response Card -->
+                <div class="card bg-black bg-opacity-50 border-secondary border-opacity-25 rounded-3 text-start p-3 font-monospace small">
+                    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-secondary border-opacity-10">
+                        <span class="text-secondary" style="font-size: 0.7rem;">JOB STATUS DETAILS</span>
+                        <span id="lessonGenStatusBadge" class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-25">RUNNING</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1" style="font-size: 0.75rem;">
+                        <span class="text-secondary">request_id:</span>
+                        <span id="lessonGenRequestId" class="text-info text-truncate ms-2" style="max-width: 220px;">--</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1" style="font-size: 0.75rem;">
+                        <span class="text-secondary">status:</span>
+                        <span id="lessonGenStatusValue" class="text-white">running</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1" style="font-size: 0.75rem;">
+                        <span class="text-secondary">message:</span>
+                        <span id="lessonGenMessageValue" class="text-white text-truncate ms-2">running</span>
+                    </div>
+                    <div class="d-flex justify-content-between" style="font-size: 0.75rem;">
+                        <span class="text-secondary">completed:</span>
+                        <span id="lessonGenCompletedValue" class="text-white">false</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 p-4 pt-0 justify-content-center">
+                <button id="btnCancelLessonGen" type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-4" data-coreui-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
 /* App Layout Overrides */
 .learn-app-wrapper { background: transparent; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .whitespace-nowrap { white-space: nowrap; }
 .transition-all-lite { transition: all 0.2s ease; }
-
 
 /* Extra small button */
 .btn-xs { 
@@ -120,7 +179,160 @@ $user = Session::getUser();
     line-height: 1.2;
 }
 
+/* AI Ring Pulse */
+.ai-icon-wrapper {
+    width: 72px;
+    height: 72px;
+}
+.ai-ring {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border-radius: 50%;
+    background: rgba(13, 110, 253, 0.15);
+    border: 1px solid rgba(13, 110, 253, 0.4);
+    animation: ai-ring-pulse 2s infinite ease-in-out;
+}
+@keyframes ai-ring-pulse {
+    0% { transform: scale(0.9); opacity: 0.8; }
+    50% { transform: scale(1.18); opacity: 0.35; }
+    100% { transform: scale(0.9); opacity: 0.8; }
+}
+
 @media (max-width: 768px) {
     .display-6 { font-size: 1.5rem !important; }
 }
 </style>
+
+<script>
+window.onPageLoad(function() {
+    const promptInput = document.getElementById('aiLessonPrompt');
+    const levelSelect = document.getElementById('aiLessonLevel');
+    const btnSend = document.getElementById('btnGenerateLesson');
+
+    // Make sample topic badges clickable
+    document.querySelectorAll('.badge.bg-secondary.text-white').forEach(badge => {
+        badge.style.cursor = 'pointer';
+        badge.addEventListener('click', () => {
+            if (promptInput) {
+                promptInput.value = badge.textContent.trim();
+                promptInput.focus();
+            }
+        });
+    });
+
+    let pollInterval = null;
+
+    function stopPolling() {
+        if (pollInterval) {
+            clearInterval(pollInterval);
+            pollInterval = null;
+        }
+    }
+
+    function startLessonGeneration() {
+        const topic = promptInput ? promptInput.value.trim() : '';
+        const level = levelSelect ? levelSelect.value : 'Beginner';
+
+        if (!topic) {
+            if (promptInput) promptInput.focus();
+            return;
+        }
+
+        stopPolling();
+
+        const modalEl = document.getElementById('lessonGenModal');
+        const modal = coreui.Modal.getInstance(modalEl) || new coreui.Modal(modalEl);
+
+        // Reset UI state without displaying raw prompt
+        document.getElementById('lessonGenTopicDisplay').textContent = "Curating AI Learning Path...";
+        document.getElementById('lessonGenLevelDisplay').textContent = level + ' Level Professional Course';
+        document.getElementById('lessonGenProgress').style.width = '10%';
+        document.getElementById('lessonGenProgress').className = 'progress-bar progress-bar-striped progress-bar-animated bg-primary rounded-pill';
+        document.getElementById('lessonGenPercent').textContent = '10%';
+        document.getElementById('lessonGenStatus').textContent = 'Initiating AI request...';
+        document.getElementById('lessonGenRequestId').textContent = 'Generating...';
+        document.getElementById('lessonGenStatusValue').textContent = 'running';
+        document.getElementById('lessonGenMessageValue').textContent = 'running';
+        document.getElementById('lessonGenCompletedValue').textContent = 'false';
+
+        const statusBadge = document.getElementById('lessonGenStatusBadge');
+        statusBadge.className = 'badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-25';
+        statusBadge.textContent = 'RUNNING';
+
+        modal.show();
+
+        fetch('/src/api/learnAI/generate_lesson.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ topic: topic, level: level })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data && data.request_id) {
+                document.getElementById('lessonGenRequestId').textContent = data.request_id;
+                document.getElementById('lessonGenStatusValue').textContent = data.status || 'running';
+                document.getElementById('lessonGenMessageValue').textContent = data.message || 'running';
+
+                // Poll job status
+                pollInterval = setInterval(() => {
+                    fetch(`/src/api/learnAI/job_status.php?request_id=${encodeURIComponent(data.request_id)}`)
+                        .then(r => r.json())
+                        .then(job => {
+                            if (!job) return;
+
+                            const pct = job.percentage || 40;
+                            document.getElementById('lessonGenProgress').style.width = pct + '%';
+                            document.getElementById('lessonGenPercent').textContent = pct + '%';
+                            document.getElementById('lessonGenStatus').textContent = job.message || 'Processing...';
+                            document.getElementById('lessonGenStatusValue').textContent = job.status || 'running';
+                            document.getElementById('lessonGenMessageValue').textContent = job.message || 'running';
+                            document.getElementById('lessonGenCompletedValue').textContent = job.completed ? 'true' : 'false';
+
+                            if (job.completed && job.lesson_id) {
+                                stopPolling();
+                                document.getElementById('lessonGenProgress').style.width = '100%';
+                                document.getElementById('lessonGenProgress').className = 'progress-bar bg-success rounded-pill';
+                                document.getElementById('lessonGenPercent').textContent = '100%';
+                                document.getElementById('lessonGenStatus').textContent = 'Complete! Redirecting to lesson...';
+                                statusBadge.className = 'badge bg-success bg-opacity-25 text-success border border-success border-opacity-25';
+                                statusBadge.textContent = 'COMPLETED';
+
+                                if (promptInput) promptInput.value = '';
+
+                                setTimeout(() => {
+                                    window.location.href = `/learn/lesson/${job.lesson_id}`;
+                                }, 1200);
+                            } else if (job.failed) {
+                                stopPolling();
+                                document.getElementById('lessonGenProgress').className = 'progress-bar bg-danger rounded-pill';
+                                document.getElementById('lessonGenStatus').textContent = job.error_message || 'Generation failed.';
+                                statusBadge.className = 'badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-25';
+                                statusBadge.textContent = 'FAILED';
+                            }
+                        })
+                        .catch(() => {});
+                }, 1500);
+            } else {
+                document.getElementById('lessonGenStatus').textContent = data.message || 'Failed to start generation.';
+                document.getElementById('lessonGenProgress').className = 'progress-bar bg-danger rounded-pill';
+            }
+        })
+        .catch(() => {
+            document.getElementById('lessonGenStatus').textContent = 'Network error starting generator.';
+            document.getElementById('lessonGenProgress').className = 'progress-bar bg-danger rounded-pill';
+        });
+    }
+
+    if (btnSend) {
+        btnSend.addEventListener('click', startLessonGeneration);
+    }
+    if (promptInput) {
+        promptInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                startLessonGeneration();
+            }
+        });
+    }
+});
+</script>

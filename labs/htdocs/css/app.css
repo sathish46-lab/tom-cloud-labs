@@ -20171,10 +20171,6 @@ html.glass-mode[data-coreui-theme=light] .sidebar-inner-layer {
 }
 
 /* SNA Individual Rounded Panel Cards Layout */
-.learn-app-wrapper .flex-grow-1 {
-  padding: 0.1rem !important;
-  gap: 0.1rem !important;
-}
 .learn-app-wrapper .split-panel {
   display: flex;
   flex-direction: column;
@@ -20530,7 +20526,127 @@ html.glass-mode[data-coreui-theme=light] .sidebar-inner-layer {
   [data-tooltip]::before {
     display: none !important;
   }
+  .outline-compact {
+    display: flex !important;
+  }
+  .outline-full {
+    display: none !important;
+  }
 }
+/* Exact 100vh viewport lock for LearnAI stable app views: footer flush at bottom, no window scrollbar */
+.wrapper:has(.stable-app-view) {
+  min-height: 100vh !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+.wrapper:has(.stable-app-view) .body {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+.wrapper:has(.stable-app-view) #main-content {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+.wrapper:has(.stable-app-view) .stable-app-view {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: 100% !important;
+}
+.wrapper:has(.stable-app-view) .footer {
+  flex-shrink: 0 !important;
+  margin-top: auto !important;
+}
+
+/* Ensure Panel 1 (collapsible sidebar) scrolls cleanly all the way to the bottom lab section without clipping */
+#learn-panel-1 .card-body {
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  min-height: 0 !important;
+}
+#learn-panel-1 .lesson-chapters-section {
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+#learn-panel-1 .lesson-lab-section {
+  margin-top: auto !important;
+  flex-shrink: 0 !important;
+  padding-bottom: 2.25rem !important;
+}
+
+/* AI Chat Bubble Markdown & Syntax Highlighting Alignment (matching Panel-2 aesthetics) */
+.ai-row .msg-bubble {
+  color: #e2e8f0;
+}
+.ai-row .msg-bubble h1, .ai-row .msg-bubble h2, .ai-row .msg-bubble h3, .ai-row .msg-bubble h4, .ai-row .msg-bubble h5, .ai-row .msg-bubble h6 {
+  color: #ffffff;
+  font-weight: 700;
+  margin-top: 0.85rem;
+  margin-bottom: 0.45rem;
+  line-height: 1.35;
+  font-size: 0.95rem;
+}
+.ai-row .msg-bubble h3 {
+  color: #38bdf8;
+  font-size: 0.9rem;
+}
+.ai-row .msg-bubble p {
+  margin-bottom: 0.65rem;
+  line-height: 1.55;
+}
+.ai-row .msg-bubble p:last-child {
+  margin-bottom: 0;
+}
+.ai-row .msg-bubble strong, .ai-row .msg-bubble b {
+  color: #38bdf8;
+  font-weight: 600;
+}
+.ai-row .msg-bubble ul, .ai-row .msg-bubble ol {
+  margin-bottom: 0.65rem;
+  padding-left: 1.25rem;
+}
+.ai-row .msg-bubble ul li, .ai-row .msg-bubble ol li {
+  margin-bottom: 0.35rem;
+}
+.ai-row .msg-bubble pre {
+  background: #0d1117;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  padding: 2.25rem 0.85rem 0.85rem 0.85rem;
+  margin: 0.65rem 0;
+  overflow-x: auto;
+  position: relative;
+  font-size: 0.78rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+.ai-row .msg-bubble pre code {
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  line-height: 1.5;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+}
+.ai-row .msg-bubble code:not(pre code) {
+  background: rgba(255, 255, 255, 0.1);
+  color: #38bdf8;
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.25rem;
+  font-size: 0.85em;
+}
+
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
@@ -20620,7 +20736,6 @@ body {
   max-width: none !important;
   height: var(--app-height, calc(100vh - 4rem)) !important;
   /* Frosted glass background layer */
-  background-color: var(--glass-bg, var(--cui-body-bg)) !important;
 }
 :root.glass-mode .stable-app-view {
   backdrop-filter: blur(var(--glass-blur, 12px));

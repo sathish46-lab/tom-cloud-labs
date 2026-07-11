@@ -40,7 +40,7 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install Python packages not available via apt
-RUN pip3 install --break-system-packages google-generativeai requests pymongo
+RUN pip3 install --break-system-packages google-generativeai requests pymongo markdown
 
 # Create symlink for labsctl
 RUN ln -sf /opt/labs-control-panel/labsctl.py /usr/local/bin/labsctl && \

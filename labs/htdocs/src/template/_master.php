@@ -553,6 +553,7 @@ $classString = implode(' ', $htmlClasses);
     </script>
     <script src="<?= Session::cacheCDN('/js/app.js') ?>"></script>
     <script src="<?= Session::cacheCDN('/js/ui-init.js') ?>"></script>
+    <script src="<?= Session::cacheCDN('/js/htmx-bridge.js') ?>"></script>
 
     <script>
         // Auto-trigger flash toasts from PHP Sessions

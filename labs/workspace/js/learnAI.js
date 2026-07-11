@@ -393,12 +393,25 @@ try {
             const chapterId = document.getElementById('currentChapterId')?.value;
 
             if (!chatInput || !chatSend || !chatHistory) return;
+            if (chatInput.dataset.aiChatInit === 'true') return;
+            chatInput.dataset.aiChatInit = 'true';
+
+            // Render existing AI markdown messages from server history
+            chatHistory.querySelectorAll('.ai-row .msg-bubble p').forEach(p => {
+                if (p.innerText.trim()) {
+                    LearnApp.renderMarkdownWithHighlighting(p.innerText, p);
+                }
+            });
 
             // Auto-scroll to bottom to show latest server-rendered messages
             setTimeout(() => { chatHistory.scrollTop = chatHistory.scrollHeight; }, 100);
 
             const userSessionId = 'sess_' + Math.random().toString(36).substr(2, 9);
-            const aiSocket = new TomSocketClient();
+            if (window.aiSocket && typeof window.aiSocket.disconnect === 'function') {
+                window.aiSocket.disconnect();
+            }
+            window.aiSocket = new TomSocketClient();
+            const aiSocket = window.aiSocket;
             let idleTimer = null;
 
             const handleAIStream = (data) => {
@@ -407,21 +420,24 @@ try {
                 const p = aiMsgContainer.querySelector('p');
 
                 if (data.type === 'stream_end') {
-                    // Explicitly remove typing dots if they are still there
                     const dots = aiMsgContainer.querySelector('.typing-dots');
                     if (dots) dots.remove();
 
+                    if (p && p.dataset.rawMd) {
+                        LearnApp.renderMarkdownWithHighlighting(p.dataset.rawMd, p);
+                    }
                     aiMsgContainer.classList.remove('current-ai-stream');
+                    chatHistory.scrollTop = chatHistory.scrollHeight;
                     return;
                 }
 
                 if (data.type === 'text_delta') {
-                    // Remove typing dots if present
                     if (p.querySelector('.typing-dots')) {
                         p.innerHTML = '';
                     }
 
-                    p.innerHTML += data.data;
+                    p.dataset.rawMd = (p.dataset.rawMd || '') + data.data;
+                    LearnApp.renderMarkdownWithHighlighting(p.dataset.rawMd, p);
                     chatHistory.scrollTop = chatHistory.scrollHeight;
                 }
             };
@@ -449,6 +465,7 @@ try {
 
             chatSend.addEventListener('click', () => {
                 const query = chatInput.value.trim();
+                const currentLessonId = document.getElementById('currentLessonId')?.value || '';
                 const currentChapterId = document.getElementById('currentChapterId')?.value || '';
                 if (!query) return;
 
@@ -472,7 +489,7 @@ try {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
-                    body: JSON.stringify({ query, chapter_id: currentChapterId, message_id: messageId, session_id: userSessionId, ai_model: aiModel })
+                    body: JSON.stringify({ query, lesson_id: currentLessonId, chapter_id: currentChapterId, message_id: messageId, session_id: userSessionId, ai_model: aiModel })
                 })
                     .then(res => res.json())
                     .catch(err => {
@@ -528,8 +545,22 @@ try {
             if (typeof marked !== 'undefined') {
                 container.innerHTML = marked.parse(markdownText);
             } else {
-                container.innerText = markdownText;
-                return;
+                let retries = 0;
+                const checkMarked = setInterval(() => {
+                    if (typeof marked !== 'undefined') {
+                        clearInterval(checkMarked);
+                        container.innerHTML = marked.parse(markdownText);
+                        if (typeof hljs !== 'undefined') {
+                            container.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
+                        }
+                    }
+                    if (retries++ > 20) {
+                        clearInterval(checkMarked);
+                        if (container.innerHTML.trim() === '') {
+                             container.innerText = markdownText;
+                        }
+                    }
+                }, 100);
             }
 
             if (typeof hljs !== 'undefined') {
@@ -566,11 +597,13 @@ try {
         initContentGenerator: function () {
             const container = document.getElementById('chapterContentContainer');
             if (!container) return;
+            if (container.dataset.contentInit === 'true') return;
+            container.dataset.contentInit = 'true';
 
             // Check if there is raw fallback markdown to highlight immediately
-            const rawFallback = container.querySelector('.raw-markdown-fallback');
+            const rawFallback = container.querySelector('.raw-markdown-fallback, .raw-markdown');
             if (rawFallback) {
-                const md = rawFallback.innerText;
+                const md = container.getAttribute('data-raw-md') || rawFallback.innerText;
                 this.renderMarkdownWithHighlighting(md, container);
             } else {
                 // Even if HTML is server-rendered, apply Highlight.js & Copy buttons to code blocks
@@ -676,7 +709,11 @@ try {
     };
 
     // Initialize
-    if (document.readyState === 'loading') {
+    if (typeof jQuery !== 'undefined') {
+        jQuery(document).ready(function() {
+            LearnApp.init();
+        });
+    } else if (document.readyState === 'loading') {
         window.onPageLoad( () => LearnApp.init());
     } else {
         LearnApp.init();

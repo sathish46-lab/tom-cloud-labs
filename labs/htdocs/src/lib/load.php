@@ -23,6 +23,7 @@ require_once __DIR__ . '/core/UserSession.class.php';
 require_once __DIR__ . '/core/WebAPI.class.php';
 require_once __DIR__ . '/labs/LabFeatures.php';
 require_once __DIR__ . '/labs/LabTemplateConfig.php';
+require_once __DIR__ . '/services/LearnAIOrchestrator.class.php';
 
 # Git version detection
 $possible_roots = [
