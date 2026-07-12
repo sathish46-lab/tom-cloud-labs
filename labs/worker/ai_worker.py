@@ -4,6 +4,7 @@ import os
 import sys
 import time
 import datetime
+import re
 import requests
 import redis
 try:
@@ -49,11 +50,19 @@ except Exception as e:
     redis_client = None
 
 # Gemini Config
-GEMINI_MODEL_NAME = 'models/gemini-3.5-flash'
+GEMINI_MODEL_NAME = 'models/gemini-flash-latest'
 print("Configuring Gemini API...", flush=True)
 genai.configure(api_key=config.get('ai_api_key'))
-model = genai.GenerativeModel(GEMINI_MODEL_NAME)
-print(f"Gemini model initialized ({GEMINI_MODEL_NAME}).", flush=True)
+
+# Define Gemini Tools
+check_lab_status_func = genai.types.FunctionDeclaration(
+    name="check_lab_status",
+    description="Check the user's currently active lab environment status and details (like IP address, Lab Name, instance ID). Use this whenever the user asks if their lab is running, asks for connection details, or wants to check their instance hash.",
+)
+ai_tools = [check_lab_status_func]
+
+model = genai.GenerativeModel(GEMINI_MODEL_NAME, tools=ai_tools)
+print(f"Gemini model initialized ({GEMINI_MODEL_NAME}) with tools.", flush=True)
 
 # ===========================================================================
 # CONTEXT CACHING: Cache system prompt + lesson context for cost savings
@@ -219,50 +228,50 @@ def maybe_summarize(user_id, lesson_id, chapter_id, ai_model='lm_studio'):
         
         messages = chat_doc['messages']
         
-        # Filter out existing summaries for counting
-        actual_messages = [m for m in messages if m.get('role') != 'system_summary']
+        last_summarized_index = chat_doc.get('last_summarized_index', 0)
+        unsummarized_messages = messages[last_summarized_index:]
         
-        if len(actual_messages) <= SUMMARIZE_THRESHOLD:
+        # Filter out existing system_summary messages in case they are still in the DB from the old system
+        actual_unsummarized = [m for m in unsummarized_messages if m.get('role') != 'system_summary']
+        
+        if len(actual_unsummarized) <= SUMMARIZE_THRESHOLD:
             return  # Not enough messages to warrant summarization
         
-        print(f" [⚡] Triggering RAG summarization ({len(actual_messages)} messages > {SUMMARIZE_THRESHOLD} threshold)")
+        print(f" [⚡] Triggering RAG summarization ({len(actual_unsummarized)} unsummarized messages > {SUMMARIZE_THRESHOLD} threshold)")
         
-        # Split: old messages to summarize, recent to keep
-        old_messages = actual_messages[:-KEEP_RECENT]
-        recent_messages = actual_messages[-KEEP_RECENT:]
+        # Split: messages to summarize now, and recent to keep as raw context
+        messages_to_summarize = actual_unsummarized[:-KEEP_RECENT]
         
+        # If there's an existing RAG summary, we should include it in the summarization prompt so context isn't lost
+        old_summary = chat_doc.get('rag_summary', '')
+        if old_summary:
+            messages_to_summarize.insert(0, {'role': 'user', 'content': f"[Previous Summary Context to merge]: {old_summary}"})
+            
         # Generate summary using the same model the user is chatting with
         summary_text = None
         if ai_model == 'lm_studio':
-            summary_text = generate_summary_via_lm_studio(old_messages)
+            summary_text = generate_summary_via_lm_studio(messages_to_summarize)
         else:
-            summary_text = generate_summary_via_gemini(old_messages)
+            summary_text = generate_summary_via_gemini(messages_to_summarize)
         
         if not summary_text:
             print(" [!] Summary generation returned empty, skipping summarization")
             return
+            
+        new_summarized_index = last_summarized_index + len(actual_unsummarized[:-KEEP_RECENT])
         
-        # Build new messages array: summary + recent messages
-        new_messages = [
-            {
-                'role': 'system_summary',
-                'content': summary_text,
-                'timestamp': int(time.time()),
-                'summarized_count': len(old_messages)
-            }
-        ] + recent_messages
-        
-        # Atomic replace in MongoDB
+        # Atomic update in MongoDB - ONLY update the summary fields, DO NOT touch messages array
         db.ai_chat_history.update_one(
             filter_key,
             {'$set': {
-                'messages': new_messages,
+                'rag_summary': summary_text,
+                'last_summarized_index': new_summarized_index,
                 'last_summary_at': int(time.time()),
-                'total_summarized': len(old_messages)
+                'total_summarized': new_summarized_index
             }}
         )
         
-        print(f" [✓] RAG Summarization complete: {len(old_messages)} old messages → 1 summary + {len(recent_messages)} recent")
+        print(f" [✓] RAG Summarization complete. Total summarized pointer moved to index {new_summarized_index}")
         
     except Exception as e:
         print(f" [!] Summarization error: {e}")
@@ -417,18 +426,22 @@ def process_ai_job(ch, method, properties, body):
             if chat_doc and 'messages' in chat_doc:
                 full_history = chat_doc['messages']
                 
-                # Separate summary from regular messages
-                summary_entries = [m for m in full_history if m.get('role') == 'system_summary']
-                regular_messages = [m for m in full_history if m.get('role') != 'system_summary']
+                # Retrieve the hidden RAG summary instead of searching the messages array
+                rag_summary = chat_doc.get('rag_summary', '')
+                last_summarized_index = chat_doc.get('last_summarized_index', 0)
                 
-                # Build context: summary (if exists) + last N regular messages
-                if summary_entries:
-                    history.append(summary_entries[-1])  # Latest summary
+                # If there's a background summary, inject it into the AI's history
+                if rag_summary:
+                    history.append({'role': 'system_summary', 'content': rag_summary})
+                    
+                # Now, only append the raw messages that come AFTER the summary pointer
+                # Also filter out any legacy 'system_summary' messages that might still be in the array
+                unsummarized_messages = full_history[last_summarized_index:]
+                recent = [m for m in unsummarized_messages if m.get('role') != 'system_summary']
                 
-                recent = regular_messages[-KEEP_RECENT:] if len(regular_messages) > KEEP_RECENT else regular_messages
                 history.extend(recent)
                 
-                print(f"   > Loaded {len(history)} context entries ({len(summary_entries)} summary + {len(recent)} recent of {len(regular_messages)} total)")
+                print(f"   > Loaded {len(history)} context entries (1 hidden summary + {len(recent)} unsummarized of {len(full_history)} total)")
 
         # Build authoritative system context from Layer 5 pre-fetch
         ctx = job.get('context', {})
@@ -446,6 +459,7 @@ def process_ai_job(ch, method, properties, body):
         # 1. Start Streaming from Gemini or LM Studio
         full_content = ""
         usage_data = None
+        executed_tools = []
         
         if ai_model == 'lm_studio':
             lm_studio_url = config.get('lm_studio_url', 'http://172.17.0.1:1234/v1/chat/completions')
@@ -460,47 +474,77 @@ def process_ai_job(ch, method, properties, body):
             # LM Studio: token tracking N/A
             usage_data = {'source': 'lm_studio'}
         else:
-            # Try to use context caching for cost savings
-            cache_name = get_or_create_cached_context(user_id, lesson_id, system_context_text, history)
-            
-            if cache_name:
-                # Use cached model - only send the new query (not the full history)
-                try:
-                    cached_content = genai_caching.CachedContent.get(cache_name)
-                    cached_model = genai.GenerativeModel.from_cached_content(cached_content=cached_content)
-                    chat_session = cached_model.start_chat(history=[])
-                    response = chat_session.send_message(query, stream=True)
-                    print(f"   > Using cached context for Gemini request")
-                except Exception as e:
-                    print(f"   > Cache model failed, falling back to standard: {e}")
-                    cache_name = None
-            
-            if not cache_name:
-                # Standard path: Format history for Gemini API
-                gemini_history = [
-                    {"role": "user", "parts": [f"[System Context]: {system_context_text}"]},
-                    {"role": "model", "parts": ["Understood. I am locked onto your active lesson, chapter, and lab context."]}
-                ]
-                for msg in history:
-                    role = msg.get('role', 'user')
-                    content = msg.get('content', '')
-                    
-                    if role == 'system_summary':
-                        gemini_history.append({"role": "user", "parts": [f"[System: Here is a summary of our previous conversation]: {content}"]})
-                        gemini_history.append({"role": "model", "parts": ["I understand. I'll keep this context in mind as we continue our conversation."]})
-                        continue
-                    
-                    role = 'model' if role == 'assistant' else role
-                    gemini_history.append({"role": role, "parts": [content]})
-                    
-                chat_session = model.start_chat(history=gemini_history)
-                response = chat_session.send_message(query, stream=True)
+            # Standard path: Format history for Gemini API
+            gemini_history = [
+                {"role": "user", "parts": [f"[System Context]: {system_context_text}"]},
+                {"role": "model", "parts": ["Understood. I am locked onto your active lesson, chapter, and lab context."]}
+            ]
+            for msg in history:
+                role = msg.get('role', 'user')
+                content = msg.get('content', '')
+                
+                if role == 'system_summary':
+                    gemini_history.append({"role": "user", "parts": [f"[System: Here is a summary of our previous conversation]: {content}"]})
+                    gemini_history.append({"role": "model", "parts": ["I understand. I'll keep this context in mind as we continue our conversation."]})
+                    continue
+                
+                role = 'model' if role == 'assistant' else role
+                gemini_history.append({"role": role, "parts": [content]})
+                
+            chat_session = model.start_chat(history=gemini_history)
+            response = chat_session.send_message(query, stream=True)
             
             for chunk in response:
+                fc = None
+                try:
+                    for part in chunk.parts:
+                        if getattr(part, 'function_call', None):
+                            fc = part.function_call
+                            break
+                except Exception:
+                    pass
+
+                if fc:
+                    try:
+                        response.resolve()
+                    except Exception:
+                        pass
+                        
+                    if fc.name == "check_lab_status":
+                        # Execute Tool
+                        tool_data = lab_ctx if lab_ctx else {"status": "No active lab"}
+                        send_tool_execution(
+                            channel=ch, 
+                            session_id=session_id, 
+                            message_id=message_id, 
+                            tool_name="check_lab_status", 
+                            tool_output=json.dumps(tool_data)
+                        )
+                        executed_tools.append({
+                            "name": "check_lab_status",
+                            "output": tool_data,
+                            "lab_name": lab_ctx.get('name', 'Unknown') if lab_ctx else 'Unknown'
+                        })
+                        # Reply to Model
+                        tool_resp = genai.protos.Part(
+                            function_response=genai.protos.FunctionResponse(name=fc.name, response=tool_data)
+                        )
+                        # Wait for model to generate text stream based on tool result
+                        follow_up_response = chat_session.send_message(tool_resp, stream=True)
+                        for f_chunk in follow_up_response:
+                            if f_chunk.text:
+                                full_content += f_chunk.text
+                                words = re.findall(r'\S+|\s+', f_chunk.text)
+                                for word in words:
+                                    stream_to_user(ch, session_id, message_id, word)
+                                    time.sleep(0.01)
+                        # Extract usage from the final response
+                        response = follow_up_response 
+                        break
+
                 if chunk.text:
                     full_content += chunk.text
                     stream_to_user(ch, session_id, message_id, chunk.text)
-                    print(f"   > Sent chunk: {len(chunk.text)} chars")
             
             # Extract token usage metadata from the completed response
             try:
@@ -534,7 +578,7 @@ def process_ai_job(ch, method, properties, body):
                         'messages': {
                             '$each': [
                                 {'role': 'user', 'content': query, 'timestamp': ts},
-                                {'role': 'model', 'content': full_content, 'timestamp': ts + 1, 'usage': usage_data}
+                                {'role': 'model', 'content': full_content, 'timestamp': ts + 1, 'usage': usage_data, 'tools': executed_tools}
                             ]
                         }
                     }},

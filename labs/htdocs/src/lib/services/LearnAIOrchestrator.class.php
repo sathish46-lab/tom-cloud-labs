@@ -164,21 +164,38 @@ class LearnAIOrchestrator {
      * get_lab_user_info()
      */
     public function getLabUserInfo() {
-        $labsList = Session::get('labs_list', []);
-        if (!empty($labsList)) {
-            foreach ($labsList as $lItem) {
-                if (($lItem['status'] ?? '') === 'running') {
-                    return $lItem;
-                }
-            }
-            return $labsList[0];
-        }
-        return [
-            'name' => 'Essentials',
-            'ip' => '172.30.0.28',
-            'status' => 'running',
-            'hash' => 'essentials-lab-id'
+        $labTemplates = [
+            ['id' => 'essentials', 'name' => 'Essentials Lab', 'icon' => 'tux'],
+            ['id' => 'minio', 'name' => 'MinIO S3 Storage', 'icon' => 'docker'],
+            ['id' => 'n8n', 'name' => 'n8n Workflow Lab', 'icon' => 'git-repo-forked'],
+            ['id' => 'docker_lab', 'name' => 'Tom Docker Lab', 'icon' => 'docker']
         ];
+
+        // Default fallback to first lab (Essentials) if nothing is running
+        $defaultLab = null;
+
+        foreach ($labTemplates as $tmpl) {
+            $hash = $this->sessionUser->getLabHash($tmpl['id']);
+            $data = $this->db->deployed_labs->findOne(['instance_hash' => $hash]);
+
+            $labInfo = [
+                'id'     => $tmpl['id'],
+                'name'   => $tmpl['name'],
+                'hash'   => $hash,
+                'status' => ($data && $data['status'] === 'running') ? 'running' : 'offline',
+                'ip'     => ($data && $data['status'] === 'running' && isset($data['internal_ip'])) ? $data['internal_ip'] : 'Instance Down'
+            ];
+
+            if ($labInfo['status'] === 'running') {
+                return $labInfo; // Return the first running lab found
+            }
+
+            if ($defaultLab === null) {
+                $defaultLab = $labInfo; // Save Essentials as fallback
+            }
+        }
+
+        return $defaultLab;
     }
 
     /**

@@ -5124,7 +5124,7 @@ try {
         updateStatsBar: function(usage) {
             if (!usage) return;
 
-            // Accumulate tokens
+            // Maintain cumulative tokens for background tracking (e.g. if we ever need it)
             if (usage.source !== 'local' && usage.source !== 'lm_studio') {
                 this.tokenStats.totalInputTokens += (usage.input_tokens || 0);
                 this.tokenStats.totalOutputTokens += (usage.output_tokens || 0);
@@ -5133,18 +5133,11 @@ try {
             }
             this.tokenStats.responseCount++;
 
-            // Store per-message history
-            this.tokenStats.history.push({
-                input: usage.input_tokens || 0,
-                output: usage.output_tokens || 0,
-                cached: usage.cached_tokens || 0,
-                cache_pct: usage.cache_hit_percent || 0,
-                source: usage.source || 'unknown',
-                tool: usage.tool_name || null,
-                timestamp: Date.now()
-            });
+            // Update DOM elements using the LATEST usage values for the current Context Window state
+            const latestInput = usage.input_tokens || 0;
+            const latestOutput = usage.output_tokens || 0;
+            const latestCached = usage.cached_tokens || 0;
 
-            // Update DOM elements
             const inputDisplay = document.getElementById('aiTokensDisplay');
             const outputDisplay = document.getElementById('aiOutputTokens');
             const cachedDisplay = document.getElementById('aiCachedTokens');
@@ -5153,27 +5146,40 @@ try {
             const progressRing = document.getElementById('aiContextProgressRing');
 
             if (inputDisplay) {
-                inputDisplay.innerText = `${this.formatTokenCount(this.tokenStats.totalInputTokens)}/1M`;
+                inputDisplay.innerText = `${this.formatTokenCount(latestInput)}/1M`;
+                inputDisplay.setAttribute('data-coreui-original-title', `Context window: ${latestInput.toLocaleString()} / 1,000,000 tokens`);
             }
             if (outputDisplay) {
-                outputDisplay.innerText = this.formatTokenCount(this.tokenStats.totalOutputTokens);
+                outputDisplay.innerText = this.formatTokenCount(latestOutput);
             }
 
-            // Cache badge & ring
-            const totalInput = this.tokenStats.totalInputTokens || 1;
-            const pct = Math.round(this.tokenStats.totalCachedTokens / totalInput * 100);
-
+            // Cache metrics
             if (cachedWrap && cachedDisplay) {
-                cachedWrap.classList.remove('d-none');
-                cachedDisplay.innerText = this.formatTokenCount(this.tokenStats.totalCachedTokens);
-                cachedWrap.title = `Cached tokens: ${this.tokenStats.totalCachedTokens.toLocaleString()} (${pct}% cache hit - cost savings!)`;
+                if (latestCached > 0) {
+                    cachedWrap.classList.remove('d-none');
+                    cachedDisplay.innerText = this.formatTokenCount(latestCached);
+                    
+                    const cachePct = latestInput > 0 ? Math.round((latestCached / latestInput) * 100) : 0;
+                    cachedWrap.setAttribute('data-coreui-original-title', `Cached tokens: ${latestCached.toLocaleString()} (${cachePct}% cache hit)`);
+                } else {
+                    cachedWrap.classList.add('d-none');
+                }
             }
 
+            // Context fill percentage ring (How full is the 1M window?)
             if (cacheBadge && progressRing) {
-                cacheBadge.innerText = pct + '%';
+                // 1M limit
+                const contextLimit = 1000000;
+                let fillPct = (latestInput / contextLimit) * 100;
+                // If it's less than 1% but greater than 0, show 1% so it's visible, otherwise round it
+                if (fillPct > 0 && fillPct < 1) fillPct = 1;
+                else fillPct = Math.round(fillPct);
+
+                cacheBadge.innerText = fillPct + '%';
+                
                 // Calculate dash offset for a circle with r=10 (circumference approx 63)
                 // 100% = offset 0, 0% = offset 63
-                const offset = 63 - (pct / 100) * 63;
+                const offset = 63 - (fillPct / 100) * 63;
                 progressRing.style.strokeDashoffset = offset;
             }
 
@@ -5566,6 +5572,35 @@ try {
             if (!chatInput || !chatSend || !chatHistory) return;
             if (chatInput.dataset.aiChatInit === 'true') return;
             chatInput.dataset.aiChatInit = 'true';
+            
+            // Token History Modal Logic
+            const tokenHistoryBtn = document.getElementById('token-history-btn');
+            if (tokenHistoryBtn) {
+                tokenHistoryBtn.addEventListener('click', () => {
+                    const lessonId = document.getElementById('currentLessonId')?.value || '';
+                    const chapterId = document.getElementById('currentChapterId')?.value || '';
+                    
+                    const modalContent = document.getElementById('tokenHistoryModalContent');
+                    if (modalContent) {
+                        modalContent.innerHTML = '<div class="p-5 text-center"><i class="bx bx-loader-alt bx-spin fs-2"></i><p class="mt-2 text-secondary">Loading token history...</p></div>';
+                    }
+                    
+                    const modalEl = document.getElementById('tokenHistoryModal');
+                    if (modalEl && typeof coreui !== 'undefined') {
+                        const modal = new coreui.Modal(modalEl);
+                        modal.show();
+                    }
+                    
+                    fetch(`/api/learnAI/token_history?lesson_id=${lessonId}&chapter_id=${chapterId}`)
+                        .then(r => r.text())
+                        .then(html => {
+                            if (modalContent) modalContent.innerHTML = html;
+                        })
+                        .catch(err => {
+                            if (modalContent) modalContent.innerHTML = '<div class="p-5 text-center text-danger">Failed to load token history.</div>';
+                        });
+                });
+            }
 
             // Load Chat History Asynchronously
             const lessonId = document.getElementById('currentLessonId')?.value || '';
@@ -5577,6 +5612,12 @@ try {
                 .then(html => {
                     chatHistory.innerHTML = html;
                     
+                    if (typeof coreui !== 'undefined' && coreui.Popover) {
+                        chatHistory.querySelectorAll('[data-coreui-toggle="popover"]').forEach(btn => {
+                            new coreui.Popover(btn, { trigger: 'focus' });
+                        });
+                    }
+                    
                     chatHistory.querySelectorAll('.ai-row .msg-bubble p').forEach(p => {
                         if (p.innerText.trim()) {
                             LearnApp.renderMarkdownWithHighlighting(p.innerText, p);
@@ -5587,12 +5628,36 @@ try {
                     LearnApp.tokenStats.totalInputTokens = 0;
                     LearnApp.tokenStats.totalOutputTokens = 0;
                     LearnApp.tokenStats.totalCachedTokens = 0;
-                    chatHistory.querySelectorAll('.ai-row[data-total-tokens]').forEach(row => {
+                    
+                    const aiRows = chatHistory.querySelectorAll('.ai-row[data-total-tokens]');
+                    
+                    // Keep cumulative stats for background tracking
+                    aiRows.forEach(row => {
                         LearnApp.tokenStats.totalInputTokens += parseInt(row.getAttribute('data-input-tokens') || 0, 10);
                         LearnApp.tokenStats.totalOutputTokens += parseInt(row.getAttribute('data-output-tokens') || 0, 10);
                         LearnApp.tokenStats.totalCachedTokens += parseInt(row.getAttribute('data-cached-tokens') || 0, 10);
                     });
-                    LearnApp.updateStatsBar();
+                    
+                    // Display current Context Window size based on the LATEST interaction
+                    if (aiRows.length > 0) {
+                        const lastRow = aiRows[aiRows.length - 1];
+                        const latestUsage = {
+                            input_tokens: parseInt(lastRow.getAttribute('data-input-tokens') || 0, 10),
+                            output_tokens: parseInt(lastRow.getAttribute('data-output-tokens') || 0, 10),
+                            cached_tokens: parseInt(lastRow.getAttribute('data-cached-tokens') || 0, 10),
+                            source: 'gemini'
+                        };
+                        // Note: Because we pass usage manually here, updateStatsBar will add these latest tokens
+                        // to the cumulative sum again. To avoid double counting, we temporarily subtract them before calling
+                        LearnApp.tokenStats.totalInputTokens -= latestUsage.input_tokens;
+                        LearnApp.tokenStats.totalOutputTokens -= latestUsage.output_tokens;
+                        LearnApp.tokenStats.totalCachedTokens -= latestUsage.cached_tokens;
+                        
+                        LearnApp.updateStatsBar(latestUsage);
+                    } else {
+                        // Empty history, just zero it out
+                        LearnApp.updateStatsBar({ input_tokens: 0, output_tokens: 0, cached_tokens: 0, source: 'gemini' });
+                    }
                     
                     setTimeout(() => { chatHistory.scrollTop = chatHistory.scrollHeight; }, 100);
                 })
@@ -5609,30 +5674,83 @@ try {
             let idleTimer = null;
 
             const handleAIStream = (data) => {
-                const aiMsgContainer = document.querySelector('.current-ai-stream');
+                const aiMsgContainer = data.message_id ? document.getElementById('ai_msg_' + data.message_id) : document.querySelector('.current-ai-stream');
 
                 if (data.type === 'tool_execution') {
                     
+                    // Parse output if it's JSON string
+                    let parsedOutput = data.tool_output;
+                    try {
+                        parsedOutput = JSON.parse(data.tool_output);
+                    } catch(e) {}
+                    
+                    const lab = parsedOutput.name || 'ubuntu';
+                    const labName = parsedOutput.name || 'Lab Environment';
+                    let formattedOutput = parsedOutput;
+                    if (typeof formattedOutput === 'object') {
+                        formattedOutput = JSON.stringify(formattedOutput, null, 2);
+                    }
+                    
+                    let labIcon = 'bx bxl-tux';
+                    const lowerLab = lab.toLowerCase();
+                    if (lowerLab.includes('ubuntu')) labIcon = 'bx bxl-ubuntu';
+                    else if (lowerLab.includes('node')) labIcon = 'bx bxl-nodejs';
+                    else if (lowerLab.includes('python')) labIcon = 'bx bxl-python';
+                    else if (lowerLab.includes('n8n')) labIcon = 'bx bxs-network-chart';
+
                     // Inject tool badge ABOVE the current AI message
                     if (aiMsgContainer) {
                         const toolId = 'tool_' + Math.random().toString(36).substr(2, 9);
                         const toolBadgeDiv = document.createElement('div');
                         toolBadgeDiv.className = 'tool-badge-wrapper mb-1';
-                        toolBadgeDiv.innerHTML = `
-                            <button class="tool-popover-btn" data-target="${toolId}">
-                                <i class='bx bxs-check-circle text-success me-1'></i>
-                                <i class='bx bxs-terminal me-1'></i> 1 tool
-                            </button>
-                            <div id="${toolId}" class="tool-popover-card">
-                                <div class="d-flex align-items-center gap-2 mb-2">
-                                    <i class='bx bxs-check-circle text-success'></i>
-                                    <strong class="text-white">${data.tool_name || 'Execute'}</strong>
+                        const popoverContent = `
+                            <div class="popover-header" style="background:transparent; margin-bottom:0; border-bottom:1px solid #1e293b; padding:0 0 8px 0;">
+                                <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                                    <i class='bx bxs-check-circle' style="color:#22c55e;"></i>
+                                    <span style="font-weight:700; color:#fff; font-size:0.95rem;">${data.tool_name || 'Execute'}</span>
                                 </div>
-                                <div class="text-secondary small">${data.tool_output || 'Executed locally'}</div>
+                                <div style="display:flex; align-items:center; gap:6px; padding-left:2px;">
+                                    <i class='${labIcon}' style="color:#f97316; font-size:0.9rem;"></i>
+                                    <span style="color:#94a3b8; font-size:0.8rem; font-weight:500;">Run in ${labName}</span>
+                                </div>
+                            </div>
+                            <div class="popover-body" style="padding:12px 0 0 0; background:transparent;">
+                                <div class="popover-row">
+                                    <span class="pop-label" style="color:#818cf8; font-weight:600; display:block; margin-bottom:4px; font-size:0.85rem;">Output:</span>
+                                    <div class="pop-output" style="color:#2dd4bf; white-space:pre-wrap; font-family:monospace; font-size:0.85rem; padding-left:8px; border-left:2px solid #334155;">${formattedOutput}</div>
+                                </div>
                             </div>
                         `;
-                        // Insert before the AI message container
-                        aiMsgContainer.parentNode.insertBefore(toolBadgeDiv, aiMsgContainer);
+
+                        toolBadgeDiv.innerHTML = `
+                            <div class="agent-activity-btn-wrapper d-flex mb-1" style="position:relative;">
+                                <button class="agent-activity-btn btn btn-sm" tabindex="0" data-coreui-toggle="popover" data-coreui-placement="bottom" data-coreui-html="true" data-coreui-custom-class="simple-blur" style="background:transparent; border:1px solid #334155; border-radius:6px; padding:4px 10px; color:#94a3b8; font-size:0.85rem; display:flex; align-items:center; gap:6px; cursor:pointer;">
+                                    <svg class="icon" style="width:14px; height:14px; fill:currentColor;">
+                                        <use xlink:href="/assets/icons/free.svg#cil-settings"></use>
+                                    </svg>
+                                    1 tool
+                                </button>
+                            </div>
+                        `;
+                        const btn = toolBadgeDiv.querySelector('.agent-activity-btn');
+                        btn.setAttribute('data-coreui-content', popoverContent);
+                        
+                        if (typeof coreui !== 'undefined' && coreui.Popover) {
+                            new coreui.Popover(btn, {
+                                container: 'body',
+                                html: true,
+                                trigger: 'focus',
+                                placement: 'bottom',
+                                customClass: 'custom-tool-popover'
+                            });
+                        }
+                        // Insert inside the msg-content-wrapper so it aligns with avatar
+                        const contentWrapper = aiMsgContainer.querySelector('.msg-content-wrapper');
+                        if (contentWrapper) {
+                            contentWrapper.insertBefore(toolBadgeDiv, contentWrapper.firstChild);
+                        } else {
+                            aiMsgContainer.insertBefore(toolBadgeDiv, aiMsgContainer.firstChild);
+                        }
                         chatHistory.scrollTop = chatHistory.scrollHeight;
                     }
                     return;
@@ -5643,7 +5761,11 @@ try {
 
                 if (data.type === 'stream_end') {
                     const dots = aiMsgContainer.querySelector('.typing-dots');
-                    if (dots) dots.remove();
+                    if (dots) {
+                        dots.remove();
+                        const bubble = aiMsgContainer.querySelector('.msg-bubble');
+                        if (bubble) bubble.style.display = 'block';
+                    }
 
                     if (p && p.dataset.rawMd) {
                         LearnApp.renderMarkdownWithHighlighting(p.dataset.rawMd, p);
@@ -5659,6 +5781,13 @@ try {
                 }
 
                 if (data.type === 'text_delta') {
+                    const dots = aiMsgContainer.querySelector('.typing-dots');
+                    if (dots) {
+                        dots.remove();
+                        const bubble = aiMsgContainer.querySelector('.msg-bubble');
+                        if (bubble) bubble.style.display = 'block';
+                    }
+
                     if (p.querySelector('.typing-dots')) {
                         p.innerHTML = '';
                     }
@@ -5684,29 +5813,28 @@ try {
                 }, 60000); // 60 seconds
             };
 
+            // Setup a monitor for the active stream in case connection closes abruptly
+            setInterval(() => {
+                const activeStream = document.querySelector('.current-ai-stream');
+                if (activeStream && window.aiSocket && !window.aiSocket.isActive()) {
+                    const dots = activeStream.querySelector('.typing-dots');
+                    if (dots) {
+                        dots.remove();
+                        const bubble = activeStream.querySelector('.msg-bubble');
+                        if (bubble) bubble.style.display = 'block';
+                        const p = activeStream.querySelector('p');
+                        if (p && p.dataset.rawMd) {
+                            LearnApp.renderMarkdownWithHighlighting(p.dataset.rawMd, p);
+                        } else if (p && p.innerHTML === '') {
+                            p.innerHTML = '<span class="text-danger small">Connection lost. Please try again.</span>';
+                        }
+                        activeStream.classList.remove('current-ai-stream');
+                    }
+                }
+            }, 2000);
+
             // Connect instantly on load
             resetIdleTimer();
-
-            // Event delegation for tool popovers
-            document.addEventListener('click', (e) => {
-                const btn = e.target.closest('.tool-popover-btn');
-                if (btn) {
-                    const targetId = btn.getAttribute('data-target');
-                    const target = document.getElementById(targetId);
-                    if (target) {
-                        // Close others
-                        document.querySelectorAll('.tool-popover-card.show').forEach(card => {
-                            if (card.id !== targetId) card.classList.remove('show');
-                        });
-                        target.classList.toggle('show');
-                    }
-                } else if (!e.target.closest('.tool-popover-card')) {
-                    // Clicked outside, close all
-                    document.querySelectorAll('.tool-popover-card.show').forEach(card => {
-                        card.classList.remove('show');
-                    });
-                }
-            });
 
             // Re-establish/refresh connection idleness on typing
             chatInput.addEventListener('input', resetIdleTimer);
@@ -5730,7 +5858,7 @@ try {
 
                 // Prepare AI message placeholder
                 const aiMsgId = 'ai_msg_' + messageId;
-                this.appendChatMessage('SathishBot', '<div class="typing-dots"><span></span><span></span><span></span></div>', 'ai-row current-ai-stream', aiMsgId);
+                this.appendChatMessage('SathishBot', '[LOADING]', 'ai-row current-ai-stream', aiMsgId);
 
                 // 2. Trigger AI Generation
                 fetch('/src/api/learnAI/ask.php', {
@@ -5765,12 +5893,24 @@ try {
             if (id) msgDiv.id = id;
 
             if (type.includes('ai-row')) {
+                const isLoader = text === '[LOADING]';
+                const loaderHtml = isLoader ? `
+                    <div class="typing-dots d-flex align-items-center mb-1 p-1">
+                        <div class="spinner-border text-secondary" style="width: 1.25rem; height: 1.25rem; border-width: 0.15em;" role="status"></div>
+                    </div>
+                ` : '';
+                const bubbleDisplay = isLoader ? 'display: none;' : '';
+                const pText = isLoader ? '' : text;
+
                 msgDiv.innerHTML = `
                     <div class="msg-avatar">
                         <img src="${aiAvatar}" style="width: 30px;" alt="AI">
                     </div>
-                    <div class="msg-bubble">
-                        <p class="m-0">${text}</p>
+                    <div class="msg-content-wrapper d-flex flex-column" style="max-width:85%; width:100%;">
+                        ${loaderHtml}
+                        <div class="msg-bubble w-100" style="${bubbleDisplay}">
+                            <p class="m-0">${pText}</p>
+                        </div>
                     </div>
                 `;
             } else {
@@ -6012,6 +6152,7 @@ try {
 const TomSocketClient = function () {
   this.client = null;
   this.isConnected = false;
+  this.isConnecting = false;
   this.isSubscribed = false;
   this.subRetryCount = 0;
 
@@ -6022,6 +6163,8 @@ const TomSocketClient = function () {
    * @param {object} ui - UI elements (optional, e.g., status dot)
    */
   this.connect = function (exchange, callback, ui = null) {
+    if (this.isConnected || this.isConnecting) return;
+    this.isConnecting = true;
     try {
       // Read MQ domain from server-injected config (env.json → PHP → window.TOM_CONFIG)
       // Each environment (dev/prod) has its own mq_domain in env.json
@@ -6052,6 +6195,7 @@ const TomSocketClient = function () {
         "admin",
         "RootTom@46",
         () => {
+          this.isConnecting = false;
           this.isConnected = true;
           if (ui && ui.dot) ui.dot.style.color = "#a6e3a1"; // Green
 
@@ -6061,6 +6205,7 @@ const TomSocketClient = function () {
           this.safeSubscribe(exchange, callback, ui);
         },
         (err) => {
+          this.isConnecting = false;
           this.isConnected = false;
           this.isSubscribed = false;
           if (ui && ui.dot) ui.dot.style.color = "#f38ba8"; // Red

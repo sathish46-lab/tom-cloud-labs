@@ -26,6 +26,7 @@ try {
 const TomSocketClient = function () {
   this.client = null;
   this.isConnected = false;
+  this.isConnecting = false;
   this.isSubscribed = false;
   this.subRetryCount = 0;
 
@@ -36,6 +37,8 @@ const TomSocketClient = function () {
    * @param {object} ui - UI elements (optional, e.g., status dot)
    */
   this.connect = function (exchange, callback, ui = null) {
+    if (this.isConnected || this.isConnecting) return;
+    this.isConnecting = true;
     try {
       // Read MQ domain from server-injected config (env.json → PHP → window.TOM_CONFIG)
       // Each environment (dev/prod) has its own mq_domain in env.json
@@ -66,6 +69,7 @@ const TomSocketClient = function () {
         "admin",
         "RootTom@46",
         () => {
+          this.isConnecting = false;
           this.isConnected = true;
           if (ui && ui.dot) ui.dot.style.color = "#a6e3a1"; // Green
 
@@ -75,6 +79,7 @@ const TomSocketClient = function () {
           this.safeSubscribe(exchange, callback, ui);
         },
         (err) => {
+          this.isConnecting = false;
           this.isConnected = false;
           this.isSubscribed = false;
           if (ui && ui.dot) ui.dot.style.color = "#f38ba8"; // Red

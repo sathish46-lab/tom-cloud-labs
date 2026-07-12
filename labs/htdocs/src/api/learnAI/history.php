@@ -58,7 +58,8 @@ try {
                     'role' => $msg['role'] ?? 'user',
                     'content' => $msg['content'] ?? '',
                     'timestamp' => (int)($msg['timestamp'] ?? 0),
-                    'usage' => isset($msg['usage']) ? (array)$msg['usage'] : null
+                    'usage' => isset($msg['usage']) ? (array)$msg['usage'] : null,
+                    'tools' => isset($msg['tools']) ? (array)$msg['tools'] : null
                 ];
             }
         }
@@ -76,19 +77,7 @@ try {
     // Output HTML directly
     $html = '';
     
-    if ($summary) {
-        $summaryText = nl2br(htmlspecialchars($summary['content']));
-        $html .= '
-        <div class="message-row sys-row text-center my-2 w-100 justify-content-center">
-            <div class="msg-bubble bg-dark bg-opacity-50 border border-secondary border-opacity-10 py-2 px-3 text-secondary" style="font-size: 0.75rem; border-radius: 8px; max-width: 80%;">
-                <div class="d-flex flex-column align-items-center">
-                    <i class="bx bx-history mb-1 opacity-50"></i>
-                    <strong>Previous Session Summary:</strong>
-                    <p class="m-0 mt-1 text-secondary" style="font-size: 0.8rem; line-height: 1.5;">' . $summaryText . '</p>
-                </div>
-            </div>
-        </div>';
-    }
+    // User requested not to show the system summary in the UI at all.
     
     foreach ($messages as $msg) {
         $content = nl2br(htmlspecialchars($msg['content']));
@@ -112,13 +101,40 @@ try {
                 $total = isset($usage['total_tokens']) ? (int)$usage['total_tokens'] : 0;
                 $usageAttrs = sprintf(' data-input-tokens="%d" data-output-tokens="%d" data-cached-tokens="%d" data-total-tokens="%d"', $inp, $out, $cache, $total);
             }
+            $toolsHtml = '';
+            if (!empty($msg['tools']) && is_array($msg['tools'])) {
+                foreach ($msg['tools'] as $tool) {
+                    $toolName = htmlspecialchars($tool['name'] ?? 'Execute');
+                    $labName = htmlspecialchars($tool['lab_name'] ?? 'Unknown');
+                    $outputRaw = is_string($tool['output']) ? $tool['output'] : json_encode($tool['output'], JSON_PRETTY_PRINT);
+                    $outputHtml = htmlspecialchars($outputRaw);
+                    
+                    $popoverContent = '<div class="popover-header" style="background:transparent; margin-bottom:0; border-bottom:1px solid #1e293b; padding:0 0 8px 0;"><div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;"><i class=\'bx bxs-check-circle\' style="color:#22c55e;"></i><span style="font-weight:700; color:#fff; font-size:0.95rem;">' . $toolName . '</span></div><div style="display:flex; align-items:center; gap:6px; padding-left:2px;"><i class=\'bx bxl-docker\' style="color:#f97316; font-size:0.9rem;"></i><span style="color:#94a3b8; font-size:0.8rem; font-weight:500;">Run in ' . $labName . '</span></div></div><div class="popover-body" style="padding:12px 0 0 0; background:transparent;"><div class="popover-row"><span class="pop-label" style="color:#818cf8; font-weight:600; display:block; margin-bottom:4px; font-size:0.85rem;">Output:</span><div class="pop-output" style="color:#2dd4bf; white-space:pre-wrap; font-family:monospace; font-size:0.85rem; padding-left:8px; border-left:2px solid #334155;">' . $outputHtml . '</div></div></div>';
+                    
+                    $toolsHtml .= '
+                    <div class="tool-badge-wrapper mb-1">
+                        <div class="agent-activity-btn-wrapper d-flex" style="position:relative;">
+                            <button class="agent-activity-btn btn btn-sm" tabindex="0" data-coreui-toggle="popover" data-coreui-placement="bottom" data-coreui-html="true" data-coreui-custom-class="simple-blur" data-coreui-content="' . htmlspecialchars($popoverContent) . '" style="background:transparent; border:1px solid #334155; border-radius:6px; padding:4px 10px; color:#94a3b8; font-size:0.85rem; display:flex; align-items:center; gap:6px; cursor:pointer;">
+                                <svg class="icon" style="width:14px; height:14px; fill:currentColor;">
+                                    <use xlink:href="/assets/icons/free.svg#cil-settings"></use>
+                                </svg>
+                                1 tool
+                            </button>
+                        </div>
+                    </div>';
+                }
+            }
+
             $html .= '
             <div class="message-row ai-row"' . $usageAttrs . '>
                 <div class="msg-avatar">
                     <img src="' . $aiAvatar . '" style="width: 30px;" alt="AI">
                 </div>
-                <div class="msg-bubble">
-                    <p class="m-0">' . $content . '</p>
+                <div class="msg-content-wrapper d-flex flex-column" style="max-width:85%; width:100%;">
+                    ' . $toolsHtml . '
+                    <div class="msg-bubble w-100">
+                        <p class="m-0">' . $content . '</p>
+                    </div>
                 </div>
             </div>';
         }

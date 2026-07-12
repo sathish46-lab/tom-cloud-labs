@@ -483,6 +483,7 @@ document.addEventListener('DOMContentLoaded', function() {
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-top-right-radius: 4px;
     color: #ffffff;
+    text-align: left;
 }
 
 /* Summary Bubble */
@@ -592,3 +593,12 @@ document.addEventListener('DOMContentLoaded', function() {
     .pane-ai { order: 3; min-height: 400px; }
 }
 </style>
+
+<!-- Token History Modal Container -->
+<div class="modal fade" id="tokenHistoryModal" tabindex="-1" aria-labelledby="tokenHistoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content bg-dark text-light" style="border: 1px solid #334155; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" id="tokenHistoryModalContent">
+            <!-- Content will be injected here via AJAX -->
+        </div>
+    </div>
+</div>

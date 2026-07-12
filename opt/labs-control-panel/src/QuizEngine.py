@@ -14,9 +14,9 @@ class QuizEngine:
         
         if self.api_key:
             genai.configure(api_key=self.api_key)
-            # Use the state-of-the-art gemini-2.5-flash-lite model for high-speed generation
+            # Use the state-of-the-art gemini-3.5-flash model for high-speed generation
             try:
-                self.model = genai.GenerativeModel('gemini-2.5-flash-lite')
+                self.model = genai.GenerativeModel('gemini-3.5-flash')
             except Exception:
                 self.model = None
         else:
