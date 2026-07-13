@@ -98,3 +98,4 @@ wireguard-conf/
 # opt/
 work/
 opt/labs-control-panel/config.json
+labs/htdocs/assets/sna_css/

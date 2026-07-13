@@ -1,35 +1,38 @@
-<div class="lab-header-section mb-4">
-    <div class="row align-items-center">
-        <div class="col">
-            <h1 class="fw-bold theme-text m-0 labs-page-title">Labs</h1>
-            <p class="text-secondary opacity-75 mt-2 mb-0 labs-page-desc">
-                Explore the Labs, a technical playground for you. Each lab is a portal to virtual experiences, fostering innovation and digital mastery. Immerse yourself in this journey of tech exploration and discovery.
-            </p>
-        </div>
-        <div class="col-auto">
-            <div class="d-flex flex-column align-items-center justify-content-center text-center running-stat-wrapper">
-                <div class="d-flex align-items-center justify-content-center mb-1">
-                    <span class="fw-bold theme-text running-stat-val"><?= Session::get('running_count', 0) ?></span>
-                    <span class="text-secondary opacity-50 ms-2 running-stat-total">/ <?= Session::get('total_labs', 0) ?></span>
+<div class="blur mb-3 rounded-0">
+    <div class="container-fluid px-4">
+        <div class="row align-items-center py-3">
+            <div class="col">
+                <h1 class="fw-bold theme-text m-0 labs-page-title">Labs</h1>
+                <p class="text-secondary opacity-75 mt-2 mb-0 labs-page-desc">
+                    Explore the Labs, a technical playground for you. Each lab is a portal to virtual experiences, fostering innovation and digital mastery. Immerse yourself in this journey of tech exploration and discovery.
+                </p>
+            </div>
+            <div class="col-auto">
+                <div class="d-flex flex-column align-items-center justify-content-center text-center running-stat-wrapper">
+                    <div class="d-flex align-items-center justify-content-center mb-1">
+                        <span class="fw-bold theme-text running-stat-val"><?= Session::get('running_count', 0) ?></span>
+                        <span class="text-secondary opacity-50 ms-2 running-stat-total">/ <?= Session::get('total_labs', 0) ?></span>
+                    </div>
+                    <?php 
+                        $total = (int)Session::get('total_labs', 1);
+                        if ($total <= 0) $total = 1;
+                        $percent = ((int)Session::get('running_count', 0) / $total) * 100;
+                    ?>
+                    <div class="progress bg-secondary bg-opacity-10 rounded-pill mb-2 w-100 running-stat-progress">
+                        <div class="progress-bar bg-success rounded-pill" role="progressbar" style="width: <?= $percent ?>%" aria-valuenow="<?= $percent ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <div class="text-secondary opacity-50 text-uppercase fw-bold ls-1 running-stat-label">Running Labs</div>
                 </div>
-                <?php 
-                    $total = (int)Session::get('total_labs', 1);
-                    if ($total <= 0) $total = 1;
-                    $percent = ((int)Session::get('running_count', 0) / $total) * 100;
-                ?>
-                <div class="progress bg-secondary bg-opacity-10 rounded-pill mb-2 w-100 running-stat-progress">
-                    <div class="progress-bar bg-success rounded-pill" role="progressbar" style="width: <?= $percent ?>%" aria-valuenow="<?= $percent ?>" aria-valuemin="0" aria-valuemax="100"></div>
-                </div>
-                <div class="text-secondary opacity-50 text-uppercase fw-bold ls-1 running-stat-label">Running Labs</div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row g-4 mb-4">
+<div class="container-fluid px-4">
+    <div class="row g-4 mb-4">
     <?php foreach(Session::get('labs_list', []) as $lab): ?>
     <div class="col-12 col-md-4 card-entrance">
-        <div class="card h-100 border-0 shadow-lg rounded-4 glass-card position-relative">
+        <div class="card h-100 border-0 shadow-lg rounded-4 blur position-relative">
             
             <div class="position-absolute end-0 top-50 translate-middle-y pe-3 opacity-10 lab-card-bg-icon">
                 <?php if ($lab['id'] === 'minio'): ?>
@@ -110,6 +113,7 @@
         </div>
     </div>
     <?php endforeach; ?>
+    </div>
 </div>
 
 <?php include __DIR__ . '/labs/partials/lab_action_modals.php'; ?>

@@ -36,10 +36,10 @@
 }
 
 /* Ensure glass-mode elements always have GPU-optimized blur compositing */
-html.glass-mode .card,
-html.glass-mode .header,
-html.glass-mode .sidebar,
-html.glass-mode .footer {
+body.hwa-enabled .card,
+body.hwa-enabled .header,
+body.hwa-enabled .sidebar,
+body.hwa-enabled .footer {
   will-change: backdrop-filter;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;

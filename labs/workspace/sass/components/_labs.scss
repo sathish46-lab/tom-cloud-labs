@@ -73,12 +73,12 @@
 /* Modals & JS Toggle Helpers */
 .modal-code-access {
   background: rgba(15, 15, 20, 0.98) !important;
-  backdrop-filter: blur(20px) !important;
+  backdrop-filter: saturate(200%) blur(18px) !important;
 }
 
 .modal-connection-info {
   background: rgba(20, 20, 25, 0.95) !important;
-  backdrop-filter: blur(20px) !important;
+  backdrop-filter: saturate(200%) blur(18px) !important;
 }
 
 /* Used for elements controlled by JS style.display - DO NOT add !important */

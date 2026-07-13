@@ -77,7 +77,7 @@
                     </div>
                 </td>
                 <td class="text-center">
-                    <div class="card glass-card border-white border-opacity-10 py-2 px-3 mx-auto" style="max-width: 200px; background: rgba(255,255,255,0.05);">
+                    <div class="card blur border-white border-opacity-10 py-2 px-3 mx-auto" style="max-width: 200px; background: rgba(255,255,255,0.05);">
                         <div class="d-flex align-items-center gap-2 justify-content-center">
                             <i class='bx bxs-shield-alt text-primary fs-4'></i>
                             <div class="text-uppercase fw-bold" style="font-size: 10px; letter-spacing: 0.5px;"><?= $league ?></div>

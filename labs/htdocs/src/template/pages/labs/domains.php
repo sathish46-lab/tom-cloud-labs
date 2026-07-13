@@ -88,7 +88,7 @@
 ?>
 
 <!-- Modals moved to lab_modals.php -->
-    <div class="container-fluid py-3 p-0">
+    <div class="container-fluid py-3 p-0 px-4">
         <!-- Grid for Domains -->
         <div class="row row-cols-1 row-cols-md-3 g-4 align-items-start" id="masonry-area" data-masonry='{"percentPosition": true }'>
            <?php 

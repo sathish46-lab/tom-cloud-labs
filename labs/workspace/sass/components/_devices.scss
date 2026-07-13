@@ -74,7 +74,7 @@
 }
 
 .glass-modal-content {
-  backdrop-filter: blur(15px) !important;
+  backdrop-filter: saturate(200%) blur(18px) !important;
 }
 
 .modal-title-delete {
@@ -133,7 +133,7 @@
     border-radius: 12px !important;
     padding: 8px !important;
     background: var(--cui-dropdown-bg) !important;
-    backdrop-filter: blur(10px) !important;
+    backdrop-filter: saturate(200%) blur(18px) !important;
     
     .dropdown-item {
       font-size: 0.75rem !important;

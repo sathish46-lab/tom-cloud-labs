@@ -65,7 +65,6 @@ body {
 // Adjust the top margin of the wrapper to match the new smaller header
 .wrapper {
   margin-top: 0; // If you use sticky header, ensure the body doesn't overlap
-  backdrop-filter: blur(var(--blur-intensity)) saturate(150%);
 }
 
 .footer {

@@ -30,8 +30,8 @@
       background: rgba(255, 255, 255, 0.8) !important;
       border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 
-      :root.glass-mode & {
-        backdrop-filter: blur(12px);
+      body.hwa-enabled & {
+        backdrop-filter: saturate(200%) blur(18px);
       }
     }
 
@@ -100,7 +100,7 @@
       box-shadow: rgba(0, 0, 0, 0.4) 0px 12px 28px, rgba(255, 255, 255, 0.03) 0px 0px 16px !important;
 
       // When Visual Blur (HWA) is ON: Rich dark translucent black with saturate & blur (exact match to SNA)
-      :root.glass-mode &,
+      body.hwa-enabled &,
       body.hwa-enabled & {
         background: rgba(0, 0, 0, 0.65) !important;
         backdrop-filter: saturate(200%) blur(18px) !important;
@@ -108,7 +108,7 @@
       }
 
       // When Visual Blur (HWA) is OFF: Premium elevated solid dark background (no blur, no color reverse)
-      :root:not(.glass-mode) &,
+      body.hwa-disabled &,
       body.hwa-disabled & {
         background: var(--cui-card-bg-solid, #0d121b) !important;
         backdrop-filter: none !important;
@@ -125,9 +125,9 @@
     .header {
       border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 
-      :root.glass-mode &,
+      body.hwa-enabled &,
       body.hwa-enabled & {
-        backdrop-filter: blur(12px);
+        backdrop-filter: saturate(200%) blur(18px);
       }
     }
   }

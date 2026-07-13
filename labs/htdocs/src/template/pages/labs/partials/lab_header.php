@@ -1,6 +1,7 @@
-<div class="lab-header-section">
-    <div class="container-fluid p-0">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="blur banner mb-3 rounded-0 border-bottom border-secondary border-opacity-10">
+    <div class="card-body p-0" style="margin-left: 1rem; margin-right: 1rem;">
+        <div class="container-fluid pt-3 pb-1">
+        <div class="d-flex justify-content-between align-items-center mb-3">
             <!-- Avatar + Info Section -->
             <div class="d-flex align-items-center gap-4">
                 <!-- Avatar Section -->
@@ -77,7 +78,7 @@
             <!-- Action Buttons -->
             <div class="btn-group shadow-sm rounded-pill overflow-hidden me-5" role="group">
                 <?php if($isRunning): ?>
-                    <button class="btn px-3 py-1.5 fw-bold hover-scale border-0 d-flex align-items-center gap-2 btn-lab-launch"
+                    <button class="btn btn-lab-launch"
                             onclick="launchService(this, '<?= $labType ?>')"
                             data-tooltip="Launch Cloud IDE / Code Server"
                             data-coreui-toggle="loading-button" data-coreui-spinner-type="grow">
@@ -86,7 +87,7 @@
                     </button>
                 <?php endif; ?>
                 
-                <button class="btn btn-success btn-redeploy-lab px-3 py-1.5 fw-bold hover-scale border-0 d-flex align-items-center gap-2 btn-lab-deploy"
+                <button class="btn btn-lab-deploy"
                         onclick="handleDeploy(this, '<?= $labType ?>')"
                         data-tooltip="<?= $isRunning ? 'Redeploy for a fresh instance' : 'Deploy this lab' ?>"
                         data-coreui-toggle="loading-button" data-coreui-spinner-type="grow">
@@ -95,7 +96,7 @@
                 </button>
 
                 <?php if($isRunning): ?>
-                    <button id="btn-stop-action" class="btn px-3 py-1.5 fw-bold hover-scale border-0 d-flex align-items-center gap-2 btn-lab-stop"
+                    <button id="btn-stop-action" class="btn btn-lab-stop"
                             onclick="handleStop()"
                             data-tooltip="Stop Instance Immediately"
                             data-coreui-toggle="loading-button" data-coreui-spinner-type="grow">
@@ -112,4 +113,5 @@
         <?php include __DIR__ . '/lab_nav.php'; ?>
         
     </div>
+</div>
 </div>

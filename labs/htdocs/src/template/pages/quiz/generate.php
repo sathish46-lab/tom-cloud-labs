@@ -30,7 +30,7 @@ Session::$pageTitle = "AI is Generating: " . $subtopic['title'];
 
 <div class="quiz-gen-view d-flex align-items-center justify-content-center min-vh-100 fade-in">
     <div class="container text-center">
-        <div class="gen-card glass-card p-5 mx-auto" style="max-width: 500px;">
+        <div class="gen-card blur p-5 mx-auto" style="max-width: 500px;">
             <div class="mb-4">
                 <div class="ai-loader-container mb-4">
                     <div class="ai-pulse"></div>

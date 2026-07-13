@@ -284,13 +284,13 @@ $greetingText = $quotes[array_rand($quotes)];
 $greetingText = str_replace($username, '<span class="text-primary">' . htmlspecialchars($username) . '</span>', $greetingText);
 ?>
 
-<div class="container-fluid px-0 pt-4">
+<div class="container-fluid px-0 pt-4 px-4">
 
     <!-- Top Row: Profile & Clan Cards -->
-    <div class="row g-4 mb-4">
+    <div class="row g-4 mb-4 ">
         <!-- Profile Banner -->
         <div class="col-12 col-xl-8">
-            <div class="card border-0 glass-card position-relative overflow-hidden h-100 profile-banner-card">
+            <div class="card border-0 blur position-relative overflow-hidden h-100 profile-banner-card">
                 <!-- Glowing Layered Liquid Waves (Background Visual Elements) -->
                 <div class="wave-wrapper">
                     <svg class="wave-svg" viewBox="0 0 1600 220" preserveAspectRatio="none">
@@ -468,7 +468,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
     <!-- Continue Learning Mega Console -->
     <div class="row g-4 mb-4">
         <div class="col-12 col-xl-8">
-            <div class="card border-0 glass-card continue-learning-card">
+            <div class="card border-0 blur continue-learning-card">
                 <div class="card-body p-4">
                     <!-- Title & Switch Tabs -->
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
@@ -637,7 +637,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                             <div class="row g-4">
                                 <!-- Connected Devices Card -->
                                 <div class="col-12 col-md-6">
-                                    <div class="card h-100 border-0 glass-card device-card">
+                                    <div class="card h-100 border-0 blur device-card">
                                         <div class="card-body p-4">
                                             <div class="d-flex justify-content-between align-items-start mb-4">
                                                 <div>
@@ -711,7 +711,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
 
                                 <!-- Linked Domains Card -->
                                 <div class="col-12 col-md-6">
-                                    <div class="card h-100 border-0 glass-card domain-card">
+                                    <div class="card h-100 border-0 blur domain-card">
                                         <div class="card-body p-4">
                                             <div class="d-flex justify-content-between align-items-start mb-4">
                                                 <div>
@@ -793,7 +793,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                             <div class="row g-3 mt-4"> <!-- Open Row 2 (Machine Labs & Challenge Labs) -->
                                 <!-- Machine Labs Card -->
                                 <div class="col-12 col-md-7 pe-md-1 mb-4 mb-md-0">
-                                    <div class="card h-100 border-0 glass-card machine-labs-card">
+                                    <div class="card h-100 border-0 blur machine-labs-card">
                                         <div class="card-body p-4">
                                             <div class="d-flex justify-content-between align-items-center mb-3">
                                                 <h6 class="fw-bold mb-0 d-flex align-items-center text-white card-title-md">
@@ -935,7 +935,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
 
                                 <!-- Challenge Labs Card -->
                                 <div class="col-12 col-md-5 ps-md-1">
-                                    <div class="card h-100 border-0 glass-card">
+                                    <div class="card h-100 border-0 blur">
                                         <div class="card-body p-2 px-3 d-flex flex-column min-h-220">
                                             <div class="d-flex justify-content-between align-items-center mb-3">
                                                 <h6 class="fw-bold mb-0 d-flex align-items-center text-white card-title-md">
@@ -1100,7 +1100,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
     <!-- Right Sidebar (Three Boxes) -->
     <div class="col-12 col-xl-4 d-flex flex-column gap-4">
         <!-- Box 1: Recent Activity -->
-        <div class="card border-0 glass-card">
+        <div class="card border-0 blur">
             <div class="card-body p-4">
                 <h6 class="fw-bold text-body mb-4 sidebar-box-title">Recent Activity</h6>
                 <div class="d-flex flex-column gap-3">
@@ -1127,7 +1127,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
         </div>
 
         <!-- Box 2: Smart Insights (Dynamic) -->
-        <div class="card border-0 glass-card position-relative overflow-hidden smart-insights-card" id="smart-insights-card">
+        <div class="card border-0 blur position-relative overflow-hidden smart-insights-card" id="smart-insights-card">
             <div class="card-body p-4 position-relative">
                 <h6 class="fw-bold mb-2 text-body insights-title">Smart Insights</h6>
                 <p class="mb-1 text-body-secondary insights-subtitle" id="insights-subtitle">Analyzing your activity...</p>
@@ -1158,7 +1158,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
         </div>
 
         <!-- Box 3: Upcoming Events -->
-        <div class="card border-0 glass-card">
+        <div class="card border-0 blur">
             <div class="card-body p-4">
                 <h6 class="fw-bold text-body d-flex align-items-center gap-2 mb-3 sidebar-box-title">
                     <i class='bx bx-calendar-event fs-5 opacity-75'></i> Upcoming Events

@@ -876,7 +876,7 @@ var TomBG = {
 
         setVar("--glass-bg", isLight ? "rgba(255, 255, 255, 0.79)" : this.hexToRgba(safeColor, 0.85));
         setVar("--glass-bg-solid", isLight ? this.hexToRgba(this.ensureLightness(themeColor, 0.92), 0.94) : this.hexToRgba(safeColor, 0.94));
-        setVar("--cui-card-bg", isLight ? "rgba(255, 255, 255, 0.7)" : this.hexToRgba(safeColor, 0.2));
+        setVar("--cui-card-bg", isLight ? "rgba(255, 255, 255, 0.7)" : this.hexToRgba(safeColor, 0.85));
         setVar("--cui-card-bg-solid", isLight ? this.hexToRgba(this.ensureLightness(themeColor, 0.96), 0.94) : this.hexToRgba(safeColor, 0.95));
         setVar("--cui-body-bg", safeColor);
         setVar("--cui-primary", primaryColor);
@@ -1327,7 +1327,6 @@ window.TomVisuals = {
   },
   toggleBlur: function (enable) {
     if (enable) {
-      document.documentElement.classList.add('glass-mode');
       if (document.body) {
         document.body.classList.add('hwa-enabled');
         document.body.classList.remove('hwa-disabled');
@@ -1346,7 +1345,6 @@ window.TomVisuals = {
         clearInterval(window._gpuWarningTimer);
         window._gpuWarningTimer = null;
       }
-      document.documentElement.classList.remove('glass-mode');
       if (document.body) {
         document.body.classList.remove('hwa-enabled');
         document.body.classList.add('hwa-disabled');
@@ -1389,8 +1387,7 @@ window.TomVisuals = {
   syncUI: function () {
     var blurToggle = document.getElementById('visualBlurToggle');
     if (blurToggle) {
-      // Sync from server-rendered HTML class instead of local storage
-      blurToggle.checked = document.documentElement.classList.contains('glass-mode');
+      blurToggle.checked = document.body && document.body.classList.contains('hwa-enabled');
     }
     var savedTheme = document.documentElement.getAttribute('data-coreui-theme') || 'dark';
     this.switchBGTheme(savedTheme);

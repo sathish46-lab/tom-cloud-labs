@@ -56,33 +56,7 @@ body {
   @include transition(padding 0.2s cubic-bezier(0.165, 0.84, 0.44, 1));
 }
 
-.lab-header-section {
-  /* 1. Theme Background - Uses Glass effect only when enabled */
-  background-color: var(--glass-bg, var(--cui-body-bg));
-
-  :root.glass-mode & {
-    backdrop-filter: blur(var(--glass-blur, 12px));
-    -webkit-backdrop-filter: blur(var(--glass-blur, 12px));
-  }
-
-  border-bottom: 1px solid var(--cui-card-border-color, rgba(255, 255, 255, 0.1));
-
-  /* 2. Spacing - Aligned with screen edges */
-  padding: 2rem 0;
-  margin: 0 -24px 2rem -24px;
-
-  position: relative;
-  z-index: 5;
-}
-
 .quiz-container {
-  /* 1. Theme Background - Uses Glass effect only when enabled */
-  background-color: var(--glass-bg, var(--cui-body-bg));
-
-  :root.glass-mode & {
-    backdrop-filter: blur(var(--glass-blur, 12px));
-    -webkit-backdrop-filter: blur(var(--glass-blur, 12px));
-  }
 
   /* Prevent nested blur bug in Chrome when cards are inside the frosted container */
   .card {
@@ -125,8 +99,8 @@ body {
   /* Frosted glass background layer */
   // background-color: var(--glass-bg, var(--cui-body-bg)) !important;
 
-  :root.glass-mode & {
-    backdrop-filter: blur(var(--glass-blur, 12px));
-    -webkit-backdrop-filter: blur(var(--glass-blur, 12px));
+  body.hwa-enabled & {
+    backdrop-filter: saturate(200%) blur(18px);
+    -webkit-backdrop-filter: saturate(200%) blur(18px);
   }
 }

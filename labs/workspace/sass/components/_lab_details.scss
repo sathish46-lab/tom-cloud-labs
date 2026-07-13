@@ -54,7 +54,33 @@
   }
 }
 
-/* 2. Server Logs Partial */
+/* 2. Lab Nav Tabs */
+.lab-nav-tabs {
+  border-bottom: 0 !important;
+
+  .nav-link {
+    border: none !important;
+    border-top: 3px solid transparent !important;
+    color: var(--glass-text-muted);
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+    background: transparent;
+    transition: all 0.2s ease-in-out;
+    
+    &:hover {
+      color: var(--glass-text);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    &.active {
+      color: var(--glass-text) !important;
+      background: rgba(0, 0, 0, 0.2) !important;
+      border-top: 3px solid transparent !important;
+    }
+  }
+}
+
+/* 3. Server Logs Partial */
 .logs-header-clickable {
   cursor: pointer !important;
 }
@@ -118,7 +144,7 @@
 /* 4. Lab Domains Tab */
 .empty-domains-card {
   max-width: 400px !important;
-  backdrop-filter: blur(10px) !important;
+  backdrop-filter: saturate(200%) blur(18px) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
@@ -289,7 +315,7 @@
 
 .modal-stop-content {
   background: rgba(25, 10, 10, 0.47) !important;
-  backdrop-filter: blur(20px) !important;
+  backdrop-filter: saturate(200%) blur(18px) !important;
 }
 
 .stop-icon-wrapper {

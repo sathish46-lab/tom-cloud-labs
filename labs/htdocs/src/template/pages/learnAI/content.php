@@ -94,16 +94,19 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
         const footer = document.querySelector('footer.footer');
         const hHeight = header ? header.offsetHeight : 64;
         const fHeight = footer ? footer.offsetHeight : 38;
-        document.documentElement.style.setProperty('--app-height', Math.max(400, window.innerHeight - hHeight - fHeight) + 'px');
+        const wrapper = document.querySelector('.learn-app-wrapper');
+        if (wrapper) {
+            wrapper.style.height = Math.max(400, window.innerHeight - hHeight - fHeight) + 'px';
+        }
     }
     updateAppHeight();
     window.addEventListener('resize', updateAppHeight);
 })();
 </script>
 
-<div class="learn-app-wrapper stable-app-view d-flex flex-column overflow-hidden bg-transparent" style="height: var(--app-height, 75vh);">
+<div class="learn-app-wrapper stable-app-view d-flex flex-column overflow-hidden bg-transparent">
     <!-- Main App Body -->
-    <div class="flex-grow-1 d-flex flex-row overflow-hidden p-2 gap-0">
+    <div class="flex-grow-1 d-flex flex-row overflow-hidden p-3 gap-0">
         
 <?php
 $isPanel1Expanded = false;
@@ -114,7 +117,7 @@ $panel1State = $isPanel1Expanded ? 'expanded' : 'collapsed';
 $panel1Class = $isPanel1Expanded ? '' : 'auto-compact';
 ?>
         <!-- Panel 1: Collapsible Sidebar -->
-        <div id="learn-panel-1" class="split-panel h-100 <?= $panel1Class ?>" style="width: var(--outlineSidebar-saved-width, 68px); min-width: 68px;" data-state="<?= $panel1State ?>">
+        <div id="learn-panel-1" class="split-panel h-100 <?= $panel1Class ?>" style="min-width: 68px;" data-state="<?= $panel1State ?>">
             <div class="card h-100 border-secondary border-opacity-10 rounded-4 shadow-sm d-flex flex-column overflow-hidden">
                 <div class="card-header fs-6 d-flex justify-content-between align-items-center py-2 px-3">
                     <strong class="text-truncate" title="<?= htmlspecialchars($lesson['title']) ?>"><?= htmlspecialchars($lesson['title']) ?></strong>
@@ -280,7 +283,7 @@ $panel1Class = $isPanel1Expanded ? '' : 'auto-compact';
         </div>
 
         <!-- Resizer 1 (Gutter) -->
-        <div class="gutter gutter-horizontal pane-resizer h-100" style="width: 4px;" data-target="learn-panel-1"></div>
+        <div class="gutter gutter-horizontal h-100" style="width: 4px;" data-target="learn-panel-1"></div>
 
         <!-- Panel 2: Center Content Area -->
         <div id="learn-panel-2" class="split-panel flex-grow-1 h-100 overflow-hidden" style="width: calc(64% - 2px);">
@@ -343,10 +346,10 @@ $panel1Class = $isPanel1Expanded ? '' : 'auto-compact';
         </div>
 
         <!-- Resizer 2 (Gutter) -->
-        <div class="gutter gutter-horizontal pane-resizer h-100" style="width: 4px;" data-target="learn-panel-3" data-direction="right"></div>
+        <div class="gutter gutter-horizontal h-100" style="width: 4px;" data-target="learn-panel-3" data-direction="right"></div>
 
         <!-- Panel 3: Right AI Assistant -->
-        <div id="learn-panel-3" class="split-panel pane-ai d-flex flex-column h-100" style="width: var(--paneAI-saved-width, 350px); min-width: 300px;">
+        <div id="learn-panel-3" class="split-panel pane-ai d-flex flex-column h-100" style="min-width: 300px;">
             <div class="card h-100 border-secondary border-opacity-10 rounded-4 shadow-sm d-flex flex-column overflow-hidden">
                 <div class="card-header bg-dark bg-opacity-25 border-secondary border-opacity-10 py-2 px-3 d-flex align-items-center justify-content-between">
                     <div class="d-flex align-items-center gap-2">
@@ -480,10 +483,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
 .user-row .msg-bubble {
     background: #1f2937;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--cui-border-color, rgba(255, 255, 255, 0.1));
     border-top-right-radius: 4px;
     color: #ffffff;
     text-align: left;
+}
+
+:root[data-coreui-theme="light"] .user-row .msg-bubble {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+:root[data-coreui-theme="dark"] .user-row .msg-bubble {
+    background: #1f2937;
+    color: #ffffff;
 }
 
 /* Summary Bubble */
@@ -533,34 +546,9 @@ document.addEventListener('DOMContentLoaded', function() {
     min-width: 0 !important; 
     flex-shrink: 0;
 }
-.pane-resizer {
-    width: 16px;
-    margin: 0 -8px;
-    background: transparent;
-    cursor: col-resize;
-    z-index: 1000;
-    transition: background 0.2s;
-    position: relative;
-    flex-shrink: 0;
-}
-.pane-resizer:hover, .pane-resizer.is-dragging {
-    background: rgba(var(--cui-primary-rgb, 50, 31, 219), 0.1);
-}
-
-.pane-resizer::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 4px;
-    height: 48px;
-    background: rgba(255,255,255,0.08);
-    border-radius: 10px;
-    transition: all 0.2s;
-}
-.pane-resizer:hover::after, .pane-resizer.is-dragging::after {
-    background: var(--cui-primary, #321fdb);
+body.resizing-active * {
+    user-select: none !important;
+    -webkit-user-select: none !important;
 }
 
 /* Scrollbars */

@@ -108,9 +108,8 @@ try {
         exit;
     }
 
-    // 4. LAYER 4b: LLM ORCHESTRATOR -> Pre-fetch authoritative Layer 5 context locally
-    $enrichedContext = $orchestrator->prepareLLMContext();
-
+    // 4. LAYER 4b: LLM ORCHESTRATOR -> API Driven (No pre-fetching)
+    // Context is now fetched dynamically by ai_worker via PHP APIs
     $job = [
         'session_id'  => $sessionId,
         'message_id'  => $messageId,
@@ -119,7 +118,7 @@ try {
         'chapter_id'  => $chapterId,
         'query'       => $query,
         'ai_model'    => $aiModel,
-        'context'     => $enrichedContext,
+        'context'     => [], // worker will fetch via API
         'timestamp'   => time()
     ];
 

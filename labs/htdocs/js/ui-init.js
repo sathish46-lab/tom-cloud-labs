@@ -23,7 +23,7 @@ window.onPageLoad = window.onPageLoad || function(callback) {
  */
 (function() {
     var isGlassMode = function() {
-        return document.documentElement.classList.contains('glass-mode');
+        return document.body && document.body.classList.contains('hwa-enabled');
     };
 
     // Before HTMX swaps content: hide #main-content instantly
@@ -299,7 +299,7 @@ window.TomGPU = (function() {
             return info.webgl && info.highPerf;
         },
         checkAndWarn: function() {
-            if (!document.documentElement.classList.contains('glass-mode')) return;
+            if (!document.body || !document.body.classList.contains('hwa-enabled')) return;
             var gpuInfo = this.detect();
             if (!gpuInfo.webgl || !gpuInfo.highPerf) {
                 var reason = !gpuInfo.webgl 
@@ -316,7 +316,7 @@ window.TomGPU = (function() {
 
             function triggerWarning() {
                 count++;
-                if (!document.documentElement.classList.contains('glass-mode')) {
+                if (!document.body || !document.body.classList.contains('hwa-enabled')) {
                     if (window._gpuWarningTimer) clearInterval(window._gpuWarningTimer);
                     window._gpuWarningTimer = null;
                     return;
@@ -344,7 +344,10 @@ window.TomGPU = (function() {
                     if (window.TomVisuals && typeof window.TomVisuals.toggleBlur === 'function') {
                         window.TomVisuals.toggleBlur(false);
                     } else {
-                        document.documentElement.classList.remove('glass-mode');
+                        if (document.body) {
+                            document.body.classList.remove('hwa-enabled');
+                            document.body.classList.add('hwa-disabled');
+                        }
                         var toggle = document.getElementById('visualBlurToggle');
                         if (toggle) toggle.checked = false;
                     }

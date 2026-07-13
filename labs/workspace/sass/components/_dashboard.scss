@@ -179,8 +179,8 @@ html[data-coreui-theme], html {
       background: rgba(255, 255, 255, 0.08) !important;
       border: 1px solid rgba(255, 255, 255, 0.12) !important;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
-      backdrop-filter: blur(12px) !important;
-      -webkit-backdrop-filter: blur(12px) !important;
+      backdrop-filter: saturate(200%) blur(18px) !important;
+      -webkit-backdrop-filter: saturate(200%) blur(18px) !important;
       
       div, span, i {
         color: #ffffff !important;
@@ -195,12 +195,11 @@ html[data-coreui-theme], html {
 
 // --- DARK MODE SPIDERMAN ---
 html:not([data-coreui-theme="light"]).bg-mode-spiderman {
-  &.glass-mode {
+  & body.hwa-enabled {
 
-    .card:not(.clan-card),
-    .glass-card:not(.clan-card) {
+    .card:not(.clan-card):not(.blur) {
       // 1. Gorgeous Dark Gray to Dark Red diagonal glass gradient
-      background: linear-gradient(135deg, rgba(14, 14, 16, 0.82) 0%, rgba(35, 12, 14, 0.78) 100%) !important;
+      background: linear-gradient(135deg, rgba(14, 14, 16, 0.65) 0%, rgba(35, 12, 14, 0.6) 100%) !important;
 
       // 2. High-fidelity thin vibrant red translucent border
       border: 1px solid rgba(255, 59, 48, 0.28) !important;
@@ -224,10 +223,10 @@ html:not([data-coreui-theme="light"]).bg-mode-spiderman {
   }
 
   // Fallback state when Visual Blur is OFF
-  &:not(.glass-mode) {
+  & body.hwa-disabled {
 
     .card:not(.clan-card),
-    .glass-card:not(.clan-card) {
+    .blur:not(.clan-card):not(.banner) {
       background: rgba(14, 14, 16, 0.68) !important;
       border: 1px solid rgba(255, 59, 48, 0.2) !important;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
@@ -241,10 +240,10 @@ html:not([data-coreui-theme="light"]).bg-mode-spiderman {
 
 // --- LIGHT MODE SPIDERMAN ---
 html[data-coreui-theme="light"].bg-mode-spiderman {
-  &.glass-mode {
+  & body.hwa-enabled {
 
     .card:not(.clan-card),
-    .glass-card:not(.clan-card) {
+    .blur:not(.clan-card):not(.banner) {
       // 1. Sleek light mode frosted glass background
       background: rgba(255, 255, 255, 0.72) !important;
 
@@ -269,10 +268,10 @@ html[data-coreui-theme="light"].bg-mode-spiderman {
   }
 
   // Fallback state when Visual Blur is OFF
-  &:not(.glass-mode) {
+  & body.hwa-disabled {
 
     .card:not(.clan-card),
-    .glass-card:not(.clan-card) {
+    .blur:not(.clan-card):not(.banner) {
       background: rgba(255, 255, 255, 0.68) !important;
       border: 1px solid rgba(255, 59, 48, 0.18) !important;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
@@ -291,14 +290,13 @@ html[data-coreui-theme="light"].bg-mode-spiderman {
 // --- DARK MODE IRON MAN ---
 html:not([data-coreui-theme="light"]).bg-mode-ironman,
 html:not([data-coreui-theme="light"]).bg-mode-IronMan {
-  &.glass-mode {
+  & body.hwa-enabled {
 
-    .card:not(.clan-card),
-    .glass-card:not(.clan-card) {
+    .card:not(.clan-card):not(.blur) {
       // 1. Sleek Deep Dark Gray to Crimson-Gold Armor glass gradient
-      background: linear-gradient(135deg, rgba(20, 8, 8, 0.85) 0%, rgba(45, 12, 12, 0.8) 100%) !important;
+      background: linear-gradient(135deg, rgba(20, 8, 8, 0.65) 0%, rgba(45, 12, 12, 0.6) 100%) !important;
 
-      // 2. High-fidelity thin gold translucent border
+      // 2. Iron Man's signature glowing arc-reactor gold border
       border: 1px solid rgba(255, 204, 0, 0.3) !important;
 
       // 3. Luxurious deep shadow blended with a soft ambient hot-red neon glow
@@ -320,10 +318,10 @@ html:not([data-coreui-theme="light"]).bg-mode-IronMan {
   }
 
   // Fallback state when Visual Blur is OFF
-  &:not(.glass-mode) {
+  & body.hwa-disabled {
 
     .card:not(.clan-card),
-    .glass-card:not(.clan-card) {
+    .blur:not(.clan-card):not(.banner) {
       background: rgba(18, 8, 8, 0.68) !important;
       border: 1px solid rgba(255, 204, 0, 0.22) !important;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
@@ -338,10 +336,10 @@ html:not([data-coreui-theme="light"]).bg-mode-IronMan {
 // --- LIGHT MODE IRON MAN ---
 html[data-coreui-theme="light"].bg-mode-ironman,
 html[data-coreui-theme="light"].bg-mode-IronMan {
-  &.glass-mode {
+  & body.hwa-enabled {
 
     .card:not(.clan-card),
-    .glass-card:not(.clan-card) {
+    .blur:not(.clan-card):not(.banner) {
       // 1. Sleek light mode frosted glass background
       background: rgba(255, 255, 255, 0.72) !important;
 
@@ -366,10 +364,10 @@ html[data-coreui-theme="light"].bg-mode-IronMan {
   }
 
   // Fallback state when Visual Blur is OFF
-  &:not(.glass-mode) {
+  & body.hwa-disabled {
 
     .card:not(.clan-card),
-    .glass-card:not(.clan-card) {
+    .blur:not(.clan-card):not(.banner) {
       background: rgba(255, 255, 255, 0.68) !important;
       border: 1px solid rgba(255, 204, 0, 0.2) !important;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
@@ -388,12 +386,12 @@ html[data-coreui-theme="light"].glass-mode {
   &.bg-mode-IronMan {
     .continue-learning-card {
       background: rgba(255, 255, 255, 0.38) !important;
-      backdrop-filter: blur(12px) saturate(120%) !important;
-      -webkit-backdrop-filter: blur(12px) saturate(120%) !important;
+      backdrop-filter: saturate(200%) blur(18px) !important;
+      -webkit-backdrop-filter: saturate(200%) blur(18px) !important;
       border: 1px solid rgba(255, 255, 255, 0.45) !important;
       box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
 
-      .glass-card {
+      .blur {
         background: rgba(255, 255, 255, 0.18) !important;
         border: 1px solid rgba(255, 255, 255, 0.55) !important;
         backdrop-filter: none !important;
@@ -410,10 +408,10 @@ html:not([data-coreui-theme="light"]).glass-mode {
   &.bg-mode-IronMan {
     .continue-learning-card {
       background: linear-gradient(135deg, rgba(14, 14, 16, 0.45) 0%, rgba(35, 12, 14, 0.4) 100%) !important;
-      backdrop-filter: blur(12px) saturate(120%) !important;
-      -webkit-backdrop-filter: blur(12px) saturate(120%) !important;
+      backdrop-filter: saturate(200%) blur(18px) !important;
+      -webkit-backdrop-filter: saturate(200%) blur(18px) !important;
 
-      .glass-card {
+      .blur {
         background: rgba(255, 255, 255, 0.04) !important;
         border: 1px solid rgba(255, 255, 255, 0.08) !important;
         backdrop-filter: none !important;
@@ -633,17 +631,17 @@ html[data-coreui-theme="light"] .active-lab-item-card {
   scrollbar-width: none !important;  /* Firefox */
 }
 /* Domain Card Static Shadows */
-:root .card.glass-card.domain-card {
+:root .card.blur.domain-card {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
   border: 1px solid rgba(0, 0, 0, 0.05) !important;
 }
 
-:root[data-coreui-theme="dark"] .card.glass-card.domain-card {
+:root[data-coreui-theme="dark"] .card.blur.domain-card {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
   border: 1px solid rgba(255, 255, 255, 0.05) !important;
 }
 
-:root.glass-mode .card.glass-card.domain-card {
+body.hwa-enabled .card.blur.domain-card {
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
 }
 
@@ -681,7 +679,7 @@ html[data-coreui-theme="light"] .active-lab-item-card {
   }
   .profile-link-btn {
     font-size: 0.75rem;
-    backdrop-filter: blur(10px);
+    backdrop-filter: saturate(200%) blur(18px);
   }
 
   .stats-row {
@@ -877,7 +875,9 @@ html[data-coreui-theme="light"] .active-lab-item-card {
 }
 
 .active-lab-item-card {
-  backdrop-filter: blur(6px) !important;
+  body.hwa-enabled & {
+    backdrop-filter: saturate(200%) blur(18px) !important;
+  }
   
   .lab-icon-circle {
     width: 32px !important;
@@ -1118,5 +1118,7 @@ html[data-coreui-theme="light"] .active-lab-item-card {
 
 /* Modals */
 .glass-modal-content {
-  backdrop-filter: blur(20px) !important;
+  body.hwa-enabled & {
+    backdrop-filter: saturate(200%) blur(18px) !important;
+  }
 }

@@ -16,12 +16,9 @@
     --glass-border: rgba(0, 0, 0, 0.1);
 }
 
-.lab-header-section,
-.card,
 .sidebar,
 .header,
-.footer,
-.modal-content {
+.footer {
     background-color: var(--glass-bg) !important;
     transition:
         background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
@@ -65,11 +62,11 @@
     }
 
     /* Use Theme-Aware solid fallback when blur is OFF */
-    html:not(.glass-mode) & {
+    body.hwa-disabled & {
         background-color: var(--glass-bg-solid, rgba(255, 255, 255, 0.95)) !important;
     }
 
-    html:not(.glass-mode)[data-coreui-theme="dark"] & {
+    body.hwa-disabled[data-coreui-theme="dark"] & {
         background-color: var(--glass-bg-solid, rgba(15, 25, 40, 0.96)) !important;
     }
 }
@@ -86,11 +83,11 @@
     /* Depth: Soft, diffused drop shadows for floating effect */
     box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.12) !important;
 
-    html:not(.glass-mode) & {
+    body.hwa-disabled & {
         border: 1px solid rgba(0, 0, 0, 0.05) !important;
     }
 
-    html:not(.glass-mode)[data-coreui-theme="dark"] & {
+    body.hwa-disabled[data-coreui-theme="dark"] & {
         border: 1px solid rgba(255, 255, 255, 0.05) !important;
     }
 }
@@ -99,11 +96,11 @@
 .sidebar {
     border-right: 1px solid rgba(255, 255, 255, 0.15) !important;
 
-    html:not(.glass-mode) & {
+    body.hwa-disabled & {
         border-right: 1px solid rgba(0, 0, 0, 0.05) !important;
     }
 
-    html:not(.glass-mode)[data-coreui-theme="dark"] & {
+    body.hwa-disabled[data-coreui-theme="dark"] & {
         border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
     }
 }
@@ -117,34 +114,16 @@
     align-items: center !important;
 }
 
-.lab-header-section {
-    padding: 2.5rem 24px !important;
-    margin: 0 -24px 2rem -24px !important;
-    border: none !important;
-    box-shadow: none !important;
-    background-color: var(--glass-bg) !important;
-    display: block !important;
-}
-
 .footer {
     border: none !important;
 }
 
 
 /* Apply the blur ONLY when the user preference class is present */
-html.glass-mode .lab-header-section,
-html.glass-mode .card,
-html.glass-mode .sidebar,
-html.glass-mode .header,
-html.glass-mode .footer,
-html.glass-mode .modal-content,
-body.hwa-enabled .lab-header-section,
-body.hwa-enabled .card,
 body.hwa-enabled .sidebar,
 body.hwa-enabled .header,
-body.hwa-enabled .footer,
-body.hwa-enabled .modal-content {
-    /* The Glass Effect: Strong frosted glass blur */
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
+body.hwa-enabled .footer {
+    /* The Professional SNA Glass Effect */
+    backdrop-filter: saturate(200%) blur(18px);
+    -webkit-backdrop-filter: saturate(200%) blur(18px);
 }

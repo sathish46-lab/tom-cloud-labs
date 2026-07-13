@@ -23,7 +23,7 @@ $tabs = [
 ?>
 
 <div class="row m-0 p-0">
-    <ul class="nav nav-tabs">
+    <ul class="nav nav-tabs lab-nav-tabs border-0">
         <?php foreach($tabs as $key => $tab): 
             $isActive = (strpos($currentUri, $tab['matcher']) !== false);
         ?>

@@ -3,7 +3,7 @@
     $displayStatus = ucfirst(strtolower($device['status'] ?? 'offline')); 
 ?>
 <div class="col-12 col-md-4 device-row card-entrance" id="device-card-<?= $dbId ?>" data-pubkey="<?= $device['public_key'] ?>">
-    <div class="card shadow-lg rounded-4 overflow-hidden border-0 glass-card h-100">
+    <div class="card shadow-lg rounded-4 overflow-hidden border-0 blur h-100">
         <div class="card-body p-3">
             <div class="d-flex justify-content-between align-items-start">
                 <h5 class="fw-bold m-0 text-truncate device-card-title">

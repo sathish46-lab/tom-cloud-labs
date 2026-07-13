@@ -128,11 +128,11 @@
 ?>
 
 <!-- Modals moved to lab_modals.php -->
-    <div class="container-fluid  py-3 p-0">
+    <div class="container-fluid py-3 px-4">
         <div class="row g-4">
             <div class="col-lg-6">
-                <div class="card mb-4 border-0 shadow-sm rounded-4 card-theme-bg">
-                    <div class="card-header bg-transparent border-0 pt-4 ">
+                <div class="card mb-4 border-0 shadow-sm blur rounded-4">
+                    <div class="card-header bg-transparent border-0 pt-4 px-4">
                         <h6 class="fw-bold mb-0 text-body-emphasis">Lab Information <span
                             class="small text-body-secondary ms-1">Readme</span></h6>
                     </div>
@@ -183,7 +183,7 @@
                         <?php endif; ?>
                     </div>
                 </div>
-                <div class="card border-0 shadow-sm glass-card rounded-4">
+                <div class="card border-0 shadow-sm blur rounded-4">
                     <div class="card-header bg-transparent border-0 pt-4 px-4">
                         <h6 class="fw-bold mb-0">IO Stats <span class="small text-muted ms-1">Net and Block</span>
                         <?php if (!$isRunning): ?>
@@ -216,7 +216,7 @@
                 </div>
             </div>
             <div class="col-lg-6">
-                <div class="card mb-4 border-0 shadow-sm glass-card rounded-4">
+                <div class="card mb-4 border-0 shadow-sm blur rounded-4">
                     <div class="card-header bg-transparent border-0 pt-4 px-4">
                         <h6 class="fw-bold mb-0">
                         Container Load
@@ -291,7 +291,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="card border-0 shadow-sm glass-card rounded-4">
+                <div class="card border-0 shadow-sm blur rounded-4">
                     <div class="card-header bg-transparent border-0 pt-4 px-4">
                         <h6 class="fw-bold mb-0 ">Load History <span class="small text-muted ms-1">One Hour</span></h6>
                     </div>
@@ -336,7 +336,7 @@
 
     <!-- Activity Lifecycle Card -->
     <div class="container-fluid px-3 mb-4">
-        <div class="card border-0 shadow-sm glass-card rounded-4 lab-activity-card" data-id="<?= htmlspecialchars($fullHash) ?>" data-lab="<?= htmlspecialchars($labType) ?>">
+        <div class="card border-0 shadow-sm blur rounded-4 lab-activity-card" data-id="<?= htmlspecialchars($fullHash) ?>" data-lab="<?= htmlspecialchars($labType) ?>">
             <div class="card-header bg-transparent border-0 p-4 d-flex justify-content-between align-items-center" role="button" data-coreui-toggle="collapse" data-coreui-target="#collapseActivity" aria-expanded="false" aria-controls="collapseActivity">
                 <h6 class="fw-bold mb-0 text-success">Activity <span class="small text-muted fw-normal ms-1">Recent lifecycle</span></h6>
                 <i class='bx bx-chevron-down fs-4 text-muted'></i>

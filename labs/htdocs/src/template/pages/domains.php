@@ -28,34 +28,45 @@ function timeAgo($timestamp) {
     return date('M j, Y', $timestamp);
 }
 ?>
-<div class="lab-header-section mb-4 px-4">
-    <div class="row align-items-center">
-        <div class="col">
-            <h1 class="fw-bold theme-text m-0 domains-header-title">Domains</h1>
-            <p class="text-secondary opacity-75 mt-2 mb-0 domains-header-desc">
-                My Domains is a section where you can reserve stylish Tom Lab Domains or register 3rd party domains to access your lab over Internet.
-                In case of 3rd party domains, you will have to manually modify the DNS records of your domain to point to your lab. Domains are used to
-                show your work to the WWW over SSL seemlessly. Your online presence makes you powerful 🔥
-            </p>
-        </div>
-        <div class="col-auto text-end">
-            <div class="mb-2">
-                <button class="btn btn-success fw-bold px-4 rounded-pill shadow-sm btn-add-domain" data-coreui-toggle="modal" data-coreui-target="#addDomainModal">
-                    <i class="bx bx-plus"></i> Add New Domain
-                </button>
+<div id="domains-banner" class="blur banner mb-3 rounded-0">
+    <div class="container-fluid px-4">
+        <div class="row">
+            <div class="col-lg-8 col-auto me-auto">
+                <div class="p-3">
+                    <h3 class="domains-header-title">Domains</h3>
+                    My Domains is a section where you can reserve stylish Tom Lab Domains or register 3rd party domains to access your lab over Internet.
+                    In case of 3rd party domains, you will have to manually modify the DNS records of your domain to point to your lab. Domains are used to
+                    show your work to the WWW over SSL seemlessly. Your online presence makes you powerful 🔥
+                </div>
             </div>
-            <div class="text-start d-inline-block text-white domains-limit-text">
-                <div class="mb-1">Limit for Tom Domains: <?= $tomDomainCount ?>/<?= $tomDomainLimit ?></div>
-                <div>Limit for Custom Domains: Unlimited 🎰</div>
+            <div class="col-auto m-auto">
+                <div class="col-auto mt-3 d-flex justify-content-center">
+                    <div class="btn-group">
+                        <button class="btn btn-success btn-add-domain rounded-start-pill" data-coreui-toggle="modal" data-coreui-target="#addDomainModal">
+                            Add New Domain
+                        </button>
+                        <button class="btn btn-info btn-help-domain rounded-end-pill px-3" data-coreui-toggle="tooltip" data-coreui-placement="top" title="How to use domains?">
+                            <i class='bx bx-info-circle'></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="row mt-2 text-white domains-limit-text text-center small">
+                    <p class="mb-0">
+                        Limit for Tom Domains: <?= $tomDomainCount ?>/<?= $tomDomainLimit ?> <br>
+                        Limit for Custom Domains: Unlimited 🎰
+                    </p>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row g-4 mb-4">
-    <?php foreach (Session::get('user_domains') as $d): ?>
-    <?php include __DIR__ . '/../partials/_domain_card.php'; ?>
-    <?php endforeach; ?>
+<div class="container-fluid px-4">
+    <div class="row g-4 mb-4">
+        <?php foreach (Session::get('user_domains') as $d): ?>
+        <?php include __DIR__ . '/../partials/_domain_card.php'; ?>
+        <?php endforeach; ?>
+    </div>
 </div>
 
 <div class="modal fade" id="addDomainModal" tabindex="-1" aria-hidden="true">
@@ -78,7 +89,7 @@ function timeAgo($timestamp) {
 
 <div class="modal fade" id="confirmDeleteDomainModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content shadow-lg rounded-4 border-0 glass-card glass-modal-content">
+    <div class="modal-content shadow-lg rounded-4 border-0 blur glass-modal-content">
         <div class="modal-header border-0 pb-2">
             <h4 class="modal-title fw-bold m-0 modal-title-delete">Delete Domain</h4>
         </div>

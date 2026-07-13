@@ -564,39 +564,76 @@ body::before {
   color: rgba(0, 0, 0, 0.55) !important;
 }
 
-.glass-card {
+.blur {
   color: var(--glass-text) !important;
-  background: var(--cui-card-bg, rgba(255, 255, 255, 0.05));
+  background: var(--glass-bg-solid, rgba(11, 30, 54, 0.95)) !important;
 
-  :root.glass-mode & {
-    backdrop-filter: blur(var(--glass-blur, 10px));
-    -webkit-backdrop-filter: blur(var(--glass-blur, 10px));
+  body.hwa-enabled & {
+    background: var(--glass-bg) !important;
   }
 
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  @at-root body.hwa-enabled .card#{&} {
+    position: relative !important;
+    overflow: visible !important;
+  }
+  
+  body.hwa-enabled &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    backdrop-filter: saturate(200%) blur(18px);
+    -webkit-backdrop-filter: saturate(200%) blur(18px);
+    border-radius: inherit !important;
+    clip-path: inset(0 round 1.25rem);
+  }
+  
+  body.hwa-enabled &.rounded-0::before {
+    clip-path: none !important;
+  }
+  @at-root body.hwa-enabled .card#{&}.rounded-0::before {
+    clip-path: none !important;
+  }
+
+  @at-root body.hwa-enabled .card#{&}::before {
+    clip-path: inset(0 round 1rem);
+  }
+
+  &.banner {
+    background: var(--glass-banner-bg, rgba(255, 255, 255, 0.03)) !important;
+  }
+
+  [data-coreui-theme="light"] body.hwa-enabled & {
+    background: var(--glass-bg) !important;
+  }
+
   border-radius: 1.25rem;
   position: relative;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Fix for Chrome rendering bug: backdrop-filter breaks during opacity/transform animations */
-  :root.glass-mode &.card-entrance {
+  body.hwa-enabled &.card-entrance {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
   }
 
   /* Fallback for when Visual Blur is OFF */
-  :root:not(.glass-mode) & {
-    background: var(--cui-card-bg-solid, #ffffff) !important;
-    border-color: rgba(0, 0, 0, 0.08) !important;
+  body.hwa-disabled & {
+    background: var(--glass-bg-solid) !important;
+    border-color: rgba(255, 255, 255, 0.05) !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
   }
+  
+  [data-coreui-theme="light"] body.hwa-disabled & {
+    background: var(--glass-bg-solid) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+  }
 
   /* Top-edge light refraction (static — no animation = no GPU cost) */
-  &::before {
+  &:not(.rounded-0)::before {
     content: "";
     position: absolute;
     top: 0;
@@ -620,7 +657,7 @@ body::before {
     background-color: rgba(255, 255, 255, 0.05) !important;
     border: 1px solid rgba(0, 0, 0, 0.1) !important;
     color: var(--glass-text) !important;
-    backdrop-filter: blur(5px);
+    backdrop-filter: saturate(200%) blur(18px);
     z-index: 5;
 
     [data-coreui-theme="dark"] & {
@@ -667,7 +704,7 @@ body::before {
   }
 
   /* Subtle hover glow */
-  &:hover {
+  &:not(.rounded-0):hover {
     border-color: rgba(100, 200, 255, 0.2) !important;
     box-shadow:
       0 0 0 1px rgba(100, 200, 255, 0.2),
@@ -829,7 +866,7 @@ html[data-coreui-theme="dark"] {
 /* Modern Color Picker UI */
 .apple-card {
   background: rgba(15, 15, 15, 0.7);
-  backdrop-filter: blur(30px) saturate(150%);
+  backdrop-filter: saturate(200%) blur(18px);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 2rem;
   padding: 2rem;
@@ -918,7 +955,7 @@ html[data-coreui-theme="dark"] {
 .color-designer-tabs {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  backdrop-filter: saturate(200%) blur(18px);
 }
 
 [data-coreui-theme="light"] .color-designer-tabs {
@@ -1133,8 +1170,8 @@ html[data-coreui-theme="dark"] {
 .labs-banner-tab.active {
   color: #fff !important;
   background: var(--glass-bg) !important;
-  backdrop-filter: blur(15px) saturate(150%);
-  -webkit-backdrop-filter: blur(15px) saturate(150%);
+  backdrop-filter: saturate(200%) blur(18px);
+  -webkit-backdrop-filter: saturate(200%) blur(18px);
   box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.15);
 }
 
@@ -1145,6 +1182,15 @@ html[data-coreui-theme="dark"] {
 [data-coreui-theme="dark"] .labs-banner-tab.active {
   background: rgba(30, 45, 75, 0.95) !important;
   box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+
+// Ensure SNA's native .blur class on .card elements gets a transparent background in Tom Labs
+html[data-coreui-theme="dark"] body.hwa-enabled .card.blur {
+  background: rgba(0, 0, 0, 0.65) !important;
+}
+
+html[data-coreui-theme="light"] body.hwa-enabled .card.blur {
+  background: rgba(255, 255, 255, 0.65) !important;
 }
 
 .labs-banner-tab.active::before,
@@ -1194,8 +1240,8 @@ html[data-coreui-theme="dark"] {
     z-index: 5 !important;
     padding: 1px !important;
     background: transparent !important;
-    backdrop-filter: saturate(400%) brightness(1.18) !important;
-    -webkit-backdrop-filter: saturate(400%) brightness(1.18) !important;
+    backdrop-filter: saturate(200%) blur(18px) !important;
+    -webkit-backdrop-filter: saturate(200%) blur(18px) !important;
     mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0) !important;
     mask-composite: exclude !important;
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0) !important;
@@ -1209,8 +1255,8 @@ html[data-coreui-theme="dark"] {
   box-shadow: rgba(0, 0, 0, 0.4) 0 15px 35px 0, rgba(0, 0, 0, 0.2) 0 5px 15px 0 !important;
 
   &::after {
-    backdrop-filter: saturate(200%) brightness(0.8) !important;
-    -webkit-backdrop-filter: saturate(200%) brightness(0.8) !important;
+    backdrop-filter: saturate(200%) blur(18px) !important;
+    -webkit-backdrop-filter: saturate(200%) blur(18px) !important;
     box-shadow: rgba(255, 255, 255, 0.08) 0 0 0 1px inset, rgba(255, 255, 255, 0.12) 0 1px 0 0 inset !important;
   }
 }

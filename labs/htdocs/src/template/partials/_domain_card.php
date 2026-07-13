@@ -1,5 +1,5 @@
 <div class="col-12 col-md-4 domain-card-wrapper card-entrance" id="domain-card-<?= $d['_id'] ?>">
-    <div class="card shadow-lg rounded-4 overflow-hidden border-0 glass-card h-100">
+    <div class="card shadow-lg rounded-4 overflow-hidden border-0 blur h-100">
         <div class="card-body p-3">
             <div class="d-flex justify-content-between align-items-start mb-2">
                 <div class="d-flex align-items-center gap-2">

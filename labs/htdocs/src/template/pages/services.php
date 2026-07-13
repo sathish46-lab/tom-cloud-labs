@@ -3,21 +3,21 @@ Session::addMetaTag('<title>Services - Tom Labs</title>');
 Session::addCustomJs('/js/copy.js');
 ?>
 
-<div class="lab-header-section mb-4 px-4 mt-3">
-    <div class="row align-items-center">
-        <div class="col">
-            <h1 class="fw-bold theme-text m-0" style="font-size: 1.8rem; letter-spacing: -0.5px;">Services</h1>
-            <p class="text-secondary opacity-75 mt-2 mb-0" style="font-size: 0.85rem; line-height: 1.7; letter-spacing: 0.2px; max-width: 900px;">
-                List of available services are shown here. You can utilize these services inside your laboratory. Some services require authentication and other configuration which can be managed from here. Services are still in beta and we are constantly upgrading them.
-            </p>
+<div class="blur mb-3 rounded-0">
+    <div class="container-fluid px-4">
+        <div class="row align-items-center py-3">
+            <div class="col">
+                <h1 class="fw-bold theme-text m-0" style="font-size: 1.8rem; letter-spacing: -0.5px;">Services</h1>
+                <p class="text-secondary opacity-75 mt-2 mb-0" style="font-size: 0.85rem; line-height: 1.7; letter-spacing: 0.2px; max-width: 900px;">
+                    List of available services are shown here. You can utilize these services inside your laboratory. Some services require authentication and other configuration which can be managed from here. Services are still in beta and we are constantly upgrading them.
+                </p>
+            </div>
         </div>
     </div>
 </div>
 
-
-
-
-<div id="services-masonry-grid" class="row g-3 pb-4">
+<div class="container-fluid px-4">
+    <div id="services-masonry-grid" class="row g-3 pb-4">
     <!-- Grid sizer for responsive column width calculation -->
     <div class="services-grid-sizer col-12 col-md-4" style="height: 0; padding: 0; margin: 0; border: 0;"></div>
 
@@ -384,6 +384,7 @@ Session::addCustomJs('/js/copy.js');
             </div>
         </div>
     </div>
+</div>
 </div>
 
 <style>

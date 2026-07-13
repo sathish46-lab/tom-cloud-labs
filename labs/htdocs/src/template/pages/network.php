@@ -4,18 +4,21 @@ $resources = Session::get('network_resources', []);
 Session::addCustomJs('/js/network.js');
 ?>
 
-<div class="lab-header-section mb-4 px-4">
-    <div class="row align-items-center">
-        <div class="col">
-            <h1 class="fw-bold theme-text m-0 network-header-title">Network</h1>
-            <p class="text-secondary opacity-75 mt-2 mb-0 network-header-desc">
-                My Network is a section where you can manage IP Address Reservation for your devices. When you reserve an IP address, you will not lose it unless you delete the reservation.
-            </p>
+<div class="blur mb-3 rounded-0">
+    <div class="container-fluid px-4">
+        <div class="row align-items-center py-3">
+            <div class="col">
+                <h1 class="fw-bold theme-text m-0 network-header-title">Network</h1>
+                <p class="text-secondary opacity-75 mt-2 mb-0 network-header-desc">
+                    My Network is a section where you can manage IP Address Reservation for your devices. When you reserve an IP address, you will not lose it unless you delete the reservation.
+                </p>
+            </div>
         </div>
     </div>
 </div>
 
-<div class="row g-4 mb-4">
+<div class="container-fluid px-4">
+    <div class="row g-4 mb-4">
     <?php foreach ($resources as $res): 
         $isAllocated = ($res['allocated'] == true);
         // Determine the label
@@ -23,7 +26,7 @@ Session::addCustomJs('/js/network.js');
         $label = $res['label'] ?? (($res['service_type'] == 'essential_lab') ? 'Essential Lab' : 'VPN Device');
     ?>
     <div class="col-12 col-md-4 col-xl-3 card-entrance" id="ip-card-<?= str_replace('.', '-', $res['ip_addr']) ?>">
-        <div class="card shadow-lg rounded-4 p-3 border-0 glass-card h-100">
+        <div class="card shadow-lg rounded-4 p-3 border-0 blur h-100">
             <div class="mb-3">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <h5 class="fw-bold m-0 font-monospace ip-card-title"><?= htmlspecialchars($res['ip_addr']) ?></h5>
@@ -51,11 +54,12 @@ Session::addCustomJs('/js/network.js');
         </div>
     </div>
     <?php endforeach; ?>
+    </div>
 </div>
 
 <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content shadow-lg rounded-4 border-0 glass-card glass-modal-content">
+    <div class="modal-content shadow-lg rounded-4 border-0 blur glass-modal-content">
         <div class="modal-header border-0 pb-2">
             <h4 class="modal-title fw-bold m-0 modal-title-delete">Confirm Delete</h4>
         </div>

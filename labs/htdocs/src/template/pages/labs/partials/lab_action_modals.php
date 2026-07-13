@@ -1,7 +1,7 @@
 <!-- Code Info Modal (Simplified IDE Launch) -->
 <div class="modal fade" id="codeInfoModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg glass-card rounded-4 overflow-hidden modal-code-access">
+        <div class="modal-content border-0 shadow-lg blur rounded-4 overflow-hidden modal-code-access">
             <div class="modal-header border-0 p-4 pb-0">
                 <h5 class="modal-title fw-bold text-white mb-0">Code Server Access</h5>
                 <button type="button" class="btn-close btn-close-white" data-coreui-dismiss="modal" aria-label="Close"></button>
@@ -32,7 +32,7 @@
 <!-- Technical Connection Info Modal -->
 <div class="modal fade" id="connectionInfoModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg glass-card rounded-4 overflow-hidden modal-connection-info">
+        <div class="modal-content border-0 shadow-lg blur rounded-4 overflow-hidden modal-connection-info">
             <div class="modal-header border-0 p-4 pb-0">
                 <h5 class="modal-title fw-bold text-white mb-0">Technical Connection Info</h5>
                 <button type="button" class="btn-close btn-close-white" data-coreui-dismiss="modal" aria-label="Close"></button>

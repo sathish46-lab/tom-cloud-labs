@@ -1,6 +1,4 @@
-<header class="header header-sticky mb-0" style="border-bottom: none; height: 4rem; min-height: 4rem;">
-    <div class="container-fluid px-4 d-flex align-items-center h-100">
-
+<header class="header header-sticky blur rounded-0 mb-0" style="border-bottom: none; height: 4rem; min-height: 4rem;">    <div class="container-fluid px-4 d-flex align-items-center h-100">
         <div class="d-flex align-items-center gap-2">
             <!-- Mobile Sidebar Toggle -->
             <button class="btn btn-link p-0 text-secondary hover-text-white d-flex d-md-none align-items-center justify-content-center rounded-circle border border-white border-opacity-10 text-decoration-none shadow-none" 

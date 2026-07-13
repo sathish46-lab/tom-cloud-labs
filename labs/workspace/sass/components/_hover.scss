@@ -12,7 +12,7 @@
 
 .toast {
   border-radius: 12px;
-  backdrop-filter: blur(10px);
+  backdrop-filter: saturate(200%) blur(18px);
   border: 1px solid rgba(var(--cui-primary-rgb, 139, 145, 249), 0.2) !important;
   box-shadow: 0 8px 32px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.15), 0 0 0 1px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.1) !important;
   

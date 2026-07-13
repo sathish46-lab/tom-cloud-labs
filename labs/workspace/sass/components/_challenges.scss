@@ -8,14 +8,14 @@
   overflow: visible !important;
   container-type: normal !important;
   background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(25px);
+  backdrop-filter: saturate(200%) blur(18px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   height: auto;
 
   &.blur {
     background: rgba(10, 10, 20, 0.3); // Deep tint but transparent
-    backdrop-filter: blur(30px);
+    backdrop-filter: saturate(200%) blur(18px);
   }
 
   .labs-index-cover {
@@ -251,12 +251,12 @@
 
 // Global utilities
 .blur {
-  backdrop-filter: blur(10px);
+  backdrop-filter: saturate(200%) blur(18px);
 }
 
 .simple-blur {
   background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(8px);
+  backdrop-filter: saturate(200%) blur(18px);
 }
 // -----------------------------------------------------
 // Challenge Search Bar & Animations
@@ -325,7 +325,7 @@
   opacity: 0;
   will-change: transform, opacity, filter;
 
-  :root.glass-mode & {
+  body.hwa-enabled & {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
@@ -335,7 +335,7 @@
 
 .custom-search-dropdown {
     border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(20px);
+    backdrop-filter: saturate(200%) blur(18px);
 }
 .custom-switch-dark .form-check-input {
     background-color: rgba(255,255,255,0.1);

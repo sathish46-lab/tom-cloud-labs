@@ -6,8 +6,9 @@ $serverIP = $dm->getServerIP();
 ?>
 
 <!-- SSL Manager Header -->
-<div class="lab-header-section mb-4 px-4">
-    <div class="row align-items-start">
+<div class="blur mb-3 rounded-0">
+    <div class="container-fluid px-4">
+        <div class="row align-items-start py-3">
         <div class="col-lg-7">
             <h1 class="fw-bold theme-text m-0" style="font-size: 1.8rem; letter-spacing: -0.5px;">SSL Manager</h1>
             <p class="text-secondary opacity-75 mt-2 mb-0" style="font-size: 0.82rem; line-height: 1.8; letter-spacing: 0.2px;">
@@ -47,15 +48,17 @@ $serverIP = $dm->getServerIP();
                 </div>
                 <?php endif; ?>
             </div>
+            </div>
         </div>
     </div>
 </div>
 
+<div class="container-fluid px-4">
 <!-- Certificate Cards Grid -->
 <div class="row g-4 mb-4" id="ssl-cards-container">
     <?php if (empty($certs)): ?>
     <div class="col-12">
-        <div class="card border-0 shadow-lg rounded-4 glass-card">
+        <div class="card border-0 shadow-lg rounded-4 blur">
             <div class="card-body text-center py-5">
                 <i class="bx bx-shield-x" style="font-size: 3rem; color: var(--glass-text-muted);"></i>
                 <h5 class="mt-3 fw-bold">No SSL Certificates Found</h5>
@@ -71,7 +74,7 @@ $serverIP = $dm->getServerIP();
         $isAutoManaged = (!empty($cert['resolver']) && stripos($cert['resolver'], 'custom') === false);
     ?>
     <div class="col-xl-4 col-md-6 <?php echo $isAutoManaged ? 'd-none auto-managed-card' : ''; ?>">
-        <div class="card border-0 shadow-lg rounded-4 h-100 ssl-cert-card glass-card" data-cert-index="<?php echo (int)$index; ?>">
+        <div class="card border-0 shadow-lg rounded-4 h-100 ssl-cert-card blur" data-cert-index="<?php echo (int)$index; ?>">
             <div class="card-body d-flex justify-content-between align-items-start p-3">
                 <div class="w-100" style="margin-bottom: 6px;">
                     <!-- Main Domain -->
@@ -242,6 +245,7 @@ $serverIP = $dm->getServerIP();
     </div>
     <?php endforeach; ?>
     <?php endif; ?>
+</div>
 </div>
 
 <!-- View Details Modal -->

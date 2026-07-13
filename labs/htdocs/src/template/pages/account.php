@@ -17,7 +17,7 @@ $is2faEnabled = $user?->getTwoFactorEnabled() ?? false;
 <div class="row g-4">
     <!-- Profile Settings Card -->
     <div class="col-lg-6">
-        <div class="card border-0 shadow-sm glass-card rounded-4">
+        <div class="card border-0 shadow-sm blur rounded-4">
             <div class="card-body p-3">
                 <h6 class="fw-bold mb-3 d-flex align-items-center">
                     <i class='bx bx-user-circle fs-5 me-2 text-primary'></i> Profile Settings
@@ -70,7 +70,7 @@ $is2faEnabled = $user?->getTwoFactorEnabled() ?? false;
         </div>
 
         <!-- SSH Keys Card -->
-        <div class="card border-0 shadow-sm glass-card rounded-4 overflow-hidden mt-4">
+        <div class="card border-0 shadow-sm blur rounded-4 overflow-hidden mt-4">
             <div class="card-header bg-transparent border-bottom border-secondary border-opacity-10 p-3 d-flex justify-content-between align-items-center">
                 <div>
                     <h6 class="fw-bold mb-0 d-flex align-items-center">
@@ -161,7 +161,7 @@ $is2faEnabled = $user?->getTwoFactorEnabled() ?? false;
             
             <!-- Storage Card -->
             <div class="col-12">
-                <div class="card border-0 shadow-sm glass-card rounded-4">
+                <div class="card border-0 shadow-sm blur rounded-4">
                     <div class="card-body p-4">
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h5 class="fw-bold m-0 d-flex align-items-center">
@@ -220,7 +220,7 @@ $is2faEnabled = $user?->getTwoFactorEnabled() ?? false;
             
             <!-- Account Verification Card -->
             <div class="col-12">
-                <div class="card border-0 shadow-sm glass-card rounded-4">
+                <div class="card border-0 shadow-sm blur rounded-4">
                     <div class="card-body p-4">
                         <h5 class="fw-bold mb-4 d-flex align-items-center">
                             <i class='bx bx-check-shield fs-4 me-2 text-success'></i> Security & Verification
@@ -273,7 +273,7 @@ $is2faEnabled = $user?->getTwoFactorEnabled() ?? false;
 <!-- Choose Existing Avatar Modal -->
 <div class="modal fade" id="chooseAvatarModal" tabindex="-1" aria-labelledby="chooseAvatarModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-md">
-        <div class="modal-content border-0 shadow glass-card rounded-4 text-white account-modal-content">
+        <div class="modal-content border-0 shadow blur rounded-4 text-white account-modal-content">
             <div class="modal-header border-bottom border-secondary border-opacity-10">
                 <h5 class="modal-title fw-bold account-modal-title" id="chooseAvatarModalLabel">Choose from uploads</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -290,7 +290,7 @@ $is2faEnabled = $user?->getTwoFactorEnabled() ?? false;
 <!-- Avatar Crop Modal -->
 <div class="modal fade" id="avatarCropModal" tabindex="-1" aria-labelledby="avatarCropModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow glass-card rounded-4 text-white account-modal-content">
+        <div class="modal-content border-0 shadow blur rounded-4 text-white account-modal-content">
             <div class="modal-header border-bottom border-secondary border-opacity-10">
                 <h5 class="modal-title fw-bold" id="avatarCropModalLabel">Position and size your new avatar</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>

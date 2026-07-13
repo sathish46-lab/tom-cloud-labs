@@ -32,7 +32,6 @@ $isSidebarNarrow = ($uiPreferences['sidebar_unfoldable'] ?? 'false') === 'true';
 $isSidebarHidden = ($uiPreferences['sidebar_hidden'] ?? 'false') === 'true';
 
 $htmlClasses = [];
-if ($isGlassMode) $htmlClasses[] = 'glass-mode'; // Disabled as requested
 if ($mode === 'plain') $htmlClasses[] = 'mode-plain';
 if ($isSidebarNarrow) $htmlClasses[] = 'sidebar-init-narrow';
 if ($isSidebarHidden) $htmlClasses[] = 'sidebar-init-hidden';
@@ -317,13 +316,13 @@ $classString = implode(' ', $htmlClasses);
         $c6Dark = $c4Dark;
         $c7Dark = $c4Dark;
         
-        $glassBgDark = tomHexToRgbaString($safeColorDark, 0.85);
-        $glassBgSolidDark = tomHexToRgbaString($safeColorDark, 0.94);
-        $cardBgDark = tomHexToRgbaString($safeColorDark, 0.20);
-        $cardBgSolidDark = tomHexToRgbaString($safeColorDark, 0.95);
+        $glassBgDark = tomHexToRgbaString($safeColorDark, 1.0);
+        $glassBgSolidDark = tomHexToRgbaString($safeColorDark, 1.0);
+        $cardBgDark = tomHexToRgbaString($safeColorDark, 1.0);
+        $cardBgSolidDark = tomHexToRgbaString($safeColorDark, 1.0);
         $bodyBgDark = $safeColorDark;
-        $sidebarBgDark = tomHexToRgbaString($safeColorDark, 0.95);
-        $headerBgDark = tomHexToRgbaString($safeColorDark, 0.85);
+        $sidebarBgDark = tomHexToRgbaString($safeColorDark, 1.0);
+        $headerBgDark = tomHexToRgbaString($safeColorDark, 1.0);
         
         $primaryRgb = implode(',', tomHexToRgbArray($accentColor));
 
@@ -439,7 +438,7 @@ $classString = implode(' ', $htmlClasses);
     <?php if (!defined('IS_HOME_PAGE') && !Session::get('show_session_expired', false)): Session::getSiteNav(); endif; ?>
 
     <div class="body flex-grow-1 bg-transparent <?= Session::get('show_session_expired', false) ? 'd-flex align-items-center justify-content-center p-0 m-0' : '' ?>"> 
-        <div id="main-content" class="container-fluid <?= (defined('IS_HOME_PAGE') || Session::get('show_session_expired', false)) ? 'p-0' : 'px-4' ?> bg-transparent">
+        <div id="main-content" class="bg-transparent" style="display: contents;">
                 <?php
                     if (!Session::get('brokenPage', false)) {
                         echo Session::generatePageBody();

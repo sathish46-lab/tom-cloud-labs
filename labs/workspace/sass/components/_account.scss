@@ -66,7 +66,7 @@
 
 .account-modal-content {
   background: rgba(25, 28, 36, 0.95);
-  backdrop-filter: blur(10px);
+  backdrop-filter: saturate(200%) blur(18px);
 }
 
 .account-modal-title {

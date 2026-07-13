@@ -218,7 +218,6 @@ try {
         },
 
         savePaneWidth: function (id, width) {
-            document.documentElement.style.setProperty(`--${id}-saved-width`, width + 'px');
             localStorage.removeItem(`learn-pane-${id}`);
             sessionStorage.removeItem(`learn-pane-${id}`);
 
@@ -270,7 +269,6 @@ try {
                         if (p1El) {
                             p1El.style.width = arr[0] + '%';
                             p1El.style.flexBasis = arr[0] + '%';
-                            document.documentElement.style.setProperty(`--${p1El.id}-saved-width`, arr[0] + '%');
                             if (p1El.id === 'outlineSidebar' || p1El.id === 'learn-panel-1') {
                                 const wrapperW = p1El.parentElement ? p1El.parentElement.offsetWidth : window.innerWidth;
                                 const p1Px = (arr[0] / 100) * wrapperW;
@@ -284,7 +282,6 @@ try {
                         if (p3El) {
                             p3El.style.width = p3Pct + '%';
                             p3El.style.flexBasis = p3Pct + '%';
-                            document.documentElement.style.setProperty('--paneAI-saved-width', p3Pct + '%');
                         }
                     }
                 } catch (e) {}
@@ -297,7 +294,7 @@ try {
         initResizers: function () {
             // Use delegation on document for mousedown to handle dynamic or late-rendered resizers
             document.addEventListener('mousedown', (e) => {
-                const resizer = e.target.closest('.pane-resizer');
+                const resizer = e.target.closest('.gutter-horizontal');
                 if (!resizer) return;
 
                 const targetId = resizer.getAttribute('data-target');
@@ -400,7 +397,6 @@ try {
                 target.style.width = newWidth + 'px';
                 target.style.flexBasis = newWidth + 'px';
                 target.style.minWidth = '68px';
-                document.documentElement.style.setProperty(`--${targetId}-saved-width`, newWidth + 'px');
             }
         },
 
@@ -453,9 +449,11 @@ try {
             const footerHeight = footer ? (footer.offsetHeight || 38) : 38;
 
             const availableHeight = window.innerHeight - headerHeight - footerHeight;
-            document.documentElement.style.setProperty('--app-height', `${availableHeight}px`);
+            if (appWrapper) {
+                appWrapper.style.height = `${availableHeight}px`;
+            }
 
-            if (appWrapper.classList.contains('stable-app-view')) {
+            if (appWrapper && appWrapper.classList.contains('stable-app-view')) {
                     document.body.style.height = '100vh';
                     document.body.style.overflow = 'hidden';
                     const mainWrapper = document.querySelector('.wrapper');
@@ -472,9 +470,6 @@ try {
                         mainWrapper.style.overflow = 'visible';
                     }
                 }
-
-            let vh = window.innerHeight * 0.01;
-            document.documentElement.style.setProperty('--vh', `${vh}px`);
         },
 
         // AI Chat Functionality
@@ -534,8 +529,9 @@ try {
                     }
                     
                     chatHistory.querySelectorAll('.ai-row .msg-bubble p').forEach(p => {
-                        if (p.innerText.trim()) {
-                            LearnApp.renderMarkdownWithHighlighting(p.innerText, p);
+                        const mdText = p.dataset.rawMd || p.innerText;
+                        if (mdText.trim()) {
+                            LearnApp.renderMarkdownWithHighlighting(mdText, p);
                         }
                     });
 
@@ -613,13 +609,13 @@ try {
                     else if (lowerLab.includes('python')) labIcon = 'bx bxl-python';
                     else if (lowerLab.includes('n8n')) labIcon = 'bx bxs-network-chart';
 
-                    // Inject tool badge ABOVE the current AI message
+                    // Inject or update tool badge ABOVE the current AI message
                     if (aiMsgContainer) {
-                        const toolId = 'tool_' + Math.random().toString(36).substr(2, 9);
-                        const toolBadgeDiv = document.createElement('div');
-                        toolBadgeDiv.className = 'tool-badge-wrapper mb-1';
+                        const contentWrapper = aiMsgContainer.querySelector('.msg-content-wrapper');
+                        let existingWrapper = aiMsgContainer.querySelector('.tool-badge-wrapper');
+                        
                         const popoverContent = `
-                            <div class="popover-header" style="background:transparent; margin-bottom:0; border-bottom:1px solid #1e293b; padding:0 0 8px 0;">
+                            <div class="popover-header" style="background:transparent; margin-bottom:0; border-bottom:1px solid #1e293b; padding:0 0 8px 0; margin-top: 8px;">
                                 <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
                                     <i class='bx bxs-check-circle' style="color:#22c55e;"></i>
                                     <span style="font-weight:700; color:#fff; font-size:0.95rem;">${data.tool_name || 'Execute'}</span>
@@ -637,34 +633,57 @@ try {
                             </div>
                         `;
 
-                        toolBadgeDiv.innerHTML = `
-                            <div class="agent-activity-btn-wrapper d-flex mb-1" style="position:relative;">
-                                <button class="agent-activity-btn btn btn-sm" tabindex="0" data-coreui-toggle="popover" data-coreui-placement="bottom" data-coreui-html="true" data-coreui-custom-class="simple-blur" style="background:transparent; border:1px solid #334155; border-radius:6px; padding:4px 10px; color:#94a3b8; font-size:0.85rem; display:flex; align-items:center; gap:6px; cursor:pointer;">
-                                    <svg class="icon" style="width:14px; height:14px; fill:currentColor;">
-                                        <use xlink:href="/assets/icons/free.svg#cil-settings"></use>
-                                    </svg>
-                                    1 tool
-                                </button>
-                            </div>
-                        `;
-                        const btn = toolBadgeDiv.querySelector('.agent-activity-btn');
-                        btn.setAttribute('data-coreui-content', popoverContent);
-                        
-                        if (typeof coreui !== 'undefined' && coreui.Popover) {
-                            new coreui.Popover(btn, {
-                                container: 'body',
-                                html: true,
-                                trigger: 'focus',
-                                placement: 'bottom',
-                                customClass: 'custom-tool-popover'
-                            });
-                        }
-                        // Insert inside the msg-content-wrapper so it aligns with avatar
-                        const contentWrapper = aiMsgContainer.querySelector('.msg-content-wrapper');
-                        if (contentWrapper) {
-                            contentWrapper.insertBefore(toolBadgeDiv, contentWrapper.firstChild);
+                        if (existingWrapper) {
+                            // Update existing badge
+                            const btn = existingWrapper.querySelector('.agent-activity-btn');
+                            let currentContent = btn.getAttribute('data-coreui-content') || '';
+                            btn.setAttribute('data-coreui-content', currentContent + popoverContent);
+                            
+                            // Update text to "X tools"
+                            let currentText = btn.innerText.trim();
+                            let count = 1;
+                            let match = currentText.match(/(\d+)\s+tool/);
+                            if (match) count = parseInt(match[1]);
+                            count++;
+                            btn.innerHTML = `
+                                <svg class="icon" style="width:14px; height:14px; fill:currentColor;">
+                                    <use xlink:href="/assets/icons/free.svg#cil-settings"></use>
+                                </svg>
+                                ${count} tools
+                            `;
+                            
+                            // Re-init popover to pick up new content
+                            if (typeof coreui !== 'undefined' && coreui.Popover) {
+                                const popInstance = coreui.Popover.getInstance(btn);
+                                if (popInstance) popInstance.dispose();
+                                new coreui.Popover(btn, { container: 'body', html: true, trigger: 'focus', placement: 'bottom', customClass: 'custom-tool-popover' });
+                            }
                         } else {
-                            aiMsgContainer.insertBefore(toolBadgeDiv, aiMsgContainer.firstChild);
+                            // Create new badge
+                            const toolBadgeDiv = document.createElement('div');
+                            toolBadgeDiv.className = 'tool-badge-wrapper mb-1';
+                            toolBadgeDiv.innerHTML = `
+                                <div class="agent-activity-btn-wrapper d-flex mb-1" style="position:relative;">
+                                    <button class="agent-activity-btn btn btn-sm" tabindex="0" data-coreui-toggle="popover" data-coreui-placement="bottom" data-coreui-html="true" data-coreui-custom-class="simple-blur" style="background:transparent; border:1px solid #334155; border-radius:6px; padding:4px 10px; color:#94a3b8; font-size:0.85rem; display:flex; align-items:center; gap:6px; cursor:pointer;">
+                                        <svg class="icon" style="width:14px; height:14px; fill:currentColor;">
+                                            <use xlink:href="/assets/icons/free.svg#cil-settings"></use>
+                                        </svg>
+                                        1 tool
+                                    </button>
+                                </div>
+                            `;
+                            const btn = toolBadgeDiv.querySelector('.agent-activity-btn');
+                            btn.setAttribute('data-coreui-content', popoverContent);
+                            
+                            if (typeof coreui !== 'undefined' && coreui.Popover) {
+                                new coreui.Popover(btn, { container: 'body', html: true, trigger: 'focus', placement: 'bottom', customClass: 'custom-tool-popover' });
+                            }
+                            
+                            if (contentWrapper) {
+                                contentWrapper.insertBefore(toolBadgeDiv, contentWrapper.firstChild);
+                            } else {
+                                aiMsgContainer.insertBefore(toolBadgeDiv, aiMsgContainer.firstChild);
+                            }
                         }
                         chatHistory.scrollTop = chatHistory.scrollHeight;
                     }
@@ -823,7 +842,7 @@ try {
                     </div>
                     <div class="msg-content-wrapper d-flex flex-column" style="max-width:85%; width:100%;">
                         ${loaderHtml}
-                        <div class="msg-bubble w-100" style="${bubbleDisplay}">
+                        <div class="msg-bubble w-100 ai-transparent-bubble" style="background:transparent !important; border:none !important; box-shadow:none !important; padding:0 !important; ${bubbleDisplay}">
                             <p class="m-0">${pText}</p>
                         </div>
                     </div>

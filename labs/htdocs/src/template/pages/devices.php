@@ -12,29 +12,33 @@ $defaultIp = !empty($resources) ? end($resources)['ip_addr'] : "";
 
 
 
-<div class="lab-header-section mb-4 px-4">
-    <div class="row align-items-center">
-        <div class="col">
-            <h1 class="fw-bold theme-text m-0 devices-header-title">Devices</h1>
-            <p class="text-secondary opacity-75 mt-2 mb-0 devices-header-desc">
-                My Devices is a section where you can register your device to access our labs to learn, develop tools and play challenges and many more features in a secure way. 
-                We have launched a new VPN app where you can connect to our network with one click to access your labs and do much more, now available for Windows and Ubuntu. 
-                <a href="#" class="text-info fw-bold" >Download here</a> or 
-                <a href="#" class="text-info fw-bold" >watch how to use this tool here</a>.
-            </p>
-        </div>
-        <div class="col-auto text-end">
-            <button class="btn btn-success fw-bold px-4 rounded-pill shadow-sm btn-add-device" data-coreui-toggle="modal" data-coreui-target="#addDeviceModal">
-                <i class="bx bx-plus"></i> Add Device
-            </button>
+<div class="blur mb-3 rounded-0">
+    <div class="container-fluid px-4">
+        <div class="row align-items-center py-3">
+            <div class="col">
+                <h1 class="fw-bold theme-text m-0 devices-header-title">Devices</h1>
+                <p class="text-secondary opacity-75 mt-2 mb-0 devices-header-desc">
+                    My Devices is a section where you can register your device to access our labs to learn, develop tools and play challenges and many more features in a secure way. 
+                    We have launched a new VPN app where you can connect to our network with one click to access your labs and do much more, now available for Windows and Ubuntu. 
+                    <a href="#" class="text-info fw-bold" >Download here</a> or 
+                    <a href="#" class="text-info fw-bold" >watch how to use this tool here</a>.
+                </p>
+            </div>
+            <div class="col-auto text-end">
+                <button class="btn btn-success fw-bold px-4 rounded-pill shadow-sm btn-add-device" data-coreui-toggle="modal" data-coreui-target="#addDeviceModal">
+                    <i class="bx bx-plus"></i> Add Device
+                </button>
+            </div>
         </div>
     </div>
 </div>
 
-<div class="row g-4" id="devices-container">
+<div class="container-fluid px-4">
+    <div class="row g-4" id="devices-container">
     <?php foreach ($devices as $device): ?>
     <?php include __DIR__ . '/../partials/_device_card.php'; ?>
     <?php endforeach; ?>
+    </div>
 </div>
 
 <div class="modal fade" id="addDeviceModal" tabindex="-1">
@@ -85,7 +89,7 @@ $defaultIp = !empty($resources) ? end($resources)['ip_addr'] : "";
 
 <div class="modal fade" id="confirmDeleteDeviceModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content shadow-lg rounded-4 border-0 glass-card glass-modal-content">
+    <div class="modal-content shadow-lg rounded-4 border-0 blur glass-modal-content">
         <div class="modal-header border-0 pb-2">
             <h4 class="modal-title fw-bold m-0 modal-title-delete">Delete Device: <span id="deleteDeviceModalTitleName"></span></h4>
         </div>

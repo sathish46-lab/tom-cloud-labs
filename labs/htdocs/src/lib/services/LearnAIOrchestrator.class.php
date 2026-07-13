@@ -204,9 +204,93 @@ class LearnAIOrchestrator {
      */
     public function prepareLLMContext() {
         return [
-            'chapter_context' => $this->readChapterContent($this->lessonId, $this->chapterId),
-            'lab_context'     => $this->getLabUserInfo(),
-            'user_id'         => $this->userId
+            'chapter_context'  => $this->readChapterContent($this->lessonId, $this->chapterId),
+            'lab_context'      => $this->getLabUserInfo(),
+            'all_labs'         => $this->getAllUserLabs(),
+            'lesson_outline'   => $this->getLessonOutline(),
+            'user_info'        => [
+                'user_id'  => $this->userId,
+                'username' => $this->sessionUser->getUsername(),
+                'email'    => $this->sessionUser->getEmail()
+            ]
         ];
+    }
+
+    /**
+     * LAYER 5: TOOL - List ALL user labs with real-time status
+     */
+    public function getAllUserLabs() {
+        $labTemplates = [
+            ['id' => 'essentials', 'name' => 'Essentials Lab', 'icon' => 'tux'],
+            ['id' => 'minio', 'name' => 'MinIO S3 Storage', 'icon' => 'docker'],
+            ['id' => 'n8n', 'name' => 'n8n Workflow Lab', 'icon' => 'git-repo-forked'],
+            ['id' => 'docker_lab', 'name' => 'Tom Docker Lab', 'icon' => 'docker']
+        ];
+
+        $labs = [];
+        foreach ($labTemplates as $tmpl) {
+            $hash = $this->sessionUser->getLabHash($tmpl['id']);
+            $data = $this->db->deployed_labs->findOne(['instance_hash' => $hash]);
+
+            $labs[] = [
+                'id'          => $tmpl['id'],
+                'name'        => $tmpl['name'],
+                'instance_id' => $hash,
+                'status'      => ($data && $data['status'] === 'running') ? 'running' : 'offline',
+                'ip'          => ($data && $data['status'] === 'running' && isset($data['internal_ip'])) ? $data['internal_ip'] : 'Instance Down'
+            ];
+        }
+        return $labs;
+    }
+
+    /**
+     * LAYER 5: TOOL - Get lesson outline with module/chapter tree
+     */
+    public function getLessonOutline() {
+        if (empty($this->lessonId)) {
+            return ['error' => 'No lesson ID in current session'];
+        }
+
+        $lidMongo = null;
+        try { $lidMongo = new \MongoDB\BSON\ObjectId($this->lessonId); } catch (\Exception $e) { return []; }
+
+        $lesson = $this->db->ai_lessons->findOne(['_id' => $lidMongo]);
+        if (!$lesson) return ['error' => 'Lesson not found'];
+
+        $chapters = $this->db->ai_chapters->find(
+            ['lesson_id' => $lidMongo],
+            ['sort' => ['order' => 1]]
+        )->toArray();
+
+        $outline = [
+            'lesson_id'    => $this->lessonId,
+            'title'        => $lesson['title'] ?? '',
+            'description'  => $lesson['description'] ?? '',
+            'level'        => $lesson['level'] ?? 'beginner',
+            'modules'      => []
+        ];
+
+        $moduleMap = [];
+        foreach ($chapters as $ch) {
+            $moduleName = $ch['module_name'] ?? 'General';
+            if (!isset($moduleMap[$moduleName])) {
+                $moduleMap[$moduleName] = [];
+            }
+            $moduleMap[$moduleName][] = [
+                'chapter_id'   => (string)$ch['_id'],
+                'title'        => $ch['title'] ?? '',
+                'has_content'  => !empty($ch['content']),
+                'is_current'   => ((string)$ch['_id'] === $this->chapterId)
+            ];
+        }
+
+        foreach ($moduleMap as $modName => $chaps) {
+            $outline['modules'][] = [
+                'name'     => $modName,
+                'chapters' => $chaps
+            ];
+        }
+
+        return $outline;
     }
 }

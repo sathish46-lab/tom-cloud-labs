@@ -39,13 +39,20 @@
     /* Code Block & Editor Wrapper Styling */
     pre {
         background: #0d1117;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        :root[data-coreui-theme="light"] & {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        :root[data-coreui-theme="dark"] & {
+            background: #0d1117;
+        }
+
+        border: 1px solid var(--cui-border-color, rgba(255, 255, 255, 0.1));
         border-radius: 0.75rem;
         padding: 2.75rem 1.25rem 1.25rem 1.25rem;
         margin: 1.5rem 0;
         overflow-x: auto;
         position: relative;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 
         code {
             background: transparent !important;
@@ -102,10 +109,6 @@
     position: relative;
     z-index: 10;
     transition: background-color 0.15s ease;
-
-    &:hover {
-        background-color: rgba(255, 255, 255, 0.12) !important;
-    }
 }
 
 /* SNA Individual Rounded Panel Cards Layout */
@@ -116,28 +119,38 @@
 
         > .card {
             border-radius: 24px !important;
-            border: 1px solid rgba(255, 255, 255, 0.08) !important;
-            background: rgba(13, 22, 38, 0.72) !important;
-            backdrop-filter: blur(12px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35) !important;
             overflow: hidden !important;
             height: 100%;
+            
+            color: var(--glass-text) !important;
+            background: var(--cui-card-bg, rgba(255, 255, 255, 0.05));
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            
+            body.hwa-enabled & {
+                backdrop-filter: saturate(200%) blur(18px);
+                -webkit-backdrop-filter: saturate(200%) blur(18px);
+            }
+            
+            body.hwa-disabled & {
+                background: var(--cui-card-bg-solid, var(--cui-body-bg)) !important;
+                border-color: rgba(0, 0, 0, 0.08) !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+            }
         }
     }
 
-    .pane-resizer {
-        width: 10px !important;
-        margin: 0 -5px !important;
-        z-index: 10;
+    .gutter.gutter-horizontal,
+    .gutter-horizontal {
+        width: 4px !important;
+        margin: 0 !important;
+        background: transparent !important;
         cursor: col-resize;
-        background: transparent;
-        transition: background 0.2s ease;
-
-        &:hover,
-        &.is-dragging {
-            background: rgba(56, 189, 248, 0.3) !important;
-            border-radius: 4px;
-        }
+        z-index: 1000;
+        position: relative;
+        flex-shrink: 0;
     }
 }
 
@@ -573,10 +586,10 @@
 
 /* AI Chat Bubble Markdown & Syntax Highlighting Alignment (matching Panel-2 aesthetics) */
 .ai-row .msg-bubble {
-    color: #e2e8f0;
+    color: var(--cui-body-color, #e2e8f0);
 
     h1, h2, h3, h4, h5, h6 {
-        color: #ffffff;
+        color: var(--cui-heading-color, #ffffff);
         font-weight: 700;
         margin-top: 0.85rem;
         margin-bottom: 0.45rem;
@@ -585,7 +598,7 @@
     }
 
     h3 {
-        color: #38bdf8;
+        color: var(--cui-primary, #38bdf8);
         font-size: 0.9rem;
     }
 
@@ -598,7 +611,7 @@
     }
 
     strong, b {
-        color: #38bdf8;
+        color: var(--cui-primary, #38bdf8);
         font-weight: 600;
     }
 
@@ -612,14 +625,21 @@
 
     pre {
         background: #0d1117;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        :root[data-coreui-theme="light"] & {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        :root[data-coreui-theme="dark"] & {
+            background: #0d1117;
+        }
+
+        border: 1px solid var(--cui-border-color, rgba(255, 255, 255, 0.1));
         border-radius: 0.5rem;
         padding: 2.25rem 0.85rem 0.85rem 0.85rem;
         margin: 0.65rem 0;
         overflow-x: auto;
         position: relative;
         font-size: 0.78rem;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 
         code {
             font-family: 'JetBrains Mono', 'Fira Code', monospace;
@@ -627,6 +647,26 @@
             background: transparent;
             padding: 0;
             color: inherit;
+            white-space: pre !important;
+            tab-size: 4;
+        }
+    }
+    
+    table {
+        width: 100%;
+        margin: 1.5rem 0;
+        border-collapse: collapse;
+
+        th, td {
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--cui-border-color, rgba(255, 255, 255, 0.1));
+            text-align: left;
+        }
+
+        th {
+            background: var(--cui-secondary-bg, rgba(255, 255, 255, 0.05));
+            color: var(--cui-heading-color, #fff);
+            font-weight: 600;
         }
     }
 

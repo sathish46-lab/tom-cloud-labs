@@ -7,6 +7,7 @@ import datetime
 import re
 import requests
 import redis
+from fast_interceptor import FastInterceptor
 try:
     import markdown
 except ImportError:
@@ -40,6 +41,9 @@ AMQP_PASS = config.get('amqp_pass', 'RootTom@46')
 QUEUE_NAME = 'ai_jobs'
 CONTENT_QUEUE_NAME = 'ai_content_jobs'
 
+# AI Worker running in stateless API mode.
+print("AI Worker running in stateless API mode.", flush=True)
+
 # Redis Config
 try:
     redis_client = redis.Redis(host='127.0.0.1', port=6379, db=0, decode_responses=True)
@@ -54,15 +58,96 @@ GEMINI_MODEL_NAME = 'models/gemini-flash-latest'
 print("Configuring Gemini API...", flush=True)
 genai.configure(api_key=config.get('ai_api_key'))
 
-# Define Gemini Tools
+# Define Gemini Tools (9 Agent Tools — SNA Architecture)
+TOOL_API_BASE = 'http://127.0.0.1:8081/src/api/learnAI/tools'
+AI_INTERNAL_TOKEN = config.get('ai_internal_token', '')
+API_HEADERS = {"Authorization": f"Bearer {AI_INTERNAL_TOKEN}", "Host": "dev.tomweb.in"}
+
 check_lab_status_func = genai.types.FunctionDeclaration(
     name="check_lab_status",
-    description="Check the user's currently active lab environment status and details (like IP address, Lab Name, instance ID). Use this whenever the user asks if their lab is running, asks for connection details, or wants to check their instance hash.",
+    description="Check the user's currently active lab environment status and details (IP address, Lab Name, instance ID). Use this whenever the user asks if their lab is running, asks for connection details, or wants to check their instance hash.",
 )
-ai_tools = [check_lab_status_func]
+
+list_running_labs_func = genai.types.FunctionDeclaration(
+    name="list_running_labs",
+    description="List ALL lab instances for the current user with their status (running/offline), IP addresses, and instance IDs. Use this when the user asks 'what labs do I have?', 'show my labs', or when a lab tool fails and you need to find an alternative running lab.",
+)
+
+get_lab_user_info_func = genai.types.FunctionDeclaration(
+    name="get_lab_user_info",
+    description="Get the student's real identity: Linux username, email, lab IP, and lab name. CRITICAL: Call this FIRST before creating files, running user applications, or answering 'who am I?' questions. You run as ROOT by default — this reveals the ACTUAL student username.",
+)
+
+execute_command_in_lab_func = genai.types.FunctionDeclaration(
+    name="execute_command_in_lab",
+    description="Execute a shell command inside the user's running lab container and return the output. Use this for hands-on tasks: running scripts, installing packages, checking processes, testing code. Pass 'username' to run as the student (for file operations), omit it to run as root (for system tasks).",
+    parameters={
+        "type": "OBJECT",
+        "properties": {
+            "command": {"type": "STRING", "description": "The shell command to execute"},
+            "username": {"type": "STRING", "description": "Optional: Run as this Linux user instead of root. Get from get_lab_user_info first."}
+        },
+        "required": ["command"]
+    }
+)
+
+read_file_content_func = genai.types.FunctionDeclaration(
+    name="read_file_content",
+    description="Read the content of a file from inside the user's lab container. Use this to inspect config files, read student code, or check log files.",
+    parameters={
+        "type": "OBJECT",
+        "properties": {
+            "file_path": {"type": "STRING", "description": "Absolute path of the file to read inside the container"}
+        },
+        "required": ["file_path"]
+    }
+)
+
+read_chapter_content_func = genai.types.FunctionDeclaration(
+    name="read_chapter_content",
+    description="Read the current chapter's full markdown content. MANDATORY: Always call this before answering lesson/chapter questions. Never answer from general knowledge — the chapter may teach concepts differently. Use this when the user says 'this lesson', 'these examples', 'setup this in my lab'.",
+)
+
+get_lesson_outline_func = genai.types.FunctionDeclaration(
+    name="get_lesson_outline",
+    description="Get the full lesson outline with all modules and chapters, including which chapters have generated content. Use this to see the lesson structure, find chapter IDs, or check generation status.",
+)
+
+detect_tool_versions_func = genai.types.FunctionDeclaration(
+    name="detect_tool_versions",
+    description="Detect versions of installed tools in the lab container (e.g., python3, node, php, git). Use when user asks 'what version of Python is installed?' or before suggesting code that requires specific tool versions.",
+    parameters={
+        "type": "OBJECT",
+        "properties": {
+            "tools": {
+                "type": "ARRAY",
+                "items": {"type": "STRING"},
+                "description": "List of tool names to check (e.g., ['python3', 'node', 'git'])"
+            }
+        },
+        "required": ["tools"]
+    }
+)
+
+read_student_progress_func = genai.types.FunctionDeclaration(
+    name="read_student_progress",
+    description="Read the student's learning progress for the current lesson from the database. Shows which chapters they've interacted with and how many messages they've exchanged.",
+)
+
+ai_tools = [
+    check_lab_status_func,
+    list_running_labs_func,
+    get_lab_user_info_func,
+    execute_command_in_lab_func,
+    read_file_content_func,
+    read_chapter_content_func,
+    get_lesson_outline_func,
+    detect_tool_versions_func,
+    read_student_progress_func,
+]
 
 model = genai.GenerativeModel(GEMINI_MODEL_NAME, tools=ai_tools)
-print(f"Gemini model initialized ({GEMINI_MODEL_NAME}) with tools.", flush=True)
+print(f"Gemini model initialized ({GEMINI_MODEL_NAME}) with {len(ai_tools)} tools.", flush=True)
 
 # ===========================================================================
 # CONTEXT CACHING: Cache system prompt + lesson context for cost savings
@@ -128,13 +213,6 @@ def get_or_create_cached_context(user_id, lesson_id, system_context_text, histor
     except Exception as e:
         print(f"   > Context caching unavailable (min token threshold not met or API error): {e}")
         return None
-
-# MongoDB Config
-print(f"Connecting to MongoDB...", flush=True)
-DB_URI = config.get('database_file', 'mongodb://admin:Tombootroot@127.0.0.1:27017/tom_labs_db?authSource=admin')
-client = MongoClient(DB_URI)
-db = client[config.get('main_db', 'tom_labs_db')]
-print("MongoDB connection established.", flush=True)
 
 # RAG Summarization threshold
 SUMMARIZE_THRESHOLD = 20  # Trigger summarization when messages exceed this count
@@ -221,58 +299,7 @@ def generate_summary_via_gemini(messages_to_summarize):
 def maybe_summarize(user_id, lesson_id, chapter_id, ai_model='lm_studio'):
     """Check if conversation needs summarization and perform it if needed"""
     try:
-        filter_key = {"user_id": int(user_id), "lesson_id": lesson_id} if lesson_id else {"user_id": int(user_id), "chapter_id": chapter_id}
-        chat_doc = db.ai_chat_history.find_one(filter_key)
-        if not chat_doc or 'messages' not in chat_doc:
-            return
-        
-        messages = chat_doc['messages']
-        
-        last_summarized_index = chat_doc.get('last_summarized_index', 0)
-        unsummarized_messages = messages[last_summarized_index:]
-        
-        # Filter out existing system_summary messages in case they are still in the DB from the old system
-        actual_unsummarized = [m for m in unsummarized_messages if m.get('role') != 'system_summary']
-        
-        if len(actual_unsummarized) <= SUMMARIZE_THRESHOLD:
-            return  # Not enough messages to warrant summarization
-        
-        print(f" [⚡] Triggering RAG summarization ({len(actual_unsummarized)} unsummarized messages > {SUMMARIZE_THRESHOLD} threshold)")
-        
-        # Split: messages to summarize now, and recent to keep as raw context
-        messages_to_summarize = actual_unsummarized[:-KEEP_RECENT]
-        
-        # If there's an existing RAG summary, we should include it in the summarization prompt so context isn't lost
-        old_summary = chat_doc.get('rag_summary', '')
-        if old_summary:
-            messages_to_summarize.insert(0, {'role': 'user', 'content': f"[Previous Summary Context to merge]: {old_summary}"})
-            
-        # Generate summary using the same model the user is chatting with
-        summary_text = None
-        if ai_model == 'lm_studio':
-            summary_text = generate_summary_via_lm_studio(messages_to_summarize)
-        else:
-            summary_text = generate_summary_via_gemini(messages_to_summarize)
-        
-        if not summary_text:
-            print(" [!] Summary generation returned empty, skipping summarization")
-            return
-            
-        new_summarized_index = last_summarized_index + len(actual_unsummarized[:-KEEP_RECENT])
-        
-        # Atomic update in MongoDB - ONLY update the summary fields, DO NOT touch messages array
-        db.ai_chat_history.update_one(
-            filter_key,
-            {'$set': {
-                'rag_summary': summary_text,
-                'last_summarized_index': new_summarized_index,
-                'last_summary_at': int(time.time()),
-                'total_summarized': new_summarized_index
-            }}
-        )
-        
-        print(f" [✓] RAG Summarization complete. Total summarized pointer moved to index {new_summarized_index}")
-        
+        pass # Database interaction removed. 
     except Exception as e:
         print(f" [!] Summarization error: {e}")
 
@@ -415,45 +442,34 @@ def process_ai_job(ch, method, properties, body):
             ch.basic_ack(delivery_tag=method.delivery_tag)
             return
 
-        # Fetch Chat History (single shared chat history per lesson)
+        # Fetch Chat History (stateless implementation via API)
         history = []
         if user_id is not None:
-            chat_doc = None
-            if lesson_id:
-                chat_doc = db.ai_chat_history.find_one({"user_id": user_id, "lesson_id": lesson_id})
-            if not chat_doc and chapter_id:
-                chat_doc = db.ai_chat_history.find_one({"user_id": user_id, "chapter_id": chapter_id})
-            if chat_doc and 'messages' in chat_doc:
-                full_history = chat_doc['messages']
-                
-                # Retrieve the hidden RAG summary instead of searching the messages array
-                rag_summary = chat_doc.get('rag_summary', '')
-                last_summarized_index = chat_doc.get('last_summarized_index', 0)
-                
-                # If there's a background summary, inject it into the AI's history
-                if rag_summary:
-                    history.append({'role': 'system_summary', 'content': rag_summary})
-                    
-                # Now, only append the raw messages that come AFTER the summary pointer
-                # Also filter out any legacy 'system_summary' messages that might still be in the array
-                unsummarized_messages = full_history[last_summarized_index:]
-                recent = [m for m in unsummarized_messages if m.get('role') != 'system_summary']
-                
-                history.extend(recent)
-                
-                print(f"   > Loaded {len(history)} context entries (1 hidden summary + {len(recent)} unsummarized of {len(full_history)} total)")
-
-        # Build authoritative system context from Layer 5 pre-fetch
-        ctx = job.get('context', {})
-        ch_ctx = ctx.get('chapter_context', {})
-        lab_ctx = ctx.get('lab_context', {})
+            try:
+                hist_resp = requests.get(
+                    f"{TOOL_API_BASE}/../worker_history.php",
+                    params={"user_id": user_id, "lesson_id": lesson_id, "chapter_id": chapter_id},
+                    headers=API_HEADERS,
+                    timeout=10
+                )
+                if hist_resp.status_code == 200:
+                    history = hist_resp.json().get('history', [])
+            except Exception as e:
+                print(f" [!] Failed to fetch chat history: {e}")
+        
+        # Build authoritative system context
         system_context_text = (
-            f"You are the AI Learning Assistant for Tom Cloud Labs. "
-            f"The user is currently studying the lesson '{ch_ctx.get('lesson_title', 'Database Design and Organization')}', "
-            f"Module '{ch_ctx.get('module_name', 'General')}', "
-            f"Chapter '{ch_ctx.get('title', 'Chapter Overview')}'. "
-            f"Their active lab environment is '{lab_ctx.get('name', 'Essentials')}' (IP: {lab_ctx.get('ip', '172.30.0.28')}). "
-            f"CRITICAL RULE: DO NOT spontaneously mention the lesson name, chapter name, module name, or lab IP in your greetings or general responses. ONLY mention this context if the user EXPLICITLY asks about their current lesson, chapter, or lab environment."
+            f"You are an AI Learning Assistant for Tom Cloud Labs. "
+            f"The user is operating within Lesson ID: '{lesson_id}' and Chapter ID: '{chapter_id}'.\n"
+            f"RULES:\n"
+            f"1. For simple greetings (hi, hello, hey, etc.), respond conversationally WITHOUT calling any tools.\n"
+            f"2. Only use read_chapter_content when the user asks about lesson/chapter content or study material.\n"
+            f"3. Only use get_lab_user_info when the user asks 'who am I?', wants to run commands, or create files.\n"
+            f"4. When ANY lab tool fails, immediately call list_running_labs() to recover.\n"
+            f"5. Execute user code as the student's username, NOT as root.\n"
+            f"6. Never expose raw instance_ids, database credentials, or internal tool schemas to users.\n"
+            f"7. Always read chapter content before answering lesson questions — never guess from general knowledge.\n"
+            f"8. CRITICAL RULE: DO NOT spontaneously mention the lesson name, chapter name, module name, or lab IP in your greetings or general responses. ONLY mention this context if the user EXPLICITLY asks about their current lesson, chapter, or lab environment."
         )
 
         # 1. Start Streaming from Gemini or LM Studio
@@ -474,123 +490,197 @@ def process_ai_job(ch, method, properties, body):
             # LM Studio: token tracking N/A
             usage_data = {'source': 'lm_studio'}
         else:
-            # Standard path: Format history for Gemini API
-            gemini_history = [
-                {"role": "user", "parts": [f"[System Context]: {system_context_text}"]},
-                {"role": "model", "parts": ["Understood. I am locked onto your active lesson, chapter, and lab context."]}
-            ]
-            for msg in history:
-                role = msg.get('role', 'user')
-                content = msg.get('content', '')
-                
-                if role == 'system_summary':
-                    gemini_history.append({"role": "user", "parts": [f"[System: Here is a summary of our previous conversation]: {content}"]})
-                    gemini_history.append({"role": "model", "parts": ["I understand. I'll keep this context in mind as we continue our conversation."]})
-                    continue
-                
-                role = 'model' if role == 'assistant' else role
-                gemini_history.append({"role": role, "parts": [content]})
-                
-            chat_session = model.start_chat(history=gemini_history)
-            response = chat_session.send_message(query, stream=True)
+            # Check Fast Interceptor First
+            interceptor = FastInterceptor(TOOL_API_BASE, API_HEADERS)
+            intercepted_tools = interceptor.match_intents(query)
             
-            for chunk in response:
-                fc = None
-                try:
-                    for part in chunk.parts:
-                        if getattr(part, 'function_call', None):
-                            fc = part.function_call
-                            break
-                except Exception:
-                    pass
-
-                if fc:
-                    try:
-                        response.resolve()
-                    except Exception:
-                        pass
+            if intercepted_tools:
+                print(f" [FastTrack] Intercepted {len(intercepted_tools)} tools for query '{query}'")
+                stream_to_user(ch, session_id, message_id, "", is_final=False)
+                
+                full_content = ""
+                
+                for intercepted_tool, intercepted_args in intercepted_tools:
+                    # Execute tool
+                    tool_result = interceptor.execute_tool(intercepted_tool, intercepted_args, user_id, lesson_id, chapter_id)
+                    executed_tools.append({"name": intercepted_tool, "output": tool_result})
+                    
+                    # Send tool execution badge
+                    send_tool_execution(
+                        channel=ch,
+                        session_id=session_id,
+                        message_id=message_id,
+                        tool_name=intercepted_tool,
+                        tool_output=json.dumps(tool_result)[:500]
+                    )
+                    
+                    # Generate and stream dynamic response immediately
+                    dynamic_resp = interceptor.generate_response(intercepted_tool, tool_result)
+                    full_content += dynamic_resp + "\n\n"
+                    stream_to_user(ch, session_id, message_id, dynamic_resp + "\n\n", is_final=False)
+                    
+                full_content = full_content.strip()
+                # Finalize
+                stream_to_user(ch, session_id, message_id, "", is_final=True)
+                usage_data = {'source': 'fast_interceptor', 'input_tokens': 0, 'output_tokens': len(full_content.split())}
+                
+            else:
+                # Standard path: Format history for Gemini API
+                gemini_history = [
+                    {"role": "user", "parts": [f"[System Context]: {system_context_text}"]},
+                    {"role": "model", "parts": ["Understood. I am locked onto your active lesson, chapter, and lab context."]}
+                ]
+                for msg in history:
+                    role = msg.get('role', 'user')
+                    content = msg.get('content', '')
+                    
+                    if role == 'system_summary':
+                        gemini_history.append({"role": "user", "parts": [f"[System: Here is a summary of our previous conversation]: {content}"]})
+                        gemini_history.append({"role": "model", "parts": ["I understand. I'll keep this context in mind as we continue our conversation."]})
+                        continue
                         
-                    if fc.name == "check_lab_status":
-                        # Execute Tool
-                        tool_data = lab_ctx if lab_ctx else {"status": "No active lab"}
-                        send_tool_execution(
-                            channel=ch, 
-                            session_id=session_id, 
-                            message_id=message_id, 
-                            tool_name="check_lab_status", 
-                            tool_output=json.dumps(tool_data)
-                        )
-                        executed_tools.append({
-                            "name": "check_lab_status",
-                            "output": tool_data,
-                            "lab_name": lab_ctx.get('name', 'Unknown') if lab_ctx else 'Unknown'
-                        })
-                        # Reply to Model
-                        tool_resp = genai.protos.Part(
-                            function_response=genai.protos.FunctionResponse(name=fc.name, response=tool_data)
-                        )
-                        # Wait for model to generate text stream based on tool result
-                        follow_up_response = chat_session.send_message(tool_resp, stream=True)
-                        for f_chunk in follow_up_response:
-                            if f_chunk.text:
-                                full_content += f_chunk.text
-                                words = re.findall(r'\S+|\s+', f_chunk.text)
-                                for word in words:
-                                    stream_to_user(ch, session_id, message_id, word)
-                                    time.sleep(0.01)
-                        # Extract usage from the final response
-                        response = follow_up_response 
-                        break
-
-                if chunk.text:
-                    full_content += chunk.text
-                    stream_to_user(ch, session_id, message_id, chunk.text)
+                    role = 'model' if role == 'assistant' else role
+                    gemini_history.append({"role": role, "parts": [content]})
+                
+                chat_session = model.start_chat(history=gemini_history)
+                response = chat_session.send_message(query, stream=True)
             
-            # Extract token usage metadata from the completed response
-            try:
-                um = response.usage_metadata
-                usage_data = {
-                    'source': 'gemini',
-                    'input_tokens': um.prompt_token_count if um else 0,
-                    'output_tokens': um.candidates_token_count if um else 0,
-                    'cached_tokens': um.cached_content_token_count if um else 0,
-                    'total_tokens': um.total_token_count if um else 0
+                endpoint_map = {
+                    "check_lab_status": "connection_info.php",
+                    "list_running_labs": "list_running.php",
+                    "get_lab_user_info": "userinfo.php",
+                    "read_chapter_content": "read_chapters.php",
+                    "get_lesson_outline": "outline.php",
+                    "read_student_progress": "read_progress.php",
+                    "execute_command_in_lab": "exec.php",
+                    "read_file_content": "read_file.php",
+                    "detect_tool_versions": "detect_versions.php"
                 }
-                cache_pct = round((usage_data['cached_tokens'] / usage_data['input_tokens'] * 100), 1) if usage_data['input_tokens'] > 0 else 0
-                usage_data['cache_hit_percent'] = cache_pct
-                print(f"   > Token Usage: input={usage_data['input_tokens']}, output={usage_data['output_tokens']}, cached={usage_data['cached_tokens']} ({cache_pct}%), total={usage_data['total_tokens']}")
-            except Exception as e:
-                print(f"   > Could not extract usage metadata: {e}")
-                usage_data = {'source': 'gemini'}
+
+                max_tool_rounds = 5
+                tool_round = 0
+
+                while tool_round < max_tool_rounds:
+                    tool_round += 1
+                    found_fc = False
+
+                    for chunk in response:
+                        fc = None
+                        try:
+                            for part in chunk.parts:
+                                if getattr(part, 'function_call', None):
+                                    fc = part.function_call
+                                    break
+                        except Exception:
+                            pass
+
+                        if fc:
+                            found_fc = True
+                            try:
+                                response.resolve()
+                            except Exception:
+                                pass
+
+                            tool_data = None
+                            tool_name = fc.name
+                            fc_args = dict(fc.args) if fc.args else {}
+
+                            if tool_name in endpoint_map:
+                                payload = dict(fc_args)
+                                payload['user_id'] = user_id
+                                payload['lesson_id'] = lesson_id
+                                payload['chapter_id'] = chapter_id
+
+                                try:
+                                    api_resp = requests.post(
+                                        f"{TOOL_API_BASE}/{endpoint_map[tool_name]}",
+                                        json=payload,
+                                        headers=API_HEADERS,
+                                        timeout=30
+                                    )
+                                    if api_resp.status_code == 200:
+                                        tool_data = api_resp.json()
+                                    else:
+                                        tool_data = {"error": f"API returned HTTP {api_resp.status_code}", "response": api_resp.text[:200]}
+                                except Exception as ae:
+                                    tool_data = {"error": f"API execution failed: {ae}"}
+                            else:
+                                tool_data = {"error": f"Unknown tool: {tool_name}"}
+
+                            print(f"   > Tool [{tool_name}] executed (round {tool_round}): {json.dumps(tool_data)[:200]}")
+                            send_tool_execution(
+                                channel=ch,
+                                session_id=session_id,
+                                message_id=message_id,
+                                tool_name=tool_name,
+                                tool_output=json.dumps(tool_data)[:500]
+                            )
+                            executed_tools.append({"name": tool_name, "output": tool_data})
+
+                            # Feed tool result back to Gemini
+                            if not isinstance(tool_data, dict):
+                                tool_response_data = {"result": tool_data}
+                            else:
+                                tool_response_data = tool_data
+
+                            tool_resp = genai.protos.Part(
+                                function_response=genai.protos.FunctionResponse(name=tool_name, response=tool_response_data)
+                            )
+                            response = chat_session.send_message(tool_resp, stream=True)
+                            break  # Break inner for-loop, continue outer while-loop for next round
+
+                        # No function call — stream text
+                        if chunk.text:
+                            full_content += chunk.text
+                            stream_to_user(ch, session_id, message_id, chunk.text)
+
+                    if not found_fc:
+                        break  # No more tool calls, exit the while loop
+            
+                # Extract token usage metadata from the completed response
+                try:
+                    um = response.usage_metadata
+                    usage_data = {
+                        'source': 'gemini',
+                        'input_tokens': um.prompt_token_count if um else 0,
+                        'output_tokens': um.candidates_token_count if um else 0,
+                        'cached_tokens': um.cached_content_token_count if um else 0,
+                        'total_tokens': um.total_token_count if um else 0
+                    }
+                    cache_pct = round((usage_data['cached_tokens'] / usage_data['input_tokens'] * 100), 1) if usage_data['input_tokens'] > 0 else 0
+                    usage_data['cache_hit_percent'] = cache_pct
+                    print(f"   > Token Usage: input={usage_data['input_tokens']}, output={usage_data['output_tokens']}, cached={usage_data['cached_tokens']} ({cache_pct}%), total={usage_data['total_tokens']}")
+                except Exception as e:
+                    print(f"   > Could not extract usage metadata: {e}")
+                    usage_data = {'source': 'gemini'}
 
         # 2. Finalize with usage data
         stream_to_user(ch, session_id, message_id, "", is_final=True, usage=usage_data, source=usage_data.get('source', 'llm') if usage_data else 'llm')
         print(" [✓] Stream completed.")
 
-        # 3. Persistence: Push new messages to Chat Database
+        # 3. Persistence: Push new messages to Chat Database via API
         if user_id is not None and full_content.strip():
             try:
-                ts = int(time.time())
-                filter_key = {'user_id': user_id, 'lesson_id': lesson_id} if lesson_id else {'user_id': user_id, 'chapter_id': chapter_id}
-                db.ai_chat_history.update_one(
-                    filter_key,
-                    {'$push': {
-                        'messages': {
-                            '$each': [
-                                {'role': 'user', 'content': query, 'timestamp': ts},
-                                {'role': 'model', 'content': full_content, 'timestamp': ts + 1, 'usage': usage_data, 'tools': executed_tools}
-                            ]
-                        }
-                    }},
-                    upsert=True
+                save_resp = requests.post(
+                    f"{TOOL_API_BASE}/../worker_history.php",
+                    json={
+                        "user_id": user_id,
+                        "lesson_id": lesson_id,
+                        "chapter_id": chapter_id,
+                        "query": query,
+                        "response": full_content,
+                        "usage": usage_data,
+                        "tools": executed_tools
+                    },
+                    headers=API_HEADERS,
+                    timeout=10
                 )
-                print(f" [✓] Persisted chat memory for user {user_id} in lesson '{lesson_id}'")
-                
-                # 4. RAG Summarization: Check if we need to compress old messages
-                maybe_summarize(user_id, lesson_id, chapter_id, ai_model)
-                
+                if save_resp.status_code == 200:
+                    print(f" [✓] Persisted chat memory for user {user_id} via API")
+                else:
+                    print(f" [!] Failed to persist chat memory: {save_resp.text}")
             except Exception as e:
-                print(f" [!] Failed to update MongoDB Chat History: {e}")
+                print(f" [!] Failed to persist chat memory API: {e}")
 
     except Exception as e:
         print(f" [!] Error processing AI job: {e}")
