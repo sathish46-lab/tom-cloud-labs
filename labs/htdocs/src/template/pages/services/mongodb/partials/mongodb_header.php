@@ -2,7 +2,8 @@
 // Default to dashboard if not set
 $current_tab = $current_tab ?? 'dashboard';
 ?>
-<div class="lab-header-section px-2 mt-3 mb-4">
+<div class="blur banner mb-3 rounded-0 border-bottom border-secondary border-opacity-10">
+    <div class="container-fluid px-4 py-3">
     <div class="row align-items-center">
         <div class="col-auto">
             <div class="bg-white p-2 rounded shadow-sm d-flex justify-content-center align-items-center" style="width: 72px; height: 72px;">
@@ -33,5 +34,6 @@ $current_tab = $current_tab ?? 'dashboard';
                 <a class="nav-link <?= ($current_tab === 'database') ? 'active' : '' ?>" href="/services/mongodb/database">Database</a>
             </li>
         </ul>
+    </div>
     </div>
 </div>

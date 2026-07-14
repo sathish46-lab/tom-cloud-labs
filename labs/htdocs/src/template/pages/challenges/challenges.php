@@ -52,7 +52,7 @@ unset($t);
 include __DIR__ . '/partials/challenge_header.php';
 ?>
 
-<div class="container-fluid px-0 py-3">
+<div class="container-fluid px-3 py-3">
     <div class="row g-4">
         <!-- LEFT: Tasks List -->
         <div class="col-lg-8">

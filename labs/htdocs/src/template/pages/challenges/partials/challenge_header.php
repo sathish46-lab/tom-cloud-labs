@@ -37,8 +37,8 @@ $isExpired = ($isRunning && $timeLeft <= 0);
 $initM = str_pad(floor($timeLeft / 60), 2, "0", STR_PAD_LEFT);
 $initS = str_pad($timeLeft % 60, 2, "0", STR_PAD_LEFT);
 ?>
-<div class="lab-header-section mb-0">
-    <div class="container-fluid p-0">
+<div class="blur banner mb-0 rounded-0 border-bottom border-secondary border-opacity-10 shadow-sm">
+    <div class="container-fluid px-4 pt-3 pb-0">
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
 
             <!-- Avatar + Info -->
@@ -268,18 +268,18 @@ $initS = str_pad($timeLeft % 60, 2, "0", STR_PAD_LEFT);
 
         <!-- Nav Tabs -->
         <div class="row m-0 p-0 mt-3">
-            <ul class="nav nav-tabs labs-banner-tabs">
+            <ul class="nav nav-tabs lab-nav-tabs border-0">
                 <li class="nav-item">
-                    <a class="nav-link labs-banner-tab <?= ($activeTab ?? '') === 'dashboard' ? 'active' : '' ?>" href="/challenges/dashboard/<?= $instanceHash ?>">Dashboard</a>
+                    <a class="nav-link <?= ($activeTab ?? '') === 'dashboard' ? 'active' : '' ?>" href="/challenges/dashboard/<?= $instanceHash ?>">Dashboard</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link labs-banner-tab <?= ($activeTab ?? '') === 'challenges' ? 'active' : '' ?>" href="/challenges/challenges/<?= $instanceHash ?>">Challenges</a>
+                    <a class="nav-link <?= ($activeTab ?? '') === 'challenges' ? 'active' : '' ?>" href="/challenges/challenges/<?= $instanceHash ?>">Challenges</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link labs-banner-tab <?= ($activeTab ?? '') === 'achievements' ? 'active' : '' ?>" href="/challenges/achievements/<?= $instanceHash ?>">Achievements</a>
+                    <a class="nav-link <?= ($activeTab ?? '') === 'achievements' ? 'active' : '' ?>" href="/challenges/achievements/<?= $instanceHash ?>">Achievements</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link labs-banner-tab <?= ($activeTab ?? '') === 'leaderboard' ? 'active' : '' ?>" href="/challenges/leaderboard/<?= $instanceHash ?>">Leaderboard</a>
+                    <a class="nav-link <?= ($activeTab ?? '') === 'leaderboard' ? 'active' : '' ?>" href="/challenges/leaderboard/<?= $instanceHash ?>">Leaderboard</a>
                 </li>
             </ul>
         </div>

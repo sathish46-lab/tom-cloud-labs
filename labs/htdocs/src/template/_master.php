@@ -231,9 +231,7 @@ $classString = implode(' ', $htmlClasses);
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/@coreui/coreui@5.0.2/dist/css/coreui.min.css" rel="stylesheet">
-
-
+    
     <link rel="stylesheet" href="<?= Session::cacheCDN('/css/app.css') ?>">
     <link rel="stylesheet" href="<?= Session::cacheCDN('/css/htmx-progress.css') ?>">
 

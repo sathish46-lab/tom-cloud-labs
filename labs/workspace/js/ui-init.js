@@ -187,7 +187,7 @@ window.copyToClipboard = (text, label = 'Information') => {
 window.onPageLoad(function() {
     if (window.TomVisuals && typeof window.TomVisuals.syncUI === 'function') window.TomVisuals.syncUI();
 
-    if (!document.querySelector('.stable-app-view')) {
+    if (!document.querySelector('.stable-app-view') && !document.querySelector('.split-panel-view')) {
         document.body.style.removeProperty('overflow');
         document.body.style.removeProperty('height');
         const mainWrapper = document.querySelector('.wrapper');

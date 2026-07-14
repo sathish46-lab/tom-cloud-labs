@@ -121,10 +121,15 @@
 ?>
 
 <!-- Modals moved to lab_modals.php -->
-    <div class="container-fluid py-3 px-4">
-        <div class="row g-4">
+    <?php 
+        $showAlwaysOn      = \TomLabs\Labs\LabTemplateConfig::supportsFeature($labType, 'always_on');
+        $showHttpProxies   = \TomLabs\Labs\LabTemplateConfig::supportsFeature($labType, 'http_proxies'); 
+        $showStartupScript = \TomLabs\Labs\LabTemplateConfig::supportsFeature($labType, 'startup_script');
+    ?>
+    <div class="container-fluid py-3 px-3">
+        <div class="row g-2">
             <div class="col-lg-6">
-                 <div class="card border-0 shadow-sm blur rounded-4 mb-4">
+                 <div class="card border-0 shadow-sm blur rounded-4">
                     <div class="card-header bg-transparent border-0 pt-4 px-4">
                         <h6 class="fw-bold mb-0">Security & Access <span class="small text-muted ms-1">Passwords</span></h6>
                     </div>
@@ -251,20 +256,12 @@
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <?php 
-            $showAlwaysOn      = \TomLabs\Labs\LabTemplateConfig::supportsFeature($labType, 'always_on');
-            $showHttpProxies   = \TomLabs\Labs\LabTemplateConfig::supportsFeature($labType, 'http_proxies'); 
-            $showStartupScript = \TomLabs\Labs\LabTemplateConfig::supportsFeature($labType, 'startup_script');
-        ?>
         <!-- Side-by-Side: HTTP Proxies & Lifecycle Section -->
         <?php if ($showAlwaysOn || $showHttpProxies): ?>
-        <div class="row mt-4">
             <?php if ($showAlwaysOn): ?>
             <!-- Left Side: Lifecycle -->
             <div class="col-md-<?= ($showAlwaysOn && $showHttpProxies) ? '5' : '12' ?>">
-                <div class="card border-0 shadow-sm blur rounded-4 mb-4 pref-card-full">
+                <div class="card border-0 shadow-sm blur rounded-4 pref-card-full">
                     <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2">
                         <h6 class="fw-bold mb-1 text-uppercase ls-1 small">Lifecycle</h6>
                     </div>
@@ -287,7 +284,7 @@
             <?php if ($showHttpProxies): ?>
             <!-- Right Side: HTTP Proxies -->
             <div class="col-md-<?= ($showAlwaysOn && $showHttpProxies) ? '7' : '12' ?>">
-                <div class="card border-0 shadow-sm blur rounded-4 mb-4 pref-card-full">
+                <div class="card border-0 shadow-sm blur rounded-4 pref-card-full">
                     <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2">
                         <h6 class="fw-bold mb-1">HTTP Proxies</h6>
                         <p class="small text-muted mb-0">Reverse-proxy ports to your domains over HTTP. TLS is terminated at the edge.</p>
@@ -378,14 +375,12 @@
                 </div>
             </div>
             <?php endif; ?>
-        </div>
         <?php endif; ?>
 
         <?php if ($showStartupScript): ?>
         <!-- Startup Script Section -->
-        <div class="row mt-2">
             <div class="col-12">
-                <div class="card border-0 shadow-sm blur rounded-4 mb-4">
+                <div class="card border-0 shadow-sm blur rounded-4">
                     <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0 d-flex justify-content-between align-items-start">
                         <div>
                             <div class="d-flex align-items-center gap-2 mb-1">
@@ -462,11 +457,9 @@
                     </div>
                 </div>
             </div>
-        </div>
         <?php endif; ?>
 
         <!-- Save / Apply Buttons -->
-        <div class="row mt-2 mb-4">
             <div class="col-12">
                 <div class="card border-0 shadow-sm blur rounded-4 p-4">
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
@@ -492,9 +485,8 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-    </div>
+        </div> <!-- Close row g-2 -->
+    </div> <!-- Close container-fluid -->
 
 <!-- Inject user domains as JS array for dynamic proxy rows -->
 <script>

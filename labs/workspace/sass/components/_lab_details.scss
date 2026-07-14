@@ -60,7 +60,7 @@
 
   .nav-link {
     border: none !important;
-    border-top: 3px solid transparent !important;
+    // border-bottom: 3px solid transparent !important;
     color: var(--glass-text-muted);
     font-weight: 500;
     padding: 0.75rem 1.5rem;
@@ -68,14 +68,15 @@
     transition: all 0.2s ease-in-out;
     
     &:hover {
-      color: var(--glass-text);
+      color: #fff;
       background: rgba(255, 255, 255, 0.05);
+      // border-bottom-color: rgba(255, 255, 255, 0.2) !important;
     }
 
     &.active {
-      color: var(--glass-text) !important;
-      background: rgba(0, 0, 0, 0.2) !important;
-      border-top: 3px solid transparent !important;
+      color: #fff !important;
+      background: rgba(255, 255, 255, 0.1) !important;
+      // border-bottom-color: #858bff !important;
     }
   }
 }
@@ -158,8 +159,7 @@
 }
 
 .lab-domain-item-card {
-  background: rgba(20, 20, 20, 0.8) !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
+  transition: all 0.3s ease;
 }
 
 .lab-domain-link {
@@ -223,7 +223,7 @@
 }
 
 .pref-card-full {
-  height: calc(100% - 1.5rem) !important;
+  height: 100% !important;
 }
 
 .pref-checkbox-lg {

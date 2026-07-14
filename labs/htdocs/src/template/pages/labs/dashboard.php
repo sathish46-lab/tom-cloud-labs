@@ -128,7 +128,7 @@
 ?>
 
 <!-- Modals moved to lab_modals.php -->
-    <div class="container-fluid py-3 px-4">
+    <div class="container-fluid py-3 px-3">
         <div class="row g-4">
             <div class="col-lg-6">
                 <div class="card mb-4 border-0 shadow-sm blur rounded-4">

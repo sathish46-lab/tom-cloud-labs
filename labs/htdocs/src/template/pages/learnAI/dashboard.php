@@ -1,6 +1,15 @@
 <?php
 $db = DatabaseConnection::getDefaultDatabase();
-$lessons = $db->ai_lessons->find()->toArray();
+$lessonsRaw = $db->ai_lessons->find([], ['sort' => ['_id' => -1]])->toArray();
+$lessons = [];
+$seen = [];
+foreach ($lessonsRaw as $l) {
+    $title = $l['title'] ?? '';
+    if (!isset($seen[$title])) {
+        $seen[$title] = true;
+        $lessons[] = $l;
+    }
+}
 $user = Session::getUser();
 ?>
 
@@ -56,11 +65,11 @@ $user = Session::getUser();
             <div class="row g-3 mb-5">
                 <?php foreach ($lessons as $lesson): ?>
                 <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
-                    <div class="card h-100 bg-dark bg-opacity-50 border-secondary border-opacity-10 rounded-4 shadow-sm overflow-hidden transition-all-lite">
+                    <div class="card h-100 shadow-sm rounded-4 blur overflow-hidden transition-all-lite" style="border: 1px solid rgba(255, 255, 255, 0.05) !important;">
                         <div class="card-body d-flex flex-column p-3">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10 rounded-pill" style="font-size: 0.6rem;">
-                                    <i class="bx bxs-star me-1"></i><?= $lesson['level'] ?>
+                                    <i class="bx bxs-star me-1"></i><?= htmlspecialchars($lesson['level'] ?? '') ?>
                                 </span>
                                 <div class="dropdown">
                                     <button class="btn btn-link text-secondary p-0" data-coreui-toggle="dropdown">
@@ -69,8 +78,8 @@ $user = Session::getUser();
                                 </div>
                             </div>
 
-                            <h6 class="card-title fw-bold mb-2 text-white"><?= $lesson['title'] ?></h6>
-                            <p class="card-text text-secondary mb-3 flex-grow-1" style="font-size: 0.75rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"><?= $lesson['description'] ?></p>
+                            <h6 class="card-title fw-bold mb-2 text-white"><?= htmlspecialchars($lesson['title'] ?? '') ?></h6>
+                            <p class="card-text text-secondary mb-3 flex-grow-1" style="font-size: 0.75rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"><?= htmlspecialchars($lesson['description'] ?? '') ?></p>
 
                             <div class="d-flex gap-2 text-secondary mb-3" style="font-size: 0.65rem;">
                                 <span><i class="bx bx-book me-1"></i><?= $lesson['modules_count'] ?> Mod</span>
@@ -90,7 +99,7 @@ $user = Session::getUser();
                             <div class="d-flex align-items-center pt-2 border-top border-secondary border-opacity-10 mt-1">
                                 <div class="d-flex align-items-center overflow-hidden">
                                     <img src="<?= Session::getAvatar() ?>" alt="Author" class="rounded-circle me-2 border border-secondary border-opacity-25" width="18" height="18">
-                                    <span class="text-secondary text-truncate" style="font-size: 0.65rem;"><?= $lesson['author'] ?></span>
+                                    <span class="text-secondary text-truncate" style="font-size: 0.65rem;"><?= htmlspecialchars($lesson['author'] ?? '') ?></span>
                                 </div>
                                 <div class="ms-auto">
                                     <a href="/learn/lesson/<?= $lesson['_id'] ?>" class="btn btn-xs btn-primary rounded-pill px-3 shadow-sm" style="font-size: 0.65rem;">Continue</a>
@@ -261,7 +270,7 @@ window.onPageLoad(function() {
 
         modal.show();
 
-        fetch('/src/api/learnAI/generate_lesson.php', {
+        fetch('/api/learnAI/generate_lesson', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ topic: topic, level: level })
@@ -275,7 +284,7 @@ window.onPageLoad(function() {
 
                 // Poll job status
                 pollInterval = setInterval(() => {
-                    fetch(`/src/api/learnAI/job_status.php?request_id=${encodeURIComponent(data.request_id)}`)
+                    fetch(`/api/learnAI/job_status?request_id=${encodeURIComponent(data.request_id)}`)
                         .then(r => r.json())
                         .then(job => {
                             if (!job) return;

@@ -54,7 +54,7 @@ require_once __DIR__ . '/partials/mysql_header.php';
 
             <!-- Left Content: Create Database -->
         <div class="col-lg-3 col-xl-3 mb-4">
-                <div class="card border-0 shadow-sm rounded-4 mb-4" style="background-color: #111827; border: 1px solid rgba(255,255,255,0.05) !important;">
+                <div class="card blur border-0 shadow-sm rounded-4 mb-4">
                     <div class="card-header bg-transparent border-bottom-0 pt-4 pb-2">
                         <h6 class="card-title fw-bold text-white mb-0" style="font-size: 1rem;">Create Database</h6>
                     </div>
@@ -99,7 +99,7 @@ require_once __DIR__ . '/partials/mysql_header.php';
 
             <!-- Right Content: Databases List -->
         <div class="col-lg-9 col-xl-9">
-                <div class="card border-0 shadow-sm rounded-4 mb-4" style="background-color: #111827; border: 1px solid rgba(255,255,255,0.05) !important;">
+                <div class="card blur border-0 shadow-sm rounded-4 mb-4">
                     <div class="card-header bg-transparent border-bottom-0 pt-4 pb-2">
                         <h6 class="card-title fw-bold text-white mb-1" style="font-size: 1rem;">MySQL Server Databases</h6>
                         <p class="text-secondary small mb-0">Your database will be listed below</p>

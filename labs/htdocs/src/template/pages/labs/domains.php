@@ -88,7 +88,7 @@
 ?>
 
 <!-- Modals moved to lab_modals.php -->
-    <div class="container-fluid py-3 p-0 px-4">
+    <div class="container-fluid py-3 p-0 px-3">
         <!-- Grid for Domains -->
         <div class="row row-cols-1 row-cols-md-3 g-4 align-items-start" id="masonry-area" data-masonry='{"percentPosition": true }'>
            <?php 
@@ -160,7 +160,7 @@
                     $domainBadgeBg = $isCustom ? '#f59e0b' : '#22c55e';
                 ?>
                 <div class="col">
-                    <div class="card border-0 rounded-4 position-relative overflow-hidden lab-domain-item-card" style="border: 1px solid <?= $borderColor ?> !important;">
+                    <div class="card border-0 rounded-4 position-relative overflow-hidden blur shadow-sm lab-domain-item-card" style="border: 1px solid <?= $borderColor ?> !important;">
                         <div class="px-3 py-2 d-flex align-items-center gap-2" style="background: <?= $headerBg ?>;">
                             <i class="bx <?= $headerIcon ?> text-white fs-6"></i>
                             <span class="text-white fw-bold small"><?= htmlspecialchars($usageLabel) ?></span>

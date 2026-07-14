@@ -113,7 +113,7 @@ try {
         },
 
         init: function () {
-            if (!document.querySelector('.stable-app-view')) {
+            if (!document.querySelector('.stable-app-view') && !document.querySelector('.split-panel-view')) {
                 document.body.style.removeProperty('overflow');
                 document.body.style.removeProperty('height');
                 const mainWrapper = document.querySelector('.wrapper');
@@ -130,6 +130,7 @@ try {
             this.adjustVHE(appWrapper);
             this.initAIChat();
             this.initContentGenerator();
+            this.initChapterNav();
             this.initFloatingTooltips();
 
             if (!this.isInitialized) {
@@ -212,7 +213,7 @@ try {
                     const fd = new FormData();
                     fd.append('preference_id', k);
                     fd.append('value', prefs[k]);
-                    fetch('/api/user/preference_save.php', { method: 'POST', body: fd }).catch(() => {});
+                    fetch('/api/user/preference_save', { method: 'POST', body: fd }).catch(() => {});
                 });
             }, 300);
         },
@@ -449,27 +450,78 @@ try {
             const footerHeight = footer ? (footer.offsetHeight || 38) : 38;
 
             const availableHeight = window.innerHeight - headerHeight - footerHeight;
-            if (appWrapper) {
-                appWrapper.style.height = `${availableHeight}px`;
-            }
 
-            if (appWrapper && appWrapper.classList.contains('stable-app-view')) {
-                    document.body.style.height = '100vh';
-                    document.body.style.overflow = 'hidden';
-                    const mainWrapper = document.querySelector('.wrapper');
-                    if (mainWrapper) {
-                        mainWrapper.style.height = '100vh';
-                        mainWrapper.style.overflow = 'hidden';
-                    }
-                } else {
-                    document.body.style.height = 'auto';
-                    document.body.style.overflow = 'auto';
-                    const mainWrapper = document.querySelector('.wrapper');
-                    if (mainWrapper) {
-                        mainWrapper.style.height = 'auto';
-                        mainWrapper.style.overflow = 'visible';
-                    }
+            if (appWrapper && (appWrapper.classList.contains('stable-app-view') || appWrapper.classList.contains('split-panel-view') || document.querySelector('.split-panel'))) {
+                appWrapper.style.height = `${availableHeight}px`;
+                document.body.style.height = '100vh';
+                document.body.style.overflow = 'hidden';
+                const mainWrapper = document.querySelector('.wrapper');
+                if (mainWrapper) {
+                    mainWrapper.style.height = '100vh';
+                    mainWrapper.style.overflow = 'hidden';
                 }
+            } else if (appWrapper) {
+                appWrapper.style.removeProperty('height');
+                document.body.style.removeProperty('height');
+                document.body.style.removeProperty('overflow');
+                const mainWrapper = document.querySelector('.wrapper');
+                if (mainWrapper) {
+                    mainWrapper.style.removeProperty('height');
+                    mainWrapper.style.removeProperty('overflow');
+                }
+            }
+        },
+
+        _processChatHistoryHtml: function () {
+            const chatHistory = document.getElementById('aiChatHistory');
+            if (!chatHistory) return;
+
+            if (typeof coreui !== 'undefined' && coreui.Popover) {
+                chatHistory.querySelectorAll('[data-coreui-toggle="popover"]').forEach(btn => {
+                    new coreui.Popover(btn, { trigger: 'focus' });
+                });
+            }
+            
+            chatHistory.querySelectorAll('.ai-row .msg-bubble p').forEach(p => {
+                const mdText = p.dataset.rawMd || p.innerText;
+                if (mdText.trim()) {
+                    LearnApp.renderMarkdownWithHighlighting(mdText, p);
+                }
+            });
+
+            // Restore token usage metrics from history
+            LearnApp.tokenStats.totalInputTokens = 0;
+            LearnApp.tokenStats.totalOutputTokens = 0;
+            LearnApp.tokenStats.totalCachedTokens = 0;
+            
+            const aiRows = chatHistory.querySelectorAll('.ai-row[data-total-tokens]');
+            
+            // Keep cumulative stats for background tracking
+            aiRows.forEach(row => {
+                LearnApp.tokenStats.totalInputTokens += parseInt(row.getAttribute('data-input-tokens') || 0, 10);
+                LearnApp.tokenStats.totalOutputTokens += parseInt(row.getAttribute('data-output-tokens') || 0, 10);
+                LearnApp.tokenStats.totalCachedTokens += parseInt(row.getAttribute('data-cached-tokens') || 0, 10);
+            });
+            
+            // Display current Context Window size based on the LATEST interaction
+            if (aiRows.length > 0) {
+                const lastRow = aiRows[aiRows.length - 1];
+                const latestUsage = {
+                    input_tokens: parseInt(lastRow.getAttribute('data-input-tokens') || 0, 10),
+                    output_tokens: parseInt(lastRow.getAttribute('data-output-tokens') || 0, 10),
+                    cached_tokens: parseInt(lastRow.getAttribute('data-cached-tokens') || 0, 10),
+                    source: 'gemini'
+                };
+                LearnApp.tokenStats.totalInputTokens -= latestUsage.input_tokens;
+                LearnApp.tokenStats.totalOutputTokens -= latestUsage.output_tokens;
+                LearnApp.tokenStats.totalCachedTokens -= latestUsage.cached_tokens;
+                
+                LearnApp.updateStatsBar(latestUsage);
+            } else {
+                LearnApp.updateStatsBar({ input_tokens: 0, output_tokens: 0, cached_tokens: 0, source: 'gemini' });
+            }
+            
+            setTimeout(() => { chatHistory.scrollTop = chatHistory.scrollHeight; }, 100);
         },
 
         // AI Chat Functionality
@@ -512,69 +564,24 @@ try {
                 });
             }
 
-            // Load Chat History Asynchronously
-            const lessonId = document.getElementById('currentLessonId')?.value || '';
-            chatHistory.innerHTML = '<div class="text-center p-3 text-secondary small"><i class="bx bx-loader-alt bx-spin"></i> Loading chat history...</div>';
-            
-            // 4. Load Chat History for this chapter/lesson
-            fetch(`/src/api/learnAI/history.php?lesson_id=${lessonId}&chapter_id=${chapterId}`)
-                .then(r => r.text())
-                .then(html => {
-                    chatHistory.innerHTML = html;
-                    
-                    if (typeof coreui !== 'undefined' && coreui.Popover) {
-                        chatHistory.querySelectorAll('[data-coreui-toggle="popover"]').forEach(btn => {
-                            new coreui.Popover(btn, { trigger: 'focus' });
-                        });
-                    }
-                    
-                    chatHistory.querySelectorAll('.ai-row .msg-bubble p').forEach(p => {
-                        const mdText = p.dataset.rawMd || p.innerText;
-                        if (mdText.trim()) {
-                            LearnApp.renderMarkdownWithHighlighting(mdText, p);
-                        }
+            // Check if chat history was pre-loaded by PHP directly inside content.php
+            if (chatHistory.dataset.preloaded === 'true') {
+                chatHistory.removeAttribute('data-preloaded');
+                LearnApp._processChatHistoryHtml();
+            } else {
+                const lessonId = document.getElementById('currentLessonId')?.value || '';
+                chatHistory.innerHTML = '<div class="text-center p-3 text-secondary small"><i class="bx bx-loader-alt bx-spin"></i> Loading chat history...</div>';
+                
+                fetch(`/api/learnAI/history?lesson_id=${lessonId}&chapter_id=${chapterId}`)
+                    .then(r => r.text())
+                    .then(html => {
+                        chatHistory.innerHTML = html;
+                        LearnApp._processChatHistoryHtml();
+                    })
+                    .catch(err => {
+                        chatHistory.innerHTML = '<div class="text-center p-3 text-danger small">Failed to load chat history.</div>';
                     });
-
-                    // Restore token usage metrics from history
-                    LearnApp.tokenStats.totalInputTokens = 0;
-                    LearnApp.tokenStats.totalOutputTokens = 0;
-                    LearnApp.tokenStats.totalCachedTokens = 0;
-                    
-                    const aiRows = chatHistory.querySelectorAll('.ai-row[data-total-tokens]');
-                    
-                    // Keep cumulative stats for background tracking
-                    aiRows.forEach(row => {
-                        LearnApp.tokenStats.totalInputTokens += parseInt(row.getAttribute('data-input-tokens') || 0, 10);
-                        LearnApp.tokenStats.totalOutputTokens += parseInt(row.getAttribute('data-output-tokens') || 0, 10);
-                        LearnApp.tokenStats.totalCachedTokens += parseInt(row.getAttribute('data-cached-tokens') || 0, 10);
-                    });
-                    
-                    // Display current Context Window size based on the LATEST interaction
-                    if (aiRows.length > 0) {
-                        const lastRow = aiRows[aiRows.length - 1];
-                        const latestUsage = {
-                            input_tokens: parseInt(lastRow.getAttribute('data-input-tokens') || 0, 10),
-                            output_tokens: parseInt(lastRow.getAttribute('data-output-tokens') || 0, 10),
-                            cached_tokens: parseInt(lastRow.getAttribute('data-cached-tokens') || 0, 10),
-                            source: 'gemini'
-                        };
-                        // Note: Because we pass usage manually here, updateStatsBar will add these latest tokens
-                        // to the cumulative sum again. To avoid double counting, we temporarily subtract them before calling
-                        LearnApp.tokenStats.totalInputTokens -= latestUsage.input_tokens;
-                        LearnApp.tokenStats.totalOutputTokens -= latestUsage.output_tokens;
-                        LearnApp.tokenStats.totalCachedTokens -= latestUsage.cached_tokens;
-                        
-                        LearnApp.updateStatsBar(latestUsage);
-                    } else {
-                        // Empty history, just zero it out
-                        LearnApp.updateStatsBar({ input_tokens: 0, output_tokens: 0, cached_tokens: 0, source: 'gemini' });
-                    }
-                    
-                    setTimeout(() => { chatHistory.scrollTop = chatHistory.scrollHeight; }, 100);
-                })
-                .catch(err => {
-                    chatHistory.innerHTML = '<div class="text-center p-3 text-danger small">Failed to load chat history.</div>';
-                });
+            }
 
             const userSessionId = 'sess_' + Math.random().toString(36).substr(2, 9);
             if (window.aiSocket && typeof window.aiSocket.disconnect === 'function') {
@@ -795,7 +802,7 @@ try {
                 this.appendChatMessage('SathishBot', '[LOADING]', 'ai-row current-ai-stream', aiMsgId);
 
                 // 2. Trigger AI Generation
-                fetch('/src/api/learnAI/ask.php', {
+                fetch('/api/learnAI/ask', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
@@ -916,117 +923,255 @@ try {
             });
         },
 
+        _bindCopyButtons: function (container) {
+            if (!container) return;
+            container.querySelectorAll('pre').forEach((pre) => {
+                if (pre.querySelector('.btn-copy-code')) return;
+                pre.style.position = 'relative';
+
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'btn btn-sm btn-dark btn-copy-code border border-secondary border-opacity-25';
+                copyBtn.innerHTML = '<i class="bx bx-copy"></i> Copy';
+                copyBtn.style.position = 'absolute';
+                copyBtn.style.top = '0.5rem';
+                copyBtn.style.right = '0.5rem';
+                copyBtn.style.zIndex = '5';
+
+                copyBtn.addEventListener('click', () => {
+                    const codeText = pre.querySelector('code')?.innerText || pre.innerText;
+                    navigator.clipboard.writeText(codeText).then(() => {
+                        copyBtn.innerHTML = '<i class="bx bx-check text-success"></i> Copied!';
+                        setTimeout(() => { copyBtn.innerHTML = '<i class="bx bx-copy"></i> Copy'; }, 2000);
+                    });
+                });
+
+                pre.appendChild(copyBtn);
+            });
+        },
+
+        _renderEmptyPrompt: function (container, chapterId) {
+            if (!container) return;
+            container.innerHTML = `<div id="emptyContentPrompt" class="text-center py-5 my-4">
+                <div class="mb-3">
+                    <i class="bx bx-book-open text-secondary opacity-50" style="font-size: 3.5rem;"></i>
+                </div>
+                <h5 class="fw-bold text-white mb-2">Ready to Learn?</h5>
+                <p class="text-secondary small mb-4">Click below to generate practical, human-like tutorial content with live code blocks.</p>
+                <button class="btn btn-primary rounded-pill px-4 btn-trigger-generate">
+                    <i class="bx bx-magic-wand me-1"></i> Generate Chapter Material
+                </button>
+            </div>`;
+            const btnEmpty = container.querySelector('.btn-trigger-generate');
+            if (btnEmpty) {
+                btnEmpty.addEventListener('click', () => {
+                    this.triggerGenerate(chapterId || document.getElementById('currentChapterId')?.value);
+                });
+            }
+        },
+
+        triggerGenerate: function (chapterId) {
+            if (!chapterId) return;
+            const container = document.getElementById('chapterContentContainer');
+            if (!container) return;
+            const statusDiv = document.getElementById('contentGeneratingStatus');
+            if (statusDiv) statusDiv.classList.remove('d-none');
+
+            const emptyPrompt = document.getElementById('emptyContentPrompt');
+            if (emptyPrompt) emptyPrompt.remove();
+
+            const sessionId = 'content_sess_' + Math.random().toString(36).substr(2, 9);
+            const messageId = 'content_msg_' + Math.random().toString(36).substr(2, 9);
+
+            let accumulatedMd = "";
+
+            if (typeof TomSocketClient !== 'undefined') {
+                const contentSocket = new TomSocketClient();
+                contentSocket.connect('/topic/content_stream.' + sessionId, (frame) => {
+                    try {
+                        let payload = frame;
+                        if (typeof frame === 'string') {
+                            try { payload = JSON.parse(frame); } catch(e) {}
+                        } else if (frame && frame.body) {
+                            try { payload = JSON.parse(frame.body); } catch(e) {}
+                        }
+                        if (payload && payload.type === 'text_delta') {
+                            accumulatedMd += payload.data;
+                            this.renderMarkdownWithHighlighting(accumulatedMd, container);
+                        } else if (payload && payload.type === 'stream_end') {
+                            if (statusDiv) statusDiv.classList.add('d-none');
+                            this.renderMarkdownWithHighlighting(accumulatedMd, container);
+                        }
+                    } catch (e) {
+                        console.error('Content stream error:', e);
+                    }
+                });
+            }
+
+            fetch('/api/learnAI/content_generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    chapter_id: chapterId,
+                    session_id: sessionId,
+                    message_id: messageId
+                })
+            })
+                .then(res => res.json())
+                .catch(err => {
+                    console.error('Content generate trigger failed:', err);
+                    if (statusDiv) statusDiv.classList.add('d-none');
+                });
+        },
+
         initContentGenerator: function () {
             const container = document.getElementById('chapterContentContainer');
             if (!container) return;
             if (container.dataset.contentInit === 'true') return;
             container.dataset.contentInit = 'true';
 
-            // Check if there is raw fallback markdown to highlight immediately
             const rawFallback = container.querySelector('.raw-markdown-fallback, .raw-markdown');
             if (rawFallback) {
                 const md = container.getAttribute('data-raw-md') || rawFallback.innerText;
                 this.renderMarkdownWithHighlighting(md, container);
             } else {
-                // Even if HTML is server-rendered, apply Highlight.js & Copy buttons to code blocks
                 if (typeof hljs !== 'undefined') {
                     container.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
                 }
-                container.querySelectorAll('pre').forEach((pre) => {
-                    if (pre.querySelector('.btn-copy-code')) return;
-                    pre.style.position = 'relative';
-
-                    const copyBtn = document.createElement('button');
-                    copyBtn.className = 'btn btn-sm btn-dark btn-copy-code border border-secondary border-opacity-25';
-                    copyBtn.innerHTML = '<i class="bx bx-copy"></i> Copy';
-                    copyBtn.style.position = 'absolute';
-                    copyBtn.style.top = '0.5rem';
-                    copyBtn.style.right = '0.5rem';
-                    copyBtn.style.zIndex = '5';
-
-                    copyBtn.addEventListener('click', () => {
-                        const codeText = pre.querySelector('code')?.innerText || pre.innerText;
-                        navigator.clipboard.writeText(codeText).then(() => {
-                            copyBtn.innerHTML = '<i class="bx bx-check text-success"></i> Copied!';
-                            setTimeout(() => { copyBtn.innerHTML = '<i class="bx bx-copy"></i> Copy'; }, 2000);
-                        });
-                    });
-
-                    pre.appendChild(copyBtn);
-                });
+                this._bindCopyButtons(container);
             }
-
-            const triggerGenerate = (chapterId) => {
-                if (!chapterId) return;
-                const statusDiv = document.getElementById('contentGeneratingStatus');
-                if (statusDiv) statusDiv.classList.remove('d-none');
-
-                // Clear prompt
-                const emptyPrompt = document.getElementById('emptyContentPrompt');
-                if (emptyPrompt) emptyPrompt.remove();
-
-                const sessionId = 'content_sess_' + Math.random().toString(36).substr(2, 9);
-                const messageId = 'content_msg_' + Math.random().toString(36).substr(2, 9);
-
-                let accumulatedMd = "";
-
-                // Subscribe to streaming topic
-                if (typeof TomSocketClient !== 'undefined') {
-                    const contentSocket = new TomSocketClient();
-                    contentSocket.connect('/topic/content_stream.' + sessionId, (frame) => {
-                        try {
-                            let payload = frame;
-                            if (typeof frame === 'string') {
-                                try { payload = JSON.parse(frame); } catch(e) {}
-                            } else if (frame && frame.body) {
-                                try { payload = JSON.parse(frame.body); } catch(e) {}
-                            }
-                            if (payload && payload.type === 'text_delta') {
-                                accumulatedMd += payload.data;
-                                this.renderMarkdownWithHighlighting(accumulatedMd, container);
-                            } else if (payload && payload.type === 'stream_end') {
-                                if (statusDiv) statusDiv.classList.add('d-none');
-                                this.renderMarkdownWithHighlighting(accumulatedMd, container);
-                            }
-                        } catch (e) {
-                            console.error('Content stream error:', e);
-                        }
-                    });
-                }
-
-                // Call generate API
-                fetch('/src/api/learnAI/content_generate.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({
-                        chapter_id: chapterId,
-                        session_id: sessionId,
-                        message_id: messageId
-                    })
-                })
-                    .then(res => res.json())
-                    .catch(err => {
-                        console.error('Content generate trigger failed:', err);
-                        if (statusDiv) statusDiv.classList.add('d-none');
-                    });
-            };
 
             const btnHeader = document.getElementById('btnGenerateContent');
             if (btnHeader) {
                 btnHeader.addEventListener('click', () => {
-                    const chId = btnHeader.getAttribute('data-chapter-id');
-                    triggerGenerate(chId);
+                    const chId = btnHeader.getAttribute('data-chapter-id') || document.getElementById('currentChapterId')?.value;
+                    this.triggerGenerate(chId);
                 });
             }
 
             const btnEmpty = container.querySelector('.btn-trigger-generate');
             if (btnEmpty) {
                 btnEmpty.addEventListener('click', () => {
-                    const chId = btnHeader ? btnHeader.getAttribute('data-chapter-id') : null;
-                    triggerGenerate(chId);
+                    const chId = btnHeader ? btnHeader.getAttribute('data-chapter-id') : document.getElementById('currentChapterId')?.value;
+                    this.triggerGenerate(chId);
                 });
             }
+        },
+
+        initChapterNav: function () {
+            if (this._chapterNavInitialized) return;
+            this._chapterNavInitialized = true;
+
+            document.addEventListener('click', (e) => {
+                const btn = e.target.closest('.learn-accordion-btn');
+                if (!btn) return;
+
+                const container = document.getElementById('chapterContentContainer');
+                if (!container) return; // If on course_view.php, let default page navigation happen
+
+                e.preventDefault();
+                e.stopPropagation();
+
+                let chapterId = btn.getAttribute('data-chapter-id');
+                let lessonId = btn.getAttribute('data-lesson-id');
+                const href = btn.getAttribute('href') || '';
+
+                if (!chapterId && href) {
+                    const chMatch = href.match(/chapter\/([^\/?#]+)/);
+                    if (chMatch) chapterId = chMatch[1];
+                }
+                if (!lessonId && href) {
+                    const lsMatch = href.match(/lesson\/([^\/?#]+)/);
+                    if (lsMatch) lessonId = lsMatch[1];
+                }
+
+                const currentChapterInput = document.getElementById('currentChapterId');
+                if (!chapterId || (currentChapterInput && currentChapterInput.value === chapterId)) {
+                    return;
+                }
+
+                // Update left sidebar active states
+                document.querySelectorAll('.learn-accordion-btn').forEach((a) => {
+                    a.classList.remove('active', 'bg-primary', 'bg-opacity-25', 'text-white', 'fw-bold');
+                    a.classList.add('text-secondary');
+                    const icon = a.querySelector('.icon');
+                    if (icon) {
+                        icon.classList.remove('bxs-check-circle', 'text-primary');
+                        icon.classList.add('bx-check-circle', 'opacity-50');
+                    }
+                    const text = a.querySelector('.chapter-title-text');
+                    if (text) {
+                        text.classList.remove('text-white');
+                        text.classList.add('text-secondary');
+                    }
+                });
+
+                btn.classList.add('active', 'bg-primary', 'bg-opacity-25', 'text-white', 'fw-bold');
+                btn.classList.remove('text-secondary');
+                const clickedIcon = btn.querySelector('.icon');
+                if (clickedIcon) {
+                    clickedIcon.classList.remove('bx-check-circle', 'opacity-50');
+                    clickedIcon.classList.add('bxs-check-circle', 'text-primary');
+                }
+                const clickedText = btn.querySelector('.chapter-title-text');
+                if (clickedText) {
+                    clickedText.classList.remove('text-secondary');
+                    clickedText.classList.add('text-white');
+                }
+
+                if (href && window.history && window.history.pushState) {
+                    window.history.pushState(null, '', href);
+                }
+
+                if (currentChapterInput) currentChapterInput.value = chapterId;
+                const currentLessonInput = document.getElementById('currentLessonId');
+                if (currentLessonInput && lessonId) currentLessonInput.value = lessonId;
+
+                const btnGenerate = document.getElementById('btnGenerateContent');
+                if (btnGenerate) btnGenerate.setAttribute('data-chapter-id', chapterId);
+
+                const newTitle = btn.getAttribute('data-chapter-title') || clickedText?.innerText || 'Chapter Content';
+                const newModName = btn.getAttribute('data-module-name') || '';
+                const titleEl = document.getElementById('currentChapterTitle');
+                if (titleEl) titleEl.innerText = newTitle;
+                const modEl = document.getElementById('currentChapterModuleName');
+                if (modEl) modEl.innerText = newModName;
+
+                container.innerHTML = `<div class="text-center py-5 my-5">
+                    <div class="spinner-border text-primary mb-3" role="status" style="width: 2.5rem; height: 2.5rem;"></div>
+                    <p class="text-secondary small">Loading chapter material...</p>
+                </div>`;
+                container.setAttribute('data-raw-md', '');
+
+                fetch(`/api/learnAI/content_fetch?chapter_id=${encodeURIComponent(chapterId)}`, {
+                    credentials: 'include'
+                })
+                    .then(res => res.text())
+                    .then(html => {
+                        container.innerHTML = html;
+                        container.setAttribute('data-raw-md', '');
+
+                        const rawFallback = container.querySelector('.raw-markdown-fallback');
+                        if (rawFallback) {
+                            this.renderMarkdownWithHighlighting(rawFallback.innerText, container);
+                        } else {
+                            if (typeof hljs !== 'undefined') {
+                                container.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
+                            }
+                            this._bindCopyButtons(container);
+                            const btnEmpty = container.querySelector('.btn-trigger-generate');
+                            if (btnEmpty) {
+                                btnEmpty.addEventListener('click', () => {
+                                    this.triggerGenerate(chapterId || document.getElementById('currentChapterId')?.value);
+                                });
+                            }
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Failed to fetch chapter content:', err);
+                        this._renderEmptyPrompt(container, chapterId);
+                    });
+            });
         }
     };
 

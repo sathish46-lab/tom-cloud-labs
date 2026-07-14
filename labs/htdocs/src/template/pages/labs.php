@@ -1,5 +1,5 @@
 <div class="blur mb-3 rounded-0">
-    <div class="container-fluid px-4">
+    <div class="container-fluid px-3">
         <div class="row align-items-center py-3">
             <div class="col">
                 <h1 class="fw-bold theme-text m-0 labs-page-title">Labs</h1>
@@ -28,7 +28,7 @@
     </div>
 </div>
 
-<div class="container-fluid px-4">
+<div class="container-fluid px-3">
     <div class="row g-4 mb-4">
     <?php foreach(Session::get('labs_list', []) as $lab): ?>
     <div class="col-12 col-md-4 card-entrance">

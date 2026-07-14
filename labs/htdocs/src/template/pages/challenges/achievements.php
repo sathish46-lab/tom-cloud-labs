@@ -49,7 +49,7 @@ $achievements = [
 ];
 ?>
 
-<div class="container-fluid px-0 py-3">
+<div class="container-fluid px-3 py-3">
     <div class="row g-4">
         <?php foreach ($achievements as $a): ?>
         <div class="col-12 col-md-6 col-xl-3">

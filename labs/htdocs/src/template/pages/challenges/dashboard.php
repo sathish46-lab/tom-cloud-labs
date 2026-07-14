@@ -51,61 +51,66 @@ $labReadme = $readmes[$labId] ?? 'Engage in real-world hacking scenarios and pen
 include __DIR__ . '/partials/challenge_header.php';
 ?>
 
-<div class="container-fluid px-0 py-3">
+<div class="container-fluid px-3 py-3">
+    
     <!-- Stats Row -->
     <div class="row g-3 mb-4">
         <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100 blur" style="background:rgba(255,255,255,0.03);">
-                <div class="card-body p-4">
-                    <div class="position-relative d-flex justify-content-center mb-3">
-                        <span class="small text-muted fw-bold text-uppercase text-center" style="font-size:0.6rem;letter-spacing:0.05em;">CHALLENGES COMPLETED</span>
-                        <i class="bx bx-flag text-secondary position-absolute end-0" style="font-size:1.4rem;opacity:0.6;"></i>
+            <div class="card shadow-sm rounded-4 h-100 blur overflow-hidden" style="border: 1px solid rgba(255,255,255,0.1) !important;">
+                <div class="card-body p-4 d-flex flex-column position-relative">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small fw-bold text-uppercase" style="font-size:0.65rem;letter-spacing:0.05em;color:rgba(255,255,255,0.8);">CHALLENGES COMPLETED</span>
+                        <i class="bx bx-flag text-secondary" style="font-size:1.4rem;opacity:0.8;"></i>
                     </div>
-                    <div class="fw-bold text-white text-center" style="font-size:1.8rem;line-height:1;"><?= "{$challengesCompleted}/{$totalTasks}" ?></div>
+                    <div class="fw-bold text-white" style="font-size:2rem;line-height:1;"><?= "{$challengesCompleted}/{$totalTasks}" ?></div>
                 </div>
+                <div class="position-absolute bottom-0 start-0" style="width: 30%; height: 4px; background: linear-gradient(90deg, #0dcaf0, transparent); border-radius: 0 2px 2px 0;"></div>
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100 blur" style="background:rgba(255,255,255,0.03);">
-                <div class="card-body p-4">
-                    <div class="position-relative d-flex justify-content-center mb-3">
-                        <span class="small text-muted fw-bold text-uppercase text-center" style="font-size:0.6rem;letter-spacing:0.05em;">ZEAL ACQUIRED</span>
-                        <i class="bx bxs-hot text-warning position-absolute end-0" style="font-size:1.4rem;opacity:0.6;"></i>
+            <div class="card shadow-sm rounded-4 h-100 blur overflow-hidden" style="border: 1px solid rgba(255,255,255,0.1) !important;">
+                <div class="card-body p-4 d-flex flex-column position-relative">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small fw-bold text-uppercase" style="font-size:0.65rem;letter-spacing:0.05em;color:rgba(255,255,255,0.8);">ZEAL ACQUIRED</span>
+                        <i class="bx bxs-hot text-secondary" style="font-size:1.4rem;opacity:0.8;"></i>
                     </div>
-                    <div class="fw-bold text-white text-center" style="font-size:1.8rem;line-height:1;"><?= $zealDisplay ?></div>
+                    <div class="fw-bold text-white" style="font-size:2rem;line-height:1;"><?= "{$zealDisplay}/{$maxZeal}" ?></div>
                 </div>
+                <div class="position-absolute bottom-0 start-0" style="width: 30%; height: 4px; background: linear-gradient(90deg, #0d6efd, transparent); border-radius: 0 2px 2px 0;"></div>
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100 blur" style="background:rgba(255,255,255,0.03);">
-                <div class="card-body p-4">
-                    <div class="position-relative d-flex justify-content-center mb-3">
-                        <span class="small text-muted fw-bold text-uppercase text-center" style="font-size:0.6rem;letter-spacing:0.05em;">TOTAL TIME SPENT</span>
-                        <i class="bx bx-time text-info position-absolute end-0" style="font-size:1.4rem;opacity:0.6;"></i>
+            <div class="card shadow-sm rounded-4 h-100 blur overflow-hidden" style="border: 1px solid rgba(255,255,255,0.1) !important;">
+                <div class="card-body p-4 d-flex flex-column position-relative">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small fw-bold text-uppercase" style="font-size:0.65rem;letter-spacing:0.05em;color:rgba(255,255,255,0.8);">TOTAL TIME SPENT</span>
+                        <i class="bx bx-time text-secondary" style="font-size:1.4rem;opacity:0.8;"></i>
                     </div>
-                    <div class="fw-bold text-white text-center" style="font-size:1.8rem;line-height:1;"><?= $timeDisplay ?></div>
+                    <div class="fw-bold text-white" style="font-size:2rem;line-height:1;"><?= $timeDisplay ?></div>
                 </div>
+                <div class="position-absolute bottom-0 start-0" style="width: 30%; height: 4px; background: linear-gradient(90deg, #0dcaf0, transparent); border-radius: 0 2px 2px 0;"></div>
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100 blur" style="background:rgba(255,255,255,0.03);">
-                <div class="card-body p-4">
-                    <div class="position-relative d-flex justify-content-center mb-3">
-                        <span class="small text-muted fw-bold text-uppercase text-center" style="font-size:0.6rem;letter-spacing:0.05em;">ATTEMPTS</span>
-                        <i class="bx bx-target-lock text-white position-absolute end-0" style="font-size:1.4rem;opacity:0.6;"></i>
+            <div class="card shadow-sm rounded-4 h-100 blur overflow-hidden" style="border: 1px solid rgba(255,255,255,0.1) !important;">
+                <div class="card-body p-4 d-flex flex-column position-relative">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small fw-bold text-uppercase" style="font-size:0.65rem;letter-spacing:0.05em;color:rgba(255,255,255,0.8);">LEADERBOARD RANK</span>
+                        <i class="bx bxs-user text-secondary" style="font-size:1.4rem;opacity:0.8;"></i>
                     </div>
-                    <div class="fw-bold text-white text-center" style="font-size:1.8rem;line-height:1;"><?= $attemptsDisplay ?></div>
+                    <div class="fw-bold text-white" style="font-size:2rem;line-height:1;">--</div>
                 </div>
+                <div class="position-absolute bottom-0 start-0" style="width: 30%; height: 4px; background: linear-gradient(90deg, #dc3545, transparent); border-radius: 0 2px 2px 0;"></div>
             </div>
         </div>
     </div>
 
     <div class="row g-4">
         <div class="col-lg-7">
-            <div class="card border-0 shadow-sm rounded-4 overflow-hidden" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05) !important;">
-                <div class="card-header bg-dark bg-opacity-50 border-0 py-3 px-4 d-flex justify-content-between align-items-center">
+            <div class="card border-0 shadow-sm blur rounded-4 overflow-hidden" style="border: 1px solid rgba(255, 255, 255, 0.05) !important;">
+                <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0 d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center gap-2">
-                        <h6 class="fw-bold mb-0 text-white small">Lab Information <span class="text-secondary ms-1 fw-normal" style="font-size: 0.75rem;">Readme</span></h6>
+                        <h6 class="fw-bold mb-0 text-white">Lab Information <span class="text-secondary ms-1 fw-normal" style="font-size: 0.75rem;">Readme</span></h6>
                     </div>
                 </div>
                 <div class="card-body p-4" style="line-height: 1.7; font-size: 0.85rem;">
@@ -115,7 +120,7 @@ include __DIR__ . '/partials/challenge_header.php';
         </div>
 
         <div class="col-lg-5">
-            <div class="card mb-4 border-0 shadow-sm rounded-4 blur" style="background:rgba(255,255,255,0.03);">
+            <div class="card mb-4 border-0 shadow-sm rounded-4 blur" style="border: 1px solid rgba(255, 255, 255, 0.05) !important;">
                 <div class="card-header bg-transparent border-0 pt-4 px-4">
                     <h6 class="fw-bold mb-0">Connection Information</h6>
                 </div>
@@ -160,7 +165,7 @@ include __DIR__ . '/partials/challenge_header.php';
             </div>
 
             <!-- Container Load (Live) Card -->
-            <div class="card mb-4 border-0 shadow-sm blur rounded-4" style="background:rgba(255,255,255,0.03);">
+            <div class="card mb-4 border-0 shadow-sm blur rounded-4" style="border: 1px solid rgba(255, 255, 255, 0.05) !important;">
                 <div class="card-header bg-transparent border-0 pt-4 px-4">
                     <h6 class="fw-bold mb-0">
                         Container Load
@@ -234,7 +239,7 @@ include __DIR__ . '/partials/challenge_header.php';
             </div>
 
             <!-- Load History Card -->
-            <div class="card border-0 shadow-sm blur rounded-4" style="background:rgba(255,255,255,0.03);">
+            <div class="card border-0 shadow-sm blur rounded-4" style="border: 1px solid rgba(255, 255, 255, 0.05) !important;">
                 <div class="card-header bg-transparent border-0 pt-4 px-4">
                     <h6 class="fw-bold mb-0">Load History <span class="text-secondary ms-1 fw-normal" style="font-size: 0.75rem;">One Hour</span></h6>
                 </div>
@@ -272,7 +277,7 @@ include __DIR__ . '/partials/challenge_header.php';
             </div>
 
             <!-- IO Stats Card -->
-            <div class="card mt-4 border-0 shadow-sm blur rounded-4" style="background:rgba(255,255,255,0.03);">
+            <div class="card mt-4 border-0 shadow-sm blur rounded-4" style="border: 1px solid rgba(255, 255, 255, 0.05) !important;">
                 <div class="card-header bg-transparent border-0 pt-4 px-4">
                     <h6 class="fw-bold mb-0">IO Stats <span class="text-secondary ms-1 fw-normal" style="font-size: 0.75rem;">Net and Block</span>
                     <?php if (!$isRunning): ?>

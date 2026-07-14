@@ -182,7 +182,7 @@ $percent = $total > 0 ? ($running / $total) * 100 : 0;
 <?php endif; ?>
 
 
-<div class="container-fluid px-0">
+<div class="container-fluid px-3">
     <div id="challengesGrid" class="row g-3 pb-5 position-relative">
         <?php $cardIndex = 0; foreach ($challenges as $c): ?>
         <?php

@@ -23,7 +23,7 @@ $activeTab     = 'leaderboard';
 include __DIR__ . '/partials/challenge_header.php';
 ?>
 
-<div class="container-fluid px-0 py-3">
+<div class="container-fluid px-3 py-3">
     <div id="leaderboard-loading" class="text-center py-5">
         <div class="spinner-border text-info" role="status"></div>
         <p class="text-secondary mt-3 small">Loading leaderboard...</p>

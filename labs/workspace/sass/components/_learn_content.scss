@@ -98,6 +98,8 @@
     flex-direction: column;
     overflow: hidden;
     transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-grow: 0 !important;
+    flex-shrink: 0 !important;
 }
 
 .gutter.gutter-horizontal,
@@ -113,9 +115,15 @@
 
 /* SNA Individual Rounded Panel Cards Layout */
 .learn-app-wrapper {
+    .flex-row {
+        flex-wrap: nowrap !important;
+    }
+
     .split-panel {
         display: flex;
         flex-direction: column;
+        flex-grow: 0 !important;
+        flex-shrink: 0 !important;
 
         > .card {
             border-radius: 24px !important;
@@ -522,8 +530,8 @@
     }
 }
 
-/* Exact 100vh viewport lock for LearnAI stable app views: footer flush at bottom, no window scrollbar */
-.wrapper:has(.stable-app-view) {
+/* Exact 100vh viewport lock for LearnAI split panel & stable app views: footer flush at bottom, no window scrollbar */
+.wrapper:has(.stable-app-view, .split-panel-view) {
     min-height: 100vh !important;
     height: 100vh !important;
     max-height: 100vh !important;
@@ -547,7 +555,7 @@
         overflow: hidden !important;
     }
 
-    .stable-app-view {
+    .stable-app-view, .split-panel-view {
         flex: 1 1 auto !important;
         min-height: 0 !important;
         height: 100% !important;

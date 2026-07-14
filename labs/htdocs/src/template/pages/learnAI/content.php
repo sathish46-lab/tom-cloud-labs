@@ -17,9 +17,6 @@ foreach ($chapters as $chapItem) {
 }
 
 $userId = (int)Session::getUser()->getUserId();
-$userId = (int)Session::getUser()->getUserId();
-
-// Note: Chat history is now loaded asynchronously via fetch in learnAI.js
 
 $userAvatar = Session::getAvatar();
 $userAvatarStyle = Session::getAvatarStyle();
@@ -67,14 +64,20 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
                     #learn-panel-1 {
                         width: ${arr[0]}% !important;
                         flex-basis: ${arr[0]}% !important;
+                        flex-grow: 0 !important;
+                        flex-shrink: 0 !important;
                     }
                     #learn-panel-2 {
                         width: calc(100% - ${arr[0]}% - ${p3Pct}% - 8px) !important;
                         flex-basis: calc(100% - ${arr[0]}% - ${p3Pct}% - 8px) !important;
+                        flex-grow: 0 !important;
+                        flex-shrink: 0 !important;
                     }
                     #learn-panel-3 {
                         width: ${p3Pct}% !important;
                         flex-basis: ${p3Pct}% !important;
+                        flex-grow: 0 !important;
+                        flex-shrink: 0 !important;
                     }
                     ${isExp ? `
                     #learn-panel-1 .outline-compact { display: none !important; }
@@ -104,9 +107,9 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
 })();
 </script>
 
-<div class="learn-app-wrapper stable-app-view d-flex flex-column overflow-hidden bg-transparent">
+<div class="learn-app-wrapper split-panel-view d-flex flex-column overflow-hidden bg-transparent">
     <!-- Main App Body -->
-    <div class="flex-grow-1 d-flex flex-row overflow-hidden p-3 gap-0">
+    <div class="flex-grow-1 d-flex flex-row flex-nowrap overflow-hidden p-3 gap-0">
         
 <?php
 $isPanel1Expanded = false;
@@ -115,10 +118,14 @@ if (is_array($dbSizesArr) && count($dbSizesArr) === 3 && $dbSizesArr[0] > 10) {
 }
 $panel1State = $isPanel1Expanded ? 'expanded' : 'collapsed';
 $panel1Class = $isPanel1Expanded ? '' : 'auto-compact';
+
+$p1Pct = (is_array($dbSizesArr) && count($dbSizesArr) === 3 && $dbSizesArr[0] > 3) ? round($dbSizesArr[0], 2) : 5.6;
+$p3Pct = (is_array($dbSizesArr) && count($dbSizesArr) === 3 && $dbSizesArr[2] > 12) ? round($dbSizesArr[2], 2) : 25;
+$p2Pct = max(10, round(100 - $p1Pct - $p3Pct, 2));
 ?>
         <!-- Panel 1: Collapsible Sidebar -->
-        <div id="learn-panel-1" class="split-panel h-100 <?= $panel1Class ?>" style="min-width: 68px;" data-state="<?= $panel1State ?>">
-            <div class="card h-100 border-secondary border-opacity-10 rounded-4 shadow-sm d-flex flex-column overflow-hidden">
+        <div id="learn-panel-1" class="split-panel h-100 <?= $panel1Class ?>" style="width: <?= $p1Pct ?>%; flex-basis: <?= $p1Pct ?>%; min-width: 68px;" data-state="<?= $panel1State ?>">
+            <div class="card h-100 border-secondary border-opacity-10 rounded-4 shadow-sm blur d-flex flex-column overflow-hidden">
                 <div class="card-header fs-6 d-flex justify-content-between align-items-center py-2 px-3">
                     <strong class="text-truncate" title="<?= htmlspecialchars($lesson['title']) ?>"><?= htmlspecialchars($lesson['title']) ?></strong>
                     <button class="btn btn-link p-0 text-secondary like-lesson-btn" title="Like this lesson">
@@ -169,7 +176,7 @@ $panel1Class = $isPanel1Expanded ? '' : 'auto-compact';
                                         <div class="accordion-body p-1">
                                             <?php $chap_local_idx = 1; foreach ($mod_chapters as $chap): ?>
                                                 <?php $clean_chap_title = preg_replace('/^\d+[\.\)]\s*/', '', $chap['title']); ?>
-                                                <a href="/learn/lesson/<?= $lesson['_id'] ?>/chapter/<?= $chap['_id'] ?>" class="btn btn-sm d-flex align-items-center justify-content-between w-100 text-start py-2 px-2 rounded mb-1 learn-accordion-btn <?= ($chap['_id'] ?? '') == ($chapter['_id'] ?? '') ? 'active bg-primary bg-opacity-25 text-white fw-bold' : 'text-secondary' ?>" data-tooltip="<?= htmlspecialchars($clean_chap_title) ?>">
+                                                <a href="/learn/lesson/<?= $lesson['_id'] ?>/chapter/<?= $chap['_id'] ?>" hx-boost="false" class="btn btn-sm d-flex align-items-center justify-content-between w-100 text-start py-2 px-2 rounded mb-1 learn-accordion-btn <?= ($chap['_id'] ?? '') == ($chapter['_id'] ?? '') ? 'active bg-primary bg-opacity-25 text-white fw-bold' : 'text-secondary' ?>" data-tooltip="<?= htmlspecialchars($clean_chap_title) ?>" data-chapter-id="<?= $chap['_id'] ?>" data-lesson-id="<?= $lesson['_id'] ?>" data-chapter-title="<?= htmlspecialchars($clean_chap_title) ?>" data-module-name="<?= htmlspecialchars($clean_mod_name) ?>">
                                                     <div class="d-flex align-items-center gap-2">
                                                         <span class="chapter-num-btn badge rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 24px; height: 24px;"><?= $chap_local_idx++ ?></span>
                                                         <h6 class="m-0 small chapter-title-text <?= ($chap['_id'] ?? '') == ($chapter['_id'] ?? '') ? 'text-white' : 'text-secondary' ?>"><?= htmlspecialchars($clean_chap_title) ?></h6>
@@ -286,8 +293,8 @@ $panel1Class = $isPanel1Expanded ? '' : 'auto-compact';
         <div class="gutter gutter-horizontal h-100" style="width: 4px;" data-target="learn-panel-1"></div>
 
         <!-- Panel 2: Center Content Area -->
-        <div id="learn-panel-2" class="split-panel flex-grow-1 h-100 overflow-hidden" style="width: calc(64% - 2px);">
-            <div class="card h-100 border-secondary border-opacity-10 rounded-4 shadow-sm d-flex flex-column overflow-hidden">
+        <div id="learn-panel-2" class="split-panel h-100 overflow-hidden" style="width: calc(100% - <?= $p1Pct ?>% - <?= $p3Pct ?>% - 8px); flex-basis: calc(100% - <?= $p1Pct ?>% - <?= $p3Pct ?>% - 8px); flex-grow: 0; flex-shrink: 0;">
+            <div class="card h-100 border-secondary border-opacity-10 rounded-4 shadow-sm blur d-flex flex-column overflow-hidden">
                 <div class="card-body p-0 overflow-x-auto chapter-card d-flex flex-column h-100">
                     <div class="p-3 pb-0 d-flex justify-content-between align-items-center border-bottom border-secondary border-opacity-10 flex-shrink-0">
                         <div class="py-2 d-flex align-items-center gap-3">
@@ -295,8 +302,8 @@ $panel1Class = $isPanel1Expanded ? '' : 'auto-compact';
                                 <i class="bx bx-left-arrow-alt fs-5"></i>
                             </a>
                             <div>
-                                <span class="text-secondary small d-block mb-1" style="font-size: 0.75rem;"><?= htmlspecialchars($chapter['module_name']) ?></span>
-                                <h4 class="fw-bold m-0 text-white"><?= htmlspecialchars($chapter['title']) ?></h4>
+                                <span id="currentChapterModuleName" class="text-secondary small d-block mb-1" style="font-size: 0.75rem;"><?= htmlspecialchars($chapter['module_name']) ?></span>
+                                <h4 id="currentChapterTitle" class="fw-bold m-0 text-white"><?= htmlspecialchars($chapter['title']) ?></h4>
                             </div>
                         </div>
                         <div class="d-flex align-items-center gap-2">
@@ -349,8 +356,8 @@ $panel1Class = $isPanel1Expanded ? '' : 'auto-compact';
         <div class="gutter gutter-horizontal h-100" style="width: 4px;" data-target="learn-panel-3" data-direction="right"></div>
 
         <!-- Panel 3: Right AI Assistant -->
-        <div id="learn-panel-3" class="split-panel pane-ai d-flex flex-column h-100" style="min-width: 300px;">
-            <div class="card h-100 border-secondary border-opacity-10 rounded-4 shadow-sm d-flex flex-column overflow-hidden">
+        <div id="learn-panel-3" class="split-panel pane-ai d-flex flex-column h-100" style="width: <?= $p3Pct ?>%; flex-basis: <?= $p3Pct ?>%; min-width: 250px;">
+            <div class="card h-100 border-secondary border-opacity-10 rounded-4 shadow-sm blur d-flex flex-column overflow-hidden">
                 <div class="card-header bg-dark bg-opacity-25 border-secondary border-opacity-10 py-2 px-3 d-flex align-items-center justify-content-between">
                     <div class="d-flex align-items-center gap-2">
                         <i class="bx bx-bot text-primary"></i>
@@ -373,7 +380,7 @@ $panel1Class = $isPanel1Expanded ? '' : 'auto-compact';
                     <input type="hidden" id="aiAvatarUrl" value="<?= $aiAvatar ?>">
 
                     <div id="aiChatHistory" class="chat-history flex-grow-1 overflow-auto custom-scrollbar p-2 d-flex flex-column gap-2">
-                        <!-- Chat history will be loaded here via JS fetch -->
+                        <div class="text-center p-3 text-secondary small"><i class="bx bx-loader-alt bx-spin"></i> Loading chat history...</div>
                     </div>
 
                     <!-- Bottom Input Bar (from sna.css) -->
@@ -542,9 +549,13 @@ document.addEventListener('DOMContentLoaded', function() {
     100% { transform: scale(1); opacity: 0.4; }
 }
 
-.pane-outline, .pane-sidebar, .pane-ai { 
+.pane-outline, .pane-sidebar { 
     min-width: 0 !important; 
     flex-shrink: 0;
+}
+.pane-ai {
+    min-width: 250px !important;
+    flex-shrink: 0 !important;
 }
 body.resizing-active * {
     user-select: none !important;

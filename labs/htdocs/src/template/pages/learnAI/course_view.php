@@ -48,14 +48,20 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
                     #learn-panel-1 {
                         width: ${arr[0]}% !important;
                         flex-basis: ${arr[0]}% !important;
+                        flex-grow: 0 !important;
+                        flex-shrink: 0 !important;
                     }
                     #learn-panel-2 {
                         width: calc(100% - ${arr[0]}% - ${arr[2]}% - 8px) !important;
                         flex-basis: calc(100% - ${arr[0]}% - ${arr[2]}% - 8px) !important;
+                        flex-grow: 0 !important;
+                        flex-shrink: 0 !important;
                     }
                     #learn-panel-3 {
                         width: ${arr[2]}% !important;
                         flex-basis: ${arr[2]}% !important;
+                        flex-grow: 0 !important;
+                        flex-shrink: 0 !important;
                     }
                     ${isExp ? `
                     #learn-panel-1 .outline-compact { display: none !important; }
@@ -82,8 +88,8 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
 })();
 </script>
 
-<div class="learn-app-wrapper stable-app-view d-flex flex-column overflow-hidden bg-transparent" style="height: var(--app-height, 75vh);">
-    <div class="flex-grow-1 d-flex flex-row overflow-hidden p-2 gap-0">
+<div class="learn-app-wrapper split-panel-view d-flex flex-column overflow-hidden bg-transparent" style="height: var(--app-height, 75vh);">
+    <div class="flex-grow-1 d-flex flex-row flex-nowrap overflow-hidden p-2 gap-0">
 <?php
 $isPanel1Expanded = false;
 if (is_array($dbSizesArr) && count($dbSizesArr) === 3 && $dbSizesArr[0] > 10) {
@@ -91,10 +97,12 @@ if (is_array($dbSizesArr) && count($dbSizesArr) === 3 && $dbSizesArr[0] > 10) {
 }
 $panel1State = $isPanel1Expanded ? 'expanded' : 'collapsed';
 $panel1Class = $isPanel1Expanded ? '' : 'auto-compact';
+
+$p1Pct = (is_array($dbSizesArr) && count($dbSizesArr) === 3 && $dbSizesArr[0] > 3) ? round($dbSizesArr[0], 2) : 5.6;
 ?>
         <!-- Panel 1: Collapsible Sidebar -->
-        <div id="learn-panel-1" class="split-panel h-100 <?= $panel1Class ?>" style="width: var(--outlineSidebar-saved-width, 68px); min-width: 68px;" data-state="<?= $panel1State ?>">
-            <div class="card h-100 border-secondary border-opacity-10 rounded-4 shadow-sm d-flex flex-column overflow-hidden">
+        <div id="learn-panel-1" class="split-panel h-100 <?= $panel1Class ?>" style="width: <?= $p1Pct ?>%; flex-basis: <?= $p1Pct ?>%; min-width: 68px;" data-state="<?= $panel1State ?>">
+            <div class="card h-100 border-secondary border-opacity-10 rounded-4 shadow-sm blur d-flex flex-column overflow-hidden">
                 <div class="card-header fs-6 d-flex justify-content-between align-items-center py-2 px-3">
                     <strong class="text-truncate" title="<?= htmlspecialchars($lesson['title']) ?>"><?= htmlspecialchars($lesson['title']) ?></strong>
                     <button class="btn btn-link p-0 text-secondary like-lesson-btn" title="Like this lesson">
@@ -145,7 +153,7 @@ $panel1Class = $isPanel1Expanded ? '' : 'auto-compact';
                                         <div class="accordion-body p-1">
                                             <?php $chap_local_idx = 1; foreach ($mod_chapters as $chap): ?>
                                                 <?php $clean_chap_title = preg_replace('/^\d+[\.\)]\s*/', '', $chap['title']); ?>
-                                                <a href="/learn/lesson/<?= $lesson['_id'] ?>/chapter/<?= $chap['_id'] ?>" class="btn btn-sm d-flex align-items-center justify-content-between w-100 text-start py-2 px-2 rounded mb-1 learn-accordion-btn text-secondary" data-tooltip="<?= htmlspecialchars($clean_chap_title) ?>">
+                                                <a href="/learn/lesson/<?= $lesson['_id'] ?>/chapter/<?= $chap['_id'] ?>" class="btn btn-sm d-flex align-items-center justify-content-between w-100 text-start py-2 px-2 rounded mb-1 learn-accordion-btn text-secondary" data-tooltip="<?= htmlspecialchars($clean_chap_title) ?>" data-chapter-id="<?= $chap['_id'] ?>" data-lesson-id="<?= $lesson['_id'] ?>" data-chapter-title="<?= htmlspecialchars($clean_chap_title) ?>" data-module-name="<?= htmlspecialchars($clean_mod_name) ?>">
                                                     <div class="d-flex align-items-center gap-2">
                                                         <span class="chapter-num-btn badge rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 24px; height: 24px;"><?= $chap_local_idx++ ?></span>
                                                         <h6 class="m-0 small chapter-title-text text-secondary"><?= htmlspecialchars($clean_chap_title) ?></h6>
@@ -262,8 +270,8 @@ $panel1Class = $isPanel1Expanded ? '' : 'auto-compact';
         <div class="gutter gutter-horizontal pane-resizer h-100" style="width: 4px;" data-target="learn-panel-1"></div>
 
         <!-- Panel 2: Center Course Overview Area -->
-        <div id="learn-panel-2" class="split-panel flex-grow-1 h-100 overflow-hidden" style="width: calc(100% - 72px);">
-            <div class="card h-100 border-secondary border-opacity-10 rounded-4 shadow-sm d-flex flex-column overflow-hidden">
+        <div id="learn-panel-2" class="split-panel h-100 overflow-hidden" style="width: calc(100% - <?= $p1Pct ?>% - 4px); flex-basis: calc(100% - <?= $p1Pct ?>% - 4px); flex-grow: 0; flex-shrink: 0;">
+            <div class="card h-100 border-secondary border-opacity-10 rounded-4 shadow-sm blur d-flex flex-column overflow-hidden">
                 <div class="card-body p-0 flex-grow-1 overflow-auto custom-scrollbar">
                     <!-- Course Header -->
                     <div class="p-3 pb-0">

@@ -19352,7 +19352,6 @@ body.hwa-enabled[data-coreui-theme=light] .sidebar-inner-layer {
 }
 .lab-nav-tabs .nav-link {
   border: none !important;
-  border-top: 3px solid transparent !important;
   color: var(--glass-text-muted);
   font-weight: 500;
   padding: 0.75rem 1.5rem;
@@ -19360,13 +19359,12 @@ body.hwa-enabled[data-coreui-theme=light] .sidebar-inner-layer {
   transition: all 0.2s ease-in-out;
 }
 .lab-nav-tabs .nav-link:hover {
-  color: var(--glass-text);
+  color: #fff;
   background: rgba(255, 255, 255, 0.05);
 }
 .lab-nav-tabs .nav-link.active {
-  color: var(--glass-text) !important;
-  background: rgba(0, 0, 0, 0.2) !important;
-  border-top: 3px solid transparent !important;
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.1) !important;
 }
 
 /* 3. Server Logs Partial */
@@ -19442,8 +19440,7 @@ body.hwa-enabled[data-coreui-theme=light] .sidebar-inner-layer {
 }
 
 .lab-domain-item-card {
-  background: rgba(20, 20, 20, 0.8) !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
+  transition: all 0.3s ease;
 }
 
 .lab-domain-link {
@@ -19507,7 +19504,7 @@ body.hwa-enabled[data-coreui-theme=light] .sidebar-inner-layer {
 }
 
 .pref-card-full {
-  height: calc(100% - 1.5rem) !important;
+  height: 100% !important;
 }
 
 .pref-checkbox-lg {
@@ -20102,6 +20099,8 @@ body.hwa-enabled[data-coreui-theme=light] .sidebar-inner-layer {
   flex-direction: column;
   overflow: hidden;
   transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-grow: 0 !important;
+  flex-shrink: 0 !important;
 }
 
 .gutter.gutter-horizontal,
@@ -20116,9 +20115,14 @@ body.hwa-enabled[data-coreui-theme=light] .sidebar-inner-layer {
 }
 
 /* SNA Individual Rounded Panel Cards Layout */
+.learn-app-wrapper .flex-row {
+  flex-wrap: nowrap !important;
+}
 .learn-app-wrapper .split-panel {
   display: flex;
   flex-direction: column;
+  flex-grow: 0 !important;
+  flex-shrink: 0 !important;
 }
 .learn-app-wrapper .split-panel > .card {
   border-radius: 24px !important;
@@ -20487,8 +20491,8 @@ body.hwa-disabled .learn-app-wrapper .split-panel > .card {
     display: none !important;
   }
 }
-/* Exact 100vh viewport lock for LearnAI stable app views: footer flush at bottom, no window scrollbar */
-.wrapper:has(.stable-app-view) {
+/* Exact 100vh viewport lock for LearnAI split panel & stable app views: footer flush at bottom, no window scrollbar */
+.wrapper:has(.stable-app-view, .split-panel-view) {
   min-height: 100vh !important;
   height: 100vh !important;
   max-height: 100vh !important;
@@ -20496,26 +20500,26 @@ body.hwa-disabled .learn-app-wrapper .split-panel > .card {
   display: flex !important;
   flex-direction: column !important;
 }
-.wrapper:has(.stable-app-view) .body {
+.wrapper:has(.stable-app-view, .split-panel-view) .body {
   flex: 1 1 auto !important;
   min-height: 0 !important;
   display: flex !important;
   flex-direction: column !important;
   overflow: hidden !important;
 }
-.wrapper:has(.stable-app-view) #main-content {
+.wrapper:has(.stable-app-view, .split-panel-view) #main-content {
   flex: 1 1 auto !important;
   min-height: 0 !important;
   display: flex !important;
   flex-direction: column !important;
   overflow: hidden !important;
 }
-.wrapper:has(.stable-app-view) .stable-app-view {
+.wrapper:has(.stable-app-view, .split-panel-view) .stable-app-view, .wrapper:has(.stable-app-view, .split-panel-view) .split-panel-view {
   flex: 1 1 auto !important;
   min-height: 0 !important;
   height: 100% !important;
 }
-.wrapper:has(.stable-app-view) .footer {
+.wrapper:has(.stable-app-view, .split-panel-view) .footer {
   flex-shrink: 0 !important;
   margin-top: auto !important;
 }

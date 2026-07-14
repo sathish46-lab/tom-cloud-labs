@@ -27,7 +27,7 @@ require_once __DIR__ . '/partials/mariadb_header.php';
     <div class="row g-4" style="align-items: start;">
         <!-- Left Column: Connection Info -->
         <div class="col-lg-5 col-xl-4">
-            <div class="card border-0 shadow-sm rounded-4 mb-4" style="background-color: #111827; border: 1px solid rgba(255,255,255,0.05) !important;">
+            <div class="card blur border-0 shadow-sm rounded-4 mb-4">
                 <div class="card-header bg-transparent border-bottom-0 pt-4 pb-2">
                     <h5 class="card-title fw-bold text-white mb-0" style="font-size: 1.1rem;">Connection Information</h5>
                 </div>
@@ -57,7 +57,7 @@ require_once __DIR__ . '/partials/mariadb_header.php';
 
         <!-- Right Column: MariaDB Users -->
         <div class="col-lg-7 col-xl-8">
-            <div class="card border-0 shadow-sm rounded-4 mb-4" style="background-color: #111827; border: 1px solid rgba(255,255,255,0.05) !important;">
+            <div class="card blur border-0 shadow-sm rounded-4 mb-4">
                 <div class="card-header bg-transparent border-bottom-0 pt-4 pb-2 d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="card-title fw-bold text-white mb-0 d-inline-block me-2" style="font-size: 1.1rem;">MariaDB Server Users</h5>
