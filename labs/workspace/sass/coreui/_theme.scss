@@ -570,37 +570,9 @@ body::before {
 
   body.hwa-enabled & {
     background: var(--glass-bg) !important;
-  }
-
-  @at-root body.hwa-enabled .card#{&} {
-    position: relative !important;
-    overflow: visible !important;
-  }
-  
-  body.hwa-enabled &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    backdrop-filter: saturate(200%) blur(18px);
-    -webkit-backdrop-filter: saturate(200%) blur(18px);
-    border-radius: inherit !important;
-    clip-path: inset(0 round 1.25rem);
-  }
-  
-  body.hwa-enabled &.rounded-0::before {
-    clip-path: none !important;
-  }
-  @at-root body.hwa-enabled .card#{&}.rounded-0::before {
-    clip-path: none !important;
-  }
-
-  @at-root body.hwa-enabled .card#{&}::before {
-    clip-path: inset(0 round 1rem);
-  }
-
-  &.banner {
-    background: var(--glass-banner-bg, rgba(255, 255, 255, 0.03)) !important;
+    backdrop-filter: saturate(200%) blur(18px) !important;
+    -webkit-backdrop-filter: saturate(200%) blur(18px) !important;
+    will-change: transform, backdrop-filter;
   }
 
   [data-coreui-theme="light"] body.hwa-enabled & {

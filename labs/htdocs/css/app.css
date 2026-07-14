@@ -14934,35 +14934,9 @@ body::before {
 }
 body.hwa-enabled .blur {
   background: var(--glass-bg) !important;
-}
-body.hwa-enabled .card.blur {
-  position: relative !important;
-  overflow: visible !important;
-}
-
-body.hwa-enabled .blur::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  backdrop-filter: saturate(200%) blur(18px);
-  -webkit-backdrop-filter: saturate(200%) blur(18px);
-  border-radius: inherit !important;
-  clip-path: inset(0 round 1.25rem);
-}
-body.hwa-enabled .blur.rounded-0::before {
-  clip-path: none !important;
-}
-body.hwa-enabled .card.blur.rounded-0::before {
-  clip-path: none !important;
-}
-
-body.hwa-enabled .card.blur::before {
-  clip-path: inset(0 round 1rem);
-}
-
-.blur.banner {
-  background: var(--glass-banner-bg, rgba(255, 255, 255, 0.03)) !important;
+  backdrop-filter: saturate(200%) blur(18px) !important;
+  -webkit-backdrop-filter: saturate(200%) blur(18px) !important;
+  will-change: transform, backdrop-filter;
 }
 [data-coreui-theme=light] body.hwa-enabled .blur {
   background: var(--glass-bg) !important;
@@ -16211,10 +16185,6 @@ body.hwa-enabled .server-logs-panel {
 }
 .lab-card .card-footer .btn-group .btn:hover {
   filter: brightness(1.1);
-}
-
-.blur {
-  backdrop-filter: saturate(200%) blur(18px);
 }
 
 .simple-blur {
@@ -17917,36 +17887,36 @@ html:not([data-coreui-theme=light]).bg-mode-spiderman body.hwa-enabled .card:not
   transform: translateY(-2px);
 }
 html:not([data-coreui-theme=light]).bg-mode-spiderman body.hwa-disabled .card:not(.clan-card),
-html:not([data-coreui-theme=light]).bg-mode-spiderman body.hwa-disabled .blur:not(.clan-card):not(.banner) {
+html:not([data-coreui-theme=light]).bg-mode-spiderman body.hwa-disabled .blur:not(.clan-card) {
   background: rgba(14, 14, 16, 0.68) !important;
   border: 1px solid rgba(255, 59, 48, 0.2) !important;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
 }
 html:not([data-coreui-theme=light]).bg-mode-spiderman body.hwa-disabled .card:not(.clan-card):hover,
-html:not([data-coreui-theme=light]).bg-mode-spiderman body.hwa-disabled .blur:not(.clan-card):not(.banner):hover {
+html:not([data-coreui-theme=light]).bg-mode-spiderman body.hwa-disabled .blur:not(.clan-card):hover {
   border-color: rgba(255, 59, 48, 0.4) !important;
 }
 
 html[data-coreui-theme=light].bg-mode-spiderman body.hwa-enabled .card:not(.clan-card),
-html[data-coreui-theme=light].bg-mode-spiderman body.hwa-enabled .blur:not(.clan-card):not(.banner) {
+html[data-coreui-theme=light].bg-mode-spiderman body.hwa-enabled .blur:not(.clan-card) {
   background: rgba(255, 255, 255, 0.72) !important;
   border: 1px solid rgba(255, 59, 48, 0.22) !important;
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.06), 0 0 15px rgba(255, 59, 48, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
 }
 html[data-coreui-theme=light].bg-mode-spiderman body.hwa-enabled .card:not(.clan-card):hover,
-html[data-coreui-theme=light].bg-mode-spiderman body.hwa-enabled .blur:not(.clan-card):not(.banner):hover {
+html[data-coreui-theme=light].bg-mode-spiderman body.hwa-enabled .blur:not(.clan-card):hover {
   border-color: rgba(255, 59, 48, 0.45) !important;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12), 0 0 25px rgba(255, 59, 48, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
   transform: translateY(-2px);
 }
 html[data-coreui-theme=light].bg-mode-spiderman body.hwa-disabled .card:not(.clan-card),
-html[data-coreui-theme=light].bg-mode-spiderman body.hwa-disabled .blur:not(.clan-card):not(.banner) {
+html[data-coreui-theme=light].bg-mode-spiderman body.hwa-disabled .blur:not(.clan-card) {
   background: rgba(255, 255, 255, 0.68) !important;
   border: 1px solid rgba(255, 59, 48, 0.18) !important;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
 }
 html[data-coreui-theme=light].bg-mode-spiderman body.hwa-disabled .card:not(.clan-card):hover,
-html[data-coreui-theme=light].bg-mode-spiderman body.hwa-disabled .blur:not(.clan-card):not(.banner):hover {
+html[data-coreui-theme=light].bg-mode-spiderman body.hwa-disabled .blur:not(.clan-card):hover {
   border-color: rgba(255, 59, 48, 0.35) !important;
 }
 
@@ -17963,48 +17933,48 @@ html:not([data-coreui-theme=light]).bg-mode-IronMan body.hwa-enabled .card:not(.
   transform: translateY(-2px);
 }
 html:not([data-coreui-theme=light]).bg-mode-ironman body.hwa-disabled .card:not(.clan-card),
-html:not([data-coreui-theme=light]).bg-mode-ironman body.hwa-disabled .blur:not(.clan-card):not(.banner),
+html:not([data-coreui-theme=light]).bg-mode-ironman body.hwa-disabled .blur:not(.clan-card),
 html:not([data-coreui-theme=light]).bg-mode-IronMan body.hwa-disabled .card:not(.clan-card),
-html:not([data-coreui-theme=light]).bg-mode-IronMan body.hwa-disabled .blur:not(.clan-card):not(.banner) {
+html:not([data-coreui-theme=light]).bg-mode-IronMan body.hwa-disabled .blur:not(.clan-card) {
   background: rgba(18, 8, 8, 0.68) !important;
   border: 1px solid rgba(255, 204, 0, 0.22) !important;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
 }
 html:not([data-coreui-theme=light]).bg-mode-ironman body.hwa-disabled .card:not(.clan-card):hover,
-html:not([data-coreui-theme=light]).bg-mode-ironman body.hwa-disabled .blur:not(.clan-card):not(.banner):hover,
+html:not([data-coreui-theme=light]).bg-mode-ironman body.hwa-disabled .blur:not(.clan-card):hover,
 html:not([data-coreui-theme=light]).bg-mode-IronMan body.hwa-disabled .card:not(.clan-card):hover,
-html:not([data-coreui-theme=light]).bg-mode-IronMan body.hwa-disabled .blur:not(.clan-card):not(.banner):hover {
+html:not([data-coreui-theme=light]).bg-mode-IronMan body.hwa-disabled .blur:not(.clan-card):hover {
   border-color: rgba(255, 204, 0, 0.45) !important;
 }
 
 html[data-coreui-theme=light].bg-mode-ironman body.hwa-enabled .card:not(.clan-card),
-html[data-coreui-theme=light].bg-mode-ironman body.hwa-enabled .blur:not(.clan-card):not(.banner),
+html[data-coreui-theme=light].bg-mode-ironman body.hwa-enabled .blur:not(.clan-card),
 html[data-coreui-theme=light].bg-mode-IronMan body.hwa-enabled .card:not(.clan-card),
-html[data-coreui-theme=light].bg-mode-IronMan body.hwa-enabled .blur:not(.clan-card):not(.banner) {
+html[data-coreui-theme=light].bg-mode-IronMan body.hwa-enabled .blur:not(.clan-card) {
   background: rgba(255, 255, 255, 0.72) !important;
   border: 1px solid rgba(255, 204, 0, 0.24) !important;
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.06), 0 0 15px rgba(214, 48, 49, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
 }
 html[data-coreui-theme=light].bg-mode-ironman body.hwa-enabled .card:not(.clan-card):hover,
-html[data-coreui-theme=light].bg-mode-ironman body.hwa-enabled .blur:not(.clan-card):not(.banner):hover,
+html[data-coreui-theme=light].bg-mode-ironman body.hwa-enabled .blur:not(.clan-card):hover,
 html[data-coreui-theme=light].bg-mode-IronMan body.hwa-enabled .card:not(.clan-card):hover,
-html[data-coreui-theme=light].bg-mode-IronMan body.hwa-enabled .blur:not(.clan-card):not(.banner):hover {
+html[data-coreui-theme=light].bg-mode-IronMan body.hwa-enabled .blur:not(.clan-card):hover {
   border-color: rgba(255, 204, 0, 0.5) !important;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12), 0 0 25px rgba(214, 48, 49, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
   transform: translateY(-2px);
 }
 html[data-coreui-theme=light].bg-mode-ironman body.hwa-disabled .card:not(.clan-card),
-html[data-coreui-theme=light].bg-mode-ironman body.hwa-disabled .blur:not(.clan-card):not(.banner),
+html[data-coreui-theme=light].bg-mode-ironman body.hwa-disabled .blur:not(.clan-card),
 html[data-coreui-theme=light].bg-mode-IronMan body.hwa-disabled .card:not(.clan-card),
-html[data-coreui-theme=light].bg-mode-IronMan body.hwa-disabled .blur:not(.clan-card):not(.banner) {
+html[data-coreui-theme=light].bg-mode-IronMan body.hwa-disabled .blur:not(.clan-card) {
   background: rgba(255, 255, 255, 0.68) !important;
   border: 1px solid rgba(255, 204, 0, 0.2) !important;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
 }
 html[data-coreui-theme=light].bg-mode-ironman body.hwa-disabled .card:not(.clan-card):hover,
-html[data-coreui-theme=light].bg-mode-ironman body.hwa-disabled .blur:not(.clan-card):not(.banner):hover,
+html[data-coreui-theme=light].bg-mode-ironman body.hwa-disabled .blur:not(.clan-card):hover,
 html[data-coreui-theme=light].bg-mode-IronMan body.hwa-disabled .card:not(.clan-card):hover,
-html[data-coreui-theme=light].bg-mode-IronMan body.hwa-disabled .blur:not(.clan-card):not(.banner):hover {
+html[data-coreui-theme=light].bg-mode-IronMan body.hwa-disabled .blur:not(.clan-card):hover {
   border-color: rgba(255, 204, 0, 0.4) !important;
 }
 

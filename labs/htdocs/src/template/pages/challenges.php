@@ -58,8 +58,8 @@ $percent = $total > 0 ? ($running / $total) * 100 : 0;
 <script>window.savedChallengeFilters = <?= json_encode($_SESSION['challenge_filters'] ?? []) ?>;</script>
 
 <?php if (!isset($_GET['ajax'])): ?>
-<div class="lab-header-section mb-4 px-4">
-    <div class="row align-items-start">
+<div class="blur mb-3 rounded-0 p-4">
+    <div class="row align-items-start px-4">
         <div class="col">
             <h1 class="fw-bold theme-text m-0" style="font-size: 1.8rem; letter-spacing: -0.5px;">Challenge Labs</h1>
             <p class="text-secondary opacity-75 mt-2 mb-0" style="font-size: 0.85rem; line-height: 1.7; letter-spacing: 0.2px;">

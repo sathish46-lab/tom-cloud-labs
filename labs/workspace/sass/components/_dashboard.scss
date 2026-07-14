@@ -226,7 +226,7 @@ html:not([data-coreui-theme="light"]).bg-mode-spiderman {
   & body.hwa-disabled {
 
     .card:not(.clan-card),
-    .blur:not(.clan-card):not(.banner) {
+    .blur:not(.clan-card) {
       background: rgba(14, 14, 16, 0.68) !important;
       border: 1px solid rgba(255, 59, 48, 0.2) !important;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
@@ -243,7 +243,7 @@ html[data-coreui-theme="light"].bg-mode-spiderman {
   & body.hwa-enabled {
 
     .card:not(.clan-card),
-    .blur:not(.clan-card):not(.banner) {
+    .blur:not(.clan-card) {
       // 1. Sleek light mode frosted glass background
       background: rgba(255, 255, 255, 0.72) !important;
 
@@ -271,7 +271,7 @@ html[data-coreui-theme="light"].bg-mode-spiderman {
   & body.hwa-disabled {
 
     .card:not(.clan-card),
-    .blur:not(.clan-card):not(.banner) {
+    .blur:not(.clan-card) {
       background: rgba(255, 255, 255, 0.68) !important;
       border: 1px solid rgba(255, 59, 48, 0.18) !important;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
@@ -321,7 +321,7 @@ html:not([data-coreui-theme="light"]).bg-mode-IronMan {
   & body.hwa-disabled {
 
     .card:not(.clan-card),
-    .blur:not(.clan-card):not(.banner) {
+    .blur:not(.clan-card) {
       background: rgba(18, 8, 8, 0.68) !important;
       border: 1px solid rgba(255, 204, 0, 0.22) !important;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
@@ -339,7 +339,7 @@ html[data-coreui-theme="light"].bg-mode-IronMan {
   & body.hwa-enabled {
 
     .card:not(.clan-card),
-    .blur:not(.clan-card):not(.banner) {
+    .blur:not(.clan-card) {
       // 1. Sleek light mode frosted glass background
       background: rgba(255, 255, 255, 0.72) !important;
 
@@ -367,7 +367,7 @@ html[data-coreui-theme="light"].bg-mode-IronMan {
   & body.hwa-disabled {
 
     .card:not(.clan-card),
-    .blur:not(.clan-card):not(.banner) {
+    .blur:not(.clan-card) {
       background: rgba(255, 255, 255, 0.68) !important;
       border: 1px solid rgba(255, 204, 0, 0.2) !important;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
