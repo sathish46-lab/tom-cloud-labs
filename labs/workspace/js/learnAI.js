@@ -152,6 +152,7 @@ try {
             this.initAIChat();
             this.initContentGenerator();
             this.initChapterNav();
+            this.initStudyHighlighter();
             this.initFloatingTooltips();
 
             if (!this.isInitialized) {
@@ -894,58 +895,755 @@ try {
             chatHistory.scrollTop = chatHistory.scrollHeight;
         },
 
+        initStudyHighlighter: function () {
+            if (this._highlighterInitialized) return;
+            this._highlighterInitialized = true;
+
+            const self = this;
+            let popover = document.getElementById('studyHighlightPopover');
+            if (!popover) {
+                popover = document.createElement('div');
+                popover.id = 'studyHighlightPopover';
+                popover.style.display = 'none';
+                popover.innerHTML = `
+                    <div class="hl-popover-group">
+                        <div class="hl-popover-row">
+                            <span class="hl-row-label" title="Pencil Circle around word"><i class="bx bx-shape-circle"></i></span>
+                            <button type="button" class="hl-color-btn hl-circle hl-yellow" data-color="yellow" data-style="circle" title="Yellow Pencil Circle"></button>
+                            <button type="button" class="hl-color-btn hl-circle hl-orange" data-color="orange" data-style="circle" title="Orange Pencil Circle"></button>
+                            <button type="button" class="hl-color-btn hl-circle hl-green" data-color="green" data-style="circle" title="Green Pencil Circle"></button>
+                            <button type="button" class="hl-color-btn hl-circle hl-pink" data-color="pink" data-style="circle" title="Pink Pencil Circle"></button>
+                            <button type="button" class="hl-color-btn hl-circle hl-blue" data-color="blue" data-style="circle" title="Blue Pencil Circle"></button>
+                        </div>
+                        <div class="hl-popover-row">
+                            <span class="hl-row-label" title="Marker Brush behind word"><i class="bx bx-highlight"></i></span>
+                            <button type="button" class="hl-color-btn hl-brush hl-yellow" data-color="yellow" data-style="brush" title="Yellow Marker Brush"></button>
+                            <button type="button" class="hl-color-btn hl-brush hl-orange" data-color="orange" data-style="brush" title="Orange Marker Brush"></button>
+                            <button type="button" class="hl-color-btn hl-brush hl-green" data-color="green" data-style="brush" title="Green Marker Brush"></button>
+                            <button type="button" class="hl-color-btn hl-brush hl-pink" data-color="pink" data-style="brush" title="Pink Marker Brush"></button>
+                            <button type="button" class="hl-color-btn hl-brush hl-blue" data-color="blue" data-style="brush" title="Blue Marker Brush"></button>
+                        </div>
+                    </div>
+                    <button type="button" class="hl-clear-btn" title="Remove Highlight"><i class="bx bx-trash"></i></button>
+                `;
+                document.body.appendChild(popover);
+            }
+
+            let penToolbar = document.getElementById('studyPenToolbar');
+            if (!penToolbar) {
+                penToolbar = document.createElement('div');
+                penToolbar.id = 'studyPenToolbar';
+                penToolbar.className = 'study-pen-toolbar';
+                penToolbar.innerHTML = `
+                    <div class="pen-tools-group">
+                        <button type="button" class="pen-tool-btn active" data-tool="cursor" title="Select / Read Mode (Normal text selection)"><i class="bx bx-pointer"></i></button>
+                        <button type="button" class="pen-tool-btn" data-tool="pencil" title="Freehand Pencil Circle Tool (Draw & circle anywhere)"><i class="bx bx-pencil"></i></button>
+                        <button type="button" class="pen-tool-btn" data-tool="eraser" title="Eraser Tool (Click/drag to erase drawn circle)"><i class="bx bx-eraser"></i></button>
+                    </div>
+                    <div class="pen-color-picker" style="display: none;">
+                        <button type="button" class="pen-color-btn active" data-color="yellow" title="Yellow Pencil"></button>
+                        <button type="button" class="pen-color-btn" data-color="orange" title="Orange Pencil"></button>
+                        <button type="button" class="pen-color-btn" data-color="green" title="Green Pencil"></button>
+                        <button type="button" class="pen-color-btn" data-color="pink" title="Pink Pencil"></button>
+                        <button type="button" class="pen-color-btn" data-color="blue" title="Blue Pencil"></button>
+                    </div>
+                    <button type="button" class="pen-tool-btn pen-clear-btn" title="Clear all freehand drawings on this chapter"><i class="bx bx-trash"></i></button>
+                `;
+                document.body.appendChild(penToolbar);
+
+                this._activePenTool = 'cursor';
+                this._activePenColor = 'yellow';
+
+                penToolbar.addEventListener('click', (e) => {
+                    const toolBtn = e.target.closest('.pen-tool-btn[data-tool]');
+                    const colorBtn = e.target.closest('.pen-color-btn[data-color]');
+                    const clearBtn = e.target.closest('.pen-clear-btn');
+
+                    if (toolBtn) {
+                        const tool = toolBtn.getAttribute('data-tool');
+                        self._activePenTool = tool;
+                        penToolbar.querySelectorAll('.pen-tool-btn[data-tool]').forEach(b => b.classList.remove('active'));
+                        toolBtn.classList.add('active');
+                        const colorPicker = penToolbar.querySelector('.pen-color-picker');
+                        if (tool === 'pencil') {
+                            colorPicker.style.display = 'flex';
+                        } else {
+                            colorPicker.style.display = 'none';
+                        }
+                        self._updateDrawingLayerState();
+                    } else if (colorBtn) {
+                        const color = colorBtn.getAttribute('data-color');
+                        self._activePenColor = color;
+                        penToolbar.querySelectorAll('.pen-color-btn').forEach(b => b.classList.remove('active'));
+                        colorBtn.classList.add('active');
+                    } else if (clearBtn) {
+                        const container = document.getElementById('chapterContentContainer') || document.querySelector('.learn-chapter-content');
+                        if (container) {
+                            const svg = container.querySelector('svg.study-drawing-layer');
+                            if (svg) svg.innerHTML = '';
+                            const chId = document.getElementById('currentChapterId')?.value || document.querySelector('.learn-accordion-btn.active')?.getAttribute('data-chapter-id');
+                            if (chId) self.saveStudyDrawings(chId);
+                        }
+                    }
+                });
+            }
+
+            let activeSelectionRange = null;
+            let activeHighlightMark = null;
+
+            const hidePopover = () => {
+                popover.style.display = 'none';
+                activeSelectionRange = null;
+                activeHighlightMark = null;
+            };
+
+            // Hide when clicking outside
+            document.addEventListener('mousedown', (e) => {
+                if (popover.contains(e.target)) return;
+                const container = document.getElementById('chapterContentContainer');
+                if (!container || !container.contains(e.target)) {
+                    hidePopover();
+                }
+            });
+
+            // Handle Text Selection in chapterContentContainer
+            document.addEventListener('mouseup', (e) => {
+                if (popover.contains(e.target)) return;
+                const container = document.getElementById('chapterContentContainer');
+                if (!container || !container.contains(e.target)) return;
+
+                // Check if clicked an existing highlight mark directly
+                const clickedMark = e.target.closest('mark.study-highlight');
+                if (clickedMark) {
+                    activeHighlightMark = clickedMark;
+                    activeSelectionRange = null;
+                    const rect = clickedMark.getBoundingClientRect();
+                    showPopoverAtRect(rect);
+                    return;
+                }
+
+                const sel = window.getSelection();
+                if (!sel || sel.isCollapsed || sel.rangeCount === 0) {
+                    if (!popover.contains(e.target)) hidePopover();
+                    return;
+                }
+
+                const range = sel.getRangeAt(0);
+                const text = range.toString().trim();
+                if (text.length < 2) {
+                    hidePopover();
+                    return;
+                }
+
+                let ancestor = range.commonAncestorContainer;
+                if (ancestor.nodeType === 3) ancestor = ancestor.parentNode;
+                if (!container.contains(ancestor) || ancestor.closest('pre') || ancestor.closest('button')) {
+                    hidePopover();
+                    return;
+                }
+
+                activeSelectionRange = range.cloneRange();
+                activeHighlightMark = null;
+                const rect = range.getBoundingClientRect();
+                showPopoverAtRect(rect);
+            });
+
+            const showPopoverAtRect = (rect) => {
+                const scrollX = window.scrollX || window.pageXOffset;
+                const scrollY = window.scrollY || window.pageYOffset;
+                popover.style.display = 'flex';
+                popover.style.opacity = '0';
+                
+                setTimeout(() => {
+                    const popWidth = popover.offsetWidth || 160;
+                    const popHeight = popover.offsetHeight || 38;
+                    let top = rect.top + scrollY - popHeight - 8;
+                    let left = rect.left + scrollX + (rect.width / 2) - (popWidth / 2);
+
+                    if (top < scrollY + 10) top = rect.bottom + scrollY + 8;
+                    if (left < scrollX + 10) left = scrollX + 10;
+                    if (left + popWidth > window.innerWidth + scrollX - 10) left = window.innerWidth + scrollX - popWidth - 10;
+
+                    popover.style.top = top + 'px';
+                    popover.style.left = left + 'px';
+                    popover.style.opacity = '1';
+                }, 10);
+            };
+
+            popover.addEventListener('click', (e) => {
+                const colorBtn = e.target.closest('.hl-color-btn');
+                const clearBtn = e.target.closest('.hl-clear-btn');
+                const chapterId = document.getElementById('currentChapterId')?.value || document.querySelector('.learn-accordion-btn.active')?.getAttribute('data-chapter-id');
+                if (!chapterId) return;
+
+                if (colorBtn) {
+                    const color = colorBtn.getAttribute('data-color') || 'yellow';
+                    const styleType = colorBtn.getAttribute('data-style') || 'brush';
+                    if (activeHighlightMark) {
+                        activeHighlightMark.className = `study-highlight hl-${styleType} hl-${color}`;
+                        activeHighlightMark.setAttribute('data-color', color);
+                        activeHighlightMark.setAttribute('data-style', styleType);
+                    } else if (activeSelectionRange) {
+                        const sel = window.getSelection();
+                        sel.removeAllRanges();
+                        sel.addRange(activeSelectionRange);
+
+                        try {
+                            const mark = document.createElement('mark');
+                            mark.className = `study-highlight hl-${styleType} hl-${color}`;
+                            mark.setAttribute('data-color', color);
+                            mark.setAttribute('data-style', styleType);
+                            mark.setAttribute('data-text', activeSelectionRange.toString().trim());
+                            mark.setAttribute('data-id', 'hl_' + Math.random().toString(36).substr(2, 9));
+                            
+                            activeSelectionRange.surroundContents(mark);
+                        } catch (err) {
+                            const text = activeSelectionRange.toString();
+                            const span = document.createElement('mark');
+                            span.className = `study-highlight hl-${styleType} hl-${color}`;
+                            span.setAttribute('data-color', color);
+                            span.setAttribute('data-style', styleType);
+                            span.setAttribute('data-text', text.trim());
+                            span.setAttribute('data-id', 'hl_' + Math.random().toString(36).substr(2, 9));
+                            span.appendChild(activeSelectionRange.extractContents());
+                            activeSelectionRange.insertNode(span);
+                        }
+                        sel.removeAllRanges();
+                    }
+                    hidePopover();
+                    self.saveStudyHighlights(chapterId);
+                } else if (clearBtn) {
+                    if (activeHighlightMark) {
+                        const parent = activeHighlightMark.parentNode;
+                        while (activeHighlightMark.firstChild) {
+                            parent.insertBefore(activeHighlightMark.firstChild, activeHighlightMark);
+                        }
+                        activeHighlightMark.remove();
+                        parent.normalize();
+                    } else if (activeSelectionRange) {
+                        const sel = window.getSelection();
+                        sel.removeAllRanges();
+                    }
+                    hidePopover();
+                    self.saveStudyHighlights(chapterId);
+                }
+            });
+        },
+
+        saveStudyHighlights: function (chapterId) {
+            if (!chapterId) return;
+            const container = document.getElementById('chapterContentContainer');
+            if (!container) return;
+
+            const highlights = [];
+            container.querySelectorAll('mark.study-highlight').forEach((mark) => {
+                const text = mark.innerText || mark.textContent || mark.getAttribute('data-text');
+                const color = mark.getAttribute('data-color') || 'yellow';
+                const styleType = mark.getAttribute('data-style') || (mark.classList.contains('hl-circle') ? 'circle' : 'brush');
+                const id = mark.getAttribute('data-id') || ('hl_' + Math.random().toString(36).substr(2, 9));
+                if (text && text.trim()) {
+                    highlights.push({ id: id, color: color, style: styleType, text: text.trim() });
+                }
+            });
+
+            fetch('/api/learnAI/highlights', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    chapter_id: chapterId,
+                    highlights: highlights,
+                    drawings: (this._cachedDrawings && this._cachedDrawings[chapterId]) || []
+                })
+            })
+            .then(r => r.json())
+            .then(res => console.log('Saved highlights for chapter', chapterId, res))
+            .catch(err => console.error('Failed to save highlights:', err));
+        },
+
+        loadStudyHighlights: function (container, chapterId, forceApplyFromCache) {
+            if (!container || !chapterId) return;
+            const targetContainer = container.id === 'chapterContentContainer' || container.classList.contains('learn-chapter-content') || container.classList.contains('chapter-text-content') ? container : (document.getElementById('chapterContentContainer') || document.querySelector('.learn-chapter-content'));
+            if (!targetContainer) return;
+            const self = this;
+
+            this._cachedHighlights = this._cachedHighlights || {};
+            this._cachedDrawings = this._cachedDrawings || {};
+
+            if (forceApplyFromCache && (this._cachedHighlights[chapterId] || this._cachedDrawings[chapterId])) {
+                if (this._cachedHighlights[chapterId]) self._applyStudyHighlights(targetContainer, this._cachedHighlights[chapterId]);
+                if (this._cachedDrawings[chapterId]) self._applyStudyDrawings(targetContainer, this._cachedDrawings[chapterId]);
+                return;
+            }
+
+            // Prevent duplicate parallel requests for the same chapter_id within 1.5s
+            if (this._loadingHighlightsChapter === chapterId && (Date.now() - (this._loadingHighlightsTime || 0) < 1500)) {
+                return;
+            }
+            this._loadingHighlightsChapter = chapterId;
+            this._loadingHighlightsTime = Date.now();
+
+            fetch('/api/learnAI/highlights?chapter_id=' + encodeURIComponent(chapterId), {
+                credentials: 'include'
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res && res.status === 'success' && res.chapter_id === chapterId) {
+                    if (Array.isArray(res.highlights)) {
+                        self._cachedHighlights[chapterId] = res.highlights;
+                        self._applyStudyHighlights(targetContainer, res.highlights);
+                    }
+                    if (Array.isArray(res.drawings)) {
+                        self._cachedDrawings[chapterId] = res.drawings;
+                        self._applyStudyDrawings(targetContainer, res.drawings);
+                    } else {
+                        self._applyStudyDrawings(targetContainer, []);
+                    }
+                }
+            })
+            .catch(err => {
+                this._loadingHighlightsChapter = null;
+                console.error('Failed to load highlights:', err);
+            });
+        },
+
+        _applyStudyHighlights: function (container, highlights) {
+            const targetContainer = container && (container.id === 'chapterContentContainer' || container.classList.contains('learn-chapter-content') || container.classList.contains('chapter-text-content')) ? container : (document.getElementById('chapterContentContainer') || document.querySelector('.learn-chapter-content'));
+            if (!targetContainer || !highlights || !highlights.length) return;
+
+            const sorted = [...highlights].sort((a, b) => (b.text || '').length - (a.text || '').length);
+            const walker = document.createTreeWalker(targetContainer, NodeFilter.SHOW_TEXT, null, false);
+            const textNodes = [];
+            let node;
+            while (node = walker.nextNode()) {
+                if (!node.nodeValue || !node.nodeValue.trim()) continue;
+                const parent = node.parentNode;
+                if (parent && (parent.closest('mark.study-highlight') || parent.closest('pre') || parent.closest('button') || parent.closest('script') || parent.closest('style'))) {
+                    continue;
+                }
+                textNodes.push(node);
+            }
+
+            sorted.forEach(hl => {
+                if (!hl || !hl.text) return;
+                const targetText = hl.text.trim();
+                if (!targetText) return;
+
+                for (let i = 0; i < textNodes.length; i++) {
+                    const tNode = textNodes[i];
+                    if (!tNode || !tNode.parentNode) continue;
+                    const val = tNode.nodeValue;
+                    const idx = val.indexOf(targetText);
+                    if (idx !== -1) {
+                        const before = val.substring(0, idx);
+                        const match = val.substring(idx, idx + targetText.length);
+                        const after = val.substring(idx + targetText.length);
+
+                        const frag = document.createDocumentFragment();
+                        if (before) frag.appendChild(document.createTextNode(before));
+
+                        const mark = document.createElement('mark');
+                        const styleType = hl.style || 'brush';
+                        mark.className = `study-highlight hl-${styleType} hl-${hl.color || 'yellow'}`;
+                        mark.setAttribute('data-style', styleType);
+                        mark.setAttribute('data-color', hl.color || 'yellow');
+                        mark.setAttribute('data-id', hl.id || ('hl_' + Math.random().toString(36).substr(2, 9)));
+                        mark.setAttribute('data-text', match);
+                        mark.textContent = match;
+                        frag.appendChild(mark);
+
+                        let afterNode = null;
+                        if (after) {
+                            afterNode = document.createTextNode(after);
+                            frag.appendChild(afterNode);
+                        }
+
+                        tNode.parentNode.replaceChild(frag, tNode);
+                        textNodes[i] = afterNode;
+                        break;
+                    }
+                }
+            });
+        },
+
+        _updateDrawingLayerState: function () {
+            const container = document.getElementById('chapterContentContainer') || document.querySelector('.learn-chapter-content');
+            if (!container) return;
+            let svg = container.querySelector('svg.study-drawing-layer');
+            if (!svg) {
+                svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.id = 'studyDrawingLayer';
+                container.appendChild(svg);
+                this._initDrawingLayerEvents(container, svg);
+            }
+            let modeClass = '';
+            if (this._activePenTool === 'pencil') modeClass = ' mode-pencil';
+            else if (this._activePenTool === 'eraser') modeClass = ' mode-eraser';
+            svg.setAttribute('class', 'study-drawing-layer' + modeClass);
+            this._syncDrawingLayerSize(container, svg);
+        },
+
+        _anchorPathToBlock: function (container, path) {
+            if (!container || !path) return;
+            const d = path.getAttribute('data-orig-d') || path.getAttribute('d');
+            if (!d) return;
+            if (!path.getAttribute('data-orig-d')) path.setAttribute('data-orig-d', d);
+
+            const match = d.match(/[ML]\s*([0-9.-]+)\s+([0-9.-]+)/);
+            if (!match) return;
+            const y0 = parseFloat(match[2]);
+
+            // Find child element covering y0
+            let targetIdx = -1;
+            let targetBlock = null;
+            const children = container.children;
+            for (let i = 0; i < children.length; i++) {
+                const child = children[i];
+                if (!child || child.tagName.toLowerCase() === 'svg' || child.tagName.toLowerCase() === 'script' || child.tagName.toLowerCase() === 'style' || child.id === 'studyDrawingLayer') continue;
+                if (child.offsetTop <= y0 && (child.offsetTop + (child.offsetHeight || 0)) >= y0) {
+                    targetIdx = i;
+                    targetBlock = child;
+                    break;
+                }
+            }
+            if (targetIdx === -1 && children.length > 0) {
+                // If not strictly inside, pick closest above
+                for (let i = children.length - 1; i >= 0; i--) {
+                    const child = children[i];
+                    if (!child || child.tagName.toLowerCase() === 'svg' || child.tagName.toLowerCase() === 'script' || child.tagName.toLowerCase() === 'style' || child.id === 'studyDrawingLayer') continue;
+                    if (child.offsetTop <= y0) {
+                        targetIdx = i;
+                        targetBlock = child;
+                        break;
+                    }
+                }
+            }
+            if (targetBlock && targetIdx !== -1) {
+                path.setAttribute('data-anchor-idx', targetIdx);
+                path.setAttribute('data-anchor-top', targetBlock.offsetTop);
+                path.setAttribute('data-anchor-width', targetBlock.offsetWidth || container.scrollWidth || 800);
+                path.setAttribute('data-anchor-height', targetBlock.offsetHeight || 100);
+            }
+        },
+
+        _syncDrawingLayerSize: function (container, svg) {
+            if (!container || !svg) return;
+            const w = container.scrollWidth || container.offsetWidth || 800;
+            const h = container.scrollHeight || container.offsetHeight || 600;
+            svg.setAttribute('width', w);
+            svg.setAttribute('height', h);
+            svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+
+            // Re-anchor and scale paths when container resizes
+            svg.querySelectorAll('path.study-drawn-path').forEach(path => {
+                const origD = path.getAttribute('data-orig-d');
+                if (!origD) return;
+                const idxStr = path.getAttribute('data-anchor-idx');
+                if (idxStr === null || idxStr === '') return;
+                const idx = parseInt(idxStr);
+                const block = container.children[idx];
+                if (!block || block.tagName.toLowerCase() === 'svg') return;
+
+                const oldTop = parseFloat(path.getAttribute('data-anchor-top')) || 0;
+                const oldW = parseFloat(path.getAttribute('data-anchor-width')) || w;
+                const oldH = parseFloat(path.getAttribute('data-anchor-height')) || h;
+                const newTop = block.offsetTop;
+                const newW = block.offsetWidth || w;
+                const newH = block.offsetHeight || h;
+
+                if (oldW > 0 && oldH > 0 && (Math.abs(oldTop - newTop) > 0.5 || Math.abs(oldW - newW) > 0.5 || Math.abs(oldH - newH) > 0.5)) {
+                    const newD = origD.replace(/([ML])\s*([0-9.-]+)\s+([0-9.-]+)/g, (m, cmd, xStr, yStr) => {
+                        const x = parseFloat(xStr);
+                        const y = parseFloat(yStr);
+                        const relX = x / oldW;
+                        const newX = Math.round((relX * newW) * 10) / 10;
+                        const relY = (y - oldTop) / oldH;
+                        const newY = Math.round((newTop + relY * newH) * 10) / 10;
+                        return `${cmd} ${newX} ${newY}`;
+                    });
+                    path.setAttribute('d', newD);
+                }
+            });
+
+            if (!container._drawingResizeObserver) {
+                container._drawingResizeObserver = new ResizeObserver(() => {
+                    LearnApp._syncDrawingLayerSize(container, svg);
+                });
+                container._drawingResizeObserver.observe(container);
+            }
+        },
+
+        _initDrawingLayerEvents: function (container, svg) {
+            if (svg._drawingInitialized) return;
+            svg._drawingInitialized = true;
+            const self = this;
+            let isDrawing = false;
+            let currentPath = null;
+
+            const getPenRgb = (colorName) => {
+                switch(colorName) {
+                    case 'yellow': return 'rgb(250, 204, 21)';
+                    case 'orange': return 'rgb(249, 115, 22)';
+                    case 'green': return 'rgb(74, 222, 128)';
+                    case 'pink': return 'rgb(248, 113, 113)';
+                    case 'blue': return 'rgb(96, 165, 250)';
+                    default: return 'rgb(250, 204, 21)';
+                }
+            };
+
+            const getRelativeCoords = (e) => {
+                const rect = svg.getBoundingClientRect();
+                return {
+                    x: Math.round(e.clientX - rect.left),
+                    y: Math.round(e.clientY - rect.top)
+                };
+            };
+
+            svg.addEventListener('mousedown', (e) => {
+                if (self._activePenTool === 'eraser') {
+                    const hitPath = e.target.closest('path.study-drawn-path');
+                    if (hitPath) {
+                        hitPath.remove();
+                        const chId = document.getElementById('currentChapterId')?.value || document.querySelector('.learn-accordion-btn.active')?.getAttribute('data-chapter-id');
+                        if (chId) self.saveStudyDrawings(chId);
+                    }
+                    return;
+                }
+                if (self._activePenTool !== 'pencil') return;
+
+                isDrawing = true;
+                const coords = getRelativeCoords(e);
+                currentPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                currentPath.setAttribute('class', 'study-drawn-path');
+                currentPath.setAttribute('data-id', 'dr_' + Math.random().toString(36).substr(2, 9));
+                const color = self._activePenColor || 'yellow';
+                currentPath.setAttribute('data-color', color);
+                currentPath.setAttribute('stroke', getPenRgb(color));
+                currentPath.setAttribute('stroke-width', '3.5');
+                currentPath.setAttribute('fill', 'none');
+                currentPath.setAttribute('stroke-linecap', 'round');
+                currentPath.setAttribute('stroke-linejoin', 'round');
+                currentPath.setAttribute('d', `M ${coords.x} ${coords.y}`);
+                svg.appendChild(currentPath);
+            });
+
+            svg.addEventListener('mousemove', (e) => {
+                if (self._activePenTool === 'eraser' && e.buttons === 1) {
+                    const hitPath = e.target.closest('path.study-drawn-path');
+                    if (hitPath) {
+                        hitPath.remove();
+                        const chId = document.getElementById('currentChapterId')?.value || document.querySelector('.learn-accordion-btn.active')?.getAttribute('data-chapter-id');
+                        if (chId) self.saveStudyDrawings(chId);
+                    }
+                    return;
+                }
+                if (!isDrawing || !currentPath || self._activePenTool !== 'pencil') return;
+                const coords = getRelativeCoords(e);
+                const d = currentPath.getAttribute('d');
+                currentPath.setAttribute('d', d + ` L ${coords.x} ${coords.y}`);
+            });
+
+            const stopDrawing = () => {
+                if (isDrawing && currentPath && self._activePenTool === 'pencil') {
+                    self._anchorPathToBlock(container, currentPath);
+                    isDrawing = false;
+                    currentPath = null;
+                    const chId = document.getElementById('currentChapterId')?.value || document.querySelector('.learn-accordion-btn.active')?.getAttribute('data-chapter-id');
+                    if (chId) self.saveStudyDrawings(chId);
+                }
+                isDrawing = false;
+                currentPath = null;
+            };
+
+            svg.addEventListener('mouseup', stopDrawing);
+            svg.addEventListener('mouseleave', stopDrawing);
+        },
+
+        saveStudyDrawings: function (chapterId) {
+            if (!chapterId) return;
+            const container = document.getElementById('chapterContentContainer') || document.querySelector('.learn-chapter-content');
+            if (!container) return;
+            const svg = container.querySelector('svg.study-drawing-layer');
+            if (!svg) return;
+
+            const drawings = [];
+            svg.querySelectorAll('path.study-drawn-path').forEach((path) => {
+                const origD = path.getAttribute('data-orig-d') || path.getAttribute('d');
+                const color = path.getAttribute('data-color') || 'yellow';
+                const id = path.getAttribute('data-id') || ('dr_' + Math.random().toString(36).substr(2, 9));
+                const anchorIdx = path.getAttribute('data-anchor-idx');
+                const anchorTop = path.getAttribute('data-anchor-top');
+                const anchorWidth = path.getAttribute('data-anchor-width');
+                const anchorHeight = path.getAttribute('data-anchor-height');
+                if (origD) {
+                    drawings.push({ 
+                        id: id, 
+                        color: color, 
+                        path: origD,
+                        anchorIdx: anchorIdx !== null ? parseInt(anchorIdx) : null,
+                        anchorTop: anchorTop !== null ? parseFloat(anchorTop) : null,
+                        anchorWidth: anchorWidth !== null ? parseFloat(anchorWidth) : null,
+                        anchorHeight: anchorHeight !== null ? parseFloat(anchorHeight) : null
+                    });
+                }
+            });
+
+            this._cachedDrawings = this._cachedDrawings || {};
+            this._cachedDrawings[chapterId] = drawings;
+
+            fetch('/api/learnAI/highlights', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    chapter_id: chapterId,
+                    highlights: (this._cachedHighlights && this._cachedHighlights[chapterId]) || [],
+                    drawings: drawings
+                })
+            })
+            .then(r => r.json())
+            .then(res => console.log('Saved drawings for chapter', chapterId, res))
+            .catch(err => console.error('Failed to save drawings:', err));
+        },
+
+        _applyStudyDrawings: function (container, drawings) {
+            const targetContainer = container && (container.id === 'chapterContentContainer' || container.classList.contains('learn-chapter-content') || container.classList.contains('chapter-text-content')) ? container : (document.getElementById('chapterContentContainer') || document.querySelector('.learn-chapter-content'));
+            if (!targetContainer) return;
+
+            let svg = targetContainer.querySelector('svg.study-drawing-layer');
+            if (!svg) {
+                svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.id = 'studyDrawingLayer';
+                targetContainer.appendChild(svg);
+                this._initDrawingLayerEvents(targetContainer, svg);
+            }
+            // Clear existing paths using DOM methods (innerHTML can be unreliable on SVG)
+            while (svg.firstChild) svg.removeChild(svg.firstChild);
+            this._updateDrawingLayerState();
+
+            if (!drawings || !drawings.length) return;
+
+            const getPenRgb = (colorName) => {
+                switch(colorName) {
+                    case 'yellow': return 'rgb(250, 204, 21)';
+                    case 'orange': return 'rgb(249, 115, 22)';
+                    case 'green': return 'rgb(74, 222, 128)';
+                    case 'pink': return 'rgb(248, 113, 113)';
+                    case 'blue': return 'rgb(96, 165, 250)';
+                    default: return 'rgb(250, 204, 21)';
+                }
+            };
+
+            drawings.forEach(dr => {
+                if (!dr.path) return;
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('class', 'study-drawn-path');
+                path.setAttribute('data-id', dr.id || ('dr_' + Math.random().toString(36).substr(2, 9)));
+                path.setAttribute('data-color', dr.color || 'yellow');
+                path.setAttribute('stroke', getPenRgb(dr.color || 'yellow'));
+                path.setAttribute('stroke-width', '3.5');
+                path.setAttribute('fill', 'none');
+                path.setAttribute('stroke-linecap', 'round');
+                path.setAttribute('stroke-linejoin', 'round');
+                path.setAttribute('d', dr.path);
+                path.setAttribute('data-orig-d', dr.path);
+                if (dr.anchorIdx !== undefined && dr.anchorIdx !== null) {
+                    path.setAttribute('data-anchor-idx', dr.anchorIdx);
+                    if (dr.anchorTop !== undefined && dr.anchorTop !== null) path.setAttribute('data-anchor-top', dr.anchorTop);
+                    if (dr.anchorWidth !== undefined && dr.anchorWidth !== null) path.setAttribute('data-anchor-width', dr.anchorWidth);
+                    if (dr.anchorHeight !== undefined && dr.anchorHeight !== null) path.setAttribute('data-anchor-height', dr.anchorHeight);
+                } else {
+                    this._anchorPathToBlock(targetContainer, path);
+                }
+                svg.appendChild(path);
+            });
+
+            // Re-sync SVG size after paths are added (layout may have changed)
+            this._syncDrawingLayerSize(targetContainer, svg);
+
+            // Safety: re-check after a frame to catch any late DOM wipe
+            const savedDrawings = [...drawings];
+            const savedContainer = targetContainer;
+            requestAnimationFrame(() => {
+                const checkSvg = savedContainer.querySelector('svg.study-drawing-layer');
+                const checkPaths = checkSvg ? checkSvg.querySelectorAll('path.study-drawn-path').length : 0;
+                if (!checkSvg || checkPaths === 0) {
+                    console.warn('[StudyDraw] SVG was WIPED after apply! Re-applying...');
+                    let resvg = savedContainer.querySelector('svg.study-drawing-layer');
+                    if (!resvg) {
+                        resvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                        resvg.id = 'studyDrawingLayer';
+                        savedContainer.appendChild(resvg);
+                        LearnApp._initDrawingLayerEvents(savedContainer, resvg);
+                    }
+                    while (resvg.firstChild) resvg.removeChild(resvg.firstChild);
+                    savedDrawings.forEach(dr => {
+                        if (!dr.path) return;
+                        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                        p.setAttribute('class', 'study-drawn-path');
+                        p.setAttribute('data-id', dr.id || ('dr_' + Math.random().toString(36).substr(2, 9)));
+                        p.setAttribute('data-color', dr.color || 'yellow');
+                        p.setAttribute('stroke', getPenRgb(dr.color || 'yellow'));
+                        p.setAttribute('stroke-width', '3.5');
+                        p.setAttribute('fill', 'none');
+                        p.setAttribute('stroke-linecap', 'round');
+                        p.setAttribute('stroke-linejoin', 'round');
+                        p.setAttribute('d', dr.path);
+                        p.setAttribute('data-orig-d', dr.path);
+                        if (dr.anchorIdx !== undefined && dr.anchorIdx !== null) {
+                            p.setAttribute('data-anchor-idx', dr.anchorIdx);
+                            if (dr.anchorTop !== undefined && dr.anchorTop !== null) p.setAttribute('data-anchor-top', dr.anchorTop);
+                            if (dr.anchorWidth !== undefined && dr.anchorWidth !== null) p.setAttribute('data-anchor-width', dr.anchorWidth);
+                            if (dr.anchorHeight !== undefined && dr.anchorHeight !== null) p.setAttribute('data-anchor-height', dr.anchorHeight);
+                        } else {
+                            LearnApp._anchorPathToBlock(savedContainer, p);
+                        }
+                        resvg.appendChild(p);
+                    });
+                    LearnApp._syncDrawingLayerSize(savedContainer, resvg);
+                    LearnApp._updateDrawingLayerState();
+                }
+            });
+        },
+
         renderMarkdownWithHighlighting: function(markdownText, container) {
             if (!container) return;
+            const isChapterContainer = container.id === 'chapterContentContainer' || container.classList.contains('learn-chapter-content') || container.classList.contains('chapter-text-content');
+
+            const finishRendering = () => {
+                if (typeof hljs !== 'undefined') {
+                    container.querySelectorAll('pre code').forEach((el) => {
+                        hljs.highlightElement(el);
+                    });
+                }
+                this._bindCopyButtons(container);
+                if (isChapterContainer) {
+                    const chId = document.getElementById('currentChapterId')?.value || document.querySelector('.learn-accordion-btn.active')?.getAttribute('data-chapter-id');
+                    if (chId) {
+                        this.loadStudyHighlights(container, chId);
+                    }
+                }
+            };
+
             if (typeof marked !== 'undefined') {
                 container.innerHTML = marked.parse(markdownText);
+                finishRendering();
             } else {
                 let retries = 0;
                 const checkMarked = setInterval(() => {
                     if (typeof marked !== 'undefined') {
                         clearInterval(checkMarked);
                         container.innerHTML = marked.parse(markdownText);
-                        if (typeof hljs !== 'undefined') {
-                            container.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
-                        }
-                    }
-                    if (retries++ > 20) {
+                        finishRendering();
+                    } else if (retries++ > 20) {
                         clearInterval(checkMarked);
                         if (container.innerHTML.trim() === '') {
                              container.innerText = markdownText;
                         }
+                        finishRendering();
                     }
                 }, 100);
             }
-
-            if (typeof hljs !== 'undefined') {
-                container.querySelectorAll('pre code').forEach((el) => {
-                    hljs.highlightElement(el);
-                });
-            }
-
-            // Add Copy buttons to code blocks
-            container.querySelectorAll('pre').forEach((pre) => {
-                if (pre.querySelector('.btn-copy-code')) return;
-                pre.style.position = 'relative';
-
-                const copyBtn = document.createElement('button');
-                copyBtn.className = 'btn btn-sm btn-dark btn-copy-code border border-secondary border-opacity-25';
-                copyBtn.innerHTML = '<i class="bx bx-copy"></i> Copy';
-                copyBtn.style.position = 'absolute';
-                copyBtn.style.top = '0.5rem';
-                copyBtn.style.right = '0.5rem';
-                copyBtn.style.zIndex = '5';
-
-                copyBtn.addEventListener('click', () => {
-                    const codeText = pre.querySelector('code')?.innerText || pre.innerText;
-                    navigator.clipboard.writeText(codeText).then(() => {
-                        copyBtn.innerHTML = '<i class="bx bx-check text-success"></i> Copied!';
-                        setTimeout(() => { copyBtn.innerHTML = '<i class="bx bx-copy"></i> Copy'; }, 2000);
-                    });
-                });
-
-                pre.appendChild(copyBtn);
-            });
         },
 
         _bindCopyButtons: function (container) {
@@ -955,7 +1653,7 @@ try {
                 pre.style.position = 'relative';
 
                 const copyBtn = document.createElement('button');
-                copyBtn.className = 'btn btn-sm btn-dark btn-copy-code border border-secondary border-opacity-25';
+                copyBtn.className = 'btn btn-sm btn-copy-code';
                 copyBtn.innerHTML = '<i class="bx bx-copy"></i> Copy';
                 copyBtn.style.position = 'absolute';
                 copyBtn.style.top = '0.5rem';
@@ -1056,15 +1754,22 @@ try {
             if (container.dataset.contentInit === 'true') return;
             container.dataset.contentInit = 'true';
 
+            const initChId = document.getElementById('currentChapterId')?.value || document.querySelector('.learn-accordion-btn.active')?.getAttribute('data-chapter-id');
             const rawFallback = container.querySelector('.raw-markdown-fallback, .raw-markdown');
             if (rawFallback) {
                 const md = container.getAttribute('data-raw-md') || rawFallback.innerText;
+                // renderMarkdownWithHighlighting already calls loadStudyHighlights at the end,
+                // so do NOT call it again below to avoid race conditions
                 this.renderMarkdownWithHighlighting(md, container);
             } else {
                 if (typeof hljs !== 'undefined') {
                     container.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
                 }
                 this._bindCopyButtons(container);
+                // Only load highlights here for pre-rendered HTML (no rawFallback)
+                if (initChId) {
+                    this.loadStudyHighlights(container, initChId);
+                }
             }
 
             const btnHeader = document.getElementById('btnGenerateContent');
@@ -1243,6 +1948,7 @@ try {
                                 container.querySelectorAll('pre code').forEach(function(el) { hljs.highlightElement(el); });
                             }
                             self._bindCopyButtons(container);
+                            self.loadStudyHighlights(container, chapterId);
                             var btnEmpty = container.querySelector('.btn-trigger-generate');
                             if (btnEmpty) {
                                 btnEmpty.addEventListener('click', function() {

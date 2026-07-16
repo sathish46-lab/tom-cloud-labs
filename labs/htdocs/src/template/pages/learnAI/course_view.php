@@ -28,9 +28,26 @@ $userUiPrefs = $userObj ? ($userObj->getUiPreferences() ?? []) : [];
 $dbSizesRaw = $userUiPrefs['learnAiThreePanelSizes'] ?? null;
 $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizesRaw;
 ?>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<link id="hljs-theme" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(function() {
+    const updateHljsTheme = () => {
+        const isDark = document.documentElement.getAttribute('data-coreui-theme') === 'dark';
+        const link = document.getElementById('hljs-theme');
+        if (!link) return;
+        const targetHref = isDark 
+            ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css' 
+            : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css';
+        if (link.getAttribute('href') !== targetHref) {
+            link.setAttribute('href', targetHref);
+        }
+    };
+    updateHljsTheme();
+    new MutationObserver(updateHljsTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-coreui-theme'] });
+})();
+</script>
 <?php if (is_array($dbSizesArr) && count($dbSizesArr) === 3): ?>
 <style>
 :root {
@@ -413,11 +430,49 @@ $p2W_php = $isPanel1Expanded ? "calc(100% - {$p1Pct}% - 4px)" : "calc(100% - 68p
 .hide-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 .hide-scrollbar::-webkit-scrollbar { display: none; }
 
-/* Smart Light Mode Syntax Highlighting Fix */
-html[data-coreui-theme="light"] pre:has(code.hljs) {
-    background-color: #1e1e1e !important;
-    color: #c9d1d9 !important;
-}
+/* Guaranteed Light Mode Syntax Colors (GitHub Light) */
+html[data-coreui-theme="light"] pre code.hljs { color: #24292e !important; }
+html[data-coreui-theme="light"] pre code.hljs .hljs-doctag,
+html[data-coreui-theme="light"] pre code.hljs .hljs-keyword,
+html[data-coreui-theme="light"] pre code.hljs .hljs-meta .hljs-keyword,
+html[data-coreui-theme="light"] pre code.hljs .hljs-template-tag,
+html[data-coreui-theme="light"] pre code.hljs .hljs-template-variable,
+html[data-coreui-theme="light"] pre code.hljs .hljs-type,
+html[data-coreui-theme="light"] pre code.hljs .hljs-variable.language_ { color: #d73a49 !important; }
+html[data-coreui-theme="light"] pre code.hljs .hljs-title,
+html[data-coreui-theme="light"] pre code.hljs .hljs-title.class_,
+html[data-coreui-theme="light"] pre code.hljs .hljs-title.class_.inherited__,
+html[data-coreui-theme="light"] pre code.hljs .hljs-title.function_ { color: #6f42c1 !important; }
+html[data-coreui-theme="light"] pre code.hljs .hljs-attr,
+html[data-coreui-theme="light"] pre code.hljs .hljs-attribute,
+html[data-coreui-theme="light"] pre code.hljs .hljs-literal,
+html[data-coreui-theme="light"] pre code.hljs .hljs-meta,
+html[data-coreui-theme="light"] pre code.hljs .hljs-number,
+html[data-coreui-theme="light"] pre code.hljs .hljs-operator,
+html[data-coreui-theme="light"] pre code.hljs .hljs-selector-attr,
+html[data-coreui-theme="light"] pre code.hljs .hljs-selector-class,
+html[data-coreui-theme="light"] pre code.hljs .hljs-selector-id,
+html[data-coreui-theme="light"] pre code.hljs .hljs-variable { color: #005cc5 !important; }
+html[data-coreui-theme="light"] pre code.hljs .hljs-meta .hljs-string,
+html[data-coreui-theme="light"] pre code.hljs .hljs-regexp,
+html[data-coreui-theme="light"] pre code.hljs .hljs-string { color: #032f62 !important; }
+html[data-coreui-theme="light"] pre code.hljs .hljs-built_in,
+html[data-coreui-theme="light"] pre code.hljs .hljs-symbol { color: #e36209 !important; }
+html[data-coreui-theme="light"] pre code.hljs .hljs-code,
+html[data-coreui-theme="light"] pre code.hljs .hljs-comment,
+html[data-coreui-theme="light"] pre code.hljs .hljs-formula { color: #6a737d !important; }
+html[data-coreui-theme="light"] pre code.hljs .hljs-name,
+html[data-coreui-theme="light"] pre code.hljs .hljs-quote,
+html[data-coreui-theme="light"] pre code.hljs .hljs-selector-pseudo,
+html[data-coreui-theme="light"] pre code.hljs .hljs-selector-tag { color: #22863a !important; }
+html[data-coreui-theme="light"] pre code.hljs .hljs-subst { color: #24292e !important; }
+html[data-coreui-theme="light"] pre code.hljs .hljs-section { color: #005cc5 !important; font-weight: 700 !important; }
+html[data-coreui-theme="light"] pre code.hljs .hljs-bullet { color: #735c0f !important; }
+html[data-coreui-theme="light"] pre code.hljs .hljs-emphasis { color: #24292e !important; font-style: italic !important; }
+html[data-coreui-theme="light"] pre code.hljs .hljs-strong { color: #24292e !important; font-weight: 700 !important; }
+html[data-coreui-theme="light"] pre code.hljs .hljs-addition { color: #22863a !important; background-color: #f0fff4 !important; }
+html[data-coreui-theme="light"] pre code.hljs .hljs-deletion { color: #b31d28 !important; background-color: #ffeef0 !important; }
+.hide-scrollbar::-webkit-scrollbar { display: none; }
 
 /* Responsive Adjustments */
 @media (max-width: 991.98px) {

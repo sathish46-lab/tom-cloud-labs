@@ -230,7 +230,7 @@ $classString = implode(' ', $htmlClasses);
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
-    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="<?= Session::cacheCDN('/css/app.css') ?>">
     <link rel="stylesheet" href="<?= Session::cacheCDN('/css/htmx-progress.css') ?>">
