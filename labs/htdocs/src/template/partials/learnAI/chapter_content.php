@@ -37,8 +37,12 @@
                         $isDummyFallback = !empty($chapter['content']) && strpos($chapter['content'], 'Welcome to this chapter on') !== false;
                         $hasRealHtml = !empty($chapter['content_html']) && $chapter['content_html'] !== '...' && strpos($chapter['content_html'], 'Welcome to this chapter on') === false;
                         $hasRealMd = !empty($chapter['content']) && $chapter['content'] !== '...' && !$isDummyFallback;
+                        // Feature Toggle: Study Pen & Freehand Drawing Toolbar
+                        // Set to true to enable the speed-dial freehand drawing toolbar in the bottom right of panel-2.
+                        // Set to false to disable freehand drawing toolbar (keeping only text highlighting active).
+                        $enable_study_pen_toolbar = true;
                         ?>
-                        <div id="chapterContentContainer" class="chapter-text-content lh-lg" style="font-size: 1.05rem;" data-raw-md="<?= htmlspecialchars((!$hasRealHtml && $hasRealMd) ? $chapter['content'] : '') ?>">
+                        <div id="chapterContentContainer" class="chapter-text-content lh-lg" style="font-size: 1.05rem;" data-raw-md="<?= htmlspecialchars((!$hasRealHtml && $hasRealMd) ? $chapter['content'] : '') ?>" data-enable-pen-toolbar="<?= $enable_study_pen_toolbar ? 'true' : 'false' ?>">
                             <?php if ($hasRealHtml): ?>
                                 <?= $chapter['content_html'] ?>
                             <?php elseif ($hasRealMd): ?>

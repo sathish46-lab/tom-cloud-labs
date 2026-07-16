@@ -87,6 +87,7 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
                         flex-shrink: 0 !important;
                     }
                     #learn-panel-2 {
+                        position: relative !important;
                         width: ${p2W} !important;
                         flex-basis: ${p2W} !important;
                         flex-grow: 1 !important;
@@ -299,7 +300,7 @@ $p2W_php = $isPanel1Expanded ? "calc(100% - {$p1Pct}% - 4px)" : "calc(100% - 68p
         <div class="gutter gutter-horizontal pane-resizer h-100" style="width: 4px;" data-target="learn-panel-1"></div>
 
         <!-- Panel 2: Center Course Overview Area -->
-        <div id="learn-panel-2" class="split-panel h-100 overflow-hidden flex-grow-1" style="width: <?= $p2W_php ?>; flex-basis: <?= $p2W_php ?>; flex-grow: 1; flex-shrink: 1;">
+        <div id="learn-panel-2" class="split-panel h-100 overflow-hidden flex-grow-1" style="position: relative; width: <?= $p2W_php ?>; flex-basis: <?= $p2W_php ?>; flex-grow: 1; flex-shrink: 1;">
             <div class="card h-100 border-secondary border-opacity-10 rounded-4 shadow-sm blur d-flex flex-column overflow-hidden">
                 <?php
                 if ($chapter_id) {

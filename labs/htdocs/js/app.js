@@ -6017,32 +6017,73 @@ try {
                 penToolbar.id = 'studyPenToolbar';
                 penToolbar.className = 'study-pen-toolbar';
                 penToolbar.innerHTML = `
-                    <div class="pen-tools-group">
-                        <button type="button" class="pen-tool-btn active" data-tool="cursor" title="Select / Read Mode (Normal text selection)"><i class="bx bx-pointer"></i></button>
-                        <button type="button" class="pen-tool-btn" data-tool="pencil" title="Freehand Pencil Circle Tool (Draw & circle anywhere)"><i class="bx bx-pencil"></i></button>
-                        <button type="button" class="pen-tool-btn" data-tool="eraser" title="Eraser Tool (Click/drag to erase drawn circle)"><i class="bx bx-eraser"></i></button>
+                    <div class="pen-speed-dial-menu">
+                        <div class="pen-tools-group">
+                            <button type="button" class="pen-tool-btn active" data-tool="cursor" title="Select / Read Mode (Normal text selection)"><i class="bx bx-pointer"></i></button>
+                            <button type="button" class="pen-tool-btn" data-tool="pencil" title="Freehand Pencil Circle Tool (Draw & circle anywhere)"><i class="bx bx-pencil"></i></button>
+                            <button type="button" class="pen-tool-btn" data-tool="eraser" title="Eraser Tool (Click/drag to erase drawn circle)"><i class="bx bx-eraser"></i></button>
+                            <button type="button" class="pen-tool-btn pen-clear-btn" title="Clear all freehand drawings on this chapter"><i class="bx bx-trash"></i></button>
+                        </div>
+                        <div class="pen-color-picker" style="display: none;">
+                            <button type="button" class="pen-color-btn active" data-color="yellow" title="Yellow Pencil"></button>
+                            <button type="button" class="pen-color-btn" data-color="orange" title="Orange Pencil"></button>
+                            <button type="button" class="pen-color-btn" data-color="green" title="Green Pencil"></button>
+                            <button type="button" class="pen-color-btn" data-color="pink" title="Pink Pencil"></button>
+                            <button type="button" class="pen-color-btn" data-color="blue" title="Blue Pencil"></button>
+                        </div>
                     </div>
-                    <div class="pen-color-picker" style="display: none;">
-                        <button type="button" class="pen-color-btn active" data-color="yellow" title="Yellow Pencil"></button>
-                        <button type="button" class="pen-color-btn" data-color="orange" title="Orange Pencil"></button>
-                        <button type="button" class="pen-color-btn" data-color="green" title="Green Pencil"></button>
-                        <button type="button" class="pen-color-btn" data-color="pink" title="Pink Pencil"></button>
-                        <button type="button" class="pen-color-btn" data-color="blue" title="Blue Pencil"></button>
-                    </div>
-                    <button type="button" class="pen-tool-btn pen-clear-btn" title="Clear all freehand drawings on this chapter"><i class="bx bx-trash"></i></button>
+                    <button type="button" class="pen-menu-toggle shadow-lg" title="Study Pen Tools">
+                        <i class="bx bx-pencil pen-icon-main fs-4"></i>
+                        <i class="bx bx-x pen-icon-close fs-3 d-none"></i>
+                    </button>
                 `;
-                document.body.appendChild(penToolbar);
+                const panel2 = document.getElementById('learn-panel-2') || document.body;
+                panel2.appendChild(penToolbar);
 
                 this._activePenTool = 'cursor';
                 this._activePenColor = 'yellow';
 
                 penToolbar.addEventListener('click', (e) => {
+                    if (penToolbar.classList.contains('is-disabled')) {
+                        const toggleBtn = e.target.closest('.pen-menu-toggle');
+                        if (toggleBtn) {
+                            toggleBtn.setAttribute('title', 'Freehand drawing is disabled right now');
+                        }
+                        return;
+                    }
+
+                    const toggleBtn = e.target.closest('.pen-menu-toggle');
                     const toolBtn = e.target.closest('.pen-tool-btn[data-tool]');
                     const colorBtn = e.target.closest('.pen-color-btn[data-color]');
                     const clearBtn = e.target.closest('.pen-clear-btn');
 
-                    if (toolBtn) {
+                    const closePenMenu = () => {
+                        penToolbar.classList.remove('is-open');
+                        const mainIcon = penToolbar.querySelector('.pen-icon-main');
+                        const closeIcon = penToolbar.querySelector('.pen-icon-close');
+                        if (mainIcon && closeIcon) {
+                            mainIcon.classList.remove('d-none');
+                            closeIcon.classList.add('d-none');
+                        }
+                    };
+
+                    if (toggleBtn) {
+                        const isOpen = penToolbar.classList.toggle('is-open');
+                        const mainIcon = penToolbar.querySelector('.pen-icon-main');
+                        const closeIcon = penToolbar.querySelector('.pen-icon-close');
+                        if (mainIcon && closeIcon) {
+                            if (isOpen) {
+                                mainIcon.classList.add('d-none');
+                                closeIcon.classList.remove('d-none');
+                            } else {
+                                mainIcon.classList.remove('d-none');
+                                closeIcon.classList.add('d-none');
+                            }
+                        }
+                    } else if (toolBtn) {
                         const tool = toolBtn.getAttribute('data-tool');
+                        const isAlreadyActive = self._activePenTool === tool;
+
                         self._activePenTool = tool;
                         penToolbar.querySelectorAll('.pen-tool-btn[data-tool]').forEach(b => b.classList.remove('active'));
                         toolBtn.classList.add('active');
@@ -6053,11 +6094,16 @@ try {
                             colorPicker.style.display = 'none';
                         }
                         self._updateDrawingLayerState();
+
+                        if (isAlreadyActive || tool === 'cursor') {
+                            closePenMenu();
+                        }
                     } else if (colorBtn) {
                         const color = colorBtn.getAttribute('data-color');
                         self._activePenColor = color;
                         penToolbar.querySelectorAll('.pen-color-btn').forEach(b => b.classList.remove('active'));
                         colorBtn.classList.add('active');
+                        closePenMenu();
                     } else if (clearBtn) {
                         const container = document.getElementById('chapterContentContainer') || document.querySelector('.learn-chapter-content');
                         if (container) {
@@ -6066,9 +6112,24 @@ try {
                             const chId = document.getElementById('currentChapterId')?.value || document.querySelector('.learn-accordion-btn.active')?.getAttribute('data-chapter-id');
                             if (chId) self.saveStudyDrawings(chId);
                         }
+                        closePenMenu();
+                    }
+                });
+
+                document.addEventListener('click', (e) => {
+                    const penToolbar = document.getElementById('studyPenToolbar');
+                    if (penToolbar && penToolbar.classList.contains('is-open') && !e.target.closest('#studyPenToolbar')) {
+                        penToolbar.classList.remove('is-open');
+                        const mainIcon = penToolbar.querySelector('.pen-icon-main');
+                        const closeIcon = penToolbar.querySelector('.pen-icon-close');
+                        if (mainIcon && closeIcon) {
+                            mainIcon.classList.remove('d-none');
+                            closeIcon.classList.add('d-none');
+                        }
                     }
                 });
             }
+            this._updatePenToolbarVisibility();
 
             let activeSelectionRange = null;
             let activeHighlightMark = null;
@@ -6248,6 +6309,7 @@ try {
             const targetContainer = container.id === 'chapterContentContainer' || container.classList.contains('learn-chapter-content') || container.classList.contains('chapter-text-content') ? container : (document.getElementById('chapterContentContainer') || document.querySelector('.learn-chapter-content'));
             if (!targetContainer) return;
             const self = this;
+            this._updatePenToolbarVisibility();
 
             this._cachedHighlights = this._cachedHighlights || {};
             this._cachedDrawings = this._cachedDrawings || {};
@@ -6282,10 +6344,12 @@ try {
                         self._applyStudyDrawings(targetContainer, []);
                     }
                 }
+                self._updatePenToolbarVisibility();
             })
             .catch(err => {
                 this._loadingHighlightsChapter = null;
                 console.error('Failed to load highlights:', err);
+                self._updatePenToolbarVisibility();
             });
         },
 
@@ -6348,6 +6412,38 @@ try {
             });
         },
 
+        _updatePenToolbarVisibility: function () {
+            const container = document.getElementById('chapterContentContainer') || document.querySelector('.learn-chapter-content');
+            const penToolbar = document.getElementById('studyPenToolbar');
+            if (!penToolbar) return;
+
+            const panel2 = document.getElementById('learn-panel-2');
+            if (panel2 && penToolbar.parentNode !== panel2) {
+                panel2.appendChild(penToolbar);
+            }
+
+            penToolbar.style.display = 'flex';
+            const isEnabled = container && container.getAttribute('data-enable-pen-toolbar') === 'true';
+            if (isEnabled) {
+                penToolbar.classList.remove('is-disabled');
+            } else {
+                penToolbar.classList.add('is-disabled');
+                if (penToolbar.classList.contains('is-open')) {
+                    penToolbar.classList.remove('is-open');
+                    const mainIcon = penToolbar.querySelector('.pen-icon-main');
+                    const closeIcon = penToolbar.querySelector('.pen-icon-close');
+                    if (mainIcon && closeIcon) {
+                        mainIcon.classList.remove('d-none');
+                        closeIcon.classList.add('d-none');
+                    }
+                }
+                if (this._activePenTool !== 'cursor') {
+                    this._activePenTool = 'cursor';
+                    this._updateDrawingLayerState();
+                }
+            }
+        },
+
         _updateDrawingLayerState: function () {
             const container = document.getElementById('chapterContentContainer') || document.querySelector('.learn-chapter-content');
             if (!container) return;
@@ -6358,9 +6454,10 @@ try {
                 container.appendChild(svg);
                 this._initDrawingLayerEvents(container, svg);
             }
+            const isEnabled = container.getAttribute('data-enable-pen-toolbar') === 'true';
             let modeClass = '';
-            if (this._activePenTool === 'pencil') modeClass = ' mode-pencil';
-            else if (this._activePenTool === 'eraser') modeClass = ' mode-eraser';
+            if (isEnabled && this._activePenTool === 'pencil') modeClass = ' mode-pencil';
+            else if (isEnabled && this._activePenTool === 'eraser') modeClass = ' mode-eraser';
             svg.setAttribute('class', 'study-drawing-layer' + modeClass);
             this._syncDrawingLayerSize(container, svg);
         },
@@ -6371,25 +6468,131 @@ try {
             if (!d) return;
             if (!path.getAttribute('data-orig-d')) path.setAttribute('data-orig-d', d);
 
-            const match = d.match(/[ML]\s*([0-9.-]+)\s+([0-9.-]+)/);
-            if (!match) return;
-            const y0 = parseFloat(match[2]);
+            // Compute bounding box and extract raw points of the drawn path
+            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+            const rawPts = [];
+            const matches = d.matchAll(/[ML]\s*([0-9.-]+)\s+([0-9.-]+)/g);
+            for (const m of matches) {
+                const x = parseFloat(m[1]), y = parseFloat(m[2]);
+                rawPts.push({ x, y });
+                if (x < minX) minX = x; if (x > maxX) maxX = x;
+                if (y < minY) minY = y; if (y > maxY) maxY = y;
+            }
+            if (!rawPts.length) return;
+            const y0 = (minY + maxY) / 2;
+            const cRect = container.getBoundingClientRect();
 
-            // Find child element covering y0
-            let targetIdx = -1;
-            let targetBlock = null;
+            // 1. Check if the path encloses or overlaps specific text words inside container
+            let foundBlockIdx = -1;
+            let matchedWords = [];
             const children = container.children;
+
             for (let i = 0; i < children.length; i++) {
                 const child = children[i];
                 if (!child || child.tagName.toLowerCase() === 'svg' || child.tagName.toLowerCase() === 'script' || child.tagName.toLowerCase() === 'style' || child.id === 'studyDrawingLayer') continue;
-                if (child.offsetTop <= y0 && (child.offsetTop + (child.offsetHeight || 0)) >= y0) {
-                    targetIdx = i;
-                    targetBlock = child;
-                    break;
+                if (child.offsetTop <= maxY + 10 && (child.offsetTop + (child.offsetHeight || 0)) >= minY - 10) {
+                    const walker = document.createTreeWalker(child, NodeFilter.SHOW_TEXT, null, false);
+                    let tNode = walker.nextNode();
+                    let blockWords = [];
+                    while (tNode) {
+                        const str = tNode.nodeValue || '';
+                        const regex = /\S+/g;
+                        let match;
+                        while ((match = regex.exec(str)) !== null) {
+                            if (match[0].length >= 1) {
+                                const range = document.createRange();
+                                range.setStart(tNode, match.index);
+                                range.setEnd(tNode, match.index + match[0].length);
+                                const rRect = range.getBoundingClientRect();
+                                if (rRect.width > 0) {
+                                    const relLeft = rRect.left - cRect.left;
+                                    const relTop = rRect.top - cRect.top;
+                                    const relRight = relLeft + rRect.width;
+                                    const relBottom = relTop + rRect.height;
+                                    blockWords.push({
+                                        text: match[0],
+                                        left: relLeft,
+                                        top: relTop,
+                                        right: relRight,
+                                        bottom: relBottom,
+                                        width: rRect.width,
+                                        height: rRect.height
+                                    });
+                                }
+                            }
+                        }
+                        tNode = walker.nextNode();
+                    }
+
+                    // Check which words intersect the exact drawn points along each vertical line row
+                    const touchingWords = blockWords.filter(w => {
+                        const rowPts = rawPts.filter(p => p.y >= w.top - 6 && p.y <= w.bottom + 6);
+                        if (rowPts.length > 0) {
+                            let minRowX = Infinity, maxRowX = -Infinity;
+                            rowPts.forEach(p => {
+                                if (p.x < minRowX) minRowX = p.x;
+                                if (p.x > maxRowX) maxRowX = p.x;
+                            });
+                            return !(w.right < minRowX - 4 || w.left > maxRowX + 4);
+                        }
+                        return false;
+                    });
+
+                    if (touchingWords.length > 0) {
+                        foundBlockIdx = i;
+                        const rowGroups = [];
+                        touchingWords.forEach(tw => {
+                            let placed = false;
+                            for (let g = 0; g < rowGroups.length; g++) {
+                                if (Math.abs(rowGroups[g][0].top - tw.top) < 14) {
+                                    rowGroups[g].push(tw);
+                                    placed = true;
+                                    break;
+                                }
+                            }
+                            if (!placed) rowGroups.push([tw]);
+                        });
+                        matchedWords = [];
+                        rowGroups.forEach(rg => {
+                            const startIdx = blockWords.indexOf(rg[0]);
+                            const endIdx = blockWords.indexOf(rg[rg.length - 1]);
+                            if (startIdx !== -1 && endIdx !== -1) {
+                                const slice = blockWords.slice(startIdx, endIdx + 1).filter(w => Math.abs(w.top - rg[0].top) < 14);
+                                matchedWords.push(...slice);
+                            }
+                        });
+                        break;
+                    }
                 }
             }
+
+            if (matchedWords.length > 0 && foundBlockIdx !== -1) {
+                let minWLeft = Infinity, minWTop = Infinity, maxWRight = -Infinity, maxWBottom = -Infinity;
+                const textArr = [];
+                matchedWords.forEach(w => {
+                    textArr.push(w.text);
+                    if (w.left < minWLeft) minWLeft = w.left;
+                    if (w.top < minWTop) minWTop = w.top;
+                    if (w.right > maxWRight) maxWRight = w.right;
+                    if (w.bottom > maxWBottom) maxWBottom = w.bottom;
+                });
+                const wBoxWidth = Math.max(10, maxWRight - minWLeft);
+                const wBoxHeight = Math.max(10, maxWBottom - minWTop);
+
+                path.setAttribute('data-anchor-type', 'text');
+                path.setAttribute('data-anchor-idx', foundBlockIdx);
+                path.setAttribute('data-anchor-text', textArr.join(' '));
+                path.setAttribute('data-word-left', Math.round(minWLeft * 10) / 10);
+                path.setAttribute('data-word-top', Math.round(minWTop * 10) / 10);
+                path.setAttribute('data-word-width', Math.round(wBoxWidth * 10) / 10);
+                path.setAttribute('data-word-height', Math.round(wBoxHeight * 10) / 10);
+                return;
+            }
+
+            // 2. Fallback: Block-level anchoring if no specific text words were enclosed
+            let targetIdx = foundBlockIdx;
+            let targetBlock = targetIdx !== -1 ? children[targetIdx] : null;
             if (targetIdx === -1 && children.length > 0) {
-                // If not strictly inside, pick closest above
                 for (let i = children.length - 1; i >= 0; i--) {
                     const child = children[i];
                     if (!child || child.tagName.toLowerCase() === 'svg' || child.tagName.toLowerCase() === 'script' || child.tagName.toLowerCase() === 'style' || child.id === 'studyDrawingLayer') continue;
@@ -6401,6 +6604,7 @@ try {
                 }
             }
             if (targetBlock && targetIdx !== -1) {
+                path.setAttribute('data-anchor-type', 'block');
                 path.setAttribute('data-anchor-idx', targetIdx);
                 path.setAttribute('data-anchor-top', targetBlock.offsetTop);
                 path.setAttribute('data-anchor-width', targetBlock.offsetWidth || container.scrollWidth || 800);
@@ -6416,15 +6620,136 @@ try {
             svg.setAttribute('height', h);
             svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
 
+            const cRect = container.getBoundingClientRect();
+
             // Re-anchor and scale paths when container resizes
             svg.querySelectorAll('path.study-drawn-path').forEach(path => {
                 const origD = path.getAttribute('data-orig-d');
                 if (!origD) return;
+                const anchorType = path.getAttribute('data-anchor-type') || 'block';
                 const idxStr = path.getAttribute('data-anchor-idx');
                 if (idxStr === null || idxStr === '') return;
                 const idx = parseInt(idxStr);
                 const block = container.children[idx];
                 if (!block || block.tagName.toLowerCase() === 'svg') return;
+
+                if (anchorType === 'text') {
+                    const targetText = path.getAttribute('data-anchor-text');
+                    const origLeft = parseFloat(path.getAttribute('data-word-left')) || 0;
+                    const origTop = parseFloat(path.getAttribute('data-word-top')) || 0;
+                    const origW = parseFloat(path.getAttribute('data-word-width')) || 100;
+                    const origH = parseFloat(path.getAttribute('data-word-height')) || 30;
+
+                    if (targetText && origW > 0 && origH > 0) {
+                        const targetTokens = targetText.split(/\s+/).filter(Boolean);
+                        const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT, null, false);
+                        let tNode = walker.nextNode();
+                        let allBlockWords = [];
+
+                        // Collect all word positions currently inside this block
+                        while (tNode) {
+                            const str = tNode.nodeValue || '';
+                            const regex = /\S+/g;
+                            let match;
+                            while ((match = regex.exec(str)) !== null) {
+                                if (match[0].length >= 1) {
+                                    const range = document.createRange();
+                                    range.setStart(tNode, match.index);
+                                    range.setEnd(tNode, match.index + match[0].length);
+                                    const rRect = range.getBoundingClientRect();
+                                    if (rRect.width > 0) {
+                                        allBlockWords.push({
+                                            text: match[0],
+                                            left: rRect.left - cRect.left,
+                                            top: rRect.top - cRect.top,
+                                            right: rRect.left - cRect.left + rRect.width,
+                                            bottom: rRect.top - cRect.top + rRect.height
+                                        });
+                                    }
+                                }
+                            }
+                            tNode = walker.nextNode();
+                        }
+
+                        let matchedBoxes = [];
+                        if (targetTokens.length > 0 && allBlockWords.length >= targetTokens.length) {
+                            const cleanToken = t => (t || '').replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '');
+                            // Search for exact or normalized contiguous sequence inside allBlockWords
+                            for (let i = 0; i <= allBlockWords.length - targetTokens.length; i++) {
+                                let matchSlice = true;
+                                for (let j = 0; j < targetTokens.length; j++) {
+                                    const bwText = allBlockWords[i + j].text;
+                                    const ttText = targetTokens[j];
+                                    if (bwText !== ttText && (cleanToken(bwText) !== cleanToken(ttText) || !cleanToken(ttText))) {
+                                        matchSlice = false;
+                                        break;
+                                    }
+                                }
+                                if (matchSlice) {
+                                    matchedBoxes = allBlockWords.slice(i, i + targetTokens.length);
+                                    break;
+                                }
+                            }
+
+                            // Fallback if exact contiguous match not found due to punctuation/split
+                            if (matchedBoxes.length === 0) {
+                                const cleanFirst = cleanToken(targetTokens[0]);
+                                const cleanLast = cleanToken(targetTokens[targetTokens.length - 1]);
+                                for (let i = 0; i < allBlockWords.length; i++) {
+                                    if (allBlockWords[i].text === targetTokens[0] || (cleanFirst && cleanToken(allBlockWords[i].text) === cleanFirst)) {
+                                        for (let k = Math.max(i, i + targetTokens.length - 4); k <= Math.min(allBlockWords.length - 1, i + targetTokens.length + 4); k++) {
+                                            if (allBlockWords[k].text === targetTokens[targetTokens.length - 1] || (cleanLast && cleanToken(allBlockWords[k].text) === cleanLast)) {
+                                                matchedBoxes = allBlockWords.slice(i, k + 1);
+                                                break;
+                                            }
+                                        }
+                                        if (matchedBoxes.length > 0) break;
+                                    }
+                                }
+                            }
+                        }
+
+                        let lineGroups = [];
+                        if (matchedBoxes.length > 0) {
+                            matchedBoxes.forEach(wb => {
+                                let placed = false;
+                                for (let g = 0; g < lineGroups.length; g++) {
+                                    if (Math.abs(lineGroups[g][0].top - wb.top) < 14) {
+                                        lineGroups[g].push(wb);
+                                        placed = true;
+                                        break;
+                                    }
+                                }
+                                if (!placed) lineGroups.push([wb]);
+                            });
+
+                            if (lineGroups.length > 0) {
+                                const subpaths = lineGroups.map(lg => {
+                                    let minL = Infinity, minT = Infinity, maxR = -Infinity, maxB = -Infinity;
+                                    lg.forEach(wb => {
+                                        if (wb.left < minL) minL = wb.left;
+                                        if (wb.top < minT) minT = wb.top;
+                                        if (wb.right > maxR) maxR = wb.right;
+                                        if (wb.bottom > maxB) maxB = wb.bottom;
+                                    });
+                                    const lgRect = {
+                                        left: minL - 4,
+                                        top: minT - 3,
+                                        width: Math.max(10, maxR - minL) + 8,
+                                        height: Math.max(10, maxB - minT) + 6
+                                    };
+                                    const rx = lgRect.width / 2;
+                                    const ry = lgRect.height / 2;
+                                    const cx = lgRect.left + rx;
+                                    const cy = lgRect.top + ry;
+                                    return `M ${Math.round((cx - rx)*10)/10} ${Math.round(cy*10)/10} C ${Math.round((cx - rx)*10)/10} ${Math.round((cy - ry*1.3)*10)/10} ${Math.round((cx + rx)*10)/10} ${Math.round((cy - ry*1.3)*10)/10} ${Math.round((cx + rx)*10)/10} ${Math.round(cy*10)/10} C ${Math.round((cx + rx)*10)/10} ${Math.round((cy + ry*1.3)*10)/10} ${Math.round((cx - rx)*10)/10} ${Math.round((cy + ry*1.3)*10)/10} ${Math.round((cx - rx)*10)/10} ${Math.round(cy*10)/10} Z`;
+                                });
+                                path.setAttribute('d', subpaths.join(' '));
+                                return;
+                            }
+                        }
+                    }
+                }
 
                 const oldTop = parseFloat(path.getAttribute('data-anchor-top')) || 0;
                 const oldW = parseFloat(path.getAttribute('data-anchor-width')) || w;
@@ -6553,19 +6878,32 @@ try {
                 const origD = path.getAttribute('data-orig-d') || path.getAttribute('d');
                 const color = path.getAttribute('data-color') || 'yellow';
                 const id = path.getAttribute('data-id') || ('dr_' + Math.random().toString(36).substr(2, 9));
+                const anchorType = path.getAttribute('data-anchor-type') || 'block';
                 const anchorIdx = path.getAttribute('data-anchor-idx');
+                const anchorText = path.getAttribute('data-anchor-text');
                 const anchorTop = path.getAttribute('data-anchor-top');
                 const anchorWidth = path.getAttribute('data-anchor-width');
                 const anchorHeight = path.getAttribute('data-anchor-height');
+                const wordLeft = path.getAttribute('data-word-left');
+                const wordTop = path.getAttribute('data-word-top');
+                const wordWidth = path.getAttribute('data-word-width');
+                const wordHeight = path.getAttribute('data-word-height');
+
                 if (origD) {
                     drawings.push({ 
                         id: id, 
                         color: color, 
                         path: origD,
+                        anchorType: anchorType,
                         anchorIdx: anchorIdx !== null ? parseInt(anchorIdx) : null,
+                        anchorText: anchorText || null,
                         anchorTop: anchorTop !== null ? parseFloat(anchorTop) : null,
                         anchorWidth: anchorWidth !== null ? parseFloat(anchorWidth) : null,
-                        anchorHeight: anchorHeight !== null ? parseFloat(anchorHeight) : null
+                        anchorHeight: anchorHeight !== null ? parseFloat(anchorHeight) : null,
+                        wordLeft: wordLeft !== null ? parseFloat(wordLeft) : null,
+                        wordTop: wordTop !== null ? parseFloat(wordTop) : null,
+                        wordWidth: wordWidth !== null ? parseFloat(wordWidth) : null,
+                        wordHeight: wordHeight !== null ? parseFloat(wordHeight) : null
                     });
                 }
             });
@@ -6629,12 +6967,18 @@ try {
                 path.setAttribute('stroke-linejoin', 'round');
                 path.setAttribute('d', dr.path);
                 path.setAttribute('data-orig-d', dr.path);
-                if (dr.anchorIdx !== undefined && dr.anchorIdx !== null) {
-                    path.setAttribute('data-anchor-idx', dr.anchorIdx);
-                    if (dr.anchorTop !== undefined && dr.anchorTop !== null) path.setAttribute('data-anchor-top', dr.anchorTop);
-                    if (dr.anchorWidth !== undefined && dr.anchorWidth !== null) path.setAttribute('data-anchor-width', dr.anchorWidth);
-                    if (dr.anchorHeight !== undefined && dr.anchorHeight !== null) path.setAttribute('data-anchor-height', dr.anchorHeight);
-                } else {
+                if (dr.anchorType) path.setAttribute('data-anchor-type', dr.anchorType);
+                if (dr.anchorIdx !== undefined && dr.anchorIdx !== null) path.setAttribute('data-anchor-idx', dr.anchorIdx);
+                if (dr.anchorText) path.setAttribute('data-anchor-text', dr.anchorText);
+                if (dr.anchorTop !== undefined && dr.anchorTop !== null) path.setAttribute('data-anchor-top', dr.anchorTop);
+                if (dr.anchorWidth !== undefined && dr.anchorWidth !== null) path.setAttribute('data-anchor-width', dr.anchorWidth);
+                if (dr.anchorHeight !== undefined && dr.anchorHeight !== null) path.setAttribute('data-anchor-height', dr.anchorHeight);
+                if (dr.wordLeft !== undefined && dr.wordLeft !== null) path.setAttribute('data-word-left', dr.wordLeft);
+                if (dr.wordTop !== undefined && dr.wordTop !== null) path.setAttribute('data-word-top', dr.wordTop);
+                if (dr.wordWidth !== undefined && dr.wordWidth !== null) path.setAttribute('data-word-width', dr.wordWidth);
+                if (dr.wordHeight !== undefined && dr.wordHeight !== null) path.setAttribute('data-word-height', dr.wordHeight);
+
+                if (!dr.anchorIdx && dr.anchorIdx !== 0) {
                     this._anchorPathToBlock(targetContainer, path);
                 }
                 svg.appendChild(path);
@@ -6672,12 +7016,18 @@ try {
                         p.setAttribute('stroke-linejoin', 'round');
                         p.setAttribute('d', dr.path);
                         p.setAttribute('data-orig-d', dr.path);
-                        if (dr.anchorIdx !== undefined && dr.anchorIdx !== null) {
-                            p.setAttribute('data-anchor-idx', dr.anchorIdx);
-                            if (dr.anchorTop !== undefined && dr.anchorTop !== null) p.setAttribute('data-anchor-top', dr.anchorTop);
-                            if (dr.anchorWidth !== undefined && dr.anchorWidth !== null) p.setAttribute('data-anchor-width', dr.anchorWidth);
-                            if (dr.anchorHeight !== undefined && dr.anchorHeight !== null) p.setAttribute('data-anchor-height', dr.anchorHeight);
-                        } else {
+                        if (dr.anchorType) p.setAttribute('data-anchor-type', dr.anchorType);
+                        if (dr.anchorIdx !== undefined && dr.anchorIdx !== null) p.setAttribute('data-anchor-idx', dr.anchorIdx);
+                        if (dr.anchorText) p.setAttribute('data-anchor-text', dr.anchorText);
+                        if (dr.anchorTop !== undefined && dr.anchorTop !== null) p.setAttribute('data-anchor-top', dr.anchorTop);
+                        if (dr.anchorWidth !== undefined && dr.anchorWidth !== null) p.setAttribute('data-anchor-width', dr.anchorWidth);
+                        if (dr.anchorHeight !== undefined && dr.anchorHeight !== null) p.setAttribute('data-anchor-height', dr.anchorHeight);
+                        if (dr.wordLeft !== undefined && dr.wordLeft !== null) p.setAttribute('data-word-left', dr.wordLeft);
+                        if (dr.wordTop !== undefined && dr.wordTop !== null) p.setAttribute('data-word-top', dr.wordTop);
+                        if (dr.wordWidth !== undefined && dr.wordWidth !== null) p.setAttribute('data-word-width', dr.wordWidth);
+                        if (dr.wordHeight !== undefined && dr.wordHeight !== null) p.setAttribute('data-word-height', dr.wordHeight);
+
+                        if (!dr.anchorIdx && dr.anchorIdx !== 0) {
                             LearnApp._anchorPathToBlock(savedContainer, p);
                         }
                         resvg.appendChild(p);

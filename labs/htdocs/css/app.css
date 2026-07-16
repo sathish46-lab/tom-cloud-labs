@@ -20261,6 +20261,7 @@ body.hwa-disabled .split-panel-view .split-panel > .card {
 }
 .learn-app-wrapper #learn-panel-2,
 .split-panel-view #learn-panel-2 {
+  position: relative !important;
   min-width: 180px !important;
   flex-grow: 1 !important;
   flex-shrink: 1 !important;
@@ -21237,94 +21238,188 @@ mark.study-highlight.hl-circle.hl-blue {
 }
 
 #studyPenToolbar {
-  position: fixed;
+  position: absolute;
   bottom: 24px;
-  right: 32px;
+  right: 28px;
   z-index: 1055;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
-  background: rgba(30, 41, 59, 0.94);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 999px;
-  padding: 6px 14px;
-  box-shadow: 0 12px 32px -6px rgba(0, 0, 0, 0.65), 0 4px 12px -2px rgba(0, 0, 0, 0.4);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  gap: 12px;
+  pointer-events: none;
 }
-:root[data-coreui-theme=light] #studyPenToolbar {
-  background: rgba(255, 255, 255, 0.94);
-  border-color: rgba(0, 0, 0, 0.15);
-  box-shadow: 0 12px 32px -6px rgba(0, 0, 0, 0.18), 0 4px 12px -2px rgba(0, 0, 0, 0.08);
-}
-#studyPenToolbar .pen-tools-group {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-#studyPenToolbar .pen-tool-btn {
-  width: 36px;
-  height: 36px;
+#studyPenToolbar .pen-menu-toggle {
+  pointer-events: auto;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  border: none;
-  background: transparent;
-  color: #94a3b8;
-  font-size: 1.3rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.15s ease;
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.45);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+}
+#studyPenToolbar .pen-menu-toggle:hover {
+  transform: translateY(-2px) scale(1.06);
+  box-shadow: 0 10px 28px rgba(59, 130, 246, 0.65);
+}
+#studyPenToolbar .pen-menu-toggle i {
+  transition: all 0.25s ease;
+}
+#studyPenToolbar.is-open .pen-menu-toggle {
+  background: linear-gradient(135deg, #334155, #1e293b);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+#studyPenToolbar.is-disabled .pen-menu-toggle {
+  opacity: 0.75;
+  background: linear-gradient(135deg, #475569, #334155);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  cursor: not-allowed;
+}
+#studyPenToolbar.is-disabled .pen-menu-toggle:hover {
+  transform: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+#studyPenToolbar .pen-speed-dial-menu {
+  pointer-events: none;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 48px;
+  height: 48px;
+  z-index: 1054;
+}
+#studyPenToolbar.is-open .pen-speed-dial-menu {
+  pointer-events: auto;
+}
+#studyPenToolbar .pen-tools-group {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 48px;
+  height: 48px;
+  pointer-events: none;
+}
+#studyPenToolbar.is-open .pen-tools-group {
+  pointer-events: auto;
+}
+#studyPenToolbar .pen-tool-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(30, 41, 59, 0.96);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  color: #94a3b8;
+  font-size: 1.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(0, 0) scale(0.4);
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+#studyPenToolbar .pen-tool-btn i {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 :root[data-coreui-theme=light] #studyPenToolbar .pen-tool-btn {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
   color: #64748b;
 }
 #studyPenToolbar .pen-tool-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(51, 65, 85, 0.98);
   color: #ffffff;
-  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.75);
+}
+#studyPenToolbar .pen-tool-btn:hover i {
+  transform: scale(1.28);
 }
 :root[data-coreui-theme=light] #studyPenToolbar .pen-tool-btn:hover {
-  background: rgba(0, 0, 0, 0.06);
+  background: rgba(241, 245, 249, 0.98);
   color: #0f172a;
 }
 #studyPenToolbar .pen-tool-btn.active {
-  background: #3b82f6;
-  color: #ffffff;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-  transform: scale(1.08);
+  background: #3b82f6 !important;
+  border-color: #60a5fa !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
 }
 #studyPenToolbar .pen-tool-btn.pen-clear-btn {
   color: #ef4444;
 }
 #studyPenToolbar .pen-tool-btn.pen-clear-btn:hover {
-  background: rgba(239, 68, 68, 0.15);
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
   color: #ef4444;
 }
+#studyPenToolbar.is-open .pen-tool-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+#studyPenToolbar.is-open .pen-tool-btn:nth-child(1) {
+  transform: translate(0px, -105px) scale(1);
+}
+#studyPenToolbar.is-open .pen-tool-btn:nth-child(2) {
+  transform: translate(-53px, -87px) scale(1);
+}
+#studyPenToolbar.is-open .pen-tool-btn:nth-child(3) {
+  transform: translate(-87px, -53px) scale(1);
+}
+#studyPenToolbar.is-open .pen-tool-btn:nth-child(4) {
+  transform: translate(-100px, 0px) scale(1);
+}
 #studyPenToolbar .pen-color-picker {
+  position: absolute;
+  bottom: 140px;
+  right: -6px;
   display: flex;
+  flex-direction: row;
   align-items: center;
   gap: 8px;
-  padding-left: 6px;
-  border-left: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(30, 41, 59, 0.94);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  padding: 6px 10px;
+  box-shadow: 0 12px 32px -6px rgba(0, 0, 0, 0.65), 0 4px 12px -2px rgba(0, 0, 0, 0.4);
 }
 :root[data-coreui-theme=light] #studyPenToolbar .pen-color-picker {
-  border-left-color: rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(0, 0, 0, 0.15);
+  box-shadow: 0 12px 32px -6px rgba(0, 0, 0, 0.18), 0 4px 12px -2px rgba(0, 0, 0, 0.08);
 }
 #studyPenToolbar .pen-color-picker .pen-color-btn {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   border: 2px solid transparent;
   cursor: pointer;
   transition: all 0.15s ease;
   padding: 0;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
 }
 #studyPenToolbar .pen-color-picker .pen-color-btn:hover, #studyPenToolbar .pen-color-picker .pen-color-btn.active {
   transform: scale(1.25);
   border-color: #ffffff;
-  box-shadow: 0 0 10px currentColor;
+  box-shadow: 0 0 12px currentColor;
 }
 :root[data-coreui-theme=light] #studyPenToolbar .pen-color-picker .pen-color-btn:hover, :root[data-coreui-theme=light] #studyPenToolbar .pen-color-picker .pen-color-btn.active {
   border-color: #0f172a;
