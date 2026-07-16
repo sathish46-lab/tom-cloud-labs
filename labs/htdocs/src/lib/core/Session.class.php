@@ -272,6 +272,11 @@ class Session
             echo '<ol id="main-breadcrumb" class="breadcrumb my-0" hx-swap-oob="true">';
             include __DIR__ . '/../../template/partials/_breadcrumb.php';
             echo '</ol>';
+
+            // Send footer data via OOB so HTMX transitions and reloads update the footer cleanly
+            if (!self::get('footer', false) && !defined('IS_HOME_PAGE') && !self::get('show_session_expired', false)) {
+                self::generateFooter(true);
+            }
             
             // Output specific page content
             if (!self::get('brokenPage', false)) {
@@ -318,7 +323,7 @@ class Session
         }
     }
 
-    public static function generateFooter()
+    public static function generateFooter($isOob = false)
     {
         include __DIR__ . '/../../template/_footer.php';
     }

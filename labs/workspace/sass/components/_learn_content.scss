@@ -97,7 +97,6 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     flex-grow: 0 !important;
     flex-shrink: 0 !important;
 }
@@ -113,17 +112,58 @@
     transition: background-color 0.15s ease;
 }
 
+/* Global Viewport & Safari WebKit Layout Optimization for Split Panel Views */
+body:has(.learn-app-wrapper),
+body:has(.split-panel-view) {
+    height: 100vh !important;
+    max-height: 100vh !important;
+    overflow: hidden !important;
+
+    .wrapper {
+        height: 100vh !important;
+        max-height: 100vh !important;
+        overflow: hidden !important;
+        /* Preserve CoreUI left sidebar offset (padding-left: var(--cui-sidebar-occupy-start)) so global sidebar never overlaps! */
+    }
+}
+
 /* SNA Individual Rounded Panel Cards Layout */
-.learn-app-wrapper {
+.learn-app-wrapper,
+.split-panel-view {
+    flex: 1 1 auto !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+
     .flex-row {
+        flex: 1 1 0% !important;
+        min-height: 0 !important;
+        min-width: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        overflow: hidden !important;
         flex-wrap: nowrap !important;
     }
 
     .split-panel {
-        display: flex;
-        flex-direction: column;
+        display: flex !important;
+        flex-direction: column !important;
         flex-grow: 0 !important;
-        flex-shrink: 0 !important;
+        flex-shrink: 1 !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+        max-height: 100% !important;
+        height: 100% !important;
+        overflow: hidden !important;
+        /* WebKit/Safari boundary optimization: skips min-content reflow pass during initial paint */
+        contain: layout size !important;
+
+        &.d-none {
+            display: none !important;
+        }
 
         > .card {
             border-radius: 24px !important;
@@ -150,6 +190,18 @@
         }
     }
 
+    #learn-panel-2 {
+        min-width: 180px !important;
+        flex-grow: 1 !important;
+        flex-shrink: 1 !important;
+    }
+
+    #learn-panel-3 {
+        min-width: 180px !important;
+        flex-grow: 0 !important;
+        flex-shrink: 0 !important;
+    }
+
     .gutter.gutter-horizontal,
     .gutter-horizontal {
         width: 4px !important;
@@ -166,6 +218,7 @@
     display: flex;
     flex-direction: column;
     min-width: 68px;
+    flex-shrink: 0 !important;
     container-type: inline-size;
     container-name: learnPanel;
     overflow: visible !important;
@@ -559,11 +612,13 @@
         flex: 1 1 auto !important;
         min-height: 0 !important;
         height: 100% !important;
+        max-height: 100% !important;
     }
 
     .footer {
         flex-shrink: 0 !important;
         margin-top: auto !important;
+        margin-bottom: 0 !important;
     }
 }
 

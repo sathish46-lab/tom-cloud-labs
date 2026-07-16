@@ -58,6 +58,18 @@ GEMINI_MODEL_NAME = 'models/gemini-flash-latest'
 print("Configuring Gemini API...", flush=True)
 genai.configure(api_key=config.get('ai_api_key'))
 
+# MongoDB Config
+print("Configuring MongoDB...", flush=True)
+try:
+    mongo_uri = config.get('database_file', 'mongodb://localhost:27017/')
+    db_name = config.get('main_db', 'tom_labs_db')
+    mongo_client = MongoClient(mongo_uri)
+    db = mongo_client[db_name]
+    mongo_client.admin.command('ping')
+    print(f"MongoDB connection established to database: {db_name}", flush=True)
+except Exception as e:
+    print(f"MongoDB connection error: {e}", flush=True)
+    db = None
 # Define Gemini Tools (9 Agent Tools — SNA Architecture)
 TOOL_API_BASE = 'http://127.0.0.1:8081/src/api/learnAI/tools'
 AI_INTERNAL_TOKEN = config.get('ai_internal_token', '')
@@ -735,7 +747,8 @@ def process_content_job(ch, method, properties, body):
         stream_to_user(ch, session_id, message_id, "", is_final=False, topic_prefix="content_stream")
 
         full_content = ""
-        response = model.generate_content(prompt, stream=True)
+        content_model = genai.GenerativeModel(GEMINI_MODEL_NAME)
+        response = content_model.generate_content(prompt, stream=True)
         for chunk in response:
             if chunk.text:
                 full_content += chunk.text

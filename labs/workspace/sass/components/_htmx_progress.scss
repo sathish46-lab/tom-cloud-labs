@@ -47,23 +47,32 @@ body.hwa-enabled .footer {
     left: 0;
     height: 3px;
     background: linear-gradient(90deg, #f7b655ff, #9cf63bff, #06d493ff);
-    z-index: 99999;
+    z-index: 999999;
     width: 0%;
     opacity: 0;
     pointer-events: none;
     box-shadow: 0 0 10px rgba(247, 185, 85, 0.7);
+    transition: none;
 }
 
 #htmx-top-progress.htmx-running {
     display: block;
     opacity: 1;
-    width: 80%;
-    transition: width 5s cubic-bezier(0.1, 0.8, 0.2, 1), opacity 150ms ease-out;
+    width: 85vw;
+    transition: width 6s cubic-bezier(0.1, 0.8, 0.2, 1), opacity 150ms ease-out;
 }
 
 #htmx-top-progress.htmx-complete {
     display: block;
-    opacity: 0;
-    width: 100%;
-    transition: width 200ms ease-out, opacity 400ms ease-out 150ms;
+    opacity: 1;
+    width: 100vw !important;
+    transition: width 250ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
+
+#htmx-top-progress.htmx-fade {
+    display: block;
+    opacity: 0;
+    width: 100vw !important;
+    transition: opacity 300ms ease-out;
+}
+

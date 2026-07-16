@@ -7,12 +7,14 @@ if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
 }
 
 $lesson_id = $_GET['id'] ?? null;
+$chapter_id = $_GET['chapter_id'] ?? null;
+
 if (!$lesson_id) {
     header("Location: /learn");
     exit;
 }
 
-Session::$pageTitle = "Lesson Details | Learn AI";
+Session::$pageTitle = $chapter_id ? "Chapter Content | Learn AI" : "Lesson Details | Learn AI";
 Session::set('is_learn_ai', true);
 // Session::set('footer', true);
 Session::addCustomJs('/js/learnAI/layout.js');
@@ -43,6 +45,32 @@ if (!Session::get('labs_list')) {
         ];
     }
     Session::set('labs_list', $labsList);
+}
+
+// HTMX-Style Partial Rendering for AJAX Requests
+if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+    $db = DatabaseConnection::getDefaultDatabase();
+    $lesson = $db->ai_lessons->findOne(['_id' => new MongoDB\BSON\ObjectId($lesson_id)]);
+    $chapter = null;
+    $chapters = [];
+    $modules = [];
+    
+    if ($chapter_id) {
+        $chapter = $db->ai_chapters->findOne(['_id' => new MongoDB\BSON\ObjectId($chapter_id)]);
+    } else {
+        $chapters = $db->ai_chapters->find(['lesson_id' => new MongoDB\BSON\ObjectId($lesson_id)], ['sort' => ['order' => 1]])->toArray();
+        foreach ($chapters as $chap) {
+            $modules[$chap['module_name']][] = $chap;
+        }
+    }
+    
+    if ($chapter_id) {
+        include __DIR__ . '/../../src/template/partials/learnAI/chapter_content.php';
+    } else {
+        include __DIR__ . '/../../src/template/partials/learnAI/course_overview.php';
+    }
+    
+    exit;
 }
 
 Session::loadMaster();

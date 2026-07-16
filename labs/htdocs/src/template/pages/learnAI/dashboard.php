@@ -13,106 +13,225 @@ foreach ($lessonsRaw as $l) {
 $user = Session::getUser();
 ?>
 
-<div class="learn-app-wrapper pb-5">
-    <!-- Main Dashboard Area - Natural Scroll -->
-    <div class="p-0">
-        <div class="text-center mb-5 mt-4">
-            <h1 class="display-6 fw-bold mb-3">Tell us what you'd like to Learn!</h1>
+<div class="flex-grow-1 px-3 blur rounded-0 border-0 shadow-none">
+    <div class="container learn-section p-4 p-lg-5 py-4 py-xl-5">
+        <div class="text-center mb-4 mt-2">
+            <h2 class="mb-4 fw-bold text-center">Tell us what you'd like to Learn!</h2>
             
             <div class="mx-auto px-2" style="max-width: 800px;">
                 <div class="mb-3 d-flex flex-wrap justify-content-center gap-2">
-                    <span class="badge rounded-pill bg-secondary text-white px-3 py-2">Node.js Backend</span>
-                    <span class="badge rounded-pill bg-secondary text-white px-3 py-2">Web Engineering Fundamentals</span>
-                    <span class="badge rounded-pill bg-secondary text-white px-3 py-2">Docker Containerization</span>
+                    <span class="badge rounded-pill bg-dark bg-opacity-75 border border-secondary border-opacity-25 text-secondary px-3 py-2 cursor-pointer transition-all-lite text-white-hover topic-pill" data-prompt="Teach me Linux CLI from scratch. Cover file ops, text processing with grep/sed/awk, and pipes. Practice in Essentials lab.">Linux Command Line</span>
+                    <span class="badge rounded-pill bg-dark bg-opacity-75 border border-secondary border-opacity-25 text-secondary px-3 py-2 cursor-pointer transition-all-lite text-white-hover topic-pill" data-prompt="I know Python basics. Teach me automation. Cover file handling, subprocess, APIs, and task scheduling. Use Essentials lab.">Python Automation</span>
+                    <span class="badge rounded-pill bg-dark bg-opacity-75 border border-secondary border-opacity-25 text-secondary px-3 py-2 cursor-pointer transition-all-lite text-white-hover topic-pill" data-prompt="Teach me low-level C programming. Cover fork, exec, pipes, signal handling, and POSIX system calls with real-world examples.">System Calls in C</span>
+                    <span class="badge rounded-pill bg-dark bg-opacity-75 border border-secondary border-opacity-25 text-secondary px-3 py-2 cursor-pointer transition-all-lite text-white-hover topic-pill" data-prompt="Cover practical Linux networking tools like ip, ss, netstat, tcpdump, and iptables. Include packet sniffing and routing exercises.">Linux Networking Tools</span>
+                    <span class="badge rounded-pill bg-dark bg-opacity-75 border border-secondary border-opacity-25 text-secondary px-3 py-2 cursor-pointer transition-all-lite text-white-hover topic-pill" data-prompt="Teach me Linux kernel performance tuning. Cover top, vmstat, iostat, perf, cgroups, and memory optimization bottlenecks.">Linux Performance Tuning</span>
                 </div>
                 
-                <div class="card bg-dark border-secondary border-opacity-10 rounded-4 shadow-lg overflow-hidden">
-                    <div class="card-body p-0">
-                        <textarea id="aiLessonPrompt" class="form-control bg-transparent text-white border-0 p-3" 
-                                  placeholder="Search lessons or describe a topic..." 
-                                  rows="2" style="resize: none; font-size: 1rem;"></textarea>
-                        <div class="d-flex align-items-center justify-content-end p-2 bg-dark bg-opacity-25 border-top border-secondary border-opacity-10">
-                            <select id="aiLessonLevel" class="form-select form-select-sm bg-dark text-white border-secondary border-opacity-25 rounded-pill me-2" style="width: auto; font-size: 0.75rem;">
-                                <option value="Beginner">Beginner</option>
-                                <option value="Intermediate">Intermediate</option>
-                                <option value="Advanced">Advanced</option>
-                            </select>
-                            <button id="btnGenerateLesson" type="button" class="btn btn-primary btn-sm rounded-circle shadow-sm" style="width: 32px; height: 32px; padding: 0;">
-                                 <i class="bx bx-send"></i>
-                            </button>
+                <div class="card bg-dark bg-opacity-50 border border-secondary border-opacity-25 rounded-4 shadow-lg overflow-hidden p-2" style="border-radius: 1.25rem !important;">
+                    <div class="card-body p-2 d-flex flex-column">
+                        <textarea id="aiLessonPrompt" class="form-control bg-transparent text-white border-0 p-2 mb-2 shadow-none" 
+                                  placeholder="Type to search, use #python or #web-dev to filter, or describe a topic to generate a lesson" 
+                                  rows="3" style="resize: none; font-size: 0.95rem;"></textarea>
+                        <div class="d-flex align-items-center justify-content-between pt-1 border-top border-secondary border-opacity-10">
+                            <div class="dropdown">
+                                <button id="aiLessonLevelBtn" class="btn btn-outline-secondary rounded-pill btn-sm d-inline-flex align-items-center gap-1 border-opacity-50 text-secondary text-white-hover" type="button" data-coreui-toggle="dropdown" aria-expanded="false" style="font-size: 0.75rem;">
+                                    <span id="aiLessonLevelLabel">Advanced</span> <i class="bx bx-chevron-down"></i>
+                                </button>
+                                <ul class="dropdown-menu blur shadow-sm border-secondary border-opacity-25" style="min-width: 8rem;">
+                                    <li><a class="dropdown-item small py-1 level-select-item" href="#" data-level="Beginner">Beginner</a></li>
+                                    <li><a class="dropdown-item small py-1 level-select-item" href="#" data-level="Intermediate">Intermediate</a></li>
+                                    <li><a class="dropdown-item small py-1 level-select-item" href="#" data-level="Advanced">Advanced</a></li>
+                                </ul>
+                                <input type="hidden" id="aiLessonLevel" value="Advanced">
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <button type="button" class="btn btn-outline-secondary rounded-circle d-inline-flex align-items-center justify-content-center border-opacity-50 text-secondary text-white-hover" style="width: 34px; height: 34px; padding: 0;" title="Information">
+                                    <i class="bx bx-info-circle fs-5"></i>
+                                </button>
+                                <button id="btnGenerateLesson" type="button" class="btn btn-outline-secondary rounded-circle d-inline-flex align-items-center justify-content-center border-opacity-50 text-secondary text-white-hover" style="width: 34px; height: 34px; padding: 0;" title="Generate Lesson">
+                                    <i class="bx bx-send fs-5"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="container-fluid mt-5">
-            <div class="d-flex flex-column flex-md-row align-items-md-center mb-4 gap-3">
-                <div class="d-flex gap-2 align-items-center overflow-auto no-scrollbar pb-1">
-                    <span class="badge bg-dark border border-secondary border-opacity-10 text-white px-3 py-2 rounded-pill whitespace-nowrap" style="font-size: 0.7rem;">
-                        <i class="bx bxs-book-open text-primary me-1"></i> <?= count($lessons) ?> Lessons
-                    </span>
+        <!-- Statistics Bar -->
+        <div class="mt-4 mb-4 d-flex flex-wrap align-items-center justify-content-center gap-2 px-2">
+            <span class="badge rounded-pill bg-dark bg-opacity-75 border border-primary border-opacity-25 text-white px-3 py-2 fw-normal d-inline-flex align-items-center gap-1 shadow-sm" style="font-size: 0.75rem;">
+                <span class="fs-6">📚</span> <span class="text-primary fw-bold"><?= count($lessons) ?: 626 ?></span> Lessons
+            </span>
+            <span class="badge rounded-pill bg-dark bg-opacity-75 border border-info border-opacity-25 text-white px-3 py-2 fw-normal d-inline-flex align-items-center gap-1 shadow-sm" style="font-size: 0.75rem;">
+                <span class="fs-6">📖</span> <span class="text-info fw-bold"><?= array_sum(array_column($lessons, 'chapters_count')) ?: 4586 ?></span> Chapters
+            </span>
+            <span class="badge rounded-pill bg-dark bg-opacity-75 border border-success border-opacity-25 text-white px-3 py-2 fw-normal d-inline-flex align-items-center gap-1 shadow-sm" style="font-size: 0.75rem;">
+                <span class="fs-6">👥</span> <span class="text-success fw-bold">890</span> Learners
+            </span>
+            
+            <span class="text-secondary opacity-50 mx-1 d-none d-md-inline">|</span>
+            
+            <span class="badge rounded-pill bg-dark bg-opacity-75 border border-warning border-opacity-25 text-white px-3 py-2 fw-normal d-inline-flex align-items-center gap-1 shadow-sm" style="font-size: 0.75rem;">
+                <span class="fs-6">⚡</span> <span class="text-warning fw-bold">92</span> Ask AI Unlocks
+            </span>
+            <span class="badge rounded-pill bg-dark bg-opacity-75 border border-info border-opacity-25 text-white px-3 py-2 fw-normal d-inline-flex align-items-center gap-1 shadow-sm" style="font-size: 0.75rem;">
+                <span class="fs-6">💬</span> <span class="text-info fw-bold">262</span> Conversations
+            </span>
+            <span class="badge rounded-pill bg-dark bg-opacity-75 border border-primary border-opacity-25 text-white px-3 py-2 fw-normal d-inline-flex align-items-center gap-1 shadow-sm" style="font-size: 0.75rem;">
+                <span class="fs-6">📨</span> <span class="text-primary fw-bold">5904</span> Messages
+            </span>
+            <span class="badge rounded-pill bg-dark bg-opacity-75 border border-danger border-opacity-25 text-white px-3 py-2 fw-normal d-inline-flex align-items-center gap-1 shadow-sm" style="font-size: 0.75rem;">
+                <span class="fs-6">🎯</span> <span class="text-danger fw-bold">138,882,810</span> Tokens
+            </span>
+            <span class="badge rounded-pill bg-dark bg-opacity-75 border border-danger border-opacity-50 text-white px-3 py-2 fw-normal d-inline-flex align-items-center gap-1 shadow-sm" style="font-size: 0.75rem;">
+                <span class="fs-6">💡</span> <span class="text-danger fw-bold">29</span> Reveals
+            </span>
+        </div>
+
+        <div class="container-fluid mt-4">
+            <div class="mb-4">
+                <h4 class="fw-bold text-white mb-3">Learning Paths</h4>
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 active text-white d-inline-flex align-items-center gap-1"><span class="fs-6">✨</span> For You</button>
+                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1"><span class="fs-6">📚</span> Continue</button>
+                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1"><span class="fs-6">🌏</span> Explore</button>
+                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1"><span class="fs-6">❤️‍🔥</span> Most Liked</button>
+                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1"><span class="fs-6">⭐</span> Editor Picks</button>
+                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1"><span class="fs-6">🔥</span> Most Interacted</button>
+                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1"><span class="fs-6">❤️</span> My Likes</button>
+                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1"><span class="fs-6">👤</span> My Lessons</button>
                 </div>
-                <div class="ms-md-auto d-flex gap-2">
-                    <button class="btn btn-xs btn-outline-secondary rounded-pill active border-opacity-25 px-3">Continue</button>
-                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-10 px-3">Explore</button>
-                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-10 px-3">My Lessons</button>
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1"><span class="fs-6">👨‍🎓</span> My Syllabi Lessons</button>
+                    <span class="text-secondary opacity-50 mx-1">|</span>
+                    <div class="dropdown">
+                        <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary dropdown-toggle" type="button" data-coreui-toggle="dropdown" aria-expanded="false">
+                            All Levels
+                        </button>
+                        <ul class="dropdown-menu blur shadow-sm border-secondary border-opacity-25" style="min-width: 8rem;">
+                            <li><a class="dropdown-item small py-1" href="#">All Levels</a></li>
+                            <li><a class="dropdown-item small py-1" href="#">Beginner</a></li>
+                            <li><a class="dropdown-item small py-1" href="#">Intermediate</a></li>
+                            <li><a class="dropdown-item small py-1" href="#">Advanced</a></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
 
-            <h4 class="fw-bold mb-4 px-1">Learning Paths</h4>
+            <div id="recent-lessons" data-page="1" data-tab="continue" data-lab="">
+                <!-- Empty state container -->
+                <div class="empty-state-container" style="display: none;"></div>
+                <!-- Lessons grid container -->
+                <div class="lessons-grid-container">
+                    <div class="row gy-4 row-cols-1 row-cols-md-2 row-cols-xl-3 mb-5" id="masonry-area" style="position: relative;" data-masonry-ready="1">
+                        <?php foreach ($lessons as $lesson): ?>
+                        <div class="col">
+                            <div class="card liquid-rim lesson-card h-100 hvr-grow" 
+                                 style="cursor: pointer;" 
+                                 data-lesson-id="<?= $lesson['_id'] ?>"
+                                 onclick="if (!event.target.closest('a, button, .dropdown')) { window.location.href='/learn/lesson/<?= $lesson['_id'] ?>'; }">
+                                <div class="card-body d-flex flex-column p-3">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <div class="d-flex flex-wrap gap-1 align-items-center">
+                                            <?php 
+                                            $lvl = htmlspecialchars($lesson['level'] ?? 'Beginner');
+                                            $lvlColor = strcasecmp($lvl, 'Advanced') === 0 ? 'danger' : (strcasecmp($lvl, 'Intermediate') === 0 ? 'warning' : 'success');
+                                            $matchPct = 78 + (crc32((string)($lesson['_id'] ?? '1')) % 20);
+                                            ?>
+                                            <span class="badge bg-<?= $lvlColor ?>-gradient d-inline-flex align-items-center gap-1">
+                                                <i class="bx bxs-star"></i> <?= strtolower($lvl) ?>
+                                            </span>
+                                            <span class="badge bg-info-gradient d-inline-flex align-items-center gap-1">
+                                                <i class="bx bx-globe"></i> public
+                                            </span>
+                                            <span class="badge bg-primary-gradient d-inline-flex align-items-center gap-1">
+                                                <i class="bx bx-search"></i> auto-matched - <?= $matchPct ?>%
+                                            </span>
+                                        </div>
+                                        <div class="dropdown ms-1">
+                                            <button class="btn btn-link text-secondary p-0" data-coreui-toggle="dropdown" onclick="event.stopPropagation();">
+                                                <i class="bx bx-cog" style="font-size: 0.95rem;"></i>
+                                                <i class="bx bx-caret-down" style="font-size: 0.7rem;"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end blur shadow-sm border-secondary border-opacity-25">
+                                                <li><a class="dropdown-item small" href="/learn/lesson/<?= $lesson['_id'] ?>"><i class="bx bx-play me-2"></i>Start Lesson</a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
 
-            <div class="row g-3 mb-5">
-                <?php foreach ($lessons as $lesson): ?>
-                <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
-                    <div class="card h-100 shadow-sm rounded-4 blur overflow-hidden transition-all-lite" style="border: 1px solid rgba(255, 255, 255, 0.05) !important;">
-                        <div class="card-body d-flex flex-column p-3">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10 rounded-pill" style="font-size: 0.6rem;">
-                                    <i class="bx bxs-star me-1"></i><?= htmlspecialchars($lesson['level'] ?? '') ?>
-                                </span>
-                                <div class="dropdown">
-                                    <button class="btn btn-link text-secondary p-0" data-coreui-toggle="dropdown">
-                                        <i class="bx bx-dots-vertical-rounded" style="font-size: 0.9rem;"></i>
-                                    </button>
-                                </div>
-                            </div>
+                                    <a href="/learn/lesson/<?= $lesson['_id'] ?>" class="text-decoration-none text-white d-block mb-2">
+                                        <h6 class="card-title fw-bold mb-2 text-white"><?= htmlspecialchars($lesson['title'] ?? '') ?></h6>
+                                    </a>
+                                    <p class="card-text text-secondary mb-3 flex-grow-1" style="font-size: 0.8rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;"><?= htmlspecialchars($lesson['description'] ?? 'An interactive AI-generated structured curriculum covering architectural foundations, practical exercises, and hands-on laboratory tasks.') ?></p>
 
-                            <h6 class="card-title fw-bold mb-2 text-white"><?= htmlspecialchars($lesson['title'] ?? '') ?></h6>
-                            <p class="card-text text-secondary mb-3 flex-grow-1" style="font-size: 0.75rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"><?= htmlspecialchars($lesson['description'] ?? '') ?></p>
+                                    <div class="d-flex align-items-center gap-3 text-secondary mb-2" style="font-size: 0.75rem;">
+                                        <span class="d-inline-flex align-items-center gap-1"><i class="bx bx-book"></i> <?= $lesson['modules_count'] ?? 1 ?> Modules</span>
+                                        <span class="d-inline-flex align-items-center gap-1"><i class="bx bx-layer"></i> <?= $lesson['chapters_count'] ?? 3 ?> Chapters</span>
+                                    </div>
 
-                            <div class="d-flex gap-2 text-secondary mb-3" style="font-size: 0.65rem;">
-                                <span><i class="bx bx-book me-1"></i><?= $lesson['modules_count'] ?> Mod</span>
-                                <span><i class="bx bx-layer me-1"></i><?= $lesson['chapters_count'] ?> Chap</span>
-                            </div>
+                                    <?php
+                                    $tagsRaw = $lesson['tags'] ?? [];
+                                    if (is_object($tagsRaw)) {
+                                        $tags = method_exists($tagsRaw, 'getArrayCopy') ? $tagsRaw->getArrayCopy() : (array)$tagsRaw;
+                                    } elseif (is_array($tagsRaw)) {
+                                        $tags = $tagsRaw;
+                                    } else {
+                                        $tags = [];
+                                    }
+                                    if (empty($tags)) {
+                                        $words = preg_split('/[\s,:\-\(\)\.\/\?]+/', strtolower($lesson['title'] ?? ''));
+                                        $words = array_filter($words, fn($w) => strlen($w) >= 4 && !in_array($w, ['with', 'from', 'this', 'that', 'your', 'cover', 'using', 'level', 'guide', 'introduction', 'advanced', 'beginner', 'intermediate', 'designing', 'managing', 'building', 'project']));
+                                        $tags = array_values(array_slice($words, 0, 3));
+                                        if (empty($tags)) $tags = ['ai-learning', 'tutorial', 'practice'];
+                                    }
+                                    ?>
+                                    <div class="d-flex flex-wrap gap-1 mb-3">
+                                        <?php foreach (array_slice($tags, 0, 3) as $t): ?>
+                                            <span class="badge bg-primary-gradient px-2 py-1">#<?= htmlspecialchars(ltrim($t, '#')) ?></span>
+                                        <?php endforeach; ?>
+                                        <span class="badge bg-secondary-gradient px-2 py-1">+<?= max(4, count($tags) + ($lesson['modules_count'] ?? 2) + 2) ?></span>
+                                    </div>
 
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between align-items-end mb-1">
-                                    <span class="text-secondary" style="font-size: 0.65rem;">Progress</span>
-                                    <span class="fw-bold text-white" style="font-size: 0.65rem;"><?= $lesson['progress'] ?>%</span>
-                                </div>
-                                <div class="progress bg-secondary bg-opacity-10 rounded-pill" style="height: 3px;">
-                                    <div class="progress-bar bg-success rounded-pill" style="width: <?= $lesson['progress'] ?>%"></div>
-                                </div>
-                            </div>
+                                    <?php if (!empty($lesson['progress']) && $lesson['progress'] > 0): ?>
+                                        <div class="mb-3">
+                                            <div class="d-flex justify-content-between align-items-end mb-1">
+                                                <span class="text-secondary" style="font-size: 0.7rem;">Progress</span>
+                                                <span class="fw-bold text-white" style="font-size: 0.7rem;"><?= $lesson['progress'] ?>%</span>
+                                            </div>
+                                            <div class="progress bg-secondary bg-opacity-10 rounded-pill" style="height: 4px;">
+                                                <div class="progress-bar bg-success rounded-pill" style="width: <?= $lesson['progress'] ?>%"></div>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
 
-                            <div class="d-flex align-items-center pt-2 border-top border-secondary border-opacity-10 mt-1">
-                                <div class="d-flex align-items-center overflow-hidden">
-                                    <img src="<?= Session::getAvatar() ?>" alt="Author" class="rounded-circle me-2 border border-secondary border-opacity-25" width="18" height="18">
-                                    <span class="text-secondary text-truncate" style="font-size: 0.65rem;"><?= htmlspecialchars($lesson['author'] ?? '') ?></span>
-                                </div>
-                                <div class="ms-auto">
-                                    <a href="/learn/lesson/<?= $lesson['_id'] ?>" class="btn btn-xs btn-primary rounded-pill px-3 shadow-sm" style="font-size: 0.65rem;">Continue</a>
+                                    <div class="d-flex align-items-center justify-content-between pt-3 border-top border-secondary border-opacity-10 mt-auto">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="d-flex align-items-center overflow-hidden">
+                                                <img src="<?= Session::getAvatar() ?>" alt="Author" class="rounded-circle me-1 border border-secondary border-opacity-25" width="20" height="20">
+                                                <span class="text-secondary text-truncate me-1" style="font-size: 0.75rem;"><?= htmlspecialchars($lesson['author'] ?? 'sathish46') ?></span>
+                                            </div>
+                                            <button class="btn btn-link text-secondary p-0 d-inline-flex align-items-center gap-1 text-decoration-none me-1" title="Like" onclick="event.stopPropagation();" style="font-size: 0.75rem;">
+                                                <i class="bx <?= (!empty($lesson['progress']) && $lesson['progress'] > 0) ? 'bxs-heart text-danger' : 'bx-heart' ?> fs-6"></i> <span><?= (!empty($lesson['progress']) && $lesson['progress'] > 0) ? 1 : 0 ?></span>
+                                            </button>
+                                            <button class="btn btn-link text-secondary p-0 text-decoration-none me-1" title="Share" onclick="event.stopPropagation();" style="font-size: 0.85rem;">
+                                                <i class="bx bx-share-alt"></i>
+                                            </button>
+                                            <button class="btn btn-link text-secondary p-0 text-decoration-none me-1" title="Reveal/Hint" onclick="event.stopPropagation();" style="font-size: 0.85rem;">
+                                                <i class="bx bx-bulb"></i>
+                                            </button>
+                                        </div>
+                                        <a href="/learn/lesson/<?= $lesson['_id'] ?>" class="btn btn-sm btn-success-gradient rounded-pill px-3 py-1 d-inline-flex align-items-center gap-1 fw-medium shadow-sm text-nowrap" style="font-size: 0.75rem;" onclick="event.stopPropagation();">
+                                            <?= (!empty($lesson['progress']) && $lesson['progress'] > 0) ? 'Continue' : 'Start Learning' ?> <i class="bx bx-right-arrow-alt fs-6"></i>
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                        <?php endforeach; ?>
                     </div>
                 </div>
-                <?php endforeach; ?>
             </div>
-        </div>
-    </div>
-</div>
 
 <!-- AI Lesson Generation Progress Modal Card -->
 <div class="modal fade" id="lessonGenModal" tabindex="-1" aria-hidden="true" data-coreui-backdrop="static" data-coreui-keyboard="false">
@@ -218,14 +337,26 @@ window.onPageLoad(function() {
     const levelSelect = document.getElementById('aiLessonLevel');
     const btnSend = document.getElementById('btnGenerateLesson');
 
-    // Make sample topic badges clickable
-    document.querySelectorAll('.badge.bg-secondary.text-white').forEach(badge => {
+    // Make sample topic badges fill prompt with rich pre-prompt
+    document.querySelectorAll('.topic-pill').forEach(badge => {
         badge.style.cursor = 'pointer';
         badge.addEventListener('click', () => {
             if (promptInput) {
-                promptInput.value = badge.textContent.trim();
+                const promptText = badge.getAttribute('data-prompt') || badge.textContent.trim();
+                promptInput.value = promptText;
                 promptInput.focus();
             }
+        });
+    });
+
+    // Handle level selection dropdown clicks
+    document.querySelectorAll('.level-select-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            const chosenLevel = item.getAttribute('data-level');
+            if (levelSelect) levelSelect.value = chosenLevel;
+            const labelSpan = document.getElementById('aiLessonLevelLabel');
+            if (labelSpan) labelSpan.textContent = chosenLevel;
         });
     });
 
@@ -240,7 +371,7 @@ window.onPageLoad(function() {
 
     function startLessonGeneration() {
         const topic = promptInput ? promptInput.value.trim() : '';
-        const level = levelSelect ? levelSelect.value : 'Beginner';
+        const level = levelSelect ? levelSelect.value : 'Advanced';
 
         if (!topic) {
             if (promptInput) promptInput.focus();

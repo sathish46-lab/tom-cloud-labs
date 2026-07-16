@@ -21,4 +21,10 @@ $userId = (int)$user->getUserId();
 $lessonId = $_GET['lesson_id'] ?? '';
 $chapterId = $_GET['chapter_id'] ?? '';
 
+// 3. Return empty if no chapter is selected (Overview Page)
+if (empty($chapterId)) {
+    echo '';
+    exit;
+}
+
 include __DIR__ . '/../../template/partials/learnAI/chat_history.php';

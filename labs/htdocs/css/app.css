@@ -16895,6 +16895,9 @@ body.hwa-enabled .difficulty-modes {
     opacity: 0.8;
   }
 }
+/* ========================================================================
+   Blur & Glass Panel Adjustments (No Curves or Seam Lines on Outer Containers)
+   ======================================================================== */
 #learn-panel-3 .container .card .card-body,
 #learn-panel-3 .container .blur .card-body,
 #roadmap-panel-right .container .card .card-body,
@@ -16910,6 +16913,17 @@ body.hwa-enabled .difficulty-modes {
   border-bottom-right-radius: var(--cui-border-radius) !important;
   border-bottom-left-radius: var(--cui-border-radius) !important;
   position: relative;
+}
+
+/* Ensure outer full-bleed blur layers (#main-content or #main level) have no top curve, gap, or seam lines */
+#main-content > .blur,
+#main > .blur,
+.body > .blur,
+.wrapper > .body > #main-content > .blur {
+  border-radius: 0 !important;
+  border: none !important;
+  border-top: none !important;
+  box-shadow: none !important;
 }
 
 #session-expired-overlay {
@@ -20098,7 +20112,6 @@ body.hwa-enabled[data-coreui-theme=light] .sidebar-inner-layer {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   flex-grow: 0 !important;
   flex-shrink: 0 !important;
 }
@@ -20114,17 +20127,62 @@ body.hwa-enabled[data-coreui-theme=light] .sidebar-inner-layer {
   transition: background-color 0.15s ease;
 }
 
+/* Global Viewport & Safari WebKit Layout Optimization for Split Panel Views */
+body:has(.learn-app-wrapper),
+body:has(.split-panel-view) {
+  height: 100vh !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
+}
+body:has(.learn-app-wrapper) .wrapper,
+body:has(.split-panel-view) .wrapper {
+  height: 100vh !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
+  /* Preserve CoreUI left sidebar offset (padding-left: var(--cui-sidebar-occupy-start)) so global sidebar never overlaps! */
+}
+
 /* SNA Individual Rounded Panel Cards Layout */
-.learn-app-wrapper .flex-row {
+.learn-app-wrapper,
+.split-panel-view {
+  flex: 1 1 auto !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+}
+.learn-app-wrapper .flex-row,
+.split-panel-view .flex-row {
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
   flex-wrap: nowrap !important;
 }
-.learn-app-wrapper .split-panel {
-  display: flex;
-  flex-direction: column;
+.learn-app-wrapper .split-panel,
+.split-panel-view .split-panel {
+  display: flex !important;
+  flex-direction: column !important;
   flex-grow: 0 !important;
-  flex-shrink: 0 !important;
+  flex-shrink: 1 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
+  /* WebKit/Safari boundary optimization: skips min-content reflow pass during initial paint */
+  contain: layout size !important;
 }
-.learn-app-wrapper .split-panel > .card {
+.learn-app-wrapper .split-panel.d-none,
+.split-panel-view .split-panel.d-none {
+  display: none !important;
+}
+.learn-app-wrapper .split-panel > .card,
+.split-panel-view .split-panel > .card {
   border-radius: 24px !important;
   overflow: hidden !important;
   height: 100%;
@@ -20133,19 +20191,35 @@ body.hwa-enabled[data-coreui-theme=light] .sidebar-inner-layer {
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
 }
-body.hwa-enabled .learn-app-wrapper .split-panel > .card {
+body.hwa-enabled .learn-app-wrapper .split-panel > .card,
+body.hwa-enabled .split-panel-view .split-panel > .card {
   backdrop-filter: saturate(200%) blur(18px);
   -webkit-backdrop-filter: saturate(200%) blur(18px);
 }
-body.hwa-disabled .learn-app-wrapper .split-panel > .card {
+body.hwa-disabled .learn-app-wrapper .split-panel > .card,
+body.hwa-disabled .split-panel-view .split-panel > .card {
   background: var(--cui-card-bg-solid, var(--cui-body-bg)) !important;
   border-color: rgba(0, 0, 0, 0.08) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
 }
+.learn-app-wrapper #learn-panel-2,
+.split-panel-view #learn-panel-2 {
+  min-width: 180px !important;
+  flex-grow: 1 !important;
+  flex-shrink: 1 !important;
+}
+.learn-app-wrapper #learn-panel-3,
+.split-panel-view #learn-panel-3 {
+  min-width: 180px !important;
+  flex-grow: 0 !important;
+  flex-shrink: 0 !important;
+}
 .learn-app-wrapper .gutter.gutter-horizontal,
-.learn-app-wrapper .gutter-horizontal {
+.learn-app-wrapper .gutter-horizontal,
+.split-panel-view .gutter.gutter-horizontal,
+.split-panel-view .gutter-horizontal {
   width: 4px !important;
   margin: 0 !important;
   background: transparent !important;
@@ -20159,6 +20233,7 @@ body.hwa-disabled .learn-app-wrapper .split-panel > .card {
   display: flex;
   flex-direction: column;
   min-width: 68px;
+  flex-shrink: 0 !important;
   container-type: inline-size;
   container-name: learnPanel;
   overflow: visible !important;
@@ -20518,10 +20593,12 @@ body.hwa-disabled .learn-app-wrapper .split-panel > .card {
   flex: 1 1 auto !important;
   min-height: 0 !important;
   height: 100% !important;
+  max-height: 100% !important;
 }
 .wrapper:has(.stable-app-view, .split-panel-view) .footer {
   flex-shrink: 0 !important;
   margin-top: auto !important;
+  margin-bottom: 0 !important;
 }
 
 /* Ensure Panel 1 (collapsible sidebar) scrolls cleanly all the way to the bottom lab section without clipping */
@@ -20854,6 +20931,133 @@ html[data-coreui-theme=dark] .unified-input-box .token-ribbon .token-metrics .pr
 }
 .token-stat:hover {
   color: #e4e4e7;
+}
+
+/* ========================================================================
+   LearnAI Dashboard & Lesson Cards — Exact Premium Glass & Gradient Styles
+   ======================================================================== */
+.lesson-keyword-tag {
+  background: rgba(102, 126, 234, 0.15) !important;
+  color: #667eea !important;
+  border: 1px solid rgba(102, 126, 234, 0.4) !important;
+  font-size: 0.7rem !important;
+  font-weight: 500 !important;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 50px !important;
+}
+
+.toggle-like-btn {
+  background: transparent !important;
+  transition: transform 0.2s ease;
+}
+.toggle-like-btn:hover {
+  transform: scale(1.1);
+}
+
+.share-lesson-btn .icon {
+  color: var(--cui-body-color);
+  opacity: 0.6;
+}
+
+.share-lesson-btn:hover .icon {
+  opacity: 1;
+}
+
+.lesson-card {
+  transition: transform 0.2s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.2s ease !important;
+}
+.lesson-card .lesson-tag {
+  background: var(--cui-body-bg);
+  color: var(--cui-body-color);
+  opacity: 0.6;
+  font-size: 0.7rem;
+  padding: 0.25rem 0.5rem;
+}
+.lesson-card .dropdown-toggle .icon {
+  color: var(--cui-body-color);
+  opacity: 0.7;
+}
+.lesson-card .dropdown-toggle:hover .icon {
+  opacity: 1;
+}
+.lesson-card .dropdown-toggle::after {
+  filter: var(--cui-accordion-button-icon-filter, none);
+}
+
+/* Exact Tom Labs Dark Glass Liquid-Rim Card Styling for Lesson Cards */
+[data-coreui-theme=dark] .card.liquid-rim.lesson-card,
+html[data-coreui-theme=dark] .card.liquid-rim.lesson-card {
+  position: relative !important;
+  background: #0d1117 !important;
+  box-shadow: rgba(0, 0, 0, 0.45) 0 12px 28px 0, rgba(0, 0, 0, 0.3) 0 2px 4px 0, rgba(255, 255, 255, 0.08) 0 0 24px 0 !important;
+  border: 0 !important;
+  border-radius: 1.2rem !important;
+}
+[data-coreui-theme=dark] .card.liquid-rim.lesson-card::after,
+html[data-coreui-theme=dark] .card.liquid-rim.lesson-card::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  pointer-events: none !important;
+  border-radius: inherit !important;
+  z-index: 5 !important;
+  padding: 1px !important;
+  background: transparent !important;
+  will-change: backdrop-filter;
+  contain: strict;
+  backdrop-filter: saturate(400%) brightness(1.2) !important;
+  -webkit-backdrop-filter: saturate(400%) brightness(1.2) !important;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0) !important;
+  mask-composite: exclude !important;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0) !important;
+  -webkit-mask-composite: xor !important;
+  box-shadow: rgba(255, 255, 255, 0.14) 0 0 0 1px inset, rgba(255, 255, 255, 0.22) 0 1px 0 0 inset !important;
+}
+
+/* Standardized Gradient Badges matching Tom Labs exactly */
+.badge.bg-success-gradient {
+  background: linear-gradient(135deg, #27ae60, #2ecc71) !important;
+  color: #fff !important;
+}
+.badge.bg-info-gradient {
+  background: linear-gradient(135deg, #0984e3, #74b9ff) !important;
+  color: #fff !important;
+}
+.badge.bg-primary-gradient {
+  background: linear-gradient(135deg, #6c5ce7, #a29bfe) !important;
+  color: #fff !important;
+}
+.badge.bg-danger-gradient {
+  background: linear-gradient(135deg, #e74c3c, #ff7675) !important;
+  color: #fff !important;
+}
+.badge.bg-warning-gradient {
+  background: linear-gradient(135deg, #f1c40f, #fdcb6e) !important;
+  color: #000 !important;
+}
+[data-coreui-theme=dark] .badge.bg-warning-gradient {
+  color: #fff !important;
+}
+.badge.bg-secondary-gradient {
+  background: linear-gradient(135deg, #a4b0be, #f1f2f6) !important;
+  color: #2f3542 !important;
+}
+[data-coreui-theme=dark] .badge.bg-secondary-gradient {
+  color: #fff !important;
+}
+
+.btn-success-gradient {
+  background: linear-gradient(135deg, #27ae60, #2ecc71) !important;
+  border: none !important;
+  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3) !important;
+  transition: all 0.2s ease !important;
+}
+.btn-success-gradient:hover {
+  background: linear-gradient(135deg, #2ecc71, #27ae60) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(39, 174, 96, 0.45) !important;
+  color: #fff !important;
 }
 
 html {

@@ -1,4 +1,6 @@
-
+/* ========================================================================
+   Blur & Glass Panel Adjustments (No Curves or Seam Lines on Outer Containers)
+   ======================================================================== */
 
 #learn-panel-3 .container .card .card-body,
 #learn-panel-3 .container .blur .card-body,
@@ -15,4 +17,15 @@
     border-bottom-right-radius: var(--cui-border-radius) !important;
     border-bottom-left-radius: var(--cui-border-radius) !important;
     position: relative;
+}
+
+/* Ensure outer full-bleed blur layers (#main-content or #main level) have no top curve, gap, or seam lines */
+#main-content > .blur,
+#main > .blur,
+.body > .blur,
+.wrapper > .body > #main-content > .blur {
+    border-radius: 0 !important;
+    border: none !important;
+    border-top: none !important;
+    box-shadow: none !important;
 }

@@ -42,16 +42,30 @@ module.exports = function (grunt) {
     obfuscator: {
       options: {
         banner: "",
-        debugProtection: true,
-        debugProtectionInterval: true,
-        controlFlowFlattening: true,
-        controlFlowFlatteningThreshold: 1,
         disableConsoleOutput: true,
         mangle: true,
-        selfDefending: true,
+        compact: true,
+        simplify: true,
         domainLock: ["labs.tomweb.fun", "labsbeta.tomweb.fun"],
       },
+      fast: {
+        options: {
+          controlFlowFlattening: false,
+          debugProtection: false,
+          selfDefending: false,
+        },
+        files: {
+          "../../htdocs/js/app.o.js": ["../../htdocs/js/app.js"],
+        },
+      },
       build: {
+        options: {
+          debugProtection: true,
+          debugProtectionInterval: true,
+          controlFlowFlattening: true,
+          controlFlowFlatteningThreshold: 0.25,
+          selfDefending: true,
+        },
         files: {
           "../../htdocs/js/app.o.js": ["../../htdocs/js/app.js"],
         },
@@ -102,7 +116,7 @@ module.exports = function (grunt) {
           "Gruntfile.js",
           "../js/**/*.js",
         ],
-        tasks: ["concat", "secureSourceMaps", "uglify:build", "obfuscator"],
+        tasks: ["concat", "secureSourceMaps", "uglify:build", "obfuscator:fast"],
       },
       css: {
         files: [

@@ -126,6 +126,27 @@ try {
             const appWrapper = document.querySelector('.learn-app-wrapper');
             if (!appWrapper) return;
 
+            // Enforce Panel 3 visibility based on whether we are in a chapter or overview
+            var currentChapterInput = document.getElementById('currentChapterId');
+            var panel3El = document.getElementById('learn-panel-3');
+            var resizer2El = document.querySelector('.gutter-horizontal[data-target="learn-panel-3"]');
+            
+            if (currentChapterInput && !currentChapterInput.value) {
+                // No chapter selected (Course Overview) -> Hide AI Assist Panel
+                if (panel3El) {
+                    panel3El.classList.add('d-none');
+                    panel3El.classList.remove('d-flex');
+                }
+                if (resizer2El) resizer2El.classList.add('d-none');
+            } else if (currentChapterInput && currentChapterInput.value) {
+                // Chapter selected -> Show AI Assist Panel
+                if (panel3El) {
+                    panel3El.classList.remove('d-none');
+                    panel3El.classList.add('d-flex');
+                }
+                if (resizer2El) resizer2El.classList.remove('d-none');
+            }
+
             this.restorePaneWidths();
             this.adjustVHE(appWrapper);
             this.initAIChat();
@@ -570,17 +591,21 @@ try {
                 LearnApp._processChatHistoryHtml();
             } else {
                 const lessonId = document.getElementById('currentLessonId')?.value || '';
-                chatHistory.innerHTML = '<div class="text-center p-3 text-secondary small"><i class="bx bx-loader-alt bx-spin"></i> Loading chat history...</div>';
-                
-                fetch(`/api/learnAI/history?lesson_id=${lessonId}&chapter_id=${chapterId}`)
-                    .then(r => r.text())
-                    .then(html => {
-                        chatHistory.innerHTML = html;
-                        LearnApp._processChatHistoryHtml();
-                    })
-                    .catch(err => {
-                        chatHistory.innerHTML = '<div class="text-center p-3 text-danger small">Failed to load chat history.</div>';
-                    });
+                if (!chapterId) {
+                    chatHistory.innerHTML = '';
+                } else {
+                    chatHistory.innerHTML = '<div class="text-center p-3 text-secondary small"><i class="bx bx-loader-alt bx-spin"></i> Loading chat history...</div>';
+                    
+                    fetch(`/api/learnAI/history?lesson_id=${lessonId}&chapter_id=${chapterId}`)
+                        .then(r => r.text())
+                        .then(html => {
+                            chatHistory.innerHTML = html;
+                            LearnApp._processChatHistoryHtml();
+                        })
+                        .catch(err => {
+                            chatHistory.innerHTML = '<div class="text-center p-3 text-danger small">Failed to load chat history.</div>';
+                        });
+                }
             }
 
             const userSessionId = 'sess_' + Math.random().toString(36).substr(2, 9);
@@ -1000,6 +1025,7 @@ try {
                         } else if (payload && payload.type === 'stream_end') {
                             if (statusDiv) statusDiv.classList.add('d-none');
                             this.renderMarkdownWithHighlighting(accumulatedMd, container);
+                            contentSocket.disconnect();
                         }
                     } catch (e) {
                         console.error('Content stream error:', e);
@@ -1063,11 +1089,11 @@ try {
             this._chapterNavInitialized = true;
 
             document.addEventListener('click', (e) => {
-                const btn = e.target.closest('.learn-accordion-btn');
+                const btn = e.target.closest('.learn-accordion-btn, .ajax-chapter-load');
                 if (!btn) return;
 
-                const container = document.getElementById('chapterContentContainer');
-                if (!container) return; // If on course_view.php, let default page navigation happen
+                const panel2Card = document.querySelector('#learn-panel-2 .card');
+                if (!panel2Card) return; // Something is wrong with the layout, fallback
 
                 e.preventDefault();
                 e.stopPropagation();
@@ -1076,104 +1102,185 @@ try {
                 let lessonId = btn.getAttribute('data-lesson-id');
                 const href = btn.getAttribute('href') || '';
 
-                if (!chapterId && href) {
-                    const chMatch = href.match(/chapter\/([^\/?#]+)/);
-                    if (chMatch) chapterId = chMatch[1];
+                if (!href) return;
+                
+                LearnApp.navigateTo(href, chapterId, lessonId, btn);
+            });
+            
+            // Handle Browser Back/Forward buttons
+            window.addEventListener('popstate', (e) => {
+                if (window.location.pathname.includes('/learn/lesson/')) {
+                    LearnApp.navigateTo(window.location.pathname, null, null, null, true);
                 }
-                if (!lessonId && href) {
-                    const lsMatch = href.match(/lesson\/([^\/?#]+)/);
-                    if (lsMatch) lessonId = lsMatch[1];
+            });
+        },
+    
+    navigateTo: function(href, chapterId, lessonId, btn, isPopState) {
+        btn = btn || null;
+        isPopState = isPopState || false;
+
+        if (!chapterId) {
+            var chMatch = href.match(/chapter\/([^\/?#]+)/);
+            if (chMatch) chapterId = chMatch[1];
+        }
+        if (!lessonId) {
+            var lsMatch = href.match(/lesson\/([^\/?#]+)/);
+            if (lsMatch) lessonId = lsMatch[1];
+        }
+
+        var currentChapterInput = document.getElementById('currentChapterId');
+        if (currentChapterInput && currentChapterInput.value === (chapterId || '') && chapterId !== null) {
+            return; // Already on this chapter
+        }
+        
+        var isOverview = !chapterId;
+
+        // Update left sidebar active states
+        if (isOverview) {
+            // Clear all sidebar states
+            document.querySelectorAll('.learn-accordion-btn').forEach(function(a) {
+                a.classList.remove('active', 'bg-primary', 'bg-opacity-25', 'text-white', 'fw-bold');
+                a.classList.add('text-secondary');
+                var icon = a.querySelector('.icon');
+                if (icon) {
+                    icon.classList.remove('bxs-check-circle', 'text-primary');
+                    icon.classList.add('bx-check-circle', 'opacity-50');
                 }
-
-                const currentChapterInput = document.getElementById('currentChapterId');
-                if (!chapterId || (currentChapterInput && currentChapterInput.value === chapterId)) {
-                    return;
+                var text = a.querySelector('.chapter-title-text');
+                if (text) {
+                    text.classList.remove('text-white');
+                    text.classList.add('text-secondary');
                 }
-
-                // Update left sidebar active states
-                document.querySelectorAll('.learn-accordion-btn').forEach((a) => {
-                    a.classList.remove('active', 'bg-primary', 'bg-opacity-25', 'text-white', 'fw-bold');
-                    a.classList.add('text-secondary');
-                    const icon = a.querySelector('.icon');
-                    if (icon) {
-                        icon.classList.remove('bxs-check-circle', 'text-primary');
-                        icon.classList.add('bx-check-circle', 'opacity-50');
-                    }
-                    const text = a.querySelector('.chapter-title-text');
-                    if (text) {
-                        text.classList.remove('text-white');
-                        text.classList.add('text-secondary');
-                    }
-                });
-
-                btn.classList.add('active', 'bg-primary', 'bg-opacity-25', 'text-white', 'fw-bold');
-                btn.classList.remove('text-secondary');
-                const clickedIcon = btn.querySelector('.icon');
-                if (clickedIcon) {
-                    clickedIcon.classList.remove('bx-check-circle', 'opacity-50');
-                    clickedIcon.classList.add('bxs-check-circle', 'text-primary');
+            });
+        } else if (btn && btn.classList.contains('learn-accordion-btn')) {
+            document.querySelectorAll('.learn-accordion-btn').forEach(function(a) {
+                a.classList.remove('active', 'bg-primary', 'bg-opacity-25', 'text-white', 'fw-bold');
+                a.classList.add('text-secondary');
+                var icon = a.querySelector('.icon');
+                if (icon) {
+                    icon.classList.remove('bxs-check-circle', 'text-primary');
+                    icon.classList.add('bx-check-circle', 'opacity-50');
                 }
-                const clickedText = btn.querySelector('.chapter-title-text');
-                if (clickedText) {
-                    clickedText.classList.remove('text-secondary');
-                    clickedText.classList.add('text-white');
+                var text = a.querySelector('.chapter-title-text');
+                if (text) {
+                    text.classList.remove('text-white');
+                    text.classList.add('text-secondary');
                 }
+            });
 
-                if (href && window.history && window.history.pushState) {
-                    window.history.pushState(null, '', href);
-                }
+            btn.classList.add('active', 'bg-primary', 'bg-opacity-25', 'text-white', 'fw-bold');
+            btn.classList.remove('text-secondary');
+            var clickedIcon = btn.querySelector('.icon');
+            if (clickedIcon) {
+                clickedIcon.classList.remove('bx-check-circle', 'opacity-50');
+                clickedIcon.classList.add('bxs-check-circle', 'text-primary');
+            }
+            var clickedText = btn.querySelector('.chapter-title-text');
+            if (clickedText) {
+                clickedText.classList.remove('text-secondary');
+                clickedText.classList.add('text-white');
+            }
+        }
 
-                if (currentChapterInput) currentChapterInput.value = chapterId;
-                const currentLessonInput = document.getElementById('currentLessonId');
-                if (currentLessonInput && lessonId) currentLessonInput.value = lessonId;
+        if (!isPopState && href && window.history && window.history.pushState) {
+            window.history.pushState(null, '', href);
+        }
 
-                const btnGenerate = document.getElementById('btnGenerateContent');
-                if (btnGenerate) btnGenerate.setAttribute('data-chapter-id', chapterId);
+        if (currentChapterInput) currentChapterInput.value = chapterId || '';
+        var currentLessonInput = document.getElementById('currentLessonId');
+        if (currentLessonInput && lessonId) currentLessonInput.value = lessonId;
 
-                const newTitle = btn.getAttribute('data-chapter-title') || clickedText?.innerText || 'Chapter Content';
-                const newModName = btn.getAttribute('data-module-name') || '';
-                const titleEl = document.getElementById('currentChapterTitle');
-                if (titleEl) titleEl.innerText = newTitle;
-                const modEl = document.getElementById('currentChapterModuleName');
-                if (modEl) modEl.innerText = newModName;
+        // Toggle Panel 3 visibility
+        var panel3El = document.getElementById('learn-panel-3');
+        var resizer2El = document.querySelector('.gutter-horizontal[data-target="learn-panel-3"]');
+        
+        if (isOverview) {
+            if (panel3El) {
+                panel3El.classList.add('d-none');
+                panel3El.classList.remove('d-flex');
+            }
+            if (resizer2El) resizer2El.classList.add('d-none');
+        } else {
+            if (panel3El) {
+                panel3El.classList.remove('d-none');
+                panel3El.classList.add('d-flex');
+            }
+            if (resizer2El) resizer2El.classList.remove('d-none');
+        }
+        
+        this.restorePaneWidths();
 
-                container.innerHTML = `<div class="text-center py-5 my-5">
-                    <div class="spinner-border text-primary mb-3" role="status" style="width: 2.5rem; height: 2.5rem;"></div>
-                    <p class="text-secondary small">Loading chapter material...</p>
-                </div>`;
-                container.setAttribute('data-raw-md', '');
+        var btnGenerate = document.getElementById('btnGenerateContent');
+        if (btnGenerate) btnGenerate.setAttribute('data-chapter-id', chapterId);
 
-                fetch(`/api/learnAI/content_fetch?chapter_id=${encodeURIComponent(chapterId)}`, {
-                    credentials: 'include'
-                })
-                    .then(res => res.text())
-                    .then(html => {
-                        container.innerHTML = html;
-                        container.setAttribute('data-raw-md', '');
+        var panel2Card = document.querySelector('#learn-panel-2 .card');
+        if (panel2Card) {
+            panel2Card.innerHTML = '<div class="text-center py-5 my-5 w-100 h-100 d-flex flex-column justify-content-center align-items-center"><div class="spinner-border text-primary mb-3" role="status" style="width: 2.5rem; height: 2.5rem;"></div><p class="text-secondary small">Loading chapter...</p></div>';
+        }
 
-                        const rawFallback = container.querySelector('.raw-markdown-fallback');
+        var self = this;
+        // Fetch the partial HTML representation of Panel 2
+        fetch(href, { 
+            credentials: 'include',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'text/html'
+            }
+        })
+            .then(function(res) { return res.text(); })
+            .then(function(html) {
+                if (html && panel2Card) {
+                    panel2Card.innerHTML = html;
+                    
+                    // Re-initialize highlighting for the newly inserted content
+                    var container = document.getElementById('chapterContentContainer');
+                    if (container) {
+                        var rawFallback = container.querySelector('.raw-markdown-fallback');
                         if (rawFallback) {
-                            this.renderMarkdownWithHighlighting(rawFallback.innerText, container);
+                            self.renderMarkdownWithHighlighting(rawFallback.innerText, container);
                         } else {
                             if (typeof hljs !== 'undefined') {
-                                container.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
+                                container.querySelectorAll('pre code').forEach(function(el) { hljs.highlightElement(el); });
                             }
-                            this._bindCopyButtons(container);
-                            const btnEmpty = container.querySelector('.btn-trigger-generate');
+                            self._bindCopyButtons(container);
+                            var btnEmpty = container.querySelector('.btn-trigger-generate');
                             if (btnEmpty) {
-                                btnEmpty.addEventListener('click', () => {
-                                    this.triggerGenerate(chapterId || document.getElementById('currentChapterId')?.value);
+                                btnEmpty.addEventListener('click', function() {
+                                    self.triggerGenerate(chapterId || document.getElementById('currentChapterId').value);
                                 });
                             }
                         }
-                    })
-                    .catch(err => {
-                        console.error('Failed to fetch chapter content:', err);
-                        this._renderEmptyPrompt(container, chapterId);
-                    });
+                    }
+                    
+                    // Refresh AI Chat History ONLY if it's a chapter
+                    var chatHistory = document.getElementById('aiChatHistory');
+                    if (chatHistory) {
+                        if (isOverview) {
+                            chatHistory.innerHTML = ''; // Clear history on overview
+                        } else {
+                            chatHistory.innerHTML = '<div class="text-center p-3 text-secondary small"><i class="bx bx-loader-alt bx-spin"></i> Loading chat history...</div>';
+                            fetch('/api/learnAI/history?lesson_id=' + lessonId + '&chapter_id=' + chapterId)
+                                .then(function(r) { return r.text(); })
+                                .then(function(chatHtml) {
+                                    chatHistory.innerHTML = chatHtml;
+                                    self._processChatHistoryHtml();
+                                });
+                        }
+                    }
+                    
+                    // Reset AI token cache badge
+                    var cacheBadge = document.getElementById('aiCachePercBadge');
+                    if (cacheBadge) cacheBadge.innerText = '0%';
+                }
+            })
+            .catch(function(err) {
+                console.error('Failed to fetch chapter:', err);
+                if (panel2Card) {
+                    panel2Card.innerHTML = '<div class="text-center p-5 text-danger">Failed to load content.</div>';
+                }
             });
-        }
-    };
+    }
+};
 
     // Initialize
     if (typeof jQuery !== 'undefined') {

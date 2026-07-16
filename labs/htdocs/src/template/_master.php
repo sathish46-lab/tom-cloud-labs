@@ -548,7 +548,7 @@ $classString = implode(' ', $htmlClasses);
         ui_preferences: <?= json_encode($uiPreferences ?? []) ?>
     };
     </script>
-    <script src="<?= Session::cacheCDN('/js/app.js') ?>"></script>
+    <script src="<?= Session::cacheCDN('/js/app.js') ?>&t=<?= time() ?>"></script>
     <script src="<?= Session::cacheCDN('/js/ui-init.js') ?>"></script>
     <script src="<?= Session::cacheCDN('/js/htmx-bridge.js') ?>"></script>
 

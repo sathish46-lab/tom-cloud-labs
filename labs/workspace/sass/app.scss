@@ -33,6 +33,7 @@
 @use "components/trash_bin";
 @use "components/account";
 @use "components/learn_content";
+@use "components/learn_cards";
 // 2. Global Performance & Smooth Rendering Optimizations
 html {
   scroll-behavior: smooth;

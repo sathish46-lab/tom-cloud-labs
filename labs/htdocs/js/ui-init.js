@@ -208,25 +208,63 @@ window.onPageLoad(function() {
  * Global HTMX Top Progress Bar Animation Driver
  */
 (function() {
-    document.addEventListener('htmx:beforeRequest', function() {
+    function resetProgress() {
         const bar = document.getElementById('htmx-top-progress');
         if (bar) {
-            bar.classList.remove('htmx-complete');
+            bar.classList.remove('htmx-running', 'htmx-complete', 'htmx-fade');
+            bar.removeAttribute('style');
+        }
+    }
+
+    function startProgress() {
+        const bar = document.getElementById('htmx-top-progress');
+        if (bar) {
+            bar.removeAttribute('style');
+            bar.classList.remove('htmx-complete', 'htmx-fade');
             void bar.offsetWidth;
             bar.classList.add('htmx-running');
         }
-    });
+    }
 
-    document.addEventListener('htmx:afterRequest', function() {
+    function finishProgress() {
         const bar = document.getElementById('htmx-top-progress');
-        if (bar) {
+        if (bar && bar.classList.contains('htmx-running')) {
             bar.classList.remove('htmx-running');
             bar.classList.add('htmx-complete');
             setTimeout(() => {
-                bar.classList.remove('htmx-complete');
-            }, 600);
+                if (bar.classList.contains('htmx-complete')) {
+                    bar.classList.remove('htmx-complete');
+                    bar.classList.add('htmx-fade');
+                    setTimeout(() => {
+                        if (bar.classList.contains('htmx-fade')) {
+                            bar.classList.remove('htmx-fade');
+                            bar.removeAttribute('style');
+                        }
+                    }, 300);
+                }
+            }, 250);
+        } else if (bar) {
+            resetProgress();
         }
+    }
+
+    // Start & Finish progress on normal HTMX requests (forward navigation)
+    document.addEventListener('htmx:beforeRequest', startProgress);
+    document.addEventListener('htmx:afterRequest', finishProgress);
+
+    // Start & Finish progress on browser Back / Forward navigation (backpage history restore)
+    window.addEventListener('popstate', function() {
+        startProgress();
     });
+    document.addEventListener('htmx:historyRestore', function() {
+        setTimeout(finishProgress, 50);
+    });
+
+    // Clean up on errors / abort / timeout
+    document.addEventListener('htmx:sendError', resetProgress);
+    document.addEventListener('htmx:responseError', finishProgress);
+    document.addEventListener('htmx:abort', resetProgress);
+    document.addEventListener('htmx:timeout', resetProgress);
 })();
 
 /**

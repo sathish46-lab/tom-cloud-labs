@@ -1,4 +1,4 @@
-<footer class="footer footer-glass px-4 py-2 mt-auto d-flex align-items-center">
+<footer id="page-footer" class="footer footer-glass px-4 py-2 mt-auto d-flex align-items-center"<?= !empty($isOob) ? ' hx-swap-oob="true"' : '' ?>>
     <button class="btn btn-link p-0 text-secondary hover-text-white me-3 page-footer-toggle" type="button"
         onclick="coreui.Sidebar.getInstance(document.querySelector('#sidebar')).toggle()">
         <i class="bx bx-menu fs-4"></i>

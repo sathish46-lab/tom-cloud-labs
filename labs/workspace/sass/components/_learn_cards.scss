@@ -1,0 +1,134 @@
+/* ========================================================================
+   LearnAI Dashboard & Lesson Cards — Exact Premium Glass & Gradient Styles
+   ======================================================================== */
+
+.lesson-keyword-tag {
+  background: rgba(102, 126, 234, 0.15) !important;
+  color: #667eea !important;
+  border: 1px solid rgba(102, 126, 234, 0.4) !important;
+  font-size: 0.7rem !important;
+  font-weight: 500 !important;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 50px !important;
+}
+
+.toggle-like-btn {
+  background: transparent !important;
+  transition: transform 0.2s ease;
+  &:hover {
+    transform: scale(1.1);
+  }
+}
+
+.share-lesson-btn .icon {
+  color: var(--cui-body-color);
+  opacity: 0.6;
+}
+
+.share-lesson-btn:hover .icon {
+  opacity: 1;
+}
+
+.lesson-card {
+  transition: transform 0.2s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.2s ease !important;
+
+  .lesson-tag {
+    background: var(--cui-body-bg);
+    color: var(--cui-body-color);
+    opacity: 0.6;
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .dropdown-toggle .icon {
+    color: var(--cui-body-color);
+    opacity: 0.7;
+  }
+
+  .dropdown-toggle:hover .icon {
+    opacity: 1;
+  }
+
+  .dropdown-toggle::after {
+    filter: var(--cui-accordion-button-icon-filter, none);
+  }
+}
+
+/* Exact Tom Labs Dark Glass Liquid-Rim Card Styling for Lesson Cards */
+[data-coreui-theme="dark"] .card.liquid-rim.lesson-card,
+html[data-coreui-theme="dark"] .card.liquid-rim.lesson-card {
+  position: relative !important;
+  background: #0d1117 !important;
+  box-shadow: rgba(0, 0, 0, 0.45) 0 12px 28px 0, rgba(0, 0, 0, 0.3) 0 2px 4px 0, rgba(255, 255, 255, 0.08) 0 0 24px 0 !important;
+  border: 0 !important;
+  border-radius: 1.2rem !important;
+
+  &::after {
+    content: '' !important;
+    position: absolute !important;
+    inset: 0 !important;
+    pointer-events: none !important;
+    border-radius: inherit !important;
+    z-index: 5 !important;
+    padding: 1px !important;
+    background: transparent !important;
+    will-change: backdrop-filter;
+    contain: strict;
+    backdrop-filter: saturate(400%) brightness(1.2) !important;
+    -webkit-backdrop-filter: saturate(400%) brightness(1.2) !important;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0) !important;
+    mask-composite: exclude !important;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0) !important;
+    -webkit-mask-composite: xor !important;
+    box-shadow: rgba(255, 255, 255, 0.14) 0 0 0 1px inset, rgba(255, 255, 255, 0.22) 0 1px 0 0 inset !important;
+  }
+}
+
+/* Standardized Gradient Badges matching Tom Labs exactly */
+.badge {
+  &.bg-success-gradient {
+    background: linear-gradient(135deg, #27ae60, #2ecc71) !important;
+    color: #fff !important;
+  }
+  &.bg-info-gradient {
+    background: linear-gradient(135deg, #0984e3, #74b9ff) !important;
+    color: #fff !important;
+  }
+  &.bg-primary-gradient {
+    background: linear-gradient(135deg, #6c5ce7, #a29bfe) !important;
+    color: #fff !important;
+  }
+  &.bg-danger-gradient {
+    background: linear-gradient(135deg, #e74c3c, #ff7675) !important;
+    color: #fff !important;
+  }
+  &.bg-warning-gradient {
+    background: linear-gradient(135deg, #f1c40f, #fdcb6e) !important;
+    color: #000 !important;
+    [data-coreui-theme="dark"] & {
+      color: #fff !important;
+    }
+  }
+  &.bg-secondary-gradient {
+    background: linear-gradient(135deg, #a4b0be, #f1f2f6) !important;
+    color: #2f3542 !important;
+    [data-coreui-theme="dark"] & {
+      color: #fff !important;
+    }
+  }
+}
+
+.btn-success-gradient {
+  background: linear-gradient(135deg, #27ae60, #2ecc71) !important;
+  border: none !important;
+  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3) !important;
+  transition: all 0.2s ease !important;
+
+  &:hover {
+    background: linear-gradient(135deg, #2ecc71, #27ae60) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(39, 174, 96, 0.45) !important;
+    color: #fff !important;
+  }
+}

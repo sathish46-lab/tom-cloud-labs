@@ -70,7 +70,7 @@ RewriteRule ^quiz$ app/quiz/quiz_hub.php [L,QSA]
 # 7. Learn AI Routing
 RewriteRule ^learn$ app/learnAI/dashboard.php [L,QSA]
 RewriteRule ^learn/lesson/([^/]+)$ app/learnAI/course_view.php?id=$1 [L,QSA]
-RewriteRule ^learn/lesson/([^/]+)/chapter/([^/]+)$ app/learnAI/content.php?id=$2 [L,QSA]
+RewriteRule ^learn/lesson/([^/]+)/chapter/([^/]+)$ app/learnAI/course_view.php?id=$1&chapter_id=$2 [L,QSA]
 
 # 5. USER PROFILE ROUTING
 RewriteCond %{DOCUMENT_ROOT}/app/account.php -f

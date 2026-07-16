@@ -87,12 +87,13 @@
         const root = container || document;
 
         // LearnAI module integration
-        if (root.querySelector('.learn-app-wrapper') || root.querySelector('#learn-panel-1')) {
-            if (window.LearnAI && typeof window.LearnAI.init === 'function') {
+        if (root.querySelector('.learn-app-wrapper') || root.querySelector('#learn-panel-1') || document.querySelector('.learn-app-wrapper')) {
+            const learnObj = window.LearnApp || window.LearnAI;
+            if (learnObj && typeof learnObj.init === 'function') {
                 try {
-                    window.LearnAI.init();
+                    learnObj.init();
                 } catch (err) {
-                    console.error('[htmx-bridge] LearnAI init error:', err);
+                    console.error('[htmx-bridge] LearnApp/LearnAI init error:', err);
                 }
             }
         }
@@ -128,36 +129,6 @@
     }
 
     // =========================================================================
-    // 5. HTMX Top Loading Bar Indicator Driver
-    // =========================================================================
-    function setupHtmxProgressIndicator() {
-        const progressEl = document.getElementById('htmx-top-progress');
-        if (!progressEl) return;
-
-        let progressTimer = null;
-
-        document.addEventListener('htmx:beforeRequest', function () {
-            progressEl.style.opacity = '1';
-            progressEl.style.width = '15%';
-            clearTimeout(progressTimer);
-            progressTimer = setTimeout(() => { progressEl.style.width = '65%'; }, 120);
-        });
-
-        document.addEventListener('htmx:afterRequest', function () {
-            progressEl.style.width = '100%';
-            progressTimer = setTimeout(() => {
-                progressEl.style.opacity = '0';
-                setTimeout(() => { progressEl.style.width = '0%'; }, 250);
-            }, 200);
-        });
-
-        document.addEventListener('htmx:sendError', function () {
-            progressEl.style.opacity = '0';
-            progressEl.style.width = '0%';
-        });
-    }
-
-    // =========================================================================
     // 6. Global Master Initialization Bridge (Fires on DOMContentLoaded + HTMX Swaps)
     // =========================================================================
     function runMasterInitBridge(container, url) {
@@ -173,7 +144,6 @@
 
     // DOMContentLoaded handler (Full Page Reload)
     document.addEventListener('DOMContentLoaded', function () {
-        setupHtmxProgressIndicator();
         runMasterInitBridge(document, window.location.pathname);
     });
 
