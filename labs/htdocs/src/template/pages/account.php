@@ -9,12 +9,21 @@ $avatar = Session::getAvatar();
 $is2faEnabled = $user?->getTwoFactorEnabled() ?? false;
 ?>
 
-<div class="lab-header-section mb-4">
-    <h1 class="fw-bold theme-text m-0">Account Settings</h1>
-    <p class="text-secondary opacity-75 small">Manage your profile, security, storage, and SSH keys.</p>
+<div class="blur mb-3 rounded-0">
+    <div class="container-fluid px-3">
+        <div class="row align-items-center py-3">
+            <div class="col">
+                <h1 class="fw-bold theme-text m-0 labs-page-title">Account Settings</h1>
+                <p class="text-secondary opacity-75 mt-2 mb-0 labs-page-desc">
+                    Manage your profile, security, storage, and SSH keys.
+                </p>
+            </div>
+        </div>
+    </div>
 </div>
 
-<div class="row g-4">
+<div class="container-fluid px-3">
+    <div class="row g-4">
     <!-- Profile Settings Card -->
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm blur rounded-4">
@@ -29,7 +38,7 @@ $is2faEnabled = $user?->getTwoFactorEnabled() ?? false;
                             <button type="button" class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 shadow dropdown-toggle no-caret account-avatar-camera-btn" title="Change Profile Picture" data-coreui-toggle="dropdown" aria-expanded="false">
                                 <i class='bx bx-camera account-fs-xs'></i>
                             </button>
-                            <ul class="dropdown-menu dropdown-menu-dark shadow-sm border border-secondary border-opacity-10 account-avatar-dropdown">
+                            <ul class="dropdown-menu shadow-sm border border-secondary border-opacity-10 account-avatar-dropdown">
                                 <li><a class="dropdown-item py-2" href="#" onclick="document.getElementById('avatarUploadInput').click(); return false;"><i class="bx bx-upload me-2 text-primary"></i> Upload Device</a></li>
                                 <li><a class="dropdown-item py-2" href="#" onclick="openChooseAvatarModal(); return false;"><i class="bx bx-image me-2 text-warning"></i> Choose Uploads</a></li>
                             </ul>
@@ -268,6 +277,7 @@ $is2faEnabled = $user?->getTwoFactorEnabled() ?? false;
             
         </div>
     </div>
+</div>
     
 
 <!-- Choose Existing Avatar Modal -->

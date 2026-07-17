@@ -14,8 +14,15 @@
 
 .account-avatar-dropdown {
   font-size: 0.75rem;
-  background: #191c24;
   min-width: 150px;
+  background: var(--cui-card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  [data-coreui-theme="light"] & {
+    background: #ffffff;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
 }
 
 .account-fs-md { font-size: 0.9rem; }

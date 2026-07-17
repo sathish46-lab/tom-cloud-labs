@@ -12,6 +12,8 @@ class Storage {
                 'region'      => $config['region'],
                 'endpoint'    => $config['endpoint'],
                 'use_path_style_endpoint' => $config['use_path_style'],
+                'signature_version' => 'v4',
+                'use_aws_shared_config_files' => false,
                 'credentials' => [
                     'key'    => $config['access_key'],
                     'secret' => $config['secret_key'],

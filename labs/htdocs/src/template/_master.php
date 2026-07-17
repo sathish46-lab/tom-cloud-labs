@@ -435,7 +435,7 @@ $classString = implode(' ', $htmlClasses);
     <div class="wrapper d-flex flex-column min-vh-100 bg-transparent" style="<?= (defined('IS_HOME_PAGE') || Session::get('show_session_expired', false)) ? '--cui-sidebar-occupy-start: 0px;' : '' ?>"> 
     <?php if (!defined('IS_HOME_PAGE') && !Session::get('show_session_expired', false)): Session::getSiteNav(); endif; ?>
 
-    <div class="body flex-grow-1 bg-transparent <?= Session::get('show_session_expired', false) ? 'd-flex align-items-center justify-content-center p-0 m-0' : '' ?>"> 
+    <div class="body flex-grow-1 bg-transparent d-flex flex-column <?= Session::get('show_session_expired', false) ? 'align-items-center justify-content-center p-0 m-0' : '' ?>"> 
         <div id="main-content" class="bg-transparent" style="display: contents;">
                 <?php
                     if (!Session::get('brokenPage', false)) {

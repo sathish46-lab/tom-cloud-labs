@@ -4,6 +4,41 @@ $lesson_id = $_GET['id'] ?? null;
 $chapter_id = $_GET['chapter_id'] ?? null;
 
 $lesson = $db->ai_lessons->findOne(['_id' => new MongoDB\BSON\ObjectId($lesson_id)]);
+$user = Session::getUser();
+$currentUsername = $user ? $user->getUsername() : '';
+$currentEmail = $user ? $user->getEmail() : '';
+$currentUserId = $user ? (int)$user->getUserId() : 0;
+
+$isAuthor = false;
+if ($lesson && !empty($lesson['author']) && strcasecmp($lesson['author'], $currentUsername) === 0) {
+    $isAuthor = true;
+} elseif ($lesson && !empty($lesson['author_email']) && strcasecmp($lesson['author_email'], $currentEmail) === 0) {
+    $isAuthor = true;
+} elseif ($lesson && !empty($lesson['user_id']) && (int)$lesson['user_id'] === $currentUserId && $currentUserId > 0) {
+    $isAuthor = true;
+}
+
+if ($lesson && strcasecmp($lesson['visibility'] ?? 'Public', 'Private') === 0 && !$isAuthor) {
+    header('Location: /learn');
+    exit;
+}
+
+$isAiAssistUnlocked = $isAuthor;
+if (!$isAuthor && $user && $lesson) {
+    try {
+        $unlockRecord = $db->ai_unlocked_lessons->findOne([
+            'user_id' => $currentUserId,
+            'lesson_id' => (string)$lesson['_id']
+        ]);
+        if ($unlockRecord) {
+            $isAiAssistUnlocked = true;
+        }
+    } catch (Exception $e) {}
+}
+
+$userStats = $user ? \TomLabs\Labs\Quiz::getUserStats($currentEmail) : ['zeal' => 0, 'jolt' => 0];
+$availableJolt = (int)($userStats['jolt'] ?? 0);
+
 $chapters = $db->ai_chapters->find(['lesson_id' => new MongoDB\BSON\ObjectId($lesson_id)], ['sort' => ['order' => 1]])->toArray();
 
 $chapter = null;
@@ -63,9 +98,10 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
 (function() {
     const prefs = (window.TOM_CONFIG && window.TOM_CONFIG.ui_preferences) || {};
 
-    let threePanelSizes = sessionStorage.getItem('learnAiThreePanelSizes') || prefs['learnAiThreePanelSizes'];
+    let threePanelSizes = localStorage.getItem('learnAiThreePanelSizes') || sessionStorage.getItem('learnAiThreePanelSizes') || prefs['learnAiThreePanelSizes'];
     if (threePanelSizes && typeof threePanelSizes !== 'string') threePanelSizes = JSON.stringify(threePanelSizes);
     if (threePanelSizes) {
+        localStorage.setItem('learnAiThreePanelSizes', threePanelSizes);
         sessionStorage.setItem('learnAiThreePanelSizes', threePanelSizes);
         try {
             const arr = JSON.parse(threePanelSizes);
@@ -74,64 +110,71 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
                 document.documentElement.style.setProperty('--outlineSidebar-saved-width', arr[0] + '%');
                 document.documentElement.style.setProperty('--paneAI-saved-width', arr[2] + '%');
 
-                const isExp = (arr[0] / 100) * window.innerWidth > 175;
-                const p1W = isExp ? `${arr[0]}%` : '68px';
-                const p2W = isExp ? `calc(100% - ${arr[0]}% - 4px)` : `calc(100% - 68px - 4px)`;
+                // SNA normalizeSizes: ensure sum = 100
+                var sum = arr[0] + arr[1] + arr[2];
+                if (sizes[0] + sizes[2] > 75) {
+                    var excess = (sizes[0] + sizes[2]) - 75;
+                    sizes[2] = Math.max(18, sizes[2] - excess);
+                }
+
+                const isExp = (sizes[0] / 100) * window.innerWidth > 175;
                 const st = document.createElement('style');
                 st.id = 'learn-panel-zero-flicker';
                 st.innerHTML = `
                     #learn-panel-1 {
-                        width: ${p1W} !important;
-                        flex-basis: ${p1W} !important;
+                        width: ${sizes[0]}% !important;
+                        flex-basis: ${sizes[0]}% !important;
                         flex-grow: 0 !important;
                         flex-shrink: 0 !important;
                     }
                     #learn-panel-2 {
-                        position: relative !important;
-                        width: ${p2W} !important;
-                        flex-basis: ${p2W} !important;
-                        flex-grow: 1 !important;
-                        flex-shrink: 1 !important;
+                        width: 0 !important;
+                        flex: 1 1 0% !important;
+                        min-width: 300px !important;
+                    }
+                    #learn-panel-3 {
+                        width: ${sizes[2]}% !important;
+                        flex-basis: ${sizes[2]}% !important;
+                        flex-grow: 0 !important;
+                        flex-shrink: 0 !important;
                     }
                     ${isExp ? `
                     #learn-panel-1 .outline-compact { display: none !important; }
                     #learn-panel-1 .outline-full { display: flex !important; }
                     ` : `
-                    #learn-panel-1 .outline-full { display: none !important; }
                     #learn-panel-1 .outline-compact { display: flex !important; }
+                    #learn-panel-1 .outline-full { display: none !important; }
                     `}
                 `;
                 document.head.appendChild(st);
             }
-        } catch (e) {}
+        } catch(e) {}
     }
-
-    }
-)();
+})();
 </script>
 
 <div class="learn-app-wrapper split-panel-view d-flex flex-column overflow-hidden bg-transparent">
-    <div class="flex-grow-1 d-flex flex-row flex-nowrap overflow-hidden p-2 gap-0">
-<?php
-$isPanel1Expanded = false;
-if (is_array($dbSizesArr) && count($dbSizesArr) === 3 && $dbSizesArr[0] > 10) {
-    $isPanel1Expanded = true;
-}
-$panel1State = $isPanel1Expanded ? 'expanded' : 'collapsed';
-$panel1Class = $isPanel1Expanded ? '' : 'auto-compact';
+    <?php include __DIR__ . '/../../partials/learnAI/top_bar.php'; ?>
 
-$p1Pct = (is_array($dbSizesArr) && count($dbSizesArr) === 3 && $dbSizesArr[0] > 3) ? round($dbSizesArr[0], 2) : 5.6;
-$p3Pct = (is_array($dbSizesArr) && count($dbSizesArr) === 3 && $dbSizesArr[2] > 12) ? round($dbSizesArr[2], 2) : 25;
-if ($p1Pct + $p3Pct > 60) {
-    $excess = ($p1Pct + $p3Pct) - 60;
-    $p1Pct = max(5.6, round($p1Pct - ($excess / 2), 2));
-    $p3Pct = max(15, round($p3Pct - ($excess / 2), 2));
-}
-$p1W_php = $isPanel1Expanded ? "{$p1Pct}%" : "68px";
-$p2W_php = $isPanel1Expanded ? "calc(100% - {$p1Pct}% - 4px)" : "calc(100% - 68px - 4px)";
+    <div class="split-panel-body d-flex flex-row overflow-hidden flex-grow-1 position-relative p-2 gap-0" style="min-height: 0;">
+        <?php
+        // SNA defaults: [22, 53, 25] for three-panel
+        $isPanel1Expanded = false;
+        if (is_array($dbSizesArr) && count($dbSizesArr) === 3 && $dbSizesArr[0] > 10) {
+            $isPanel1Expanded = true;
+        }
+        $panel1State = $isPanel1Expanded ? 'expanded' : 'collapsed';
+        $panel1Class = $isPanel1Expanded ? '' : 'auto-compact';
+
+        // SNA normalizeSizes: use raw percentages, ensure sum = 100
+        $p1Pct = (is_array($dbSizesArr) && count($dbSizesArr) === 3 && $dbSizesArr[0] > 3) ? round($dbSizesArr[0], 2) : 22;
+        $p3Pct = (is_array($dbSizesArr) && count($dbSizesArr) === 3 && $dbSizesArr[2] > 5) ? round($dbSizesArr[2], 2) : 25;
+        $p2Pct = 100 - $p1Pct - $p3Pct;
+        if ($p2Pct < 20) { $p1Pct = 22; $p3Pct = 25; $p2Pct = 53; }
+        $p1W_php = $isPanel1Expanded ? "{$p1Pct}%" : "70px";
 ?>
         <!-- Panel 1: Collapsible Sidebar -->
-        <div id="learn-panel-1" class="split-panel h-100 <?= $panel1Class ?>" style="width: <?= $p1W_php ?>; flex-basis: <?= $p1W_php ?>; min-width: 68px; flex-grow: 0; flex-shrink: 0;" data-state="<?= $panel1State ?>">
+        <div id="learn-panel-1" class="split-panel h-100 <?= $panel1Class ?>" style="width: <?= $p1W_php ?>; flex-basis: <?= $p1W_php ?>; flex-grow: 0; flex-shrink: 0;" data-state="<?= $panel1State ?>">
             <div class="card h-100 border-secondary border-opacity-10 rounded-4 shadow-sm blur d-flex flex-column overflow-hidden">
                 <div class="card-header fs-6 d-flex justify-content-between align-items-center py-2 px-3">
                     <strong class="text-truncate" title="<?= htmlspecialchars($lesson['title']) ?>"><?= htmlspecialchars($lesson['title']) ?></strong>
@@ -300,7 +343,7 @@ $p2W_php = $isPanel1Expanded ? "calc(100% - {$p1Pct}% - 4px)" : "calc(100% - 68p
         <div class="gutter gutter-horizontal pane-resizer h-100" style="width: 4px;" data-target="learn-panel-1"></div>
 
         <!-- Panel 2: Center Course Overview Area -->
-        <div id="learn-panel-2" class="split-panel h-100 overflow-hidden flex-grow-1" style="position: relative; width: <?= $p2W_php ?>; flex-basis: <?= $p2W_php ?>; flex-grow: 1; flex-shrink: 1;">
+        <div id="learn-panel-2" class="split-panel h-100 overflow-hidden" style="width: 0 !important; flex: 1 1 0% !important; min-width: 300px !important;">
             <div class="card h-100 border-secondary border-opacity-10 rounded-4 shadow-sm blur d-flex flex-column overflow-hidden">
                 <?php
                 if ($chapter_id) {
@@ -316,7 +359,7 @@ $p2W_php = $isPanel1Expanded ? "calc(100% - {$p1Pct}% - 4px)" : "calc(100% - 68p
         <div class="gutter gutter-horizontal h-100 <?= $chapter_id ? '' : 'd-none' ?>" style="width: 4px;" data-target="learn-panel-3" data-direction="right"></div>
 
         <!-- Panel 3: Right AI Assistant - Hidden on Course Overview until chapter continue -->
-        <div id="learn-panel-3" class="split-panel pane-ai flex-column h-100 <?= $chapter_id ? 'd-flex' : 'd-none' ?>" style="width: <?= $p3Pct ?>%; flex-basis: <?= $p3Pct ?>%; min-width: 180px; flex-grow: 0; flex-shrink: 0;" data-state="closed">
+        <div id="learn-panel-3" class="split-panel pane-ai flex-column h-100 <?= $chapter_id ? 'd-flex' : 'd-none' ?>" style="width: <?= $p3Pct ?>%; flex-basis: <?= $p3Pct ?>%; flex-grow: 0; flex-shrink: 0;" data-state="closed">
             <div class="card h-100 border-secondary border-opacity-10 rounded-4 shadow-sm blur d-flex flex-column overflow-hidden">
                 <div class="card-header bg-dark bg-opacity-25 border-secondary border-opacity-10 py-2 px-3 d-flex align-items-center justify-content-between">
                     <div class="d-flex align-items-center gap-2">
@@ -338,13 +381,46 @@ $p2W_php = $isPanel1Expanded ? "calc(100% - {$p1Pct}% - 4px)" : "calc(100% - 68p
                     <input type="hidden" id="userAvatarUrl" value="<?= $userAvatar ?>">
                     <input type="hidden" id="userAvatarStyle" value="<?= $userAvatarStyle ?>">
                     <input type="hidden" id="aiAvatarUrl" value="<?= $aiAvatar ?>">
+                    <input type="hidden" id="isAiAssistUnlocked" value="<?= $isAiAssistUnlocked ? '1' : '0' ?>">
 
-                    <div id="aiChatHistory" class="chat-history flex-grow-1 overflow-auto hide-scrollbar p-2 d-flex flex-column gap-2">
-                        <div class="text-center p-3 text-secondary small"><i class="bx bx-loader-alt bx-spin"></i> Loading chat history...</div>
+                    <?php if (!$isAiAssistUnlocked): ?>
+                    <!-- AI Assist Locked Screen matching user design -->
+                    <div id="aiAssistLockedScreen" class="d-flex flex-column align-items-center justify-content-center h-100 p-4 text-center my-auto">
+                        <div class="mb-3 d-flex align-items-center justify-content-center border border-secondary border-opacity-25 rounded-circle" style="width: 76px; height: 76px; background: rgba(255, 255, 255, 0.03); box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
+                            <i class="bx bx-lock-alt fs-1 text-secondary"></i>
+                        </div>
+                        <h5 class="fw-bold text-white mb-2">AI Assist is Locked</h5>
+                        <p class="text-secondary small mb-4" style="max-width: 280px; line-height: 1.5; font-size: 0.82rem;">
+                            Unlock AI Assist to get help with this lesson's chapters. Ask questions, get explanations, and learn faster with AI.
+                        </p>
+                        <div class="mb-3">
+                            <span class="badge rounded-pill bg-warning text-dark px-3 py-2 fw-bold d-inline-flex align-items-center gap-1 shadow-sm" style="font-size: 0.85rem;">
+                                25 <i class="bx bxs-zap fs-6"></i> Jolt
+                            </span>
+                        </div>
+                        <button id="unlockAiAssistBtn" class="btn rounded-pill px-4 py-2 fw-medium shadow-sm d-inline-flex align-items-center gap-2 mb-3 text-white hvr-grow" style="background: linear-gradient(135deg, #8b5cf6, #6366f1); border: none; font-size: 0.9rem;" onclick="unlockAiAssistAction('<?= $lesson['_id'] ?>')">
+                            <i class="bx bx-lock-open fs-5"></i> Unlock AI Assist
+                        </button>
+                        <p class="text-secondary small m-0 d-flex align-items-center gap-1" style="font-size: 0.75rem;">
+                            <span class="text-warning fs-6">💡</span> Lesson owners get free access
+                        </p>
+                        <div class="mt-2 text-secondary small" style="font-size: 0.75rem;">
+                            Your Fuel: <strong class="text-warning"><?= number_format($availableJolt) ?> <i class="bx bxs-zap"></i> Jolt</strong>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
+                    <div id="aiChatHistory" class="chat-history flex-grow-1 overflow-auto hide-scrollbar p-3 flex-column gap-3 <?= $isAiAssistUnlocked ? 'd-flex' : 'd-none' ?>">
+                        <div class="text-center py-4 my-auto text-secondary small d-flex flex-column align-items-center gap-2"><i class="bx bx-loader-circle bx-spin fs-4 text-primary"></i><span>Loading conversation...</span></div>
                     </div>
 
+                    <!-- Floating Scroll to Bottom / Auto-Scroll Wait Button -->
+                    <button id="aiChatScrollToBottom" class="d-none" type="button" title="Scroll to bottom">
+                        <i class="bx bx-down-arrow-alt fs-4"></i>
+                    </button>
+
                     <!-- Bottom Input Bar (from sna.css) -->
-                    <div class="input-container p-2 pb-3">
+                    <div id="aiChatInputBar" class="input-container p-2 pb-3 <?= $isAiAssistUnlocked ? '' : 'd-none' ?>">
                         <div class="unified-input-box simple-blur">
                             <textarea class="user-text-input" type="text" id="aiChatInput" placeholder="Ask AI ✨" rows="1" style="height: auto; resize: none;"></textarea>
                             
@@ -376,6 +452,18 @@ $p2W_php = $isPanel1Expanded ? "calc(100% - {$p1Pct}% - 4px)" : "calc(100% - 68p
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Token History Modal -->
+<div class="modal fade" id="tokenHistoryModal" tabindex="-1" aria-labelledby="tokenHistoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg" style="max-width: 820px;">
+        <div class="modal-content shadow-lg rounded-4 border" id="tokenHistoryModalContent">
+            <div class="p-5 text-center">
+                <i class="bx bx-loader-circle bx-spin fs-2 text-primary"></i>
+                <p class="mt-2 text-secondary small">Loading token history...</p>
             </div>
         </div>
     </div>
@@ -421,11 +509,6 @@ $p2W_php = $isPanel1Expanded ? "calc(100% - {$p1Pct}% - 4px)" : "calc(100% - 68p
     background: var(--cui-primary, #321fdb);
 }
 
-/* Custom Scrollbars */
-.custom-scrollbar::-webkit-scrollbar { width: 4px; }
-.custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
 /* Hidden Scrollbar */
 .hide-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }

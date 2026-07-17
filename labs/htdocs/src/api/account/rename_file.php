@@ -30,21 +30,33 @@ $nameWithoutExt = pathinfo($newName, PATHINFO_FILENAME);
 $safeNameWithoutExt = preg_replace('/[^a-zA-Z0-9_-]/', '_', $nameWithoutExt);
 $newName = $safeNameWithoutExt . ($ext ? '.' . $ext : '');
 
-$safeUsername = preg_replace('/[^a-zA-Z0-9_-]/', '', $username);
-$userDir = __DIR__ . '/../../../uploads/users/' . $safeUsername . '/';
-$oldPath = $userDir . $oldName;
-$newPath = $userDir . $newName;
-
-if (!file_exists($oldPath) || !is_file($oldPath)) {
-    echo json_encode(['status' => 'error', 'error' => 'Original file not found.']); exit;
+$userId = $user->getUserId();
+if (!$userId) {
+    echo json_encode(['status' => 'error', 'error' => 'User ID not found']); exit;
 }
 
-if (file_exists($newPath)) {
-    echo json_encode(['status' => 'error', 'error' => 'A file with this name already exists.']); exit;
-}
-
-if (rename($oldPath, $newPath)) {
+try {
+    $client = Storage::getClient();
+    $config = get_config('s3');
+    
+    $oldKey = "labassets/uploads/{$userId}/{$oldName}";
+    $newKey = "labassets/uploads/{$userId}/{$newName}";
+    
+    // Copy object
+    $client->copyObject([
+        'Bucket'     => $config['bucket'],
+        'CopySource' => "{$config['bucket']}/{$oldKey}",
+        'Key'        => $newKey
+    ]);
+    
+    // Delete old object
+    $client->deleteObject([
+        'Bucket' => $config['bucket'],
+        'Key'    => $oldKey
+    ]);
+    
     echo json_encode(['status' => 'success', 'new_name' => $newName]);
-} else {
+} catch (Exception $e) {
+    error_log("MinIO rename_file Error: " . $e->getMessage());
     echo json_encode(['status' => 'error', 'error' => 'Could not rename the file.']);
 }

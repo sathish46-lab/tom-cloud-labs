@@ -29,35 +29,18 @@ if ($file['size'] > $maxSize) {
     echo json_encode(['status' => 'error', 'error' => 'File size exceeds 5MB.']); exit;
 }
 
-$safeUsername = preg_replace('/[^a-zA-Z0-9_-]/', '', $username);
-$uploadDir = __DIR__ . '/../../../uploads/users/' . $safeUsername;
-
-if (!is_dir($uploadDir)) {
-    mkdir($uploadDir, 0755, true);
+$userId = $user->getUserId();
+if (!$userId) {
+    echo json_encode(['status' => 'error', 'error' => 'User ID not found']); exit;
 }
 
-// Enforce 2GB total storage limit
-$totalUsed = 0;
-$files = scandir($uploadDir);
-if ($files !== false) {
-    foreach ($files as $f) {
-        if ($f !== '.' && $f !== '..') {
-            $totalUsed += filesize($uploadDir . '/' . $f);
-        }
-    }
-}
-$maxStorage = 2 * 1024 * 1024 * 1024; // 2 GB
-if (($totalUsed + $file['size']) > $maxStorage) {
-    echo json_encode(['status' => 'error', 'error' => 'Storage limit of 2GB exceeded.']); exit;
-}
-
-// Generate safe filename to prevent overwrites, but keep original name if possible
+// Generate safe filename to prevent overwrites
 $originalName = preg_replace('/[^a-zA-Z0-9_.-]/', '_', $file['name']);
 $filename = time() . '_' . $originalName;
-$destination = $uploadDir . '/' . $filename;
+$s3Path = "labassets/uploads/{$userId}/{$filename}";
 
-if (move_uploaded_file($file['tmp_name'], $destination)) {
+if (Storage::upload($file['tmp_name'], $s3Path)) {
     echo json_encode(['status' => 'success']);
 } else {
-    echo json_encode(['status' => 'error', 'error' => 'Failed to move uploaded file.']);
+    echo json_encode(['status' => 'error', 'error' => 'Failed to upload file to MinIO.']);
 }

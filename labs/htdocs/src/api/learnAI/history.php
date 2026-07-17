@@ -27,4 +27,31 @@ if (empty($chapterId)) {
     exit;
 }
 
+if (!empty($lessonId)) {
+    try {
+        $db = DatabaseConnection::getDefaultDatabase();
+        $lessonDoc = $db->ai_lessons->findOne(['_id' => new MongoDB\BSON\ObjectId($lessonId)]);
+        if ($lessonDoc) {
+            $isAuthor = false;
+            $currentUsername = $user->getUsername();
+            $currentEmail = $user->getEmail();
+            if (!empty($lessonDoc['author']) && strcasecmp($lessonDoc['author'], $currentUsername) === 0) {
+                $isAuthor = true;
+            } elseif (!empty($lessonDoc['author_email']) && strcasecmp($lessonDoc['author_email'], $currentEmail) === 0) {
+                $isAuthor = true;
+            } elseif (!empty($lessonDoc['user_id']) && (int)$lessonDoc['user_id'] === $userId && $userId > 0) {
+                $isAuthor = true;
+            }
+
+            if (!$isAuthor) {
+                $unlockCheck = $db->ai_unlocked_lessons->findOne(['user_id' => $userId, 'lesson_id' => (string)$lessonId]);
+                if (!$unlockCheck) {
+                    echo '';
+                    exit;
+                }
+            }
+        }
+    } catch (Exception $e) {}
+}
+
 include __DIR__ . '/../../template/partials/learnAI/chat_history.php';

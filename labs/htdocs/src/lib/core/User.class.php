@@ -35,6 +35,17 @@ class User {
         return null;
     }
 
+    public function getUserId() {
+        if (isset($this->user['_id'])) {
+            return (string)$this->user['_id'];
+        }
+        return isset($this->user['user_id']) ? $this->user['user_id'] : null;
+    }
+
+    public function getId() {
+        return $this->getUserId();
+    }
+
     public function getFullName() {
         $first = $this->getFirstName();
         $last = $this->getLastName();

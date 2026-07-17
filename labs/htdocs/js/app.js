@@ -5101,6 +5101,26 @@ try {
         animationFrame: null,
         initialAnchor: 0,
         initialWidth: 0,
+        _aiGenerating: false,
+        _userScrolledUp: false,
+
+        setChatSendState: function (state) {
+            const btn = document.getElementById('aiChatSend');
+            if (!btn) return;
+            if (state === 'stop') {
+                this._aiGenerating = true;
+                btn.classList.add('is-generating');
+                btn.setAttribute('data-coreui-original-title', 'Stop AI generation');
+                btn.setAttribute('title', 'Stop AI generation');
+                btn.innerHTML = '<svg class="nav-icon"><use xlink:href="/assets/icons/sprites/free.svg#cil-media-stop"></use></svg>';
+            } else {
+                this._aiGenerating = false;
+                btn.classList.remove('is-generating');
+                btn.setAttribute('data-coreui-original-title', 'Send message');
+                btn.setAttribute('title', 'Send message');
+                btn.innerHTML = '<svg class="nav-icon"><use xlink:href="/assets/icons/sprites/free.svg#cil-paper-plane"></use></svg>';
+            }
+        },
 
         // Token usage tracking (cumulative per session)
         tokenStats: {
@@ -5326,182 +5346,204 @@ try {
             localStorage.removeItem(`learn-pane-${id}`);
             sessionStorage.removeItem(`learn-pane-${id}`);
 
-            // Compute and save ONLY learnAiThreePanelSizes
-            const wrapper = document.querySelector('.learn-app-wrapper');
+            // Compute and save ONLY learnAiThreePanelSizes (SNA-style: raw percentages)
+            const wrapper = document.querySelector('.split-panel-body') || document.querySelector('.learn-app-wrapper');
             if (wrapper) {
                 const totalW = wrapper.offsetWidth || window.innerWidth;
-                const p1El = document.getElementById('learn-panel-1') || document.getElementById('outlineSidebar') || document.getElementById('courseSidebar');
-                const p3El = document.getElementById('learn-panel-3') || document.getElementById('paneAI');
+                const p1El = document.getElementById('learn-panel-1');
+                const p2El = document.getElementById('learn-panel-2');
+                const p3El = document.getElementById('learn-panel-3');
                 if (p1El && totalW > 0) {
-                    const w1 = p1El.offsetWidth;
-                    let existingPct3 = 25;
-                    try {
-                        const prev = JSON.parse(sessionStorage.getItem('learnAiThreePanelSizes') || '[]');
-                        if (Array.isArray(prev) && prev[2] > 10) existingPct3 = prev[2];
-                    } catch(e) {}
-
-                    const pct1 = (w1 / totalW) * 100;
-                    const pct3 = p3El ? Math.max(15, (p3El.offsetWidth / totalW) * 100) : existingPct3;
-                    const pct2 = Math.max(10, 100 - pct1 - pct3);
-                    const sizesStr = JSON.stringify([pct1, pct2, pct3]);
-                    localStorage.removeItem('learnAiThreePanelSizes');
-                    sessionStorage.setItem('learnAiThreePanelSizes', sizesStr);
-                    this.savePreferenceToDB('learnAiThreePanelSizes', sizesStr);
+                    const pct1 = (p1El.offsetWidth / totalW) * 100;
+                    const isP3Visible = p3El && !p3El.classList.contains('d-none') && p3El.offsetWidth > 0;
+                    let pct3;
+                    if (isP3Visible) {
+                        pct3 = (p3El.offsetWidth / totalW) * 100;
+                    } else {
+                        // Preserve existing Panel 3 percentage
+                        try {
+                            const prev = JSON.parse(localStorage.getItem('learnAiThreePanelSizes') || '[]');
+                            pct3 = (Array.isArray(prev) && prev[2] > 5) ? prev[2] : 25;
+                        } catch(e) { pct3 = 25; }
+                    }
+                    const pct2 = 100 - pct1 - pct3;
+                    // SNA sanitizeSplitSizes: ensure all > 0 and sum ~ 100
+                    if (pct1 > 0 && pct2 > 0 && pct3 > 0) {
+                        const sum = pct1 + pct2 + pct3;
+                        const normalized = [pct1 * 100 / sum, pct2 * 100 / sum, pct3 * 100 / sum];
+                        const sizesStr = JSON.stringify(normalized.map(v => Math.round(v * 100) / 100));
+                        localStorage.setItem('learnAiThreePanelSizes', sizesStr);
+                        sessionStorage.setItem('learnAiThreePanelSizes', sizesStr);
+                        this.savePreferenceToDB('learnAiThreePanelSizes', sizesStr);
+                    }
                 }
             }
         },
 
         restorePaneWidths: function () {
-            const prefs = (window.TOM_CONFIG && window.TOM_CONFIG.ui_preferences) || {};
+            var prefs = (window.TOM_CONFIG && window.TOM_CONFIG.ui_preferences) || {};
 
-            ['outlineSidebar', 'courseSidebar', 'paneAI'].forEach(id => {
-                localStorage.removeItem(`learn-pane-${id}`);
-                sessionStorage.removeItem(`learn-pane-${id}`);
+            ['outlineSidebar', 'courseSidebar', 'paneAI'].forEach(function(id) {
+                localStorage.removeItem('learn-pane-' + id);
+                sessionStorage.removeItem('learn-pane-' + id);
             });
 
-            localStorage.removeItem('learnAiThreePanelSizes');
-            let threePanelSizes = sessionStorage.getItem('learnAiThreePanelSizes') || prefs['learnAiThreePanelSizes'];
+            var threePanelSizes = localStorage.getItem('learnAiThreePanelSizes') || sessionStorage.getItem('learnAiThreePanelSizes') || prefs['learnAiThreePanelSizes'];
             if (threePanelSizes && typeof threePanelSizes !== 'string') threePanelSizes = JSON.stringify(threePanelSizes);
             if (threePanelSizes) {
+                localStorage.setItem('learnAiThreePanelSizes', threePanelSizes);
                 sessionStorage.setItem('learnAiThreePanelSizes', threePanelSizes);
                 try {
-                    const arr = JSON.parse(threePanelSizes);
+                    var arr = JSON.parse(threePanelSizes);
                     if (Array.isArray(arr) && arr.length === 3) {
-                        const p1El = document.getElementById('learn-panel-1') || document.getElementById('outlineSidebar') || document.getElementById('courseSidebar');
-                        const p2El = document.getElementById('learn-panel-2');
-                        const p3El = document.getElementById('learn-panel-3') || document.getElementById('paneAI');
-                        const p3Pct = (arr[2] && arr[2] > 12) ? arr[2] : 25;
+                        var p1El = document.getElementById('learn-panel-1');
+                        var p2El = document.getElementById('learn-panel-2');
+                        var p3El = document.getElementById('learn-panel-3');
+
+                        // SNA normalizeSizes: ensure sum = 100
+                        var sum = arr[0] + arr[1] + arr[2];
+                        var sizes = (Math.abs(sum - 100) > 0.01 && sum > 0) ?
+                            arr.map(function(v) { return v * 100 / sum; }) : arr.slice();
+
+                        if (sizes[0] + sizes[2] > 75) {
+                            var excess = (sizes[0] + sizes[2]) - 75;
+                            sizes[2] = Math.max(18, sizes[2] - excess);
+                        }
+
                         if (p1El) {
-                            p1El.style.width = arr[0] + '%';
-                            p1El.style.flexBasis = arr[0] + '%';
-                            if (p1El.id === 'outlineSidebar' || p1El.id === 'learn-panel-1') {
-                                const wrapperW = p1El.parentElement ? p1El.parentElement.offsetWidth : window.innerWidth;
-                                const p1Px = (arr[0] / 100) * wrapperW;
-                                this.setOutlineState(p1El, p1Px > 175 ? 'expanded' : 'collapsed');
-                            }
+                            p1El.style.width = sizes[0] + '%';
+                            p1El.style.flexBasis = sizes[0] + '%';
+                            var wrapperW = p1El.parentElement ? p1El.parentElement.offsetWidth : window.innerWidth;
+                            var p1Px = (sizes[0] / 100) * wrapperW;
+                            this.setOutlineState(p1El, p1Px > 175 ? 'expanded' : 'collapsed');
                         }
                         if (p2El) {
-                            p2El.style.width = `calc(100% - ${arr[0]}% - ${p3Pct}% - 8px)`;
-                            p2El.style.flexBasis = `calc(100% - ${arr[0]}% - ${p3Pct}% - 8px)`;
+                            p2El.style.width = '0';
+                            p2El.style.flex = '1 1 0%';
                         }
                         if (p3El) {
-                            p3El.style.width = p3Pct + '%';
-                            p3El.style.flexBasis = p3Pct + '%';
+                            p3El.style.width = sizes[2] + '%';
+                            p3El.style.flexBasis = sizes[2] + '%';
                         }
                     }
                 } catch (e) {}
             }
-            const zf = document.getElementById('learn-panel-zero-flicker');
+            var zf = document.getElementById('learn-panel-zero-flicker');
             if (zf) zf.remove();
         },
 
-        // Draggable Resizers Logic (Hardened with Anchors & Delegation)
         initResizers: function () {
-            // Use delegation on document for mousedown to handle dynamic or late-rendered resizers
-            document.addEventListener('mousedown', (e) => {
-                const resizer = e.target.closest('.gutter-horizontal');
+            var self = this;
+            if (self._resizersAttached) return;
+            self._resizersAttached = true;
+
+            var onMouseDown = function (e) {
+                var resizer = e.target.closest('.gutter-horizontal');
                 if (!resizer) return;
 
-                const targetId = resizer.getAttribute('data-target');
-                const target = document.getElementById(targetId);
-                if (!target) return;
+                e.preventDefault();
+                self.isDragging = true;
+                self.currentResizer = resizer;
+                self.initialAnchor = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
 
-                this.isDragging = true;
-                this.currentResizer = resizer;
-                resizer.classList.add('is-dragging');
-                document.body.classList.add('resizing-active');
-                document.body.style.cursor = 'col-resize';
-                document.body.style.userSelect = 'none';
+                var targetId = resizer.getAttribute('data-target');
+                var target = document.getElementById(targetId);
+                if (target) {
+                    self.initialWidth = target.offsetWidth;
+                }
+                document.body.classList.add('user-select-none');
+            };
 
-                // Prevent iframes from stealing mouse events
-                document.querySelectorAll('iframe').forEach(ifrm => {
-                    ifrm.style.pointerEvents = 'none';
+            var onMouseMove = function (e) {
+                if (!self.isDragging || !self.currentResizer) return;
+                if (self.animationFrame) {
+                    cancelAnimationFrame(self.animationFrame);
+                }
+                self.animationFrame = requestAnimationFrame(function () {
+                    self.handleResize(e);
                 });
+            };
 
-                // Disable transitions immediately
-                target.style.setProperty('transition', 'none', 'important');
+            var onMouseUp = function () {
+                if (!self.isDragging) return;
+                self.isDragging = false;
+                if (self.animationFrame) {
+                    cancelAnimationFrame(self.animationFrame);
+                    self.animationFrame = null;
+                }
+                document.body.classList.remove('user-select-none');
 
-                // Cache initial state for stable calculation
-                const rect = target.getBoundingClientRect();
-                const direction = resizer.getAttribute('data-direction') || 'left';
-                this.initialAnchor = (direction === 'left') ? rect.left : rect.right;
-                this.initialWidth = rect.width;
-            });
-
-            document.addEventListener('mousemove', (e) => {
-                if (!this.isDragging || !this.currentResizer) return;
-
-                // Simple throttling via RAF
-                if (this.animationFrame) cancelAnimationFrame(this.animationFrame);
-
-                this.animationFrame = requestAnimationFrame(() => {
-                    this.handleResize(e);
-                });
-            });
-
-            const stopDragging = () => {
-                if (this.isDragging) {
-                    this.isDragging = false;
-                    document.body.classList.remove('resizing-active');
-                    document.querySelectorAll('iframe').forEach(ifrm => ifrm.style.pointerEvents = 'all');
-
-                    if (this.currentResizer) {
-                        this.currentResizer.classList.remove('is-dragging');
-                        const targetId = this.currentResizer.getAttribute('data-target');
-                        const target = document.getElementById(targetId);
-                        if (target) {
-                            target.style.removeProperty('transition');
-                            this.savePaneWidth(targetId, target.offsetWidth);
-                        }
+                if (self.currentResizer) {
+                    var targetId = self.currentResizer.getAttribute('data-target');
+                    var target = document.getElementById(targetId);
+                    if (target) {
+                        self.savePaneWidth(targetId, target.offsetWidth);
                     }
-                    document.body.style.cursor = 'default';
-                    document.body.style.userSelect = 'auto';
-                    this.currentResizer = null;
+                    self.currentResizer = null;
                 }
             };
 
-            document.addEventListener('mouseup', stopDragging);
-            window.addEventListener('blur', stopDragging);
+            document.addEventListener('mousedown', onMouseDown);
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+
+            document.addEventListener('touchstart', onMouseDown, { passive: false });
+            document.addEventListener('touchmove', onMouseMove, { passive: false });
+            document.addEventListener('touchend', onMouseUp);
         },
 
         handleResize: function (e) {
-            if (!this.currentResizer) return;
+            if (!this.isDragging || !this.currentResizer) return;
 
-            const targetId = this.currentResizer.getAttribute('data-target');
-            const direction = this.currentResizer.getAttribute('data-direction') || 'left';
-            const target = document.getElementById(targetId);
+            var targetId = this.currentResizer.getAttribute('data-target');
+            var target = document.getElementById(targetId);
+            if (!target) return;
 
-            if (target) {
-                let newWidth;
+            var clientX = e.clientX;
+            if (clientX === undefined && e.touches && e.touches[0]) {
+                clientX = e.touches[0].clientX;
+            }
+            if (clientX === undefined) return;
 
-                if (direction === 'left') {
-                    // Distance from fixed left edge (anchor) to mouse
-                    newWidth = e.clientX - this.initialAnchor;
-                } else {
-                    // Distance from fixed right edge (anchor) to mouse
-                    newWidth = this.initialAnchor - e.clientX;
-                }
+            var direction = this.currentResizer.getAttribute('data-direction') || 'left';
+            var delta = (direction === 'right') ? (this.initialAnchor - clientX) : (clientX - this.initialAnchor);
+            var newWidth = this.initialWidth + delta;
 
-                // Standardized constraints
-                if (targetId === 'learn-panel-1' || targetId === 'outlineSidebar') {
-                    newWidth = Math.max(68, Math.min(500, newWidth));
-                    const isCollapsed = target.getAttribute('data-state') === 'collapsed' || target.classList.contains('auto-compact');
-                    if (newWidth > 110 && isCollapsed) {
-                        this.setOutlineState(target, 'expanded');
-                    } else if (newWidth <= 110 && !isCollapsed) {
-                        newWidth = 68;
-                        this.setOutlineState(target, 'collapsed');
-                    }
-                } else if (targetId === 'learn-panel-2' || targetId === 'courseSidebar') {
-                    newWidth = Math.max(250, Math.min(1000, newWidth));
-                } else if (targetId === 'learn-panel-3' || targetId === 'paneAI') {
-                    newWidth = Math.max(250, Math.min(800, newWidth));
-                }
+            var wrapper = document.querySelector('.split-panel-body') || document.querySelector('.learn-app-wrapper');
+            var totalW = wrapper ? wrapper.offsetWidth : window.innerWidth;
 
-                // Double Apply for flexbox and standard layout
+            var p1 = document.getElementById('learn-panel-1');
+            var p3 = document.getElementById('learn-panel-3');
+            var isP3Visible = p3 && !p3.classList.contains('d-none') && p3.offsetWidth > 0;
+
+            if (targetId === 'learn-panel-1') {
+                var minW = 70;
+                var p3W = isP3Visible ? p3.offsetWidth : 0;
+                var maxW = totalW - 300 - p3W - 16;
+                if (maxW < minW) maxW = minW;
+
+                if (newWidth < minW) newWidth = minW;
+                if (newWidth > maxW) newWidth = maxW;
+
                 target.style.width = newWidth + 'px';
                 target.style.flexBasis = newWidth + 'px';
-                target.style.minWidth = '68px';
+                target.style.flexGrow = '0';
+                target.style.flexShrink = '0';
+
+                this.setOutlineState(target, newWidth > 175 ? 'expanded' : 'collapsed');
+            } else if (targetId === 'learn-panel-3') {
+                var minW = 300;
+                var p1W = p1 ? p1.offsetWidth : 70;
+                var maxW = totalW - 300 - p1W - 16;
+                if (maxW < minW) maxW = minW;
+
+                if (newWidth < minW) newWidth = minW;
+                if (newWidth > maxW) newWidth = maxW;
+
+                target.style.width = newWidth + 'px';
+                target.style.flexBasis = newWidth + 'px';
+                target.style.flexGrow = '0';
+                target.style.flexShrink = '0';
             }
         },
 
@@ -5628,6 +5670,77 @@ try {
             setTimeout(() => { chatHistory.scrollTop = chatHistory.scrollHeight; }, 100);
         },
 
+        unlockAiAssistAction: function (lessonId) {
+            if (!lessonId) return;
+            if (!confirm('Unlock AI Assist for this lesson using 25 Jolt?')) return;
+
+            const btn = document.getElementById('unlockAiAssistBtn');
+            const origHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="bx bx-loader-circle bx-spin fs-5"></i> Unlocking...';
+            }
+
+            fetch('/api/learnAI/unlock_ai_assist.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lesson_id: lessonId })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Update header Jolt display
+                    const headerJolt = document.getElementById('header-jolt');
+                    if (headerJolt && data.new_jolt !== undefined) {
+                        headerJolt.innerText = Number(data.new_jolt).toLocaleString();
+                    }
+
+                    // Set unlocked status to 1
+                    const unlockInput = document.getElementById('isAiAssistUnlocked');
+                    if (unlockInput) unlockInput.value = '1';
+
+                    // Remove locked screen and show chat + input
+                    const lockedScreen = document.getElementById('aiAssistLockedScreen');
+                    if (lockedScreen) lockedScreen.remove();
+
+                    const chatHistory = document.getElementById('aiChatHistory');
+                    const chatInputBar = document.getElementById('aiChatInputBar');
+                    if (chatHistory) {
+                        chatHistory.classList.remove('d-none');
+                        chatHistory.classList.add('d-flex');
+                    }
+                    if (chatInputBar) {
+                        chatInputBar.classList.remove('d-none');
+                    }
+
+                    // Now load chat history
+                    const chapterId = document.getElementById('currentChapterId')?.value || '';
+                    if (chatHistory && chapterId) {
+                        chatHistory.innerHTML = '<div class="text-center py-4 my-auto text-secondary small d-flex flex-column align-items-center gap-2"><i class="bx bx-loader-circle bx-spin fs-4 text-primary"></i><span>Loading conversation...</span></div>';
+                        fetch(`/api/learnAI/history?lesson_id=${lessonId}&chapter_id=${chapterId}`)
+                            .then(r => r.text())
+                            .then(html => {
+                                chatHistory.innerHTML = html;
+                                if (typeof LearnApp._processChatHistoryHtml === 'function') LearnApp._processChatHistoryHtml();
+                            });
+                    }
+                } else {
+                    alert(data.error || 'Failed to unlock AI Assist.');
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = origHtml;
+                    }
+                }
+            })
+            .catch(err => {
+                alert('Error connecting to unlock API.');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = origHtml;
+                }
+            });
+        },
+
         // AI Chat Functionality
         initAIChat: function () {
             const chatInput = document.getElementById('aiChatInput');
@@ -5648,13 +5761,18 @@ try {
                     
                     const modalContent = document.getElementById('tokenHistoryModalContent');
                     if (modalContent) {
-                        modalContent.innerHTML = '<div class="p-5 text-center"><i class="bx bx-loader-alt bx-spin fs-2"></i><p class="mt-2 text-secondary">Loading token history...</p></div>';
+                        modalContent.innerHTML = '<div class="p-5 text-center"><i class="bx bx-loader-circle bx-spin fs-2 text-primary"></i><p class="mt-2 text-secondary">Loading token history...</p></div>';
                     }
                     
                     const modalEl = document.getElementById('tokenHistoryModal');
-                    if (modalEl && typeof coreui !== 'undefined') {
-                        const modal = new coreui.Modal(modalEl);
-                        modal.show();
+                    if (modalEl) {
+                        if (typeof coreui !== 'undefined' && coreui.Modal) {
+                            const modal = new coreui.Modal(modalEl);
+                            modal.show();
+                        } else if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                            const modal = new bootstrap.Modal(modalEl);
+                            modal.show();
+                        }
                     }
                     
                     fetch(`/api/learnAI/token_history?lesson_id=${lessonId}&chapter_id=${chapterId}`)
@@ -5668,6 +5786,45 @@ try {
                 });
             }
 
+            // Scroll-to-bottom button & scroll spy (scroll to wait when user scrolls up during stream)
+            this._userScrolledUp = false;
+            const scrollBtn = document.getElementById('aiChatScrollToBottom');
+            if (scrollBtn && !chatHistory.dataset.scrollSpyInit) {
+                chatHistory.dataset.scrollSpyInit = 'true';
+                chatHistory.addEventListener('scroll', () => {
+                    const isAtBottom = chatHistory.scrollHeight - chatHistory.scrollTop - chatHistory.clientHeight <= 45;
+                    if (isAtBottom) {
+                        LearnApp._userScrolledUp = false;
+                        scrollBtn.classList.remove('d-flex');
+                        scrollBtn.classList.add('d-none');
+                    } else {
+                        LearnApp._userScrolledUp = true;
+                        scrollBtn.classList.remove('d-none');
+                        scrollBtn.classList.add('d-flex');
+                        const activeStream = document.querySelector('.current-ai-stream');
+                        if (activeStream) {
+                            scrollBtn.innerHTML = '<i class="bx bx-loader-circle bx-spin fs-4"></i>';
+                        } else {
+                            scrollBtn.innerHTML = '<i class="bx bx-down-arrow-alt fs-4"></i>';
+                        }
+                    }
+                });
+
+                scrollBtn.addEventListener('click', () => {
+                    LearnApp._userScrolledUp = false;
+                    chatHistory.scrollTo({ top: chatHistory.scrollHeight, behavior: 'smooth' });
+                    setTimeout(() => {
+                        scrollBtn.classList.remove('d-flex');
+                        scrollBtn.classList.add('d-none');
+                    }, 300);
+                });
+            }
+
+            // Check if AI Assist is locked for this user on this lesson
+            if (document.getElementById('isAiAssistUnlocked') && document.getElementById('isAiAssistUnlocked').value !== '1') {
+                return;
+            }
+
             // Check if chat history was pre-loaded by PHP directly inside content.php
             if (chatHistory.dataset.preloaded === 'true') {
                 chatHistory.removeAttribute('data-preloaded');
@@ -5677,7 +5834,7 @@ try {
                 if (!chapterId) {
                     chatHistory.innerHTML = '';
                 } else {
-                    chatHistory.innerHTML = '<div class="text-center p-3 text-secondary small"><i class="bx bx-loader-alt bx-spin"></i> Loading chat history...</div>';
+                    chatHistory.innerHTML = '<div class="text-center py-4 my-auto text-secondary small d-flex flex-column align-items-center gap-2"><i class="bx bx-loader-circle bx-spin fs-4 text-primary"></i><span>Loading conversation...</span></div>';
                     
                     fetch(`/api/learnAI/history?lesson_id=${lessonId}&chapter_id=${chapterId}`)
                         .then(r => r.text())
@@ -5809,6 +5966,7 @@ try {
                 const p = aiMsgContainer.querySelector('p');
 
                 if (data.type === 'stream_end') {
+                    LearnApp.setChatSendState('idle');
                     const dots = aiMsgContainer.querySelector('.typing-dots');
                     if (dots) {
                         dots.remove();
@@ -5820,7 +5978,19 @@ try {
                         LearnApp.renderMarkdownWithHighlighting(p.dataset.rawMd, p);
                     }
                     aiMsgContainer.classList.remove('current-ai-stream');
-                    chatHistory.scrollTop = chatHistory.scrollHeight;
+
+                    const scrollBtn = document.getElementById('aiChatScrollToBottom');
+                    if (scrollBtn && !scrollBtn.classList.contains('d-none')) {
+                        scrollBtn.innerHTML = '<i class="bx bx-down-arrow-alt fs-4"></i>';
+                    }
+
+                    if (!LearnApp._userScrolledUp) {
+                        chatHistory.scrollTop = chatHistory.scrollHeight;
+                        if (scrollBtn) {
+                            scrollBtn.classList.remove('d-flex');
+                            scrollBtn.classList.add('d-none');
+                        }
+                    }
 
                     // Update token stats bar with usage data
                     if (data.usage) {
@@ -5843,13 +6013,23 @@ try {
 
                     p.dataset.rawMd = (p.dataset.rawMd || '') + data.data;
                     LearnApp.renderMarkdownWithHighlighting(p.dataset.rawMd, p);
-                    chatHistory.scrollTop = chatHistory.scrollHeight;
+
+                    const scrollBtn = document.getElementById('aiChatScrollToBottom');
+                    if (!LearnApp._userScrolledUp) {
+                        chatHistory.scrollTop = chatHistory.scrollHeight;
+                    } else if (scrollBtn) {
+                        scrollBtn.classList.remove('d-none');
+                        scrollBtn.classList.add('d-flex');
+                        scrollBtn.innerHTML = '<i class="bx bx-loader-circle bx-spin fs-4"></i>';
+                    }
                 }
             };
 
-            const ensureSocketConnection = () => {
-                if (!aiSocket.isActive()) {
-                    aiSocket.connect(`ai_stream.${userSessionId}`, handleAIStream);
+            const ensureSocketConnection = (onReady = null) => {
+                if (aiSocket.isActive()) {
+                    if (typeof onReady === 'function') onReady();
+                } else {
+                    aiSocket.connect(`ai_stream.${userSessionId}`, handleAIStream, null, onReady);
                 }
             };
 
@@ -5865,19 +6045,10 @@ try {
             // Setup a monitor for the active stream in case connection closes abruptly
             setInterval(() => {
                 const activeStream = document.querySelector('.current-ai-stream');
-                if (activeStream && window.aiSocket && !window.aiSocket.isActive()) {
-                    const dots = activeStream.querySelector('.typing-dots');
-                    if (dots) {
-                        dots.remove();
-                        const bubble = activeStream.querySelector('.msg-bubble');
-                        if (bubble) bubble.style.display = 'block';
-                        const p = activeStream.querySelector('p');
-                        if (p && p.dataset.rawMd) {
-                            LearnApp.renderMarkdownWithHighlighting(p.dataset.rawMd, p);
-                        } else if (p && p.innerHTML === '') {
-                            p.innerHTML = '<span class="text-danger small">Connection lost. Please try again.</span>';
-                        }
-                        activeStream.classList.remove('current-ai-stream');
+                if (activeStream && window.aiSocket) {
+                    if (!window.aiSocket.isActive()) {
+                        if (window.aiSocket.isConnecting) return;
+                        ensureSocketConnection();
                     }
                 }
             }, 2000);
@@ -5889,12 +6060,39 @@ try {
             chatInput.addEventListener('input', resetIdleTimer);
 
             chatSend.addEventListener('click', () => {
+                if (LearnApp._aiGenerating === true) {
+                    if (window.aiSocket && typeof window.aiSocket.disconnect === 'function') {
+                        window.aiSocket.disconnect();
+                    }
+                    LearnApp.setChatSendState('idle');
+                    const activeStream = document.querySelector('.current-ai-stream');
+                    if (activeStream) {
+                        const dots = activeStream.querySelector('.typing-dots');
+                        if (dots) dots.remove();
+                        const bubble = activeStream.querySelector('.msg-bubble');
+                        if (bubble) bubble.style.display = 'block';
+                        const p = activeStream.querySelector('p');
+                        if (p && p.dataset.rawMd) {
+                            LearnApp.renderMarkdownWithHighlighting(p.dataset.rawMd, p);
+                        } else if (p && !p.innerHTML) {
+                            p.innerHTML = '<span class="text-secondary small fst-italic">Generation stopped by user.</span>';
+                        }
+                        activeStream.classList.remove('current-ai-stream');
+                    }
+                    return;
+                }
+
                 const query = chatInput.value.trim();
                 const currentLessonId = document.getElementById('currentLessonId')?.value || '';
                 const currentChapterId = document.getElementById('currentChapterId')?.value || '';
                 if (!query) return;
 
-                resetIdleTimer(); // ensure socket gets bumped or reconnected on send
+                LearnApp._userScrolledUp = false;
+                const scrollBtn = document.getElementById('aiChatScrollToBottom');
+                if (scrollBtn) {
+                    scrollBtn.classList.remove('d-flex');
+                    scrollBtn.classList.add('d-none');
+                }
 
                 const modelSelect = document.getElementById('aiModelSelect');
                 const aiModel = modelSelect ? modelSelect.value : 'gemini';
@@ -5908,20 +6106,30 @@ try {
                 // Prepare AI message placeholder
                 const aiMsgId = 'ai_msg_' + messageId;
                 this.appendChatMessage('SathishBot', '[LOADING]', 'ai-row current-ai-stream', aiMsgId);
+                LearnApp.setChatSendState('stop');
 
-                // 2. Trigger AI Generation
-                fetch('/api/learnAI/ask', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({ query, lesson_id: currentLessonId, chapter_id: currentChapterId, message_id: messageId, session_id: userSessionId, ai_model: aiModel })
-                })
-                    .then(res => res.json())
-                    .catch(err => {
-                        console.error('AI Request Failed:', err);
-                        const aiMsgContainer = document.getElementById(aiMsgId);
-                        if (aiMsgContainer) aiMsgContainer.querySelector('p').innerText = 'Sorry, something went wrong.';
-                    });
+                const sendAskRequest = () => {
+                    fetch('/api/learnAI/ask', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ query, lesson_id: currentLessonId, chapter_id: currentChapterId, message_id: messageId, session_id: userSessionId, ai_model: aiModel })
+                    })
+                        .then(res => res.json())
+                        .catch(err => {
+                            console.error('AI Request Failed:', err);
+                            LearnApp.setChatSendState('idle');
+                            const aiMsgContainer = document.getElementById(aiMsgId);
+                            if (aiMsgContainer) {
+                                const p = aiMsgContainer.querySelector('p');
+                                if (p) p.innerText = 'Sorry, something went wrong.';
+                            }
+                        });
+                };
+
+                ensureSocketConnection(() => {
+                    sendAskRequest();
+                });
             });
 
             chatInput.addEventListener('keypress', (e) => {
@@ -5944,8 +6152,9 @@ try {
             if (type.includes('ai-row')) {
                 const isLoader = text === '[LOADING]';
                 const loaderHtml = isLoader ? `
-                    <div class="typing-dots d-flex align-items-center mb-1 p-1">
-                        <div class="spinner-border text-secondary" style="width: 1.25rem; height: 1.25rem; border-width: 0.15em;" role="status"></div>
+                    <div class="typing-dots d-flex align-items-center gap-2 mb-1 p-1 text-primary small">
+                        <i class="bx bx-loader-circle bx-spin fs-5"></i>
+                        <span class="text-secondary fw-medium">AI is thinking...</span>
                     </div>
                 ` : '';
                 const bubbleDisplay = isLoader ? 'display: none;' : '';
@@ -5990,7 +6199,7 @@ try {
                 popover.innerHTML = `
                     <div class="hl-popover-group">
                         <div class="hl-popover-row">
-                            <span class="hl-row-label" title="Pencil Circle around word"><i class="bx bx-shape-circle"></i></span>
+                            <span class="hl-mode-badge" title="Pencil Circle around word"><i class="bx bx-shape-circle"></i> <span>Circle</span></span>
                             <button type="button" class="hl-color-btn hl-circle hl-yellow" data-color="yellow" data-style="circle" title="Yellow Pencil Circle"></button>
                             <button type="button" class="hl-color-btn hl-circle hl-orange" data-color="orange" data-style="circle" title="Orange Pencil Circle"></button>
                             <button type="button" class="hl-color-btn hl-circle hl-green" data-color="green" data-style="circle" title="Green Pencil Circle"></button>
@@ -5998,7 +6207,7 @@ try {
                             <button type="button" class="hl-color-btn hl-circle hl-blue" data-color="blue" data-style="circle" title="Blue Pencil Circle"></button>
                         </div>
                         <div class="hl-popover-row">
-                            <span class="hl-row-label" title="Marker Brush behind word"><i class="bx bx-highlight"></i></span>
+                            <span class="hl-mode-badge" title="Marker Brush behind word"><i class="bx bx-highlight"></i> <span>Highlight</span></span>
                             <button type="button" class="hl-color-btn hl-brush hl-yellow" data-color="yellow" data-style="brush" title="Yellow Marker Brush"></button>
                             <button type="button" class="hl-color-btn hl-brush hl-orange" data-color="orange" data-style="brush" title="Orange Marker Brush"></button>
                             <button type="button" class="hl-color-btn hl-brush hl-green" data-color="green" data-style="brush" title="Green Marker Brush"></button>
@@ -6006,6 +6215,7 @@ try {
                             <button type="button" class="hl-color-btn hl-brush hl-blue" data-color="blue" data-style="brush" title="Blue Marker Brush"></button>
                         </div>
                     </div>
+                    <div class="hl-vertical-divider"></div>
                     <button type="button" class="hl-clear-btn" title="Remove Highlight"><i class="bx bx-trash"></i></button>
                 `;
                 document.body.appendChild(popover);
@@ -7396,7 +7606,7 @@ try {
                         if (isOverview) {
                             chatHistory.innerHTML = ''; // Clear history on overview
                         } else {
-                            chatHistory.innerHTML = '<div class="text-center p-3 text-secondary small"><i class="bx bx-loader-alt bx-spin"></i> Loading chat history...</div>';
+                            chatHistory.innerHTML = '<div class="text-center py-4 my-auto text-secondary small d-flex flex-column align-items-center gap-2"><i class="bx bx-loader-circle bx-spin fs-4 text-primary"></i><span>Loading conversation...</span></div>';
                             fetch('/api/learnAI/history?lesson_id=' + lessonId + '&chapter_id=' + chapterId)
                                 .then(function(r) { return r.text(); })
                                 .then(function(chatHtml) {
@@ -7433,6 +7643,7 @@ try {
 
     // Export toggle for button clicks
     window.toggleOutline = () => LearnApp.toggleOutline();
+    window.unlockAiAssistAction = (lessonId) => LearnApp.unlockAiAssistAction(lessonId);
 
     // Re-check for resizers after a small delay in case of late rendering
     setTimeout(() => { if (!LearnApp.isInitialized) LearnApp.init(); }, 1000);
@@ -7486,8 +7697,25 @@ const TomSocketClient = function () {
    * @param {function} callback - Message handler function
    * @param {object} ui - UI elements (optional, e.g., status dot)
    */
-  this.connect = function (exchange, callback, ui = null) {
-    if (this.isConnected || this.isConnecting) return;
+  this.connect = function (exchange, callback, ui = null, onSubscribed = null) {
+    if (this.isConnected && this.isSubscribed) {
+      if (typeof onSubscribed === 'function') onSubscribed();
+      return;
+    }
+    if (this.isConnecting) {
+      // If already connecting, poll briefly for subscription readiness
+      if (typeof onSubscribed === 'function') {
+        const checkReady = setInterval(() => {
+          if (this.isSubscribed) {
+            clearInterval(checkReady);
+            onSubscribed();
+          } else if (!this.isConnecting && !this.isConnected) {
+            clearInterval(checkReady);
+          }
+        }, 100);
+      }
+      return;
+    }
     this.isConnecting = true;
     try {
       // Read MQ domain from server-injected config (env.json → PHP → window.TOM_CONFIG)
@@ -7526,7 +7754,7 @@ const TomSocketClient = function () {
           console.log(`[✓] Socket connected to exchange: ${exchange}`);
 
           // Start the subscription attempt
-          this.safeSubscribe(exchange, callback, ui);
+          this.safeSubscribe(exchange, callback, ui, onSubscribed);
         },
         (err) => {
           this.isConnecting = false;
@@ -7535,11 +7763,12 @@ const TomSocketClient = function () {
           if (ui && ui.dot) ui.dot.style.color = "#f38ba8"; // Red
 
           console.warn("Socket connection failed, retrying in 2s...", err);
-          setTimeout(() => this.connect(exchange, callback, ui), 2000);
+          setTimeout(() => this.connect(exchange, callback, ui, onSubscribed), 2000);
         },
         "/",
       );
     } catch (e) {
+      this.isConnecting = false;
       console.error("Socket Error:", e);
     }
   };
@@ -7554,6 +7783,7 @@ const TomSocketClient = function () {
       });
       this.isConnected = false;
       this.isSubscribed = false;
+      this.isConnecting = false;
     }
   };
 
@@ -7562,15 +7792,16 @@ const TomSocketClient = function () {
    * @param {string} exchange - Exchange name
    * @param {function} callback - Message handler
    * @param {object} ui - UI elements
+   * @param {function} onSubscribed - Optional callback once subscribed
    */
-  this.safeSubscribe = function (exchange, callback, ui) {
-    // Wait 1 second initially to give the worker time to declare the exchange
+  this.safeSubscribe = function (exchange, callback, ui, onSubscribed = null) {
+    const isTopic = exchange.startsWith('/') || exchange.startsWith('logs.') || exchange.startsWith('ai_stream.') || exchange.startsWith('content_stream.');
+    const delayMs = isTopic ? 10 : 1000;
+
     setTimeout(() => {
       if (!this.isConnected) return;
 
       try {
-        // Use /topic/ instead of /exchange/ for better stability and resource management
-        // This maps to amq.topic exchange in RabbitMQ
         let destination;
         if (exchange.startsWith('/')) {
           destination = exchange;
@@ -7581,27 +7812,32 @@ const TomSocketClient = function () {
         }
 
         this.client.subscribe(destination, (m) => {
-          if (m.body) {
+          if (m && m.body) {
+            let parsed = m.body;
             try {
-              callback(JSON.parse(m.body));
-            } catch (e) {
-              callback(m.body);
-            }
+              if (typeof m.body === 'string' && (m.body.startsWith('{') || m.body.startsWith('['))) {
+                parsed = JSON.parse(m.body);
+              }
+            } catch (e) {}
+            callback(parsed);
           }
         });
         this.isSubscribed = true;
         this.subRetryCount = 0;
         console.log(`[✓] Subscribed to ${destination}`);
+        if (typeof onSubscribed === 'function') {
+          onSubscribed();
+        }
       } catch (e) {
         console.warn(
           `[!] Subscription failed for ${exchange}. Worker might not be ready. Retrying...`,
         );
         if (this.subRetryCount < 10) {
           this.subRetryCount++;
-          this.safeSubscribe(exchange, callback, ui);
+          this.safeSubscribe(exchange, callback, ui, onSubscribed);
         }
       }
-    }, 1000);
+    }, delayMs);
   };
 
   /**

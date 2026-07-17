@@ -20,11 +20,10 @@
            |  <?= Session::getVersion() ?>
         </span>
     </div>
+    <style>
+    /* Smart hide: only show the page footer toggle when the sidebar is hidden */
+    .sidebar:not(.hide):not(.sidebar-hide) ~ .wrapper .page-footer-toggle {
+        display: none !important;
+    }
+    </style>
 </footer>
-
-<style>
-/* Smart hide: only show the page footer toggle when the sidebar is hidden */
-.sidebar:not(.hide):not(.sidebar-hide) ~ .wrapper .page-footer-toggle {
-    display: none !important;
-}
-</style>

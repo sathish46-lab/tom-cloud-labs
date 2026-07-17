@@ -31,25 +31,18 @@ if (!$extension) {
     $extension = $map[$mimeType];
 }
 
-$username = $user->getUsername();
-if (!$username) {
-    echo json_encode(['status' => 'error', 'error' => 'User not found']); exit;
-}
-
-// User-specific directory in htdocs/uploads/users/{username}
-$safeUsername = preg_replace('/[^a-zA-Z0-9_-]/', '', $username);
-$uploadDir = __DIR__ . '/../../../uploads/users/' . $safeUsername;
-
-if (!is_dir($uploadDir)) {
-    mkdir($uploadDir, 0755, true);
+$userId = $user->getUserId();
+if (!$userId) {
+    echo json_encode(['status' => 'error', 'error' => 'User ID not found']); exit;
 }
 
 $filename = 'avatar_' . time() . '.' . $extension;
-$destination = $uploadDir . '/' . $filename;
+$s3Path = "avatars/{$userId}/{$filename}";
 
-if (move_uploaded_file($file['tmp_name'], $destination)) {
-    $avatarUrl = '/uploads/users/' . $safeUsername . '/' . $filename;
-    
+if (Storage::upload($file['tmp_name'], $s3Path)) {
+    $avatarUrl = "/system/user/avatar/{$userId}/{$filename}";
+
+
     try {
         $db->users->updateOne(
             ['email' => $user->getEmail()],
@@ -64,5 +57,5 @@ if (move_uploaded_file($file['tmp_name'], $destination)) {
         echo json_encode(['status' => 'error', 'error' => 'Database update failed.']);
     }
 } else {
-    echo json_encode(['status' => 'error', 'error' => 'Failed to move uploaded file.']);
+    echo json_encode(['status' => 'error', 'error' => 'Failed to upload file to MinIO.']);
 }

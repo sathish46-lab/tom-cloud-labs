@@ -72,6 +72,9 @@ RewriteRule ^learn$ app/learnAI/dashboard.php [L,QSA]
 RewriteRule ^learn/lesson/([^/]+)$ app/learnAI/course_view.php?id=$1 [L,QSA]
 RewriteRule ^learn/lesson/([^/]+)/chapter/([^/]+)$ app/learnAI/course_view.php?id=$1&chapter_id=$2 [L,QSA]
 
+# 8. System User Files Routing (Avatar & Private)
+RewriteRule ^system/user/(avatar|private)/([a-zA-Z0-9_-]+)/(.+)$ src/api/system/user_files.php?type=$1&user_id=$2&filename=$3 [L,QSA]
+
 # 5. USER PROFILE ROUTING
 RewriteCond %{DOCUMENT_ROOT}/app/account.php -f
 RewriteRule ^([a-zA-Z0-9_.-]+)$ app/account.php?username=$1 [L,QSA]

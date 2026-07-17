@@ -582,13 +582,13 @@ class Session
         $avatarUrl = $user?->getAvatarUrl() ?? $_SESSION['user_avatar'] ?? null;
 
         if (!empty($avatarUrl)) {
-            // CHECK: Is it a remote URL (like Google)?
-            if (strpos($avatarUrl, 'http') === 0) {
-                // Remote URL is always valid
+            // CHECK: Is it a remote URL (like Google) or a routed system path (MinIO/S3)?
+            if (strpos($avatarUrl, 'http') === 0 || strpos($avatarUrl, '/system/') === 0) {
+                // Remote URL or routed system path is always valid
                 return htmlspecialchars($avatarUrl); 
             }
             
-            // CHECK: Is it a valid local file?
+            // CHECK: Is it a valid physical local file?
             if (file_exists($_SERVER['DOCUMENT_ROOT'] . $avatarUrl)) {
                 // Local file exists
                 return htmlspecialchars($avatarUrl);
@@ -609,9 +609,12 @@ class Session
     public static function getAvatarStyle() {
         $user = self::getUser();
         
-        // If the user HAS a real profile (Google/Uploaded), do not change the color
-        if ($user && $user->getAvatarUrl() && strpos($user->getAvatarUrl(), 'http') === 0) {
-            return ""; 
+        // If the user HAS a real profile (Google/Uploaded/MinIO), do not change the color with hue-rotate
+        if ($user && $user->getAvatarUrl()) {
+            $url = $user->getAvatarUrl();
+            if (strpos($url, 'http') === 0 || strpos($url, '/system/') === 0 || strpos($url, '/uploads/') === 0) {
+                return ""; 
+            }
         }
 
         $seed = $user ? $user->getUserId() : session_id();

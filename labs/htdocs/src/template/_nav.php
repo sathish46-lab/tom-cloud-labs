@@ -51,8 +51,8 @@ $current = Session::getCurrentFile();
                 Learn AI 
             </a>
         </li>
-        <li class="nav-group">
-            <a class="nav-link nav-group-toggle" href="#">
+        <li class="nav-group <?= $current == 'quiz' ? 'show' : '' ?>">
+            <a class="nav-link nav-group-toggle" href="javascript:void(0);">
                 <i class="nav-icon bx bx-spreadsheet"></i> Evaluate
             </a>
             <ul class="nav-group-items">
@@ -62,7 +62,7 @@ $current = Session::getCurrentFile();
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#">
+                    <a class="nav-link" href="javascript:void(0);">
                         <i class="nav-icon bx bx-code-alt"></i> Code Arena 👨🏽‍💻
                     </a>
                 </li>
@@ -198,21 +198,36 @@ $current = Session::getCurrentFile();
   });
 })();
 
-// HTMX Sidebar Active State Sync
-document.addEventListener('htmx:afterSettle', function() {
+// Sidebar Active State Sync & Cleanup
+function syncSidebarActiveState() {
     const path = window.location.pathname;
     document.querySelectorAll('.sidebar-nav .nav-link').forEach(link => {
         link.classList.remove('active');
         const href = link.getAttribute('href');
-        if (href && href !== '#' && href !== '/') {
+        if (href && !href.startsWith('javascript:') && href !== '#' && href !== '/') {
             if (path === href || path.startsWith(href + '/')) {
                 link.classList.add('active');
+                const navGroup = link.closest('.nav-group');
+                if (navGroup) {
+                    navGroup.classList.add('show');
+                }
             }
         } else if (href === '/' && path === '/') {
             link.classList.add('active');
         }
     });
 
-
-});
+    document.querySelectorAll('.sidebar-nav .nav-group').forEach(group => {
+        const hasActiveChild = group.querySelector('.nav-group-items .nav-link.active');
+        const toggle = group.querySelector('.nav-group-toggle');
+        if (!hasActiveChild) {
+            if (toggle) toggle.classList.remove('active');
+            if (window.location.hash === '#' || path.includes('/dashboard')) {
+                group.classList.remove('show');
+            }
+        }
+    });
+}
+document.addEventListener('DOMContentLoaded', syncSidebarActiveState);
+document.addEventListener('htmx:afterSettle', syncSidebarActiveState);
 </script>

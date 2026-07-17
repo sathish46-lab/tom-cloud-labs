@@ -35,6 +35,35 @@ if (empty($query)) {
     exit;
 }
 
+// Check AI Assist unlock status for non-authors on public lessons
+if (!empty($lessonId)) {
+    try {
+        $db = DatabaseConnection::getDefaultDatabase();
+        $lessonDoc = $db->ai_lessons->findOne(['_id' => new MongoDB\BSON\ObjectId($lessonId)]);
+        if ($lessonDoc) {
+            $isAuthor = false;
+            $currentUsername = $user->getUsername();
+            $currentEmail = $user->getEmail();
+            if (!empty($lessonDoc['author']) && strcasecmp($lessonDoc['author'], $currentUsername) === 0) {
+                $isAuthor = true;
+            } elseif (!empty($lessonDoc['author_email']) && strcasecmp($lessonDoc['author_email'], $currentEmail) === 0) {
+                $isAuthor = true;
+            } elseif (!empty($lessonDoc['user_id']) && (int)$lessonDoc['user_id'] === $userId && $userId > 0) {
+                $isAuthor = true;
+            }
+
+            if (!$isAuthor) {
+                $unlockCheck = $db->ai_unlocked_lessons->findOne(['user_id' => $userId, 'lesson_id' => (string)$lessonId]);
+                if (!$unlockCheck) {
+                    http_response_code(403);
+                    echo json_encode(['error' => 'AI Assist is locked for this lesson. Please unlock it first.']);
+                    exit;
+                }
+            }
+        }
+    } catch (Exception $e) {}
+}
+
 try {
     $rabbit = new RabbitClient();
     $orchestrator = new LearnAIOrchestrator($userId, $user, $lessonId, $chapterId, $sessionId);

@@ -36,8 +36,25 @@ const TomSocketClient = function () {
    * @param {function} callback - Message handler function
    * @param {object} ui - UI elements (optional, e.g., status dot)
    */
-  this.connect = function (exchange, callback, ui = null) {
-    if (this.isConnected || this.isConnecting) return;
+  this.connect = function (exchange, callback, ui = null, onSubscribed = null) {
+    if (this.isConnected && this.isSubscribed) {
+      if (typeof onSubscribed === 'function') onSubscribed();
+      return;
+    }
+    if (this.isConnecting) {
+      // If already connecting, poll briefly for subscription readiness
+      if (typeof onSubscribed === 'function') {
+        const checkReady = setInterval(() => {
+          if (this.isSubscribed) {
+            clearInterval(checkReady);
+            onSubscribed();
+          } else if (!this.isConnecting && !this.isConnected) {
+            clearInterval(checkReady);
+          }
+        }, 100);
+      }
+      return;
+    }
     this.isConnecting = true;
     try {
       // Read MQ domain from server-injected config (env.json → PHP → window.TOM_CONFIG)
@@ -76,7 +93,7 @@ const TomSocketClient = function () {
           console.log(`[✓] Socket connected to exchange: ${exchange}`);
 
           // Start the subscription attempt
-          this.safeSubscribe(exchange, callback, ui);
+          this.safeSubscribe(exchange, callback, ui, onSubscribed);
         },
         (err) => {
           this.isConnecting = false;
@@ -85,11 +102,12 @@ const TomSocketClient = function () {
           if (ui && ui.dot) ui.dot.style.color = "#f38ba8"; // Red
 
           console.warn("Socket connection failed, retrying in 2s...", err);
-          setTimeout(() => this.connect(exchange, callback, ui), 2000);
+          setTimeout(() => this.connect(exchange, callback, ui, onSubscribed), 2000);
         },
         "/",
       );
     } catch (e) {
+      this.isConnecting = false;
       console.error("Socket Error:", e);
     }
   };
@@ -104,6 +122,7 @@ const TomSocketClient = function () {
       });
       this.isConnected = false;
       this.isSubscribed = false;
+      this.isConnecting = false;
     }
   };
 
@@ -112,15 +131,16 @@ const TomSocketClient = function () {
    * @param {string} exchange - Exchange name
    * @param {function} callback - Message handler
    * @param {object} ui - UI elements
+   * @param {function} onSubscribed - Optional callback once subscribed
    */
-  this.safeSubscribe = function (exchange, callback, ui) {
-    // Wait 1 second initially to give the worker time to declare the exchange
+  this.safeSubscribe = function (exchange, callback, ui, onSubscribed = null) {
+    const isTopic = exchange.startsWith('/') || exchange.startsWith('logs.') || exchange.startsWith('ai_stream.') || exchange.startsWith('content_stream.');
+    const delayMs = isTopic ? 10 : 1000;
+
     setTimeout(() => {
       if (!this.isConnected) return;
 
       try {
-        // Use /topic/ instead of /exchange/ for better stability and resource management
-        // This maps to amq.topic exchange in RabbitMQ
         let destination;
         if (exchange.startsWith('/')) {
           destination = exchange;
@@ -131,27 +151,32 @@ const TomSocketClient = function () {
         }
 
         this.client.subscribe(destination, (m) => {
-          if (m.body) {
+          if (m && m.body) {
+            let parsed = m.body;
             try {
-              callback(JSON.parse(m.body));
-            } catch (e) {
-              callback(m.body);
-            }
+              if (typeof m.body === 'string' && (m.body.startsWith('{') || m.body.startsWith('['))) {
+                parsed = JSON.parse(m.body);
+              }
+            } catch (e) {}
+            callback(parsed);
           }
         });
         this.isSubscribed = true;
         this.subRetryCount = 0;
         console.log(`[✓] Subscribed to ${destination}`);
+        if (typeof onSubscribed === 'function') {
+          onSubscribed();
+        }
       } catch (e) {
         console.warn(
           `[!] Subscription failed for ${exchange}. Worker might not be ready. Retrying...`,
         );
         if (this.subRetryCount < 10) {
           this.subRetryCount++;
-          this.safeSubscribe(exchange, callback, ui);
+          this.safeSubscribe(exchange, callback, ui, onSubscribed);
         }
       }
-    }, 1000);
+    }, delayMs);
   };
 
   /**

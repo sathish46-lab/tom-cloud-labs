@@ -1,144 +1,139 @@
-<div class="quiz-container quiz-container">
-    <!-- 1. Hero Section -->
-    <div class="d-flex flex-column align-items-center text-center py-2 mb-3 w-100">
-        <h1 class="display-4 fw-bold theme-text mb-2 d-flex align-items-center justify-content-center">
-            <i class="bx bxs-zap text-warning me-2"></i>Spot Quiz
-        </h1>
-        <p class="text-body-secondary fs-5 mb-4">Quick 5-question challenges • Earn rewards • Boost your skills</p>
-        
-        <!-- Mode Pills -->
-        <div class="d-flex flex-wrap justify-content-center gap-2 mb-3 max-width-800">
-            <span class="badge border border-primary text-primary bg-transparent px-3 py-2 rounded-pill">
-                <i class="bx bx-target-lock me-1"></i> Tech Master
-            </span>
-            <span class="badge border border-warning text-warning bg-transparent px-3 py-2 rounded-pill">
-                <i class="bx bx-timer me-1"></i> Time Trial
-            </span>
-            <span class="badge border border-danger text-danger bg-transparent px-3 py-2 rounded-pill">
-                <i class="bx bxs-flame me-1"></i> Rapid Fire
-            </span>
-            <span class="badge border border-info text-info bg-transparent px-3 py-2 rounded-pill">
-                <i class="bx bx-bolt-circle me-1"></i> Blitz
-            </span>
-            <span class="badge border border-success text-success bg-transparent px-3 py-2 rounded-pill">
-                <i class="bx bx-shield-quarter me-1"></i> Endurance
-            </span>
-            <span class="badge border border-secondary text-body-tertiary bg-transparent px-3 py-2 rounded-pill opacity-75">
-                <i class="bx bx-graduation-cap me-1"></i> Self Evaluation
-            </span>
-        </div>
-        <small class="text-body-tertiary opacity-50">AI can make mistakes. Found an issue? <a href="#" class="text-info text-decoration-none">Report it</a></small>
-    </div>
-
-    <!-- 2. Tracked Achievements Section -->
-    <div class="container-fluid px-lg-5">
-        <div class="d-flex justify-content-between align-items-end mb-3">
-            <h4 class="fw-bold theme-text m-0">Tracked Achievements</h4>
-            <a href="/achievements" class="btn btn-sm btn-outline-info rounded-pill px-3">View All</a>
+<div class="flex-grow-1 px-3 blur rounded-0 border-0 shadow-none d-flex flex-column">
+    <div class="quiz-container flex-grow-1 d-flex flex-column">
+        <!-- 1. Hero Section -->
+        <div class="d-flex flex-column align-items-center text-center py-2 mb-3 w-100">
+            <h1 class="display-4 fw-bold theme-text mb-2 d-flex align-items-center justify-content-center">
+                <i class="bx bxs-zap text-warning me-2"></i>Spot Quiz
+            </h1>
+            <p class="text-body-secondary fs-5 mb-4">Quick 5-question challenges • Earn rewards • Boost your skills</p>
+            
+            <!-- Mode Pills -->
+            <div class="d-flex flex-wrap justify-content-center gap-2 mb-3 max-width-800">
+                <span class="badge border border-primary text-primary bg-transparent px-3 py-2 rounded-pill">
+                    <i class="bx bx-target-lock me-1"></i> Tech Master
+                </span>
+                <span class="badge border border-warning text-warning bg-transparent px-3 py-2 rounded-pill">
+                    <i class="bx bx-timer me-1"></i> Time Trial
+                </span>
+                <span class="badge border border-danger text-danger bg-transparent px-3 py-2 rounded-pill">
+                    <i class="bx bxs-flame me-1"></i> Rapid Fire
+                </span>
+                <span class="badge border border-info text-info bg-transparent px-3 py-2 rounded-pill">
+                    <i class="bx bx-bolt-circle me-1"></i> Blitz
+                </span>
+                <span class="badge border border-success text-success bg-transparent px-3 py-2 rounded-pill">
+                    <i class="bx bx-shield-quarter me-1"></i> Endurance
+                </span>
+                <span class="badge border border-secondary text-body-tertiary bg-transparent px-3 py-2 rounded-pill opacity-75">
+                    <i class="bx bx-graduation-cap me-1"></i> Self Evaluation
+                </span>
+            </div>
+            <small class="text-body-tertiary opacity-50">AI can make mistakes. Found an issue? <a href="#" class="text-info text-decoration-none">Report it</a></small>
         </div>
 
-        <div class="row g-3 mb-2">
-            <!-- Achievement Card 1 -->
-            <div class="col-md-3">
-                <div class="card p-3 blur h-100 transition-all" style="background-color: rgba(255, 255, 255, 0.3) !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2) !important;">
-                    <div class="card-body p-0">
-                        <div class="d-flex align-items-start gap-3 mb-3">
-                            <div class="achievement-icon bg-primary bg-opacity-10 rounded-3 p-2">
-                                <i class="bx bxs-trophy text-primary fs-3"></i>
+        <!-- 2. Tracked Achievements Section -->
+        <div class="container-fluid px-lg-5">
+            <div class="d-flex justify-content-between align-items-end mb-3">
+                <h4 class="fw-bold theme-text m-0">Tracked Achievements</h4>
+                <a href="/achievements" class="btn btn-sm btn-outline-info rounded-pill px-3">View All</a>
+            </div>
+
+            <div class="row g-3 mb-2">
+                <!-- Achievement Card 1 -->
+                <div class="col-md-3">
+                    <div class="card p-3 blur h-100 transition-all" style="background-color: rgba(255, 255, 255, 0.3) !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2) !important;">
+                        <div class="card-body p-0">
+                            <div class="d-flex align-items-start gap-3 mb-3">
+                                <div class="achievement-icon bg-primary bg-opacity-10 rounded-3 p-2">
+                                    <i class="bx bxs-trophy text-primary fs-3"></i>
+                                </div>
+                                <div>
+                                    <span class="badge bg-secondary-subtle text-body-secondary text-uppercase x-small mb-1">Common</span>
+                                    <h6 class="fw-bold m-0 card-title-text">Normal Sampler</h6>
+                                </div>
                             </div>
-                            <div>
-                                <span class="badge bg-secondary-subtle text-body-secondary text-uppercase x-small mb-1">Common</span>
-                                <h6 class="fw-bold m-0 card-title-text">Normal Sampler</h6>
+                            <p class="text-body-secondary x-small mb-3">Complete 1 normal quiz in 10 different topics. Normal difficulty.</p>
+                            <div class="d-flex justify-content-between x-small text-body-tertiary mb-1">
+                                <span>9/10 topics (Normal)</span>
+                                <span>90%</span>
+                            </div>
+                            <div class="progress mb-3" style="height: 6px; background: rgba(var(--bs-emphasis-color-rgb), 0.05);">
+                                <div class="progress-bar bg-primary" role="progressbar" style="width: 90%;"></div>
+                            </div>
+                            <button class="btn btn-primary rounded-pill w-100 py-1 fw-semibold text-white d-flex align-items-center justify-content-center gap-1 shadow-sm transition-all" style="font-size: 0.75rem;" onclick="location.href='/quiz'">
+                                <i class="bx bx-target-lock"></i> Track
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Achievement Card 2 -->
+                <div class="col-md-3">
+                    <div class="card p-3 blur h-100 transition-all" style="background-color: rgba(255, 255, 255, 0.3) !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2) !important;">
+                        <div class="card-body p-0">
+                            <div class="d-flex align-items-start gap-3 mb-3">
+                                <div class="achievement-icon bg-info bg-opacity-10 rounded-3 p-2">
+                                    <i class="bx bx-run text-info fs-3"></i>
+                                </div>
+                                <div>
+                                    <span class="badge bg-secondary-subtle text-body-secondary text-uppercase x-small mb-1">Rare</span>
+                                    <h6 class="fw-bold m-0 card-title-text">Normal Decathlon</h6>
+                                </div>
+                            </div>
+                            <p class="text-body-secondary x-small mb-3">Complete 10 normal quizzes in 10 different topics. Normal diff...</p>
+                            <div class="d-flex justify-content-between x-small text-body-tertiary mb-1">
+                                <span>9/10 topics (Normal)</span>
+                                <span>90%</span>
+                            </div>
+                            <div class="progress mb-3" style="height: 6px; background: rgba(var(--bs-emphasis-color-rgb), 0.05);">
+                                <div class="progress-bar bg-info" role="progressbar" style="width: 90%;"></div>
+                            </div>
+                            <button class="btn btn-info rounded-pill w-100 py-1 fw-semibold text-white d-flex align-items-center justify-content-center gap-1 shadow-sm transition-all" style="font-size: 0.75rem;" onclick="location.href='/quiz'">
+                                <i class="bx bx-target-lock"></i> Track
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Achievement Card 3 -->
+                <div class="col-md-3">
+                    <div class="card p-3 blur h-100 transition-all position-relative overflow-hidden" style="background-color: rgba(255, 255, 255, 0.3) !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2) !important;">
+                        <div class="card-body p-0 d-flex flex-column justify-content-between h-100 text-center">
+                            <div class="my-auto py-2">
+                                <h2 class="fw-bold m-0 text-gradient display-5">62 / 128</h2>
+                                <span class="x-small text-body-secondary text-uppercase tracking-wider fw-semibold">Collected</span>
+                                <div class="progress my-2 mx-auto" style="height: 4px; width: 60%; background: rgba(var(--bs-emphasis-color-rgb), 0.05);">
+                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 48%;"></div>
+                                </div>
+                                <span class="x-small text-body-tertiary">48% COMPLETE</span>
+                            </div>
+                            <div class="d-flex justify-content-center gap-3 pt-2 border-top border-secondary border-opacity-10 x-small fw-semibold">
+                                <span class="text-warning"><i class="bx bxs-flame"></i> 9,541</span>
+                                <span class="text-info"><i class="bx bxs-bolt-circle"></i> 4,764</span>
                             </div>
                         </div>
-                        <p class="text-body-secondary x-small mb-3">Complete 1 normal quiz in 10 different topics. Normal difficulty.</p>
-                        <div class="d-flex justify-content-between x-small text-body-tertiary mb-1">
-                            <span>9/10 topics (Normal)</span>
-                            <span>90%</span>
-                        </div>
-                        <div class="progress mb-3" style="height: 6px; background: rgba(var(--bs-emphasis-color-rgb), 0.05);">
-                            <div class="progress-bar bg-primary" role="progressbar" style="width: 90%;"></div>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mt-auto">
-                            <div class="d-flex gap-2">
-                                <span class="text-warning x-small"><i class="bx bxs-hot me-1"></i>30</span>
-                                <span class="text-info x-small"><i class="bx bxs-zap me-1"></i>15</span>
+                        <a href="/achievements" class="stretched-link" title="View Collected"></a>
+                    </div>
+                </div>
+
+                <!-- Achievement Card 4 -->
+                <div class="col-md-3">
+                    <div class="card p-3 blur h-100 transition-all text-center d-flex flex-column justify-content-center align-items-center" style="background-color: rgba(255, 255, 255, 0.3) !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2) !important;">
+                        <div class="card-body p-0 d-flex flex-column justify-content-center w-100">
+                            <div class="mb-2">
+                                <span class="display-4 fw-bold text-warning">4</span>
+                                <div class="x-small text-body-secondary text-uppercase tracking-wider fw-semibold mt-1">Ready to Collect</div>
                             </div>
-                            <button class="btn btn-sm btn-info rounded-pill px-3 py-0 x-small text-white">Track</button>
+                            <p class="text-body-tertiary x-small mb-3">Rewards waiting!</p>
+                            <a href="/achievements" class="btn btn-warning rounded-pill w-100 py-2 fw-bold text-dark shadow-sm hvr-grow d-flex align-items-center justify-content-center gap-1" style="font-size: 0.8rem;">
+                                Collect Rewards
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Achievement Card 2 (Rare) -->
-            <div class="col-md-3">
-                <div class="card p-3 blur h-100 transition-all" style="background-color: rgba(255, 255, 255, 0.3) !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2) !important;">
-                    <div class="card-body p-0">
-                        <div class="d-flex align-items-start gap-3 mb-3">
-                            <div class="achievement-icon bg-info bg-opacity-10 rounded-3 p-2">
-                                <i class="bx bxs-medal text-info fs-3"></i>
-                            </div>
-                            <div>
-                                <span class="badge bg-primary-subtle text-primary text-uppercase x-small mb-1">Rare</span>
-                                <h6 class="fw-bold m-0 card-title-text">Normal Decathlon</h6>
-                            </div>
-                        </div>
-                        <p class="text-body-secondary x-small mb-3">Complete 10 normal quizzes in 10 different topics. Normal diff...</p>
-                        <div class="d-flex justify-content-between x-small text-body-tertiary mb-1">
-                            <span>9/10 topics (Normal)</span>
-                            <span>90%</span>
-                        </div>
-                        <div class="progress mb-3" style="height: 6px; background: rgba(var(--bs-emphasis-color-rgb), 0.05);">
-                            <div class="progress-bar bg-info" role="progressbar" style="width: 90%;"></div>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mt-auto">
-                            <div class="d-flex gap-2">
-                                <span class="text-warning x-small"><i class="bx bxs-hot me-1"></i>150</span>
-                                <span class="text-info x-small"><i class="bx bxs-zap me-1"></i>75</span>
-                            </div>
-                            <button class="btn btn-sm btn-info rounded-pill px-3 py-0 x-small text-white">Track</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Overall Stats Card -->
-            <div class="col-md-4">
-                <div class="card p-3 blur border-info border-opacity-25 h-100 transition-all" style="background-color: rgba(255, 255, 255, 0.3) !important; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2) !important;">
-                    <div class="card-body p-0 d-flex flex-column justify-content-center text-center">
-                        <h2 class="display-6 fw-bold text-info mb-0">62 / 128</h2>
-                        <p class="text-body-secondary small mb-3">Collected</p>
-                        <div class="px-4 mb-3">
-                            <div class="progress" style="height: 4px; background: rgba(var(--bs-emphasis-color-rgb), 0.05);">
-                                <div class="progress-bar bg-info" role="progressbar" style="width: 48%;"></div>
-                            </div>
-                            <small class="text-body-tertiary mt-1 d-block text-uppercase letter-spacing-1">48% Complete</small>
-                        </div>
-                        <div class="d-flex justify-content-center gap-4 mb-3">
-                            <span class="text-warning"><i class="bx bxs-hot me-1"></i>9,541</span>
-                            <span class="text-info"><i class="bx bxs-zap me-1"></i>4,764</span>
-                        </div>
-                        <button class="btn btn-outline-info rounded-pill w-100 py-1 small">View Collected</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Ready to Collect Card -->
-            <div class="col-md-2">
-                <div class="card p-3 blur border-warning border-opacity-25 h-100 transition-all" style="background-color: rgba(255, 255, 255, 0.3) !important; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2) !important;">
-                    <div class="card-body p-0 d-flex flex-column text-center">
-                        <h2 class="display-5 fw-bold text-warning mb-0">4</h2>
-                        <p class="text-body-secondary small mb-auto">Ready to Collect</p>
-                        <div class="mt-3">
-                            <p class="text-body-tertiary x-small mb-2">Rewards waiting!</p>
-                            <button class="btn btn-warning rounded-pill w-100 py-1 small fw-bold">Collect Rewards</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <hr class="opacity-10 my-2">
+        <hr class="opacity-10 my-3">
 
         <!-- 3. Dynamic Learning Sections from MongoDB -->
         <?php 
@@ -164,6 +159,3 @@
         <?php endforeach; ?>
     </div>
 </div>
-
-
-

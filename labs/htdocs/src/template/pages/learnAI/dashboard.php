@@ -1,16 +1,36 @@
 <?php
 $db = DatabaseConnection::getDefaultDatabase();
 $lessonsRaw = $db->ai_lessons->find([], ['sort' => ['_id' => -1]])->toArray();
+$user = Session::getUser();
+$currentUsername = $user ? $user->getUsername() : '';
+$currentEmail = $user ? $user->getEmail() : '';
+$currentUserId = $user ? (int)$user->getUserId() : 0;
+
 $lessons = [];
 $seen = [];
 foreach ($lessonsRaw as $l) {
     $title = $l['title'] ?? '';
     if (!isset($seen[$title])) {
+        // Determine if current logged-in user is the author
+        $isAuthor = false;
+        if (!empty($l['author']) && strcasecmp($l['author'], $currentUsername) === 0) {
+            $isAuthor = true;
+        } elseif (!empty($l['author_email']) && strcasecmp($l['author_email'], $currentEmail) === 0) {
+            $isAuthor = true;
+        } elseif (!empty($l['user_id']) && (int)$l['user_id'] === $currentUserId && $currentUserId > 0) {
+            $isAuthor = true;
+        }
+
+        // Check visibility: if Private, only the created author should see it
+        $visibility = $l['visibility'] ?? 'Public';
+        if (strcasecmp($visibility, 'Private') === 0 && !$isAuthor) {
+            continue;
+        }
+
         $seen[$title] = true;
         $lessons[] = $l;
     }
 }
-$user = Session::getUser();
 ?>
 
 <div class="flex-grow-1 px-3 blur rounded-0 border-0 shadow-none">
@@ -92,15 +112,15 @@ $user = Session::getUser();
         <div class="container-fluid mt-4">
             <div class="mb-4">
                 <h4 class="fw-bold text-white mb-3">Learning Paths</h4>
-                <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 active text-white d-inline-flex align-items-center gap-1"><span class="fs-6">✨</span> For You</button>
-                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1"><span class="fs-6">📚</span> Continue</button>
-                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1"><span class="fs-6">🌏</span> Explore</button>
-                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1"><span class="fs-6">❤️‍🔥</span> Most Liked</button>
-                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1"><span class="fs-6">⭐</span> Editor Picks</button>
-                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1"><span class="fs-6">🔥</span> Most Interacted</button>
-                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1"><span class="fs-6">❤️</span> My Likes</button>
-                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1"><span class="fs-6">👤</span> My Lessons</button>
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-3 lesson-tabs-container">
+                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 active text-white d-inline-flex align-items-center gap-1 lesson-filter-btn" data-filter="all"><span class="fs-6">✨</span> For You</button>
+                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1 lesson-filter-btn" data-filter="all"><span class="fs-6">📚</span> Continue</button>
+                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1 lesson-filter-btn" data-filter="all"><span class="fs-6">🌏</span> Explore</button>
+                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1 lesson-filter-btn" data-filter="all"><span class="fs-6">❤️‍🔥</span> Most Liked</button>
+                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1 lesson-filter-btn" data-filter="all"><span class="fs-6">⭐</span> Editor Picks</button>
+                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1 lesson-filter-btn" data-filter="all"><span class="fs-6">🔥</span> Most Interacted</button>
+                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1 lesson-filter-btn" data-filter="all"><span class="fs-6">❤️</span> My Likes</button>
+                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1 lesson-filter-btn" data-filter="my_lessons"><span class="fs-6">👤</span> My Lessons</button>
                 </div>
                 <div class="d-flex flex-wrap align-items-center gap-2">
                     <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1"><span class="fs-6">👨‍🎓</span> My Syllabi Lessons</button>
@@ -126,7 +146,19 @@ $user = Session::getUser();
                 <div class="lessons-grid-container">
                     <div class="row gy-4 row-cols-1 row-cols-md-2 row-cols-xl-3 mb-5" id="masonry-area" style="position: relative;" data-masonry-ready="1">
                         <?php foreach ($lessons as $lesson): ?>
-                        <div class="col">
+                        <?php
+                        $isAuthor = false;
+                        if (!empty($lesson['author']) && strcasecmp($lesson['author'], $currentUsername) === 0) {
+                            $isAuthor = true;
+                        } elseif (!empty($lesson['author_email']) && strcasecmp($lesson['author_email'], $currentEmail) === 0) {
+                            $isAuthor = true;
+                        } elseif (!empty($lesson['user_id']) && (int)$lesson['user_id'] === $currentUserId && $currentUserId > 0) {
+                            $isAuthor = true;
+                        }
+                        $visibility = $lesson['visibility'] ?? 'Public';
+                        $isPrivate = strcasecmp($visibility, 'Private') === 0;
+                        ?>
+                        <div class="col lesson-grid-item" data-is-author="<?= $isAuthor ? '1' : '0' ?>" data-visibility="<?= htmlspecialchars($visibility) ?>">
                             <div class="card liquid-rim lesson-card h-100 hvr-grow" 
                                  style="cursor: pointer;" 
                                  data-lesson-id="<?= $lesson['_id'] ?>"
@@ -142,8 +174,8 @@ $user = Session::getUser();
                                             <span class="badge bg-<?= $lvlColor ?>-gradient d-inline-flex align-items-center gap-1">
                                                 <i class="bx bxs-star"></i> <?= strtolower($lvl) ?>
                                             </span>
-                                            <span class="badge bg-info-gradient d-inline-flex align-items-center gap-1">
-                                                <i class="bx bx-globe"></i> public
+                                            <span class="badge bg-<?= $isPrivate ? 'secondary' : 'info' ?>-gradient d-inline-flex align-items-center gap-1 lesson-visibility-badge">
+                                                <i class="bx <?= $isPrivate ? 'bx-lock-alt' : 'bx-globe' ?>"></i> <span class="visibility-text"><?= htmlspecialchars($isPrivate ? 'Private' : 'Public') ?></span>
                                             </span>
                                             <span class="badge bg-primary-gradient d-inline-flex align-items-center gap-1">
                                                 <i class="bx bx-search"></i> auto-matched - <?= $matchPct ?>%
@@ -155,7 +187,18 @@ $user = Session::getUser();
                                                 <i class="bx bx-caret-down" style="font-size: 0.7rem;"></i>
                                             </button>
                                             <ul class="dropdown-menu dropdown-menu-end blur shadow-sm border-secondary border-opacity-25">
-                                                <li><a class="dropdown-item small" href="/learn/lesson/<?= $lesson['_id'] ?>"><i class="bx bx-play me-2"></i>Start Lesson</a></li>
+                                                <li><a class="dropdown-item small py-1" href="/learn/lesson/<?= $lesson['_id'] ?>"><i class="bx bx-play me-2"></i>Start Lesson</a></li>
+                                                <?php if ($isAuthor): ?>
+                                                    <li class="visibility-toggle-item">
+                                                        <?php if ($isPrivate): ?>
+                                                        <a class="dropdown-item small py-1" href="#" onclick="event.stopPropagation(); toggleLessonVisibility('<?= $lesson['_id'] ?>', 'Public'); return false;"><i class="bx bx-globe me-2 text-info"></i>Make Public</a>
+                                                        <?php else: ?>
+                                                        <a class="dropdown-item small py-1" href="#" onclick="event.stopPropagation(); toggleLessonVisibility('<?= $lesson['_id'] ?>', 'Private'); return false;"><i class="bx bx-lock-alt me-2 text-warning"></i>Make Private</a>
+                                                        <?php endif; ?>
+                                                    </li>
+                                                    <li><hr class="dropdown-divider border-secondary border-opacity-25 my-1"></li>
+                                                    <li><a class="dropdown-item small py-1 text-danger" href="#" onclick="event.stopPropagation(); deleteLessonAction('<?= $lesson['_id'] ?>', '<?= htmlspecialchars(addslashes($lesson['title'] ?? ''), ENT_QUOTES) ?>'); return false;"><i class="bx bx-trash me-2"></i>Delete Lesson</a></li>
+                                                <?php endif; ?>
                                             </ul>
                                         </div>
                                     </div>
@@ -208,7 +251,7 @@ $user = Session::getUser();
                                     <div class="d-flex align-items-center justify-content-between pt-3 border-top border-secondary border-opacity-10 mt-auto">
                                         <div class="d-flex align-items-center gap-2">
                                             <div class="d-flex align-items-center overflow-hidden">
-                                                <img src="<?= Session::getAvatar() ?>" alt="Author" class="rounded-circle me-1 border border-secondary border-opacity-25" width="20" height="20">
+                                                <img src="<?= $isAuthor ? Session::getAvatar() : '/assets/images/avatars/1.png' ?>" alt="Author" class="rounded-circle me-1 border border-secondary border-opacity-25" width="20" height="20">
                                                 <span class="text-secondary text-truncate me-1" style="font-size: 0.75rem;"><?= htmlspecialchars($lesson['author'] ?? 'sathish46') ?></span>
                                             </div>
                                             <button class="btn btn-link text-secondary p-0 d-inline-flex align-items-center gap-1 text-decoration-none me-1" title="Like" onclick="event.stopPropagation();" style="font-size: 0.75rem;">
@@ -463,6 +506,29 @@ window.onPageLoad(function() {
         });
     }
 
+    // Filter tabs ("For You", "My Lessons", etc.)
+    const filterBtns = document.querySelectorAll('.lesson-filter-btn');
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterBtns.forEach(b => {
+                b.classList.remove('active', 'text-white');
+                b.classList.add('text-secondary');
+            });
+            btn.classList.add('active', 'text-white');
+            btn.classList.remove('text-secondary');
+
+            const filter = btn.getAttribute('data-filter') || 'all';
+            document.querySelectorAll('.lesson-grid-item').forEach(item => {
+                const isAuthor = item.getAttribute('data-is-author') === '1';
+                if (filter === 'my_lessons') {
+                    item.style.display = isAuthor ? '' : 'none';
+                } else {
+                    item.style.display = '';
+                }
+            });
+        });
+    });
+
     if (btnSend) {
         btnSend.addEventListener('click', startLessonGeneration);
     }
@@ -475,4 +541,65 @@ window.onPageLoad(function() {
         });
     }
 });
+
+window.toggleLessonVisibility = function(lessonId, targetVisibility) {
+    fetch('/api/learnAI/visibility_toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lesson_id: lessonId, visibility: targetVisibility })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data && data.status === 'success') {
+            const cardEl = document.querySelector(`.lesson-card[data-lesson-id="${lessonId}"]`);
+            if (cardEl) {
+                const gridItem = cardEl.closest('.lesson-grid-item');
+                if (gridItem) gridItem.setAttribute('data-visibility', targetVisibility);
+
+                const badgeEl = cardEl.querySelector('.lesson-visibility-badge');
+                if (badgeEl) {
+                    const isPrivate = (targetVisibility === 'Private');
+                    badgeEl.className = `badge bg-${isPrivate ? 'secondary' : 'info'}-gradient d-inline-flex align-items-center gap-1 lesson-visibility-badge`;
+                    badgeEl.innerHTML = `<i class="bx ${isPrivate ? 'bx-lock-alt' : 'bx-globe'}"></i> <span class="visibility-text">${isPrivate ? 'Private' : 'Public'}</span>`;
+                }
+
+                const toggleLi = cardEl.querySelector('.visibility-toggle-item');
+                if (toggleLi) {
+                    if (targetVisibility === 'Private') {
+                        toggleLi.innerHTML = `<a class="dropdown-item small py-1" href="#" onclick="event.stopPropagation(); toggleLessonVisibility('${lessonId}', 'Public'); return false;"><i class="bx bx-globe me-2 text-info"></i>Make Public</a>`;
+                    } else {
+                        toggleLi.innerHTML = `<a class="dropdown-item small py-1" href="#" onclick="event.stopPropagation(); toggleLessonVisibility('${lessonId}', 'Private'); return false;"><i class="bx bx-lock-alt me-2 text-warning"></i>Make Private</a>`;
+                    }
+                }
+            }
+        } else {
+            alert(data.error || 'Failed to change lesson visibility');
+        }
+    })
+    .catch(() => alert('Network error while toggling lesson visibility'));
+};
+
+window.deleteLessonAction = function(lessonId, lessonTitle) {
+    if (!confirm(`Are you sure you want to delete lesson "${lessonTitle}"? This will permanently remove all chapters and content.`)) {
+        return;
+    }
+    fetch('/api/learnAI/lesson_delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lesson_id: lessonId })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data && data.status === 'success') {
+            const cardEl = document.querySelector(`.lesson-card[data-lesson-id="${lessonId}"]`);
+            if (cardEl) {
+                const colEl = cardEl.closest('.lesson-grid-item') || cardEl.closest('.col');
+                if (colEl) colEl.remove();
+            }
+        } else {
+            alert(data.error || 'Failed to delete lesson');
+        }
+    })
+    .catch(() => alert('Network error while deleting lesson'));
+};
 </script>

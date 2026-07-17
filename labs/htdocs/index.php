@@ -535,7 +535,7 @@ $initialQuote = $heroQuotes[array_rand($heroQuotes)];
                     <div class="card-icon">
                         <i class='bx bxs-rocket' style="color: #4ade80;"></i>
                         <h3>The Result</h3>
-                        <img src="<?= Session::cdn3('main/ticker/TomLabs.png') ?>" alt="Tom Labs" class="card-img-avatar">
+                        <img src="<?= Session::cdn3('logo/logo.png') ?>" alt="Tom Labs" class="card-img-avatar">
                     </div>
                     <h4>Tom Labs</h4>
                     <p>The outcome of excellent mentorship and learning. A virtual innovation hub built to empower the next generation.</p>
@@ -563,7 +563,7 @@ $initialQuote = $heroQuotes[array_rand($heroQuotes)];
                     <div class="card-icon">
                         <i class='bx bxs-bulb' style="color: #facc15;"></i> 
                         <h3>The Visionary</h3>
-                        <img src="/assets/images/portfolio/ticker/Sibidharan.png" alt="Sibidharan" class="card-img-avatar">
+                        <img src="<?= Session::cdn3('main/ticker/Sibidharan.png') ?>" alt="Sibidharan" class="card-img-avatar">
                     </div>
                     <h4>Sibidharan Nandhakumar</h4>
                     <p>My Tech Guru and ultimate inspiration. I am building this today because of the knowledge and path he showed me.</p>
@@ -591,7 +591,7 @@ $initialQuote = $heroQuotes[array_rand($heroQuotes)];
                     <div class="card-icon">
                         <i class='bx bxs-buoy' style="color: #38bdf8;"></i>
                         <h3>The Solver</h3>
-                        <img src="/assets/images/portfolio/ticker/Anish.jpeg" alt="AnishKumar" class="card-img-avatar">
+                        <img src="<?= Session::cdn3('main/ticker/Anish.jpeg') ?>" alt="AnishKumar" class="card-img-avatar">
                     </div>
                     <h4>AnishKumar</h4>
                     <p>The pillar of support who never ignores a doubt. From complex logic to the smallest questions, he is always there to help.</p>
@@ -619,7 +619,7 @@ $initialQuote = $heroQuotes[array_rand($heroQuotes)];
                     <div class="card-icon">
                         <i class='bx bxs-graduation' style="color: #a78bfa;"></i>
                         <h3>The Forge</h3>
-                        <img src="/assets/images/portfolio/ticker/Sna.jpeg" alt="Selfmade Ninja Academy" class="card-img-avatar">
+                        <img src="<?= Session::cdn3('main/ticker/Sna.jpeg') ?>" alt="Selfmade Ninja Academy" class="card-img-avatar">
                     </div>
                     <h4>Selfmade Ninja Academy</h4>
                     <p>The training ground where I learned everything. A community that transforms curiosity into elite engineering skills.</p>
@@ -647,7 +647,7 @@ $initialQuote = $heroQuotes[array_rand($heroQuotes)];
                     <div class="card-icon">
                         <i class='bx bxs-rocket' style="color: #4ade80;"></i>
                         <h3>The Result</h3>
-                        <img src="/assets/images/portfolio/ticker/TomLabs.png" alt="Tom Labs" class="card-img-avatar">
+                        <img src="<?= Session::cdn3('main/ticker/TomLabs.png') ?>" alt="Tom Labs" class="card-img-avatar">
                     </div>
                     <h4>Tom Labs</h4>
                     <p>The outcome of excellent mentorship and learning. A virtual innovation hub built to empower the next generation.</p>

@@ -19783,8 +19783,14 @@ body.hwa-enabled[data-coreui-theme=light] .sidebar-inner-layer {
 
 .account-avatar-dropdown {
   font-size: 0.75rem;
-  background: #191c24;
   min-width: 150px;
+  background: var(--cui-card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+[data-coreui-theme=light] .account-avatar-dropdown {
+  background: #ffffff;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
 .account-fs-md {
@@ -20209,7 +20215,9 @@ body:has(.split-panel-view) .wrapper {
   min-height: 0 !important;
 }
 .learn-app-wrapper .flex-row,
-.split-panel-view .flex-row {
+.learn-app-wrapper .split-panel-body,
+.split-panel-view .flex-row,
+.split-panel-view .split-panel-body {
   flex: 1 1 0% !important;
   min-height: 0 !important;
   min-width: 0 !important;
@@ -20217,20 +20225,20 @@ body:has(.split-panel-view) .wrapper {
   max-height: 100% !important;
   overflow: hidden !important;
   flex-wrap: nowrap !important;
+  padding: 0.5rem !important;
+  gap: 0 !important;
 }
 .learn-app-wrapper .split-panel,
 .split-panel-view .split-panel {
   display: flex !important;
   flex-direction: column !important;
   flex-grow: 0 !important;
-  flex-shrink: 1 !important;
+  flex-shrink: 0 !important;
   min-width: 0 !important;
   min-height: 0 !important;
   max-height: 100% !important;
   height: 100% !important;
   overflow: hidden !important;
-  /* WebKit/Safari boundary optimization: skips min-content reflow pass during initial paint */
-  contain: layout size !important;
 }
 .learn-app-wrapper .split-panel.d-none,
 .split-panel-view .split-panel.d-none {
@@ -20259,18 +20267,24 @@ body.hwa-disabled .split-panel-view .split-panel > .card {
   -webkit-backdrop-filter: none !important;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
 }
+.learn-app-wrapper #learn-panel-1,
+.split-panel-view #learn-panel-1 {
+  flex-grow: 0 !important;
+  flex-shrink: 0 !important;
+  min-width: 70px !important;
+}
 .learn-app-wrapper #learn-panel-2,
 .split-panel-view #learn-panel-2 {
   position: relative !important;
-  min-width: 180px !important;
-  flex-grow: 1 !important;
-  flex-shrink: 1 !important;
+  width: 0 !important;
+  flex: 1 1 0% !important;
+  min-width: 300px !important;
 }
 .learn-app-wrapper #learn-panel-3,
 .split-panel-view #learn-panel-3 {
-  min-width: 180px !important;
   flex-grow: 0 !important;
   flex-shrink: 0 !important;
+  min-width: 300px !important;
 }
 .learn-app-wrapper .gutter.gutter-horizontal,
 .learn-app-wrapper .gutter-horizontal,
@@ -20285,10 +20299,17 @@ body.hwa-disabled .split-panel-view .split-panel > .card {
   flex-shrink: 0;
 }
 
+body.resizing-active,
+body.resizing-active * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  cursor: col-resize !important;
+}
+
 #learn-panel-1 {
   display: flex;
   flex-direction: column;
-  min-width: 68px;
+  min-width: 70px;
   flex-shrink: 0 !important;
   container-type: inline-size;
   container-name: learnPanel;
@@ -20678,6 +20699,117 @@ body.hwa-disabled .split-panel-view .split-panel > .card {
   padding-bottom: 2.25rem !important;
 }
 
+/* AI Chat Panel & Message Bubble Styling (Exact SNA & Premium Aesthetics) */
+#aiChatHistory {
+  padding: 1.25rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.25rem !important;
+  position: relative !important;
+  scroll-behavior: smooth;
+}
+
+.message-row {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 0.75rem !important;
+  width: 100% !important;
+}
+
+.message-row.user-row {
+  justify-content: flex-end !important;
+}
+.message-row.user-row .msg-bubble {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.16), rgba(14, 165, 233, 0.26)) !important;
+  border: 1px solid rgba(56, 189, 248, 0.35) !important;
+  border-radius: 1.15rem 1.15rem 0.25rem 1.15rem !important;
+  padding: 0.8rem 1.15rem !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2) !important;
+  max-width: 82% !important;
+  word-break: break-word !important;
+  font-size: 0.92rem !important;
+  line-height: 1.55 !important;
+  backdrop-filter: blur(8px) !important;
+}
+:root[data-coreui-theme=light] .message-row.user-row .msg-bubble {
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.12), rgba(14, 165, 233, 0.22)) !important;
+  border-color: rgba(2, 132, 199, 0.35) !important;
+  color: #0f172a !important;
+}
+.message-row.user-row .msg-bubble p {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.message-row.ai-row {
+  justify-content: flex-start !important;
+}
+.message-row.ai-row .msg-avatar {
+  flex-shrink: 0 !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  background: rgba(15, 23, 42, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+  overflow: hidden !important;
+}
+.message-row.ai-row .msg-avatar img {
+  width: 20px !important;
+  height: 20px !important;
+  object-fit: contain !important;
+}
+.message-row.ai-row .msg-content-wrapper {
+  flex: 1 1 0% !important;
+  min-width: 0 !important;
+  padding-top: 0.1rem !important;
+}
+
+/* Floating Scroll-to-Bottom Button inside AI Chat (circular Telegram style) */
+#aiChatScrollToBottom {
+  position: absolute;
+  bottom: 0.8rem;
+  right: 1.25rem;
+  left: auto;
+  transform: none;
+  z-index: 100;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45), 0 0 12px rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+}
+:root[data-coreui-theme=light] #aiChatScrollToBottom {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(2, 132, 199, 0.4);
+  color: #0284c7;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+#aiChatScrollToBottom:hover {
+  transform: translateY(-2px);
+  background: #0f172a;
+  border-color: #38bdf8;
+  color: #ffffff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 16px rgba(56, 189, 248, 0.35);
+}
+:root[data-coreui-theme=light] #aiChatScrollToBottom:hover {
+  background: #f8fafc;
+  color: #0284c7;
+}
+
 /* AI Chat Bubble Markdown & Syntax Highlighting Alignment (matching Panel-2 aesthetics) */
 .ai-row .msg-bubble {
   color: var(--cui-body-color, #e2e8f0);
@@ -20915,20 +21047,35 @@ body.hwa-disabled .split-panel-view .split-panel > .card {
   justify-content: center;
   color: white;
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.1s ease;
+  transition: all 0.2s ease, transform 0.1s ease;
   flex-shrink: 0;
   margin-left: 0.25rem;
 }
-.unified-input-box .token-ribbon .send-button .nav-icon {
+.unified-input-box .token-ribbon .send-button .nav-icon, .unified-input-box .token-ribbon .send-button i {
   width: 20px;
   height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.unified-input-box .token-ribbon .send-button i {
+  font-size: 1.35rem;
 }
 .unified-input-box .token-ribbon .send-button:hover {
-  background: var(--cui-primary-dark);
+  background: var(--cui-primary-dark, #0284c7);
   transform: scale(1.05);
 }
 .unified-input-box .token-ribbon .send-button:active {
   transform: scale(0.95);
+}
+.unified-input-box .token-ribbon .send-button.is-generating {
+  background: #ef4444 !important;
+}
+.unified-input-box .token-ribbon .send-button.is-generating i {
+  font-size: 1.5rem;
+}
+.unified-input-box .token-ribbon .send-button.is-generating:hover {
+  background: #dc2626 !important;
 }
 .unified-input-box:has(.user-text-input:focus-visible) {
   border-color: var(--cui-primary);
@@ -21377,7 +21524,7 @@ mark.study-highlight.hl-circle.hl-blue {
   transform: translate(0px, -105px) scale(1);
 }
 #studyPenToolbar.is-open .pen-tool-btn:nth-child(2) {
-  transform: translate(-53px, -87px) scale(1);
+  transform: translate(-53px, -92px) scale(1);
 }
 #studyPenToolbar.is-open .pen-tool-btn:nth-child(3) {
   transform: translate(-87px, -53px) scale(1);
@@ -21471,6 +21618,21 @@ svg.mode-eraser svg.study-drawing-layer path.study-drawn-path:hover {
   opacity: 0.3;
   stroke: #ef4444 !important;
   cursor: no-drop;
+}
+
+/* Global Utility & Modal Scrollbar Hiding (Exact Clean Look Without Visible Scrollbars) */
+.hide-scrollbar,
+#tokenHistoryModalContent .table-responsive,
+#tokenHistoryModal .table-responsive {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+.hide-scrollbar::-webkit-scrollbar,
+#tokenHistoryModalContent .table-responsive::-webkit-scrollbar,
+#tokenHistoryModal .table-responsive::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 /* ========================================================================
@@ -21636,9 +21798,9 @@ body {
 }
 .quiz-container {
   border-bottom: 1px solid var(--cui-card-border-color, rgba(255, 255, 255, 0.1));
-  /* 2. Spacing - Aligned with screen edges */
-  padding: 2rem 0 0 0;
-  margin: 0 -24px 0 -24px;
+  /* 2. Spacing - Aligned with container boundaries */
+  padding: 2rem 0 2rem 0;
+  margin: 0;
   position: relative;
   z-index: 5;
 }

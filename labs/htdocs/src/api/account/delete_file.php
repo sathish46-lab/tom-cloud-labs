@@ -22,15 +22,24 @@ if (empty($filename)) {
 // Security: Prevent directory traversal
 $filename = basename($filename);
 
-$safeUsername = preg_replace('/[^a-zA-Z0-9_-]/', '', $username);
-$filePath = __DIR__ . '/../../../uploads/users/' . $safeUsername . '/' . $filename;
+$userId = $user->getUserId();
+if (!$userId) {
+    echo json_encode(['status' => 'error', 'error' => 'User ID not found']); exit;
+}
 
-if (file_exists($filePath) && is_file($filePath)) {
-    if (unlink($filePath)) {
-        echo json_encode(['status' => 'success']);
-    } else {
-        echo json_encode(['status' => 'error', 'error' => 'Could not delete the file.']);
-    }
-} else {
-    echo json_encode(['status' => 'error', 'error' => 'File not found.']);
+try {
+    $client = Storage::getClient();
+    $config = get_config('s3');
+    
+    $s3Path = "labassets/uploads/{$userId}/{$filename}";
+    
+    $client->deleteObject([
+        'Bucket' => $config['bucket'],
+        'Key'    => $s3Path
+    ]);
+    
+    echo json_encode(['status' => 'success']);
+} catch (Exception $e) {
+    error_log("MinIO delete_file Error: " . $e->getMessage());
+    echo json_encode(['status' => 'error', 'error' => 'Could not delete the file.']);
 }

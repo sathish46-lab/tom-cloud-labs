@@ -12,43 +12,55 @@ if (!$username) {
     echo json_encode(['status' => 'error', 'error' => 'User not found']); exit;
 }
 
-$safeUsername = preg_replace('/[^a-zA-Z0-9_-]/', '', $username);
-$uploadDir = __DIR__ . '/../../../uploads/users/' . $safeUsername;
+$userId = $user->getUserId();
+if (!$userId) {
+    echo json_encode(['status' => 'error', 'error' => 'User ID not found']); exit;
+}
 
 $filesData = [];
 
-if (is_dir($uploadDir)) {
-    $files = scandir($uploadDir);
-    if ($files !== false) {
-        foreach ($files as $file) {
-            if ($file === '.' || $file === '..') continue;
+try {
+    $client = Storage::getClient();
+    $config = get_config('s3');
+    
+    $prefix = "labassets/uploads/{$userId}/";
+    $results = $client->listObjectsV2([
+        'Bucket' => $config['bucket'],
+        'Prefix' => $prefix
+    ]);
+    
+    if (!empty($results['Contents'])) {
+        foreach ($results['Contents'] as $item) {
+            $file = basename($item['Key']);
+            if (empty($file) || $file === '/') continue;
             
-            $filePath = $uploadDir . '/' . $file;
-            if (is_file($filePath)) {
-                $size = filesize($filePath);
-                $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-                $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
-                
-                if ($size >= 1048576) {
-                    $sizeStr = round($size / 1048576, 2) . ' MB';
-                } elseif ($size >= 1024) {
-                    $sizeStr = round($size / 1024, 0) . ' KB';
-                } else {
-                    $sizeStr = $size . ' bytes';
-                }
-                
-                $filesData[] = [
-                    'name' => $file,
-                    'url' => '/uploads/users/' . $safeUsername . '/' . $file,
-                    'size_bytes' => $size,
-                    'size_formatted' => $sizeStr,
-                    'is_image' => $isImage,
-                    'ext' => $ext,
-                    'modified' => filemtime($filePath)
-                ];
+            $size = (int) $item['Size'];
+            $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+            $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']);
+            
+            if ($size >= 1048576) {
+                $sizeStr = round($size / 1048576, 2) . ' MB';
+            } elseif ($size >= 1024) {
+                $sizeStr = round($size / 1024, 0) . ' KB';
+            } else {
+                $sizeStr = $size . ' bytes';
             }
+            
+            $modifiedTime = is_object($item['LastModified']) ? $item['LastModified']->getTimestamp() : strtotime($item['LastModified']);
+            
+            $filesData[] = [
+                'name' => $file,
+                'url' => "/system/user/private/{$userId}/{$file}",
+                'size_bytes' => $size,
+                'size_formatted' => $sizeStr,
+                'is_image' => $isImage,
+                'ext' => $ext,
+                'modified' => $modifiedTime
+            ];
         }
     }
+} catch (Exception $e) {
+    error_log("MinIO list_files Error: " . $e->getMessage());
 }
 
 usort($filesData, function($a, $b) {

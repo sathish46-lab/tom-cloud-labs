@@ -3,9 +3,9 @@ $topic = Session::get('current_topic');
 $subtopics = $topic['subtopics'] ?? [];
 ?>
 
-<div class="quiz-topic-view fade-in pb-4 quiz-container">
+<div class="flex-grow-1 px-3 blur rounded-0 border-0 shadow-none d-flex flex-column">
+<div class="quiz-topic-view fade-in pb-4 quiz-container flex-grow-1 d-flex flex-column">
     <div class="container-fluid px-4 pt-2">
-        
         <!-- 1. Header Section -->
         <div class="row g-3 mb-3">
             <div class="col-lg-6">
@@ -127,6 +127,7 @@ $subtopics = $topic['subtopics'] ?? [];
             </div>
         </div>
     </div>
+</div>
 </div>
 
 <script>

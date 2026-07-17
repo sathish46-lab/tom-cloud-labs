@@ -25,7 +25,8 @@ $userStats = $user ? Quiz::getUserStats($user->getEmail()) : ['zeal' => 0, 'jolt
 $availableJolt = $userStats['jolt'] ?? 0;
 ?>
 
-<div class="fade-in pb-2 quiz-container">
+<div class="flex-grow-1 px-3 blur rounded-0 border-0 shadow-none d-flex flex-column">
+<div class="fade-in pb-2 quiz-container flex-grow-1 d-flex flex-column">
     <div class="evaluation-bg"></div>
     <div class="container-fluid px-4 pt-2">
         
