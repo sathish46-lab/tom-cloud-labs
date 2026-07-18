@@ -7,6 +7,9 @@ if (!Session::getUser()) {
     die("Unauthorized");
 }
 
+$uiPrefs = Session::getUser()->getUiPreferences() ?? [];
+$activeBgTab = $uiPrefs['bg_dialog_tab'] ?? 'swatches';
+
 $swatches = [
     ['name' => 'Dark Green', 'bg' => '#064e3b', 'light' => '#ecfdf5', 'accent' => '#10b981'],
     ['name' => 'Pine',       'bg' => '#0a1914', 'light' => '#f0fdf4', 'accent' => '#22c55e'],
@@ -45,26 +48,30 @@ $templates = [
 <div class="px-4 pt-3">
     <ul class="nav nav-pills gap-2" id="bgModalTabs" role="tablist" style="border: none;">
         <li class="nav-item" role="presentation">
-            <button class="nav-link px-3 py-2 rounded-pill fw-semibold" id="my-themes-tab" data-coreui-toggle="tab" data-coreui-target="#my-themes-pane" type="button" role="tab" aria-selected="false"
+            <button class="nav-link <?= $activeBgTab === 'my-themes' ? 'active' : '' ?> px-3 py-2 rounded-pill fw-semibold" id="my-themes-tab" data-coreui-toggle="tab" data-coreui-target="#my-themes-pane" type="button" role="tab" aria-selected="<?= $activeBgTab === 'my-themes' ? 'true' : 'false' ?>"
+                onclick="saveBgModalTab('my-themes')"
                 style="font-size: 0.82rem; color: var(--cui-body-color); opacity: 0.65; border: 1px solid rgba(var(--cui-emphasis-color-rgb, 255, 255, 255), 0.2);">
                 My Themes <span class="badge bg-success ms-1" id="my-themes-count-badge" style="font-size: 0.65rem;">0/10</span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link px-3 py-2 rounded-pill fw-semibold" id="community-tab" data-coreui-toggle="tab" data-coreui-target="#community-pane" type="button" role="tab" aria-selected="false"
+            <button class="nav-link <?= $activeBgTab === 'community' ? 'active' : '' ?> px-3 py-2 rounded-pill fw-semibold" id="community-tab" data-coreui-toggle="tab" data-coreui-target="#community-pane" type="button" role="tab" aria-selected="<?= $activeBgTab === 'community' ? 'true' : 'false' ?>"
+                onclick="saveBgModalTab('community')"
                 style="font-size: 0.82rem; color: var(--cui-body-color); opacity: 0.65; border: 1px solid rgba(var(--cui-emphasis-color-rgb, 255, 255, 255), 0.2);">
                 Community <span class="badge bg-success ms-1" id="community-count-badge" style="font-size: 0.65rem;">0</span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link px-3 py-2 rounded-pill fw-semibold" id="templates-tab" data-coreui-toggle="tab" data-coreui-target="#templates-pane" type="button" role="tab" aria-selected="false"
+            <button class="nav-link <?= $activeBgTab === 'templates' ? 'active' : '' ?> px-3 py-2 rounded-pill fw-semibold" id="templates-tab" data-coreui-toggle="tab" data-coreui-target="#templates-pane" type="button" role="tab" aria-selected="<?= $activeBgTab === 'templates' ? 'true' : 'false' ?>"
+                onclick="saveBgModalTab('templates')"
                 style="font-size: 0.82rem; color: var(--cui-body-color); opacity: 0.65; border: 1px solid rgba(var(--cui-emphasis-color-rgb, 255, 255, 255), 0.2);">
                 Templates <span class="badge bg-success ms-1" id="templates-count-badge" style="font-size: 0.65rem;"><?= count($templates) ?></span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link active px-3 py-2 rounded-pill fw-semibold" id="swatches-tab" data-coreui-toggle="tab" data-coreui-target="#swatches-pane" type="button" role="tab" aria-selected="true"
-                style="font-size: 0.82rem; background: rgba(var(--cui-primary-rgb), 0.15); color: var(--cui-primary); border: 1px solid rgba(var(--cui-primary-rgb), 0.25);">
+            <button class="nav-link <?= $activeBgTab === 'swatches' ? 'active' : '' ?> px-3 py-2 rounded-pill fw-semibold" id="swatches-tab" data-coreui-toggle="tab" data-coreui-target="#swatches-pane" type="button" role="tab" aria-selected="<?= $activeBgTab === 'swatches' ? 'true' : 'false' ?>"
+                onclick="saveBgModalTab('swatches')"
+                style="font-size: 0.82rem; <?= $activeBgTab === 'swatches' ? 'background: rgba(var(--cui-primary-rgb), 0.15); color: var(--cui-primary); border: 1px solid rgba(var(--cui-primary-rgb), 0.25);' : 'color: var(--cui-body-color); opacity: 0.65; border: 1px solid rgba(var(--cui-emphasis-color-rgb, 255, 255, 255), 0.2);' ?>">
                 Swatches <span class="badge bg-success text-white ms-1" id="swatches-count-badge" style="font-size: 0.65rem;"><?= count($swatches) ?></span>
             </button>
         </li>
@@ -73,7 +80,7 @@ $templates = [
 <div class="modal-body px-4 pb-4 pt-3">
     <div class="tab-content" id="bgModalTabContent">
         <!-- ============ SWATCHES TAB ============ -->
-        <div class="tab-pane fade show active" id="swatches-pane" role="tabpanel">
+        <div class="tab-pane fade <?= $activeBgTab === 'swatches' ? 'show active' : '' ?>" id="swatches-pane" role="tabpanel">
             <p class="mb-4" style="font-size: 0.9rem; opacity: 0.85;">Pick a color palette for plain backgrounds</p>
             <div class="d-flex flex-wrap justify-content-center gap-3">
                 <?php
@@ -132,7 +139,7 @@ $templates = [
         </div>
         
         <!-- ============ MY THEMES TAB ============ -->
-        <div class="tab-pane fade" id="my-themes-pane" role="tabpanel">
+        <div class="tab-pane fade <?= $activeBgTab === 'my-themes' ? 'show active' : '' ?>" id="my-themes-pane" role="tabpanel">
             <div class="p-5 text-center opacity-50">
                 <i class='bx bx-image-add mb-3' style="font-size: 3rem;"></i>
                 <h6>No custom themes yet</h6>
@@ -141,7 +148,7 @@ $templates = [
         </div>
 
         <!-- ============ COMMUNITY TAB ============ -->
-        <div class="tab-pane fade" id="community-pane" role="tabpanel">
+        <div class="tab-pane fade <?= $activeBgTab === 'community' ? 'show active' : '' ?>" id="community-pane" role="tabpanel">
             <div class="p-5 text-center opacity-50">
                 <i class='bx bx-globe mb-3' style="font-size: 3rem;"></i>
                 <h6>Explore Community Themes</h6>
@@ -150,7 +157,7 @@ $templates = [
         </div>
 
         <!-- ============ TEMPLATES TAB ============ -->
-        <div class="tab-pane fade" id="templates-pane" role="tabpanel">
+        <div class="tab-pane fade <?= $activeBgTab === 'templates' ? 'show active' : '' ?>" id="templates-pane" role="tabpanel">
             <div class="row g-3">
                 <?php foreach ($templates as $t): ?>
                     <div class="col-md-4">

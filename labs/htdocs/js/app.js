@@ -770,6 +770,13 @@ try {
     "use strict";
 
 
+window.saveBgModalTab = function(tabId) {
+    const fd = new FormData();
+    fd.append('preference_id', 'bg_dialog_tab');
+    fd.append('value', tabId);
+    fetch('/api/user/preference_save', { method: 'POST', body: fd }).catch(() => {});
+};
+
 var TomBG = {
   // Theme configuration is now loaded securely from the server via API
   themes: {},
@@ -2564,29 +2571,59 @@ try {
             }
         });
 
-        // 3. Persist the active tab in localStorage
+        // 3. Persist the active tab in DB
         try {
-            localStorage.setItem('active_continue_tab', tabId);
+            const fd = new FormData();
+            fd.append('preference_id', 'active_continue_tab');
+            fd.append('value', tabId);
+            fetch('/api/user/preference_save', { method: 'POST', body: fd }).catch(() => {});
         } catch (e) {
             console.error('Failed to persist active tab:', e);
         }
     };
-
-    // Restore previously active tab on page load
-    window.onPageLoad( function () {
-        try {
-            const savedTab = localStorage.getItem('active_continue_tab');
-            if (savedTab) {
-                const pane = document.getElementById('continue-pane-' + savedTab);
-                if (pane) {
-                    window.switchContinueTab(savedTab);
-                }
-            }
-        } catch (e) {
-            console.error('Failed to restore active tab:', e);
-        }
-    });
 })();
+
+// Live search for lessons via Prompt Box
+let searchDebounceTimeout = null;
+const aiPromptInput = document.getElementById('aiLessonPrompt');
+if (aiPromptInput) {
+    aiPromptInput.addEventListener('input', function(e) {
+        clearTimeout(searchDebounceTimeout);
+        const query = e.target.value.trim();
+        
+        searchDebounceTimeout = setTimeout(() => {
+            if (query.length < 2) {
+                // If emptied, reload the current filter
+                if (window.LearnApp && typeof window.LearnApp.loadLessons === 'function') {
+                    const currentTab = document.querySelector('.lesson-filter-btn.active')?.dataset?.filter || 'continue';
+                    window.LearnApp.loadLessons(1, currentTab);
+                }
+                return;
+            }
+            
+            // Show loading in masonry area
+            const masonryArea = document.getElementById('masonry-area');
+            if (masonryArea) {
+                masonryArea.innerHTML = '<div class="col-12 text-center py-5"><div class="spinner-border text-secondary" role="status"><span class="visually-hidden">Loading...</span></div><p class="text-secondary small mt-2">Searching lessons...</p></div>';
+            }
+            
+            const fd = new FormData();
+            fd.append('query', query);
+            
+            fetch('/api/learnAI/search.php', { method: 'POST', body: fd })
+                .then(res => res.text())
+                .then(html => {
+                    if (masonryArea) {
+                        masonryArea.innerHTML = html;
+                        if (window.Masonry) {
+                            new Masonry(masonryArea, { percentPosition: true });
+                        }
+                    }
+                })
+                .catch(err => console.error('Search failed:', err));
+        }, 500);
+    });
+}
 
 
 
@@ -5217,7 +5254,7 @@ try {
         _dashboardInitialized: false,
         initDashboard: function () {
             if (this._dashboardInitialized) return;
-            const promptInput = document.getElementById('aiLessonPrompt');
+            const promptInput = document.getElementById('aiLessonPrompt') || document.getElementById('lessonTopicInput');
             const levelSelect = document.getElementById('aiLessonLevel');
             const btnSend = document.getElementById('btnGenerateLesson');
             const filterBtns = document.querySelectorAll('.lesson-filter-btn');
@@ -5229,22 +5266,49 @@ try {
             document.querySelectorAll('.topic-pill').forEach(badge => {
                 badge.style.cursor = 'pointer';
                 badge.addEventListener('click', () => {
-                    if (promptInput) {
+                    const targetInput = document.getElementById('aiLessonPrompt') || document.getElementById('lessonTopicInput');
+                    if (targetInput) {
                         const promptText = badge.getAttribute('data-prompt') || badge.textContent.trim();
-                        promptInput.value = promptText;
-                        promptInput.focus();
+                        targetInput.value = promptText;
+                        targetInput.focus();
                     }
                 });
             });
 
             // Handle level selection dropdown clicks
+            function updateLevelSelectUI(chosenLevel) {
+                const targetLevelInput = document.getElementById('aiLessonLevel');
+                if (targetLevelInput) targetLevelInput.value = chosenLevel;
+                if (levelSelect) levelSelect.value = chosenLevel;
+                const labelSpan = document.getElementById('selectedLevelText') || document.getElementById('aiLessonLevelLabel');
+                if (labelSpan) labelSpan.textContent = chosenLevel;
+
+                document.querySelectorAll('.level-select-item').forEach(el => {
+                    const elLevel = el.getAttribute('data-level');
+                    if (elLevel === chosenLevel) {
+                        el.className = 'level-select-item dropdown-item rounded-2 py-1 px-3 d-flex align-items-center justify-content-between fw-semibold';
+                        el.innerHTML = `<span>${elLevel}</span>`;
+                    } else {
+                        el.className = 'level-select-item dropdown-item rounded-2 py-1 px-3 d-flex align-items-center justify-content-between';
+                        el.innerHTML = `<span>${elLevel}</span>`;
+                    }
+                });
+            }
+
+            const initPrefs = (window.TOM_CONFIG && window.TOM_CONFIG.ui_preferences) || {};
+            if (initPrefs.lesson_difficulty) {
+                const savedDifficulty = initPrefs.lesson_difficulty.charAt(0).toUpperCase() + initPrefs.lesson_difficulty.slice(1).toLowerCase();
+                updateLevelSelectUI(savedDifficulty);
+            }
+
             document.querySelectorAll('.level-select-item').forEach(item => {
                 item.addEventListener('click', (e) => {
                     e.preventDefault();
-                    const chosenLevel = item.getAttribute('data-level');
-                    if (levelSelect) levelSelect.value = chosenLevel;
-                    const labelSpan = document.getElementById('aiLessonLevelLabel');
-                    if (labelSpan) labelSpan.textContent = chosenLevel;
+                    const chosenLevel = item.getAttribute('data-level') || 'Beginner';
+                    updateLevelSelectUI(chosenLevel);
+                    if (typeof LearnApp.savePreferenceToDB === 'function') {
+                        LearnApp.savePreferenceToDB('lesson_difficulty', chosenLevel.toLowerCase());
+                    }
                 });
             });
 
@@ -5258,11 +5322,13 @@ try {
             }
 
             function startLessonGeneration() {
-                const topic = promptInput ? promptInput.value.trim() : '';
-                const level = levelSelect ? levelSelect.value : 'Advanced';
+                const targetInput = document.getElementById('aiLessonPrompt') || document.getElementById('lessonTopicInput');
+                const targetLevelInput = document.getElementById('aiLessonLevel');
+                const topic = targetInput ? targetInput.value.trim() : '';
+                const level = targetLevelInput ? targetLevelInput.value : (levelSelect ? levelSelect.value : 'Beginner');
 
                 if (!topic) {
-                    if (promptInput) promptInput.focus();
+                    if (targetInput) targetInput.focus();
                     return;
                 }
 
@@ -5369,25 +5435,182 @@ try {
                 });
             }
 
-            // Filter tabs ("For You", "My Lessons", etc.)
-            filterBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    filterBtns.forEach(b => {
+            let currentFilterTab = 'all';
+            let currentFilterLevel = 'All Levels';
+
+            const filterPrefs = (window.TOM_CONFIG && window.TOM_CONFIG.ui_preferences && window.TOM_CONFIG.ui_preferences.learn_ai_filters) || null;
+            if (filterPrefs) {
+                let fPref = filterPrefs;
+                if (typeof fPref === 'string') {
+                    try { fPref = JSON.parse(fPref); } catch (e) {}
+                }
+                if (fPref && typeof fPref === 'object') {
+                    if (fPref.tab) currentFilterTab = fPref.tab;
+                    if (fPref.level && fPref.level !== 'all levels') {
+                        currentFilterLevel = fPref.level.charAt(0).toUpperCase() + fPref.level.slice(1).toLowerCase();
+                    } else if (fPref.level === 'all levels') {
+                        currentFilterLevel = 'All Levels';
+                    }
+                }
+            }
+
+            if (currentFilterTab !== 'all') {
+                document.querySelectorAll('.lesson-filter-btn').forEach(b => {
+                    b.classList.remove('active', 'text-white');
+                    b.classList.add('text-secondary');
+                    if (b.getAttribute('data-filter') === currentFilterTab) {
+                        b.classList.add('active', 'text-white');
+                        b.classList.remove('text-secondary');
+                    }
+                });
+            }
+            if (currentFilterLevel !== 'All Levels') {
+                const levelBtn = document.getElementById('lessonLevelDropdownBtn');
+                if (levelBtn) levelBtn.textContent = currentFilterLevel;
+            }
+
+            function saveLearnAIFiltersPreference() {
+                if (typeof LearnApp.savePreferenceToDB === 'function') {
+                    const prefValue = {
+                        tab: currentFilterTab || 'all',
+                        level: (currentFilterLevel && currentFilterLevel !== 'All Levels') ? currentFilterLevel.toLowerCase() : 'all levels'
+                    };
+                    LearnApp.savePreferenceToDB('learn_ai_filters', JSON.stringify(prefValue));
+                }
+            }
+
+            let currentPage = 2;
+            let isLoadingLessons = false;
+            let hasMoreLessons = true;
+
+            async function fetchLessonsGrid(reset = true) {
+                const masonryArea = document.getElementById('masonry-area');
+                if (!masonryArea) return;
+                
+                if (reset) {
+                    currentPage = 1;
+                    hasMoreLessons = true;
+                    masonryArea.innerHTML = `
+                        <div class="col-12 text-center py-5">
+                            <div class="spinner-border text-info mb-2" role="status"></div>
+                            <p class="text-secondary small mb-0">Loading lessons...</p>
+                        </div>`;
+                }
+
+                if (isLoadingLessons || !hasMoreLessons) return;
+                isLoadingLessons = true;
+                
+                if (!reset) {
+                    let loader = document.createElement('div');
+                    loader.id = 'masonry-loader';
+                    loader.className = 'col-12 text-center py-4 masonry-loader w-100';
+                    loader.innerHTML = '<div class="spinner-border spinner-border-sm text-info mb-2" role="status"></div><p class="text-secondary small mb-0">Loading more...</p>';
+                    masonryArea.appendChild(loader);
+                    if (window.Masonry) {
+                        const msnry = Masonry.data(masonryArea) || new Masonry(masonryArea, { percentPosition: true });
+                        msnry.appended(loader);
+                    }
+                }
+                
+                try {
+                    const res = await fetch('/api/learnAI/lessons?filter=' + encodeURIComponent(currentFilterTab) + '&level=' + encodeURIComponent(currentFilterLevel) + '&page=' + currentPage);
+                    if (!res.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    const html = await res.text();
+                    
+                    if (reset) {
+                        masonryArea.innerHTML = html;
+                        if (html.includes('No lessons found!') || html.trim() === '') {
+                            hasMoreLessons = false;
+                        }
+                        if (window.Masonry) {
+                            new Masonry(masonryArea, { percentPosition: true });
+                        }
+                    } else {
+                        const loader = document.getElementById('masonry-loader');
+                        let msnry = null;
+                        if (window.Masonry) {
+                            msnry = Masonry.data(masonryArea) || new Masonry(masonryArea, { percentPosition: true });
+                            if (loader) {
+                                msnry.remove(loader);
+                            }
+                        }
+                        if (loader) loader.remove();
+                        
+                        if (html.trim() === '' || html.includes('No lessons found!')) {
+                            hasMoreLessons = false;
+                        } else {
+                            const tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = html;
+                            const newElements = Array.from(tempDiv.children);
+                            
+                            newElements.forEach(el => masonryArea.appendChild(el));
+                            
+                            if (msnry) {
+                                msnry.appended(newElements);
+                                msnry.layout();
+                            }
+                        }
+                    }
+                    
+                    currentPage++;
+                } catch (e) {
+                    console.error('Error fetching lessons:', e);
+                    if (reset) {
+                        masonryArea.innerHTML = `<div class="col-12 text-center py-5"><p class="text-danger small">Error loading lessons.</p></div>`;
+                    } else {
+                        const loader = document.getElementById('masonry-loader');
+                        if (loader) loader.remove();
+                    }
+                } finally {
+                    isLoadingLessons = false;
+                }
+            }
+
+            const panel2 = document.getElementById('learn-panel-2');
+            if (panel2) {
+                panel2.addEventListener('scroll', () => {
+                    if (panel2.scrollTop + panel2.clientHeight >= panel2.scrollHeight - 300) {
+                        if (!isLoadingLessons && hasMoreLessons) {
+                            fetchLessonsGrid(false);
+                        }
+                    }
+                });
+            } else {
+                window.addEventListener('scroll', () => {
+                    if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 300) {
+                        if (!isLoadingLessons && hasMoreLessons) {
+                            fetchLessonsGrid(false);
+                        }
+                    }
+                });
+            }
+
+            document.querySelectorAll('.lesson-filter-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    document.querySelectorAll('.lesson-filter-btn').forEach(b => {
                         b.classList.remove('active', 'text-white');
                         b.classList.add('text-secondary');
                     });
                     btn.classList.add('active', 'text-white');
                     btn.classList.remove('text-secondary');
 
-                    const filter = btn.getAttribute('data-filter') || 'all';
-                    document.querySelectorAll('.lesson-grid-item').forEach(item => {
-                        const isAuthor = item.getAttribute('data-is-author') === '1';
-                        if (filter === 'my_lessons') {
-                            item.style.display = isAuthor ? '' : 'none';
-                        } else {
-                            item.style.display = '';
-                        }
-                    });
+                    currentFilterTab = btn.getAttribute('data-filter') || 'all';
+                    fetchLessonsGrid();
+                    saveLearnAIFiltersPreference();
+                });
+            });
+
+            document.querySelectorAll('.lesson-level-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    currentFilterLevel = item.getAttribute('data-level') || 'All Levels';
+                    const levelBtn = document.getElementById('lessonLevelDropdownBtn');
+                    if (levelBtn) levelBtn.textContent = currentFilterLevel;
+                    fetchLessonsGrid();
+                    saveLearnAIFiltersPreference();
                 });
             });
 
@@ -5402,35 +5625,6 @@ try {
                     }
                 });
             }
-
-            // Filter tab handling
-            document.querySelectorAll('.lesson-filter-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    document.querySelectorAll('.lesson-filter-btn').forEach(b => {
-                        b.classList.remove('active', 'text-white');
-                        b.classList.add('text-secondary');
-                    });
-                    btn.classList.add('active', 'text-white');
-                    btn.classList.remove('text-secondary');
-
-                    const filter = btn.getAttribute('data-filter') || 'all';
-                    document.querySelectorAll('.lesson-grid-item').forEach(item => {
-                        if (filter === 'all') {
-                            item.style.display = '';
-                        } else if (filter === 'my_likes') {
-                            item.style.display = (item.getAttribute('data-liked') === 'true') ? '' : 'none';
-                        } else if (filter === 'most_liked') {
-                            const count = parseInt(item.getAttribute('data-likes-count') || '0', 10);
-                            item.style.display = (count > 0) ? '' : 'none';
-                        } else if (filter === 'my_lessons') {
-                            item.style.display = (item.getAttribute('data-is-author') === '1') ? '' : 'none';
-                        } else {
-                            item.style.display = '';
-                        }
-                    });
-                });
-            });
 
             // Delegated click handlers for cards and dashboard actions without inline onclick
             if (!window._dashboardDelegationAdded) {
@@ -5487,18 +5681,109 @@ try {
                     if (revealHintBtn) {
                         e.preventDefault();
                         e.stopPropagation();
-                        if (typeof TomNotify !== 'undefined') {
-                            TomNotify.show("Click 'Start Learning' to dive into interactive hints and solutions inside the chapters!", "Hint / Solution", "info", 3500);
-                        }
+                        const lessonId = revealHintBtn.getAttribute('data-lesson-id') || revealHintBtn.closest('.lesson-card')?.getAttribute('data-lesson-id');
+                        if (!lessonId) return;
+
+                        const modalEl = document.getElementById('revealPromptModal');
+                        const modalContent = document.getElementById('revealPromptModalContent');
+                        if (!modalEl || !modalContent) return;
+
+                        modalContent.innerHTML = '<div class="p-4 text-center text-white"><span class="spinner-border spinner-border-sm text-warning me-2"></span>Loading generation prompt details...</div>';
+                        const modalInstance = new (window.coreui?.Modal || window.bootstrap?.Modal)(modalEl);
+                        modalInstance.show();
+
+                        fetch('/api/learnAI/reveal_prompt', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ lesson_id: lessonId })
+                        })
+                        .then(r => r.text())
+                        .then(html => {
+                            modalContent.innerHTML = html;
+                            if (html.indexOf('Generation Prompt') !== -1 && html.indexOf('btn-confirm-reveal-prompt') === -1) {
+                                const bulbBtn = document.querySelector('.reveal-hint-btn[data-lesson-id="' + lessonId + '"]');
+                                if (bulbBtn) {
+                                    bulbBtn.classList.remove('text-secondary');
+                                    bulbBtn.classList.add('text-success');
+                                    bulbBtn.title = 'Generation Prompt (Unlocked)';
+                                }
+                            }
+                        })
+                        .catch(err => {
+                            modalContent.innerHTML = '<div class="p-4 text-center text-danger">Failed to load prompt details.</div>';
+                        });
                         return;
                     }
 
                     const card = e.target.closest('.lesson-card');
                     if (card && !e.target.closest('a, button, .dropdown, input, textarea')) {
                         const lessonId = card.getAttribute('data-lesson-id');
-                        if (lessonId && !window.getSelection()?.toString()) {
+                        if (lessonId && !(window.getSelection() && window.getSelection().toString())) {
                             window.location.href = '/learn/lesson/' + lessonId;
                         }
+                    }
+                });
+
+                document.addEventListener('click', function (e) {
+                    const confirmBtn = e.target.closest('.btn-confirm-reveal-prompt');
+                    if (confirmBtn) {
+                        e.preventDefault();
+                        const lessonId = confirmBtn.getAttribute('data-lesson-id');
+                        if (!lessonId) return;
+
+                        confirmBtn.disabled = true;
+                        const originalText = confirmBtn.innerHTML;
+                        confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Revealing...';
+
+                        fetch('/api/learnAI/reveal_prompt_confirm', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ lesson_id: lessonId })
+                        })
+                        .then(r => r.json())
+                        .then(res => {
+                            if (res.error) {
+                                if (typeof TomNotify !== 'undefined') {
+                                    TomNotify.show(res.error, "Insufficient Fuel", "warning", 5000);
+                                } else {
+                                    alert(res.error);
+                                }
+                                confirmBtn.disabled = false;
+                                confirmBtn.innerHTML = originalText;
+                                return;
+                            }
+                            if (res.new_jolt !== undefined) {
+                                const headerJolt = document.getElementById('header-jolt');
+                                if (headerJolt) headerJolt.textContent = res.new_jolt;
+                            }
+                            if (typeof TomNotify !== 'undefined' && res.message) {
+                                TomNotify.show(res.message, "Success", "success", 3000);
+                            }
+                            const bulbBtn = document.querySelector('.reveal-hint-btn[data-lesson-id="' + lessonId + '"]');
+                            if (bulbBtn) {
+                                bulbBtn.classList.remove('text-secondary');
+                                bulbBtn.classList.add('text-success');
+                                bulbBtn.title = 'Generation Prompt (Unlocked)';
+                            }
+                            // Re-fetch exact revealed HTML
+                            fetch('/api/learnAI/reveal_prompt', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ lesson_id: lessonId })
+                            })
+                            .then(r => r.text())
+                            .then(html => {
+                                const modalContent = document.getElementById('revealPromptModalContent');
+                                if (modalContent) modalContent.innerHTML = html;
+                            });
+                        })
+                        .catch(err => {
+                            confirmBtn.disabled = false;
+                            confirmBtn.innerHTML = originalText;
+                            if (typeof TomNotify !== 'undefined') {
+                                TomNotify.show("Error confirming reveal prompt.", "Error", "danger", 3500);
+                            }
+                        });
                     }
                 });
             }
@@ -5962,7 +6247,6 @@ try {
 
         unlockAiAssistAction: function (lessonId) {
             if (!lessonId) return;
-            if (!confirm('Unlock AI Assist for this lesson using 25 Jolt?')) return;
 
             const btn = document.getElementById('unlockAiAssistBtn');
             const origHtml = btn ? btn.innerHTML : '';
@@ -5971,7 +6255,7 @@ try {
                 btn.innerHTML = '<i class="bx bx-loader-circle bx-spin fs-5"></i> Unlocking...';
             }
 
-            fetch('/api/learnAI/unlock_ai_assist.php', {
+            fetch('/api/learnAI/unlock_ai_assist', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ lesson_id: lessonId })
@@ -6118,6 +6402,7 @@ try {
             // Check if chat history was pre-loaded by PHP directly inside content.php
             if (chatHistory.dataset.preloaded === 'true') {
                 chatHistory.removeAttribute('data-preloaded');
+                chatHistory.dataset.chatLoaded = 'true';
                 LearnApp._processChatHistoryHtml();
             } else {
                 const lessonId = document.getElementById('currentLessonId')?.value || '';
@@ -6130,6 +6415,7 @@ try {
                         .then(r => r.text())
                         .then(html => {
                             chatHistory.innerHTML = html;
+                            chatHistory.dataset.chatLoaded = 'true';
                             LearnApp._processChatHistoryHtml();
                         })
                         .catch(err => {
@@ -7789,7 +8075,9 @@ try {
                     text.classList.add('text-secondary');
                 }
             });
-        } else if (btn && btn.classList.contains('learn-accordion-btn')) {
+        } else if (chapterId) {
+            var targetBtn = (btn && btn.classList.contains('learn-accordion-btn')) ? btn : document.querySelector('.learn-accordion-btn[data-chapter-id="' + chapterId + '"]');
+
             document.querySelectorAll('.learn-accordion-btn').forEach(function(a) {
                 a.classList.remove('active', 'bg-primary', 'bg-opacity-25', 'text-white', 'fw-bold');
                 a.classList.add('text-secondary');
@@ -7805,17 +8093,19 @@ try {
                 }
             });
 
-            btn.classList.add('active', 'bg-primary', 'bg-opacity-25', 'text-white', 'fw-bold');
-            btn.classList.remove('text-secondary');
-            var clickedIcon = btn.querySelector('.icon');
-            if (clickedIcon) {
-                clickedIcon.classList.remove('bx-check-circle', 'opacity-50');
-                clickedIcon.classList.add('bxs-check-circle', 'text-primary');
-            }
-            var clickedText = btn.querySelector('.chapter-title-text');
-            if (clickedText) {
-                clickedText.classList.remove('text-secondary');
-                clickedText.classList.add('text-white');
+            if (targetBtn) {
+                targetBtn.classList.add('active', 'bg-primary', 'bg-opacity-25', 'text-white', 'fw-bold');
+                targetBtn.classList.remove('text-secondary');
+                var clickedIcon = targetBtn.querySelector('.icon');
+                if (clickedIcon) {
+                    clickedIcon.classList.remove('bx-check-circle', 'opacity-50');
+                    clickedIcon.classList.add('bxs-check-circle', 'text-primary');
+                }
+                var clickedText = targetBtn.querySelector('.chapter-title-text');
+                if (clickedText) {
+                    clickedText.classList.remove('text-secondary');
+                    clickedText.classList.add('text-white');
+                }
             }
         }
 
@@ -7890,17 +8180,16 @@ try {
                         }
                     }
                     
-                    // Refresh AI Chat History ONLY if it's a chapter
+                    // Load AI Chat History ONLY if not already loaded
                     var chatHistory = document.getElementById('aiChatHistory');
                     if (chatHistory) {
-                        if (isOverview) {
-                            chatHistory.innerHTML = ''; // Clear history on overview
-                        } else {
+                        if (!isOverview && chatHistory.dataset.chatLoaded !== 'true') {
                             chatHistory.innerHTML = '<div class="text-center py-4 my-auto text-secondary small d-flex flex-column align-items-center gap-2"><i class="bx bx-loader-circle bx-spin fs-4 text-primary"></i><span>Loading conversation...</span></div>';
                             fetch('/api/learnAI/history?lesson_id=' + lessonId + '&chapter_id=' + chapterId)
                                 .then(function(r) { return r.text(); })
                                 .then(function(chatHtml) {
                                     chatHistory.innerHTML = chatHtml;
+                                    chatHistory.dataset.chatLoaded = 'true';
                                     self._processChatHistoryHtml();
                                 });
                         }
@@ -7936,6 +8225,9 @@ try {
     // Export toggle for button clicks
     window.toggleOutline = () => LearnApp.toggleOutline();
     window.unlockAiAssistAction = (lessonId) => LearnApp.unlockAiAssistAction(lessonId);
+
+    window.LearnAI = LearnApp;
+    window.LearnApp = LearnApp;
 
     // Re-check for resizers after a small delay in case of late rendering
     setTimeout(() => { if (!LearnApp.isInitialized) LearnApp.init(); LearnApp.initDashboard(); }, 1000);

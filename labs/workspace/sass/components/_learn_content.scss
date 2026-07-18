@@ -594,6 +594,12 @@ body.resizing-active * {
                 background: rgba(255, 255, 255, 0.15) !important;
                 color: #ffffff !important;
                 border: 1px solid rgba(255, 255, 255, 0.2) !important;
+
+                :root[data-coreui-theme="light"] & {
+                    background: rgba(0, 0, 0, 0.05) !important;
+                    color: #111827 !important;
+                    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+                }
             }
         }
 
@@ -1704,5 +1710,144 @@ svg.study-drawing-layer {
         display: none !important;
         width: 0 !important;
         height: 0 !important;
+    }
+}
+
+/* Mermaid Mindmap Custom Styling for AI Labs */
+#course-mermaid-map {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#course-mermaid-map .node rect,
+#course-mermaid-map .node polygon,
+#course-mermaid-map .node circle,
+#course-mermaid-map .mindmap-node rect,
+#course-mermaid-map .mindmap-node path,
+#course-mermaid-map .mindmap-node polygon {
+    fill: #1e2227 !important;
+    stroke: rgba(255, 255, 255, 0.15) !important;
+    stroke-width: 1.5px !important;
+    transition: all 0.2s ease;
+}
+
+#course-mermaid-map .mindmap-edge,
+#course-mermaid-map .edgePath path {
+    stroke: rgba(255, 255, 255, 0.15) !important;
+    stroke-width: 2px !important;
+}
+
+#course-mermaid-map .nodeLabel,
+#course-mermaid-map .mindmap-node foreignObject,
+#course-mermaid-map .mindmap-node foreignObject > div {
+    color: #e2e8f0 !important;
+    font-family: inherit !important;
+}
+
+#course-mermaid-map .mindmap-node:hover rect,
+#course-mermaid-map .mindmap-node:hover path,
+#course-mermaid-map .mindmap-node:hover polygon {
+    fill: rgba(255, 255, 255, 0.1) !important;
+    stroke: var(--cui-primary) !important;
+    cursor: pointer;
+}
+
+:root[data-coreui-theme="light"] #course-mermaid-map .mindmap-node rect,
+:root[data-coreui-theme="light"] #course-mermaid-map .mindmap-node path,
+:root[data-coreui-theme="light"] #course-mermaid-map .mindmap-node polygon,
+:root[data-coreui-theme="light"] #course-mermaid-map .mindmap-node circle {
+    fill: #ffffff !important;
+    stroke: rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Fix sidebar chapter numbers inheriting colors instead of defaulting to white badge */
+.chapter-num-btn {
+    color: inherit !important;
+}
+
+/* Base adaptive styles for view switcher buttons */
+.learn-switch-btn {
+    border: none !important;
+    color: var(--cui-secondary-color, #94a3b8) !important;
+    background: transparent !important;
+    transition: all 0.2s ease;
+
+    &:hover {
+        color: var(--cui-body-color, #f8fafc) !important;
+        background: rgba(128, 128, 128, 0.1) !important;
+    }
+
+    &.active {
+        background: rgba(var(--cui-primary-rgb), 0.15) !important;
+        color: var(--cui-primary) !important;
+        font-weight: 600 !important;
+    }
+}
+
+/* Bold, solid primary highlight for the active chapter */
+.learn-accordion-btn.active {
+    background-color: var(--cui-primary) !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 6px -1px rgba(var(--cui-primary-rgb), 0.2) !important;
+    
+    .chapter-title-text,
+    .icon {
+        color: #ffffff !important;
+        opacity: 1 !important;
+    }
+
+    .chapter-num-btn {
+        background-color: rgba(255, 255, 255, 0.25) !important;
+        color: #ffffff !important;
+    }
+}
+
+/* Light mode overrides for sidebar */
+:root[data-coreui-theme="light"] {
+    /* Force module numbers to be dark */
+    .accordion-num {
+        background: rgba(0, 0, 0, 0.05) !important;
+        color: #111827 !important;
+        border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    }
+
+    /* Fix completed label in light mode */
+    .progress-label {
+        color: #111827 !important;
+    }
+
+    /* Force chapter numbers to be dark when inactive */
+    .learn-accordion-btn:not(.active) .chapter-num-btn {
+        color: #4b5563 !important;
+        background: rgba(0, 0, 0, 0.05) !important;
+    }
+
+    /* Switcher buttons light mode */
+    .learn-switch-btn {
+        color: #4b5563 !important;
+
+        &:hover {
+            color: #111827 !important;
+            background: rgba(0, 0, 0, 0.05) !important;
+        }
+
+        &.active {
+            color: var(--cui-primary) !important;
+            background: rgba(var(--cui-primary-rgb), 0.15) !important;
+        }
+    }
+
+    #course-mermaid-map .mindmap-edge {
+        stroke: rgba(0, 0, 0, 0.2) !important;
+    }
+
+    #course-mermaid-map .nodeLabel,
+    #course-mermaid-map .mindmap-node foreignObject,
+    #course-mermaid-map .mindmap-node foreignObject > div {
+        color: #111827 !important;
     }
 }

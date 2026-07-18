@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="/assets/sna_js/mermaid.min.js"></script>
+</head>
+<body>
+  <div class="mermaid">
+    graph LR
+      A[Course Title] --> B[Module 1]
+      B --> C[<a href="/learn/lesson/123/chapter/456">Chapter 1</a>]
+      click C "/learn/lesson/123/chapter/456" "Go to chapter"
+  </div>
+  <script>
+    mermaid.initialize({ startOnLoad: true, securityLevel: 'loose' });
+  </script>
+</body>
+</html>

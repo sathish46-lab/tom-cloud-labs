@@ -6,6 +6,13 @@ try {
     "use strict";
 
 
+window.saveBgModalTab = function(tabId) {
+    const fd = new FormData();
+    fd.append('preference_id', 'bg_dialog_tab');
+    fd.append('value', tabId);
+    fetch('/api/user/preference_save', { method: 'POST', body: fd }).catch(() => {});
+};
+
 var TomBG = {
   // Theme configuration is now loaded securely from the server via API
   themes: {},

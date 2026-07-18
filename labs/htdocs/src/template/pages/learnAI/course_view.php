@@ -199,55 +199,74 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
                     </button>
                 </div>
                 <div class="card-body p-0 overflow-hidden d-flex flex-column">
-                    <!-- Top section: controls and chapters (scrollable independently) -->
-                    <div class="lesson-chapters-section flex-grow-1 overflow-y-auto hide-scrollbar">
-                        <div class="d-flex justify-content-center align-items-center p-2 lesson-controls gap-2 border-bottom border-secondary border-opacity-10">
-                            <!-- Like button (shown in compact mode via sna.css) -->
-                            <button class="btn btn-link p-0 text-secondary like-lesson-btn like-lesson-btn-compact" data-lesson-id="<?= $lesson['_id'] ?>" data-tooltip="Like Lesson">
-                                <i class="bx <?= !empty($likedByCurrent) ? 'bxs-heart text-danger' : 'bx-heart' ?> fs-5"></i>
-                            </button>
-                            <!-- Circular progress indicator -->
-                            <div class="d-flex align-items-center progress-section gap-2">
-                                <div class="circular-progress d-flex align-items-center justify-content-center position-relative" style="width: 36px; height: 36px;">
-                                    <svg width="36" height="36" viewBox="0 0 45 45">
-                                        <circle cx="22.5" cy="22.5" r="18" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3"></circle>
-                                        <circle cx="22.5" cy="22.5" r="18" fill="none" stroke="var(--cui-primary)" stroke-width="3" stroke-dasharray="113" stroke-dashoffset="<?= 113 - (113 * ($lesson['progress'] ?? 35) / 100) ?>" stroke-linecap="round" transform="rotate(-90 22.5 22.5)"></circle>
-                                    </svg>
-                                    <span class="position-absolute small fw-bold" style="font-size: 0.6rem;"><?= $lesson['progress'] ?? 35 ?>%</span>
-                                </div>
-                                <span class="small fw-bold text-light progress-label">Completed</span>
+                    <!-- Top section: pinned controls (does not scroll) -->
+                    <div class="d-flex justify-content-center align-items-center p-2 lesson-controls gap-2 border-bottom border-secondary border-opacity-10" style="flex-shrink: 0;">
+                        <!-- Like button (shown in compact mode via sna.css) -->
+                        <button class="btn btn-link p-0 text-secondary like-lesson-btn like-lesson-btn-compact" data-lesson-id="<?= $lesson['_id'] ?>" data-tooltip="Like Lesson">
+                            <i class="bx <?= !empty($likedByCurrent) ? 'bxs-heart text-danger' : 'bx-heart' ?> fs-5"></i>
+                        </button>
+                        <!-- Circular progress indicator -->
+                        <div class="d-flex align-items-center progress-section gap-2">
+                            <div class="circular-progress d-flex align-items-center justify-content-center position-relative" style="width: 36px; height: 36px;">
+                                <svg width="36" height="36" viewBox="0 0 45 45">
+                                    <circle cx="22.5" cy="22.5" r="18" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3"></circle>
+                                    <circle cx="22.5" cy="22.5" r="18" fill="none" stroke="var(--cui-primary)" stroke-width="3" stroke-dasharray="113" stroke-dashoffset="<?= 113 - (113 * ($lesson['progress'] ?? 35) / 100) ?>" stroke-linecap="round" transform="rotate(-90 22.5 22.5)"></circle>
+                                </svg>
+                                <span class="position-absolute small fw-bold" style="font-size: 0.6rem;"><?= $lesson['progress'] ?? 35 ?>%</span>
                             </div>
-                            <!-- View switcher buttons -->
-                            <div class="view-buttons d-flex align-items-center">
-                                <button class="btn btn-sm btn-dark border border-secondary border-opacity-25 rounded-pill d-flex align-items-center learn-switch-btn active" data-tooltip="Outline">
-                                    <i class="bx bx-list-ul icon"></i> <span class="btn-label ms-1">Outline</span>
-                                </button>
-                                <a href="/learn/lesson/<?= $lesson['_id'] ?>" class="btn btn-sm btn-outline-secondary border-0 rounded-pill d-flex align-items-center learn-switch-btn text-secondary" data-tooltip="Map">
-                                    <i class="bx bx-share-alt icon"></i> <span class="btn-label ms-1">Map</span>
-                                </a>
-                            </div>
+                            <span class="small fw-bold text-light progress-label">Completed</span>
                         </div>
+                        <!-- View switcher buttons -->
+                        <div class="view-buttons d-flex align-items-center">
+                            <a href="/learn/lesson/<?= $lesson['_id'] ?>" class="btn btn-sm rounded-pill d-flex align-items-center learn-switch-btn <?= !isset($_GET['view']) || $_GET['view'] !== 'map' ? 'active' : '' ?>" data-tooltip="Outline">
+                                <i class="bx bx-list-ul icon"></i> <span class="btn-label ms-1">Outline</span>
+                            </a>
+                            <a href="/learn/lesson/<?= $lesson['_id'] ?>/map" class="btn btn-sm rounded-pill d-flex align-items-center learn-switch-btn <?= isset($_GET['view']) && $_GET['view'] === 'map' ? 'active' : '' ?>" data-tooltip="Map">
+                                <i class="bx bx-share-alt icon"></i> <span class="btn-label ms-1">Map</span>
+                            </a>
+                        </div>
+                    </div>
 
+                    <!-- Chapters list (scrollable) -->
+                    <div class="lesson-chapters-section flex-grow-1 overflow-y-auto hide-scrollbar">
                         <div class="accordion accordion-flush" id="accordionFlushExample">
                             <?php $mod_idx = 1; foreach ($modules as $mod_name => $mod_chapters): ?>
+                                <?php
+                                $is_mod_active = false;
+                                if ($chapter_id) {
+                                    foreach ($mod_chapters as $c) {
+                                        if ((string)$c['_id'] === $chapter_id) {
+                                            $is_mod_active = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                $is_expanded = $is_mod_active || (!$chapter_id && $mod_idx === 1);
+                                ?>
                                 <div class="accordion-item bg-transparent border-bottom border-secondary border-opacity-10">
                                     <h2 class="accordion-header m-0">
-                                        <button class="accordion-button bg-transparent text-white py-2 px-3 d-flex align-items-center shadow-none <?= $mod_idx > 1 ? 'collapsed' : '' ?>" type="button" data-coreui-toggle="collapse" data-coreui-target="#flush-collapse<?= $mod_idx ?>" aria-expanded="<?= $mod_idx === 1 ? 'true' : 'false' ?>" aria-controls="flush-collapse<?= $mod_idx ?>">
+                                        <button class="accordion-button bg-transparent text-white py-2 px-3 d-flex align-items-center shadow-none <?= !$is_expanded ? 'collapsed' : '' ?>" type="button" data-coreui-toggle="collapse" data-coreui-target="#flush-collapse<?= $mod_idx ?>" aria-expanded="<?= $is_expanded ? 'true' : 'false' ?>" aria-controls="flush-collapse<?= $mod_idx ?>">
                                             <?php $clean_mod_name = preg_replace('/^\d+[\.\)]\s*/', '', $mod_name); ?>
                                             <span class="accordion-num badge rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;" data-tooltip="<?= htmlspecialchars($clean_mod_name) ?>"><?= $mod_idx ?></span>
                                             <span class="module-title-text"><?= htmlspecialchars($clean_mod_name) ?></span>
                                         </button>
                                     </h2>
-                                    <div id="flush-collapse<?= $mod_idx ?>" class="accordion-collapse collapse <?= $mod_idx === 1 ? 'show' : '' ?>" data-coreui-parent="#accordionFlushExample">
+                                    <div id="flush-collapse<?= $mod_idx ?>" class="accordion-collapse collapse <?= $is_expanded ? 'show' : '' ?>" data-coreui-parent="#accordionFlushExample">
                                         <div class="accordion-body p-1">
                                             <?php $chap_local_idx = 1; foreach ($mod_chapters as $chap): ?>
-                                                <?php $clean_chap_title = preg_replace('/^\d+[\.\)]\s*/', '', $chap['title']); ?>
-                                                <a href="/learn/lesson/<?= $lesson['_id'] ?>/chapter/<?= $chap['_id'] ?>" class="btn btn-sm d-flex align-items-center justify-content-between w-100 text-start py-2 px-2 rounded mb-1 learn-accordion-btn text-secondary" data-tooltip="<?= htmlspecialchars($clean_chap_title) ?>" data-chapter-id="<?= $chap['_id'] ?>" data-lesson-id="<?= $lesson['_id'] ?>" data-chapter-title="<?= htmlspecialchars($clean_chap_title) ?>" data-module-name="<?= htmlspecialchars($clean_mod_name) ?>">
+                                                <?php 
+                                                $clean_chap_title = preg_replace('/^\d+[\.\)]\s*/', '', $chap['title']); 
+                                                $is_active = ($chapter_id && (string)$chap['_id'] === $chapter_id);
+                                                $btn_class = $is_active ? 'active bg-primary bg-opacity-25 text-white fw-bold' : 'text-secondary';
+                                                $text_class = $is_active ? 'text-white' : 'text-secondary';
+                                                $icon_class = $is_active ? 'bxs-check-circle text-primary' : 'bx-check-circle opacity-50';
+                                                ?>
+                                                <a href="/learn/lesson/<?= $lesson['_id'] ?>/chapter/<?= $chap['_id'] ?>" hx-boost="false" class="btn btn-sm d-flex align-items-center justify-content-between w-100 text-start py-2 px-2 rounded mb-1 learn-accordion-btn <?= $btn_class ?>" data-tooltip="<?= htmlspecialchars($clean_chap_title) ?>" data-chapter-id="<?= $chap['_id'] ?>" data-lesson-id="<?= $lesson['_id'] ?>" data-chapter-title="<?= htmlspecialchars($clean_chap_title) ?>" data-module-name="<?= htmlspecialchars($clean_mod_name) ?>">
                                                     <div class="d-flex align-items-center gap-2">
                                                         <span class="chapter-num-btn badge rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 24px; height: 24px;"><?= $chap_local_idx++ ?></span>
-                                                        <h6 class="m-0 small chapter-title-text text-secondary"><?= htmlspecialchars($clean_chap_title) ?></h6>
+                                                        <h6 class="m-0 small chapter-title-text <?= $text_class ?>"><?= htmlspecialchars($clean_chap_title) ?></h6>
                                                     </div>
-                                                    <i class="bx bx-check-circle opacity-50 icon"></i>
+                                                    <i class="bx <?= $icon_class ?> icon"></i>
                                                 </a>
                                             <?php endforeach; ?>
                                         </div>
@@ -364,6 +383,8 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
                 <?php
                 if ($chapter_id) {
                     include __DIR__ . '/../../partials/learnAI/chapter_content.php';
+                } elseif (isset($_GET['view']) && $_GET['view'] === 'map') {
+                    include __DIR__ . '/../../partials/learnAI/course_map.php';
                 } else {
                     include __DIR__ . '/../../partials/learnAI/course_overview.php';
                 }
@@ -414,7 +435,7 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
                                 25 <i class="bx bxs-zap fs-6"></i> Jolt
                             </span>
                         </div>
-                        <button id="unlockAiAssistBtn" class="btn rounded-pill px-4 py-2 fw-medium shadow-sm d-inline-flex align-items-center gap-2 mb-3 text-white hvr-grow" style="background: linear-gradient(135deg, #8b5cf6, #6366f1); border: none; font-size: 0.9rem;" onclick="unlockAiAssistAction('<?= $lesson['_id'] ?>')">
+                        <button id="unlockAiAssistBtn" class="btn rounded-pill px-4 py-2 fw-medium shadow-sm d-inline-flex align-items-center gap-2 mb-3 text-white hvr-grow" style="background: linear-gradient(135deg, #8b5cf6, #6366f1); border: none; font-size: 0.9rem;" data-coreui-toggle="modal" data-coreui-target="#unlockAiAssistModal">
                             <i class="bx bx-lock-open fs-5"></i> Unlock AI Assist
                         </button>
                         <p class="text-secondary small m-0 d-flex align-items-center gap-1" style="font-size: 0.75rem;">
@@ -481,6 +502,64 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
                 <i class="bx bx-loader-circle bx-spin fs-2 text-primary"></i>
                 <p class="mt-2 text-secondary small">Loading token history...</p>
             </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="unlockAiAssistModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 pt-4 px-4">
+                <h5 class="modal-title fw-bold">Unlock AI Assist</h5>
+                <button type="button" class="btn-close btn-close-white" data-coreui-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4 pt-2">
+                <div class="mb-3">
+                    🏷 You are about to unlock AI Assist for this lesson
+                </div>
+                
+                <hr class="text-secondary opacity-25">
+                
+                <div class="row text-center g-2 my-3">
+                    <div class="col-4">
+                        <div class="small fw-bold mb-1">AI Assist Cost</div>
+                        <div>25 ⚡️</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="small fw-bold mb-1">Available Jolt</div>
+                        <div><?= number_format($availableJolt) ?> ⚡️</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="small fw-bold mb-1">Jolt Remaining</div>
+                        <div><?= number_format($availableJolt - 25) ?> ⚡️</div>
+                    </div>
+                </div>
+                
+                <hr class="text-secondary opacity-25">
+                
+                <div class="mb-4 mt-3">
+                    <h6 class="mb-2">Important Notes</h6>
+                    <ul class="list-unstyled mb-0 d-flex flex-column gap-2 small" style="color: #d97706;">
+                        <li>• This will unlock AI Assist for all chapters in this lesson</li>
+                        <li>• 25 ⚡️ Jolts will be deducted and this action cannot be undone</li>
+                        <li>• Lesson owners get free access without spending Jolt</li>
+                    </ul>
+                </div>
+                
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-coreui-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn rounded-pill px-4 text-white" style="background: linear-gradient(135deg, #8b5cf6, #6366f1); border: none;" onclick="unlockAiAssistAction('<?= $lesson['_id'] ?>')" data-coreui-dismiss="modal">Unlock AI Assist</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reveal Prompt Modal Container (Dynamically loaded via HTMX/AJAX) -->
+<div class="modal fade" id="revealPromptModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4" id="revealPromptModalContent">
+            <!-- Content loaded dynamically from reveal_prompt.php -->
         </div>
     </div>
 </div>

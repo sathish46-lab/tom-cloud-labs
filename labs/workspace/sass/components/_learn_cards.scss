@@ -58,8 +58,6 @@
 [data-coreui-theme="dark"] .card.liquid-rim.lesson-card,
 html[data-coreui-theme="dark"] .card.liquid-rim.lesson-card {
   position: relative !important;
-  background: #0d1117 !important;
-  box-shadow: rgba(0, 0, 0, 0.45) 0 12px 28px 0, rgba(0, 0, 0, 0.3) 0 2px 4px 0, rgba(255, 255, 255, 0.08) 0 0 24px 0 !important;
   border: 0 !important;
   border-radius: 1.2rem !important;
 
@@ -82,6 +80,15 @@ html[data-coreui-theme="dark"] .card.liquid-rim.lesson-card {
     -webkit-mask-composite: xor !important;
     box-shadow: rgba(255, 255, 255, 0.14) 0 0 0 1px inset, rgba(255, 255, 255, 0.22) 0 1px 0 0 inset !important;
   }
+}
+
+/* Force filter buttons to have white text on hover/active in both themes */
+.lesson-filter-btn:hover,
+.lesson-filter-btn.active,
+.lesson-level-btn:hover,
+.lesson-level-btn.show,
+.lesson-level-btn[aria-expanded="true"] {
+  color: #ffffff !important;
 }
 
 /* Standardized Gradient Badges matching Tom Labs exactly */
@@ -174,4 +181,13 @@ html[data-coreui-theme="dark"] .card.liquid-rim.lesson-card {
   overflow: hidden;
 }
 
-
+/* Autocomplete live search dropdown */
+.autocomplete-lesson-item {
+  color: inherit;
+  text-decoration: none;
+  
+  &:hover, &:focus {
+    background-color: var(--cui-tertiary-bg) !important;
+    color: var(--cui-body-color) !important;
+  }
+}

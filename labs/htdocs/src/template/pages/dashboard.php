@@ -5,6 +5,8 @@
 $user = Session::getUser();
 $userId = (int)$user->getUserId();
 $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
+$uiPrefs = $user ? ($user->getUiPreferences() ?? []) : [];
+$activeContinueTab = $uiPrefs['active_continue_tab'] ?? 'activity';
 
 // 1. Fetch Labs
 $activeLabsCount = $db->deployed_labs->countDocuments(['user_id' => $userId, 'status' => 'running']);
@@ -284,10 +286,10 @@ $greetingText = $quotes[array_rand($quotes)];
 $greetingText = str_replace($username, '<span class="text-primary">' . htmlspecialchars($username) . '</span>', $greetingText);
 ?>
 
-<div class="container-fluid px-0 pt-4 px-4">
+<div class="container-fluid px-0 pt-3 px-3">
 
     <!-- Top Row: Profile & Clan Cards -->
-    <div class="row g-4 mb-4 ">
+    <div class="row g-3 mb-4 ">
         <!-- Profile Banner -->
         <div class="col-12 col-xl-8">
             <div class="card border-0 blur position-relative overflow-hidden h-100 profile-banner-card">
@@ -466,7 +468,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
     </div>
 
     <!-- Continue Learning Mega Console -->
-    <div class="row g-4 mb-4">
+    <div class="row g-3 mb-4">
         <div class="col-12 col-xl-8">
             <div class="card border-0 blur continue-learning-card">
                 <div class="card-body p-4">
@@ -479,15 +481,15 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                         
                         <!-- Switch Tabs Selector -->
                         <div class="d-flex gap-2 flex-wrap continue-tab-switcher-container">
-                            <button class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold continue-tab-btn" 
+                            <button class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold continue-tab-btn <?= $activeContinueTab === 'setup' ? 'active' : '' ?>" 
                                     onclick="switchContinueTab('setup')" data-tab="setup">
                                 <i class='bx bx-desktop me-1 align-middle'></i> Your Setup
                             </button>
-                            <button class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold continue-tab-btn active" 
+                            <button class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold continue-tab-btn <?= $activeContinueTab === 'activity' ? 'active' : '' ?>" 
                                     onclick="switchContinueTab('activity')" data-tab="activity">
                                 <i class='bx bx-time-five me-1 align-middle'></i> Your Activity
                             </button>
-                            <button class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold continue-tab-btn" 
+                            <button class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold continue-tab-btn <?= $activeContinueTab === 'recommended' ? 'active' : '' ?>" 
                                     onclick="switchContinueTab('recommended')" data-tab="recommended">
                                 <i class='bx bx-star me-1 align-middle'></i> Recommended
                             </button>
@@ -498,10 +500,10 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                     <div id="continue-tab-panes">
                         
                         <!-- Pane 1: Your Activity -->
-                        <div class="continue-tab-pane" id="continue-pane-activity">
+                        <div class="continue-tab-pane <?= $activeContinueTab === 'activity' ? '' : 'd-none' ?>" id="continue-pane-activity">
                             <div class="row g-3">
                                 <!-- Card 1 -->
-                                <div class="col-12 col-md-6 col-lg-4">
+                                <div class="col-12 col-md-6 col-lg-3">
                                     <div class="card h-100 border-0 continue-activity-card">
                                         <div class="card-body p-3 d-flex gap-3">
                                             <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 activity-icon-circle bg-success bg-opacity-10 border border-success border-opacity-25">
@@ -526,7 +528,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                     </div>
                                 </div>
                                 <!-- Card 2 -->
-                                <div class="col-12 col-md-6 col-lg-4">
+                                <div class="col-12 col-md-6 col-lg-3">
                                     <div class="card h-100 border-0 continue-activity-card">
                                         <div class="card-body p-3 d-flex gap-3">
                                             <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 activity-icon-circle bg-warning bg-opacity-10 border border-warning border-opacity-25">
@@ -551,7 +553,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                     </div>
                                 </div>
                                 <!-- Card 3 -->
-                                <div class="col-12 col-md-6 col-lg-4">
+                                <div class="col-12 col-md-6 col-lg-3">
                                     <div class="card h-100 border-0 continue-activity-card">
                                         <div class="card-body p-3 d-flex gap-3">
                                             <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 activity-icon-circle bg-success bg-opacity-10 border border-success border-opacity-25">
@@ -576,7 +578,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                     </div>
                                 </div>
                                 <!-- Card 4 -->
-                                <div class="col-12 col-md-6 col-lg-4">
+                                <div class="col-12 col-md-6 col-lg-3">
                                     <div class="card h-100 border-0 continue-activity-card">
                                         <div class="card-body p-3 d-flex gap-3">
                                             <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 activity-icon-circle bg-success bg-opacity-10 border border-success border-opacity-25">
@@ -601,7 +603,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                     </div>
                                 </div>
                                 <!-- Card 5 -->
-                                <div class="col-12 col-md-6 col-lg-4">
+                                <div class="col-12 col-md-6 col-lg-3">
                                     <div class="card h-100 border-0 continue-activity-card">
                                         <div class="card-body p-3 d-flex gap-3">
                                             <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 activity-icon-circle bg-warning bg-opacity-10 border border-warning border-opacity-25">
@@ -633,8 +635,8 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
 
                         <!-- Pane 2: Your Setup (DYNAMIC!) -->
                         <!-- Pane 2: Your Setup (DYNAMIC!) -->
-                        <div class="continue-tab-pane d-none" id="continue-pane-setup">
-                            <div class="row g-4">
+                        <div class="continue-tab-pane <?= $activeContinueTab === 'setup' ? '' : 'd-none' ?>" id="continue-pane-setup">
+                            <div class="row g-3">
                                 <!-- Connected Devices Card -->
                                 <div class="col-12 col-md-6">
                                     <div class="card h-100 border-0 blur device-card">
@@ -998,13 +1000,13 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                         </div>
 
                         <!-- Pane 3: Recommended -->
-                        <div class="continue-tab-pane d-none" id="continue-pane-recommended">
+                        <div class="continue-tab-pane <?= $activeContinueTab === 'recommended' ? '' : 'd-none' ?>" id="continue-pane-recommended">
                             <div class="mb-3">
                                 <h6 class="text-white text-opacity-40 fw-bold small mb-3 uppercase tracking-widest fs-8">Recommended For You</h6>
                             </div>
                             <div class="row g-3">
                                 <!-- Card 1 -->
-                                <div class="col-12 col-md-6 col-lg-4">
+                                <div class="col-12 col-md-6 col-lg-3">
                                     <div class="card h-100 border-0 continue-activity-card">
                                         <div class="card-body p-3 d-flex gap-3">
                                             <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 activity-icon-circle" style="background: rgba(255, 165, 2, 0.12); border: 1px solid rgba(255, 165, 2, 0.2);">
@@ -1021,7 +1023,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                     </div>
                                 </div>
                                 <!-- Card 2 -->
-                                <div class="col-12 col-md-6 col-lg-4">
+                                <div class="col-12 col-md-6 col-lg-3">
                                     <div class="card h-100 border-0 continue-activity-card">
                                         <div class="card-body p-3 d-flex gap-3">
                                             <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 activity-icon-circle" style="background: rgba(255, 165, 2, 0.12); border: 1px solid rgba(255, 165, 2, 0.2);">
@@ -1038,7 +1040,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                     </div>
                                 </div>
                                 <!-- Card 3 -->
-                                <div class="col-12 col-md-6 col-lg-4">
+                                <div class="col-12 col-md-6 col-lg-3">
                                     <div class="card h-100 border-0 continue-activity-card">
                                         <div class="card-body p-3 d-flex gap-3">
                                             <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 activity-icon-circle" style="background: rgba(46, 213, 115, 0.12); border: 1px solid rgba(46, 213, 115, 0.2);">
@@ -1055,7 +1057,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                     </div>
                                 </div>
                                 <!-- Card 4 -->
-                                <div class="col-12 col-md-6 col-lg-4">
+                                <div class="col-12 col-md-6 col-lg-3">
                                     <div class="card h-100 border-0 continue-activity-card">
                                         <div class="card-body p-3 d-flex gap-3">
                                             <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 activity-icon-circle" style="background: rgba(46, 213, 115, 0.12); border: 1px solid rgba(46, 213, 115, 0.2);">
@@ -1072,7 +1074,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                     </div>
                                 </div>
                                 <!-- Card 5 -->
-                                <div class="col-12 col-md-6 col-lg-4">
+                                <div class="col-12 col-md-6 col-lg-3">
                                     <div class="card h-100 border-0 continue-activity-card">
                                         <div class="card-body p-3 d-flex gap-3">
                                             <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 activity-icon-circle" style="background: rgba(46, 134, 222, 0.12); border: 1px solid rgba(46, 134, 222, 0.2);">

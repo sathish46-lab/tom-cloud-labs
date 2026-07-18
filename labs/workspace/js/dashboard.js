@@ -153,29 +153,59 @@ try {
             }
         });
 
-        // 3. Persist the active tab in localStorage
+        // 3. Persist the active tab in DB
         try {
-            localStorage.setItem('active_continue_tab', tabId);
+            const fd = new FormData();
+            fd.append('preference_id', 'active_continue_tab');
+            fd.append('value', tabId);
+            fetch('/api/user/preference_save', { method: 'POST', body: fd }).catch(() => {});
         } catch (e) {
             console.error('Failed to persist active tab:', e);
         }
     };
-
-    // Restore previously active tab on page load
-    window.onPageLoad( function () {
-        try {
-            const savedTab = localStorage.getItem('active_continue_tab');
-            if (savedTab) {
-                const pane = document.getElementById('continue-pane-' + savedTab);
-                if (pane) {
-                    window.switchContinueTab(savedTab);
-                }
-            }
-        } catch (e) {
-            console.error('Failed to restore active tab:', e);
-        }
-    });
 })();
+
+// Live search for lessons via Prompt Box
+let searchDebounceTimeout = null;
+const aiPromptInput = document.getElementById('aiLessonPrompt');
+if (aiPromptInput) {
+    aiPromptInput.addEventListener('input', function(e) {
+        clearTimeout(searchDebounceTimeout);
+        const query = e.target.value.trim();
+        
+        searchDebounceTimeout = setTimeout(() => {
+            if (query.length < 2) {
+                // If emptied, reload the current filter
+                if (window.LearnApp && typeof window.LearnApp.loadLessons === 'function') {
+                    const currentTab = document.querySelector('.lesson-filter-btn.active')?.dataset?.filter || 'continue';
+                    window.LearnApp.loadLessons(1, currentTab);
+                }
+                return;
+            }
+            
+            // Show loading in masonry area
+            const masonryArea = document.getElementById('masonry-area');
+            if (masonryArea) {
+                masonryArea.innerHTML = '<div class="col-12 text-center py-5"><div class="spinner-border text-secondary" role="status"><span class="visually-hidden">Loading...</span></div><p class="text-secondary small mt-2">Searching lessons...</p></div>';
+            }
+            
+            const fd = new FormData();
+            fd.append('query', query);
+            
+            fetch('/api/learnAI/search.php', { method: 'POST', body: fd })
+                .then(res => res.text())
+                .then(html => {
+                    if (masonryArea) {
+                        masonryArea.innerHTML = html;
+                        if (window.Masonry) {
+                            new Masonry(masonryArea, { percentPosition: true });
+                        }
+                    }
+                })
+                .catch(err => console.error('Search failed:', err));
+        }, 500);
+    });
+}
 
 
 

@@ -20577,6 +20577,11 @@ body.resizing-active * {
   color: #ffffff !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
+:root[data-coreui-theme=light] #learn-panel-1[data-state=collapsed] .accordion-button .accordion-num, :root[data-coreui-theme=light] #learn-panel-1.auto-compact .accordion-button .accordion-num {
+  background: rgba(0, 0, 0, 0.05) !important;
+  color: #111827 !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
 #learn-panel-1[data-state=collapsed] .learn-accordion-btn, #learn-panel-1.auto-compact .learn-accordion-btn {
   justify-content: center !important;
   padding: 0.4rem !important;
@@ -21635,6 +21640,140 @@ svg.mode-eraser svg.study-drawing-layer path.study-drawn-path:hover {
   height: 0 !important;
 }
 
+/* Mermaid Mindmap Custom Styling for AI Labs */
+#course-mermaid-map {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#course-mermaid-map .node rect,
+#course-mermaid-map .node polygon,
+#course-mermaid-map .node circle,
+#course-mermaid-map .mindmap-node rect,
+#course-mermaid-map .mindmap-node path,
+#course-mermaid-map .mindmap-node polygon {
+  fill: #1e2227 !important;
+  stroke: rgba(255, 255, 255, 0.15) !important;
+  stroke-width: 1.5px !important;
+  transition: all 0.2s ease;
+}
+
+#course-mermaid-map .mindmap-edge,
+#course-mermaid-map .edgePath path {
+  stroke: rgba(255, 255, 255, 0.15) !important;
+  stroke-width: 2px !important;
+}
+
+#course-mermaid-map .nodeLabel,
+#course-mermaid-map .mindmap-node foreignObject,
+#course-mermaid-map .mindmap-node foreignObject > div {
+  color: #e2e8f0 !important;
+  font-family: inherit !important;
+}
+
+#course-mermaid-map .mindmap-node:hover rect,
+#course-mermaid-map .mindmap-node:hover path,
+#course-mermaid-map .mindmap-node:hover polygon {
+  fill: rgba(255, 255, 255, 0.1) !important;
+  stroke: var(--cui-primary) !important;
+  cursor: pointer;
+}
+
+:root[data-coreui-theme=light] #course-mermaid-map .mindmap-node rect,
+:root[data-coreui-theme=light] #course-mermaid-map .mindmap-node path,
+:root[data-coreui-theme=light] #course-mermaid-map .mindmap-node polygon,
+:root[data-coreui-theme=light] #course-mermaid-map .mindmap-node circle {
+  fill: #ffffff !important;
+  stroke: rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Fix sidebar chapter numbers inheriting colors instead of defaulting to white badge */
+.chapter-num-btn {
+  color: inherit !important;
+}
+
+/* Base adaptive styles for view switcher buttons */
+.learn-switch-btn {
+  border: none !important;
+  color: var(--cui-secondary-color, #94a3b8) !important;
+  background: transparent !important;
+  transition: all 0.2s ease;
+}
+.learn-switch-btn:hover {
+  color: var(--cui-body-color, #f8fafc) !important;
+  background: rgba(128, 128, 128, 0.1) !important;
+}
+.learn-switch-btn.active {
+  background: rgba(var(--cui-primary-rgb), 0.15) !important;
+  color: var(--cui-primary) !important;
+  font-weight: 600 !important;
+}
+
+/* Bold, solid primary highlight for the active chapter */
+.learn-accordion-btn.active {
+  background-color: var(--cui-primary) !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 6px -1px rgba(var(--cui-primary-rgb), 0.2) !important;
+}
+.learn-accordion-btn.active .chapter-title-text,
+.learn-accordion-btn.active .icon {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+.learn-accordion-btn.active .chapter-num-btn {
+  background-color: rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff !important;
+}
+
+/* Light mode overrides for sidebar */
+:root[data-coreui-theme=light] {
+  /* Force module numbers to be dark */
+}
+:root[data-coreui-theme=light] .accordion-num {
+  background: rgba(0, 0, 0, 0.05) !important;
+  color: #111827 !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+:root[data-coreui-theme=light] {
+  /* Fix completed label in light mode */
+}
+:root[data-coreui-theme=light] .progress-label {
+  color: #111827 !important;
+}
+:root[data-coreui-theme=light] {
+  /* Force chapter numbers to be dark when inactive */
+}
+:root[data-coreui-theme=light] .learn-accordion-btn:not(.active) .chapter-num-btn {
+  color: #4b5563 !important;
+  background: rgba(0, 0, 0, 0.05) !important;
+}
+:root[data-coreui-theme=light] {
+  /* Switcher buttons light mode */
+}
+:root[data-coreui-theme=light] .learn-switch-btn {
+  color: #4b5563 !important;
+}
+:root[data-coreui-theme=light] .learn-switch-btn:hover {
+  color: #111827 !important;
+  background: rgba(0, 0, 0, 0.05) !important;
+}
+:root[data-coreui-theme=light] .learn-switch-btn.active {
+  color: var(--cui-primary) !important;
+  background: rgba(var(--cui-primary-rgb), 0.15) !important;
+}
+:root[data-coreui-theme=light] #course-mermaid-map .mindmap-edge {
+  stroke: rgba(0, 0, 0, 0.2) !important;
+}
+:root[data-coreui-theme=light] #course-mermaid-map .nodeLabel,
+:root[data-coreui-theme=light] #course-mermaid-map .mindmap-node foreignObject,
+:root[data-coreui-theme=light] #course-mermaid-map .mindmap-node foreignObject > div {
+  color: #111827 !important;
+}
+
 /* ========================================================================
    LearnAI Dashboard & Lesson Cards — Exact Premium Glass & Gradient Styles
    ======================================================================== */
@@ -21690,8 +21829,6 @@ svg.mode-eraser svg.study-drawing-layer path.study-drawn-path:hover {
 [data-coreui-theme=dark] .card.liquid-rim.lesson-card,
 html[data-coreui-theme=dark] .card.liquid-rim.lesson-card {
   position: relative !important;
-  background: #0d1117 !important;
-  box-shadow: rgba(0, 0, 0, 0.45) 0 12px 28px 0, rgba(0, 0, 0, 0.3) 0 2px 4px 0, rgba(255, 255, 255, 0.08) 0 0 24px 0 !important;
   border: 0 !important;
   border-radius: 1.2rem !important;
 }
@@ -21714,6 +21851,15 @@ html[data-coreui-theme=dark] .card.liquid-rim.lesson-card::after {
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0) !important;
   -webkit-mask-composite: xor !important;
   box-shadow: rgba(255, 255, 255, 0.14) 0 0 0 1px inset, rgba(255, 255, 255, 0.22) 0 1px 0 0 inset !important;
+}
+
+/* Force filter buttons to have white text on hover/active in both themes */
+.lesson-filter-btn:hover,
+.lesson-filter-btn.active,
+.lesson-level-btn:hover,
+.lesson-level-btn.show,
+.lesson-level-btn[aria-expanded=true] {
+  color: #ffffff !important;
 }
 
 /* Standardized Gradient Badges matching Tom Labs exactly */
@@ -21826,6 +21972,16 @@ html[data-coreui-theme=dark] .card.liquid-rim.lesson-card::after {
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Autocomplete live search dropdown */
+.autocomplete-lesson-item {
+  color: inherit;
+  text-decoration: none;
+}
+.autocomplete-lesson-item:hover, .autocomplete-lesson-item:focus {
+  background-color: var(--cui-tertiary-bg) !important;
+  color: var(--cui-body-color) !important;
 }
 
 html {
