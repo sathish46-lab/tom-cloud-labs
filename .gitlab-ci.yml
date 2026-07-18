@@ -18,6 +18,7 @@ deploy_to_tomcloud_lab:
     refs:
       - master
     changes:
+      - ".gitlab-ci.yml"
       - "labs/**/*"
       - "vpn-api/**/*"
       - "opt/**/*"
