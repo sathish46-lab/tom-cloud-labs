@@ -27,6 +27,25 @@ foreach ($lessonsRaw as $l) {
             continue;
         }
 
+        // Compute likes count and whether current user liked it
+        $likesList = $l['likes'] ?? [];
+        if (!is_array($likesList)) {
+            $likesList = is_object($likesList) && method_exists($likesList, 'getArrayCopy') ? $likesList->getArrayCopy() : (array)$likesList;
+        }
+        $likesCount = intval($l['likes_count'] ?? count($likesList));
+        $likedByCurrent = false;
+        if (in_array($currentUsername, $likesList) || ($currentUserId > 0 && in_array((string)$currentUserId, $likesList))) {
+            $likedByCurrent = true;
+        } else {
+            try {
+                if (!empty($currentUsername) && $db->ai_lesson_likes->findOne(['lesson_id' => (string)$l['_id'], 'username' => $currentUsername])) {
+                    $likedByCurrent = true;
+                }
+            } catch (Throwable $t) {}
+        }
+        $l['likes_count'] = $likesCount;
+        $l['liked_by_current'] = $likedByCurrent;
+
         $seen[$title] = true;
         $lessons[] = $l;
     }
@@ -114,12 +133,12 @@ foreach ($lessonsRaw as $l) {
                 <h4 class="fw-bold text-white mb-3">Learning Paths</h4>
                 <div class="d-flex flex-wrap align-items-center gap-2 mb-3 lesson-tabs-container">
                     <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 active text-white d-inline-flex align-items-center gap-1 lesson-filter-btn" data-filter="all"><span class="fs-6">✨</span> For You</button>
-                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1 lesson-filter-btn" data-filter="all"><span class="fs-6">📚</span> Continue</button>
-                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1 lesson-filter-btn" data-filter="all"><span class="fs-6">🌏</span> Explore</button>
-                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1 lesson-filter-btn" data-filter="all"><span class="fs-6">❤️‍🔥</span> Most Liked</button>
-                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1 lesson-filter-btn" data-filter="all"><span class="fs-6">⭐</span> Editor Picks</button>
-                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1 lesson-filter-btn" data-filter="all"><span class="fs-6">🔥</span> Most Interacted</button>
-                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1 lesson-filter-btn" data-filter="all"><span class="fs-6">❤️</span> My Likes</button>
+                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1 lesson-filter-btn" data-filter="continue"><span class="fs-6">📚</span> Continue</button>
+                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1 lesson-filter-btn" data-filter="explore"><span class="fs-6">🌏</span> Explore</button>
+                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1 lesson-filter-btn" data-filter="most_liked"><span class="fs-6">❤️‍🔥</span> Most Liked</button>
+                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1 lesson-filter-btn" data-filter="editor_picks"><span class="fs-6">⭐</span> Editor Picks</button>
+                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1 lesson-filter-btn" data-filter="interacted"><span class="fs-6">🔥</span> Most Interacted</button>
+                    <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1 lesson-filter-btn" data-filter="my_likes"><span class="fs-6">❤️</span> My Likes</button>
                     <button class="btn btn-xs btn-outline-secondary rounded-pill border-opacity-25 px-3 py-1 text-secondary d-inline-flex align-items-center gap-1 lesson-filter-btn" data-filter="my_lessons"><span class="fs-6">👤</span> My Lessons</button>
                 </div>
                 <div class="d-flex flex-wrap align-items-center gap-2">
@@ -158,11 +177,8 @@ foreach ($lessonsRaw as $l) {
                         $visibility = $lesson['visibility'] ?? 'Public';
                         $isPrivate = strcasecmp($visibility, 'Private') === 0;
                         ?>
-                        <div class="col lesson-grid-item" data-is-author="<?= $isAuthor ? '1' : '0' ?>" data-visibility="<?= htmlspecialchars($visibility) ?>">
-                            <div class="card liquid-rim lesson-card h-100 hvr-grow" 
-                                 style="cursor: pointer;" 
-                                 data-lesson-id="<?= $lesson['_id'] ?>"
-                                 onclick="if (!event.target.closest('a, button, .dropdown')) { window.location.href='/learn/lesson/<?= $lesson['_id'] ?>'; }">
+                        <div class="col lesson-grid-item" data-is-author="<?= $isAuthor ? '1' : '0' ?>" data-visibility="<?= htmlspecialchars($visibility) ?>" data-liked="<?= !empty($lesson['liked_by_current']) ? 'true' : 'false' ?>" data-likes-count="<?= intval($lesson['likes_count'] ?? 0) ?>">
+                            <div class="card liquid-rim lesson-card h-100 hvr-grow" data-lesson-id="<?= $lesson['_id'] ?>">
                                 <div class="card-body d-flex flex-column p-3">
                                     <div class="d-flex justify-content-between align-items-start mb-3">
                                         <div class="d-flex flex-wrap gap-1 align-items-center">
@@ -182,22 +198,22 @@ foreach ($lessonsRaw as $l) {
                                             </span>
                                         </div>
                                         <div class="dropdown ms-1">
-                                            <button class="btn btn-link text-secondary p-0" data-coreui-toggle="dropdown" onclick="event.stopPropagation();">
-                                                <i class="bx bx-cog" style="font-size: 0.95rem;"></i>
-                                                <i class="bx bx-caret-down" style="font-size: 0.7rem;"></i>
+                                            <button class="btn btn-link text-secondary p-0" data-coreui-toggle="dropdown">
+                                                <i class="bx bx-cog"></i>
+                                                <i class="bx bx-caret-down small"></i>
                                             </button>
                                             <ul class="dropdown-menu dropdown-menu-end blur shadow-sm border-secondary border-opacity-25">
                                                 <li><a class="dropdown-item small py-1" href="/learn/lesson/<?= $lesson['_id'] ?>"><i class="bx bx-play me-2"></i>Start Lesson</a></li>
                                                 <?php if ($isAuthor): ?>
                                                     <li class="visibility-toggle-item">
                                                         <?php if ($isPrivate): ?>
-                                                        <a class="dropdown-item small py-1" href="#" onclick="event.stopPropagation(); toggleLessonVisibility('<?= $lesson['_id'] ?>', 'Public'); return false;"><i class="bx bx-globe me-2 text-info"></i>Make Public</a>
+                                                        <a class="dropdown-item small py-1 visibility-toggle-action" href="#" data-lesson-id="<?= $lesson['_id'] ?>" data-target-visibility="Public"><i class="bx bx-globe me-2 text-info"></i>Make Public</a>
                                                         <?php else: ?>
-                                                        <a class="dropdown-item small py-1" href="#" onclick="event.stopPropagation(); toggleLessonVisibility('<?= $lesson['_id'] ?>', 'Private'); return false;"><i class="bx bx-lock-alt me-2 text-warning"></i>Make Private</a>
+                                                        <a class="dropdown-item small py-1 visibility-toggle-action" href="#" data-lesson-id="<?= $lesson['_id'] ?>" data-target-visibility="Private"><i class="bx bx-lock-alt me-2 text-warning"></i>Make Private</a>
                                                         <?php endif; ?>
                                                     </li>
                                                     <li><hr class="dropdown-divider border-secondary border-opacity-25 my-1"></li>
-                                                    <li><a class="dropdown-item small py-1 text-danger" href="#" onclick="event.stopPropagation(); deleteLessonAction('<?= $lesson['_id'] ?>', '<?= htmlspecialchars(addslashes($lesson['title'] ?? ''), ENT_QUOTES) ?>'); return false;"><i class="bx bx-trash me-2"></i>Delete Lesson</a></li>
+                                                    <li><a class="dropdown-item small py-1 text-danger delete-lesson-action" href="#" data-lesson-id="<?= $lesson['_id'] ?>" data-lesson-title="<?= htmlspecialchars($lesson['title'] ?? '', ENT_QUOTES) ?>"><i class="bx bx-trash me-2"></i>Delete Lesson</a></li>
                                                 <?php endif; ?>
                                             </ul>
                                         </div>
@@ -206,9 +222,9 @@ foreach ($lessonsRaw as $l) {
                                     <a href="/learn/lesson/<?= $lesson['_id'] ?>" class="text-decoration-none text-white d-block mb-2">
                                         <h6 class="card-title fw-bold mb-2 text-white"><?= htmlspecialchars($lesson['title'] ?? '') ?></h6>
                                     </a>
-                                    <p class="card-text text-secondary mb-3 flex-grow-1" style="font-size: 0.8rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;"><?= htmlspecialchars($lesson['description'] ?? 'An interactive AI-generated structured curriculum covering architectural foundations, practical exercises, and hands-on laboratory tasks.') ?></p>
+                                    <p class="card-text text-secondary mb-3 flex-grow-1 small lesson-desc-clamp"><?= htmlspecialchars($lesson['description'] ?? 'An interactive AI-generated structured curriculum covering architectural foundations, practical exercises, and hands-on laboratory tasks.') ?></p>
 
-                                    <div class="d-flex align-items-center gap-3 text-secondary mb-2" style="font-size: 0.75rem;">
+                                    <div class="d-flex align-items-center gap-3 text-secondary mb-2 small">
                                         <span class="d-inline-flex align-items-center gap-1"><i class="bx bx-book"></i> <?= $lesson['modules_count'] ?? 1 ?> Modules</span>
                                         <span class="d-inline-flex align-items-center gap-1"><i class="bx bx-layer"></i> <?= $lesson['chapters_count'] ?? 3 ?> Chapters</span>
                                     </div>
@@ -239,8 +255,8 @@ foreach ($lessonsRaw as $l) {
                                     <?php if (!empty($lesson['progress']) && $lesson['progress'] > 0): ?>
                                         <div class="mb-3">
                                             <div class="d-flex justify-content-between align-items-end mb-1">
-                                                <span class="text-secondary" style="font-size: 0.7rem;">Progress</span>
-                                                <span class="fw-bold text-white" style="font-size: 0.7rem;"><?= $lesson['progress'] ?>%</span>
+                                                <span class="text-secondary small">Progress</span>
+                                                <span class="fw-bold text-white small"><?= $lesson['progress'] ?>%</span>
                                             </div>
                                             <div class="progress bg-secondary bg-opacity-10 rounded-pill" style="height: 4px;">
                                                 <div class="progress-bar bg-success rounded-pill" style="width: <?= $lesson['progress'] ?>%"></div>
@@ -249,22 +265,23 @@ foreach ($lessonsRaw as $l) {
                                     <?php endif; ?>
 
                                     <div class="d-flex align-items-center justify-content-between pt-3 border-top border-secondary border-opacity-10 mt-auto">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <div class="d-flex align-items-center overflow-hidden">
-                                                <img src="<?= $isAuthor ? Session::getAvatar() : '/assets/images/avatars/1.png' ?>" alt="Author" class="rounded-circle me-1 border border-secondary border-opacity-25" width="20" height="20">
-                                                <span class="text-secondary text-truncate me-1" style="font-size: 0.75rem;"><?= htmlspecialchars($lesson['author'] ?? 'sathish46') ?></span>
+                                        <div class="d-flex align-items-center gap-1 min-w-0 me-1">
+                                            <div class="d-flex align-items-center min-w-0">
+                                                <img src="<?= Session::getAvatarForUsername($lesson['username'] ?? $lesson['author'] ?? '') ?>" alt="Author" class="rounded-circle me-1 flex-shrink-0 border border-secondary border-opacity-25" width="18" height="18">
+                                                <span class="text-secondary text-truncate small" style="max-width: 60px; font-size: 0.75rem;"><?= htmlspecialchars($lesson['author'] ?? 'sathish46') ?></span>
                                             </div>
-                                            <button class="btn btn-link text-secondary p-0 d-inline-flex align-items-center gap-1 text-decoration-none me-1" title="Like" onclick="event.stopPropagation();" style="font-size: 0.75rem;">
-                                                <i class="bx <?= (!empty($lesson['progress']) && $lesson['progress'] > 0) ? 'bxs-heart text-danger' : 'bx-heart' ?> fs-6"></i> <span><?= (!empty($lesson['progress']) && $lesson['progress'] > 0) ? 1 : 0 ?></span>
+                                            <button class="btn btn-link text-secondary p-0 d-inline-flex align-items-center gap-1 text-decoration-none toggle-like-btn flex-shrink-0 ms-1" data-lesson-id="<?= $lesson['_id'] ?>" title="Like">
+                                                <i class="bx <?= !empty($lesson['liked_by_current']) ? 'bxs-heart text-danger' : 'bx-heart' ?> fs-6"></i>
+                                                <span class="lesson-like-count" style="font-size: 0.75rem;"><?= intval($lesson['likes_count'] ?? 0) ?></span>
                                             </button>
-                                            <button class="btn btn-link text-secondary p-0 text-decoration-none me-1" title="Share" onclick="event.stopPropagation();" style="font-size: 0.85rem;">
-                                                <i class="bx bx-share-alt"></i>
+                                            <button class="btn btn-link text-secondary p-0 text-decoration-none share-lesson-btn flex-shrink-0 ms-1" data-lesson-id="<?= $lesson['_id'] ?>" data-lesson-title="<?= htmlspecialchars($lesson['title'] ?? '', ENT_QUOTES) ?>" title="Share lesson">
+                                                <i class="bx bx-share-alt fs-6"></i>
                                             </button>
-                                            <button class="btn btn-link text-secondary p-0 text-decoration-none me-1" title="Reveal/Hint" onclick="event.stopPropagation();" style="font-size: 0.85rem;">
-                                                <i class="bx bx-bulb"></i>
+                                            <button class="btn btn-link text-secondary p-0 text-decoration-none reveal-hint-btn flex-shrink-0 ms-1" title="Reveal/Hint">
+                                                <i class="bx bx-bulb fs-6"></i>
                                             </button>
                                         </div>
-                                        <a href="/learn/lesson/<?= $lesson['_id'] ?>" class="btn btn-sm btn-success-gradient rounded-pill px-3 py-1 d-inline-flex align-items-center gap-1 fw-medium shadow-sm text-nowrap" style="font-size: 0.75rem;" onclick="event.stopPropagation();">
+                                        <a href="/learn/lesson/<?= $lesson['_id'] ?>" class="btn btn-sm btn-success-gradient rounded-pill px-2 py-1 d-inline-flex align-items-center gap-1 fw-medium shadow-sm text-nowrap flex-shrink-0" style="font-size: 0.78rem;">
                                             <?= (!empty($lesson['progress']) && $lesson['progress'] > 0) ? 'Continue' : 'Start Learning' ?> <i class="bx bx-right-arrow-alt fs-6"></i>
                                         </a>
                                     </div>
@@ -275,6 +292,9 @@ foreach ($lessonsRaw as $l) {
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
 
 <!-- AI Lesson Generation Progress Modal Card -->
 <div class="modal fade" id="lessonGenModal" tabindex="-1" aria-hidden="true" data-coreui-backdrop="static" data-coreui-keyboard="false">
@@ -335,271 +355,3 @@ foreach ($lessonsRaw as $l) {
         </div>
     </div>
 </div>
-
-<style>
-/* App Layout Overrides */
-.learn-app-wrapper { background: transparent; }
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.whitespace-nowrap { white-space: nowrap; }
-.transition-all-lite { transition: all 0.2s ease; }
-
-/* Extra small button */
-.btn-xs { 
-    padding: 0.2rem 0.6rem;
-    font-size: 0.65rem;
-    line-height: 1.2;
-}
-
-/* AI Ring Pulse */
-.ai-icon-wrapper {
-    width: 72px;
-    height: 72px;
-}
-.ai-ring {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    border-radius: 50%;
-    background: rgba(13, 110, 253, 0.15);
-    border: 1px solid rgba(13, 110, 253, 0.4);
-    animation: ai-ring-pulse 2s infinite ease-in-out;
-}
-@keyframes ai-ring-pulse {
-    0% { transform: scale(0.9); opacity: 0.8; }
-    50% { transform: scale(1.18); opacity: 0.35; }
-    100% { transform: scale(0.9); opacity: 0.8; }
-}
-
-@media (max-width: 768px) {
-    .display-6 { font-size: 1.5rem !important; }
-}
-</style>
-
-<script>
-window.onPageLoad(function() {
-    const promptInput = document.getElementById('aiLessonPrompt');
-    const levelSelect = document.getElementById('aiLessonLevel');
-    const btnSend = document.getElementById('btnGenerateLesson');
-
-    // Make sample topic badges fill prompt with rich pre-prompt
-    document.querySelectorAll('.topic-pill').forEach(badge => {
-        badge.style.cursor = 'pointer';
-        badge.addEventListener('click', () => {
-            if (promptInput) {
-                const promptText = badge.getAttribute('data-prompt') || badge.textContent.trim();
-                promptInput.value = promptText;
-                promptInput.focus();
-            }
-        });
-    });
-
-    // Handle level selection dropdown clicks
-    document.querySelectorAll('.level-select-item').forEach(item => {
-        item.addEventListener('click', (e) => {
-            e.preventDefault();
-            const chosenLevel = item.getAttribute('data-level');
-            if (levelSelect) levelSelect.value = chosenLevel;
-            const labelSpan = document.getElementById('aiLessonLevelLabel');
-            if (labelSpan) labelSpan.textContent = chosenLevel;
-        });
-    });
-
-    let pollInterval = null;
-
-    function stopPolling() {
-        if (pollInterval) {
-            clearInterval(pollInterval);
-            pollInterval = null;
-        }
-    }
-
-    function startLessonGeneration() {
-        const topic = promptInput ? promptInput.value.trim() : '';
-        const level = levelSelect ? levelSelect.value : 'Advanced';
-
-        if (!topic) {
-            if (promptInput) promptInput.focus();
-            return;
-        }
-
-        stopPolling();
-
-        const modalEl = document.getElementById('lessonGenModal');
-        const modal = coreui.Modal.getInstance(modalEl) || new coreui.Modal(modalEl);
-
-        // Reset UI state without displaying raw prompt
-        document.getElementById('lessonGenTopicDisplay').textContent = "Curating AI Learning Path...";
-        document.getElementById('lessonGenLevelDisplay').textContent = level + ' Level Professional Course';
-        document.getElementById('lessonGenProgress').style.width = '10%';
-        document.getElementById('lessonGenProgress').className = 'progress-bar progress-bar-striped progress-bar-animated bg-primary rounded-pill';
-        document.getElementById('lessonGenPercent').textContent = '10%';
-        document.getElementById('lessonGenStatus').textContent = 'Initiating AI request...';
-        document.getElementById('lessonGenRequestId').textContent = 'Generating...';
-        document.getElementById('lessonGenStatusValue').textContent = 'running';
-        document.getElementById('lessonGenMessageValue').textContent = 'running';
-        document.getElementById('lessonGenCompletedValue').textContent = 'false';
-
-        const statusBadge = document.getElementById('lessonGenStatusBadge');
-        statusBadge.className = 'badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-25';
-        statusBadge.textContent = 'RUNNING';
-
-        modal.show();
-
-        fetch('/api/learnAI/generate_lesson', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ topic: topic, level: level })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data && data.request_id) {
-                document.getElementById('lessonGenRequestId').textContent = data.request_id;
-                document.getElementById('lessonGenStatusValue').textContent = data.status || 'running';
-                document.getElementById('lessonGenMessageValue').textContent = data.message || 'running';
-
-                // Poll job status
-                pollInterval = setInterval(() => {
-                    fetch(`/api/learnAI/job_status?request_id=${encodeURIComponent(data.request_id)}`)
-                        .then(r => r.json())
-                        .then(job => {
-                            if (!job) return;
-
-                            const pct = job.percentage || 40;
-                            document.getElementById('lessonGenProgress').style.width = pct + '%';
-                            document.getElementById('lessonGenPercent').textContent = pct + '%';
-                            document.getElementById('lessonGenStatus').textContent = job.message || 'Processing...';
-                            document.getElementById('lessonGenStatusValue').textContent = job.status || 'running';
-                            document.getElementById('lessonGenMessageValue').textContent = job.message || 'running';
-                            document.getElementById('lessonGenCompletedValue').textContent = job.completed ? 'true' : 'false';
-
-                            if (job.completed && job.lesson_id) {
-                                stopPolling();
-                                document.getElementById('lessonGenProgress').style.width = '100%';
-                                document.getElementById('lessonGenProgress').className = 'progress-bar bg-success rounded-pill';
-                                document.getElementById('lessonGenPercent').textContent = '100%';
-                                document.getElementById('lessonGenStatus').textContent = 'Complete! Redirecting to lesson...';
-                                statusBadge.className = 'badge bg-success bg-opacity-25 text-success border border-success border-opacity-25';
-                                statusBadge.textContent = 'COMPLETED';
-
-                                if (promptInput) promptInput.value = '';
-
-                                setTimeout(() => {
-                                    window.location.href = `/learn/lesson/${job.lesson_id}`;
-                                }, 1200);
-                            } else if (job.failed) {
-                                stopPolling();
-                                document.getElementById('lessonGenProgress').className = 'progress-bar bg-danger rounded-pill';
-                                document.getElementById('lessonGenStatus').textContent = job.error_message || 'Generation failed.';
-                                statusBadge.className = 'badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-25';
-                                statusBadge.textContent = 'FAILED';
-                            }
-                        })
-                        .catch(() => {});
-                }, 1500);
-            } else {
-                document.getElementById('lessonGenStatus').textContent = data.message || 'Failed to start generation.';
-                document.getElementById('lessonGenProgress').className = 'progress-bar bg-danger rounded-pill';
-            }
-        })
-        .catch(() => {
-            document.getElementById('lessonGenStatus').textContent = 'Network error starting generator.';
-            document.getElementById('lessonGenProgress').className = 'progress-bar bg-danger rounded-pill';
-        });
-    }
-
-    // Filter tabs ("For You", "My Lessons", etc.)
-    const filterBtns = document.querySelectorAll('.lesson-filter-btn');
-    filterBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            filterBtns.forEach(b => {
-                b.classList.remove('active', 'text-white');
-                b.classList.add('text-secondary');
-            });
-            btn.classList.add('active', 'text-white');
-            btn.classList.remove('text-secondary');
-
-            const filter = btn.getAttribute('data-filter') || 'all';
-            document.querySelectorAll('.lesson-grid-item').forEach(item => {
-                const isAuthor = item.getAttribute('data-is-author') === '1';
-                if (filter === 'my_lessons') {
-                    item.style.display = isAuthor ? '' : 'none';
-                } else {
-                    item.style.display = '';
-                }
-            });
-        });
-    });
-
-    if (btnSend) {
-        btnSend.addEventListener('click', startLessonGeneration);
-    }
-    if (promptInput) {
-        promptInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                startLessonGeneration();
-            }
-        });
-    }
-});
-
-window.toggleLessonVisibility = function(lessonId, targetVisibility) {
-    fetch('/api/learnAI/visibility_toggle', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lesson_id: lessonId, visibility: targetVisibility })
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data && data.status === 'success') {
-            const cardEl = document.querySelector(`.lesson-card[data-lesson-id="${lessonId}"]`);
-            if (cardEl) {
-                const gridItem = cardEl.closest('.lesson-grid-item');
-                if (gridItem) gridItem.setAttribute('data-visibility', targetVisibility);
-
-                const badgeEl = cardEl.querySelector('.lesson-visibility-badge');
-                if (badgeEl) {
-                    const isPrivate = (targetVisibility === 'Private');
-                    badgeEl.className = `badge bg-${isPrivate ? 'secondary' : 'info'}-gradient d-inline-flex align-items-center gap-1 lesson-visibility-badge`;
-                    badgeEl.innerHTML = `<i class="bx ${isPrivate ? 'bx-lock-alt' : 'bx-globe'}"></i> <span class="visibility-text">${isPrivate ? 'Private' : 'Public'}</span>`;
-                }
-
-                const toggleLi = cardEl.querySelector('.visibility-toggle-item');
-                if (toggleLi) {
-                    if (targetVisibility === 'Private') {
-                        toggleLi.innerHTML = `<a class="dropdown-item small py-1" href="#" onclick="event.stopPropagation(); toggleLessonVisibility('${lessonId}', 'Public'); return false;"><i class="bx bx-globe me-2 text-info"></i>Make Public</a>`;
-                    } else {
-                        toggleLi.innerHTML = `<a class="dropdown-item small py-1" href="#" onclick="event.stopPropagation(); toggleLessonVisibility('${lessonId}', 'Private'); return false;"><i class="bx bx-lock-alt me-2 text-warning"></i>Make Private</a>`;
-                    }
-                }
-            }
-        } else {
-            alert(data.error || 'Failed to change lesson visibility');
-        }
-    })
-    .catch(() => alert('Network error while toggling lesson visibility'));
-};
-
-window.deleteLessonAction = function(lessonId, lessonTitle) {
-    if (!confirm(`Are you sure you want to delete lesson "${lessonTitle}"? This will permanently remove all chapters and content.`)) {
-        return;
-    }
-    fetch('/api/learnAI/lesson_delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lesson_id: lessonId })
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data && data.status === 'success') {
-            const cardEl = document.querySelector(`.lesson-card[data-lesson-id="${lessonId}"]`);
-            if (cardEl) {
-                const colEl = cardEl.closest('.lesson-grid-item') || cardEl.closest('.col');
-                if (colEl) colEl.remove();
-            }
-        } else {
-            alert(data.error || 'Failed to delete lesson');
-        }
-    })
-    .catch(() => alert('Network error while deleting lesson'));
-};
-</script>

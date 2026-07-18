@@ -39,6 +39,22 @@ if (!$isAuthor && $user && $lesson) {
 $userStats = $user ? \TomLabs\Labs\Quiz::getUserStats($currentEmail) : ['zeal' => 0, 'jolt' => 0];
 $availableJolt = (int)($userStats['jolt'] ?? 0);
 
+$likedByCurrent = false;
+$likesList = $lesson['likes'] ?? [];
+if (!is_array($likesList)) {
+    $likesList = is_object($likesList) && method_exists($likesList, 'getArrayCopy') ? $likesList->getArrayCopy() : (array)$likesList;
+}
+if (in_array($currentUsername, $likesList) || ($currentUserId > 0 && in_array((string)$currentUserId, $likesList))) {
+    $likedByCurrent = true;
+} else {
+    try {
+        if (!empty($currentUsername) && $db->ai_lesson_likes->findOne(['lesson_id' => (string)$lesson['_id'], 'username' => $currentUsername])) {
+            $likedByCurrent = true;
+        }
+    } catch (Throwable $t) {}
+}
+
+
 $chapters = $db->ai_chapters->find(['lesson_id' => new MongoDB\BSON\ObjectId($lesson_id)], ['sort' => ['order' => 1]])->toArray();
 
 $chapter = null;
@@ -178,8 +194,8 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
             <div class="card h-100 border-secondary border-opacity-10 rounded-4 shadow-sm blur d-flex flex-column overflow-hidden">
                 <div class="card-header fs-6 d-flex justify-content-between align-items-center py-2 px-3">
                     <strong class="text-truncate" title="<?= htmlspecialchars($lesson['title']) ?>"><?= htmlspecialchars($lesson['title']) ?></strong>
-                    <button class="btn btn-link p-0 text-secondary like-lesson-btn" title="Like this lesson">
-                        <i class="bx bx-heart fs-5"></i>
+                    <button class="btn btn-link p-0 text-secondary like-lesson-btn" data-lesson-id="<?= $lesson['_id'] ?>" title="Like this lesson">
+                        <i class="bx <?= !empty($likedByCurrent) ? 'bxs-heart text-danger' : 'bx-heart' ?> fs-5"></i>
                     </button>
                 </div>
                 <div class="card-body p-0 overflow-hidden d-flex flex-column">
@@ -187,8 +203,8 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
                     <div class="lesson-chapters-section flex-grow-1 overflow-y-auto hide-scrollbar">
                         <div class="d-flex justify-content-center align-items-center p-2 lesson-controls gap-2 border-bottom border-secondary border-opacity-10">
                             <!-- Like button (shown in compact mode via sna.css) -->
-                            <button class="btn btn-link p-0 text-secondary like-lesson-btn like-lesson-btn-compact" data-tooltip="Like Lesson">
-                                <i class="bx bx-heart fs-5"></i>
+                            <button class="btn btn-link p-0 text-secondary like-lesson-btn like-lesson-btn-compact" data-lesson-id="<?= $lesson['_id'] ?>" data-tooltip="Like Lesson">
+                                <i class="bx <?= !empty($likedByCurrent) ? 'bxs-heart text-danger' : 'bx-heart' ?> fs-5"></i>
                             </button>
                             <!-- Circular progress indicator -->
                             <div class="d-flex align-items-center progress-section gap-2">

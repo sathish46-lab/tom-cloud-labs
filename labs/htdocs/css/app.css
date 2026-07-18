@@ -21762,6 +21762,72 @@ html[data-coreui-theme=dark] .card.liquid-rim.lesson-card::after {
   color: #fff !important;
 }
 
+/* LearnAI Dashboard Layout & Animation Utilities */
+.learn-app-wrapper {
+  background: transparent;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.whitespace-nowrap {
+  white-space: nowrap;
+}
+
+.transition-all-lite {
+  transition: all 0.2s ease;
+}
+
+.btn-xs {
+  padding: 0.2rem 0.6rem;
+  font-size: 0.65rem;
+  line-height: 1.2;
+}
+
+.ai-icon-wrapper {
+  width: 72px;
+  height: 72px;
+}
+
+.ai-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 50%;
+  background: rgba(13, 110, 253, 0.15);
+  border: 1px solid rgba(13, 110, 253, 0.4);
+  animation: ai-ring-pulse 2s infinite ease-in-out;
+}
+
+@keyframes ai-ring-pulse {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.18);
+    opacity: 0.35;
+  }
+  100% {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+}
+@media (max-width: 768px) {
+  .display-6 {
+    font-size: 1.5rem !important;
+  }
+}
+.lesson-desc-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;

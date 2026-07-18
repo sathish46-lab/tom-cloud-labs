@@ -132,6 +132,296 @@ try {
             }
         },
 
+        _dashboardInitialized: false,
+        initDashboard: function () {
+            if (this._dashboardInitialized) return;
+            const promptInput = document.getElementById('aiLessonPrompt');
+            const levelSelect = document.getElementById('aiLessonLevel');
+            const btnSend = document.getElementById('btnGenerateLesson');
+            const filterBtns = document.querySelectorAll('.lesson-filter-btn');
+
+            if (!promptInput && !btnSend && filterBtns.length === 0) return;
+            this._dashboardInitialized = true;
+
+            // Make sample topic badges fill prompt with rich pre-prompt
+            document.querySelectorAll('.topic-pill').forEach(badge => {
+                badge.style.cursor = 'pointer';
+                badge.addEventListener('click', () => {
+                    if (promptInput) {
+                        const promptText = badge.getAttribute('data-prompt') || badge.textContent.trim();
+                        promptInput.value = promptText;
+                        promptInput.focus();
+                    }
+                });
+            });
+
+            // Handle level selection dropdown clicks
+            document.querySelectorAll('.level-select-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const chosenLevel = item.getAttribute('data-level');
+                    if (levelSelect) levelSelect.value = chosenLevel;
+                    const labelSpan = document.getElementById('aiLessonLevelLabel');
+                    if (labelSpan) labelSpan.textContent = chosenLevel;
+                });
+            });
+
+            let pollInterval = null;
+
+            function stopPolling() {
+                if (pollInterval) {
+                    clearInterval(pollInterval);
+                    pollInterval = null;
+                }
+            }
+
+            function startLessonGeneration() {
+                const topic = promptInput ? promptInput.value.trim() : '';
+                const level = levelSelect ? levelSelect.value : 'Advanced';
+
+                if (!topic) {
+                    if (promptInput) promptInput.focus();
+                    return;
+                }
+
+                stopPolling();
+
+                const modalEl = document.getElementById('lessonGenModal');
+                const modal = (typeof coreui !== 'undefined' && coreui.Modal) ? (coreui.Modal.getInstance(modalEl) || new coreui.Modal(modalEl)) : null;
+
+                const topicDisp = document.getElementById('lessonGenTopicDisplay');
+                if (topicDisp) topicDisp.textContent = "Curating AI Learning Path...";
+                const levelDisp = document.getElementById('lessonGenLevelDisplay');
+                if (levelDisp) levelDisp.textContent = level + ' Level Professional Course';
+                const prog = document.getElementById('lessonGenProgress');
+                if (prog) {
+                    prog.style.width = '10%';
+                    prog.className = 'progress-bar progress-bar-striped progress-bar-animated bg-primary rounded-pill';
+                }
+                const perc = document.getElementById('lessonGenPercent');
+                if (perc) perc.textContent = '10%';
+                const status = document.getElementById('lessonGenStatus');
+                if (status) status.textContent = 'Initiating AI request...';
+                const reqId = document.getElementById('lessonGenRequestId');
+                if (reqId) reqId.textContent = 'Generating...';
+                const statusVal = document.getElementById('lessonGenStatusValue');
+                if (statusVal) statusVal.textContent = 'running';
+                const msgVal = document.getElementById('lessonGenMessageValue');
+                if (msgVal) msgVal.textContent = 'running';
+                const compVal = document.getElementById('lessonGenCompletedValue');
+                if (compVal) compVal.textContent = 'false';
+
+                const statusBadge = document.getElementById('lessonGenStatusBadge');
+                if (statusBadge) {
+                    statusBadge.className = 'badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-25';
+                    statusBadge.textContent = 'RUNNING';
+                }
+
+                if (modal) modal.show();
+
+                fetch('/api/learnAI/generate_lesson', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topic: topic, level: level })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.request_id) {
+                        if (reqId) reqId.textContent = data.request_id;
+                        if (statusVal) statusVal.textContent = data.status || 'running';
+                        if (msgVal) msgVal.textContent = data.message || 'running';
+
+                        // Poll job status
+                        pollInterval = setInterval(() => {
+                            fetch(`/api/learnAI/job_status?request_id=${encodeURIComponent(data.request_id)}`)
+                                .then(r => r.json())
+                                .then(job => {
+                                    if (!job) return;
+
+                                    const pct = job.percentage || 40;
+                                    if (prog) prog.style.width = pct + '%';
+                                    if (perc) perc.textContent = pct + '%';
+                                    if (status) status.textContent = job.message || 'Processing...';
+                                    if (statusVal) statusVal.textContent = job.status || 'running';
+                                    if (msgVal) msgVal.textContent = job.message || 'running';
+                                    if (compVal) compVal.textContent = job.completed ? 'true' : 'false';
+
+                                    if (job.completed && job.lesson_id) {
+                                        stopPolling();
+                                        if (prog) {
+                                            prog.style.width = '100%';
+                                            prog.className = 'progress-bar bg-success rounded-pill';
+                                        }
+                                        if (perc) perc.textContent = '100%';
+                                        if (status) status.textContent = 'Complete! Redirecting to lesson...';
+                                        if (statusBadge) {
+                                            statusBadge.className = 'badge bg-success bg-opacity-25 text-success border border-success border-opacity-25';
+                                            statusBadge.textContent = 'COMPLETED';
+                                        }
+
+                                        if (promptInput) promptInput.value = '';
+
+                                        setTimeout(() => {
+                                            window.location.href = `/learn/lesson/${job.lesson_id}`;
+                                        }, 1200);
+                                    } else if (job.failed) {
+                                        stopPolling();
+                                        if (prog) prog.className = 'progress-bar bg-danger rounded-pill';
+                                        if (status) status.textContent = job.error_message || 'Generation failed.';
+                                        if (statusBadge) {
+                                            statusBadge.className = 'badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-25';
+                                            statusBadge.textContent = 'FAILED';
+                                        }
+                                    }
+                                })
+                                .catch(() => {});
+                        }, 1500);
+                    } else {
+                        if (status) status.textContent = data.message || 'Failed to start generation.';
+                        if (prog) prog.className = 'progress-bar bg-danger rounded-pill';
+                    }
+                })
+                .catch(() => {
+                    if (status) status.textContent = 'Network error starting generator.';
+                    if (prog) prog.className = 'progress-bar bg-danger rounded-pill';
+                });
+            }
+
+            // Filter tabs ("For You", "My Lessons", etc.)
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    filterBtns.forEach(b => {
+                        b.classList.remove('active', 'text-white');
+                        b.classList.add('text-secondary');
+                    });
+                    btn.classList.add('active', 'text-white');
+                    btn.classList.remove('text-secondary');
+
+                    const filter = btn.getAttribute('data-filter') || 'all';
+                    document.querySelectorAll('.lesson-grid-item').forEach(item => {
+                        const isAuthor = item.getAttribute('data-is-author') === '1';
+                        if (filter === 'my_lessons') {
+                            item.style.display = isAuthor ? '' : 'none';
+                        } else {
+                            item.style.display = '';
+                        }
+                    });
+                });
+            });
+
+            if (btnSend) {
+                btnSend.addEventListener('click', startLessonGeneration);
+            }
+            if (promptInput) {
+                promptInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        startLessonGeneration();
+                    }
+                });
+            }
+
+            // Filter tab handling
+            document.querySelectorAll('.lesson-filter-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    document.querySelectorAll('.lesson-filter-btn').forEach(b => {
+                        b.classList.remove('active', 'text-white');
+                        b.classList.add('text-secondary');
+                    });
+                    btn.classList.add('active', 'text-white');
+                    btn.classList.remove('text-secondary');
+
+                    const filter = btn.getAttribute('data-filter') || 'all';
+                    document.querySelectorAll('.lesson-grid-item').forEach(item => {
+                        if (filter === 'all') {
+                            item.style.display = '';
+                        } else if (filter === 'my_likes') {
+                            item.style.display = (item.getAttribute('data-liked') === 'true') ? '' : 'none';
+                        } else if (filter === 'most_liked') {
+                            const count = parseInt(item.getAttribute('data-likes-count') || '0', 10);
+                            item.style.display = (count > 0) ? '' : 'none';
+                        } else if (filter === 'my_lessons') {
+                            item.style.display = (item.getAttribute('data-is-author') === '1') ? '' : 'none';
+                        } else {
+                            item.style.display = '';
+                        }
+                    });
+                });
+            });
+
+            // Delegated click handlers for cards and dashboard actions without inline onclick
+            if (!window._dashboardDelegationAdded) {
+                window._dashboardDelegationAdded = true;
+                document.addEventListener('click', (e) => {
+                    const likeBtn = e.target.closest('.toggle-like-btn, .like-lesson-btn');
+                    if (likeBtn) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const lessonId = likeBtn.getAttribute('data-lesson-id') || document.getElementById('currentLessonId')?.value;
+                        if (lessonId) {
+                            window.toggleLikeLessonAction(lessonId, likeBtn);
+                        }
+                        return;
+                    }
+
+                    const shareBtn = e.target.closest('.share-lesson-btn');
+                    if (shareBtn) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const lessonId = shareBtn.getAttribute('data-lesson-id') || document.getElementById('currentLessonId')?.value;
+                        const lessonTitle = shareBtn.getAttribute('data-lesson-title') || document.querySelector('.card-header strong')?.innerText || 'AI Lesson';
+                        if (lessonId) {
+                            window.shareLessonAction(lessonId, lessonTitle, shareBtn);
+                        }
+                        return;
+                    }
+
+                    const deleteAction = e.target.closest('.delete-lesson-action');
+                    if (deleteAction) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const lessonId = deleteAction.getAttribute('data-lesson-id');
+                        const lessonTitle = deleteAction.getAttribute('data-lesson-title');
+                        if (lessonId && typeof window.deleteLessonAction === 'function') {
+                            window.deleteLessonAction(lessonId, lessonTitle);
+                        }
+                        return;
+                    }
+
+                    const visAction = e.target.closest('.visibility-toggle-action');
+                    if (visAction) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const lessonId = visAction.getAttribute('data-lesson-id');
+                        const targetVis = visAction.getAttribute('data-target-visibility');
+                        if (lessonId && targetVis && typeof window.toggleLessonVisibility === 'function') {
+                            window.toggleLessonVisibility(lessonId, targetVis);
+                        }
+                        return;
+                    }
+
+                    const revealHintBtn = e.target.closest('.reveal-hint-btn');
+                    if (revealHintBtn) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (typeof TomNotify !== 'undefined') {
+                            TomNotify.show("Click 'Start Learning' to dive into interactive hints and solutions inside the chapters!", "Hint / Solution", "info", 3500);
+                        }
+                        return;
+                    }
+
+                    const card = e.target.closest('.lesson-card');
+                    if (card && !e.target.closest('a, button, .dropdown, input, textarea')) {
+                        const lessonId = card.getAttribute('data-lesson-id');
+                        if (lessonId && !window.getSelection()?.toString()) {
+                            window.location.href = '/learn/lesson/' + lessonId;
+                        }
+                    }
+                });
+            }
+        },
+
         init: function () {
             if (!document.querySelector('.stable-app-view') && !document.querySelector('.split-panel-view')) {
                 document.body.style.removeProperty('overflow');
@@ -2552,11 +2842,13 @@ try {
     if (typeof jQuery !== 'undefined') {
         jQuery(document).ready(function() {
             LearnApp.init();
+            LearnApp.initDashboard();
         });
     } else if (document.readyState === 'loading') {
-        window.onPageLoad( () => LearnApp.init());
+        window.onPageLoad( () => { LearnApp.init(); LearnApp.initDashboard(); });
     } else {
         LearnApp.init();
+        LearnApp.initDashboard();
     }
 
     // Export toggle for button clicks
@@ -2564,13 +2856,201 @@ try {
     window.unlockAiAssistAction = (lessonId) => LearnApp.unlockAiAssistAction(lessonId);
 
     // Re-check for resizers after a small delay in case of late rendering
-    setTimeout(() => { if (!LearnApp.isInitialized) LearnApp.init(); }, 1000);
+    setTimeout(() => { if (!LearnApp.isInitialized) LearnApp.init(); LearnApp.initDashboard(); }, 1000);
 })();
 
 
     
 
     // --- Explicit Window Exports for Inline HTML ---
+    window.toggleLessonVisibility = function(lessonId, targetVisibility) {
+        fetch('/api/learnAI/visibility_toggle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lesson_id: lessonId, visibility: targetVisibility })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data && data.status === 'success') {
+                const cardEl = document.querySelector(`.lesson-card[data-lesson-id="${lessonId}"]`);
+                if (cardEl) {
+                    const gridItem = cardEl.closest('.lesson-grid-item');
+                    if (gridItem) gridItem.setAttribute('data-visibility', targetVisibility);
+
+                    const badgeEl = cardEl.querySelector('.lesson-visibility-badge');
+                    if (badgeEl) {
+                        const isPrivate = (targetVisibility === 'Private');
+                        badgeEl.className = `badge bg-${isPrivate ? 'secondary' : 'info'}-gradient d-inline-flex align-items-center gap-1 lesson-visibility-badge`;
+                        badgeEl.innerHTML = `<i class="bx ${isPrivate ? 'bx-lock-alt' : 'bx-globe'}"></i> <span class="visibility-text">${isPrivate ? 'Private' : 'Public'}</span>`;
+                    }
+
+                    const toggleLi = cardEl.querySelector('.visibility-toggle-item');
+                    if (toggleLi) {
+                        if (targetVisibility === 'Private') {
+                            toggleLi.innerHTML = `<a class="dropdown-item small py-1" href="#" onclick="event.stopPropagation(); toggleLessonVisibility('${lessonId}', 'Public'); return false;"><i class="bx bx-globe me-2 text-info"></i>Make Public</a>`;
+                        } else {
+                            toggleLi.innerHTML = `<a class="dropdown-item small py-1" href="#" onclick="event.stopPropagation(); toggleLessonVisibility('${lessonId}', 'Private'); return false;"><i class="bx bx-lock-alt me-2 text-warning"></i>Make Private</a>`;
+                        }
+                    }
+                }
+            } else {
+                alert(data.error || 'Failed to change lesson visibility');
+            }
+        })
+        .catch(() => alert('Network error while toggling lesson visibility'));
+    };
+
+    window.deleteLessonAction = function(lessonId, lessonTitle) {
+        if (!confirm(`Are you sure you want to delete lesson "${lessonTitle}"? This will permanently remove all chapters and content.`)) {
+            return;
+        }
+        fetch('/api/learnAI/lesson_delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lesson_id: lessonId })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data && data.status === 'success') {
+                const cardEl = document.querySelector(`.lesson-card[data-lesson-id="${lessonId}"]`);
+                if (cardEl) {
+                    const colEl = cardEl.closest('.lesson-grid-item') || cardEl.closest('.col');
+                    if (colEl) colEl.remove();
+                }
+            } else {
+                alert(data.error || 'Failed to delete lesson');
+            }
+        })
+        .catch(() => alert('Network error while deleting lesson'));
+    };
+
+    window.shareLessonAction = function(lessonId, lessonTitle, btnEl) {
+        const shareUrl = window.location.origin + '/learn/lesson/' + lessonId;
+        
+        const onSuccess = () => {
+            if (btnEl) {
+                const icon = btnEl.querySelector('i');
+                if (icon) {
+                    const origClass = icon.className;
+                    icon.className = 'bx bx-check text-success fs-6';
+                    setTimeout(() => { icon.className = origClass; }, 2000);
+                }
+            }
+            if (typeof TomNotify !== 'undefined') {
+                TomNotify.show("Lesson link copied to clipboard!", "Lesson Shared", "success", 3000);
+            }
+        };
+
+        const fallbackCopy = () => {
+            try {
+                const textArea = document.createElement("textarea");
+                textArea.value = shareUrl;
+                textArea.style.position = "fixed";
+                textArea.style.left = "-999999px";
+                textArea.style.top = "-999999px";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                const successful = document.execCommand('copy');
+                textArea.remove();
+                if (successful) {
+                    onSuccess();
+                } else if (typeof TomNotify !== 'undefined') {
+                    TomNotify.show("Could not copy automatically. Link: " + shareUrl, "Copy Failed", "error", 4000);
+                }
+            } catch (e) {
+                console.error("Fallback copy failed", e);
+                if (typeof TomNotify !== 'undefined') {
+                    TomNotify.show("Could not copy automatically. Link: " + shareUrl, "Copy Failed", "error", 4000);
+                }
+            }
+        };
+
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(shareUrl).then(onSuccess).catch(() => fallbackCopy());
+        } else {
+            fallbackCopy();
+        }
+    };
+
+    window.toggleLikeLessonAction = function(lessonId, btnEl) {
+        if (!lessonId || !btnEl) return;
+        const icon = btnEl.querySelector('i');
+        const span = btnEl.querySelector('.lesson-like-count, span');
+        let count = 0;
+        if (span) count = parseInt(span.innerText, 10) || 0;
+        const wasLiked = icon && (icon.classList.contains('bxs-heart') || icon.classList.contains('text-danger'));
+        
+        // Optimistic toggle
+        if (icon) {
+            if (wasLiked) {
+                icon.className = 'bx bx-heart fs-6';
+                if (span) span.innerText = Math.max(0, count - 1);
+            } else {
+                icon.className = 'bx bxs-heart text-danger fs-6';
+                if (span) span.innerText = count + 1;
+            }
+        }
+
+        fetch('/api/learnAI/lesson_like', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lesson_id: lessonId })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data && data.result === 'success') {
+                if (span && typeof data.like_count !== 'undefined') {
+                    span.innerText = data.like_count;
+                }
+                if (icon) {
+                    if (data.liked) {
+                        icon.className = icon.className.replace(/fs-\d+/, '').trim() + ' bx bxs-heart text-danger fs-6';
+                    } else {
+                        icon.className = icon.className.replace(/fs-\d+/, '').trim() + ' bx bx-heart fs-6';
+                    }
+                }
+                const gridItem = btnEl.closest('.lesson-grid-item');
+                if (gridItem) {
+                    gridItem.setAttribute('data-liked', data.liked ? 'true' : 'false');
+                    gridItem.setAttribute('data-likes-count', data.like_count || '0');
+                }
+                // Also sync all other like buttons for this same lesson on the page
+                document.querySelectorAll(`.toggle-like-btn[data-lesson-id="${lessonId}"], .like-lesson-btn[data-lesson-id="${lessonId}"]`).forEach(otherBtn => {
+                    if (otherBtn !== btnEl) {
+                        const otherIcon = otherBtn.querySelector('i');
+                        const otherSpan = otherBtn.querySelector('.lesson-like-count, span');
+                        if (otherIcon) {
+                            const baseClass = otherBtn.classList.contains('like-lesson-btn') ? 'fs-5' : 'fs-6';
+                            otherIcon.className = `bx ${data.liked ? 'bxs-heart text-danger' : 'bx-heart'} ${baseClass}`;
+                        }
+                        if (otherSpan && typeof data.like_count !== 'undefined') {
+                            otherSpan.innerText = data.like_count;
+                        }
+                    }
+                });
+                if (typeof TomNotify !== 'undefined' && data.message) {
+                    TomNotify.show(data.message, data.liked ? "Liked" : "Unliked", data.liked ? "success" : "info", 2000);
+                }
+            } else {
+                // Revert optimistic change on failure
+                if (icon) {
+                    icon.className = wasLiked ? 'bx bxs-heart text-danger fs-6' : 'bx bx-heart fs-6';
+                }
+                if (span) span.innerText = count;
+                if (typeof TomNotify !== 'undefined') {
+                    TomNotify.show(data?.error || "Could not update like status", "Error", "error", 3000);
+                }
+            }
+        })
+        .catch(err => {
+            console.error("Like API error:", err);
+            if (icon) {
+                icon.className = wasLiked ? 'bx bxs-heart text-danger fs-6' : 'bx bx-heart fs-6';
+            }
+            if (span) span.innerText = count;
+        });
+    };
 
   })();
 } catch (e) {

@@ -380,6 +380,9 @@ class Session
      */
     public static function loadErrorPage()
     {
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
         self::set('brokenPage', true);
         self::set('footer', false);
         self::loadMaster();
@@ -601,6 +604,55 @@ class Session
 
         return $defaultAvatars[$index];
     }
+
+    /**
+     * Get avatar for any specific username (used for lesson authors, public cards, etc.)
+     */
+    public static function getAvatarForUsername($username)
+    {
+        $currentUser = self::getUser();
+        $currentUsername = $currentUser ? $currentUser->getUsername() : null;
+        if (empty($username) || ($currentUsername && $username === $currentUsername)) {
+            return self::getAvatar();
+        }
+        static $avatarCache = [];
+        if (isset($avatarCache[$username])) {
+            return $avatarCache[$username];
+        }
+
+        $defaultAvatars = [
+            self::cdn3('avatars/avatar1.png'), self::cdn3('avatars/avatar2.png'),
+            self::cdn3('avatars/avatar3.png'), self::cdn3('avatars/avatar4.png'),
+            self::cdn3('avatars/avatar5.png'), self::cdn3('avatars/avatar6.png'),
+            self::cdn3('avatars/avatar7.png'), self::cdn3('avatars/avatar8.png'),
+            self::cdn3('avatars/avatar9.png'), self::cdn3('avatars/avatar10.png')
+        ];
+
+        try {
+            $db = DatabaseConnection::getDefaultDatabase();
+            $userDoc = $db->users->findOne(['username' => $username]);
+            if (!$userDoc && strpos($username, '@') !== false) {
+                $userDoc = $db->users->findOne(['email' => $username]);
+            }
+
+            if ($userDoc && !empty($userDoc['avatar_url'])) {
+                $avatarUrl = $userDoc['avatar_url'];
+                if (strpos($avatarUrl, 'http') === 0 || strpos($avatarUrl, '/system/') === 0 || file_exists($_SERVER['DOCUMENT_ROOT'] . $avatarUrl)) {
+                    $avatarCache[$username] = htmlspecialchars($avatarUrl);
+                    return $avatarCache[$username];
+                }
+            }
+
+            $seedValue = $userDoc ? ($userDoc['user_id'] ?? $userDoc['_id'] ?? $username) : $username;
+            $index = abs(crc32((string)$seedValue)) % count($defaultAvatars);
+            $avatarCache[$username] = $defaultAvatars[$index];
+            return $avatarCache[$username];
+        } catch (\Exception $e) {
+            $index = abs(crc32((string)$username)) % count($defaultAvatars);
+            return $defaultAvatars[$index];
+        }
+    }
+
     /**
      * Generates a unique CSS hue-rotate based on the user's ID
      * 

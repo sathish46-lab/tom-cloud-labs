@@ -36,13 +36,19 @@ class User {
     }
 
     public function getUserId() {
+        if (isset($this->user['user_id'])) {
+            return (int)$this->user['user_id'];
+        }
         if (isset($this->user['_id'])) {
             return (string)$this->user['_id'];
         }
-        return isset($this->user['user_id']) ? $this->user['user_id'] : null;
+        return null;
     }
 
     public function getId() {
+        if (isset($this->user['_id'])) {
+            return (string)$this->user['_id'];
+        }
         return $this->getUserId();
     }
 

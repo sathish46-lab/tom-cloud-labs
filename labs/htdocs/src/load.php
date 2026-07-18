@@ -76,6 +76,9 @@ if (isset($_SESSION['auth_status'])) {
 // 4. Global Exception and Error Handlers
 if (!function_exists('global_exception_handler')) {
     function global_exception_handler($e) {
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
         // Only handle if Session class is available to render the beautiful page
         if (class_exists('Session')) {
             Session::set('error_exception', $e);
