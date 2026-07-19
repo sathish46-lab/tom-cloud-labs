@@ -1,0 +1,116 @@
+<?php
+require_once __DIR__ . '/../../load.php';
+
+if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
+    header('Content-Type: application/json');
+    echo json_encode(['status' => 'error', 'error' => 'Unauthorized']);
+    exit;
+}
+
+header('Content-Type: application/json');
+$user = Session::getUser();
+$userId = (int)$user->getUserId();
+$db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
+
+$source_id = $_POST['source_id'] ?? '';
+$name = trim($_POST['name'] ?? '');
+$visibility = $_POST['visibility'] ?? 'private';
+
+if (empty($source_id)) {
+    echo json_encode(['status' => 'error', 'error' => 'Source lab is required']);
+    exit;
+}
+
+// Find source lab in deployed_labs or instances
+$source = $db->deployed_labs->findOne(['instance_hash' => $source_id]);
+if (!$source) {
+    try {
+        $source = $db->instances->findOne(['_id' => new MongoDB\BSON\ObjectId($source_id)]);
+    } catch (Exception $e) {
+        $source = $db->instances->findOne(['slug' => $source_id]);
+    }
+}
+
+if (!$source) {
+    echo json_encode(['status' => 'error', 'error' => 'Source lab not found']);
+    exit;
+}
+
+$labType = $source['lab_type'] ?? ($source['type'] ?? 'machine');
+$bgMap = ['essentials' => '#e95420', 'minio' => '#2f3542', 'n8n' => '#ff6b81', 'docker_lab' => '#2496ed'];
+$typeIconMap = ['essentials' => 'bxl-tux', 'minio' => 'bx-cube', 'n8n' => 'bx-git-repo-forked', 'docker_lab' => 'bxl-docker'];
+
+$bgColor = $bgMap[$labType] ?? 'rgba(0,0,0,0.5)';
+$icon = $typeIconMap[$labType] ?? 'bx-cube-alt';
+
+if (empty($name)) {
+    $sourceName = $source['name'] ?? ucfirst($labType);
+    $name = $sourceName . ' (fork)';
+}
+
+// Generate slug
+$slug = strtolower(preg_replace('/[^a-z0-9]+/', '-', $name));
+$slug = trim($slug, '-');
+if (empty($slug)) $slug = 'lab-' . time();
+
+// Ensure unique slug
+$existing = $db->instances->findOne(['slug' => $slug]);
+if ($existing) {
+    $slug .= '-' . rand(1000, 9999);
+}
+
+$instance = [
+    'user_id' => $userId,
+    'name' => $name,
+    'slug' => $slug,
+    'visibility' => $visibility,
+    'type' => $labType === 'n8n' || $labType === 'minio' || $labType === 'essentials' || $labType === 'docker_lab' ? 'machine' : ($source['type'] ?? 'machine'),
+    'status' => 'draft',
+    'image' => $source['image'] ?? 'ubuntu:24.04',
+    'color' => $bgColor,
+    'icon' => $icon,
+    'forked_from' => $source['_id'] ?? $source_id,
+    'created_at' => new MongoDB\BSON\UTCDateTime(),
+    'updated_at' => new MongoDB\BSON\UTCDateTime(),
+];
+
+$result = $db->instances->insertOne($instance);
+
+if ($result->getInsertedCount() > 0) {
+    ob_start();
+    ?>
+    <div class="col" id="instance-<?= htmlspecialchars($slug) ?>">
+        <a href="/instances/<?= htmlspecialchars($slug) ?>" class="card h-100 blur border-0 shadow-lg rounded-4 overflow-hidden text-decoration-none group device-card">
+            <div class="card-body p-4 d-flex flex-column justify-content-between h-100">
+                <div>
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" 
+                                 style="width: 36px; height: 36px; background: <?= htmlspecialchars($bgColor) ?>; border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 3px 8px rgba(0,0,0,0.15);">
+                                <i class="bx <?= htmlspecialchars($icon) ?> text-white fs-5"></i>
+                            </div>
+                            <h5 class="fw-bold theme-text mb-0 group-hover-text-primary transition-all"><?= htmlspecialchars($name) ?></h5>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill px-2 fw-normal"><?= htmlspecialchars($instance['type']) ?></span>
+                        <span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill px-2 fw-normal">draft</span>
+                        <span class="badge <?php echo $visibility === 'public' ? 'bg-info bg-opacity-25 text-info' : 'bg-secondary bg-opacity-25 text-secondary'; ?> rounded-pill px-2 fw-normal"><?= htmlspecialchars($visibility) ?></span>
+                    </div>
+                    
+                    <div class="d-flex align-items-center text-info font-monospace small mb-3">
+                        <span class="text-success"><?= htmlspecialchars($slug) ?></span> - <?= htmlspecialchars($instance['image']) ?>
+                    </div>
+                </div>
+                
+                <div class="text-secondary small mt-2">just now</div>
+            </div>
+        </a>
+    </div>
+    <?php
+    $html = ob_get_clean();
+    echo json_encode(['status' => 'success', 'html' => $html]);
+} else {
+    echo json_encode(['status' => 'error', 'error' => 'Database insert failed']);
+}

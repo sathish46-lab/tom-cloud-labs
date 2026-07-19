@@ -1,6 +1,6 @@
 <?php
 /**
- * POST /api/instance/preferences_save
+ * POST /api/labs/preferences_save
  * Save preferences (http_proxies, always_on, init_script) to MongoDB without triggering a redeploy.
  */
 require_once __DIR__ . '/../../../src/load.php';

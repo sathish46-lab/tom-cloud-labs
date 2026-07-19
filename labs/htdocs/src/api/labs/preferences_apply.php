@@ -1,6 +1,6 @@
 <?php
 /**
- * POST /api/instance/preferences_apply
+ * POST /api/labs/preferences_apply
  * Save preferences AND queue an apply-preferences job via RabbitMQ.
  * This updates Traefik routing and runs init.sh without a full container redeploy.
  */

@@ -1,6 +1,6 @@
 <?php
 /**
- * POST /api/instance/run_script
+ * POST /api/labs/run_script
  * Execute the init.sh script immediately inside the running container.
  * Queues a job via RabbitMQ so output streams to the user's log terminal.
  */

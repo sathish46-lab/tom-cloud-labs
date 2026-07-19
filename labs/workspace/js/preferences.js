@@ -155,7 +155,7 @@ async function savePreferences() {
 
     try {
         const data = collectPreferencesData();
-        const response = await fetch('/api/instance/preferences_save', {
+        const response = await fetch('/api/labs/preferences_save', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -216,7 +216,7 @@ async function applyAndRedeploy() {
 
     try {
         const data = collectPreferencesData();
-        const response = await fetch('/api/instance/preferences_apply', {
+        const response = await fetch('/api/labs/preferences_apply', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -251,7 +251,7 @@ async function runInitScript() {
     Dashboard.appendCommand('bash /home/' + (window.LAB_USER || 'user') + '/init.sh');
 
     try {
-        const response = await fetch('/api/instance/run_script', {
+        const response = await fetch('/api/labs/run_script', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

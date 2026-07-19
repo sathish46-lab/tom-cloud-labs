@@ -1,5 +1,5 @@
 <?php
-// /var/www/labs/htdocs/src/api/instance/stop.php
+// /var/www/labs/htdocs/src/api/labs/stop.php
 require_once __DIR__ . '/../../../src/load.php';
 require_once __DIR__ . '/../../lib/core/jobs/Process.class.php';
 require_once __DIR__ . '/../../lib/core/jobs/Worker.class.php';

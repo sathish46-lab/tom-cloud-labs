@@ -348,7 +348,7 @@ const Dashboard = {
       const poll = () => {
         if (document.hidden) return; // double check
 
-        fetch(`/api/instance/stats?hash=${window.SESSION_HASH}`)
+        fetch(`/api/labs/stats?hash=${window.SESSION_HASH}`)
           .then((res) => res.json())
           .then((data) => {
             if (data.status === "offline" || data.status === "initializing") {
@@ -758,7 +758,7 @@ async function executeRedeploy(labType) {
     }
   });
 
-  const response = await fetch("/api/instance/deploy", {
+  const response = await fetch("/api/labs/deploy", {
     method: "POST",
     body: formData,
   });
@@ -821,7 +821,7 @@ async function executeStop() {
   Dashboard.appendLog("[*] Analyzing active session hooks...");
 
   try {
-    const response = await fetch("/api/instance/stop", {
+    const response = await fetch("/api/labs/stop", {
       method: "POST",
       body: new URLSearchParams({
         lab: type,
@@ -890,7 +890,7 @@ async function launchCodeIDE(event, targetUrl = null) {
       formData.append("lab", type);
       formData.append("hash", window.SESSION_HASH);
 
-      let response = await fetch("/api/instance/ensure_codeserver", {
+      let response = await fetch("/api/labs/ensure_codeserver", {
         method: "POST",
         body: formData
       });
@@ -935,7 +935,7 @@ async function launchCodeIDE(event, targetUrl = null) {
       formData.append("lab", type);
       formData.append("hash", window.SESSION_HASH);
 
-      await fetch("/api/instance/ensure_codeserver", {
+      await fetch("/api/labs/ensure_codeserver", {
         method: "POST",
         body: formData
       });

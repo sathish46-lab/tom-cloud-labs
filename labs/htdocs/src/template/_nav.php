@@ -89,6 +89,11 @@ $current = Session::getCurrentFile();
             </a>
         </li>
         <li class="nav-item">
+            <a class="nav-link <?= (str_contains($current, 'instances')) ? 'active' : '' ?>" href="/instances">
+                <i class="nav-icon bx bx-cube-alt"></i> Instances
+            </a>
+        </li>
+        <li class="nav-item">
             <a class="nav-link <?= (str_contains($current, 'labs')) ? 'active' : '' ?>" href="/labs">
                 <svg class="nav-icon">
                     <use xlink:href="/assets/icons/sprites/free.svg#cil-memory"></use>
