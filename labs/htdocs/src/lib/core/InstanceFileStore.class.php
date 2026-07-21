@@ -3,23 +3,20 @@
 /**
  * Instance File Store (Copy-on-Write template inheritance)
  *
- * Storage model (Mongo + MinIO):
- *   - Base layer:  tom_labs_files_db.files where layer = "base"
- *                  seeded once from opt/labs-control-panel/lab-templates/<template>/
- *                  text files -> content field; binaries -> uploaded to MinIO (s3_key)
+ * Storage model:
+ *   - Base layer:  MinIO at labassets/instances/base/<template>/<path>
+ *                  Fallback: /opt/labs-control-panel/lab-templates/<template>/
  *   - User layer:  tom_labs_files_db.files where layer = "user"
- *                  created copy-on-write when a user edits/creates a file
- *                  keyed by instance_id + username + email
+ *                  Created copy-on-write when a user edits/creates a file.
  *
  * Rendering merges base + user overrides. Saves always write to the user layer.
  */
 
 class InstanceFileStore {
 
-    // Local disk location of the shared lab templates
     const TEMPLATES_DIR = '/opt/labs-control-panel/lab-templates';
+    const S3_BASE_PREFIX = 'labassets/instances/base/';
 
-    // Text extensions we store inline in Mongo (everything else goes to MinIO)
     const TEXT_EXT = [
         'txt', 'php', 'html', 'htm', 'css', 'js', 'json', 'md', 'sh', 'py', 'yml',
         'yaml', 'ini', 'conf', 'cfg', 'Dockerfile', 'env', 'log', 'xml', 'sql',
@@ -45,19 +42,16 @@ class InstanceFileStore {
     }
 
     /**
-     * Map an instance's stored template name to a lab-templates folder.
+     * Map an instance's template name to a lab-templates folder.
      */
     public static function resolveTemplateFolder($instance) {
-        // Explicit template folder stored on the instance takes precedence
         if (!empty($instance['template']) && is_dir(self::TEMPLATES_DIR . '/' . $instance['template'])) {
             return $instance['template'];
         }
-        // Fallback: type/lab_type might already be a folder name
         $candidate = $instance['lab_type'] ?? ($instance['type'] ?? '');
         if (!empty($candidate) && is_dir(self::TEMPLATES_DIR . '/' . $candidate)) {
             return $candidate;
         }
-        // Default base template for instances created before the file-manager existed
         if (is_dir(self::TEMPLATES_DIR . '/essentials')) {
             return 'essentials';
         }
@@ -65,222 +59,210 @@ class InstanceFileStore {
     }
 
     /**
-     * Seed the BASE layer for a template folder (idempotent).
-     * Skips if base docs for this template already exist.
-     */
-    public static function seedBaseLayer($templateFolder) {
-        $basePath = self::TEMPLATES_DIR . '/' . $templateFolder;
-        if (!is_dir($basePath)) {
-            return false;
-        }
-
-        $already = self::collection()->countDocuments([
-            'layer' => 'base',
-            'template' => $templateFolder,
-        ]);
-        if ($already > 0) {
-            return true;
-        }
-
-        $basePath = rtrim($basePath, '/');
-        $rii = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($basePath, FilesystemIterator::SKIP_DOTS),
-            RecursiveIteratorIterator::SELF_FIRST
-        );
-
-        $count = 0;
-        foreach ($rii as $fileInfo) {
-            $relative = ltrim(substr($fileInfo->getPathname(), strlen($basePath) + 1), '/');
-            if ($relative === '') {
-                continue;
-            }
-            $isDir = $fileInfo->isDir();
-            $ext = strtolower($fileInfo->getExtension());
-            $isText = in_array($ext, self::TEXT_EXT, true)
-                || in_array($relative, self::TEXT_EXT, true)
-                // extensionless (e.g. "entrypoints", "Dockerfile") or small unknown files -> treat as text
-                || (($ext === '' || !in_array($ext, self::TEXT_EXT, true))
-                    && $fileInfo->getSize() <= 256 * 1024);
-
-            $doc = [
-                'layer'        => 'base',
-                'template'     => $templateFolder,
-                'base_path'    => $relative,
-                'name'         => $fileInfo->getFilename(),
-                'is_dir'       => $isDir,
-                'size'         => $isDir ? 0 : $fileInfo->getSize(),
-                'mime'         => $isDir ? null : (mime_content_type($fileInfo->getPathname()) ?: 'application/octet-stream'),
-                'content'      => null,
-                's3_key'       => null,
-                'username'     => null,
-                'email'        => null,
-                'version'      => 1,
-                'created_at'   => new MongoDB\BSON\UTCDateTime(),
-                'updated_at'   => new MongoDB\BSON\UTCDateTime(),
-            ];
-
-            if (!$isDir) {
-                if ($isText && $fileInfo->getSize() <= 1024 * 1024) {
-                    $doc['content'] = @file_get_contents($fileInfo->getPathname());
-                } else {
-                    // Binary or too large -> push to MinIO
-                    $s3Key = 'labassets/instances/base/' . $templateFolder . '/' . $relative;
-                    $doc['s3_key'] = $s3Key;
-                    Storage::upload($fileInfo->getPathname(), $s3Key);
-                }
-            }
-
-            self::collection()->insertOne($doc);
-            $count++;
-        }
-
-        return $count;
-    }
-
-    /**
-     * Ensure an instance's base layer exists, then return the template folder used.
+     * Ensure an instance's base layer exists in MinIO, then return the template folder.
      */
     public static function ensureBaseForInstance($instance) {
         $folder = self::resolveTemplateFolder($instance);
         if ($folder) {
-            self::seedBaseLayer($folder);
+            self::seedBaseToMinIO($folder);
         }
         return $folder;
     }
 
     /**
-     * Build a merged tree (base + user overrides) for an instance.
-     * Returns nested array of root-level nodes (folders + files at the root).
+     * Seed base files from filesystem to MinIO (idempotent — skips if already uploaded).
      */
-    public static function getTree($instanceId, $templateFolder) {
-        $pipeline = [
-            ['$match' => [
-                '$or' => [
-                    ['layer' => 'base', 'template' => $templateFolder],
-                    ['layer' => 'user', 'instance_id' => $instanceId],
-                ]
-            ]],
-            // Prefer user layer over base when base_path collides
-            ['$sort' => ['layer' => -1, 'base_path' => 1]],
-            ['$group' => [
-                '_id' => '$base_path',
-                'doc' => ['$first' => '$$ROOT'],
-            ]],
-            ['$replaceRoot' => ['newRoot' => '$doc']],
-        ];
-
-        $rows = self::collection()->aggregate($pipeline)->toArray();
-
-        // Build a flat map of folder nodes, ensuring all ancestor folders exist.
-        $folders = [];   // path => node
-        $ensureFolder = function ($path) use (&$folders, &$ensureFolder) {
-            if ($path === '' || isset($folders[$path])) {
-                return;
-            }
-            // recursively ensure parent first
-            $parent = dirname($path);
-            $parent = ($parent === '.' || $parent === '/') ? '' : $parent;
-            if ($parent !== '' && !isset($folders[$parent])) {
-                $ensureFolder($parent);
-            }
-            $folders[$path] = [
-                'path' => $path,
-                'name' => basename($path),
-                'is_dir' => true,
-                'modified' => false,
-                'children' => [],
-            ];
-        };
-
-        foreach ($rows as $row) {
-            $row = (array) $row;
-            if ($row['is_dir']) {
-                $ensureFolder($row['base_path']);
-                if ($row['layer'] === 'user') {
-                    $folders[$row['base_path']]['modified'] = true;
-                }
-            }
+    public static function seedBaseToMinIO($templateFolder) {
+        $prefix = self::S3_BASE_PREFIX . $templateFolder . '/';
+        $existing = Storage::listObjects($prefix);
+        if ($existing !== false && count($existing) > 0) {
+            return true; // already seeded
         }
 
-        // Attach files (and any folder that only existed because of a nested file)
-        // to their parent folder node (or root if no parent).
-        $root = [];
-        $attach = function ($node) use (&$folders, &$root, &$ensureFolder) {
-            $dir = dirname($node['path']);
-            $dir = ($dir === '.' || $dir === '/') ? '' : $dir;
-            if ($dir === '') {
-                $root[] = $node;
-            } else {
-                $ensureFolder($dir);
-                $exists = false;
-                foreach ($folders[$dir]['children'] as $c) {
-                    if ($c['path'] === $node['path']) { $exists = true; break; }
-                }
-                if (!$exists) {
-                    $folders[$dir]['children'][] = $node;
-                }
-            }
-        };
+        $basePath = self::TEMPLATES_DIR . '/' . $templateFolder;
+        if (!is_dir($basePath)) return false;
 
-        foreach ($rows as $row) {
-            $row = (array) $row;
-            if ($row['is_dir']) {
-                continue; // folder nodes already added via $folders
-            }
-            $fileNode = [
-                'path' => $row['base_path'],
-                'name' => $row['name'],
-                'is_dir' => false,
-                'size' => $row['size'],
-                'mime' => $row['mime'],
-                'modified' => ($row['layer'] === 'user'),
-                'is_binary' => !empty($row['s3_key']),
-            ];
-            $attach($fileNode);
+        $rii = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($basePath, FilesystemIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::SELF_FIRST
+        );
+
+        foreach ($rii as $fileInfo) {
+            if ($fileInfo->isDir()) continue;
+            $relative = ltrim(substr($fileInfo->getPathname(), strlen($basePath) + 1), '/');
+            if ($relative === '') continue;
+            $s3Key = self::S3_BASE_PREFIX . $templateFolder . '/' . $relative;
+            Storage::upload($fileInfo->getPathname(), $s3Key);
         }
-
-        // Also attach declared folder nodes to their parents
-        foreach ($folders as $path => $node) {
-            if ($path === '') {
-                continue;
-            }
-            $attach($node);
-        }
-
-        // Recursively sort: folders first, then files, alpha
-        $sortFn = function (&$n) use (&$sortFn) {
-            usort($n['children'], function ($a, $b) {
-                if ($a['is_dir'] !== $b['is_dir']) {
-                    return $a['is_dir'] ? -1 : 1;
-                }
-                return strcasecmp($a['name'], $b['name']);
-            });
-            foreach ($n['children'] as &$c) {
-                if ($c['is_dir']) {
-                    $sortFn($c);
-                }
-            }
-        };
-        foreach ($root as &$n) {
-            if ($n['is_dir']) {
-                $sortFn($n);
-            }
-        }
-        usort($root, function ($a, $b) {
-            if ($a['is_dir'] !== $b['is_dir']) {
-                return $a['is_dir'] ? -1 : 1;
-            }
-            return strcasecmp($a['name'], $b['name']);
-        });
-
-        return $root;
+        return true;
     }
 
     /**
-     * Get file content (text) or s3_key (binary) for an instance,
-     * preferring the user layer override.
+     * List all base files for a template from MinIO, with filesystem fallback.
+     * Returns flat array of relative paths.
+     */
+    public static function listBaseFiles($templateFolder) {
+        // Try MinIO first
+        $prefix = self::S3_BASE_PREFIX . $templateFolder . '/';
+        $keys = Storage::listObjects($prefix);
+        if ($keys !== false && count($keys) > 0) {
+            return array_map(function ($key) use ($prefix) {
+                return ltrim(substr($key, strlen($prefix)), '/');
+            }, $keys);
+        }
+
+        // Fallback: list from filesystem
+        $basePath = self::TEMPLATES_DIR . '/' . $templateFolder;
+        if (!is_dir($basePath)) return [];
+
+        $files = [];
+        $rii = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($basePath, FilesystemIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::SELF_FIRST
+        );
+        foreach ($rii as $fileInfo) {
+            if ($fileInfo->isDir()) continue;
+            $relative = ltrim(substr($fileInfo->getPathname(), strlen($basePath) + 1), '/');
+            if ($relative !== '') $files[] = $relative;
+        }
+        return $files;
+    }
+
+    /**
+     * Read base file content from MinIO (or filesystem fallback).
+     * Returns ['content' => string, 'is_binary' => bool, 's3_key' => string|null] or null.
+     */
+    public static function readBaseFile($templateFolder, $path) {
+        // Try MinIO first
+        $s3Key = self::S3_BASE_PREFIX . $templateFolder . '/' . $path;
+        $content = Storage::download($s3Key);
+        if ($content !== false) {
+            $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+            $isBinary = !in_array($ext, self::TEXT_EXT, true)
+                && filesize($path) > 256 * 1024; // can't use filesize on S3, treat as binary if unknown ext
+            return ['content' => $content, 'is_binary' => false, 's3_key' => $s3Key];
+        }
+
+        // Fallback: read from filesystem
+        $filePath = self::TEMPLATES_DIR . '/' . $templateFolder . '/' . $path;
+        if (file_exists($filePath)) {
+            $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+            $isText = in_array($ext, self::TEXT_EXT, true)
+                || filesize($filePath) <= 256 * 1024;
+            if ($isText) {
+                return ['content' => file_get_contents($filePath), 'is_binary' => false, 's3_key' => null];
+            } else {
+                $s3Key2 = self::S3_BASE_PREFIX . $templateFolder . '/' . $path;
+                return ['content' => null, 'is_binary' => true, 's3_key' => $s3Key2];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Build a merged tree (base from MinIO + user overrides from Mongo) for an instance.
+     */
+    public static function getTree($instanceId, $templateFolder) {
+        //1. Collect ALL paths (base from MinIO/filesystem + user-only from Mongo)
+        $allPaths = [];
+
+        $baseFiles = self::listBaseFiles($templateFolder);
+        foreach ($baseFiles as $relPath) {
+            if ($relPath === '' || $relPath === '/') continue;
+            $allPaths[$relPath] = false;
+        }
+
+        $userDocs = self::collection()->find([
+            'layer' => 'user',
+            'instance_id' => $instanceId,
+        ])->toArray();
+
+        $userMap = [];
+        foreach ($userDocs as $doc) {
+            $doc = (array) $doc;
+            $userMap[$doc['base_path']] = $doc;
+            if (!$doc['is_dir']) {
+                $allPaths[$doc['base_path']] = true;
+            }
+        }
+
+        //2. Collect ALL folder paths from all files
+        $allFolders = [];
+        foreach (array_keys($allPaths) as $filePath) {
+            $parts = explode('/', $filePath);
+            array_pop($parts);
+            $cumulative = '';
+            foreach ($parts as $part) {
+                $cumulative = $cumulative === '' ? $part : $cumulative . '/' . $part;
+                $allFolders[$cumulative] = true;
+            }
+        }
+        foreach ($userMap as $path => $doc) {
+            if (!empty($doc['is_dir'])) {
+                $allFolders[$path] = true;
+            }
+        }
+
+        //3. Build node map and parent→children index
+        $nodes = [];
+        $childrenOf = []; // parent_path => [child_path, ...]
+
+        foreach ($allFolders as $folderPath => $_) {
+            $nodes[$folderPath] = [
+                'path' => $folderPath,
+                'name' => basename($folderPath),
+                'is_dir' => true,
+                'modified' => !empty($userMap[$folderPath]),
+                'children' => [],
+            ];
+            $dir = dirname($folderPath);
+            $dir = ($dir === '.' || $dir === '/') ? '' : $dir;
+            $childrenOf[$dir][] = $folderPath;
+        }
+
+        foreach ($allPaths as $filePath => $isUser) {
+            $doc = $userMap[$filePath] ?? null;
+            $nodes[$filePath] = [
+                'path' => $filePath,
+                'name' => basename($filePath),
+                'is_dir' => false,
+                'size' => $isUser ? ($doc['size'] ?? 0) : 0,
+                'mime' => $isUser ? ($doc['mime'] ?? null) : null,
+                'modified' => (bool) $isUser,
+                'is_binary' => $isUser ? !empty($doc['s3_key']) : false,
+            ];
+            $dir = dirname($filePath);
+            $dir = ($dir === '.' || $dir === '/') ? '' : $dir;
+            $childrenOf[$dir][] = $filePath;
+        }
+
+        //4. Recursively build tree from root
+        $build = function ($parentPath) use (&$build, &$nodes, &$childrenOf) {
+            $children = $childrenOf[$parentPath] ?? [];
+            $list = [];
+            foreach ($children as $childPath) {
+                $node = $nodes[$childPath];
+                if ($node['is_dir']) {
+                    $node['children'] = $build($childPath);
+                }
+                $list[] = $node;
+            }
+            usort($list, function ($a, $b) {
+                if ($a['is_dir'] !== $b['is_dir']) return $a['is_dir'] ? -1 : 1;
+                return strcasecmp($a['name'], $b['name']);
+            });
+            return $list;
+        };
+
+        return $build('');
+    }
+
+    /**
+     * Get file content — user layer from Mongo, base layer from MinIO/filesystem.
      */
     public static function getFile($instanceId, $templateFolder, $path) {
+        // Check user layer first
         $user = self::collection()->findOne([
             'layer' => 'user',
             'instance_id' => $instanceId,
@@ -289,20 +271,30 @@ class InstanceFileStore {
         if ($user) {
             return self::rowToArray($user);
         }
-        $base = self::collection()->findOne([
-            'layer' => 'base',
-            'template' => $templateFolder,
-            'base_path' => $path,
-        ]);
+
+        // Fall back to base layer (MinIO → filesystem)
+        $base = self::readBaseFile($templateFolder, $path);
         if ($base) {
-            return self::rowToArray($base);
+            $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+            return [
+                'id' => null,
+                'layer' => 'base',
+                'base_path' => $path,
+                'name' => basename($path),
+                'is_dir' => false,
+                'size' => strlen($base['content'] ?? ''),
+                'mime' => mime_content_type(self::TEMPLATES_DIR . '/' . $templateFolder . '/' . $path) ?: 'application/octet-stream',
+                'content' => $base['content'],
+                's3_key' => $base['s3_key'],
+                'version' => 1,
+                'modified' => false,
+            ];
         }
         return null;
     }
 
     /**
      * Copy-on-write save. Creates/updates the user layer doc.
-     * Snapshots the previous user version into files_versions.
      */
     public static function saveFile($instanceId, $templateFolder, $path, $content, $username, $email) {
         $existing = self::collection()->findOne([
@@ -313,7 +305,6 @@ class InstanceFileStore {
 
         if ($existing) {
             $existing = self::rowToArray($existing);
-            // snapshot previous version
             self::versionsCollection()->insertOne([
                 'instance_id' => $instanceId,
                 'base_path' => $path,
@@ -327,7 +318,7 @@ class InstanceFileStore {
             ]);
             $newVersion = ($existing['version'] ?? 1) + 1;
             self::collection()->updateOne(
-                ['_id' => $existing['_id']],
+                ['_id' => new MongoDB\BSON\ObjectId($existing['id'])],
                 ['$set' => [
                     'content' => $content,
                     's3_key' => null,
@@ -340,25 +331,16 @@ class InstanceFileStore {
             return $newVersion;
         }
 
-        // No user doc yet -> create (CoW). Inherit metadata from base if present.
-        $base = self::collection()->findOne([
-            'layer' => 'base',
-            'template' => $templateFolder,
-            'base_path' => $path,
-        ]);
         $name = basename($path);
-        $isDir = $base ? (bool) $base['is_dir'] : false;
-        $mime = $base ? $base['mime'] : 'text/plain';
-
         $doc = [
             'layer' => 'user',
             'instance_id' => $instanceId,
             'template' => $templateFolder,
             'base_path' => $path,
             'name' => $name,
-            'is_dir' => $isDir,
+            'is_dir' => false,
             'size' => strlen($content),
-            'mime' => $mime,
+            'mime' => 'text/plain',
             'content' => $content,
             's3_key' => null,
             'username' => $username,
@@ -379,10 +361,7 @@ class InstanceFileStore {
         $existing = self::collection()->findOne([
             'instance_id' => $instanceId,
             'base_path' => $path,
-            '$or' => [
-                ['layer' => 'user'],
-                ['layer' => 'base', 'template' => $templateFolder],
-            ],
+            'layer' => 'user',
         ]);
         if ($existing) {
             return ['status' => 'error', 'error' => 'Path already exists'];
@@ -409,15 +388,10 @@ class InstanceFileStore {
     }
 
     /**
-     * Delete a user-layer node (file or folder). Base nodes cannot be deleted
-     * (they revert to base view).
+     * Delete a user-layer node. Base nodes revert to base view.
      */
     public static function deleteNode($instanceId, $path) {
-        $path = ltrim($path, '/');
-        // If folder, delete all user docs under this path prefix
-        if (substr($path, -1) === '/') {
-            $path = rtrim($path, '/');
-        }
+        if (substr($path, -1) === '/') $path = rtrim($path, '/');
         self::collection()->deleteMany([
             'layer' => 'user',
             'instance_id' => $instanceId,

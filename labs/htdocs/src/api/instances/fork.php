@@ -2,37 +2,41 @@
 require_once __DIR__ . '/../../load.php';
 
 if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    header('Content-Type: application/json');
-    echo json_encode(['status' => 'error', 'error' => 'Unauthorized']);
+    http_response_code(401);
+    echo 'Unauthorized';
     exit;
 }
 
-header('Content-Type: application/json');
 $user = Session::getUser();
 $userId = (int)$user->getUserId();
-$db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
+$username = $user->getUsername();
+$email = $user->getEmail();
+$dbInstances = DatabaseConnection::getClient()->selectDatabase('tom_labs_instances_db');
+$dbMain = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
 
 $source_id = $_POST['source_id'] ?? '';
 $name = trim($_POST['name'] ?? '');
 $visibility = $_POST['visibility'] ?? 'private';
 
 if (empty($source_id)) {
-    echo json_encode(['status' => 'error', 'error' => 'Source lab is required']);
+    http_response_code(400);
+    echo 'Source lab is required';
     exit;
 }
 
 // Find source lab in deployed_labs or instances
-$source = $db->deployed_labs->findOne(['instance_hash' => $source_id]);
+$source = $dbMain->deployed_labs->findOne(['instance_hash' => $source_id]);
 if (!$source) {
     try {
-        $source = $db->instances->findOne(['_id' => new MongoDB\BSON\ObjectId($source_id)]);
+        $source = $dbInstances->instances->findOne(['_id' => new MongoDB\BSON\ObjectId($source_id)]);
     } catch (Exception $e) {
-        $source = $db->instances->findOne(['slug' => $source_id]);
+        $source = $dbInstances->instances->findOne(['slug' => $source_id]);
     }
 }
 
 if (!$source) {
-    echo json_encode(['status' => 'error', 'error' => 'Source lab not found']);
+    http_response_code(404);
+    echo 'Source lab not found';
     exit;
 }
 
@@ -49,21 +53,34 @@ if (empty($name)) {
     $name = $sourceName . ' (fork)';
 }
 
+// Ensure unique name for this user
+$nameBase = $name;
+$nameCount = $dbInstances->instances->countDocuments(['user_id' => $userId, 'name' => $name]);
+if ($nameCount > 0) {
+    $name = $nameBase . ' (' . ($nameCount + 1) . ')';
+}
+
 // Generate slug
 $slug = strtolower(preg_replace('/[^a-z0-9]+/', '-', $name));
 $slug = trim($slug, '-');
 if (empty($slug)) $slug = 'lab-' . time();
 
 // Ensure unique slug
-$existing = $db->instances->findOne(['slug' => $slug]);
+$existing = $dbInstances->instances->findOne(['slug' => $slug]);
 if ($existing) {
     $slug .= '-' . rand(1000, 9999);
 }
 
+// Generate unique instance hash (email + slug + salt)
+$instanceHash = md5($email . $slug . '8b51626f3a468904e8b6f83747f2fcf1');
+
 $instance = [
     'user_id' => $userId,
+    'username' => $username,
+    'email' => $email,
     'name' => $name,
     'slug' => $slug,
+    'instance_hash' => $instanceHash,
     'visibility' => $visibility,
     'type' => $labType === 'n8n' || $labType === 'minio' || $labType === 'essentials' || $labType === 'docker_lab' ? 'machine' : ($source['type'] ?? 'machine'),
     'template' => $template,
@@ -76,10 +93,9 @@ $instance = [
     'updated_at' => new MongoDB\BSON\UTCDateTime(),
 ];
 
-$result = $db->instances->insertOne($instance);
+$result = $dbInstances->instances->insertOne($instance);
 
 if ($result->getInsertedCount() > 0) {
-    // Seed the instance's file store (base layer from lab-templates/<template>/)
     try {
         $newId = $result->getInsertedId();
         $instance['_id'] = $newId;
@@ -87,40 +103,39 @@ if ($result->getInsertedCount() > 0) {
     } catch (Exception $e) {
         error_log('Instance file seed failed: ' . $e->getMessage());
     }
+
+    $slug        = $slug;
+    $instanceHash = $instanceHash;
+    $name        = $name;
+    $type        = $instance['type'];
+    $status      = $instance['status'];
+    $visibility  = $visibility;
+    $image       = $instance['image'];
+    $bgColor     = $bgColor;
+    $icon        = $icon;
+    $tplKey      = $instance['template'] ?? $instance['type'] ?? 'machine';
+    $forked_from = !empty($instance['forked_from']);
+    $updatedLabel = 'just now';
+
+    $avatarMap = [
+        'essentials' => 'essentials_avatar.png',
+        'minio'      => 'minio_avatar.png',
+        'docker_lab' => 'docker_avatar.png',
+        'docker'     => 'docker_avatar.png',
+        'zephyr'     => 'zephyr_avatar.png',
+        'kali'       => 'kali-background.png',
+        'n8n'        => 'essentials_avatar.png',
+    ];
+    $avatarFile = $avatarMap[$tplKey] ?? 'essentials_avatar.png';
+    $cover = Session::cdn3('labassets/avatar/' . $avatarFile);
+
     ob_start();
-    ?>
-    <div class="col" id="instance-<?= htmlspecialchars($slug) ?>">
-        <a href="/instances/<?= htmlspecialchars($slug) ?>" class="card h-100 blur border-0 shadow-lg rounded-4 overflow-hidden text-decoration-none group device-card">
-            <div class="card-body p-4 d-flex flex-column justify-content-between h-100">
-                <div>
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" 
-                                 style="width: 36px; height: 36px; background: <?= htmlspecialchars($bgColor) ?>; border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 3px 8px rgba(0,0,0,0.15);">
-                                <i class="bx <?= htmlspecialchars($icon) ?> text-white fs-5"></i>
-                            </div>
-                            <h5 class="fw-bold theme-text mb-0 group-hover-text-primary transition-all"><?= htmlspecialchars($name) ?></h5>
-                        </div>
-                    </div>
-                    
-                    <div class="d-flex flex-wrap gap-2 mb-3">
-                        <span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill px-2 fw-normal"><?= htmlspecialchars($instance['type']) ?></span>
-                        <span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill px-2 fw-normal">draft</span>
-                        <span class="badge <?php echo $visibility === 'public' ? 'bg-info bg-opacity-25 text-info' : 'bg-secondary bg-opacity-25 text-secondary'; ?> rounded-pill px-2 fw-normal"><?= htmlspecialchars($visibility) ?></span>
-                    </div>
-                    
-                    <div class="d-flex align-items-center text-info font-monospace small mb-3">
-                        <span class="text-success"><?= htmlspecialchars($slug) ?></span> - <?= htmlspecialchars($instance['image']) ?>
-                    </div>
-                </div>
-                
-                <div class="text-secondary small mt-2">just now</div>
-            </div>
-        </a>
-    </div>
-    <?php
+    include __DIR__ . '/../../template/partials/_instance_card.php';
     $html = ob_get_clean();
-    echo json_encode(['status' => 'success', 'html' => $html]);
+
+    if (ob_get_length()) ob_clean();
+    echo $html;
 } else {
-    echo json_encode(['status' => 'error', 'error' => 'Database insert failed']);
+    http_response_code(400);
+    echo 'Database insert failed';
 }

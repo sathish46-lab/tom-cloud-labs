@@ -178,11 +178,7 @@ window.TomNotify = {
 };
 
 window.showToast = (msg) => TomNotify.show(msg, "System", "info");
-window.copyToClipboard = (text, label = 'Information') => {
-    navigator.clipboard.writeText(text).then(() => {
-        TomNotify.show(`${label} copied to clipboard!`, "Copied", "success", 3000);
-    });
-};
+// copyToClipboard removed — use window.copyText() from clipboard.js instead
 
 window.onPageLoad(function() {
     if (window.TomVisuals && typeof window.TomVisuals.syncUI === 'function') window.TomVisuals.syncUI();

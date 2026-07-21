@@ -16,21 +16,26 @@ if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
 }
 
 $user = Session::getUser();
-$slug = $_GET['slug'] ?? '';
+$hash = $_GET['slug'] ?? '';
 
-if (empty($slug)) {
+if (empty($hash)) {
     if (!empty($_GET['tab']) && $isAjax) {
         header('Content-Type: text/html; charset=UTF-8');
-        echo '<div class="alert alert-danger">Missing slug.</div>';
+        echo '<div class="alert alert-danger">Missing instance hash.</div>';
         exit;
     }
     header("Location: /instances");
     exit;
 }
 
-// Fetch instance data from the new 'instances' collection
-$db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
-$instance = $db->instances->findOne(['slug' => $slug]);
+// Fetch instance data by instance_hash
+$db = DatabaseConnection::getClient()->selectDatabase('tom_labs_instances_db');
+$instance = $db->instances->findOne(['instance_hash' => $hash]);
+
+// Fallback: try by slug for old URLs
+if (!$instance) {
+    $instance = $db->instances->findOne(['slug' => $hash]);
+}
 
 if (!$instance) {
     // If not found in 'instances', optionally fallback or just leave it null
@@ -51,6 +56,6 @@ if (!empty($_GET['tab']) && $isAjax) {
     exit;
 }
 
-Session::$pageTitle = "Instances - " . htmlspecialchars($slug) . " | Tom Labs";
-Session::loadMaster('instances/manage.php', ['slug' => $slug]);
+Session::$pageTitle = "Instances - " . htmlspecialchars($instance['name'] ?? $hash) . " | Tom Labs";
+Session::loadMaster('instances/manage.php', ['slug' => $hash]);
 

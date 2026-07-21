@@ -41,11 +41,14 @@
     lineNumbers: true,
     theme: "material-darker",
     mode: "text/plain",
-    indentUnit: 2,
-    tabSize: 2,
+    indentUnit: 4,
+    tabSize: 4,
+    indentWithTabs: true,
     lineWrapping: false,
     readOnly: true,
     styleActiveLine: true,
+    matchBrackets: true,
+    autoCloseBrackets: true,
     extraKeys: { "Ctrl-S": saveFile, "Cmd-S": saveFile },
   });
   cm.setSize("100%", "100%");
@@ -124,6 +127,7 @@
 
   let activeFile = null; // { path, name, modified, version }
   let loadedContent = "";
+  let lastOpenedPath = null; // from DB
 
   // ---- Helpers ---------------------------------------------------------
   const api = (path, opts) =>
@@ -148,11 +152,12 @@
   // ---- Tree rendering --------------------------------------------------
   function renderNode(node, depth) {
     const wrap = document.createElement("div");
-    const pad = depth > 0 ? "ms-" + depth * 3 : "";
+    const padPx = depth * 18;
 
     if (node.is_dir) {
       const header = document.createElement("div");
-      header.className = "instance-tree-item is-folder " + pad;
+      header.className = "instance-tree-item is-folder";
+      header.style.paddingLeft = padPx + "px";
       header.innerHTML =
         '<i class="bx bx-chevron-right"></i> <i class="bx ' +
         iconFor(node) +
@@ -174,7 +179,8 @@
       wrap.appendChild(childBox);
     } else {
       const item = document.createElement("div");
-      item.className = "instance-tree-item " + pad;
+      item.className = "instance-tree-item";
+      item.style.paddingLeft = (padPx + 4) + "px";
       item.innerHTML =
         '<i class="bx ' +
         iconFor(node) +
@@ -197,6 +203,8 @@
     );
   }
 
+  let treeData = [];
+
   async function loadTree() {
     treeEl.innerHTML =
       '<div class="text-secondary small py-3 text-center"><div class="spinner-border spinner-border-sm" role="status"></div></div>';
@@ -208,15 +216,29 @@
         return;
       }
       treeEl.innerHTML = "";
+      treeData = data.tree;
+      lastOpenedPath = data.last_opened;
       if (!data.tree.length) {
         treeEl.innerHTML = '<div class="text-secondary small p-2">No files in this template.</div>';
         return;
       }
       data.tree.forEach((node) => treeEl.appendChild(renderNode(node, 0)));
-      // Auto-expand top-level folders
-      treeEl.querySelectorAll(".instance-tree-item.is-folder").forEach((h) => {
-        if (h.parentElement === treeEl) h.click();
-      });
+      // Auto-expand ALL folders
+      treeEl.querySelectorAll(".instance-tree-item.is-folder").forEach((h) => h.click());
+      // Auto-open last file from DB
+      if (lastOpenedPath) {
+        const node = findNode(data.tree, lastOpenedPath);
+        if (node && !node.is_dir) {
+          const items = treeEl.querySelectorAll(".instance-tree-item:not(.is-folder)");
+          for (const item of items) {
+            const span = item.querySelector("span.flex-grow-1");
+            if (span && span.textContent === node.name) {
+              openFile(node.path, node.name, item);
+              break;
+            }
+          }
+        }
+      }
     } catch (e) {
       treeEl.innerHTML = '<div class="text-danger small p-2">Network error loading files.</div>';
     }
@@ -226,6 +248,7 @@
   async function openFile(path, name, itemEl) {
     document.querySelectorAll(".instance-tree-item.is-active").forEach((e) => e.classList.remove("is-active"));
     if (itemEl) itemEl.classList.add("is-active");
+    saveLastOpened(path);
 
     fileNameEl.textContent = path;
     if (langEl) langEl.textContent = langLabel(name);
@@ -275,7 +298,7 @@
       metaEl.innerHTML =
         (data.modified
           ? '<span class="badge bg-warning bg-opacity-25 text-warning">Modified by you</span>'
-          : '<span class="badge bg-secondary bg-opacity-25 text-secondary">Base template</span>') +
+          : '<span class="badge bg-info bg-opacity-25 text-info">Base template</span>') +
         ' <span class="small text-secondary">v' +
         (data.version || 1) +
         "</span>";
@@ -327,6 +350,29 @@
     if (window.TomNotify) {
       window.TomNotify.show(msg, "File Manager", type);
     }
+  }
+
+  // Save last opened file to DB
+  async function saveLastOpened(path) {
+    try {
+      await fetch("/api/instances/save_last_opened_file", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: slug, path: path }),
+      });
+    } catch (e) { /* ignore */ }
+  }
+
+  // Find a file node in the tree by path
+  function findNode(tree, path) {
+    for (const node of tree) {
+      if (node.path === path) return node;
+      if (node.is_dir && node.children) {
+        const found = findNode(node.children, path);
+        if (found) return found;
+      }
+    }
+    return null;
   }
 
   // ---- Create new file / folder ---------------------------------------

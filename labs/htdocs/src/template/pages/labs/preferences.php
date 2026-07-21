@@ -243,7 +243,7 @@
                                                 
                                                 <?php if(isset($field['copy']) && $field['copy']): ?>
                                                     <button class="btn btn-outline-secondary ms-2 rounded-pill px-3" 
-                                                            onclick="copyText('<?= htmlspecialchars($field['value']) ?>')">
+                                                            data-copy="<?= htmlspecialchars($field['value']) ?>">
                                                         <i class='bx bx-copy'></i>
                                                     </button>
                                                 <?php endif; ?>

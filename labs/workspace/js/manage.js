@@ -90,20 +90,177 @@ function initInstanceTabs() {
 if (!window.__instanceTabDelegated) {
     window.__instanceTabDelegated = true;
     document.addEventListener('click', (e) => {
-        const btn = e.target.closest('.manage-tab-btn');
-        if (!btn) return;
-        e.preventDefault();
-        const tabName = btn.dataset.tab;
-        if (tabName && window.__loadInstanceTab) {
-            window.__loadInstanceTab(tabName);
+        // Tab switching
+        const tabBtn = e.target.closest('.manage-tab-btn');
+        if (tabBtn) {
+            e.preventDefault();
+            const tabName = tabBtn.dataset.tab;
+            if (tabName && window.__loadInstanceTab) window.__loadInstanceTab(tabName);
+            return;
+        }
+
+        // Save configuration
+        if (e.target.closest('#saveConfigBtn')) {
+            e.preventDefault();
+            saveInstanceConfig();
+            return;
+        }
+
+        // Add user
+        if (e.target.closest('#addConfigUser')) {
+            e.preventDefault();
+            addConfigUser();
+            return;
+        }
+
+        // Remove user
+        const removeBtn = e.target.closest('.remove-user');
+        if (removeBtn) {
+            removeBtn.closest('[data-user-index]').remove();
+            return;
+        }
+
+        // Add bind mount
+        if (e.target.closest('#addBindMount')) {
+            e.preventDefault();
+            addBindMount();
+            return;
+        }
+
+        // Remove bind mount
+        const removeMount = e.target.closest('.remove-mount');
+        if (removeMount) {
+            removeMount.closest('[data-mount-index]').remove();
+            return;
         }
     });
 }
 
+function getSlugFromUrl() {
+    const parts = window.location.pathname.split('/').filter(Boolean);
+    return parts.length >= 2 && parts[0] === 'instances' ? parts[1] : null;
+}
+
+async function saveInstanceConfig() {
+    const slug = getSlugFromUrl();
+    if (!slug) return;
+
+    const saveBtn = document.getElementById('saveConfigBtn');
+    if (!saveBtn) return;
+
+    const data = {};
+    document.querySelectorAll('#instanceTabsContent [data-field]').forEach(el => {
+        const field = el.dataset.field;
+        if (field.startsWith('users.') || field.startsWith('bind_mounts.')) return;
+        if (el.type === 'checkbox') {
+            data[field] = el.checked;
+        } else if (field === 'ports') {
+            data[field] = el.value.trim().split(/\s+/).filter(Boolean);
+        } else {
+            data[field] = el.value;
+        }
+    });
+
+    // Collect users
+    const usersList = document.getElementById('configUsersList');
+    if (usersList) {
+        const userRows = usersList.querySelectorAll('[data-user-index]');
+        data.users = [];
+        userRows.forEach(row => {
+            const username = row.querySelector('[data-field$=".username"]');
+            const shell = row.querySelector('[data-field$=".shell"]');
+            const sudo = row.querySelector('[data-field$=".sudo"]');
+            if (username && username.value.trim()) {
+                data.users.push({
+                    username: username.value.trim(),
+                    shell: shell ? shell.value : '/bin/bash',
+                    sudo: sudo ? sudo.checked : false
+                });
+            }
+        });
+    }
+
+    // Collect bind mounts
+    const mountsList = document.getElementById('configBindMountsList');
+    if (mountsList) {
+        const mountInputs = mountsList.querySelectorAll('[data-field^="bind_mounts."]');
+        data.bind_mounts = [];
+        mountInputs.forEach(input => {
+            if (input.value.trim()) data.bind_mounts.push(input.value.trim());
+        });
+    }
+
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving...';
+
+    try {
+        const res = await fetch('/api/instances/save_config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ slug: slug, config: data })
+        });
+        const result = await res.json();
+        if (result.status === 'success') {
+            saveBtn.innerHTML = '<i class="bx bx-check me-1"></i> Saved!';
+            setTimeout(() => { saveBtn.innerHTML = '<i class="bx bx-save me-1"></i> Save configuration'; }, 2000);
+        } else {
+            alert('Error: ' + (result.error || 'Failed to save'));
+            saveBtn.innerHTML = '<i class="bx bx-save me-1"></i> Save configuration';
+        }
+    } catch (e) {
+        alert('Network error.');
+        saveBtn.innerHTML = '<i class="bx bx-save me-1"></i> Save configuration';
+    } finally {
+        saveBtn.disabled = false;
+    }
+}
+
+function addConfigUser() {
+    const usersList = document.getElementById('configUsersList');
+    if (!usersList) return;
+    const idx = usersList.querySelectorAll('[data-user-index]').length;
+    const html = `
+        <div class="d-flex align-items-center gap-2 mb-2 p-2 rounded-3 border border-secondary border-opacity-25 bg-black bg-opacity-50" data-user-index="${idx}">
+            <div class="bg-secondary bg-opacity-25 p-1 rounded d-flex"><i class='bx bx-user text-secondary'></i></div>
+            <input type="text" class="form-control form-control-sm config-input bg-transparent border-0 text-white fw-bold" style="max-width:120px;" placeholder="username" data-field="users.${idx}.username">
+            <select class="form-select form-select-sm config-input bg-transparent border-0 text-secondary" style="max-width:120px;" data-field="users.${idx}.shell">
+                <option value="/bin/bash">/bin/bash</option>
+                <option value="/bin/sh">/bin/sh</option>
+                <option value="/bin/zsh">/bin/zsh</option>
+            </select>
+            <div class="ms-auto d-flex align-items-center gap-3 pe-2">
+                <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
+                    <input class="form-check-input m-0" type="checkbox" role="switch" data-field="users.${idx}.sudo">
+                    <label class="form-check-label text-secondary small">sudo</label>
+                </div>
+                <i class='bx bx-trash text-danger pointer small remove-user' data-user-index="${idx}"></i>
+            </div>
+        </div>`;
+    usersList.insertAdjacentHTML('beforeend', html);
+}
+
+function addBindMount() {
+    const mountsList = document.getElementById('configBindMountsList');
+    if (!mountsList) return;
+    // Remove "no mounts" placeholder if present
+    const placeholder = mountsList.querySelector('.opacity-50');
+    if (placeholder) placeholder.remove();
+    const idx = mountsList.querySelectorAll('[data-mount-index]').length;
+    const html = `
+        <div class="d-flex align-items-center gap-2 mb-2" data-mount-index="${idx}">
+            <input type="text" class="form-control form-control-sm config-input" placeholder="{labstorage}/home:/home" data-field="bind_mounts.${idx}" style="font-size: 0.8rem;">
+            <i class='bx bx-trash text-danger pointer small remove-mount' data-mount-index="${idx}"></i>
+        </div>`;
+    mountsList.insertAdjacentHTML('beforeend', html);
+}
+
 // Initialise now (full load) and whenever HTMX settles a swap.
-if (document.readyState !== 'loading') {
+function initManagePage() {
     initInstanceTabs();
 }
-document.addEventListener('DOMContentLoaded', initInstanceTabs);
-document.addEventListener('htmx:afterSettle', initInstanceTabs);
-document.addEventListener('htmx:load', initInstanceTabs);
+if (document.readyState !== 'loading') {
+    initManagePage();
+}
+document.addEventListener('DOMContentLoaded', initManagePage);
+document.addEventListener('htmx:afterSettle', initManagePage);
+document.addEventListener('htmx:load', initManagePage);

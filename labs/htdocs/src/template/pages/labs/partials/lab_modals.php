@@ -112,7 +112,7 @@
                             <div class="input-group input-group-sm">
                                 <input type="text" class="form-control border-secondary border-opacity-25 bg-body-tertiary text-body" 
                                        value="<?= htmlspecialchars($field['value']) ?>" readonly>
-                                <button class="btn btn-outline-secondary px-3" onclick="copyText('<?= htmlspecialchars($field['value']) ?>')">
+                                <button class="btn btn-outline-secondary px-3" data-copy="<?= htmlspecialchars($field['value']) ?>">
                                     <i class='bx bx-copy'></i>
                                 </button>
                             </div>

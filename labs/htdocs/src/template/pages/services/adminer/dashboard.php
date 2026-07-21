@@ -45,7 +45,7 @@ Session::addCustomJs('/js/copy.js');
                         <span class="text-secondary fw-semibold" style="font-size: 0.85rem;">3. Enter the Forwarding Address</span>
                         <div class="d-flex align-items-center">
                             <span class="text-info font-monospace fw-bold me-3" style="font-size: 0.95rem;">adminer.tomweb.in:8080</span>
-                            <i class='bx bx-copy text-secondary cursor-pointer hover-white' style="font-size: 1.2rem;" onclick="copyText('adminer.tomweb.in:8080', 'Address copied');"></i>
+                            <i class='bx bx-copy text-secondary cursor-pointer hover-white' style="font-size: 1.2rem;" data-copy="adminer.tomweb.in:8080"></i>
                         </div>
                     </div>
                     <div class="mb-0 d-flex justify-content-between align-items-center bg-dark bg-opacity-50 p-3 rounded border border-light border-opacity-10">

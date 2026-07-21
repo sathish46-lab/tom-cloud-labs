@@ -22,10 +22,9 @@ class Storage {
         }
         return self::$client;
     }
+
     /**
      * Upload a file to MinIO
-     * @param string $localFilePath Full path to the file on your server
-     * @param string $s3Path The destination path inside the bucket (e.g., 'avatars/user1.png')
      */
     public static function upload($localFilePath, $s3Path) {
         $client = self::getClient();
@@ -36,13 +35,57 @@ class Storage {
                 'Bucket' => $config['bucket'],
                 'Key'    => ltrim($s3Path, '/'),
                 'SourceFile' => $localFilePath,
-                'ACL'    => 'public-read', // Ensures the image is viewable via URL
-                'ContentType' => mime_content_type($localFilePath) // Important for browser rendering
+                'ACL'    => 'public-read',
+                'ContentType' => mime_content_type($localFilePath)
             ]);
             return $result;
         } catch (Aws\S3\Exception\S3Exception $e) {
             error_log("MinIO Upload Error: " . $e->getMessage());
             return false;
         }
+    }
+
+    /**
+     * Download a file's content from MinIO.
+     * Returns the body string on success, false on failure.
+     */
+    public static function download($s3Path) {
+        $client = self::getClient();
+        $config = get_config('s3');
+
+        try {
+            $result = $client->getObject([
+                'Bucket' => $config['bucket'],
+                'Key'    => ltrim($s3Path, '/'),
+            ]);
+            return (string) $result['Body'];
+        } catch (Aws\S3\Exception\S3Exception $e) {
+            error_log("MinIO Download Error: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * List all object keys under a prefix.
+     * Returns an array of key strings.
+     */
+    public static function listObjects($prefix) {
+        $client = self::getClient();
+        $config = get_config('s3');
+        $keys = [];
+
+        try {
+            $iterator = $client->getIterator('ListObjectsV2', [
+                'Bucket' => $config['bucket'],
+                'Prefix' => ltrim($prefix, '/'),
+            ]);
+            foreach ($iterator as $object) {
+                $keys[] = $object['Key'];
+            }
+        } catch (Aws\S3\Exception\S3Exception $e) {
+            error_log("MinIO List Error: " . $e->getMessage());
+            return false;
+        }
+        return $keys;
     }
 }

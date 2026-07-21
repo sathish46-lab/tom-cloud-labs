@@ -1,18 +1,23 @@
 <?php
 // Fetch instance data for this page
-$slug = $_GET['slug'] ?? '';
+$hash = $_GET['slug'] ?? '';
 $user = Session::getUser();
 $userId = (int)$user->getUserId();
-$db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
-$instance = $db->instances->findOne(['slug' => $slug]);
+$db = DatabaseConnection::getClient()->selectDatabase('tom_labs_instances_db');
+$instance = $db->instances->findOne(['instance_hash' => $hash]);
+// Fallback: try by slug for old URLs
+if (!$instance) {
+    $instance = $db->instances->findOne(['slug' => $hash]);
+}
 
-$instName = $instance['name'] ?? ucfirst($slug);
+$instName = $instance['name'] ?? ucfirst($hash);
 $instType = $instance['type'] ?? 'machine';
 $instStatus = $instance['status'] ?? 'draft';
 $instImage = $instance['image'] ?? 'ubuntu:24.04';
 $instIcon = $instance['icon'] ?? 'bx-cube-alt';
 $instColor = $instance['color'] ?? '#ff416c';
-$instSlug = $instance['slug'] ?? $slug;
+$instSlug = $instance['slug'] ?? $hash;
+$instHash = $instance['instance_hash'] ?? $hash;
 $instVisibility = $instance['visibility'] ?? 'private';
 $instDescription = $instance['description'] ?? '';
 $instVersion = $instance['version'] ?? 'v0.0.1';
@@ -32,6 +37,8 @@ $instVersion = $instance['version'] ?? 'v0.0.1';
 }
 .instance-header-btn:hover {
     background-color: rgba(255,255,255,0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
 }
 .instance-header-btn.btn-primary {
     background-color: #ff4b2b;
@@ -39,6 +46,16 @@ $instVersion = $instance['version'] ?? 'v0.0.1';
 }
 .instance-header-btn.btn-primary:hover {
     background-color: #ff416c;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+}
+.copy-hash-btn {
+    transition: all 0.2s;
+    cursor: pointer;
+}
+.copy-hash-btn:hover {
+    color: white !important;
+    transform: translateY(-2px);
 }
 .nav-tabs .nav-link {
     color: rgba(255,255,255,0.6);
@@ -153,15 +170,18 @@ $instVersion = $instance['version'] ?? 'v0.0.1';
                 <div>
                     <div class="d-flex align-items-center gap-2 mb-1">
                         <h3 class="fw-bold theme-text m-0"><?= htmlspecialchars($instName) ?></h3>
-                        <span class="badge bg-secondary bg-opacity-25 border border-secondary border-opacity-25 text-secondary rounded-pill px-2"><?= htmlspecialchars($instType) ?></span>
-                        <span class="badge bg-secondary bg-opacity-25 border border-secondary border-opacity-25 text-secondary rounded-pill px-2"><?= htmlspecialchars($instStatus) ?></span>
+                        <span class="badge instance-badge-tag badge-type-<?= htmlspecialchars($instType) ?>"><?= htmlspecialchars($instType) ?></span>
+                        <span class="badge instance-badge-tag badge-status-<?= htmlspecialchars($instStatus) ?>"><?= htmlspecialchars($instStatus) ?></span>
                         <?php if ($instVisibility === 'public'): ?>
-                        <span class="badge bg-info bg-opacity-10 border border-info border-opacity-25 text-info rounded-pill px-2">public</span>
+                        <span class="badge instance-badge-tag badge-vis-public">public</span>
+                        <?php else: ?>
+                        <span class="badge instance-badge-tag badge-vis-private">private</span>
                         <?php endif; ?>
-                        <span class="badge bg-secondary bg-opacity-25 border border-secondary border-opacity-25 text-secondary rounded-pill px-2"><?= htmlspecialchars($instVersion) ?></span>
+                        <span class="badge instance-badge-tag border border-secondary text-secondary"><?= htmlspecialchars($instVersion) ?></span>
                     </div>
                     <div class="d-flex align-items-center gap-2 text-secondary small">
-                        Template <span class="text-info font-monospace"><?= htmlspecialchars(substr($instSlug, 0, 12)) ?></span> - <?= htmlspecialchars($instImage) ?>
+                        Template <span class="text-info font-monospace"><?= htmlspecialchars($instance['template'] ?? 'essentials') ?></span> - <?= htmlspecialchars($instImage) ?>
+                        <button type="button" class="btn btn-link text-secondary p-0 border-0 ms-1 copy-hash-btn" data-hash="<?= htmlspecialchars($instHash) ?>" title="Copy Instance ID"><i class='bx bx-copy'></i></button>
                     </div>
                     <?php if (!empty($instDescription)): ?>
                     <div class="text-secondary small mt-1">
@@ -225,10 +245,10 @@ $instVersion = $instance['version'] ?? 'v0.0.1';
     </div>
 </div>
 
-<div class="container-fluid px-4 py-3">
+<div class="container-fluid px-3 py-2">
 
     <!-- Progress Pipeline Bar -->
-    <div class="card blur border-0 rounded-3 shadow-sm px-4 py-3 mb-4">
+    <div class="card blur border-0 rounded-3 shadow-sm px-4 py-3 mb-2">
         <div class="d-flex align-items-center gap-3 text-secondary small fw-bold">
             <span class="text-success d-flex align-items-center gap-1">Configure <i class='bx bx-check'></i></span>
             <i class='bx bx-chevron-right fs-5 opacity-50'></i>

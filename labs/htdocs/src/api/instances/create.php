@@ -10,7 +10,9 @@ if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
 header('Content-Type: application/json');
 $user = Session::getUser();
 $userId = (int)$user->getUserId();
-$db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
+$username = $user->getUsername();
+$email = $user->getEmail();
+$db = DatabaseConnection::getClient()->selectDatabase('tom_labs_instances_db');
 
 $name = trim($_POST['name'] ?? '');
 $visibility = $_POST['visibility'] ?? 'private';
@@ -33,10 +35,16 @@ if ($existing) {
     $slug .= '-' . rand(1000, 9999);
 }
 
+// Generate unique instance hash (email + slug + salt)
+$instanceHash = md5($email . $slug . '8b51626f3a468904e8b6f83747f2fcf1');
+
 $instance = [
     'user_id' => $userId,
+    'username' => $username,
+    'email' => $email,
     'name' => $name,
     'slug' => $slug,
+    'instance_hash' => $instanceHash,
     'visibility' => $visibility,
     'type' => $type,
     'template' => $template,
@@ -62,7 +70,7 @@ if ($result->getInsertedCount() > 0) {
     ob_start();
     ?>
     <div class="col" id="instance-<?= htmlspecialchars($slug) ?>">
-        <a href="/instances/<?= htmlspecialchars($slug) ?>" class="card h-100 blur border-0 shadow-lg rounded-4 overflow-hidden text-decoration-none group device-card">
+        <a href="/instances/<?= htmlspecialchars($instanceHash) ?>" class="card h-100 blur border-0 shadow-lg rounded-4 overflow-hidden text-decoration-none group device-card">
             <div class="card-body p-4 d-flex flex-column justify-content-between h-100">
                 <div>
                     <div class="d-flex align-items-center justify-content-between mb-3">

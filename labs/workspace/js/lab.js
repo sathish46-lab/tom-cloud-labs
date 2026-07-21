@@ -1387,67 +1387,11 @@ function launchService(btn, type) {
 }
 /* ============================================================================
  * UTILITIES: Clipboard Handling
+ * ============================================================================
+ * All clipboard logic is now in /js/clipboard.js (loaded separately in _master.php).
+ * The delegated handler in clipboard.js handles .clipboard[data-clipboard-text] clicks.
  * ============================================================================ */
-window.onPageLoad( () => {
-  // Global handler for .clipboard buttons
-  document.body.addEventListener('click', async (e) => {
-    const btn = e.target.closest('.clipboard');
-    if (!btn) return;
 
-    e.preventDefault();
-    const text = btn.getAttribute('data-clipboard-text');
-    if (!text) return;
-
-    try {
-      // Robust Copy Handler with Fallback
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(text);
-      } else {
-        // Fallback for non-secure contexts
-        const textArea = document.createElement("textarea");
-        textArea.value = text;
-        textArea.style.position = "fixed";
-        textArea.style.left = "-9999px";
-        textArea.style.top = "0";
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-      }
-
-      // 1. Visual Feedback on Button
-      const originalInner = btn.innerHTML;
-      btn.innerHTML = '<i class="bx bx-check text-success"></i>';
-      btn.classList.add('active');
-
-      setTimeout(() => {
-        btn.innerHTML = originalInner;
-        btn.classList.remove('active');
-      }, 2000);
-
-      // 2. Premium Toast Notification
-      const toastEl = document.getElementById('copyToast');
-      if (toastEl) {
-        const toast = coreui.Toast.getOrCreateInstance(toastEl);
-        const titleEl = document.getElementById('toast-title');
-        const msgEl = document.getElementById('toast-message');
-
-        // Extract label from tooltip or use generic
-        let label = btn.getAttribute('title') || btn.getAttribute('data-coreui-title') || 'Information';
-        label = label.replace('Copy ', ''); // Clean up title
-
-        if (titleEl) titleEl.innerText = 'Copied!';
-        if (msgEl) msgEl.innerText = `${label} has been copied into your clipboard`;
-
-        toast.show();
-      }
-
-    } catch (err) {
-      console.error('Failed to copy: ', err);
-    }
-  });
-});
 //  * EVENT LISTENERS
 //  * ========================================================================== */
 

@@ -2761,10 +2761,9 @@ try {
 
                 copyBtn.addEventListener('click', () => {
                     const codeText = pre.querySelector('code')?.innerText || pre.innerText;
-                    navigator.clipboard.writeText(codeText).then(() => {
-                        copyBtn.innerHTML = '<i class="bx bx-check text-success"></i> Copied!';
-                        setTimeout(() => { copyBtn.innerHTML = '<i class="bx bx-copy"></i> Copy'; }, 2000);
-                    });
+                    copyText(codeText, 'Code copied!');
+                    copyBtn.innerHTML = '<i class="bx bx-check text-success"></i> Copied!';
+                    setTimeout(() => { copyBtn.innerHTML = '<i class="bx bx-copy"></i> Copy'; }, 2000);
                 });
 
                 pre.appendChild(copyBtn);
@@ -3181,50 +3180,14 @@ try {
 
     window.shareLessonAction = function(lessonId, lessonTitle, btnEl) {
         const shareUrl = window.location.origin + '/learn/lesson/' + lessonId;
-        
-        const onSuccess = () => {
-            if (btnEl) {
-                const icon = btnEl.querySelector('i');
-                if (icon) {
-                    const origClass = icon.className;
-                    icon.className = 'bx bx-check text-success fs-6';
-                    setTimeout(() => { icon.className = origClass; }, 2000);
-                }
+        copyText(shareUrl, 'Lesson link copied!');
+        if (btnEl) {
+            const icon = btnEl.querySelector('i');
+            if (icon) {
+                const origClass = icon.className;
+                icon.className = 'bx bx-check text-success fs-6';
+                setTimeout(() => { icon.className = origClass; }, 2000);
             }
-            if (typeof TomNotify !== 'undefined') {
-                TomNotify.show("Lesson link copied to clipboard!", "Lesson Shared", "success", 3000);
-            }
-        };
-
-        const fallbackCopy = () => {
-            try {
-                const textArea = document.createElement("textarea");
-                textArea.value = shareUrl;
-                textArea.style.position = "fixed";
-                textArea.style.left = "-999999px";
-                textArea.style.top = "-999999px";
-                document.body.appendChild(textArea);
-                textArea.focus();
-                textArea.select();
-                const successful = document.execCommand('copy');
-                textArea.remove();
-                if (successful) {
-                    onSuccess();
-                } else if (typeof TomNotify !== 'undefined') {
-                    TomNotify.show("Could not copy automatically. Link: " + shareUrl, "Copy Failed", "error", 4000);
-                }
-            } catch (e) {
-                console.error("Fallback copy failed", e);
-                if (typeof TomNotify !== 'undefined') {
-                    TomNotify.show("Could not copy automatically. Link: " + shareUrl, "Copy Failed", "error", 4000);
-                }
-            }
-        };
-
-        if (navigator.clipboard && window.isSecureContext) {
-            navigator.clipboard.writeText(shareUrl).then(onSuccess).catch(() => fallbackCopy());
-        } else {
-            fallbackCopy();
         }
     };
 

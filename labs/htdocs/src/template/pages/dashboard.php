@@ -676,7 +676,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                                 <div class="text-white font-monospace fw-bold server-ip"><?= htmlspecialchars($lab['ip']) ?></div>
                                                                 <div class="text-white text-opacity-40 uppercase fw-bold server-ip-lbl">INTERNAL IP</div>
                                                             </div>
-                                                            <button class="btn btn-sm btn-link p-0 text-white text-opacity-40 hover-text-white transition-all btn-copy" onclick="copyText('<?= htmlspecialchars(addslashes($lab['ip'])) ?>', 'IP copied!')">
+                                                             <button class="btn btn-sm btn-link p-0 text-white text-opacity-40 hover-text-white transition-all btn-copy" data-copy="<?= htmlspecialchars(addslashes($lab['ip'])) ?>">
                                                                 <i class="bx bx-copy"></i>
                                                             </button>
                                                         </div>
@@ -700,7 +700,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                                 <div class="text-white font-monospace fw-bold server-ip">172.30.0.28</div>
                                                                 <div class="text-white text-opacity-40 uppercase fw-bold server-ip-lbl">INTERNAL IP</div>
                                                             </div>
-                                                            <button class="btn btn-sm btn-link p-0 text-white text-opacity-40 hover-text-white transition-all btn-copy" onclick="copyText('172.30.0.28', 'IP copied!')">
+                                                             <button class="btn btn-sm btn-link p-0 text-white text-opacity-40 hover-text-white transition-all btn-copy" data-copy="172.30.0.28">
                                                                 <i class="bx bx-copy"></i>
                                                             </button>
                                                         </div>
@@ -1236,6 +1236,16 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
     </div>
 </div>
 <script>
+function switchContinueTab(tab) {
+    document.querySelectorAll('.continue-tab-pane').forEach(p => p.classList.add('d-none'));
+    document.querySelectorAll('.continue-tab-btn').forEach(b => b.classList.remove('active'));
+    const pane = document.getElementById('continue-pane-' + tab);
+    if (pane) pane.classList.remove('d-none');
+    const btn = document.querySelector('.continue-tab-btn[data-tab="' + tab + '"]');
+    if (btn) btn.classList.add('active');
+}
+window.switchContinueTab = switchContinueTab;
+
 window.onPageLoad(function() {
     // Initialize premium lab metrics polling
     if (typeof window.initDashboardPolling === 'function') {

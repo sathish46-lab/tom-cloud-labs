@@ -17,8 +17,11 @@ if (empty($slug)) {
     exit;
 }
 
-$db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
-$instance = $db->instances->findOne(['slug' => $slug]);
+$db = DatabaseConnection::getClient()->selectDatabase('tom_labs_instances_db');
+$instance = $db->instances->findOne(['instance_hash' => $slug]);
+if (!$instance) {
+    $instance = $db->instances->findOne(['slug' => $slug]);
+}
 
 if (!$instance) {
     echo json_encode(['status' => 'error', 'error' => 'Instance not found']);
@@ -38,13 +41,18 @@ if (!$templateFolder) {
     exit;
 }
 
-// Ensure base layer exists (lazy seed if missed at creation)
-InstanceFileStore::seedBaseLayer($templateFolder);
+// Base layer lives in MinIO (seeded lazily if missing)
 
 $tree = InstanceFileStore::getTree($instanceId, $templateFolder);
+
+// Get last opened file for this user
+$userId = (string)$user->getUserId();
+$lastOpenedFiles = (array)($instance['last_file_opened'] ?? []);
+$lastOpened = $lastOpenedFiles[$userId] ?? null;
 
 echo json_encode([
     'status' => 'success',
     'tree' => $tree,
     'template' => $templateFolder,
+    'last_opened' => $lastOpened,
 ]);

@@ -37,6 +37,7 @@ module.exports = function (grunt) {
           "../js/quiz/*.js",
           "!../js/ui-init.js",
           "!../js/htmx-bridge.js",
+          "!../js/clipboard.js",
         ],
         dest: "../../htdocs/js/app.js",
       },
@@ -114,7 +115,7 @@ module.exports = function (grunt) {
           {
             expand: true,
             flatten: true,
-            src: ["../js/ui-init.js", "../js/htmx-bridge.js"],
+            src: ["../js/ui-init.js", "../js/htmx-bridge.js", "../js/clipboard.js"],
             dest: "../../htdocs/js/",
           },
         ],

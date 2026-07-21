@@ -28,8 +28,11 @@ if (empty($slug)) {
 }
 
 try {
-    $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
+    $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_instances_db');
+    $instance = $db->instances->findOne(['instance_hash' => $slug]);
+if (!$instance) {
     $instance = $db->instances->findOne(['slug' => $slug]);
+}
 
     if (!$instance) {
         http_response_code(404);

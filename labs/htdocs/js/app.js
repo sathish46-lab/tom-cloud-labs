@@ -17949,7 +17949,7 @@ function renderConnectionFields(fields, container) {
             const escapedValue = field.value.replace(/'/g, "\\'");
             const copyBtn = field.copy ? `
                 <button class="btn btn-outline-secondary ms-2 rounded-pill px-3" 
-                        onclick="copyText('${escapedValue}', '${field.label} copied!')">
+                        data-copy="${escapedValue}">
                     <i class='bx bx-copy'></i>
                 </button>` : '';
 
@@ -17986,344 +17986,6 @@ function renderConnectionFields(fields, container) {
   })();
 } catch (e) {
   console.error("[Fatal Error in connection_info.js]", e);
-}
-
-/**
- * Wrapped with IIFE Error Boundary
- */
-try {
-  (function() {
-    "use strict";
-
-
-/**
- * Copies raw text string to clipboard and shows toast
- */
-function copyText(text, toastMsg = "Text copied to clipboard!") {
-    const notifySuccess = () => {
-        showToast(toastMsg);
-    };
-
-    if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(text).then(notifySuccess).catch((err) => {
-            console.error("Clipboard API failed: ", err);
-            // If it still fails, try fallback synchronously (though it may be blocked)
-            if (fallbackCopyText(text)) {
-                notifySuccess();
-            }
-        });
-    } else {
-        // In insecure contexts, run fallback synchronously immediately during the click event!
-        if (fallbackCopyText(text)) {
-            notifySuccess();
-        }
-    }
-}
-
-function fallbackCopyText(text) {
-    const textArea = document.createElement("textarea");
-    textArea.value = text;
-    textArea.style.top = "0";
-    textArea.style.left = "0";
-    textArea.style.position = "fixed";
-    textArea.style.opacity = "0";
-    
-    // Prevent Modal Focus Trap from stealing focus!
-    // Append the hidden textarea to the active modal if one is open, otherwise use body.
-    const activeModal = document.querySelector('.modal.show');
-    const container = activeModal ? activeModal : document.body;
-    
-    container.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
-    
-    let successful = false;
-    try {
-        successful = document.execCommand('copy');
-    } catch (err) {
-        console.error('Fallback copy failed', err);
-    }
-    
-    container.removeChild(textArea);
-    return successful;
-}
-
-/**
- * Copies value from an input element by ID and shows toast
- */
-function copyValue(elementId) {
-    const copyTextEl = document.getElementById(elementId);
-    if (copyTextEl) {
-        copyText(copyTextEl.value, "Command copied!");
-    }
-}
-
-/**
- * CoreUI Toast Trigger Function
- */
-function showToast(message) {
-    if (window.TomNotify && typeof window.TomNotify.show === 'function') {
-        window.TomNotify.show(message, "Success", "success", 3000);
-    } else {
-        const toastEl = document.getElementById('copyToast');
-        const messageEl = document.getElementById('toast-message');
-        if (toastEl && messageEl) {
-            messageEl.innerText = message;
-            const toast = new coreui.Toast(toastEl, {
-                delay: 3000,
-                autohide: true
-            });
-            toast.show();
-        }
-    }
-
-    // Optional: Visual feedback on the clicked button
-    try {
-        if (typeof event !== 'undefined' && event && event.currentTarget) {
-            const btn = event.currentTarget;
-            const icon = btn.querySelector('i');
-            if (icon) {
-                const originalClass = icon.className;
-                icon.className = 'bx bx-check text-success';
-                setTimeout(() => { icon.className = originalClass; }, 2000);
-            }
-        }
-    } catch (e) {
-        console.error(e);
-    }
-}
-
-    
-
-    // --- Explicit Window Exports for Inline HTML ---
-    window.copyText = copyText;
-    window.showToast = showToast;
-    window.fallbackCopyText = fallbackCopyText;
-    window.copyValue = copyValue;
-
-  })();
-} catch (e) {
-  console.error("[Fatal Error in copy.js]", e);
-}
-
-/**
- * Wrapped with IIFE Error Boundary
- */
-try {
-  (function() {
-    "use strict";
-
-
-// ========================================================================
-// Dashboard — Workspace Polling & Insights Animations
-// ========================================================================
-
-(function () {
-    let dashboardPollingInterval = null;
-
-    window.initDashboardPolling = function () {
-        if (dashboardPollingInterval) return; // Prevent duplicate intervals
-
-        function fetchDashboardMetrics() {
-            if (!document.getElementById('insights-subtitle') && !document.querySelector('[id^="cpu-"]')) {
-                window.stopDashboardPolling();
-                return;
-            }
-
-            fetch(`/api/dashboard/stats`)
-                .then(res => res.json())
-                .then(data => {
-                    if (!data.labs || !data.labs.all_labs) return;
-                    
-                    data.labs.all_labs.forEach(lab => {
-                        const hash = lab.hash;
-                        const stats = lab.metrics;
-                        if (!hash || !stats) return;
-
-                        const cpuEl = document.getElementById(`cpu-${hash}`);
-                        const memEl = document.getElementById(`mem-${hash}`);
-                        const loadEl = document.getElementById(`load-${hash}`);
-
-                        if (stats.CPUPerc && cpuEl) cpuEl.textContent = stats.CPUPerc;
-                        if (stats.MemUsage && memEl) {
-                            const usage = stats.MemUsage.split(' / ')[0];
-                            memEl.textContent = usage;
-                        }
-                        if (stats.Load1 !== undefined && loadEl) {
-                            const loadAvg = `${stats.Load1.toFixed(2)}, ${stats.Load5.toFixed(2)}, ${stats.Load15.toFixed(2)}`;
-                            loadEl.textContent = loadAvg;
-                        }
-                    });
-                })
-                .catch(() => { });
-        }
-        
-        fetchDashboardMetrics();
-        dashboardPollingInterval = setInterval(fetchDashboardMetrics, 5000);
-    };
-
-    // To allow stopping it on HTMX page transitions if needed
-    window.stopDashboardPolling = function() {
-        if (dashboardPollingInterval) {
-            clearInterval(dashboardPollingInterval);
-            dashboardPollingInterval = null;
-        }
-    };
-
-    document.addEventListener('htmx:beforeSwap', () => {
-        window.stopDashboardPolling();
-    });
-
-    // Initialize Smart Insights activity graph
-    window.initDashboardInsights = function () {
-        const subtitle = document.getElementById('insights-subtitle');
-        const peakLabel = document.getElementById('insights-peak-label');
-        const footer = document.getElementById('insights-footer');
-        const activeDays = document.getElementById('insights-active-days');
-        const lastSeen = document.getElementById('insights-last-seen');
-
-        if (!subtitle || !peakLabel) return;
-
-        fetch('/api/dashboard/insights')
-            .then(res => res.json())
-            .then(data => {
-                if (data.has_data) {
-                    subtitle.textContent = "You're most productive between";
-                    peakLabel.textContent = data.peak_label;
-
-                    // Animate bars with theme-aware colors
-                    const isLight = document.documentElement.getAttribute('data-coreui-theme') === 'light';
-                    const bars = document.querySelectorAll('.insights-bar');
-                    const barValues = data.bars || [];
-                    bars.forEach((bar, i) => {
-                        const val = barValues[i] || 0;
-                        const minHeight = val > 0 ? Math.max(val, 6) : 3;
-                        setTimeout(() => {
-                            bar.style.height = minHeight + '%';
-                            if (val >= 70) {
-                                // Peak hours — orange
-                                bar.style.background = '#ffa502';
-                                bar.style.boxShadow = isLight ? '0 0 6px rgba(255, 165, 2, 0.45)' : '0 0 8px rgba(255, 165, 2, 0.35)';
-                            } else if (val > 0) {
-                                // Active hours
-                                bar.style.background = isLight ? 'rgba(0, 0, 0, 0.16)' : 'rgba(255, 255, 255, 0.22)';
-                                bar.style.boxShadow = 'none';
-                            } else {
-                                // Inactive — very subtle
-                                bar.style.background = isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.08)';
-                                bar.style.boxShadow = 'none';
-                            }
-                        }, i * 25);
-                    });
-
-                    // Show footer stats
-                    if (data.active_days > 0 && activeDays && footer) {
-                        activeDays.textContent = data.active_days + ' active days';
-                        footer.style.cssText = '';
-                        footer.classList.remove('d-none');
-                        footer.classList.add('d-flex');
-                    }
-                    if (data.last_seen && lastSeen) {
-                        lastSeen.textContent = 'Last: ' + data.last_seen;
-                    }
-                } else {
-                    subtitle.textContent = "Start exploring to see your insights";
-                    peakLabel.textContent = "No data yet";
-                    peakLabel.style.fontSize = '1.2rem';
-                    peakLabel.style.opacity = '0.4';
-                }
-            })
-            .catch(() => {
-                subtitle.textContent = "Start exploring to see your insights";
-                peakLabel.textContent = "No data yet";
-            });
-    };
-
-    // Tab Switcher and selection persistence
-    window.switchContinueTab = function (tabId) {
-        // 1. Update buttons by toggling active class cleanly
-        const buttons = document.querySelectorAll('.continue-tab-btn');
-        buttons.forEach(btn => {
-            if (btn.getAttribute('data-tab') === tabId) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
-        });
-
-        // 2. Toggle panes
-        const panes = document.querySelectorAll('.continue-tab-pane');
-        panes.forEach(pane => {
-            if (pane.id === 'continue-pane-' + tabId) {
-                pane.classList.remove('d-none');
-            } else {
-                pane.classList.add('d-none');
-            }
-        });
-
-        // 3. Persist the active tab in DB
-        try {
-            const fd = new FormData();
-            fd.append('preference_id', 'active_continue_tab');
-            fd.append('value', tabId);
-            fetch('/api/user/preference_save', { method: 'POST', body: fd }).catch(() => {});
-        } catch (e) {
-            console.error('Failed to persist active tab:', e);
-        }
-    };
-})();
-
-// Live search for lessons via Prompt Box
-let searchDebounceTimeout = null;
-const aiPromptInput = document.getElementById('aiLessonPrompt');
-if (aiPromptInput) {
-    aiPromptInput.addEventListener('input', function(e) {
-        clearTimeout(searchDebounceTimeout);
-        const query = e.target.value.trim();
-        
-        searchDebounceTimeout = setTimeout(() => {
-            if (query.length < 2) {
-                // If emptied, reload the current filter
-                if (window.LearnApp && typeof window.LearnApp.loadLessons === 'function') {
-                    const currentTab = document.querySelector('.lesson-filter-btn.active')?.dataset?.filter || 'continue';
-                    window.LearnApp.loadLessons(1, currentTab);
-                }
-                return;
-            }
-            
-            // Show loading in masonry area
-            const masonryArea = document.getElementById('masonry-area');
-            if (masonryArea) {
-                masonryArea.innerHTML = '<div class="col-12 text-center py-5"><div class="spinner-border text-secondary" role="status"><span class="visually-hidden">Loading...</span></div><p class="text-secondary small mt-2">Searching lessons...</p></div>';
-            }
-            
-            const fd = new FormData();
-            fd.append('query', query);
-            
-            fetch('/api/learnAI/search.php', { method: 'POST', body: fd })
-                .then(res => res.text())
-                .then(html => {
-                    if (masonryArea) {
-                        masonryArea.innerHTML = html;
-                        if (window.Masonry) {
-                            new Masonry(masonryArea, { percentPosition: true });
-                        }
-                    }
-                })
-                .catch(err => console.error('Search failed:', err));
-        }, 500);
-    });
-}
-
-
-
-    
-
-    // --- Explicit Window Exports for Inline HTML ---
-
-  })();
-} catch (e) {
-  console.error("[Fatal Error in dashboard.js]", e);
 }
 
 /**
@@ -18937,11 +18599,14 @@ document.addEventListener('show.coreui.modal', function(e) {
     lineNumbers: true,
     theme: "material-darker",
     mode: "text/plain",
-    indentUnit: 2,
-    tabSize: 2,
+    indentUnit: 4,
+    tabSize: 4,
+    indentWithTabs: true,
     lineWrapping: false,
     readOnly: true,
     styleActiveLine: true,
+    matchBrackets: true,
+    autoCloseBrackets: true,
     extraKeys: { "Ctrl-S": saveFile, "Cmd-S": saveFile },
   });
   cm.setSize("100%", "100%");
@@ -19020,6 +18685,7 @@ document.addEventListener('show.coreui.modal', function(e) {
 
   let activeFile = null; // { path, name, modified, version }
   let loadedContent = "";
+  let lastOpenedPath = null; // from DB
 
   // ---- Helpers ---------------------------------------------------------
   const api = (path, opts) =>
@@ -19044,11 +18710,12 @@ document.addEventListener('show.coreui.modal', function(e) {
   // ---- Tree rendering --------------------------------------------------
   function renderNode(node, depth) {
     const wrap = document.createElement("div");
-    const pad = depth > 0 ? "ms-" + depth * 3 : "";
+    const padPx = depth * 18;
 
     if (node.is_dir) {
       const header = document.createElement("div");
-      header.className = "instance-tree-item is-folder " + pad;
+      header.className = "instance-tree-item is-folder";
+      header.style.paddingLeft = padPx + "px";
       header.innerHTML =
         '<i class="bx bx-chevron-right"></i> <i class="bx ' +
         iconFor(node) +
@@ -19070,7 +18737,8 @@ document.addEventListener('show.coreui.modal', function(e) {
       wrap.appendChild(childBox);
     } else {
       const item = document.createElement("div");
-      item.className = "instance-tree-item " + pad;
+      item.className = "instance-tree-item";
+      item.style.paddingLeft = (padPx + 4) + "px";
       item.innerHTML =
         '<i class="bx ' +
         iconFor(node) +
@@ -19093,6 +18761,8 @@ document.addEventListener('show.coreui.modal', function(e) {
     );
   }
 
+  let treeData = [];
+
   async function loadTree() {
     treeEl.innerHTML =
       '<div class="text-secondary small py-3 text-center"><div class="spinner-border spinner-border-sm" role="status"></div></div>';
@@ -19104,15 +18774,29 @@ document.addEventListener('show.coreui.modal', function(e) {
         return;
       }
       treeEl.innerHTML = "";
+      treeData = data.tree;
+      lastOpenedPath = data.last_opened;
       if (!data.tree.length) {
         treeEl.innerHTML = '<div class="text-secondary small p-2">No files in this template.</div>';
         return;
       }
       data.tree.forEach((node) => treeEl.appendChild(renderNode(node, 0)));
-      // Auto-expand top-level folders
-      treeEl.querySelectorAll(".instance-tree-item.is-folder").forEach((h) => {
-        if (h.parentElement === treeEl) h.click();
-      });
+      // Auto-expand ALL folders
+      treeEl.querySelectorAll(".instance-tree-item.is-folder").forEach((h) => h.click());
+      // Auto-open last file from DB
+      if (lastOpenedPath) {
+        const node = findNode(data.tree, lastOpenedPath);
+        if (node && !node.is_dir) {
+          const items = treeEl.querySelectorAll(".instance-tree-item:not(.is-folder)");
+          for (const item of items) {
+            const span = item.querySelector("span.flex-grow-1");
+            if (span && span.textContent === node.name) {
+              openFile(node.path, node.name, item);
+              break;
+            }
+          }
+        }
+      }
     } catch (e) {
       treeEl.innerHTML = '<div class="text-danger small p-2">Network error loading files.</div>';
     }
@@ -19122,6 +18806,7 @@ document.addEventListener('show.coreui.modal', function(e) {
   async function openFile(path, name, itemEl) {
     document.querySelectorAll(".instance-tree-item.is-active").forEach((e) => e.classList.remove("is-active"));
     if (itemEl) itemEl.classList.add("is-active");
+    saveLastOpened(path);
 
     fileNameEl.textContent = path;
     if (langEl) langEl.textContent = langLabel(name);
@@ -19171,7 +18856,7 @@ document.addEventListener('show.coreui.modal', function(e) {
       metaEl.innerHTML =
         (data.modified
           ? '<span class="badge bg-warning bg-opacity-25 text-warning">Modified by you</span>'
-          : '<span class="badge bg-secondary bg-opacity-25 text-secondary">Base template</span>') +
+          : '<span class="badge bg-info bg-opacity-25 text-info">Base template</span>') +
         ' <span class="small text-secondary">v' +
         (data.version || 1) +
         "</span>";
@@ -19223,6 +18908,29 @@ document.addEventListener('show.coreui.modal', function(e) {
     if (window.TomNotify) {
       window.TomNotify.show(msg, "File Manager", type);
     }
+  }
+
+  // Save last opened file to DB
+  async function saveLastOpened(path) {
+    try {
+      await fetch("/api/instances/save_last_opened_file", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: slug, path: path }),
+      });
+    } catch (e) { /* ignore */ }
+  }
+
+  // Find a file node in the tree by path
+  function findNode(tree, path) {
+    for (const node of tree) {
+      if (node.path === path) return node;
+      if (node.is_dir && node.children) {
+        const found = findNode(node.children, path);
+        if (found) return found;
+      }
+    }
+    return null;
   }
 
   // ---- Create new file / folder ---------------------------------------
@@ -19371,6 +19079,215 @@ document.addEventListener('show.coreui.modal', function(e) {
   }
 })();
 
+// Instance Dashboard tab switching.
+// Same pattern as manage.js — event delegation, htmx re-init, cached tabs.
+
+function initDashboardTabs() {
+    const tabs = document.querySelectorAll('.instance-dashboard-tab');
+    const contentContainer = document.getElementById('instanceDashboardContent');
+    if (tabs.length === 0 || !contentContainer) return;
+
+    if (!window.__dashboardState) {
+        window.__dashboardState = { savedHtml: {}, fetching: {} };
+    }
+    const state = window.__dashboardState;
+
+    window.__loadDashboardTab = async (tabName) => {
+        const container = document.getElementById('instanceDashboardContent');
+        if (!container) return;
+
+        tabs.forEach(t => t.classList.remove('active'));
+        const activeBtn = document.querySelector(`.instance-dashboard-tab[data-tab="${tabName}"]`);
+        if (activeBtn) activeBtn.classList.add('active');
+
+        const newUrl = tabName === 'trash' ? '/instances/trash' : '/instances/templates';
+        if (window.location.pathname !== newUrl) {
+            window.history.pushState(null, '', newUrl);
+        }
+
+        if (state.savedHtml[tabName]) {
+            container.innerHTML = state.savedHtml[tabName];
+            return;
+        }
+
+        if (state.fetching[tabName]) return;
+        state.fetching[tabName] = true;
+
+        container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-secondary" role="status"></div></div>';
+
+        const apiUrl = tabName === 'trash' ? '/api/instances/trash_tab' : '/api/instances/templates_tab';
+        try {
+            const res = await fetch(apiUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            const html = await res.text();
+            if (res.ok && html.trim()) {
+                state.savedHtml[tabName] = html;
+                container.innerHTML = html;
+                if (typeof htmx !== 'undefined') htmx.process(container);
+            } else {
+                container.innerHTML = '<div class="alert alert-danger">Failed to load.</div>';
+            }
+        } catch (e) {
+            container.innerHTML = '<div class="alert alert-danger">Network error.</div>';
+        } finally {
+            state.fetching[tabName] = false;
+        }
+    };
+
+    const currentPath = window.location.pathname;
+    const initialTab = currentPath.includes('/instances/trash') ? 'trash' : 'templates';
+    window.__loadDashboardTab(initialTab);
+}
+
+// Delegated click handler — survives htmx swaps
+if (!window.__dashboardTabDelegated) {
+    window.__dashboardTabDelegated = true;
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.instance-dashboard-tab');
+        if (!btn) return;
+        e.preventDefault();
+        const tabName = btn.dataset.tab;
+        if (tabName && window.__loadDashboardTab) {
+            window.__loadDashboardTab(tabName);
+        }
+    });
+}
+
+// Init on full load and htmx swaps
+if (document.readyState !== 'loading') {
+    initDashboardTabs();
+}
+document.addEventListener('DOMContentLoaded', initDashboardTabs);
+document.addEventListener('htmx:afterSettle', initDashboardTabs);
+document.addEventListener('htmx:load', initDashboardTabs);
+
+// --- Fork ---
+async function submitFork() {
+    const form = document.getElementById('forkLabForm');
+    const btn = form.querySelector('button[type="button"]');
+    const sourceId = form.querySelector('select[name="source_id"]').value;
+    if (!sourceId) return alert('Please select a lab to fork.');
+
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Forking...';
+
+    try {
+        const formData = new FormData(form);
+        const response = await fetch('/api/instances/fork', { method: 'POST', body: formData });
+
+        if (response.ok) {
+            const html = await response.text();
+            if (html.trim()) {
+                const grid = document.getElementById('templatesGrid');
+                if (grid) {
+                    const noTemplates = grid.querySelector('.col-12');
+                    if (noTemplates) noTemplates.remove();
+                    grid.insertAdjacentHTML('beforeend', html);
+                }
+            }
+            // Invalidate cache so next tab load is fresh
+            if (window.__dashboardState) {
+                window.__dashboardState.savedHtml = {};
+                window.__dashboardState.fetching = {};
+            }
+            const modalEl = document.getElementById('forkLabModal');
+            const modal = coreui.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+            form.reset();
+        } else {
+            const errorMsg = await response.text();
+            alert('Error: ' + (errorMsg || 'Unknown error'));
+        }
+    } catch (e) {
+        console.error(e);
+        alert('A network error occurred.');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+window.submitFork = submitFork;
+
+// --- Trash ---
+async function trashInstance(slug) {
+    if (!confirm('Move this template to trash?')) return;
+    try {
+        const res = await fetch('/api/instances/trash', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ slug: slug })
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            const card = document.getElementById('instance-card-' + slug);
+            if (card) card.remove();
+            if (window.__dashboardState) {
+                window.__dashboardState.savedHtml = {};
+                window.__dashboardState.fetching = {};
+            }
+            window.__loadDashboardTab('templates');
+        } else {
+            alert('Error: ' + (data.error || 'Failed'));
+        }
+    } catch (e) {
+        alert('Network error.');
+    }
+}
+window.trashInstance = trashInstance;
+
+// --- Restore ---
+async function restoreInstance(slug) {
+    try {
+        const res = await fetch('/api/instances/restore', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ slug: slug })
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            const card = document.getElementById('trash-card-' + slug);
+            if (card) card.remove();
+            if (window.__dashboardState) {
+                window.__dashboardState.savedHtml = {};
+                window.__dashboardState.fetching = {};
+            }
+            window.__loadDashboardTab('trash');
+        } else {
+            alert('Error: ' + (data.error || 'Failed'));
+        }
+    } catch (e) {
+        alert('Network error.');
+    }
+}
+window.restoreInstance = restoreInstance;
+
+// --- Permanent Delete ---
+async function permanentDelete(slug) {
+    if (!confirm('Permanently delete this template? This cannot be undone.')) return;
+    try {
+        const res = await fetch('/api/instances/permanent_delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ slug: slug })
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            const card = document.getElementById('trash-card-' + slug);
+            if (card) card.remove();
+            if (window.__dashboardState) {
+                window.__dashboardState.savedHtml = {};
+                window.__dashboardState.fetching = {};
+            }
+            window.__loadDashboardTab('trash');
+        } else {
+            alert('Error: ' + (data.error || 'Failed'));
+        }
+    } catch (e) {
+        alert('Network error.');
+    }
+}
+window.permanentDelete = permanentDelete;
+
 /**
  * Wrapped with IIFE Error Boundary
  */
@@ -19446,7 +19363,7 @@ function openCodeModal(hash, name, status) {
                             <div class="col-7">
                                 <div class="input-group input-group-sm">
                                     <input type="password" class="form-control rounded-pill-start border-secondary bg-dark text-white px-3 font-monospace" value="${data.data.primary.value}" readonly>
-                                    <button class="btn btn-outline-secondary rounded-pill-end px-3 border-start-0" onclick="navigator.clipboard.writeText('${data.data.primary.value}')">
+                                    <button class="btn btn-outline-secondary rounded-pill-end px-3 border-start-0" data-copy="${data.data.primary.value}">
                                         <i class='bx bx-copy'></i>
                                     </button>
                                 </div>
@@ -20876,67 +20793,11 @@ function launchService(btn, type) {
 }
 /* ============================================================================
  * UTILITIES: Clipboard Handling
+ * ============================================================================
+ * All clipboard logic is now in /js/clipboard.js (loaded separately in _master.php).
+ * The delegated handler in clipboard.js handles .clipboard[data-clipboard-text] clicks.
  * ============================================================================ */
-window.onPageLoad( () => {
-  // Global handler for .clipboard buttons
-  document.body.addEventListener('click', async (e) => {
-    const btn = e.target.closest('.clipboard');
-    if (!btn) return;
 
-    e.preventDefault();
-    const text = btn.getAttribute('data-clipboard-text');
-    if (!text) return;
-
-    try {
-      // Robust Copy Handler with Fallback
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(text);
-      } else {
-        // Fallback for non-secure contexts
-        const textArea = document.createElement("textarea");
-        textArea.value = text;
-        textArea.style.position = "fixed";
-        textArea.style.left = "-9999px";
-        textArea.style.top = "0";
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-      }
-
-      // 1. Visual Feedback on Button
-      const originalInner = btn.innerHTML;
-      btn.innerHTML = '<i class="bx bx-check text-success"></i>';
-      btn.classList.add('active');
-
-      setTimeout(() => {
-        btn.innerHTML = originalInner;
-        btn.classList.remove('active');
-      }, 2000);
-
-      // 2. Premium Toast Notification
-      const toastEl = document.getElementById('copyToast');
-      if (toastEl) {
-        const toast = coreui.Toast.getOrCreateInstance(toastEl);
-        const titleEl = document.getElementById('toast-title');
-        const msgEl = document.getElementById('toast-message');
-
-        // Extract label from tooltip or use generic
-        let label = btn.getAttribute('title') || btn.getAttribute('data-coreui-title') || 'Information';
-        label = label.replace('Copy ', ''); // Clean up title
-
-        if (titleEl) titleEl.innerText = 'Copied!';
-        if (msgEl) msgEl.innerText = `${label} has been copied into your clipboard`;
-
-        toast.show();
-      }
-
-    } catch (err) {
-      console.error('Failed to copy: ', err);
-    }
-  });
-});
 //  * EVENT LISTENERS
 //  * ========================================================================== */
 
@@ -24047,10 +23908,9 @@ try {
 
                 copyBtn.addEventListener('click', () => {
                     const codeText = pre.querySelector('code')?.innerText || pre.innerText;
-                    navigator.clipboard.writeText(codeText).then(() => {
-                        copyBtn.innerHTML = '<i class="bx bx-check text-success"></i> Copied!';
-                        setTimeout(() => { copyBtn.innerHTML = '<i class="bx bx-copy"></i> Copy'; }, 2000);
-                    });
+                    copyText(codeText, 'Code copied!');
+                    copyBtn.innerHTML = '<i class="bx bx-check text-success"></i> Copied!';
+                    setTimeout(() => { copyBtn.innerHTML = '<i class="bx bx-copy"></i> Copy'; }, 2000);
                 });
 
                 pre.appendChild(copyBtn);
@@ -24467,50 +24327,14 @@ try {
 
     window.shareLessonAction = function(lessonId, lessonTitle, btnEl) {
         const shareUrl = window.location.origin + '/learn/lesson/' + lessonId;
-        
-        const onSuccess = () => {
-            if (btnEl) {
-                const icon = btnEl.querySelector('i');
-                if (icon) {
-                    const origClass = icon.className;
-                    icon.className = 'bx bx-check text-success fs-6';
-                    setTimeout(() => { icon.className = origClass; }, 2000);
-                }
+        copyText(shareUrl, 'Lesson link copied!');
+        if (btnEl) {
+            const icon = btnEl.querySelector('i');
+            if (icon) {
+                const origClass = icon.className;
+                icon.className = 'bx bx-check text-success fs-6';
+                setTimeout(() => { icon.className = origClass; }, 2000);
             }
-            if (typeof TomNotify !== 'undefined') {
-                TomNotify.show("Lesson link copied to clipboard!", "Lesson Shared", "success", 3000);
-            }
-        };
-
-        const fallbackCopy = () => {
-            try {
-                const textArea = document.createElement("textarea");
-                textArea.value = shareUrl;
-                textArea.style.position = "fixed";
-                textArea.style.left = "-999999px";
-                textArea.style.top = "-999999px";
-                document.body.appendChild(textArea);
-                textArea.focus();
-                textArea.select();
-                const successful = document.execCommand('copy');
-                textArea.remove();
-                if (successful) {
-                    onSuccess();
-                } else if (typeof TomNotify !== 'undefined') {
-                    TomNotify.show("Could not copy automatically. Link: " + shareUrl, "Copy Failed", "error", 4000);
-                }
-            } catch (e) {
-                console.error("Fallback copy failed", e);
-                if (typeof TomNotify !== 'undefined') {
-                    TomNotify.show("Could not copy automatically. Link: " + shareUrl, "Copy Failed", "error", 4000);
-                }
-            }
-        };
-
-        if (navigator.clipboard && window.isSecureContext) {
-            navigator.clipboard.writeText(shareUrl).then(onSuccess).catch(() => fallbackCopy());
-        } else {
-            fallbackCopy();
         }
     };
 
@@ -24690,23 +24514,180 @@ function initInstanceTabs() {
 if (!window.__instanceTabDelegated) {
     window.__instanceTabDelegated = true;
     document.addEventListener('click', (e) => {
-        const btn = e.target.closest('.manage-tab-btn');
-        if (!btn) return;
-        e.preventDefault();
-        const tabName = btn.dataset.tab;
-        if (tabName && window.__loadInstanceTab) {
-            window.__loadInstanceTab(tabName);
+        // Tab switching
+        const tabBtn = e.target.closest('.manage-tab-btn');
+        if (tabBtn) {
+            e.preventDefault();
+            const tabName = tabBtn.dataset.tab;
+            if (tabName && window.__loadInstanceTab) window.__loadInstanceTab(tabName);
+            return;
+        }
+
+        // Save configuration
+        if (e.target.closest('#saveConfigBtn')) {
+            e.preventDefault();
+            saveInstanceConfig();
+            return;
+        }
+
+        // Add user
+        if (e.target.closest('#addConfigUser')) {
+            e.preventDefault();
+            addConfigUser();
+            return;
+        }
+
+        // Remove user
+        const removeBtn = e.target.closest('.remove-user');
+        if (removeBtn) {
+            removeBtn.closest('[data-user-index]').remove();
+            return;
+        }
+
+        // Add bind mount
+        if (e.target.closest('#addBindMount')) {
+            e.preventDefault();
+            addBindMount();
+            return;
+        }
+
+        // Remove bind mount
+        const removeMount = e.target.closest('.remove-mount');
+        if (removeMount) {
+            removeMount.closest('[data-mount-index]').remove();
+            return;
         }
     });
 }
 
+function getSlugFromUrl() {
+    const parts = window.location.pathname.split('/').filter(Boolean);
+    return parts.length >= 2 && parts[0] === 'instances' ? parts[1] : null;
+}
+
+async function saveInstanceConfig() {
+    const slug = getSlugFromUrl();
+    if (!slug) return;
+
+    const saveBtn = document.getElementById('saveConfigBtn');
+    if (!saveBtn) return;
+
+    const data = {};
+    document.querySelectorAll('#instanceTabsContent [data-field]').forEach(el => {
+        const field = el.dataset.field;
+        if (field.startsWith('users.') || field.startsWith('bind_mounts.')) return;
+        if (el.type === 'checkbox') {
+            data[field] = el.checked;
+        } else if (field === 'ports') {
+            data[field] = el.value.trim().split(/\s+/).filter(Boolean);
+        } else {
+            data[field] = el.value;
+        }
+    });
+
+    // Collect users
+    const usersList = document.getElementById('configUsersList');
+    if (usersList) {
+        const userRows = usersList.querySelectorAll('[data-user-index]');
+        data.users = [];
+        userRows.forEach(row => {
+            const username = row.querySelector('[data-field$=".username"]');
+            const shell = row.querySelector('[data-field$=".shell"]');
+            const sudo = row.querySelector('[data-field$=".sudo"]');
+            if (username && username.value.trim()) {
+                data.users.push({
+                    username: username.value.trim(),
+                    shell: shell ? shell.value : '/bin/bash',
+                    sudo: sudo ? sudo.checked : false
+                });
+            }
+        });
+    }
+
+    // Collect bind mounts
+    const mountsList = document.getElementById('configBindMountsList');
+    if (mountsList) {
+        const mountInputs = mountsList.querySelectorAll('[data-field^="bind_mounts."]');
+        data.bind_mounts = [];
+        mountInputs.forEach(input => {
+            if (input.value.trim()) data.bind_mounts.push(input.value.trim());
+        });
+    }
+
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving...';
+
+    try {
+        const res = await fetch('/api/instances/save_config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ slug: slug, config: data })
+        });
+        const result = await res.json();
+        if (result.status === 'success') {
+            saveBtn.innerHTML = '<i class="bx bx-check me-1"></i> Saved!';
+            setTimeout(() => { saveBtn.innerHTML = '<i class="bx bx-save me-1"></i> Save configuration'; }, 2000);
+        } else {
+            alert('Error: ' + (result.error || 'Failed to save'));
+            saveBtn.innerHTML = '<i class="bx bx-save me-1"></i> Save configuration';
+        }
+    } catch (e) {
+        alert('Network error.');
+        saveBtn.innerHTML = '<i class="bx bx-save me-1"></i> Save configuration';
+    } finally {
+        saveBtn.disabled = false;
+    }
+}
+
+function addConfigUser() {
+    const usersList = document.getElementById('configUsersList');
+    if (!usersList) return;
+    const idx = usersList.querySelectorAll('[data-user-index]').length;
+    const html = `
+        <div class="d-flex align-items-center gap-2 mb-2 p-2 rounded-3 border border-secondary border-opacity-25 bg-black bg-opacity-50" data-user-index="${idx}">
+            <div class="bg-secondary bg-opacity-25 p-1 rounded d-flex"><i class='bx bx-user text-secondary'></i></div>
+            <input type="text" class="form-control form-control-sm config-input bg-transparent border-0 text-white fw-bold" style="max-width:120px;" placeholder="username" data-field="users.${idx}.username">
+            <select class="form-select form-select-sm config-input bg-transparent border-0 text-secondary" style="max-width:120px;" data-field="users.${idx}.shell">
+                <option value="/bin/bash">/bin/bash</option>
+                <option value="/bin/sh">/bin/sh</option>
+                <option value="/bin/zsh">/bin/zsh</option>
+            </select>
+            <div class="ms-auto d-flex align-items-center gap-3 pe-2">
+                <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
+                    <input class="form-check-input m-0" type="checkbox" role="switch" data-field="users.${idx}.sudo">
+                    <label class="form-check-label text-secondary small">sudo</label>
+                </div>
+                <i class='bx bx-trash text-danger pointer small remove-user' data-user-index="${idx}"></i>
+            </div>
+        </div>`;
+    usersList.insertAdjacentHTML('beforeend', html);
+}
+
+function addBindMount() {
+    const mountsList = document.getElementById('configBindMountsList');
+    if (!mountsList) return;
+    // Remove "no mounts" placeholder if present
+    const placeholder = mountsList.querySelector('.opacity-50');
+    if (placeholder) placeholder.remove();
+    const idx = mountsList.querySelectorAll('[data-mount-index]').length;
+    const html = `
+        <div class="d-flex align-items-center gap-2 mb-2" data-mount-index="${idx}">
+            <input type="text" class="form-control form-control-sm config-input" placeholder="{labstorage}/home:/home" data-field="bind_mounts.${idx}" style="font-size: 0.8rem;">
+            <i class='bx bx-trash text-danger pointer small remove-mount' data-mount-index="${idx}"></i>
+        </div>`;
+    mountsList.insertAdjacentHTML('beforeend', html);
+}
+
 // Initialise now (full load) and whenever HTMX settles a swap.
-if (document.readyState !== 'loading') {
+function initManagePage() {
     initInstanceTabs();
 }
-document.addEventListener('DOMContentLoaded', initInstanceTabs);
-document.addEventListener('htmx:afterSettle', initInstanceTabs);
-document.addEventListener('htmx:load', initInstanceTabs);
+if (document.readyState !== 'loading') {
+    initManagePage();
+}
+document.addEventListener('DOMContentLoaded', initManagePage);
+document.addEventListener('htmx:afterSettle', initManagePage);
+document.addEventListener('htmx:load', initManagePage);
 
 /**
  * Wrapped with IIFE Error Boundary

@@ -9,7 +9,7 @@ $slug = $_GET['slug'] ?? '';
     <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
         <h5 class="fw-bold theme-text m-0 d-flex align-items-center gap-2">
             <i class='bx bx-folder-open fs-4'></i> Scaffolded files
-            <span class="instance-badge text-bg-soft-secondary fw-normal">editor: reaped</span>
+            <span class="badge bg-secondary text-white rounded-pill fw-bold">editor: reaped</span>
         </h5>
         <button class="btn btn-primary rounded-pill px-4 btn-sm fw-bold" data-editor-open>
             <i class='bx bx-code-alt'></i> Open in editor

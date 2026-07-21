@@ -182,7 +182,7 @@ $services = [
                         <span class="text-secondary fw-semibold pe-2" style="font-size: 0.8rem;"><?= htmlspecialchars($name) ?></span>
                         <div class="d-flex align-items-center text-end" style="max-width: 65%;">
                             <span class="text-light font-monospace me-2 text-break" style="font-size: 0.8rem;"><?= htmlspecialchars($val) ?></span>
-                            <i class='bx bx-copy text-secondary cursor-pointer hover-white' onclick="copyText('<?= htmlspecialchars($val) ?>')"></i>
+                            <i class='bx bx-copy text-secondary cursor-pointer hover-white' data-copy="<?= htmlspecialchars($val) ?>"></i>
                         </div>
                     </div>
                     <?php endforeach; ?>
@@ -203,7 +203,7 @@ $services = [
                         <span class="text-secondary fw-semibold pe-2" style="font-size: 0.8rem;"><?= htmlspecialchars($name) ?></span>
                         <div class="d-flex align-items-center text-end" style="max-width: 65%;">
                             <span class="text-light font-monospace me-2 text-break" style="font-size: 0.8rem;"><?= htmlspecialchars($val) ?></span>
-                            <i class='bx bx-copy text-secondary cursor-pointer hover-white' onclick="copyText('<?= htmlspecialchars($val) ?>')"></i>
+                            <i class='bx bx-copy text-secondary cursor-pointer hover-white' data-copy="<?= htmlspecialchars($val) ?>"></i>
                         </div>
                     </div>
                     <?php endforeach; ?>

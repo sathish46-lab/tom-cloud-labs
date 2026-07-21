@@ -1,116 +1,203 @@
 <?php
 // /src/template/partials/instances/manage/configuration.php
+$slug = $instance['slug'] ?? '';
+$portsRaw = $instance['ports'] ?? null;
+if ($portsRaw instanceof MongoDB\Model\BSONArray) {
+    $ports = implode(' ', iterator_to_array($portsRaw));
+} elseif (is_array($portsRaw)) {
+    $ports = implode(' ', $portsRaw);
+} else {
+    $ports = (string)($portsRaw ?? '');
+}
+$usersRaw = $instance['users'] ?? [];
+$users = ($usersRaw instanceof MongoDB\Model\BSONArray) ? iterator_to_array($usersRaw) : (is_array($usersRaw) ? $usersRaw : []);
+
+$bindMountsRaw = $instance['bind_mounts'] ?? [];
+$bindMounts = ($bindMountsRaw instanceof MongoDB\Model\BSONArray) ? iterator_to_array($bindMountsRaw) : (is_array($bindMountsRaw) ? $bindMountsRaw : []);
 ?>
-<div class="card blur border-0 rounded-4 p-4 shadow-lg">
-    <div class="d-flex align-items-center gap-2 mb-4">
-        <i class='bx bx-cog text-secondary'></i>
-        <span class="fw-bold theme-text">Configuration</span>
-    </div>
-    
-    <div class="text-secondary text-uppercase fw-bold small mb-3" style="font-size: 0.7rem; letter-spacing: 0.08em;">General</div>
-    
-    <div class="mb-3 d-flex align-items-center">
-        <div style="width: 130px;" class="text-secondary fw-bold small flex-shrink-0">Name</div>
-        <input type="text" class="form-control config-input flex-grow-1" value="<?= htmlspecialchars($instance['name'] ?? '') ?>">
-    </div>
-    <div class="mb-3 d-flex align-items-start">
-        <div style="width: 130px;" class="text-secondary fw-bold small pt-2 flex-shrink-0">Slug</div>
-        <div class="flex-grow-1">
-            <div class="d-flex align-items-center gap-2 mb-2">
-                <input type="text" class="form-control config-input" value="<?= htmlspecialchars($instance['slug'] ?? '') ?>" style="max-width: 300px;" disabled>
-                <?php
-                $slugLen = strlen($instance['slug'] ?? '');
-                ?>
-                <span class="bg-secondary bg-opacity-25 text-secondary rounded-3 px-3 py-2 small"><?= $slugLen ?>/15</span>
-                <button class="btn btn-outline-danger rounded-3 px-3 fw-bold small py-2 border-opacity-50">Save slug</button>
-            </div>
-            <div class="text-secondary opacity-75" style="font-size: 0.75rem; line-height: 1.5;">
-                Friendly identifier (lowercase letters, digits, dashes) — it becomes the deployed lab id and the start of every copy's hostname, so machine slugs are capped at 15 characters. Must be unique — if taken, a short suffix is added automatically. <strong>Locked after the first deploy.</strong> The internal id stays <span class="text-info"><?= htmlspecialchars(substr($instance['_id'] ?? 'N/A', 0, 12)) ?></span>.
-            </div>
-        </div>
-    </div>
-    <div class="mb-3 d-flex align-items-center">
-        <div style="width: 130px;" class="text-secondary fw-bold small flex-shrink-0">Description</div>
-        <input type="text" class="form-control config-input flex-grow-1" value="<?= htmlspecialchars($instance['description'] ?? '') ?>">
-    </div>
-    <div class="mb-3 d-flex align-items-start">
-        <div style="width: 130px;" class="text-secondary fw-bold small pt-2 flex-shrink-0">Stability</div>
-        <div class="flex-grow-1">
-            <input type="text" class="form-control config-input w-100 mb-2" value="<?= htmlspecialchars($instance['stability'] ?? 'alpha') ?>">
-            <div class="text-secondary opacity-75" style="font-size: 0.75rem;">
-                alpha = private work-in-progress — only you can see or deploy it. Move to <strong>beta</strong> or <strong>stable</strong> to share it with a workgroup or publish it to the catalog.
-            </div>
-        </div>
-    </div>
-    
-    <hr class="border-secondary border-opacity-25 my-4">
-    
-    <div class="text-secondary text-uppercase fw-bold small mb-3" style="font-size: 0.7rem; letter-spacing: 0.08em;">Resources</div>
-    
-    <div class="mb-3 d-flex align-items-center">
-        <div style="width: 130px;" class="text-secondary fw-bold small flex-shrink-0">CPU</div>
-        <input type="text" class="form-control config-input" value="<?= htmlspecialchars($instance['cpu'] ?? '2') ?>" style="max-width: 200px;">
-    </div>
-    <div class="mb-3 d-flex align-items-start">
-        <div style="width: 130px;" class="text-secondary fw-bold small pt-2 flex-shrink-0">Memory</div>
-        <div class="flex-grow-1">
-            <input type="text" class="form-control config-input mb-2" value="<?= htmlspecialchars($instance['memory'] ?? '512m') ?>" style="max-width: 300px;">
-            <div class="text-secondary opacity-75" style="font-size: 0.75rem;">Docker memory string, e.g. <span class="text-info">512m, 2g</span>.</div>
-        </div>
-    </div>
-    <div class="mb-3 d-flex align-items-start">
-        <div style="width: 130px;" class="text-secondary fw-bold small pt-2 flex-shrink-0">Ports</div>
-        <div class="flex-grow-1">
-            <?php 
-            $ports = is_array($instance['ports'] ?? null) ? implode(' ', $instance['ports']) : ($instance['ports'] ?? '');
-            ?>
-            <input type="text" class="form-control config-input mb-2" value="<?= htmlspecialchars($ports) ?>" style="max-width: 300px;">
-            <div class="text-secondary opacity-75" style="font-size: 0.75rem;">Space-separated container ports, e.g. <span class="text-info">80</span> or <span class="text-info">22 8080</span>.</div>
-        </div>
-    </div>
-    <div class="mb-3 d-flex align-items-start">
-        <div style="width: 130px;" class="text-secondary fw-bold small pt-2 flex-shrink-0">Network</div>
-        <div class="flex-grow-1">
-            <input type="text" class="form-control config-input mb-2" value="<?= htmlspecialchars($instance['network'] ?? 'Default (wg0)') ?>" style="max-width: 300px;">
-            <div class="text-secondary opacity-75" style="font-size: 0.75rem;">Internal-only = bridge IP + published port, no WireGuard peer. Default (wg0) joins the shared VPN. Team networks appear here once an admin grants your team access.</div>
-        </div>
-    </div>
-
-    <hr class="border-secondary border-opacity-25 my-4">
-
-    <div class="text-secondary text-uppercase fw-bold small mb-3" style="font-size: 0.7rem; letter-spacing: 0.08em;">User Management</div>
-    
-    <div class="form-check form-switch mb-3 d-flex align-items-center gap-3 ps-0">
-        <div style="width: 130px;" class="text-secondary fw-bold small m-0 flex-shrink-0">SSH</div>
-        <input class="form-check-input m-0 fs-5" type="checkbox" role="switch" <?= !empty($instance['ssh_enabled']) ? 'checked' : '' ?> style="background-color: #ff4b2b; border-color: #ff4b2b;">
-        <label class="form-check-label text-white small m-0">Enable SSH access</label>
-    </div>
-    <div class="mb-3 d-flex align-items-start">
-        <div style="width: 130px;" class="text-secondary fw-bold small pt-2 flex-shrink-0">Users</div>
-        <div class="flex-grow-1">
-            <?php 
-            $users = $instance['users'] ?? [['username' => 'sibi', 'shell' => '/bin/bash', 'sudo' => true]];
-            foreach ($users as $u): 
-            ?>
-            <div class="d-flex align-items-center gap-2 mb-2 p-2 rounded-3 border border-secondary border-opacity-25 bg-black bg-opacity-50">
-                <div class="bg-secondary bg-opacity-25 p-2 rounded d-flex"><i class='bx bx-user text-secondary'></i></div>
-                <span class="text-white fw-bold ms-2"><?= htmlspecialchars($u['username']) ?></span>
-                <span class="text-secondary ms-4"><?= htmlspecialchars($u['shell'] ?? '/bin/bash') ?></span>
-                <div class="ms-auto d-flex align-items-center gap-3 pe-3">
-                    <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
-                        <input class="form-check-input m-0" type="checkbox" role="switch" <?= !empty($u['sudo']) ? 'checked' : '' ?>>
-                        <label class="form-check-label text-secondary small">sudo</label>
+<div class="card blur border-0 rounded-4 p-3 p-md-4">
+    <div class="d-flex flex-column gap-4">
+        <!-- Top row: General + Resources side by side -->
+        <div class="row g-4">
+            <!-- General -->
+            <div class="col-md-6">
+                <div class="card blur border-0 rounded-4 p-4 shadow-lg h-100">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <i class='bx bx-cog text-secondary'></i>
+                        <span class="fw-bold theme-text">General</span>
                     </div>
-                    <i class='bx bx-trash text-danger pointer'></i>
+                    
+                    <div class="mb-3 d-flex align-items-center">
+                        <div style="width: 100px;" class="text-secondary fw-bold small flex-shrink-0">Name</div>
+                        <input type="text" class="form-control config-input flex-grow-1" data-field="name" value="<?= htmlspecialchars($instance['name'] ?? '') ?>">
+                    </div>
+                    <div class="mb-3 d-flex align-items-start">
+                        <div style="width: 100px;" class="text-secondary fw-bold small pt-2 flex-shrink-0">Slug</div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <input type="text" class="form-control config-input" value="<?= htmlspecialchars($slug) ?>" style="max-width: 200px;" disabled>
+                                <span class="bg-secondary bg-opacity-25 text-secondary rounded-3 px-2 py-1 small"><?= strlen($slug) ?>/15</span>
+                            </div>
+                            <div class="text-secondary opacity-75" style="font-size: 0.7rem; line-height: 1.5;">
+                                Friendly identifier — becomes the deployed lab id. <strong>Locked after first deploy.</strong> Internal id: <span class="text-info"><?= htmlspecialchars(substr($instance['_id'] ?? 'N/A', 0, 12)) ?></span>.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3 d-flex align-items-center">
+                        <div style="width: 100px;" class="text-secondary fw-bold small flex-shrink-0">Description</div>
+                        <input type="text" class="form-control config-input flex-grow-1" data-field="description" value="<?= htmlspecialchars($instance['description'] ?? '') ?>">
+                    </div>
+                    <div class="mb-0 d-flex align-items-start">
+                        <div style="width: 100px;" class="text-secondary fw-bold small pt-2 flex-shrink-0">Stability</div>
+                        <div class="flex-grow-1">
+                            <select class="form-select config-input w-100" data-field="stability">
+                                <option value="alpha" <?= ($instance['stability'] ?? 'alpha') === 'alpha' ? 'selected' : '' ?>>alpha</option>
+                                <option value="beta" <?= ($instance['stability'] ?? '') === 'beta' ? 'selected' : '' ?>>beta</option>
+                                <option value="stable" <?= ($instance['stability'] ?? '') === 'stable' ? 'selected' : '' ?>>stable</option>
+                            </select>
+                            <div class="text-secondary opacity-75 mt-1" style="font-size: 0.7rem;">
+                                alpha = private. Move to <strong>beta</strong> or <strong>stable</strong> to share.
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <?php endforeach; ?>
-            <button class="btn btn-outline-danger btn-sm rounded-pill fw-bold border-opacity-50 mt-2 px-3"><i class='bx bx-plus'></i> Add user</button>
-            <div class="text-secondary opacity-75 mt-3" style="font-size: 0.75rem;">Authoring intent — each becomes a <span class="text-info">useradd</span> line in the Dockerfile (the app-provisioned uid-1000 user is managed separately, do not add it here).</div>
+
+            <!-- Resources -->
+            <div class="col-md-6">
+                <div class="card blur border-0 rounded-4 p-4 shadow-lg h-100">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <i class='bx bx-server text-secondary'></i>
+                        <span class="fw-bold theme-text">Resources</span>
+                    </div>
+                    
+                    <div class="mb-3 d-flex align-items-center">
+                        <div style="width: 100px;" class="text-secondary fw-bold small flex-shrink-0">CPU</div>
+                        <input type="text" class="form-control config-input" data-field="cpu" value="<?= htmlspecialchars($instance['cpu'] ?? '2') ?>" style="max-width: 150px;">
+                    </div>
+                    <div class="mb-3 d-flex align-items-start">
+                        <div style="width: 100px;" class="text-secondary fw-bold small pt-2 flex-shrink-0">Memory</div>
+                        <div class="flex-grow-1">
+                            <input type="text" class="form-control config-input mb-1" data-field="memory" value="<?= htmlspecialchars($instance['memory'] ?? '512m') ?>" style="max-width: 200px;">
+                            <div class="text-secondary opacity-75" style="font-size: 0.7rem;">e.g. <span class="text-info">512m, 2g</span></div>
+                        </div>
+                    </div>
+                    <div class="mb-3 d-flex align-items-start">
+                        <div style="width: 100px;" class="text-secondary fw-bold small pt-2 flex-shrink-0">Ports</div>
+                        <div class="flex-grow-1">
+                            <input type="text" class="form-control config-input mb-1" data-field="ports" value="<?= htmlspecialchars($ports) ?>" style="max-width: 200px;">
+                            <div class="text-secondary opacity-75" style="font-size: 0.7rem;">Space-separated, e.g. <span class="text-info">22 8080</span></div>
+                        </div>
+                    </div>
+                    <div class="mb-0 d-flex align-items-start">
+                        <div style="width: 100px;" class="text-secondary fw-bold small pt-2 flex-shrink-0">Network</div>
+                        <div class="flex-grow-1">
+                            <select class="form-select config-input mb-1" data-field="network" style="max-width: 200px;">
+                                <option value="Default (wg0)" <?= ($instance['network'] ?? 'Default (wg0)') === 'Default (wg0)' ? 'selected' : '' ?>>Default (wg0)</option>
+                                <option value="Internal only" <?= ($instance['network'] ?? '') === 'Internal only' ? 'selected' : '' ?>>Internal only</option>
+                            </select>
+                            <div class="text-secondary opacity-75" style="font-size: 0.7rem;">Default joins shared VPN. Internal only = no WireGuard.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom: User Management full width -->
+        <div class="card blur border-0 rounded-4 p-4 shadow-lg">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <i class='bx bx-group text-secondary'></i>
+                <span class="fw-bold theme-text">User Management</span>
+            </div>
+            
+            <!-- SSH -->
+            <div class="form-check form-switch mb-3 d-flex align-items-center gap-3 ps-0">
+                <div style="width: 120px;" class="text-secondary fw-bold small m-0 flex-shrink-0">SSH</div>
+                <input class="form-check-input m-0 fs-5" type="checkbox" role="switch" data-field="ssh_enabled" <?= !empty($instance['ssh_enabled']) ? 'checked' : '' ?> style=" border-color: #ff4b2b;">
+                <label class="form-check-label text-white small m-0">Enable SSH access</label>
+            </div>
+
+            <!-- Signed-in user -->
+            <div class="mb-3 d-flex align-items-start gap-3 ps-0">
+                <div style="width: 120px;" class="text-secondary fw-bold small pt-1 flex-shrink-0">Signed-in user</div>
+                <div class="flex-grow-1">
+                    <div class="form-check form-switch mb-1">
+                        <input class="form-check-input" type="checkbox" role="switch" data-field="run_as_signed_in_user" <?= !empty($instance['run_as_signed_in_user']) ? 'checked' : '' ?> style=" border-color: #ff4b2b;">
+                        <label class="form-check-label text-white small">Run as the signed-in user (shared home)</label>
+                    </div>
+                    <div class="text-secondary opacity-75" style="font-size: 0.7rem;">Provisions the deployer's platform username at uid 1000 on deploy, with their <strong>shared home</strong> mounted. Coexists with any custom users below.</div>
+                </div>
+            </div>
+
+            <!-- Home mount -->
+            <div class="mb-3 d-flex align-items-start gap-3 ps-0">
+                <div style="width: 120px;" class="text-secondary fw-bold small pt-1 flex-shrink-0">Home mount</div>
+                <div class="flex-grow-1">
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" role="switch" data-field="home_mount_enabled" <?= !empty($instance['home_mount_enabled']) ? 'checked' : '' ?> style="border-color: #ff4b2b;">
+                        <label class="form-check-label text-white small">Mount a persistent home volume</label>
+                    </div>
+                    <input type="text" class="form-control config-input mb-1" data-field="home_mount_path" value="<?= htmlspecialchars($instance['home_mount_path'] ?? '/var/labsstorage') ?>" style="max-width: 300px;">
+                    <div class="text-secondary opacity-75" style="font-size: 0.7rem;">In-container path where the per-user volume mounts. Off = ephemeral.</div>
+                </div>
+            </div>
+
+            <!-- Bind mounts -->
+            <div class="mb-3 d-flex align-items-start gap-3 ps-0">
+                <div style="width: 120px;" class="text-secondary fw-bold small pt-2 flex-shrink-0">Bind mounts</div>
+                <div class="flex-grow-1" id="configBindMountsList">
+                    <?php if (empty($bindMounts)): ?>
+                    <div class="text-secondary small opacity-50 mb-2">No bind mounts configured.</div>
+                    <?php else: foreach ($bindMounts as $idx => $mount): ?>
+                    <div class="d-flex align-items-center gap-2 mb-2" data-mount-index="<?= $idx ?>">
+                        <input type="text" class="form-control form-control-sm config-input" value="<?= htmlspecialchars((string)$mount) ?>" data-field="bind_mounts.<?= $idx ?>" style="font-size: 0.8rem;">
+                        <i class='bx bx-trash text-danger pointer small remove-mount' data-mount-index="<?= $idx ?>"></i>
+                    </div>
+                    <?php endforeach; endif; ?>
+                </div>
+            </div>
+            <div class="ps-0 mb-3">
+                <button type="button" class="btn btn-outline-danger btn-sm rounded-pill fw-bold border-opacity-50 px-3" id="addBindMount"><i class='bx bx-plus'></i> Add bind mount</button>
+                <div class="text-secondary opacity-75 mt-2" style="font-size: 0.7rem;">Format: <span class="text-info">src:dst</span>. Placeholders: <span class="text-info">{labstorage}</span>, <span class="text-info">{lab_id}</span>, <span class="text-info">{username}</span>. e.g. <span class="text-info">{labstorage}/home:/home</span>.</div>
+            </div>
+
+            <hr class="border-secondary border-opacity-25 my-3">
+
+            <!-- Users -->
+            <div class="mb-3 d-flex align-items-start gap-3 ps-0">
+                <div style="width: 120px;" class="text-secondary fw-bold small pt-2 flex-shrink-0">Users</div>
+                <div class="flex-grow-1" id="configUsersList">
+                    <?php if (empty($users)): ?>
+                    <div class="text-secondary small opacity-50">No users configured.</div>
+                    <?php else: foreach ($users as $idx => $u): ?>
+                    <div class="d-flex align-items-center gap-2 mb-2 p-2 rounded-3 border border-secondary border-opacity-25 bg-black bg-opacity-50" data-user-index="<?= $idx ?>">
+                        <div class="bg-secondary bg-opacity-25 p-1 rounded d-flex"><i class='bx bx-user text-secondary'></i></div>
+                        <input type="text" class="form-control form-control-sm config-input bg-transparent border-0 text-white fw-bold" style="max-width:120px;" value="<?= htmlspecialchars($u['username'] ?? '') ?>" data-field="users.<?= $idx ?>.username">
+                        <select class="form-select form-select-sm config-input bg-transparent border-0 text-secondary" style="max-width:120px;" data-field="users.<?= $idx ?>.shell">
+                            <option value="/bin/bash" <?= ($u['shell'] ?? '/bin/bash') === '/bin/bash' ? 'selected' : '' ?>>/bin/bash</option>
+                            <option value="/bin/sh" <?= ($u['shell'] ?? '') === '/bin/sh' ? 'selected' : '' ?>>/bin/sh</option>
+                            <option value="/bin/zsh" <?= ($u['shell'] ?? '') === '/bin/zsh' ? 'selected' : '' ?>>/bin/zsh</option>
+                        </select>
+                        <div class="ms-auto d-flex align-items-center gap-3 pe-2">
+                            <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
+                                <input class="form-check-input m-0" type="checkbox" role="switch" <?= !empty($u['sudo']) ? 'checked' : '' ?> data-field="users.<?= $idx ?>.sudo">
+                                <label class="form-check-label text-secondary small">sudo</label>
+                            </div>
+                            <i class='bx bx-trash text-danger pointer small remove-user' data-user-index="<?= $idx ?>"></i>
+                        </div>
+                    </div>
+                    <?php endforeach; endif; ?>
+                </div>
+            </div>
+            <div class="ps-0 pb-2">
+                <button type="button" class="btn btn-outline-danger btn-sm rounded-pill fw-bold border-opacity-50 px-3" id="addConfigUser"><i class='bx bx-plus'></i> Add user</button>
+                <div class="text-secondary opacity-75 mt-2" style="font-size: 0.7rem;">Each becomes a <span class="text-info">useradd</span> line in the Dockerfile (the app-provisioned uid-1000 user is managed separately, do not add it here).</div>
+            </div>
+
+            <div class="mt-3 text-end">
+                <button class="btn btn-primary rounded-pill px-5 py-2 fw-bold" style="background-color: #ff4b2b; border:none; color: white;" id="saveConfigBtn">
+                    <i class='bx bx-save me-1'></i> Save configuration
+                </button>
+            </div>
         </div>
     </div>
-
-    <div class="mt-5 text-end">
-        <button class="btn btn-primary rounded-pill px-5 py-2 fw-bold" style="background-color: #4a5568; border:none; color: white;">Save configuration</button>
-    </div>
-</div>

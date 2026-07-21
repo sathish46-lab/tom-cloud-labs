@@ -80,7 +80,7 @@ function renderConnectionFields(fields, container) {
             const escapedValue = field.value.replace(/'/g, "\\'");
             const copyBtn = field.copy ? `
                 <button class="btn btn-outline-secondary ms-2 rounded-pill px-3" 
-                        onclick="copyText('${escapedValue}', '${field.label} copied!')">
+                        data-copy="${escapedValue}">
                     <i class='bx bx-copy'></i>
                 </button>` : '';
 

@@ -73,7 +73,7 @@ function openCodeModal(hash, name, status) {
                             <div class="col-7">
                                 <div class="input-group input-group-sm">
                                     <input type="password" class="form-control rounded-pill-start border-secondary bg-dark text-white px-3 font-monospace" value="${data.data.primary.value}" readonly>
-                                    <button class="btn btn-outline-secondary rounded-pill-end px-3 border-start-0" onclick="navigator.clipboard.writeText('${data.data.primary.value}')">
+                                    <button class="btn btn-outline-secondary rounded-pill-end px-3 border-start-0" data-copy="${data.data.primary.value}">
                                         <i class='bx bx-copy'></i>
                                     </button>
                                 </div>

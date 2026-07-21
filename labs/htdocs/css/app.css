@@ -22013,10 +22013,22 @@ html[data-coreui-theme=dark] .card.liquid-rim.lesson-card::after {
   flex: 1;
   background-color: #1e1e1e;
   color: #d4d4d4;
+  color-scheme: dark;
   position: relative;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+.instance-file-editor .instance-editor-header,
+.instance-file-editor .instance-editor-body,
+.instance-file-editor .instance-editor-status,
+.instance-file-editor .instance-editor-overlay {
+  color-scheme: dark;
+}
+
+.instance-file-editor .CodeMirror,
+.instance-file-editor .cm-s-material-darker.CodeMirror {
+  color-scheme: dark !important;
 }
 
 .instance-editor-header {
@@ -22024,14 +22036,16 @@ html[data-coreui-theme=dark] .card.liquid-rim.lesson-card::after {
   align-items: center;
   gap: 10px;
   padding: 8px 14px;
-  background-color: #161616;
+  background-color: #161616 !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   font-size: 0.82rem;
   min-height: 40px;
+  color: #e6e6e6 !important;
+  color-scheme: dark;
 }
 
 .instance-editor-filename {
-  color: #e6e6e6;
+  color: #e6e6e6 !important;
   font-weight: 600;
 }
 
@@ -22075,8 +22089,9 @@ html[data-coreui-theme=dark] .card.liquid-rim.lesson-card::after {
 .instance-editor-overlay {
   position: absolute;
   inset: 0;
-  background-color: #1e1e1e;
-  color: #8a93a3;
+  background-color: #1e1e1e !important;
+  color: #8a93a3 !important;
+  color-scheme: dark;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -22089,10 +22104,11 @@ html[data-coreui-theme=dark] .card.liquid-rim.lesson-card::after {
   align-items: center;
   gap: 12px;
   padding: 5px 14px;
-  background-color: #161616;
+  background-color: #161616 !important;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   font-size: 0.72rem;
-  color: #7a8290;
+  color: #7a8290 !important;
+  color-scheme: dark;
   min-height: 30px;
 }
 
@@ -22158,31 +22174,36 @@ html[data-coreui-theme=dark] .card.liquid-rim.lesson-card::after {
 .instance-file-editor .cm-s-material-darker.CodeMirror {
   height: 100% !important;
   background-color: #1e1e1e !important;
-  color: #d4d4d4 !important;
-  font-family: "Courier New", Courier, monospace;
-  font-size: 0.95rem !important;
-  line-height: 1.6 !important;
+  font-family: Consolas, "SF Mono", "Menlo", "DejaVu Sans Mono", "Liberation Mono", monospace;
+  font-size: 14.5px !important;
+  line-height: 1.55 !important;
+  letter-spacing: 0.01em;
+  padding: 4px 0 !important;
 }
 
 .instance-editor-body {
   background-color: #1e1e1e !important;
+  color-scheme: dark;
 }
 
 .instance-file-editor .CodeMirror-gutters {
-  background-color: #1e1e1e !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background-color: #252526 !important;
+  border-right: 1px solid #333 !important;
+  padding-right: 4px;
 }
 
 .instance-file-editor .CodeMirror-linenumber {
-  color: #6b7280 !important;
+  color: #858585 !important;
+  font-size: 13px !important;
+  padding: 0 8px 0 4px !important;
 }
 
 .instance-file-editor .CodeMirror-cursor {
-  border-left: 1px solid #d4d4d4 !important;
+  border-left: 2px solid #aeafad !important;
 }
 
 .instance-file-editor .CodeMirror-selected {
-  background-color: rgba(130, 170, 255, 0.25) !important;
+  background-color: rgba(38, 79, 120, 0.6) !important;
 }
 
 .instance-file-editor .CodeMirror-activeline-background {
@@ -22190,7 +22211,102 @@ html[data-coreui-theme=dark] .card.liquid-rim.lesson-card::after {
 }
 
 .instance-file-editor .CodeMirror-focused .CodeMirror-activeline-background {
-  background-color: rgba(255, 255, 255, 0.05) !important;
+  background-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+.instance-file-editor .CodeMirror-matchingbracket {
+  color: #fff !important;
+  background-color: rgba(64, 64, 64, 0.6) !important;
+  border-bottom: 1px solid #ff0 !important;
+}
+
+.instance-file-editor .cm-s-material-darker,
+.instance-file-editor .cm-s-material-darker span {
+  color: #d4d4d4 !important;
+}
+
+.instance-file-editor .cm-s-material-darker .cm-keyword {
+  color: #c792ea !important;
+}
+
+.instance-file-editor .cm-s-material-darker .cm-atom {
+  color: #f78c6c !important;
+}
+
+.instance-file-editor .cm-s-material-darker .cm-number {
+  color: #f78c6c !important;
+}
+
+.instance-file-editor .cm-s-material-darker .cm-def {
+  color: #82aaff !important;
+}
+
+.instance-file-editor .cm-s-material-darker .cm-variable {
+  color: #eeffff !important;
+}
+
+.instance-file-editor .cm-s-material-darker .cm-variable-2 {
+  color: #eeffff !important;
+}
+
+.instance-file-editor .cm-s-material-darker .cm-type {
+  color: #ffcb6b !important;
+}
+
+.instance-file-editor .cm-s-material-darker .cm-property {
+  color: #f07178 !important;
+}
+
+.instance-file-editor .cm-s-material-darker .cm-operator {
+  color: #89ddff !important;
+}
+
+.instance-file-editor .cm-s-material-darker .cm-string {
+  color: #c3e88d !important;
+}
+
+.instance-file-editor .cm-s-material-darker .cm-string-2 {
+  color: #c3e88d !important;
+}
+
+.instance-file-editor .cm-s-material-darker .cm-comment {
+  color: #546e7a !important;
+}
+
+.instance-file-editor .cm-s-material-darker .cm-tag {
+  color: #f07178 !important;
+}
+
+.instance-file-editor .cm-s-material-darker .cm-attribute {
+  color: #ffcb6b !important;
+}
+
+.instance-file-editor .cm-s-material-darker .cm-builtin {
+  color: #ffcb6b !important;
+}
+
+.instance-file-editor .cm-s-material-darker .cm-qualifier {
+  color: #ffcb6b !important;
+}
+
+.instance-file-editor .cm-s-material-darker .cm-meta {
+  color: #ffcb6b !important;
+}
+
+.instance-file-editor .cm-s-material-darker .cm-bracket {
+  color: #89ddff !important;
+}
+
+.instance-file-editor .cm-s-material-darker .cm-error {
+  color: #ff5370 !important;
+}
+
+.instance-file-editor .cm-s-material-darker .cm-header {
+  color: #82aaff !important;
+}
+
+.instance-file-editor .cm-s-material-darker .cm-link {
+  color: #82aaff !important;
 }
 
 .instance-file-editor .CodeMirror-readonly {
@@ -22198,14 +22314,14 @@ html[data-coreui-theme=dark] .card.liquid-rim.lesson-card::after {
 }
 
 .instance-config-input {
-  background-color: #1a1a1a;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #fff;
+  background-color: rgba(128, 128, 128, 0.1);
+  border: 1px solid rgba(128, 128, 128, 0.2);
+  color: var(--glass-text, #fff);
   border-radius: 12px;
   padding: 10px 16px;
 }
 .instance-config-input:focus {
-  background-color: #222;
+  background-color: rgba(128, 128, 128, 0.15);
   border-color: var(--cui-primary);
   box-shadow: none;
 }
@@ -22240,8 +22356,8 @@ html[data-coreui-theme=dark] .card.liquid-rim.lesson-card::after {
   color: #fff;
 }
 .instance-action-btn.instance-action-primary:hover {
-  background-color: #ff416c;
-  border-color: #ff416c;
+  background-color: #ff4b2b;
+  border-color: #ff4b2b;
   color: #fff;
 }
 .instance-action-btn.instance-action-danger {
@@ -22398,6 +22514,26 @@ html[data-coreui-theme=dark] .card.liquid-rim.lesson-card::after {
   transition: transform 0.18s ease, box-shadow 0.18s ease;
   position: relative;
 }
+.instance-template-card .dropdown-menu {
+  background: var(--cui-dropdown-bg, rgba(30, 30, 30, 0.95)) !important;
+  backdrop-filter: saturate(200%) blur(18px) !important;
+  border-radius: 12px !important;
+  padding: 8px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
+}
+.instance-template-card .dropdown-menu .dropdown-item {
+  font-size: 0.8rem;
+  border-radius: 8px;
+  padding: 6px 12px;
+}
+.instance-template-card .dropdown-menu .dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.instance-template-card > div:first-child {
+  border-radius: 1rem;
+  overflow: hidden;
+}
 
 .instance-template-card:hover {
   transform: translateY(-2px);
@@ -22419,6 +22555,54 @@ html[data-coreui-theme=dark] .card.liquid-rim.lesson-card::after {
   inset: 0;
   z-index: 1;
   background: rgba(0, 0, 0, 0.4);
+}
+
+.instance-badge-tag {
+  font-size: 8px !important;
+  padding: 2px 8px !important;
+  font-weight: 700 !important;
+  border-radius: 50rem !important;
+  letter-spacing: 0.3px;
+}
+
+.badge-vis-public {
+  background-color: #0dcaf0 !important;
+  color: #fff !important;
+}
+
+.badge-vis-private {
+  background-color: #6366f1 !important;
+  color: #fff !important;
+}
+
+.badge-type-machine {
+  background-color: #8b5cf6 !important;
+  color: #fff !important;
+}
+
+.badge-type-challenge {
+  background-color: #f59e0b !important;
+  color: #fff !important;
+}
+
+.badge-status-draft {
+  background-color: #f59e0b !important;
+  color: #fff !important;
+}
+
+.badge-status-built {
+  background-color: #10b981 !important;
+  color: #fff !important;
+}
+
+.badge-status-running {
+  background-color: #10b981 !important;
+  color: #fff !important;
+}
+
+.badge-status-trashed {
+  background-color: #ef4444 !important;
+  color: #fff !important;
 }
 
 /* BASICS */

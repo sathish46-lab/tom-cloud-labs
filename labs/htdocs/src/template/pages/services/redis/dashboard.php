@@ -41,14 +41,14 @@ require_once __DIR__ . '/partials/redis_header.php';
                         <span class="text-secondary fw-semibold" style="font-size: 0.8rem;">Hostname</span>
                         <div class="d-flex align-items-center">
                             <span class="text-light font-monospace me-2" style="font-size: 0.8rem;">redis.selfmade.ninja</span>
-                            <i class='bx bx-copy text-secondary cursor-pointer hover-white' onclick="copyText('redis.selfmade.ninja', 'Hostname copied');"></i>
+                            <i class='bx bx-copy text-secondary cursor-pointer hover-white' data-copy="redis.selfmade.ninja"></i>
                         </div>
                     </div>
                     <div class="mb-0 d-flex justify-content-between align-items-center bg-dark bg-opacity-50 p-2 px-3 rounded border border-light border-opacity-10">
                         <span class="text-secondary fw-semibold" style="font-size: 0.8rem;">Port</span>
                         <div class="d-flex align-items-center">
                             <span class="text-light font-monospace me-2" style="font-size: 0.8rem;">6379</span>
-                            <i class='bx bx-copy text-secondary cursor-pointer hover-white' onclick="copyText('6379', 'Port copied');"></i>
+                            <i class='bx bx-copy text-secondary cursor-pointer hover-white' data-copy="6379"></i>
                         </div>
                     </div>
                 </div>
@@ -83,7 +83,7 @@ require_once __DIR__ . '/partials/redis_header.php';
                                                 <small class="text-secondary fw-bold" style="font-size: 0.65rem; letter-spacing: 1px;">USERNAME</small>
                                                 <div class="d-flex justify-content-between align-items-center bg-dark bg-opacity-50 p-2 rounded mt-1 border border-light border-opacity-10">
                                                     <span class="text-light font-monospace" style="font-size: 0.8rem;"><?= htmlspecialchars($mu['redis_username']) ?></span>
-                                                    <i class='bx bx-copy text-secondary cursor-pointer hover-white' onclick="copyText('<?= htmlspecialchars($mu['redis_username']) ?>', 'Username copied');"></i>
+                                                    <i class='bx bx-copy text-secondary cursor-pointer hover-white' data-copy="<?= htmlspecialchars($mu['redis_username']) ?>"></i>
                                                 </div>
                                             </div>
                                             
@@ -93,7 +93,7 @@ require_once __DIR__ . '/partials/redis_header.php';
                                                     <span class="text-light font-monospace" style="font-size: 0.8rem;">••••••••••••</span>
                                                     <div>
                                                         <i class='bx bx-show text-secondary cursor-pointer hover-white me-2' onclick="alert('Password: <?= htmlspecialchars(base64_decode($mu['redis_password'])) ?>')"></i>
-                                                        <i class='bx bx-copy text-secondary cursor-pointer hover-white' onclick="copyText('<?= htmlspecialchars(base64_decode($mu['redis_password'])) ?>', 'Password copied');"></i>
+                                                        <i class='bx bx-copy text-secondary cursor-pointer hover-white' data-copy="<?= htmlspecialchars(base64_decode($mu['redis_password'])) ?>"></i>
                                                     </div>
                                                 </div>
                                             </div>

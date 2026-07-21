@@ -26,8 +26,11 @@ if (empty($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
     exit;
 }
 
-$db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
-$instance = $db->instances->findOne(['slug' => $slug]);
+$db = DatabaseConnection::getClient()->selectDatabase('tom_labs_instances_db');
+$instance = $db->instances->findOne(['instance_hash' => $slug]);
+if (!$instance) {
+    $instance = $db->instances->findOne(['slug' => $slug]);
+}
 if (!$instance || (int) ($instance['user_id'] ?? 0) !== $userId) {
     echo json_encode(['status' => 'error', 'error' => 'Instance not found or forbidden']);
     exit;

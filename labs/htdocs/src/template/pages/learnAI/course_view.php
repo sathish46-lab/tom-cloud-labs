@@ -336,7 +336,7 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
                                         <div class="d-flex align-items-center justify-content-between mb-2">
                                             <span class="font-monospace text-white fs-6"><?= htmlspecialchars($labIp) ?></span>
                                             <div class="d-flex align-items-center gap-1">
-                                                <button type="button" class="btn btn-link p-1 text-secondary hover-text-white" onclick="navigator.clipboard.writeText('<?= htmlspecialchars($labIp) ?>')" title="Copy IP"><i class="bx bx-copy fs-5"></i></button>
+                                                <button type="button" class="btn btn-link p-1 text-secondary hover-text-white" data-copy="<?= htmlspecialchars($labIp) ?>" title="Copy IP"><i class="bx bx-copy fs-5"></i></button>
                                                 <a href="/labs/dashboard/<?= htmlspecialchars($labHash) ?>" class="btn btn-link p-1 text-secondary hover-text-white" title="Open Lab"><i class="bx bx-share fs-5"></i></a>
                                             </div>
                                         </div>
