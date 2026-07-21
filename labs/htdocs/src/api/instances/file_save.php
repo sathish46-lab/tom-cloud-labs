@@ -32,7 +32,7 @@ if (!$instance || (int) ($instance['user_id'] ?? 0) !== $userId) {
     exit;
 }
 
-$instanceId = $instance['_id'];
+$instanceHash = $instance['instance_hash'] ?? $slug;
 $templateFolder = InstanceFileStore::resolveTemplateFolder($instance);
 if (!$templateFolder) {
     echo json_encode(['status' => 'error', 'error' => 'No template for instance']);
@@ -40,7 +40,7 @@ if (!$templateFolder) {
 }
 
 try {
-    $version = InstanceFileStore::saveFile($instanceId, $templateFolder, $path, $content, $username, $email);
+    $version = InstanceFileStore::saveFile($instanceHash, $templateFolder, $path, $content, $username, $email);
     echo json_encode(['status' => 'success', 'version' => $version, 'modified' => true]);
 } catch (Exception $e) {
     echo json_encode(['status' => 'error', 'error' => 'Save failed: ' . $e->getMessage()]);

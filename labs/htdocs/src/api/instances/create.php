@@ -25,8 +25,7 @@ if (empty($name)) {
 }
 
 // Generate slug
-$slug = strtolower(preg_replace('/[^a-z0-9]+/', '-', $name));
-$slug = trim($slug, '-');
+$slug = strtolower(trim(preg_replace('/[^a-z0-9]+/', '-', strtolower($name)), '-'));
 if (empty($slug)) $slug = 'lab-' . time();
 
 // Ensure unique slug

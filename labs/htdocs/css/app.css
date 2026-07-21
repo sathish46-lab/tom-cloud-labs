@@ -15610,6 +15610,16 @@ html[data-coreui-theme=light] body.hwa-enabled .card.blur {
   border: 1px solid rgba(var(--cui-primary-rgb, 139, 145, 249), 0.4) !important;
   box-shadow: 0 12px 40px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.25), 0 0 15px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.15) !important;
 }
+[data-coreui-theme=dark] .toast .btn-close {
+  filter: none;
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  opacity: 0.7;
+}
+[data-coreui-theme=dark] .toast .btn-close:hover {
+  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.25);
+}
 
 #scene {
   position: fixed;
@@ -22351,14 +22361,24 @@ html[data-coreui-theme=dark] .card.liquid-rim.lesson-card::after {
   color: var(--glass-text);
 }
 .instance-action-btn.instance-action-primary {
-  background-color: #ff4b2b;
-  border-color: #ff4b2b;
-  color: #fff;
+  border-color: rgba(var(--instance-primary-rgb, 255, 75, 43), 0.5);
+  color: var(--instance-primary, #ff4b2b);
+  background-color: rgba(var(--instance-primary-rgb, 255, 75, 43), 0.08);
 }
 .instance-action-btn.instance-action-primary:hover {
-  background-color: #ff4b2b;
-  border-color: #ff4b2b;
-  color: #fff;
+  background-color: rgba(var(--instance-primary-rgb, 255, 75, 43), 0.12);
+  border-color: var(--instance-primary, #ff4b2b);
+  color: var(--instance-primary, #ff4b2b);
+}
+.instance-action-btn.instance-action-success {
+  border-color: rgba(25, 135, 84, 0.5);
+  color: #198754;
+  background-color: rgba(25, 135, 84, 0.08);
+}
+.instance-action-btn.instance-action-success:hover {
+  background-color: rgba(25, 135, 84, 0.12);
+  border-color: #198754;
+  color: #198754;
 }
 .instance-action-btn.instance-action-danger {
   border-color: rgba(var(--instance-danger-rgb, 214, 49, 75), 0.5);
@@ -22366,9 +22386,9 @@ html[data-coreui-theme=dark] .card.liquid-rim.lesson-card::after {
   background-color: rgba(var(--instance-danger-rgb, 214, 49, 75), 0.08);
 }
 .instance-action-btn.instance-action-danger:hover {
-  background-color: var(--instance-danger);
+  background-color: rgba(var(--instance-danger-rgb, 214, 49, 75), 0.12);
   border-color: var(--instance-danger);
-  color: #fff;
+  color: var(--instance-danger);
 }
 
 .instance-nav-tabs {

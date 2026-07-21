@@ -29,6 +29,6 @@ if (!$instance || (int) ($instance['user_id'] ?? 0) !== $userId) {
     exit;
 }
 
-$instanceId = $instance['_id'];
-$result = InstanceFileStore::deleteNode($instanceId, $path);
+$instanceHash = $instance['instance_hash'] ?? $slug;
+$result = InstanceFileStore::deleteNode($instanceHash, $path);
 echo json_encode($result);

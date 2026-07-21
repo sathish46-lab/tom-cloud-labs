@@ -18830,17 +18830,17 @@ document.addEventListener('show.coreui.modal', function(e) {
         showOverlay(data.error || "Failed to load file", "bx bx-error-circle");
         return;
       }
-      if (data.is_binary) {
+      if (data.s3_key) {
         cm.setValue("");
         cm.setOption("readOnly", true);
         cm.getWrapperElement().classList.add("CodeMirror-readonly");
         saveBtn.disabled = true;
         if (deleteBtn) deleteBtn.disabled = false;
-        activeFile = { path, name, modified: data.modified, version: data.version };
+        activeFile = { path, name, modified: data.modified };
         metaEl.innerHTML =
-          '<span class="badge bg-secondary bg-opacity-25 text-secondary">Binary file — manage via "Open in editor"</span>' +
+          '<span class="badge bg-secondary bg-opacity-25 text-secondary">Binary file</span>' +
           ' <span class="small text-secondary">' + humanSize(data.size || 0) + "</span>";
-        showOverlay('This is a binary file. Edit it via "Open in editor".', "bx bx-file-blank");
+        showOverlay("Binary file — manage via MinIO.", "bx bx-file-blank");
         updateStatus();
         return;
       }
@@ -18851,15 +18851,11 @@ document.addEventListener('show.coreui.modal', function(e) {
       cm.getWrapperElement().classList.remove("CodeMirror-readonly");
       saveBtn.disabled = false;
       if (deleteBtn) deleteBtn.disabled = false;
-      activeFile = { path, name, modified: data.modified, version: data.version };
+      activeFile = { path, name, modified: data.modified };
       if (modifiedEl) modifiedEl.classList.toggle("d-none", !data.modified);
-      metaEl.innerHTML =
-        (data.modified
-          ? '<span class="badge bg-warning bg-opacity-25 text-warning">Modified by you</span>'
-          : '<span class="badge bg-info bg-opacity-25 text-info">Base template</span>') +
-        ' <span class="small text-secondary">v' +
-        (data.version || 1) +
-        "</span>";
+      metaEl.innerHTML = data.modified
+        ? '<span class="badge bg-warning bg-opacity-25 text-warning">Modified by you</span>'
+        : '<span class="badge bg-info bg-opacity-25 text-info">Base template</span>';
       cm.focus();
       updateStatus();
     } catch (e) {
@@ -18885,13 +18881,10 @@ document.addEventListener('show.coreui.modal', function(e) {
       if (data.status === "success") {
         loadedContent = cm.getValue();
         activeFile.modified = true;
-        activeFile.version = data.version;
         if (modifiedEl) modifiedEl.classList.remove("d-none");
         metaEl.innerHTML =
-          '<span class="badge bg-warning bg-opacity-25 text-warning">Modified by you</span> <span class="small text-secondary">v' +
-          data.version +
-          "</span>";
-        showToast("Saved. Version " + data.version + " stored.", "success");
+          '<span class="badge bg-warning bg-opacity-25 text-warning">Modified by you</span>';
+        showToast("Saved.", "success");
         loadTree();
       } else {
         showToast("Save failed: " + (data.error || "unknown"), "danger");

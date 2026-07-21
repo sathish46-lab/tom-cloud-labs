@@ -49,8 +49,7 @@ $bgColor = $bgMap[$labType] ?? 'rgba(0,0,0,0.5)';
 $icon = $typeIconMap[$labType] ?? 'bx-cube-alt';
 
 if (empty($name)) {
-    $sourceName = $source['name'] ?? ucfirst($labType);
-    $name = $sourceName . ' (fork)';
+    $name = $source['name'] ?? ucfirst($labType);
 }
 
 // Ensure unique name for this user
@@ -61,8 +60,7 @@ if ($nameCount > 0) {
 }
 
 // Generate slug
-$slug = strtolower(preg_replace('/[^a-z0-9]+/', '-', $name));
-$slug = trim($slug, '-');
+$slug = strtolower(trim(preg_replace('/[^a-z0-9]+/', '-', strtolower($name)), '-'));
 if (empty($slug)) $slug = 'lab-' . time();
 
 // Ensure unique slug

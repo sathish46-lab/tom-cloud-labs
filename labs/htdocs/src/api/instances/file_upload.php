@@ -36,7 +36,7 @@ if (!$instance || (int) ($instance['user_id'] ?? 0) !== $userId) {
     exit;
 }
 
-$instanceId = $instance['_id'];
+$instanceHash = $instance['instance_hash'] ?? $slug;
 $templateFolder = InstanceFileStore::resolveTemplateFolder($instance);
 if (!$templateFolder) {
     echo json_encode(['status' => 'error', 'error' => 'No template for instance']);
@@ -44,7 +44,7 @@ if (!$templateFolder) {
 }
 
 $tmpPath = $_FILES['file']['tmp_name'];
-$s3Key = 'labassets/instances/' . $instanceId . '/' . ltrim($path, '/');
+$s3Key = 'labassets/instances/' . $instanceHash . '/' . ltrim($path, '/');
 
 $uploaded = Storage::upload($tmpPath, $s3Key);
 if (!$uploaded) {
@@ -52,24 +52,20 @@ if (!$uploaded) {
     exit;
 }
 
-// Remove any existing user-layer doc for this path, then store binary metadata
-InstanceFileStore::deleteNode($instanceId, $path);
-InstanceFileStore::collection()->insertOne([
-    'layer' => 'user',
-    'instance_id' => $instanceId,
-    'template' => $templateFolder,
-    'base_path' => ltrim($path, '/'),
-    'name' => basename($path),
-    'is_dir' => false,
-    'size' => $_FILES['file']['size'],
-    'mime' => mime_content_type($tmpPath) ?: 'application/octet-stream',
-    'content' => null,
-    's3_key' => $s3Key,
-    'username' => $username,
-    'email' => $email,
-    'version' => 1,
-    'created_at' => new MongoDB\BSON\UTCDateTime(),
-    'updated_at' => new MongoDB\BSON\UTCDateTime(),
-]);
+// Store binary file in user layer via single-doc model
+InstanceFileStore::deleteNode($instanceHash, $path);
+InstanceFileStore::collection()->updateOne(
+    ['instance_id' => $instanceHash],
+    ['$set' => [
+        'files.' . ltrim($path, '/') => [
+            'content' => null,
+            'size' => $_FILES['file']['size'],
+            's3_key' => $s3Key,
+        ],
+        'username' => $username,
+        'email' => $email,
+        'updated_at' => new MongoDB\BSON\UTCDateTime(),
+    ]]
+);
 
 echo json_encode(['status' => 'success', 's3_key' => $s3Key]);

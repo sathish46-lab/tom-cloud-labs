@@ -34,18 +34,15 @@ if ((int) ($instance['user_id'] ?? 0) !== $userId) {
     exit;
 }
 
-$instanceId = $instance['_id'];
+$instanceHash = $instance['instance_hash'] ?? $slug;
 $templateFolder = InstanceFileStore::resolveTemplateFolder($instance);
 if (!$templateFolder) {
     echo json_encode(['status' => 'success', 'tree' => [], 'template' => null]);
     exit;
 }
 
-// Base layer lives in MinIO (seeded lazily if missing)
+$tree = InstanceFileStore::getTree($instanceHash, $templateFolder);
 
-$tree = InstanceFileStore::getTree($instanceId, $templateFolder);
-
-// Get last opened file for this user
 $userId = (string)$user->getUserId();
 $lastOpenedFiles = (array)($instance['last_file_opened'] ?? []);
 $lastOpened = $lastOpenedFiles[$userId] ?? null;

@@ -195,8 +195,8 @@ $bindMounts = ($bindMountsRaw instanceof MongoDB\Model\BSONArray) ? iterator_to_
             </div>
 
             <div class="mt-3 text-end">
-                <button class="btn btn-primary rounded-pill px-5 py-2 fw-bold" style="background-color: #ff4b2b; border:none; color: white;" id="saveConfigBtn">
-                    <i class='bx bx-save me-1'></i> Save configuration
+                <button class="btn instance-action-btn instance-action-success rounded-pill px-5 py-2 fw-bold" id="saveConfigBtn">
+                    <i class='bx bx-save me-1' style="font-size: 1.25rem;"></i> Save configuration
                 </button>
             </div>
         </div>

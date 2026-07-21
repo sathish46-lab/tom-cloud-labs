@@ -32,13 +32,15 @@ $slug = $_GET['slug'] ?? '';
         </div>
         <div class="d-flex gap-2">
             <button class="btn instance-action-btn btn-sm rounded-pill fw-bold px-3" data-refresh-files>
-                <i class='bx bx-refresh'></i> Refresh
+                <svg class="icon text-warning" style="height: 18px; width: 18px;">
+                    <use xlink:href="/assets/icons/sprites/free.svg#cil-loop-circular"></use>
+                </svg>
             </button>
             <button class="btn instance-action-btn instance-action-danger btn-sm rounded-pill fw-bold px-3" data-delete-file disabled>
-                <i class='bx bx-trash'></i> Delete
+                <i class='bx bx-trash'></i>
             </button>
-            <button class="btn instance-action-btn instance-action-primary btn-sm rounded-pill px-4 fw-bold" data-save-file disabled>
-                <i class='bx bxs-save'></i> Save <span class="fw-normal opacity-75 ms-1" style="font-size: 0.7rem;">Ctrl+S</span>
+            <button class="btn instance-action-btn instance-action-success btn-sm rounded-pill fw-bold px-3" data-save-file disabled>
+                <i class='bx bx-save' style="font-size: 1.25rem;"></i>
             </button>
         </div>
     </div>

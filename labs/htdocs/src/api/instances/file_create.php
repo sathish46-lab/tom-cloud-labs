@@ -33,12 +33,12 @@ if (!$instance || (int) ($instance['user_id'] ?? 0) !== $userId) {
     exit;
 }
 
-$instanceId = $instance['_id'];
+$instanceHash = $instance['instance_hash'] ?? $slug;
 $templateFolder = InstanceFileStore::resolveTemplateFolder($instance);
 if (!$templateFolder) {
     echo json_encode(['status' => 'error', 'error' => 'No template for instance']);
     exit;
 }
 
-$result = InstanceFileStore::createNode($instanceId, $templateFolder, $path, $isDir, $username, $email, $content);
+$result = InstanceFileStore::createNode($instanceHash, $templateFolder, $path, $isDir, $username, $email, $content);
 echo json_encode($result);
