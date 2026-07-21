@@ -15,6 +15,7 @@ $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
 $name = trim($_POST['name'] ?? '');
 $visibility = $_POST['visibility'] ?? 'private';
 $type = $_POST['type'] ?? 'machine';
+$template = trim($_POST['template'] ?? 'essentials');
 
 if (empty($name)) {
     echo json_encode(['status' => 'error', 'error' => 'Name is required']);
@@ -38,6 +39,7 @@ $instance = [
     'slug' => $slug,
     'visibility' => $visibility,
     'type' => $type,
+    'template' => $template,
     'status' => 'draft',
     'image' => 'ubuntu:24.04',
     'color' => 'rgba(0,0,0,0.5)',
@@ -49,6 +51,14 @@ $instance = [
 $result = $db->instances->insertOne($instance);
 
 if ($result->getInsertedCount() > 0) {
+    // Seed the instance's file store (base layer from lab-templates/<template>/)
+    try {
+        $newId = $result->getInsertedId();
+        $instance['_id'] = $newId;
+        InstanceFileStore::ensureBaseForInstance($instance);
+    } catch (Exception $e) {
+        error_log('Instance file seed failed: ' . $e->getMessage());
+    }
     ob_start();
     ?>
     <div class="col" id="instance-<?= htmlspecialchars($slug) ?>">

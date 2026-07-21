@@ -68,14 +68,14 @@
     transition: all 0.2s ease-in-out;
     
     &:hover {
-      color: #fff;
-      background: rgba(255, 255, 255, 0.05);
-      // border-bottom-color: rgba(255, 255, 255, 0.2) !important;
+      color: var(--glass-text);
+      background: rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.08);
+      // border-bottom-color: rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.2) !important;
     }
 
     &.active {
-      color: #fff !important;
-      background: rgba(255, 255, 255, 0.1) !important;
+      color: var(--glass-text) !important;
+      background: rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.14) !important;
       // border-bottom-color: #858bff !important;
     }
   }

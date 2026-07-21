@@ -1,0 +1,467 @@
+// Instance Manager — file tree, editor, and config styling
+// (Dark code-editor UI. Colors are functional for an IDE-like surface.)
+
+// File tree + editor: theme-aware. Dark IDE surface in dark mode,
+// light surface in light mode (text flips via --glass-text tokens).
+.instance-file-tree {
+  background-color: var(--glass-bg, #111);
+  border-radius: 12px;
+  border: 1px solid rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.08);
+  height: 600px;
+  display: flex;
+  overflow: hidden;
+}
+
+.instance-file-sidebar {
+  width: 260px;
+  border-right: 1px solid rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.08);
+  background-color: rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.03);
+  padding: 10px;
+  overflow-y: auto;
+}
+
+.instance-file-editor {
+  flex: 1;
+  // Forced dark IDE surface (VS Code look) — independent of page theme.
+  background-color: #1e1e1e;
+  color: #d4d4d4;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+// Editor header bar (filename + language + modified)
+.instance-editor-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  background-color: #161616;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.82rem;
+  min-height: 40px;
+}
+
+.instance-editor-filename {
+  color: #e6e6e6;
+  font-weight: 600;
+}
+
+.text-editor-accent {
+  color: #c792ea !important;
+}
+
+.instance-editor-lang {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #7a8290;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 1px 8px;
+  font-weight: 600;
+}
+
+.instance-editor-modified {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.7rem;
+  color: #ffcb6b;
+}
+
+.instance-editor-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #ffcb6b;
+}
+
+.instance-editor-body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+// Centered overlay for empty / binary / error states
+.instance-editor-overlay {
+  position: absolute;
+  inset: 0;
+  background-color: #1e1e1e;
+  color: #8a93a3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  padding: 20px;
+}
+
+// Editor footer status bar
+.instance-editor-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 5px 14px;
+  background-color: #161616;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.72rem;
+  color: #7a8290;
+  min-height: 30px;
+}
+
+.instance-editor-stats {
+  font-variant-numeric: tabular-nums;
+}
+
+.instance-tree-item {
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--glass-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+
+  // Icons follow the theme text color
+  i.bx {
+    color: var(--glass-text) !important;
+  }
+
+  // Folder icons get a warm tint so they read as folders
+  &.is-folder i.bx:not(.bx-chevron-right):not(.bx-chevron-down) {
+    color: #e0a800 !important;
+  }
+
+  &:hover {
+    background-color: rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.08);
+    color: var(--glass-text);
+
+    i.bx {
+      color: var(--glass-text) !important;
+    }
+  }
+
+  &.is-folder {
+    font-weight: 600;
+  }
+
+  &.is-active {
+    background-color: rgba(var(--cui-primary-rgb), 0.18);
+    color: var(--glass-text);
+
+    i.bx {
+      color: var(--glass-text) !important;
+    }
+  }
+
+  .tree-modified-dot {
+    margin-left: auto;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background-color: var(--cui-warning, #ffc107);
+  }
+
+  .text-secondary {
+    color: var(--glass-text-muted) !important;
+  }
+}
+
+.instance-code-editor {
+  flex: 1;
+  resize: none;
+  width: 100%;
+  height: 100%;
+  border: none;
+  font-family: "Courier New", Courier, monospace;
+}
+
+// CodeMirror dark IDE overrides — forced solid dark in BOTH themes (VS Code look).
+// The material-darker theme class sets its own bg, so we must out-specify it.
+.instance-file-editor .CodeMirror,
+.instance-file-editor .cm-s-material-darker.CodeMirror {
+  height: 100% !important;
+  background-color: #1e1e1e !important;
+  color: #d4d4d4 !important;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 0.95rem !important;
+  line-height: 1.6 !important;
+}
+
+// The editor body wrapper itself must never go gray/light
+.instance-editor-body {
+  background-color: #1e1e1e !important;
+}
+
+.instance-file-editor .CodeMirror-gutters {
+  background-color: #1e1e1e !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.instance-file-editor .CodeMirror-linenumber {
+  color: #6b7280 !important;
+}
+
+.instance-file-editor .CodeMirror-cursor {
+  border-left: 1px solid #d4d4d4 !important;
+}
+
+.instance-file-editor .CodeMirror-selected {
+  background-color: rgba(130, 170, 255, 0.25) !important;
+}
+
+.instance-file-editor .CodeMirror-activeline-background {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+}
+
+.instance-file-editor .CodeMirror-focused .CodeMirror-activeline-background {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+// Read-only (binary / not loaded) — dim the surface
+.instance-file-editor .CodeMirror-readonly {
+  opacity: 0.85;
+}
+
+.instance-config-input {
+  background-color: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-radius: 12px;
+  padding: 10px 16px;
+
+  &:focus {
+    background-color: #222;
+    border-color: var(--cui-primary);
+    box-shadow: none;
+  }
+}
+
+.instance-config-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 10px;
+  margin-top: 25px;
+}
+
+.instance-action-btn {
+  border: 1px solid rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.15);
+  background-color: rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.06);
+  color: var(--glass-text);
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.12);
+    color: var(--glass-text);
+  }
+
+  &.instance-action-primary {
+    background-color: #ff4b2b;
+    border-color: #ff4b2b;
+    color: #fff;
+
+    &:hover {
+      background-color: #ff416c;
+      border-color: #ff416c;
+      color: #fff;
+    }
+  }
+
+  &.instance-action-danger {
+    border-color: rgba(var(--instance-danger-rgb, 214, 49, 75), 0.5);
+    color: var(--instance-danger);
+    background-color: rgba(var(--instance-danger-rgb, 214, 49, 75), 0.08);
+
+    &:hover {
+      background-color: var(--instance-danger);
+      border-color: var(--instance-danger);
+      color: #fff;
+    }
+  }
+}
+
+.instance-nav-tabs {
+  border-bottom: 1px solid rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.12);
+
+  .nav-link {
+    color: var(--glass-text-muted);
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 10px 16px;
+    font-weight: 600;
+    font-size: 0.9rem;
+
+    &:hover {
+      color: var(--glass-text);
+      border-color: transparent;
+    }
+
+    &.active {
+      background: transparent;
+      color: var(--glass-text);
+      border-bottom: 2px solid var(--cui-primary, #858bff);
+    }
+  }
+}
+
+// Generic helpers used by manage tabs/partials (kept in SASS, not inline)
+.config-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--glass-text-muted);
+  margin-bottom: 10px;
+  margin-top: 25px;
+}
+
+.config-input {
+  background-color: rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.06);
+  border: 1px solid rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.15);
+  color: var(--glass-text);
+  border-radius: 12px;
+  padding: 10px 16px;
+
+  &::placeholder {
+    color: var(--glass-text-muted);
+  }
+
+  &:focus {
+    background-color: rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.1);
+    border-color: var(--cui-primary);
+    box-shadow: none;
+    color: var(--glass-text);
+  }
+}
+
+.nav-tabs {
+  border-bottom: 1px solid rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.12);
+
+  .nav-link {
+    color: var(--glass-text-muted);
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 10px 16px;
+    font-weight: 600;
+    font-size: 0.9rem;
+
+    &:hover {
+      color: var(--glass-text);
+      border-color: transparent;
+    }
+
+    &.active {
+      background: transparent;
+      color: var(--glass-text);
+      border-bottom: 2px solid var(--cui-primary, #858bff);
+    }
+  }
+}
+
+// Shared subtle-tinted badge for the Instance pages (matches the domain card
+// style: translucent fill + tinted text + hairline border). Use with a color
+// modifier class, e.g. <span class="instance-badge text-bg-soft-secondary">.
+.instance-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  padding: 0.2rem 0.6rem;
+  border-radius: 50rem;
+  border: 1px solid transparent;
+  background-color: rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.1);
+  color: var(--glass-text-muted);
+}
+
+.instance-badge.text-bg-soft-secondary {
+  background-color: rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.1);
+  color: var(--glass-text-muted);
+  border-color: rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.25);
+}
+.instance-badge.text-bg-soft-primary {
+  background-color: rgba(var(--cui-primary-rgb), 0.12);
+  color: var(--cui-primary);
+  border-color: rgba(var(--cui-primary-rgb), 0.3);
+}
+.instance-badge.text-bg-soft-success {
+  background-color: rgba(25, 135, 84, 0.14);
+  color: #1a9c5b;
+  border-color: rgba(25, 135, 84, 0.3);
+}
+.instance-badge.text-bg-soft-warning {
+  background-color: rgba(255, 193, 7, 0.14);
+  color: #d9a400;
+  border-color: rgba(255, 193, 7, 0.3);
+}
+.instance-badge.text-bg-soft-danger {
+  background-color: rgba(220, 53, 69, 0.14);
+  color: #e5534b;
+  border-color: rgba(220, 53, 69, 0.3);
+}
+.instance-badge.text-bg-soft-info {
+  background-color: rgba(13, 202, 240, 0.14);
+  color: #0dcaf0;
+  border-color: rgba(13, 202, 240, 0.3);
+}
+
+// Thin, un-filled meta badge for OS / type (e.g. ubuntu:24.04, machine).
+.instance-badge-thin {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1;
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: var(--cui-secondary-color, #9aa0ac);
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.instance-badge.text-bg-soft-light {
+  background-color: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+// ----- Dashboard template cards (full-card image background + blur overlay) -----
+.instance-template-card {
+  background-color: #1c1e29;
+  min-height: 200px;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  position: relative;
+}
+
+.instance-template-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28) !important;
+}
+
+.instance-template-card-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: brightness(0.6);
+}
+
+.instance-template-card-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: rgba(0, 0, 0, 0.4);
+}

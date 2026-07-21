@@ -5,9 +5,40 @@ $userId = (int)$user->getUserId();
 $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
 $instances = iterator_to_array($db->instances->find(['user_id' => $userId]));
 $deployedLabs = iterator_to_array($db->deployed_labs->find(['user_id' => $userId]));
+
+if (!function_exists('dashboard_relative_time')) {
+    function dashboard_relative_time($dt) {
+        if (!$dt instanceof MongoDB\BSON\UTCDateTime) return 'recently';
+        $ts = $dt->toDateTime()->getTimestamp();
+        $diff = time() - $ts;
+        if ($diff < 60) return 'just now';
+        if ($diff < 3600) return floor($diff / 60) . 'm ago';
+        if ($diff < 86400) return floor($diff / 3600) . 'h ago';
+        if ($diff < 604800) return floor($diff / 86400) . 'd ago';
+        return date('M j', $ts);
+    }
+}
+function dashboard_fork_source($db, $forkedFrom) {
+    if (empty($forkedFrom)) return '';
+    try {
+        $oid = new MongoDB\BSON\ObjectId($forkedFrom);
+    } catch (Exception $e) {
+        return '';
+    }
+    $src = $db->instances->findOne(['_id' => $oid]);
+    if (!$src) {
+        $src = $db->deployed_labs->findOne(['_id' => $oid]);
+    }
+    if (!$src) return '';
+    $name = $src['name'] ?? '';
+    if (empty($name)) {
+        $name = $src['lab_type'] ?? ($src['instance_hash'] ?? 'source');
+    }
+    return $name;
+}
 ?>
 <div class="blur mb-3 rounded-0">
-    <div class="container-fluid px-4 py-3">
+    <div class="container-fluid px-3 py-3">
         <div class="d-flex align-items-center justify-content-between mb-4">
             <div class="d-flex align-items-center gap-3">
                 <div class="bg-body-secondary theme-text p-2 rounded-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
@@ -24,13 +55,13 @@ $deployedLabs = iterator_to_array($db->deployed_labs->find(['user_id' => $userId
             </div>
             
             <div class="d-flex align-items-center gap-2">
-                <button class="btn btn-primary d-flex align-items-center gap-2 rounded-pill px-4 fw-bold" style="background-color: #8b5cf6; border-color: #8b5cf6; color: white;">
+                <button class="btn instance-action-btn instance-action-primary d-flex align-items-center gap-2 rounded-pill px-4 fw-bold">
                     <i class='bx bx-plus-circle'></i> Create template
                 </button>
-                <button class="btn border border-secondary border-opacity-25 theme-text d-flex align-items-center gap-2 rounded-pill px-4 hover-bg-secondary transition-all" data-coreui-toggle="modal" data-coreui-target="#forkLabModal" style="background-color: rgba(255,255,255,0.05);">
+                <button class="btn instance-action-btn d-flex align-items-center gap-2 rounded-pill px-4" data-coreui-toggle="modal" data-coreui-target="#forkLabModal">
                     <i class='bx bx-git-repo-forked text-danger'></i> Fork a lab
                 </button>
-                <button class="btn border border-secondary border-opacity-25 theme-text d-flex align-items-center gap-2 rounded-pill px-4 hover-bg-secondary transition-all" style="background-color: rgba(255,255,255,0.05);">
+                <button class="btn instance-action-btn d-flex align-items-center gap-2 rounded-pill px-4">
                     <i class='bx bx-import text-danger'></i> Import
                 </button>
             </div>
@@ -46,10 +77,10 @@ $deployedLabs = iterator_to_array($db->deployed_labs->find(['user_id' => $userId
         <div class="d-flex align-items-center gap-2 mb-4">
             <i class='bx bx-cube theme-text'></i>
             <h5 class="fw-bold theme-text m-0">Your templates</h5>
-            <span class="badge bg-secondary text-white rounded-pill px-2"><?= count($instances) ?></span>
+            <span class="instance-badge text-bg-soft-secondary"><?= count($instances) ?></span>
         </div>
         
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4" id="templatesGrid">
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-3 g-3" id="templatesGrid">
             
             <?php if (empty($instances)): ?>
             <div class="col-12">
@@ -67,48 +98,68 @@ $deployedLabs = iterator_to_array($db->deployed_labs->find(['user_id' => $userId
                     $status = $instance['status'] ?? 'draft';
                     $visibility = $instance['visibility'] ?? 'private';
                     $image = $instance['image'] ?? 'ubuntu:24.04';
-                    
-                    // Simple logic for header color/icon
                     $bgColor = $instance['color'] ?? 'rgba(0,0,0,0.5)';
-                    $icon = $instance['icon'] ?? 'bx-cube-alt';
+                    // Full-card background = template avatar from CDN (correct per template type).
+                    $tplKey = $instance['template'] ?? $type;
+                    $avatarMap = [
+                        'essentials'   => 'essentials_avatar.png',
+                        'minio'        => 'minio_avatar.png',
+                        'docker_lab'   => 'docker_avatar.png',
+                        'docker'       => 'docker_avatar.png',
+                        'zephyr'       => 'zephyr_avatar.png',
+                        'kali'         => 'kali-background.png',
+                        'n8n'          => 'essentials_avatar.png',
+                    ];
+                    $avatarFile = $avatarMap[$tplKey] ?? 'essentials_avatar.png';
+                    $cover = Session::cdn3('labassets/avatar/' . $avatarFile);
+                    $forkSource = dashboard_fork_source($db, $instance['forked_from'] ?? null);
+                    $updatedLabel = dashboard_relative_time($instance['updated_at'] ?? null);
                 ?>
                 <div class="col">
-                    <a href="/instances/<?= htmlspecialchars($slug) ?>" class="card h-100 blur border-0 shadow-lg rounded-4 overflow-hidden text-decoration-none group device-card">
-                        <div class="card-body p-4 d-flex flex-column justify-content-between h-100">
-                            <div>
-                                <div class="d-flex align-items-center justify-content-between mb-3">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" 
-                                             style="width: 36px; height: 36px; background: <?= htmlspecialchars($bgColor) ?>; border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 3px 8px rgba(0,0,0,0.15);">
-                                            <i class="bx <?= htmlspecialchars($icon) ?> text-white fs-5"></i>
-                                        </div>
-                                        <h5 class="fw-bold theme-text mb-0 group-hover-text-primary transition-all"><?= htmlspecialchars($name) ?></h5>
-                                    </div>
-                                </div>
-                                
-                                <div class="d-flex flex-wrap gap-2 mb-3">
-                                    <span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill px-2 fw-normal"><?= htmlspecialchars($type) ?></span>
-                                    <?php if ($status === 'built' || $status === 'running'): ?>
-                                    <span class="badge bg-success bg-opacity-25 text-success rounded-pill px-2 fw-normal"><?= htmlspecialchars($status) ?></span>
-                                    <?php else: ?>
-                                    <span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill px-2 fw-normal"><?= htmlspecialchars($status) ?></span>
-                                    <?php endif; ?>
-                                    
-                                    <?php if ($visibility === 'public'): ?>
-                                    <span class="badge bg-info bg-opacity-25 text-info rounded-pill px-2 fw-normal"><?= htmlspecialchars($visibility) ?></span>
-                                    <?php else: ?>
-                                    <span class="badge bg-secondary bg-opacity-25 text-secondary rounded-pill px-2 fw-normal"><?= htmlspecialchars($visibility) ?></span>
-                                    <?php endif; ?>
-                                </div>
-                                
-                                <div class="d-flex align-items-center text-info font-monospace small mb-3">
-                                    <span class="text-success"><?= htmlspecialchars($slug) ?></span> - <?= htmlspecialchars($image) ?>
-                                </div>
+                    <div class="card border-0 shadow-sm rounded-3 overflow-hidden instance-template-card">
+                        <div class="instance-template-card-bg" style="background-image: url('<?= htmlspecialchars($cover) ?>'), linear-gradient(135deg, <?= htmlspecialchars($bgColor) ?> 0%, rgba(0,0,0,0.35) 100%);"></div>
+                        <div class="instance-template-card-overlay"></div>
+
+                        <div class="position-relative d-flex flex-column justify-content-end p-3 h-100" style="z-index: 2;">
+                            <div class="d-flex align-items-center gap-2 mb-5">
+                                <?php if ($visibility === 'public'): ?>
+                                <span class="instance-badge text-bg-soft-info small">public</span>
+                                <?php else: ?>
+                                <span class="instance-badge text-bg-soft-secondary small">private</span>
+                                <?php endif; ?>
+                                <span class="instance-badge text-bg-soft-light small">
+                                    <?= htmlspecialchars($type) ?>
+                                </span>
+                                <span class="instance-badge text-bg-soft-<?= ($status === 'built' || $status === 'running') ? 'success' : 'warning' ?> small">
+                                    <?= htmlspecialchars($status) ?>
+                                </span>
                             </div>
-                            
-                            <div class="text-secondary small mt-2">updated recently</div>
+
+                            <h6 class="fw-bold theme-text mb-0">
+                                <?= htmlspecialchars($name) ?><?= !empty($instance['forked_from']) ? ' (fork)' : '' ?>
+                            </h6>
+
+                            <div class="d-flex align-items-center justify-content-between gap-2 text-secondary small mb-1 mt-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span><?= htmlspecialchars($image) ?></span>
+                                    <span><?= htmlspecialchars($tplKey) ?></span>
+                                </div>
+                                <span class="text-nowrap">updated <?= htmlspecialchars($updatedLabel) ?></span>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <a href="/instances/<?= htmlspecialchars($slug) ?>/configuration" class="btn instance-action-btn btn-sm rounded-pill px-2 fw-bold flex-fill text-center">
+                                    <i class='bx bx-cog'></i> Config
+                                </a>
+                                <a href="/instances/<?= htmlspecialchars($slug) ?>/files" class="btn instance-action-btn btn-sm rounded-pill px-2 fw-bold flex-fill text-center">
+                                    <i class='bx bx-folder'></i> Files
+                                </a>
+                                <a href="/instances/<?= htmlspecialchars($slug) ?>/deployments" class="btn instance-action-btn instance-action-primary btn-sm rounded-pill px-2 fw-bold flex-fill text-center">
+                                    <i class='bx bx-rocket'></i> Deploy
+                                </a>
+                            </div>
                         </div>
-                    </a>
+                    </div>
                 </div>
                 <?php endforeach; ?>
             <?php endif; ?>

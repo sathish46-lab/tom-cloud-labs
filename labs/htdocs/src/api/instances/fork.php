@@ -37,6 +37,7 @@ if (!$source) {
 }
 
 $labType = $source['lab_type'] ?? ($source['type'] ?? 'machine');
+$template = $source['template'] ?? $labType;
 $bgMap = ['essentials' => '#e95420', 'minio' => '#2f3542', 'n8n' => '#ff6b81', 'docker_lab' => '#2496ed'];
 $typeIconMap = ['essentials' => 'bxl-tux', 'minio' => 'bx-cube', 'n8n' => 'bx-git-repo-forked', 'docker_lab' => 'bxl-docker'];
 
@@ -65,6 +66,7 @@ $instance = [
     'slug' => $slug,
     'visibility' => $visibility,
     'type' => $labType === 'n8n' || $labType === 'minio' || $labType === 'essentials' || $labType === 'docker_lab' ? 'machine' : ($source['type'] ?? 'machine'),
+    'template' => $template,
     'status' => 'draft',
     'image' => $source['image'] ?? 'ubuntu:24.04',
     'color' => $bgColor,
@@ -77,6 +79,14 @@ $instance = [
 $result = $db->instances->insertOne($instance);
 
 if ($result->getInsertedCount() > 0) {
+    // Seed the instance's file store (base layer from lab-templates/<template>/)
+    try {
+        $newId = $result->getInsertedId();
+        $instance['_id'] = $newId;
+        InstanceFileStore::ensureBaseForInstance($instance);
+    } catch (Exception $e) {
+        error_log('Instance file seed failed: ' . $e->getMessage());
+    }
     ob_start();
     ?>
     <div class="col" id="instance-<?= htmlspecialchars($slug) ?>">

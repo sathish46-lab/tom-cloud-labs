@@ -12,7 +12,7 @@
     </div>
     
     <div class="d-flex align-items-center justify-content-between border-bottom border-secondary border-opacity-25 pb-2 mb-4">
-        <span class="text-secondary fw-bold small text-uppercase">DEPLOYMENTS <span class="badge bg-secondary bg-opacity-25 text-white ms-2">running <?= count($instance['deployments'] ?? []) ?></span></span>
+        <span class="text-secondary fw-bold small text-uppercase">DEPLOYMENTS <span class="instance-badge text-bg-soft-primary ms-2">running <?= count($instance['deployments'] ?? []) ?></span></span>
         <i class='bx bx-refresh text-secondary pointer'></i>
     </div>
     

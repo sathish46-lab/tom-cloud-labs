@@ -34,6 +34,10 @@
 @use "components/account";
 @use "components/learn_content";
 @use "components/learn_cards";
+@use "components/instances";
+// CodeMirror base + dark editor theme (file content pane is forced dark)
+@use "../grunt/node_modules/codemirror/lib/codemirror";
+@use "../grunt/node_modules/codemirror/theme/material-darker";
 // 2. Global Performance & Smooth Rendering Optimizations
 html {
   scroll-behavior: smooth;

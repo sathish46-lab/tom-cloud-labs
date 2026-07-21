@@ -17,6 +17,22 @@ module.exports = function (grunt) {
           "node_modules/three/build/three.min.js",
           "node_modules/three/examples/js/loaders/STLLoader.js",
 
+          // CodeMirror 5 (real code editor for the Files tab)
+          "node_modules/codemirror/lib/codemirror.js",
+          "node_modules/codemirror/mode/meta.js",
+          "node_modules/codemirror/addon/mode/simple.js",
+          "node_modules/codemirror/mode/xml/xml.js",
+          "node_modules/codemirror/mode/css/css.js",
+          "node_modules/codemirror/mode/javascript/javascript.js",
+          "node_modules/codemirror/mode/clike/clike.js",
+          "node_modules/codemirror/mode/php/php.js",
+          "node_modules/codemirror/mode/python/python.js",
+          "node_modules/codemirror/mode/shell/shell.js",
+          "node_modules/codemirror/mode/yaml/yaml.js",
+          "node_modules/codemirror/mode/markdown/markdown.js",
+          "node_modules/codemirror/mode/dockerfile/dockerfile.js",
+          "node_modules/codemirror/mode/htmlmixed/htmlmixed.js",
+
           "../js/*.js",
           "../js/quiz/*.js",
           "!../js/ui-init.js",

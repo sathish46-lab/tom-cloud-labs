@@ -2,11 +2,12 @@
 // /app/instances/manage.php
 require_once __DIR__ . '/../../src/load.php';
 
-$isAjax = (!empty($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) || (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest');
+$isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest');
 
 if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
     if (!empty($_GET['tab']) && $isAjax) {
-        echo json_encode(['status' => 'error', 'error' => 'Unauthorized']);
+        header('Content-Type: text/html; charset=UTF-8');
+        echo '<div class="alert alert-danger">Unauthorized.</div>';
         exit;
     }
     Session::$pageTitle = "Instances / Manage";
@@ -19,7 +20,8 @@ $slug = $_GET['slug'] ?? '';
 
 if (empty($slug)) {
     if (!empty($_GET['tab']) && $isAjax) {
-        echo json_encode(['status' => 'error', 'error' => 'Missing slug']);
+        header('Content-Type: text/html; charset=UTF-8');
+        echo '<div class="alert alert-danger">Missing slug.</div>';
         exit;
     }
     header("Location: /instances");
@@ -35,19 +37,16 @@ if (!$instance) {
     // (For testing purposes, we'll proceed even if null so the UI can render)
 }
 
-// Handle AJAX tab request
+// Handle AJAX tab request — return the raw HTML fragment (no JSON wrapper).
 if (!empty($_GET['tab']) && $isAjax) {
     $tab = preg_replace('/[^a-zA-Z0-9_-]/', '', $_GET['tab']); // sanitize
     $partialPath = __DIR__ . "/../../src/template/pages/instances/manage/{$tab}.php";
-    
+
+    header('Content-Type: text/html; charset=UTF-8');
     if (file_exists($partialPath)) {
-        ob_start();
         include $partialPath;
-        $html = ob_get_clean();
-        
-        echo json_encode(['status' => 'success', 'html' => $html]);
     } else {
-        echo json_encode(['status' => 'error', 'error' => 'Tab not found']);
+        echo '<div class="alert alert-danger">Tab not found.</div>';
     }
     exit;
 }
