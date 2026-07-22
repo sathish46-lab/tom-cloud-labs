@@ -2,16 +2,18 @@
 // Plain Theme Mode - Clean Elevated Cards
 // Matches labs.selfmade.ninja/domains style
 // No background images, just solid colors
+// Specificity must beat: html[data-coreui-theme=dark] body.hwa-enabled .card.blur (0,4,2)
 // ==========================================
 
-.mode-plain {
+html.mode-plain {
 
   // Light mode: white elevated cards on warm cream bg
   &[data-coreui-theme="light"] {
 
     .card:not(.clan-card),
     .glass-card:not(.clan-card),
-    .lab-card-main {
+    .lab-card-main,
+    .card.blur {
       background: #ffffff !important;
       backdrop-filter: none !important;
       -webkit-backdrop-filter: none !important;
@@ -29,10 +31,6 @@
     .header {
       background: rgba(255, 255, 255, 0.8) !important;
       border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-
-      body.hwa-enabled & {
-        backdrop-filter: saturate(200%) blur(18px);
-      }
     }
 
     .footer {
@@ -73,7 +71,6 @@
       color: rgba(26, 26, 46, 0.8);
     }
 
-    // Nav items in sidebar should use dark text
     .sidebar-nav .nav-link {
       color: rgba(26, 26, 46, 0.75);
 
@@ -91,31 +88,30 @@
     }
   }
 
-  // Dark mode: dark semi-transparent cards with subtle glow
+  // Dark mode: solid elevated dark cards - always opaque, no background bleed
+  // Must match specificity of theme rules that use body.hwa-enabled
   &[data-coreui-theme="dark"] {
-    .card,
-    .glass-card,
-    .lab-card-main {
+
+    body.hwa-enabled .card,
+    body.hwa-enabled .glass-card,
+    body.hwa-enabled .lab-card-main,
+    body.hwa-enabled .card.blur {
+      background: var(--cui-card-bg-solid, rgba(42, 32, 24, 0.94)) !important;
       border: 1px solid rgba(255, 255, 255, 0.12) !important;
       box-shadow: rgba(0, 0, 0, 0.4) 0px 12px 28px, rgba(255, 255, 255, 0.03) 0px 0px 16px !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
 
-      // When Visual Blur (HWA) is ON: Rich dark translucent black with saturate & blur (exact match to SNA)
-      body.hwa-enabled &,
-      body.hwa-enabled & {
-        background: rgba(0, 0, 0, 0.65) !important;
-        backdrop-filter: saturate(200%) blur(18px) !important;
-        -webkit-backdrop-filter: saturate(200%) blur(18px) !important;
-      }
-
-      // When Visual Blur (HWA) is OFF: Premium elevated solid dark background (no blur, no color reverse)
-      body.hwa-disabled &,
-      body.hwa-disabled & {
-        background: var(--cui-card-bg-solid, #0d121b) !important;
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
-        border-color: rgba(255, 255, 255, 0.08) !important;
-        box-shadow: rgba(0, 0, 0, 0.45) 0px 12px 28px, inset 0 0 0 1px rgba(255, 255, 255, 0.04) !important;
-      }
+    body.hwa-disabled .card,
+    body.hwa-disabled .glass-card,
+    body.hwa-disabled .lab-card-main,
+    body.hwa-disabled .card.blur {
+      background: var(--cui-card-bg-solid, #0d121b) !important;
+      border: 1px solid rgba(255, 255, 255, 0.08) !important;
+      box-shadow: rgba(0, 0, 0, 0.45) 0px 12px 28px, inset 0 0 0 1px rgba(255, 255, 255, 0.04) !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
     }
 
     .sidebar {
@@ -124,11 +120,6 @@
 
     .header {
       border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-
-      body.hwa-enabled &,
-      body.hwa-enabled & {
-        backdrop-filter: saturate(200%) blur(18px);
-      }
     }
   }
 }

@@ -17996,6 +17996,226 @@ try {
     "use strict";
 
 
+// ========================================================================
+// Dashboard — Workspace Polling & Insights Animations
+// ========================================================================
+
+(function () {
+    let dashboardPollingInterval = null;
+
+    window.initDashboardPolling = function () {
+        if (dashboardPollingInterval) return; // Prevent duplicate intervals
+
+        function fetchDashboardMetrics() {
+            if (!document.getElementById('insights-subtitle') && !document.querySelector('[id^="cpu-"]')) {
+                window.stopDashboardPolling();
+                return;
+            }
+
+            fetch(`/api/dashboard/stats`)
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.labs || !data.labs.all_labs) return;
+                    
+                    data.labs.all_labs.forEach(lab => {
+                        const hash = lab.hash;
+                        const stats = lab.metrics;
+                        if (!hash || !stats) return;
+
+                        const cpuEl = document.getElementById(`cpu-${hash}`);
+                        const memEl = document.getElementById(`mem-${hash}`);
+                        const loadEl = document.getElementById(`load-${hash}`);
+
+                        if (stats.CPUPerc && cpuEl) cpuEl.textContent = stats.CPUPerc;
+                        if (stats.MemUsage && memEl) {
+                            const usage = stats.MemUsage.split(' / ')[0];
+                            memEl.textContent = usage;
+                        }
+                        if (stats.Load1 !== undefined && loadEl) {
+                            const loadAvg = `${stats.Load1.toFixed(2)}, ${stats.Load5.toFixed(2)}, ${stats.Load15.toFixed(2)}`;
+                            loadEl.textContent = loadAvg;
+                        }
+                    });
+                })
+                .catch(() => { });
+        }
+        
+        fetchDashboardMetrics();
+        dashboardPollingInterval = setInterval(fetchDashboardMetrics, 5000);
+    };
+
+    // To allow stopping it on HTMX page transitions if needed
+    window.stopDashboardPolling = function() {
+        if (dashboardPollingInterval) {
+            clearInterval(dashboardPollingInterval);
+            dashboardPollingInterval = null;
+        }
+    };
+
+    document.addEventListener('htmx:beforeSwap', () => {
+        window.stopDashboardPolling();
+    });
+
+    // Initialize Smart Insights activity graph
+    window.initDashboardInsights = function () {
+        const subtitle = document.getElementById('insights-subtitle');
+        const peakLabel = document.getElementById('insights-peak-label');
+        const footer = document.getElementById('insights-footer');
+        const activeDays = document.getElementById('insights-active-days');
+        const lastSeen = document.getElementById('insights-last-seen');
+
+        if (!subtitle || !peakLabel) return;
+
+        fetch('/api/dashboard/insights')
+            .then(res => res.json())
+            .then(data => {
+                if (data.has_data) {
+                    subtitle.textContent = "You're most productive between";
+                    peakLabel.textContent = data.peak_label;
+
+                    // Animate bars with theme-aware colors
+                    const isLight = document.documentElement.getAttribute('data-coreui-theme') === 'light';
+                    const bars = document.querySelectorAll('.insights-bar');
+                    const barValues = data.bars || [];
+                    bars.forEach((bar, i) => {
+                        const val = barValues[i] || 0;
+                        const minHeight = val > 0 ? Math.max(val, 6) : 3;
+                        setTimeout(() => {
+                            bar.style.height = minHeight + '%';
+                            if (val >= 70) {
+                                // Peak hours — orange
+                                bar.style.background = '#ffa502';
+                                bar.style.boxShadow = isLight ? '0 0 6px rgba(255, 165, 2, 0.45)' : '0 0 8px rgba(255, 165, 2, 0.35)';
+                            } else if (val > 0) {
+                                // Active hours
+                                bar.style.background = isLight ? 'rgba(0, 0, 0, 0.16)' : 'rgba(255, 255, 255, 0.22)';
+                                bar.style.boxShadow = 'none';
+                            } else {
+                                // Inactive — very subtle
+                                bar.style.background = isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.08)';
+                                bar.style.boxShadow = 'none';
+                            }
+                        }, i * 25);
+                    });
+
+                    // Show footer stats
+                    if (data.active_days > 0 && activeDays && footer) {
+                        activeDays.textContent = data.active_days + ' active days';
+                        footer.style.cssText = '';
+                        footer.classList.remove('d-none');
+                        footer.classList.add('d-flex');
+                    }
+                    if (data.last_seen && lastSeen) {
+                        lastSeen.textContent = 'Last: ' + data.last_seen;
+                    }
+                } else {
+                    subtitle.textContent = "Start exploring to see your insights";
+                    peakLabel.textContent = "No data yet";
+                    peakLabel.style.fontSize = '1.2rem';
+                    peakLabel.style.opacity = '0.4';
+                }
+            })
+            .catch(() => {
+                subtitle.textContent = "Start exploring to see your insights";
+                peakLabel.textContent = "No data yet";
+            });
+    };
+
+    // Tab Switcher and selection persistence
+    window.switchContinueTab = function (tabId) {
+        // 1. Update buttons by toggling active class cleanly
+        const buttons = document.querySelectorAll('.continue-tab-btn');
+        buttons.forEach(btn => {
+            if (btn.getAttribute('data-tab') === tabId) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        // 2. Toggle panes
+        const panes = document.querySelectorAll('.continue-tab-pane');
+        panes.forEach(pane => {
+            if (pane.id === 'continue-pane-' + tabId) {
+                pane.classList.remove('d-none');
+            } else {
+                pane.classList.add('d-none');
+            }
+        });
+
+        // 3. Persist the active tab in DB
+        try {
+            const fd = new FormData();
+            fd.append('preference_id', 'active_continue_tab');
+            fd.append('value', tabId);
+            fetch('/api/user/preference_save', { method: 'POST', body: fd }).catch(() => {});
+        } catch (e) {
+            console.error('Failed to persist active tab:', e);
+        }
+    };
+})();
+
+// Live search for lessons via Prompt Box
+let searchDebounceTimeout = null;
+const aiPromptInput = document.getElementById('aiLessonPrompt');
+if (aiPromptInput) {
+    aiPromptInput.addEventListener('input', function(e) {
+        clearTimeout(searchDebounceTimeout);
+        const query = e.target.value.trim();
+        
+        searchDebounceTimeout = setTimeout(() => {
+            if (query.length < 2) {
+                // If emptied, reload the current filter
+                if (window.LearnApp && typeof window.LearnApp.loadLessons === 'function') {
+                    const currentTab = document.querySelector('.lesson-filter-btn.active')?.dataset?.filter || 'continue';
+                    window.LearnApp.loadLessons(1, currentTab);
+                }
+                return;
+            }
+            
+            // Show loading in masonry area
+            const masonryArea = document.getElementById('masonry-area');
+            if (masonryArea) {
+                masonryArea.innerHTML = '<div class="col-12 text-center py-5"><div class="spinner-border text-secondary" role="status"><span class="visually-hidden">Loading...</span></div><p class="text-secondary small mt-2">Searching lessons...</p></div>';
+            }
+            
+            const fd = new FormData();
+            fd.append('query', query);
+            
+            fetch('/api/learnAI/search.php', { method: 'POST', body: fd })
+                .then(res => res.text())
+                .then(html => {
+                    if (masonryArea) {
+                        masonryArea.innerHTML = html;
+                        if (window.Masonry) {
+                            new Masonry(masonryArea, { percentPosition: true });
+                        }
+                    }
+                })
+                .catch(err => console.error('Search failed:', err));
+        }, 500);
+    });
+}
+
+
+
+    
+
+    // --- Explicit Window Exports for Inline HTML ---
+
+  })();
+} catch (e) {
+  console.error("[Fatal Error in dashboard.js]", e);
+}
+
+/**
+ * Wrapped with IIFE Error Boundary
+ */
+try {
+  (function() {
+    "use strict";
+
+
 let activeConfigRaw = "";
 
 function toggleManualKey() {
@@ -18684,6 +18904,7 @@ document.addEventListener('show.coreui.modal', function(e) {
   }
 
   let activeFile = null; // { path, name, modified, version }
+  let selectedNode = null; // { path, name, is_dir } — currently selected tree item
   let loadedContent = "";
   let lastOpenedPath = null; // from DB
 
@@ -18715,6 +18936,7 @@ document.addEventListener('show.coreui.modal', function(e) {
     if (node.is_dir) {
       const header = document.createElement("div");
       header.className = "instance-tree-item is-folder";
+      header.setAttribute("data-path", node.path);
       header.style.paddingLeft = padPx + "px";
       header.innerHTML =
         '<i class="bx bx-chevron-right"></i> <i class="bx ' +
@@ -18723,21 +18945,28 @@ document.addEventListener('show.coreui.modal', function(e) {
         escapeHtml(node.name) +
         "</span>";
       const childBox = document.createElement("div");
+      childBox.className = "instance-tree-children";
       childBox.style.display = "none";
       (node.children || []).forEach((c) => childBox.appendChild(renderNode(c, depth + 1)));
 
-      header.addEventListener("click", () => {
+      header.addEventListener("click", (e) => {
         const chevron = header.querySelector(".bx-chevron-right, .bx-chevron-down");
         const open = childBox.style.display !== "none";
         childBox.style.display = open ? "none" : "block";
         chevron.classList.toggle("bx-chevron-right", open);
         chevron.classList.toggle("bx-chevron-down", !open);
+
+        treeEl.querySelectorAll(".instance-tree-item.is-active").forEach((el) => el.classList.remove("is-active"));
+        header.classList.add("is-active");
+        selectedNode = { path: node.path, name: node.name, is_dir: true };
+        if (deleteBtn) deleteBtn.disabled = false;
       });
       wrap.appendChild(header);
       wrap.appendChild(childBox);
     } else {
       const item = document.createElement("div");
       item.className = "instance-tree-item";
+      item.setAttribute("data-path", node.path);
       item.style.paddingLeft = (padPx + 4) + "px";
       item.innerHTML =
         '<i class="bx ' +
@@ -18749,7 +18978,12 @@ document.addEventListener('show.coreui.modal', function(e) {
         ' <span class="small text-secondary opacity-50">' +
         humanSize(node.size) +
         "</span>";
-      item.addEventListener("click", () => openFile(node.path, node.name, item));
+      item.addEventListener("click", () => {
+        treeEl.querySelectorAll(".instance-tree-item.is-active").forEach((el) => el.classList.remove("is-active"));
+        item.classList.add("is-active");
+        selectedNode = { path: node.path, name: node.name, is_dir: false };
+        openFile(node.path, node.name, item);
+      });
       wrap.appendChild(item);
     }
     return wrap;
@@ -18885,7 +19119,6 @@ document.addEventListener('show.coreui.modal', function(e) {
         metaEl.innerHTML =
           '<span class="badge bg-warning bg-opacity-25 text-warning">Modified by you</span>';
         showToast("Saved.", "success");
-        loadTree();
       } else {
         showToast("Save failed: " + (data.error || "unknown"), "danger");
       }
@@ -18926,25 +19159,106 @@ document.addEventListener('show.coreui.modal', function(e) {
     return null;
   }
 
-  // ---- Create new file / folder ---------------------------------------
-  async function createNode(isDir) {
-    const name = prompt(isDir ? "New folder name:" : "New file name (include path, e.g. scripts/setup.sh):");
-    if (!name) return;
+  // ---- Create new file / folder (inline VS Code style) -------------------
+  function getSelectedFolderPath() {
+    if (selectedNode && selectedNode.is_dir) return selectedNode.path;
+    return "";
+  }
+
+  function createInlineInput(isDir) {
+    const parentPath = getSelectedFolderPath();
+    const parentEl = parentPath
+      ? treeEl.querySelector('[data-path="' + CSS.escape(parentPath) + '"]')
+      : null;
+    const childContainer = parentEl ? parentEl.nextElementSibling : treeEl;
+    if (!childContainer) return;
+
+    const depth = parentPath ? (parentPath.split("/").length) : 0;
+    const padPx = depth * 18;
+
+    const inputWrap = document.createElement("div");
+    inputWrap.className = "instance-tree-item instance-tree-input-wrap";
+    inputWrap.style.paddingLeft = (padPx + 4) + "px";
+
+    const iconClass = isDir ? "bxs-folder text-secondary" : "bx-file-blank text-info";
+    inputWrap.innerHTML =
+      '<i class="bx ' + iconClass + '"></i>' +
+      '<input type="text" class="instance-tree-inline-input" placeholder="' +
+      (isDir ? "Folder name" : "File name (e.g. scripts/setup.sh)") +
+      '" autofocus>';
+
+    childContainer.prepend(inputWrap);
+    const input = inputWrap.querySelector("input");
+    input.focus();
+
+    function commit() {
+      const val = input.value.trim().replace(/^\/+/, "");
+      if (!val) { inputWrap.remove(); return; }
+      const fullPath = parentPath ? parentPath + "/" + val : val;
+      inputWrap.remove();
+      doCreateNode(fullPath, isDir);
+    }
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); commit(); }
+      if (e.key === "Escape") { inputWrap.remove(); }
+    });
+    input.addEventListener("blur", () => { if (inputWrap.parentNode) inputWrap.remove(); });
+  }
+
+  async function doCreateNode(fullPath, isDir) {
     const fd = new FormData();
     fd.append("slug", slug);
-    fd.append("path", name.trim().replace(/^\/+/, ""));
+    fd.append("path", fullPath);
     fd.append("is_dir", isDir ? "1" : "0");
     try {
       const res = await fetch("/api/instances/file_create", { method: "POST", body: fd });
       const data = await res.json();
       if (data.status === "success") {
         showToast((isDir ? "Folder" : "File") + " created.", "success");
-        loadTree();
+        appendNodeToTree(fullPath, isDir);
       } else {
         showToast("Create failed: " + (data.error || "exists?"), "danger");
       }
     } catch (e) {
       showToast("Network error.", "danger");
+    }
+  }
+
+  function appendNodeToTree(fullPath, isDir) {
+    const parts = fullPath.split("/");
+    const name = parts.pop();
+    let parentPath = parts.join("/");
+    let container = treeEl;
+
+    if (parentPath) {
+      const parentEl = treeEl.querySelector('[data-path="' + CSS.escape(parentPath) + '"]');
+      if (parentEl) {
+        let childBox = parentEl.nextElementSibling;
+        if (!childBox || !childBox.classList.contains("instance-tree-children")) {
+          childBox = document.createElement("div");
+          childBox.className = "instance-tree-children";
+          childBox.style.display = "block";
+          parentEl.parentNode.insertBefore(childBox, parentEl.nextSibling);
+        }
+        container = childBox;
+        const chevron = parentEl.querySelector(".bx-chevron-right");
+        if (chevron) {
+          chevron.classList.remove("bx-chevron-right");
+          chevron.classList.add("bx-chevron-down");
+        }
+      }
+    }
+
+    const depth = parentPath ? parentPath.split("/").length : 0;
+    const padPx = depth * 18;
+    const nodeData = { path: fullPath, name: name, is_dir: isDir, children: isDir ? [] : undefined, size: isDir ? undefined : 0 };
+    const el = renderNode(nodeData, parentPath ? depth : 0);
+    container.appendChild(el);
+
+    if (isDir) {
+      el.querySelector(".instance-tree-item").click();
+      el.querySelector(".instance-tree-item").click();
     }
   }
 
@@ -18973,7 +19287,7 @@ document.addEventListener('show.coreui.modal', function(e) {
         const data = await res.json();
         if (data.status === "success") {
           showToast("Asset uploaded to your instance file store.", "success");
-          loadTree();
+          appendNodeToTree(file.name, false);
         } else {
           showToast("Upload failed: " + (data.error || "unknown"), "danger");
         }
@@ -18995,31 +19309,35 @@ document.addEventListener('show.coreui.modal', function(e) {
     loadTree();
   }
 
-  // ---- Delete active file ---------------------------------------------
+  // ---- Delete selected file or folder ----------------------------------
   async function deleteFile() {
-    if (!activeFile) return;
-    if (!confirm('Delete "' + activeFile.name + '"? This cannot be undone.')) return;
+    if (!selectedNode) return;
+    const label = selectedNode.is_dir ? "folder" : "file";
+    if (!confirm('Delete ' + label + ' "' + selectedNode.name + '"? This cannot be undone.')) return;
     const fd = new FormData();
     fd.append("slug", slug);
-    fd.append("path", activeFile.path);
+    fd.append("path", selectedNode.path);
     try {
       const res = await fetch("/api/instances/file_delete", { method: "POST", body: fd });
       const data = await res.json();
       if (data.status === "success") {
-        showToast("File deleted.", "success");
-        activeFile = null;
-        cm.setValue("");
-        cm.setOption("readOnly", true);
-        cm.getWrapperElement().classList.add("CodeMirror-readonly");
-        fileNameEl.textContent = "No file selected";
-        if (langEl) langEl.textContent = "";
-        if (modifiedEl) modifiedEl.classList.add("d-none");
-        metaEl.innerHTML = "";
-        showOverlay("Select a file to view its contents", "bx bx-file");
-        if (saveBtn) saveBtn.disabled = true;
+        showToast(selectedNode.name + " deleted.", "success");
+        removeNodeFromTree(selectedNode.path);
+        if (!selectedNode.is_dir && activeFile && activeFile.path === selectedNode.path) {
+          activeFile = null;
+          cm.setValue("");
+          cm.setOption("readOnly", true);
+          cm.getWrapperElement().classList.add("CodeMirror-readonly");
+          fileNameEl.textContent = "No file selected";
+          if (langEl) langEl.textContent = "";
+          if (modifiedEl) modifiedEl.classList.add("d-none");
+          metaEl.innerHTML = "";
+          showOverlay("Select a file to view its contents", "bx bx-file");
+          if (saveBtn) saveBtn.disabled = true;
+        }
+        selectedNode = null;
         if (deleteBtn) deleteBtn.disabled = true;
         updateStatus();
-        loadTree();
       } else {
         showToast("Delete failed: " + (data.error || "unknown"), "danger");
       }
@@ -19028,10 +19346,23 @@ document.addEventListener('show.coreui.modal', function(e) {
     }
   }
 
+  function removeNodeFromTree(path) {
+    const el = treeEl.querySelector('[data-path="' + CSS.escape(path) + '"]');
+    if (el) {
+      const parent = el.parentNode;
+      el.remove();
+      if (parent && parent.classList.contains("instance-tree-children") && !parent.children.length) {
+        parent.remove();
+      }
+    }
+    const fileItem = treeEl.querySelector('.instance-tree-item:not(.is-folder) [data-path="' + CSS.escape(path) + '"]');
+    if (fileItem) fileItem.closest(".instance-tree-item").remove();
+  }
+
   // ---- Wire up ---------------------------------------------------------
   if (saveBtn) saveBtn.addEventListener("click", saveFile);
-  if (newFileBtn) newFileBtn.addEventListener("click", () => createNode(false));
-  if (newFolderBtn) newFolderBtn.addEventListener("click", () => createNode(true));
+  if (newFileBtn) newFileBtn.addEventListener("click", () => createInlineInput(false));
+  if (newFolderBtn) newFolderBtn.addEventListener("click", () => createInlineInput(true));
   if (uploadBtn) uploadBtn.addEventListener("click", uploadFile);
   if (refreshBtn) refreshBtn.addEventListener("click", refreshFiles);
   if (deleteBtn) deleteBtn.addEventListener("click", deleteFile);
@@ -19075,6 +19406,18 @@ document.addEventListener('show.coreui.modal', function(e) {
 // Instance Dashboard tab switching.
 // Same pattern as manage.js — event delegation, htmx re-init, cached tabs.
 
+function syncDashboardCounts(container) {
+    const el = container.querySelector('[data-templates-count]');
+    if (!el) return;
+    const tCount = el.getAttribute('data-templates-count');
+    const trCount = el.getAttribute('data-trash-count');
+    const tBadge = document.getElementById('templatesCount');
+    const trBadge = document.getElementById('trashCount');
+    if (tBadge && tCount !== null) tBadge.textContent = tCount;
+    if (trBadge && trCount !== null) trBadge.textContent = trCount;
+}
+window.syncDashboardCounts = syncDashboardCounts;
+
 function initDashboardTabs() {
     const tabs = document.querySelectorAll('.instance-dashboard-tab');
     const contentContainer = document.getElementById('instanceDashboardContent');
@@ -19116,6 +19459,7 @@ function initDashboardTabs() {
                 state.savedHtml[tabName] = html;
                 container.innerHTML = html;
                 if (typeof htmx !== 'undefined') htmx.process(container);
+                syncDashboardCounts(container);
             } else {
                 container.innerHTML = '<div class="alert alert-danger">Failed to load.</div>';
             }

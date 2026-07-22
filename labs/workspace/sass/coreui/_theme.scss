@@ -169,7 +169,7 @@
   --cui-card-border-color: rgba(255, 255, 255, 0.1);
   --glass-border-glow: rgba(255, 255, 255, 0.14);
   --glass-shine: rgba(255, 255, 255, 0.22);
-  --glass-bg: rgba(0, 0, 0, 0.45);
+  --glass-bg: rgba(0, 0, 0, 0.65);
   --glass-blur: 24px;
   --glass-overlay-rgb: 255, 255, 255;
   --instance-danger: #ff6b81;
@@ -612,23 +612,7 @@ body::before {
     border-color: rgba(0, 0, 0, 0.08) !important;
   }
 
-  /* Top-edge light refraction (static — no animation = no GPU cost) */
-  &:not(.rounded-0)::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg,
-        transparent 0%,
-        var(--glass-shine) 20%,
-        rgba(255, 255, 255, 0.25) 50%,
-        var(--glass-shine) 80%,
-        transparent 100%);
-    pointer-events: none;
-    z-index: 2;
-  }
+  /* Top-edge light refraction removed */
 
   /* Force visibility on dropdown parts for Light/Dark modes */
   .dropdown-toggle,
@@ -1164,7 +1148,7 @@ html[data-coreui-theme="dark"] {
   box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.1);
 }
 
-// Ensure SNA's native .blur class on .card elements gets a transparent background in Tom Labs
+// Ensure SNA's native .blur class on .card elements gets dark glass background matching SNA
 html[data-coreui-theme="dark"] body.hwa-enabled .card.blur {
   background: rgba(0, 0, 0, 0.65) !important;
 }
@@ -1204,12 +1188,17 @@ html[data-coreui-theme="light"] body.hwa-enabled .card.blur {
   3.  SELFMADE NINJA PREMIUM EFFECTS
   ════════════════════════════════════════════*/
 
+.simple-whitebg {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
 .liquid-rim,
 .unified-input-box {
   position: relative;
+  background: transparent !important;
   box-shadow: rgba(0, 0, 0, 0.18) 0 12px 28px 0, rgba(0, 0, 0, 0.08) 0 2px 4px 0, rgba(0, 0, 0, 0.14) 0 0 24px 0 !important;
   border: 0 !important;
-  border-radius: 0.75rem;
+  border-radius: 1.2rem;
 
   &::after {
     content: '' !important;
@@ -1220,25 +1209,42 @@ html[data-coreui-theme="light"] body.hwa-enabled .card.blur {
     z-index: 5 !important;
     padding: 1px !important;
     background: transparent !important;
-    backdrop-filter: saturate(200%) blur(18px) !important;
-    -webkit-backdrop-filter: saturate(200%) blur(18px) !important;
+    will-change: backdrop-filter;
+    contain: strict;
+    backdrop-filter: saturate(400%) brightness(0.96) !important;
+    -webkit-backdrop-filter: saturate(400%) brightness(0.96) !important;
     mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0) !important;
     mask-composite: exclude !important;
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0) !important;
     -webkit-mask-composite: xor !important;
-    box-shadow: rgba(0, 0, 0, 0.14) 0 0 0 1px inset, rgba(0, 0, 0, 0.22) 0 1px 0 0 inset !important;
+    box-shadow: rgba(0, 0, 0, 0.1) 0 0 0 1px inset, rgba(0, 0, 0, 0.14) 0 1px 0 0 inset !important;
   }
 }
 
 [data-coreui-theme="dark"] .liquid-rim,
 [data-coreui-theme="dark"] .unified-input-box {
-  box-shadow: rgba(0, 0, 0, 0.4) 0 15px 35px 0, rgba(0, 0, 0, 0.2) 0 5px 15px 0 !important;
+  box-shadow: rgba(0, 0, 0, 0.45) 0 12px 28px 0, rgba(0, 0, 0, 0.3) 0 2px 4px 0, rgba(255, 255, 255, 0.14) 0 0 24px 0 !important;
+  border: 0 !important;
+  border-radius: 1.2rem;
 
   &::after {
-    backdrop-filter: saturate(200%) blur(18px) !important;
-    -webkit-backdrop-filter: saturate(200%) blur(18px) !important;
-    box-shadow: rgba(255, 255, 255, 0.08) 0 0 0 1px inset, rgba(255, 255, 255, 0.12) 0 1px 0 0 inset !important;
+    backdrop-filter: saturate(400%) brightness(1.2) !important;
+    -webkit-backdrop-filter: saturate(400%) brightness(1.2) !important;
+    box-shadow: rgba(255, 255, 255, 0.14) 0 0 0 1px inset, rgba(255, 255, 255, 0.22) 0 1px 0 0 inset !important;
   }
+}
+
+/* liquid-rim hwa-disabled fallback — solid shadow, no backdrop-filter */
+html[data-coreui-theme="dark"] body.hwa-disabled .liquid-rim,
+html[data-coreui-theme="dark"] body.hwa-disabled .card.blur,
+html[data-coreui-theme="dark"] body.hwa-disabled .dropdown-menu {
+  box-shadow: rgba(0, 0, 0, 0.45) 0 12px 28px 0, rgba(0, 0, 0, 0.25) 0 2px 4px 0, rgba(var(--cui-primary-rgb), 0.25) 0 0 32px -4px, rgba(255, 255, 255, 0.12) 0 0 0 1px inset, rgba(255, 255, 255, 0.18) 0 1px 0 0 inset !important;
+}
+
+html[data-coreui-theme="light"] body.hwa-disabled .liquid-rim,
+html[data-coreui-theme="light"] body.hwa-disabled .card.blur,
+html[data-coreui-theme="light"] body.hwa-disabled .dropdown-menu {
+  box-shadow: rgba(0, 0, 0, 0.18) 0 12px 28px 0, rgba(0, 0, 0, 0.1) 0 2px 4px 0, rgba(var(--cui-primary-rgb), 0.12) 0 0 32px -4px, rgba(0, 0, 0, 0.08) 0 0 0 1px inset, rgba(0, 0, 0, 0.1) 0 1px 0 0 inset !important;
 }
 
 [data-coreui-theme="light"] .labs-banner-tab.active::after {

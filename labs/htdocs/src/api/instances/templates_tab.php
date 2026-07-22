@@ -45,12 +45,12 @@ function templates_fork_source($dbInstances, $dbMain, $forkedFrom) {
 }
 ?>
 <?php if (empty($instances)): ?>
-<div class="text-center py-5">
+<div class="text-center py-5" data-templates-count="0" data-trash-count="<?= count(iterator_to_array($dbInstances->instance_trash->find(['user_id' => $userId]))) ?>">
     <div class="text-secondary opacity-50 mb-2"><i class='bx bx-layer fs-1'></i></div>
     <div class="text-secondary small">No templates yet. Create your first lab template!</div>
 </div>
 <?php else: ?>
-<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-3 g-3" id="templatesGrid">
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-3 g-3" id="templatesGrid" data-templates-count="<?= count($instances) ?>" data-trash-count="<?= count(iterator_to_array($dbInstances->instance_trash->find(['user_id' => $userId]))) ?>">
     <?php foreach ($instances as $instance): ?>
     <?php
         $slug = $instance['slug'] ?? 'unknown';

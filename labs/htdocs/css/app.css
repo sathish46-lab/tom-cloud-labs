@@ -14555,7 +14555,7 @@ body {
   --cui-card-border-color: rgba(255, 255, 255, 0.1);
   --glass-border-glow: rgba(255, 255, 255, 0.14);
   --glass-shine: rgba(255, 255, 255, 0.22);
-  --glass-bg: rgba(0, 0, 0, 0.45);
+  --glass-bg: rgba(0, 0, 0, 0.65);
   --glass-blur: 24px;
   --glass-overlay-rgb: 255, 255, 255;
   --instance-danger: #ff6b81;
@@ -14975,20 +14975,7 @@ body.hwa-disabled .blur {
   border-color: rgba(0, 0, 0, 0.08) !important;
 }
 .blur {
-  /* Top-edge light refraction (static — no animation = no GPU cost) */
-}
-.blur:not(.rounded-0)::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent 0%, var(--glass-shine) 20%, rgba(255, 255, 255, 0.25) 50%, var(--glass-shine) 80%, transparent 100%);
-  pointer-events: none;
-  z-index: 2;
-}
-.blur {
+  /* Top-edge light refraction removed */
   /* Force visibility on dropdown parts for Light/Dark modes */
 }
 .blur .dropdown-toggle,
@@ -15539,12 +15526,17 @@ html[data-coreui-theme=light] body.hwa-enabled .card.blur {
 /*════════════════════════════════════════════
   3.  SELFMADE NINJA PREMIUM EFFECTS
   ════════════════════════════════════════════*/
+.simple-whitebg {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
 .liquid-rim,
 .unified-input-box {
   position: relative;
+  background: transparent !important;
   box-shadow: rgba(0, 0, 0, 0.18) 0 12px 28px 0, rgba(0, 0, 0, 0.08) 0 2px 4px 0, rgba(0, 0, 0, 0.14) 0 0 24px 0 !important;
   border: 0 !important;
-  border-radius: 0.75rem;
+  border-radius: 1.2rem;
 }
 .liquid-rim::after,
 .unified-input-box::after {
@@ -15556,24 +15548,41 @@ html[data-coreui-theme=light] body.hwa-enabled .card.blur {
   z-index: 5 !important;
   padding: 1px !important;
   background: transparent !important;
-  backdrop-filter: saturate(200%) blur(18px) !important;
-  -webkit-backdrop-filter: saturate(200%) blur(18px) !important;
+  will-change: backdrop-filter;
+  contain: strict;
+  backdrop-filter: saturate(400%) brightness(0.96) !important;
+  -webkit-backdrop-filter: saturate(400%) brightness(0.96) !important;
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0) !important;
   mask-composite: exclude !important;
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0) !important;
   -webkit-mask-composite: xor !important;
-  box-shadow: rgba(0, 0, 0, 0.14) 0 0 0 1px inset, rgba(0, 0, 0, 0.22) 0 1px 0 0 inset !important;
+  box-shadow: rgba(0, 0, 0, 0.1) 0 0 0 1px inset, rgba(0, 0, 0, 0.14) 0 1px 0 0 inset !important;
 }
 
 [data-coreui-theme=dark] .liquid-rim,
 [data-coreui-theme=dark] .unified-input-box {
-  box-shadow: rgba(0, 0, 0, 0.4) 0 15px 35px 0, rgba(0, 0, 0, 0.2) 0 5px 15px 0 !important;
+  box-shadow: rgba(0, 0, 0, 0.45) 0 12px 28px 0, rgba(0, 0, 0, 0.3) 0 2px 4px 0, rgba(255, 255, 255, 0.14) 0 0 24px 0 !important;
+  border: 0 !important;
+  border-radius: 1.2rem;
 }
 [data-coreui-theme=dark] .liquid-rim::after,
 [data-coreui-theme=dark] .unified-input-box::after {
-  backdrop-filter: saturate(200%) blur(18px) !important;
-  -webkit-backdrop-filter: saturate(200%) blur(18px) !important;
-  box-shadow: rgba(255, 255, 255, 0.08) 0 0 0 1px inset, rgba(255, 255, 255, 0.12) 0 1px 0 0 inset !important;
+  backdrop-filter: saturate(400%) brightness(1.2) !important;
+  -webkit-backdrop-filter: saturate(400%) brightness(1.2) !important;
+  box-shadow: rgba(255, 255, 255, 0.14) 0 0 0 1px inset, rgba(255, 255, 255, 0.22) 0 1px 0 0 inset !important;
+}
+
+/* liquid-rim hwa-disabled fallback — solid shadow, no backdrop-filter */
+html[data-coreui-theme=dark] body.hwa-disabled .liquid-rim,
+html[data-coreui-theme=dark] body.hwa-disabled .card.blur,
+html[data-coreui-theme=dark] body.hwa-disabled .dropdown-menu {
+  box-shadow: rgba(0, 0, 0, 0.45) 0 12px 28px 0, rgba(0, 0, 0, 0.25) 0 2px 4px 0, rgba(var(--cui-primary-rgb), 0.25) 0 0 32px -4px, rgba(255, 255, 255, 0.12) 0 0 0 1px inset, rgba(255, 255, 255, 0.18) 0 1px 0 0 inset !important;
+}
+
+html[data-coreui-theme=light] body.hwa-disabled .liquid-rim,
+html[data-coreui-theme=light] body.hwa-disabled .card.blur,
+html[data-coreui-theme=light] body.hwa-disabled .dropdown-menu {
+  box-shadow: rgba(0, 0, 0, 0.18) 0 12px 28px 0, rgba(0, 0, 0, 0.1) 0 2px 4px 0, rgba(var(--cui-primary-rgb), 0.12) 0 0 32px -4px, rgba(0, 0, 0, 0.08) 0 0 0 1px inset, rgba(0, 0, 0, 0.1) 0 1px 0 0 inset !important;
 }
 
 [data-coreui-theme=light] .labs-banner-tab.active::after {
@@ -17058,9 +17067,10 @@ body:has(#session-expired-overlay) .wrapper {
     transform: translateY(0) scale(1);
   }
 }
-.mode-plain[data-coreui-theme=light] .card:not(.clan-card),
-.mode-plain[data-coreui-theme=light] .glass-card:not(.clan-card),
-.mode-plain[data-coreui-theme=light] .lab-card-main {
+html.mode-plain[data-coreui-theme=light] .card:not(.clan-card),
+html.mode-plain[data-coreui-theme=light] .glass-card:not(.clan-card),
+html.mode-plain[data-coreui-theme=light] .lab-card-main,
+html.mode-plain[data-coreui-theme=light] .card.blur {
   background: #ffffff !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
@@ -17068,93 +17078,81 @@ body:has(#session-expired-overlay) .wrapper {
   box-shadow: rgba(0, 0, 0, 0.08) 0px 8px 24px, rgba(0, 0, 0, 0.04) 0px 2px 4px !important;
   color: #1a1a2e;
 }
-.mode-plain[data-coreui-theme=light] .sidebar {
+html.mode-plain[data-coreui-theme=light] .sidebar {
   background: rgba(255, 255, 255, 0.85) !important;
   border-right: 1px solid rgba(0, 0, 0, 0.06);
 }
-.mode-plain[data-coreui-theme=light] .header {
+html.mode-plain[data-coreui-theme=light] .header {
   background: rgba(255, 255, 255, 0.8) !important;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
-body.hwa-enabled .mode-plain[data-coreui-theme=light] .header {
-  backdrop-filter: saturate(200%) blur(18px);
-}
-.mode-plain[data-coreui-theme=light] .footer {
+html.mode-plain[data-coreui-theme=light] .footer {
   background: rgba(255, 255, 255, 0.6) !important;
 }
-.mode-plain[data-coreui-theme=light] .lab-card-main {
+html.mode-plain[data-coreui-theme=light] .lab-card-main {
   background: var(--cui-card-bg-solid, rgba(255, 255, 255, 0.95)) !important;
   border: 1px solid rgba(0, 0, 0, 0.08) !important;
   box-shadow: rgba(0, 0, 0, 0.1) 0px 12px 28px, rgba(0, 0, 0, 0.04) 0px 2px 6px !important;
 }
-.mode-plain[data-coreui-theme=light] .lab-card-main .card-title,
-.mode-plain[data-coreui-theme=light] .lab-card-main .fw-bold {
+html.mode-plain[data-coreui-theme=light] .lab-card-main .card-title,
+html.mode-plain[data-coreui-theme=light] .lab-card-main .fw-bold {
   color: #1a1a2e !important;
 }
-.mode-plain[data-coreui-theme=light] .lab-card-main .text-secondary,
-.mode-plain[data-coreui-theme=light] .lab-card-main .small,
-.mode-plain[data-coreui-theme=light] .lab-card-main .font-monospace {
+html.mode-plain[data-coreui-theme=light] .lab-card-main .text-secondary,
+html.mode-plain[data-coreui-theme=light] .lab-card-main .small,
+html.mode-plain[data-coreui-theme=light] .lab-card-main .font-monospace {
   color: rgba(26, 26, 46, 0.7) !important;
 }
-.mode-plain[data-coreui-theme=light] .lab-card-main .font-monospace {
+html.mode-plain[data-coreui-theme=light] .lab-card-main .font-monospace {
   background: rgba(0, 0, 0, 0.04);
   border-color: rgba(0, 0, 0, 0.08);
 }
-.mode-plain[data-coreui-theme=light] .lab-bg-icon {
+html.mode-plain[data-coreui-theme=light] .lab-bg-icon {
   color: #000;
   opacity: 0.04;
 }
-.mode-plain[data-coreui-theme=light] .badge-mini {
+html.mode-plain[data-coreui-theme=light] .badge-mini {
   border-color: rgba(0, 0, 0, 0.1);
   background: rgba(0, 0, 0, 0.04) !important;
   color: rgba(26, 26, 46, 0.8);
 }
-.mode-plain[data-coreui-theme=light] .sidebar-nav .nav-link {
+html.mode-plain[data-coreui-theme=light] .sidebar-nav .nav-link {
   color: rgba(26, 26, 46, 0.75);
 }
-.mode-plain[data-coreui-theme=light] .sidebar-nav .nav-link:hover {
+html.mode-plain[data-coreui-theme=light] .sidebar-nav .nav-link:hover {
   color: rgba(26, 26, 46, 0.95);
 }
-.mode-plain[data-coreui-theme=light] .sidebar-nav .nav-link.active {
+html.mode-plain[data-coreui-theme=light] .sidebar-nav .nav-link.active {
   color: var(--cui-primary);
 }
-.mode-plain[data-coreui-theme=light] .sidebar-nav .nav-group-toggle::after {
+html.mode-plain[data-coreui-theme=light] .sidebar-nav .nav-group-toggle::after {
   filter: invert(0.3);
 }
-.mode-plain[data-coreui-theme=dark] .card,
-.mode-plain[data-coreui-theme=dark] .glass-card,
-.mode-plain[data-coreui-theme=dark] .lab-card-main {
+html.mode-plain[data-coreui-theme=dark] body.hwa-enabled .card,
+html.mode-plain[data-coreui-theme=dark] body.hwa-enabled .glass-card,
+html.mode-plain[data-coreui-theme=dark] body.hwa-enabled .lab-card-main,
+html.mode-plain[data-coreui-theme=dark] body.hwa-enabled .card.blur {
+  background: var(--cui-card-bg-solid, rgba(42, 32, 24, 0.94)) !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
   box-shadow: rgba(0, 0, 0, 0.4) 0px 12px 28px, rgba(255, 255, 255, 0.03) 0px 0px 16px !important;
-}
-body.hwa-enabled .mode-plain[data-coreui-theme=dark] .card, body.hwa-enabled .mode-plain[data-coreui-theme=dark] .card,
-body.hwa-enabled .mode-plain[data-coreui-theme=dark] .glass-card,
-body.hwa-enabled .mode-plain[data-coreui-theme=dark] .glass-card,
-body.hwa-enabled .mode-plain[data-coreui-theme=dark] .lab-card-main,
-body.hwa-enabled .mode-plain[data-coreui-theme=dark] .lab-card-main {
-  background: rgba(0, 0, 0, 0.65) !important;
-  backdrop-filter: saturate(200%) blur(18px) !important;
-  -webkit-backdrop-filter: saturate(200%) blur(18px) !important;
-}
-body.hwa-disabled .mode-plain[data-coreui-theme=dark] .card, body.hwa-disabled .mode-plain[data-coreui-theme=dark] .card,
-body.hwa-disabled .mode-plain[data-coreui-theme=dark] .glass-card,
-body.hwa-disabled .mode-plain[data-coreui-theme=dark] .glass-card,
-body.hwa-disabled .mode-plain[data-coreui-theme=dark] .lab-card-main,
-body.hwa-disabled .mode-plain[data-coreui-theme=dark] .lab-card-main {
-  background: var(--cui-card-bg-solid, #0d121b) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
-  box-shadow: rgba(0, 0, 0, 0.45) 0px 12px 28px, inset 0 0 0 1px rgba(255, 255, 255, 0.04) !important;
 }
-.mode-plain[data-coreui-theme=dark] .sidebar {
+html.mode-plain[data-coreui-theme=dark] body.hwa-disabled .card,
+html.mode-plain[data-coreui-theme=dark] body.hwa-disabled .glass-card,
+html.mode-plain[data-coreui-theme=dark] body.hwa-disabled .lab-card-main,
+html.mode-plain[data-coreui-theme=dark] body.hwa-disabled .card.blur {
+  background: var(--cui-card-bg-solid, #0d121b) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: rgba(0, 0, 0, 0.45) 0px 12px 28px, inset 0 0 0 1px rgba(255, 255, 255, 0.04) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html.mode-plain[data-coreui-theme=dark] .sidebar {
   border-right: 1px solid rgba(255, 255, 255, 0.04);
 }
-.mode-plain[data-coreui-theme=dark] .header {
+html.mode-plain[data-coreui-theme=dark] .header {
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-}
-body.hwa-enabled .mode-plain[data-coreui-theme=dark] .header, body.hwa-enabled .mode-plain[data-coreui-theme=dark] .header {
-  backdrop-filter: saturate(200%) blur(18px);
 }
 
 .home-avatar {
@@ -17462,22 +17460,7 @@ body.hwa-enabled .home-nav-card.card {
   margin-bottom: 0.5rem !important;
 }
 
-.clan-stats-grid {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
-  transition: background-color 0.4s ease;
-}
-body.hwa-enabled .clan-stats-grid {
-  backdrop-filter: saturate(200%) blur(18px);
-  -webkit-backdrop-filter: saturate(200%) blur(18px);
-}
-body.hwa-disabled .clan-stats-grid {
-  background: rgba(20, 20, 20, 0.82) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
+/* ========== Stat Pill Badges (SNA Match) ========== */
 [data-coreui-theme=light] .home-nav-card.card,
 [data-coreui-theme=light] .launcher-card.card {
   background: #ffffff !important;
@@ -17758,6 +17741,27 @@ body.hwa-disabled .clan-stats-grid {
   color: #e74c3c !important;
 }
 
+.glass-inner-card {
+  background: rgba(73, 66, 66, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease !important;
+}
+.glass-inner-card:hover {
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+}
+html[data-coreui-theme=light] .glass-inner-card {
+  background: rgba(0, 0, 0, 0.03) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  border-top: none !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+}
+html[data-coreui-theme=light] .glass-inner-card:hover {
+  border-color: rgba(0, 0, 0, 0.15) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
+}
+
 @keyframes greenPulse {
   0% {
     box-shadow: 0 0 0 0 rgba(16, 172, 132, 0.85);
@@ -17819,12 +17823,16 @@ html:not(.bg-mode-spiderman):not(.bg-mode-ironman):not(.bg-mode-IronMan) .machin
   border: 1px solid rgba(16, 172, 132, 0.28) !important;
   box-shadow: 0 4px 20px rgba(16, 172, 132, 0.03) !important;
 }
+html:not(.bg-mode-spiderman):not(.bg-mode-ironman):not(.bg-mode-IronMan) .challenge-labs-card {
+  border: 1px solid rgba(255, 71, 87, 0.28) !important;
+  box-shadow: 0 4px 20px rgba(255, 71, 87, 0.03) !important;
+}
 html:not(.bg-mode-spiderman):not(.bg-mode-ironman):not(.bg-mode-IronMan) #smart-insights-card {
   border: 1px solid rgba(111, 50, 207, 0.28) !important;
   box-shadow: 0 4px 20px rgba(111, 50, 207, 0.03) !important;
 }
 
-.device-card, .domain-card, .machine-labs-card, #smart-insights-card {
+.device-card, .domain-card, .machine-labs-card, .challenge-labs-card, #smart-insights-card {
   transition: all 0.3s ease !important;
 }
 
@@ -17896,16 +17904,6 @@ html[data-coreui-theme] .clan-card.text-white-50, html[data-coreui-theme] .clan-
 }
 html[data-coreui-theme] .clan-card.text-muted, html[data-coreui-theme] .clan-card *.text-muted, html .clan-card.text-muted, html .clan-card *.text-muted {
   color: rgba(255, 255, 255, 0.4) !important;
-}
-html[data-coreui-theme] .clan-card .clan-stats-grid, html .clan-card .clan-stats-grid {
-  background: rgba(255, 255, 255, 0.08) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
-  backdrop-filter: saturate(200%) blur(18px) !important;
-  -webkit-backdrop-filter: saturate(200%) blur(18px) !important;
-}
-html[data-coreui-theme] .clan-card .clan-stats-grid div, html[data-coreui-theme] .clan-card .clan-stats-grid span, html[data-coreui-theme] .clan-card .clan-stats-grid i, html .clan-card .clan-stats-grid div, html .clan-card .clan-stats-grid span, html .clan-card .clan-stats-grid i {
-  color: #ffffff !important;
 }
 
 html:not([data-coreui-theme=light]).bg-mode-spiderman body.hwa-enabled .card:not(.clan-card):not(.blur) {
@@ -18150,6 +18148,10 @@ html[data-coreui-theme=light] .continue-activity-card:hover {
   border-radius: 12px;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
+.active-lab-item-card.liquid-rim, .liquid-rim.challenge-item-card {
+  background: transparent !important;
+  border: 0 !important;
+}
 .active-lab-item-card:hover, .challenge-item-card:hover {
   transform: translateY(-2px);
   background: rgba(255, 255, 255, 0.07) !important;
@@ -18186,38 +18188,6 @@ html[data-coreui-theme=light] .active-lab-item-card:hover, html[data-coreui-them
 .active-lab-item-card p.text-white-50, .challenge-item-card p.text-white-50 {
   color: var(--lab-card-text-muted) !important;
   opacity: 1 !important;
-}
-
-@keyframes waveFlow {
-  0% {
-    transform: translate3d(0, 0, 0);
-  }
-  100% {
-    transform: translate3d(-50%, 0, 0);
-  }
-}
-.wave-wrapper {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 200%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.wave-svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.wave-front {
-  animation: waveFlow 18s linear infinite;
-}
-
-.wave-back {
-  animation: waveFlow 12s linear infinite reverse;
 }
 
 /* Hide scrollbars completely while keeping scroll functionality */
@@ -18329,69 +18299,154 @@ body.hwa-enabled .card.blur.domain-card {
 .clan-card {
   border-radius: 16px !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.8) 100%), url("/assets/Background_Img/clan_zero_byte.png") no-repeat center !important;
-  background-size: cover !important;
-}
-.clan-card .clan-logo-circle {
-  width: 52px;
-  height: 52px;
-  border-color: #00d2d3 !important;
-  border-width: 2px !important;
-  box-shadow: 0 0 15px rgba(0, 210, 211, 0.6) !important;
-}
-.clan-card .clan-logo-circle span {
-  font-size: 1.15rem;
-  letter-spacing: -1px;
-  font-family: sans-serif;
-  text-shadow: 0 0 8px rgba(0, 210, 211, 0.5);
-}
-.clan-card .clan-title {
-  letter-spacing: -0.5px;
-  font-size: 1.1rem;
-}
-.clan-card .clan-handle {
-  font-size: 0.75rem;
-}
-.clan-card .clan-stats-grid {
-  padding: 12px 16px !important;
-}
-.clan-card .clan-stats-grid .stat-val {
-  font-size: 0.8rem;
-  font-family: sans-serif;
-}
-.clan-card .clan-stats-grid .stat-val i {
-  font-size: 0.85rem;
-}
-.clan-card .clan-stats-grid .stat-lbl {
-  font-size: 0.58rem;
-  font-weight: 500;
-}
-.clan-card .clan-action-btn {
-  background-color: #6f32cf !important;
-  color: #ffffff !important;
-  font-size: 0.78rem;
 }
 
-/* Device & Domain Setup Cards */
-.device-card .card-header-title, .domain-card .card-header-title {
+/* ========== Stat Pill Badges (SNA Match) ========== */
+.stat-pill,
+.lesson-pill {
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  backdrop-filter: saturate(180%) blur(8px);
+  -webkit-backdrop-filter: saturate(180%) blur(8px);
+}
+.stat-pill i,
+.lesson-pill i {
+  font-size: 0.85rem;
+}
+
+.stat-pill-success {
+  background: linear-gradient(135deg, rgba(var(--cui-success-rgb), 0.18), rgba(var(--cui-success-rgb), 0.08));
+  border: 1px solid rgba(var(--cui-success-rgb), 0.5);
+  color: var(--cui-success, #198754);
+}
+.stat-pill-success:hover {
+  background: linear-gradient(135deg, rgba(var(--cui-success-rgb), 0.28), rgba(var(--cui-success-rgb), 0.15));
+  border-color: rgba(var(--cui-success-rgb), 0.7);
+  transform: translateY(-1px);
+}
+
+.stat-pill-danger {
+  background: linear-gradient(135deg, rgba(var(--cui-danger-rgb), 0.18), rgba(var(--cui-danger-rgb), 0.08));
+  border: 1px solid rgba(var(--cui-danger-rgb), 0.5);
+  color: var(--cui-danger, #dc3545);
+}
+.stat-pill-danger:hover {
+  background: linear-gradient(135deg, rgba(var(--cui-danger-rgb), 0.28), rgba(var(--cui-danger-rgb), 0.15));
+  border-color: rgba(var(--cui-danger-rgb), 0.7);
+  transform: translateY(-1px);
+}
+
+.stat-pill-primary {
+  background: linear-gradient(135deg, rgba(var(--cui-primary-rgb), 0.18), rgba(var(--cui-primary-rgb), 0.08));
+  border: 1px solid rgba(var(--cui-primary-rgb), 0.5);
+  color: var(--cui-primary, #0d6efd);
+}
+.stat-pill-primary:hover {
+  background: linear-gradient(135deg, rgba(var(--cui-primary-rgb), 0.28), rgba(var(--cui-primary-rgb), 0.15));
+  border-color: rgba(var(--cui-primary-rgb), 0.7);
+  transform: translateY(-1px);
+}
+
+.stat-pill-info {
+  background: linear-gradient(135deg, rgba(var(--cui-info-rgb), 0.18), rgba(var(--cui-info-rgb), 0.08));
+  border: 1px solid rgba(var(--cui-info-rgb), 0.5);
+  color: var(--cui-info, #0dcaf0);
+}
+.stat-pill-info:hover {
+  background: linear-gradient(135deg, rgba(var(--cui-info-rgb), 0.28), rgba(var(--cui-info-rgb), 0.15));
+  border-color: rgba(var(--cui-info-rgb), 0.7);
+  transform: translateY(-1px);
+}
+
+.stat-pill-warning {
+  background: linear-gradient(135deg, rgba(var(--cui-warning-rgb), 0.18), rgba(var(--cui-warning-rgb), 0.08));
+  border: 1px solid rgba(var(--cui-warning-rgb), 0.5);
+  color: var(--cui-warning, #ffc107);
+}
+.stat-pill-warning:hover {
+  background: linear-gradient(135deg, rgba(var(--cui-warning-rgb), 0.28), rgba(var(--cui-warning-rgb), 0.15));
+  border-color: rgba(var(--cui-warning-rgb), 0.7);
+  transform: translateY(-1px);
+}
+
+.stat-pill-secondary {
+  background: linear-gradient(135deg, rgba(var(--cui-secondary-rgb), 0.18), rgba(var(--cui-secondary-rgb), 0.08));
+  border: 1px solid rgba(var(--cui-secondary-rgb), 0.5);
+  color: var(--cui-secondary, #6c757d);
+}
+.stat-pill-secondary:hover {
+  background: linear-gradient(135deg, rgba(var(--cui-secondary-rgb), 0.28), rgba(var(--cui-secondary-rgb), 0.15));
+  border-color: rgba(var(--cui-secondary-rgb), 0.7);
+  transform: translateY(-1px);
+}
+
+/* Device & Domain Setup Sections (compact, no card blur — sits inside continue-learning-card) */
+.device-card,
+.domain-card,
+.machine-labs-card,
+.challenge-labs-card {
+  padding: 0.75rem 1rem;
+  border-radius: 1rem !important;
+}
+.device-card .card-header-title,
+.domain-card .card-header-title,
+.machine-labs-card .card-header-title,
+.challenge-labs-card .card-header-title {
   letter-spacing: -0.3px;
   font-size: 1.05rem;
 }
-.device-card .card-header-title i, .domain-card .card-header-title i {
+.device-card .card-header-title i,
+.domain-card .card-header-title i,
+.machine-labs-card .card-header-title i,
+.challenge-labs-card .card-header-title i {
   font-size: 0.9rem;
 }
-.device-card .card-header-sub, .domain-card .card-header-sub {
+.device-card .card-header-sub,
+.domain-card .card-header-sub,
+.machine-labs-card .card-header-sub,
+.challenge-labs-card .card-header-sub {
   font-size: 0.85rem;
 }
-.device-card .card-header-count, .domain-card .card-header-count {
+.device-card .card-header-count,
+.domain-card .card-header-count,
+.machine-labs-card .card-header-count,
+.challenge-labs-card .card-header-count {
   font-size: 0.75rem;
 }
-.device-card .device-list, .device-card .domain-list, .domain-card .device-list, .domain-card .domain-list {
+.device-card .device-list, .device-card .domain-list,
+.domain-card .device-list,
+.domain-card .domain-list,
+.machine-labs-card .device-list,
+.machine-labs-card .domain-list,
+.challenge-labs-card .device-list,
+.challenge-labs-card .domain-list {
   max-height: 155px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+}
+.device-card .d-view-more,
+.domain-card .d-view-more,
+.machine-labs-card .d-view-more,
+.challenge-labs-card .d-view-more {
+  color: #5299E0;
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: opacity 0.15s ease;
+}
+.device-card .d-view-more:hover,
+.domain-card .d-view-more:hover,
+.machine-labs-card .d-view-more:hover,
+.challenge-labs-card .d-view-more:hover {
+  opacity: 0.75;
+  color: #5299E0;
 }
 
 .continue-learning-card .card-header-title {
@@ -18400,6 +18455,59 @@ body.hwa-enabled .card.blur.domain-card {
 }
 .continue-learning-card .card-header-sub {
   font-size: 0.72rem !important;
+}
+.continue-learning-card {
+  /* Inner setup sections — compact, no card blur needed */
+}
+.continue-learning-card .device-card h6,
+.continue-learning-card .domain-card h6 {
+  font-size: 0.92rem !important;
+  margin-bottom: 0.5rem !important;
+}
+.continue-learning-card .device-card small,
+.continue-learning-card .domain-card small {
+  font-size: 0.72rem !important;
+}
+.continue-learning-card .device-card,
+.continue-learning-card .domain-card {
+  padding: 0.65rem 0.85rem !important;
+  border-radius: 1rem !important;
+}
+.continue-learning-card .machine-labs-card h6 {
+  font-size: 0.92rem !important;
+  margin-bottom: 0.5rem !important;
+}
+.continue-learning-card .machine-labs-card small {
+  font-size: 0.72rem !important;
+}
+.continue-learning-card .machine-labs-card {
+  border-radius: 1rem !important;
+}
+.continue-learning-card .machine-labs-card .liquid-rim {
+  padding: 0.65rem 0.85rem !important;
+  border-radius: 0.9rem !important;
+}
+.continue-learning-card .machine-labs-list {
+  max-height: 150px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.continue-learning-card .machine-labs-list::-webkit-scrollbar {
+  width: 4px;
+}
+.continue-learning-card .machine-labs-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+.continue-learning-card .challenge-labs-card h6 {
+  font-size: 0.92rem !important;
+  margin-bottom: 0.5rem !important;
+}
+.continue-learning-card .challenge-labs-card small {
+  font-size: 0.72rem !important;
+}
+.continue-learning-card .challenge-labs-card {
+  border-radius: 1rem !important;
 }
 
 .active-lab-item-card .server-icon-circle, .challenge-item-card .server-icon-circle {
@@ -18750,9 +18858,120 @@ body.hwa-enabled .active-lab-item-card, body.hwa-enabled .challenge-item-card {
   color: rgba(255, 255, 255, 0.35) !important;
 }
 
+/* Light mode stat-pill overrides */
+html[data-coreui-theme=light] .stat-pill-success {
+  background: linear-gradient(135deg, rgba(var(--cui-success-rgb), 0.18), rgba(var(--cui-success-rgb), 0.08));
+  border: 1px solid rgba(var(--cui-success-rgb), 0.5);
+  color: var(--cui-success, #198754);
+}
+html[data-coreui-theme=light] .stat-pill-success:hover {
+  background: linear-gradient(135deg, rgba(var(--cui-success-rgb), 0.28), rgba(var(--cui-success-rgb), 0.15));
+  border-color: rgba(var(--cui-success-rgb), 0.65);
+  transform: translateY(-1px);
+}
+html[data-coreui-theme=light] .stat-pill-danger {
+  background: linear-gradient(135deg, rgba(var(--cui-danger-rgb), 0.18), rgba(var(--cui-danger-rgb), 0.08));
+  border: 1px solid rgba(var(--cui-danger-rgb), 0.5);
+  color: var(--cui-danger, #dc3545);
+}
+html[data-coreui-theme=light] .stat-pill-danger:hover {
+  background: linear-gradient(135deg, rgba(var(--cui-danger-rgb), 0.28), rgba(var(--cui-danger-rgb), 0.15));
+  border-color: rgba(var(--cui-danger-rgb), 0.65);
+  transform: translateY(-1px);
+}
+html[data-coreui-theme=light] .stat-pill-primary {
+  background: linear-gradient(135deg, rgba(var(--cui-primary-rgb), 0.18), rgba(var(--cui-primary-rgb), 0.08));
+  border: 1px solid rgba(var(--cui-primary-rgb), 0.5);
+  color: var(--cui-primary, #0d6efd);
+}
+html[data-coreui-theme=light] .stat-pill-primary:hover {
+  background: linear-gradient(135deg, rgba(var(--cui-primary-rgb), 0.28), rgba(var(--cui-primary-rgb), 0.15));
+  border-color: rgba(var(--cui-primary-rgb), 0.65);
+  transform: translateY(-1px);
+}
+html[data-coreui-theme=light] .stat-pill-info {
+  background: linear-gradient(135deg, rgba(var(--cui-info-rgb), 0.18), rgba(var(--cui-info-rgb), 0.08));
+  border: 1px solid rgba(var(--cui-info-rgb), 0.5);
+  color: var(--cui-info, #0dcaf0);
+}
+html[data-coreui-theme=light] .stat-pill-info:hover {
+  background: linear-gradient(135deg, rgba(var(--cui-info-rgb), 0.28), rgba(var(--cui-info-rgb), 0.15));
+  border-color: rgba(var(--cui-info-rgb), 0.65);
+  transform: translateY(-1px);
+}
+html[data-coreui-theme=light] .stat-pill-warning {
+  background: linear-gradient(135deg, rgba(var(--cui-warning-rgb), 0.18), rgba(var(--cui-warning-rgb), 0.08));
+  border: 1px solid rgba(var(--cui-warning-rgb), 0.5);
+  color: var(--cui-warning, #ffc107);
+}
+html[data-coreui-theme=light] .stat-pill-warning:hover {
+  background: linear-gradient(135deg, rgba(var(--cui-warning-rgb), 0.28), rgba(var(--cui-warning-rgb), 0.15));
+  border-color: rgba(var(--cui-warning-rgb), 0.65);
+  transform: translateY(-1px);
+}
+html[data-coreui-theme=light] .stat-pill-secondary {
+  background: linear-gradient(135deg, rgba(var(--cui-secondary-rgb), 0.18), rgba(var(--cui-secondary-rgb), 0.08));
+  border: 1px solid rgba(var(--cui-secondary-rgb), 0.5);
+  color: var(--cui-secondary, #6c757d);
+}
+html[data-coreui-theme=light] .stat-pill-secondary:hover {
+  background: linear-gradient(135deg, rgba(var(--cui-secondary-rgb), 0.28), rgba(var(--cui-secondary-rgb), 0.15));
+  border-color: rgba(var(--cui-secondary-rgb), 0.65);
+  transform: translateY(-1px);
+}
+html[data-coreui-theme=light] .dashboard-tabs .nav-link {
+  color: rgba(var(--cui-body-color-rgb), 0.6);
+  border-color: rgba(var(--cui-body-color-rgb), 0.15);
+}
+html[data-coreui-theme=light] .dashboard-tabs .nav-link:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--cui-body-color);
+}
+html[data-coreui-theme=light] .dashboard-tabs .nav-link.active {
+  color: var(--cui-primary, #0d6efd);
+  border-color: rgba(var(--cui-primary-rgb, 13, 110, 253), 0.5);
+  background: rgba(var(--cui-primary-rgb, 13, 110, 253), 0.1);
+}
+
 /* Modals */
 body.hwa-enabled .glass-modal-content {
   backdrop-filter: saturate(200%) blur(18px) !important;
+}
+
+/* Dashboard Continue Learning Tabs */
+.dashboard-tabs {
+  gap: 0.5rem;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.dashboard-tabs .nav-link {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.55);
+  border: 1px solid rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.15);
+  border-radius: 999px;
+  padding: 0.4rem 1rem;
+  transition: all 0.2s;
+  background: transparent;
+}
+.dashboard-tabs .nav-link i {
+  font-size: 1rem;
+  margin-right: 0.25rem;
+}
+.dashboard-tabs .nav-link:hover {
+  color: rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.85);
+  background: rgba(255, 255, 255, 0.06);
+}
+.dashboard-tabs .nav-link.active {
+  color: #fff;
+  border-color: rgba(var(--cui-primary-rgb, 13, 110, 253), 0.5);
+  background: rgba(var(--cui-primary-rgb, 13, 110, 253), 0.2);
+}
+
+/* SNA match: disable backdrop-filter on stat-pills inside blur containers */
+html[data-coreui-theme=dark] .blur [class*=stat-pill-] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 /* Sidebar Layout Fix: Ensure Footer and Stats stay at bottom */
@@ -22017,6 +22236,43 @@ html[data-coreui-theme=dark] .card.liquid-rim.lesson-card::after {
   background-color: rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.03);
   padding: 10px;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.instance-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 8px;
+  border-bottom: 1px solid rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.06);
+  margin-bottom: 6px;
+}
+
+.instance-sidebar-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--glass-text-muted, rgba(255, 255, 255, 0.45));
+}
+
+.instance-sidebar-icon-btn {
+  background: none;
+  border: none;
+  color: var(--glass-text-muted, rgba(255, 255, 255, 0.45));
+  cursor: pointer;
+  padding: 3px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s, background 0.15s;
+  font-size: 1rem;
+}
+.instance-sidebar-icon-btn:hover {
+  color: var(--glass-text, #e6e6e6);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .instance-file-editor {
@@ -22169,6 +22425,33 @@ html[data-coreui-theme=dark] .card.liquid-rim.lesson-card::after {
 }
 .instance-tree-item .text-secondary {
   color: var(--glass-text-muted) !important;
+}
+
+.instance-tree-input-wrap {
+  padding: 2px 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.instance-tree-inline-input {
+  flex: 1;
+  background: rgba(var(--glass-overlay-rgb, 255, 255, 255), 0.06);
+  border: 1px solid rgba(var(--cui-primary-rgb, 139, 145, 249), 0.4);
+  border-radius: 4px;
+  color: var(--glass-text, #e6e6e6);
+  font-size: 0.85rem;
+  padding: 2px 6px;
+  outline: none;
+  font-family: inherit;
+  min-width: 0;
+}
+.instance-tree-inline-input:focus {
+  border-color: var(--cui-primary, #8b5cf6);
+  box-shadow: 0 0 0 2px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.15);
+}
+.instance-tree-inline-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
 }
 
 .instance-code-editor {

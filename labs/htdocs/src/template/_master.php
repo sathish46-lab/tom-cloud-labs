@@ -497,42 +497,42 @@ $classString = implode(' ', $htmlClasses);
     <!-- Visuals Recommendation Modal (GPU Capability Info) -->
     <div class="modal fade" id="visualsRecommendationModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 rounded-4 shadow-lg" style="background: rgba(var(--cui-body-bg-rgb, 11, 30, 54), 0.96); backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px); border: 1px solid rgba(var(--cui-emphasis-color-rgb, 255, 255, 255), 0.1) !important;">
+            <div class="modal-content border-0 rounded-4 shadow-lg blur">
                 <div class="modal-header border-0 pt-4 px-4 pb-2">
                     <h5 class="fw-bold m-0 text-body-emphasis">Visuals Recommendation</h5>
                     <button type="button" class="btn-close" data-coreui-dismiss="modal" style="filter: var(--cui-btn-close-white-filter, none);"></button>
                 </div>
                 <div class="modal-body p-4 pt-2">
-                    <p class="small text-secondary mb-4">
+                    <p class="small text-body-secondary mb-4">
                         This website use Blur effects for background. This effect is only available if your browser supports WebGL and your GPU is a high performance one. You can check your GPU info below.
                     </p>
-                    <div class="border rounded-3 overflow-hidden mb-4" style="border-color: rgba(255, 255, 255, 0.1) !important;">
+                    <div class="rounded-3 overflow-hidden mb-4" style="border: 1px solid var(--cui-border-color) !important;">
                         <table class="table table-borderless mb-0 small">
                             <tbody>
-                                <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
-                                    <td class="py-2 px-3 text-secondary">WebGL Support</td>
+                                <tr style="border-bottom: 1px solid var(--cui-border-color);">
+                                    <td class="py-2 px-3 text-body-secondary">WebGL Support</td>
                                     <td class="py-2 px-3 fw-semibold" id="gpuModalWebGL">Yes</td>
                                 </tr>
-                                <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
-                                    <td class="py-2 px-3 text-secondary">High Performance GPU</td>
+                                <tr style="border-bottom: 1px solid var(--cui-border-color);">
+                                    <td class="py-2 px-3 text-body-secondary">High Performance GPU</td>
                                     <td class="py-2 px-3 fw-semibold" id="gpuModalHighPerf">Yes</td>
                                 </tr>
-                                <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
-                                    <td class="py-2 px-3 text-secondary">GPU Vendor</td>
+                                <tr style="border-bottom: 1px solid var(--cui-border-color);">
+                                    <td class="py-2 px-3 text-body-secondary">GPU Vendor</td>
                                     <td class="py-2 px-3 text-body-emphasis" id="gpuModalVendor">-</td>
                                 </tr>
                                 <tr>
-                                    <td class="py-2 px-3 text-secondary">Renderer</td>
+                                    <td class="py-2 px-3 text-body-secondary">Renderer</td>
                                     <td class="py-2 px-3 text-body-emphasis" id="gpuModalRenderer">-</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
-                    <p class="small text-secondary mb-4">
+                    <p class="small text-body-secondary mb-4">
                         Note: This info is only for recommendation purpose. You can still use this website without WebGL support or High Performance GPU. However, some visual effects may not work properly.
                     </p>
                     <div class="d-flex justify-content-end">
-                        <button type="button" class="btn btn-warning rounded-pill px-4 fw-semibold small" data-coreui-dismiss="modal">Okay</button>
+                        <button type="button" class="btn btn-primary rounded-pill px-4 fw-semibold small" data-coreui-dismiss="modal">Okay</button>
                     </div>
                 </div>
             </div>

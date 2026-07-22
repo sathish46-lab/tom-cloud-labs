@@ -277,24 +277,7 @@
   }
 }
 
-// ---------- Clan Stats Grid with Visual Blur Compatibility ----------
-.clan-stats-grid {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
-  transition: background-color 0.4s ease;
-
-  body.hwa-enabled & {
-    backdrop-filter: saturate(200%) blur(18px);
-    -webkit-backdrop-filter: saturate(200%) blur(18px);
-  }
-
-  body.hwa-disabled & {
-    background: rgba(20, 20, 20, 0.82) !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-  }
-}
+/* ========== Stat Pill Badges (SNA Match) ========== */
 
 // ========================================================================
 // Light Theme Custom Overrides for Dashboard Home Page
@@ -620,6 +603,35 @@
         
         i {
             color: #e74c3c !important;
+        }
+    }
+}
+
+// ========================================================================
+// Glass Inner Card — for cards nested inside a .blur parent
+// Use .glass-inner-card on child cards that sit inside a .card.blur container
+// Provides subtle separation without overriding the parent glass effect
+// ========================================================================
+.glass-inner-card {
+    background: rgba(73, 66, 66, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease !important;
+
+    &:hover {
+        border-color: rgba(255, 255, 255, 0.18) !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    html[data-coreui-theme="light"] & {
+        background: rgba(0, 0, 0, 0.03) !important;
+        border-color: rgba(0, 0, 0, 0.08) !important;
+        border-top: none !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+
+        &:hover {
+            border-color: rgba(0, 0, 0, 0.15) !important;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
         }
     }
 }

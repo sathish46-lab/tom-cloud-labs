@@ -46,12 +46,12 @@ if (strpos($_SERVER['REQUEST_URI'] ?? '', '/instances/trash') !== false) {
         <ul class="nav nav-tabs lab-nav-tabs border-0 m-0" role="tablist">
             <li class="nav-item">
                 <button class="nav-link d-flex align-items-center gap-2 instance-dashboard-tab <?= $activeTab === 'templates' ? 'active' : '' ?>" data-tab="templates" type="button">
-                    <i class='bx bx-cube'></i> Your templates <span class="badge bg-secondary text-white rounded-pill fw-bold ms-1"><?= count($instances) ?></span>
+                    <i class='bx bx-cube'></i> Your templates <span class="badge bg-success text-white rounded-pill fw-bold ms-1" id="templatesCount"><?= count($instances) ?></span>
                 </button>
             </li>
             <li class="nav-item">
                 <button class="nav-link d-flex align-items-center gap-2 instance-dashboard-tab <?= $activeTab === 'trash' ? 'active' : '' ?>" data-tab="trash" type="button">
-                    <i class='bx bx-trash'></i> Trash <span class="badge bg-secondary text-white rounded-pill fw-bold ms-1" id="trashCount"><?= count($trashedInstances) ?></span>
+                    <i class='bx bx-trash'></i> Trash <span class="badge bg-danger text-white rounded-pill fw-bold ms-1" id="trashCount"><?= count($trashedInstances) ?></span>
                 </button>
             </li>
         </ul>

@@ -126,6 +126,7 @@
   }
 
   let activeFile = null; // { path, name, modified, version }
+  let selectedNode = null; // { path, name, is_dir } — currently selected tree item
   let loadedContent = "";
   let lastOpenedPath = null; // from DB
 
@@ -157,6 +158,7 @@
     if (node.is_dir) {
       const header = document.createElement("div");
       header.className = "instance-tree-item is-folder";
+      header.setAttribute("data-path", node.path);
       header.style.paddingLeft = padPx + "px";
       header.innerHTML =
         '<i class="bx bx-chevron-right"></i> <i class="bx ' +
@@ -165,21 +167,28 @@
         escapeHtml(node.name) +
         "</span>";
       const childBox = document.createElement("div");
+      childBox.className = "instance-tree-children";
       childBox.style.display = "none";
       (node.children || []).forEach((c) => childBox.appendChild(renderNode(c, depth + 1)));
 
-      header.addEventListener("click", () => {
+      header.addEventListener("click", (e) => {
         const chevron = header.querySelector(".bx-chevron-right, .bx-chevron-down");
         const open = childBox.style.display !== "none";
         childBox.style.display = open ? "none" : "block";
         chevron.classList.toggle("bx-chevron-right", open);
         chevron.classList.toggle("bx-chevron-down", !open);
+
+        treeEl.querySelectorAll(".instance-tree-item.is-active").forEach((el) => el.classList.remove("is-active"));
+        header.classList.add("is-active");
+        selectedNode = { path: node.path, name: node.name, is_dir: true };
+        if (deleteBtn) deleteBtn.disabled = false;
       });
       wrap.appendChild(header);
       wrap.appendChild(childBox);
     } else {
       const item = document.createElement("div");
       item.className = "instance-tree-item";
+      item.setAttribute("data-path", node.path);
       item.style.paddingLeft = (padPx + 4) + "px";
       item.innerHTML =
         '<i class="bx ' +
@@ -191,7 +200,12 @@
         ' <span class="small text-secondary opacity-50">' +
         humanSize(node.size) +
         "</span>";
-      item.addEventListener("click", () => openFile(node.path, node.name, item));
+      item.addEventListener("click", () => {
+        treeEl.querySelectorAll(".instance-tree-item.is-active").forEach((el) => el.classList.remove("is-active"));
+        item.classList.add("is-active");
+        selectedNode = { path: node.path, name: node.name, is_dir: false };
+        openFile(node.path, node.name, item);
+      });
       wrap.appendChild(item);
     }
     return wrap;
@@ -327,7 +341,6 @@
         metaEl.innerHTML =
           '<span class="badge bg-warning bg-opacity-25 text-warning">Modified by you</span>';
         showToast("Saved.", "success");
-        loadTree();
       } else {
         showToast("Save failed: " + (data.error || "unknown"), "danger");
       }
@@ -368,25 +381,106 @@
     return null;
   }
 
-  // ---- Create new file / folder ---------------------------------------
-  async function createNode(isDir) {
-    const name = prompt(isDir ? "New folder name:" : "New file name (include path, e.g. scripts/setup.sh):");
-    if (!name) return;
+  // ---- Create new file / folder (inline VS Code style) -------------------
+  function getSelectedFolderPath() {
+    if (selectedNode && selectedNode.is_dir) return selectedNode.path;
+    return "";
+  }
+
+  function createInlineInput(isDir) {
+    const parentPath = getSelectedFolderPath();
+    const parentEl = parentPath
+      ? treeEl.querySelector('[data-path="' + CSS.escape(parentPath) + '"]')
+      : null;
+    const childContainer = parentEl ? parentEl.nextElementSibling : treeEl;
+    if (!childContainer) return;
+
+    const depth = parentPath ? (parentPath.split("/").length) : 0;
+    const padPx = depth * 18;
+
+    const inputWrap = document.createElement("div");
+    inputWrap.className = "instance-tree-item instance-tree-input-wrap";
+    inputWrap.style.paddingLeft = (padPx + 4) + "px";
+
+    const iconClass = isDir ? "bxs-folder text-secondary" : "bx-file-blank text-info";
+    inputWrap.innerHTML =
+      '<i class="bx ' + iconClass + '"></i>' +
+      '<input type="text" class="instance-tree-inline-input" placeholder="' +
+      (isDir ? "Folder name" : "File name (e.g. scripts/setup.sh)") +
+      '" autofocus>';
+
+    childContainer.prepend(inputWrap);
+    const input = inputWrap.querySelector("input");
+    input.focus();
+
+    function commit() {
+      const val = input.value.trim().replace(/^\/+/, "");
+      if (!val) { inputWrap.remove(); return; }
+      const fullPath = parentPath ? parentPath + "/" + val : val;
+      inputWrap.remove();
+      doCreateNode(fullPath, isDir);
+    }
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); commit(); }
+      if (e.key === "Escape") { inputWrap.remove(); }
+    });
+    input.addEventListener("blur", () => { if (inputWrap.parentNode) inputWrap.remove(); });
+  }
+
+  async function doCreateNode(fullPath, isDir) {
     const fd = new FormData();
     fd.append("slug", slug);
-    fd.append("path", name.trim().replace(/^\/+/, ""));
+    fd.append("path", fullPath);
     fd.append("is_dir", isDir ? "1" : "0");
     try {
       const res = await fetch("/api/instances/file_create", { method: "POST", body: fd });
       const data = await res.json();
       if (data.status === "success") {
         showToast((isDir ? "Folder" : "File") + " created.", "success");
-        loadTree();
+        appendNodeToTree(fullPath, isDir);
       } else {
         showToast("Create failed: " + (data.error || "exists?"), "danger");
       }
     } catch (e) {
       showToast("Network error.", "danger");
+    }
+  }
+
+  function appendNodeToTree(fullPath, isDir) {
+    const parts = fullPath.split("/");
+    const name = parts.pop();
+    let parentPath = parts.join("/");
+    let container = treeEl;
+
+    if (parentPath) {
+      const parentEl = treeEl.querySelector('[data-path="' + CSS.escape(parentPath) + '"]');
+      if (parentEl) {
+        let childBox = parentEl.nextElementSibling;
+        if (!childBox || !childBox.classList.contains("instance-tree-children")) {
+          childBox = document.createElement("div");
+          childBox.className = "instance-tree-children";
+          childBox.style.display = "block";
+          parentEl.parentNode.insertBefore(childBox, parentEl.nextSibling);
+        }
+        container = childBox;
+        const chevron = parentEl.querySelector(".bx-chevron-right");
+        if (chevron) {
+          chevron.classList.remove("bx-chevron-right");
+          chevron.classList.add("bx-chevron-down");
+        }
+      }
+    }
+
+    const depth = parentPath ? parentPath.split("/").length : 0;
+    const padPx = depth * 18;
+    const nodeData = { path: fullPath, name: name, is_dir: isDir, children: isDir ? [] : undefined, size: isDir ? undefined : 0 };
+    const el = renderNode(nodeData, parentPath ? depth : 0);
+    container.appendChild(el);
+
+    if (isDir) {
+      el.querySelector(".instance-tree-item").click();
+      el.querySelector(".instance-tree-item").click();
     }
   }
 
@@ -415,7 +509,7 @@
         const data = await res.json();
         if (data.status === "success") {
           showToast("Asset uploaded to your instance file store.", "success");
-          loadTree();
+          appendNodeToTree(file.name, false);
         } else {
           showToast("Upload failed: " + (data.error || "unknown"), "danger");
         }
@@ -437,31 +531,35 @@
     loadTree();
   }
 
-  // ---- Delete active file ---------------------------------------------
+  // ---- Delete selected file or folder ----------------------------------
   async function deleteFile() {
-    if (!activeFile) return;
-    if (!confirm('Delete "' + activeFile.name + '"? This cannot be undone.')) return;
+    if (!selectedNode) return;
+    const label = selectedNode.is_dir ? "folder" : "file";
+    if (!confirm('Delete ' + label + ' "' + selectedNode.name + '"? This cannot be undone.')) return;
     const fd = new FormData();
     fd.append("slug", slug);
-    fd.append("path", activeFile.path);
+    fd.append("path", selectedNode.path);
     try {
       const res = await fetch("/api/instances/file_delete", { method: "POST", body: fd });
       const data = await res.json();
       if (data.status === "success") {
-        showToast("File deleted.", "success");
-        activeFile = null;
-        cm.setValue("");
-        cm.setOption("readOnly", true);
-        cm.getWrapperElement().classList.add("CodeMirror-readonly");
-        fileNameEl.textContent = "No file selected";
-        if (langEl) langEl.textContent = "";
-        if (modifiedEl) modifiedEl.classList.add("d-none");
-        metaEl.innerHTML = "";
-        showOverlay("Select a file to view its contents", "bx bx-file");
-        if (saveBtn) saveBtn.disabled = true;
+        showToast(selectedNode.name + " deleted.", "success");
+        removeNodeFromTree(selectedNode.path);
+        if (!selectedNode.is_dir && activeFile && activeFile.path === selectedNode.path) {
+          activeFile = null;
+          cm.setValue("");
+          cm.setOption("readOnly", true);
+          cm.getWrapperElement().classList.add("CodeMirror-readonly");
+          fileNameEl.textContent = "No file selected";
+          if (langEl) langEl.textContent = "";
+          if (modifiedEl) modifiedEl.classList.add("d-none");
+          metaEl.innerHTML = "";
+          showOverlay("Select a file to view its contents", "bx bx-file");
+          if (saveBtn) saveBtn.disabled = true;
+        }
+        selectedNode = null;
         if (deleteBtn) deleteBtn.disabled = true;
         updateStatus();
-        loadTree();
       } else {
         showToast("Delete failed: " + (data.error || "unknown"), "danger");
       }
@@ -470,10 +568,23 @@
     }
   }
 
+  function removeNodeFromTree(path) {
+    const el = treeEl.querySelector('[data-path="' + CSS.escape(path) + '"]');
+    if (el) {
+      const parent = el.parentNode;
+      el.remove();
+      if (parent && parent.classList.contains("instance-tree-children") && !parent.children.length) {
+        parent.remove();
+      }
+    }
+    const fileItem = treeEl.querySelector('.instance-tree-item:not(.is-folder) [data-path="' + CSS.escape(path) + '"]');
+    if (fileItem) fileItem.closest(".instance-tree-item").remove();
+  }
+
   // ---- Wire up ---------------------------------------------------------
   if (saveBtn) saveBtn.addEventListener("click", saveFile);
-  if (newFileBtn) newFileBtn.addEventListener("click", () => createNode(false));
-  if (newFolderBtn) newFolderBtn.addEventListener("click", () => createNode(true));
+  if (newFileBtn) newFileBtn.addEventListener("click", () => createInlineInput(false));
+  if (newFolderBtn) newFolderBtn.addEventListener("click", () => createInlineInput(true));
   if (uploadBtn) uploadBtn.addEventListener("click", uploadFile);
   if (refreshBtn) refreshBtn.addEventListener("click", refreshFiles);
   if (deleteBtn) deleteBtn.addEventListener("click", deleteFile);

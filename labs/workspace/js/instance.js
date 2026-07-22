@@ -1,6 +1,18 @@
 // Instance Dashboard tab switching.
 // Same pattern as manage.js — event delegation, htmx re-init, cached tabs.
 
+function syncDashboardCounts(container) {
+    const el = container.querySelector('[data-templates-count]');
+    if (!el) return;
+    const tCount = el.getAttribute('data-templates-count');
+    const trCount = el.getAttribute('data-trash-count');
+    const tBadge = document.getElementById('templatesCount');
+    const trBadge = document.getElementById('trashCount');
+    if (tBadge && tCount !== null) tBadge.textContent = tCount;
+    if (trBadge && trCount !== null) trBadge.textContent = trCount;
+}
+window.syncDashboardCounts = syncDashboardCounts;
+
 function initDashboardTabs() {
     const tabs = document.querySelectorAll('.instance-dashboard-tab');
     const contentContainer = document.getElementById('instanceDashboardContent');
@@ -42,6 +54,7 @@ function initDashboardTabs() {
                 state.savedHtml[tabName] = html;
                 container.innerHTML = html;
                 if (typeof htmx !== 'undefined') htmx.process(container);
+                syncDashboardCounts(container);
             } else {
                 container.innerHTML = '<div class="alert alert-danger">Failed to load.</div>';
             }

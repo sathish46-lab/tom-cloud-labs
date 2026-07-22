@@ -21,7 +21,7 @@ $bindMounts = ($bindMountsRaw instanceof MongoDB\Model\BSONArray) ? iterator_to_
         <div class="row g-4">
             <!-- General -->
             <div class="col-md-6">
-                <div class="card blur border-0 rounded-4 p-4 shadow-lg h-100">
+                <div class="card liquid-rim border-0 rounded-4 p-4 h-100">
                     <div class="d-flex align-items-center gap-2 mb-3">
                         <i class='bx bx-cog text-secondary'></i>
                         <span class="fw-bold theme-text">General</span>
@@ -65,7 +65,7 @@ $bindMounts = ($bindMountsRaw instanceof MongoDB\Model\BSONArray) ? iterator_to_
 
             <!-- Resources -->
             <div class="col-md-6">
-                <div class="card blur border-0 rounded-4 p-4 shadow-lg h-100">
+                <div class="card liquid-rim border-0 rounded-4 p-4 h-100">
                     <div class="d-flex align-items-center gap-2 mb-3">
                         <i class='bx bx-server text-secondary'></i>
                         <span class="fw-bold theme-text">Resources</span>
@@ -104,7 +104,7 @@ $bindMounts = ($bindMountsRaw instanceof MongoDB\Model\BSONArray) ? iterator_to_
         </div>
 
         <!-- Bottom: User Management full width -->
-        <div class="card blur border-0 rounded-4 p-4 shadow-lg">
+        <div class="card liquid-rim border-0 rounded-4 p-4">
             <div class="d-flex align-items-center gap-2 mb-3">
                 <i class='bx bx-group text-secondary'></i>
                 <span class="fw-bold theme-text">User Management</span>
@@ -195,8 +195,8 @@ $bindMounts = ($bindMountsRaw instanceof MongoDB\Model\BSONArray) ? iterator_to_
             </div>
 
             <div class="mt-3 text-end">
-                <button class="btn instance-action-btn instance-action-success rounded-pill px-5 py-2 fw-bold" id="saveConfigBtn">
-                    <i class='bx bx-save me-1' style="font-size: 1.25rem;"></i> Save configuration
+                <button class="btn instance-action-btn instance-action-success rounded-pill px-3 py-2 fw-bold" id="saveConfigBtn" title="Save configuration">
+                    <i class='bx bx-save' style="font-size: 1.25rem;"></i>
                 </button>
             </div>
         </div>

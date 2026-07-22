@@ -11,26 +11,7 @@ $slug = $_GET['slug'] ?? '';
             <i class='bx bx-folder-open fs-4'></i> Scaffolded files
             <span class="badge bg-secondary text-white rounded-pill fw-bold">editor: reaped</span>
         </h5>
-        <button class="btn btn-primary rounded-pill px-4 btn-sm fw-bold" data-editor-open>
-            <i class='bx bx-code-alt'></i> Open in editor
-        </button>
-    </div>
-
-    <!-- Row 2: New file / folder / upload (left) + Save (right) -->
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-        <div class="d-flex gap-2">
-            <button class="btn instance-action-btn instance-action-danger btn-sm rounded-pill fw-bold px-3" data-new-file>
-                <i class='bx bx-file-blank'></i> New file
-            </button>
-            <button class="btn instance-action-btn instance-action-danger btn-sm rounded-pill fw-bold px-3" data-new-folder>
-                <i class='bx bx-folder'></i> New folder
-            </button>
-            <button class="btn instance-action-btn instance-action-danger btn-sm rounded-pill fw-bold px-3" data-upload-file>
-                <i class='bx bx-upload'></i> Upload asset
-            </button>
-            <input type="file" id="fileUploadInput" class="d-none" data-upload-input>
-        </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex align-items-center gap-2">
             <button class="btn instance-action-btn btn-sm rounded-pill fw-bold px-3" data-refresh-files>
                 <svg class="icon text-warning" style="height: 18px; width: 18px;">
                     <use xlink:href="/assets/icons/sprites/free.svg#cil-loop-circular"></use>
@@ -42,12 +23,30 @@ $slug = $_GET['slug'] ?? '';
             <button class="btn instance-action-btn instance-action-success btn-sm rounded-pill fw-bold px-3" data-save-file disabled>
                 <i class='bx bx-save' style="font-size: 1.25rem;"></i>
             </button>
+            <button class="btn btn-primary rounded-pill px-4 btn-sm fw-bold ms-1" data-editor-open>
+                <i class='bx bx-code-alt'></i> Open in editor
+            </button>
         </div>
     </div>
 
-    <!-- Row 3: file tree (left) + file content (right) -->
+    <!-- Row 2: file tree (left) + file content (right) -->
     <div class="instance-file-tree">
         <div class="instance-file-sidebar">
+            <div class="instance-sidebar-header">
+                <span class="instance-sidebar-title">Explorer</span>
+                <div class="d-flex align-items-center gap-1">
+                    <button class="instance-sidebar-icon-btn" data-new-file title="New file">
+                        <i class='bx bx-file'></i>
+                    </button>
+                    <button class="instance-sidebar-icon-btn" data-new-folder title="New folder">
+                        <i class='bx bx-folder-plus'></i>
+                    </button>
+                    <button class="instance-sidebar-icon-btn" data-upload-file title="Upload asset">
+                        <i class='bx bx-upload'></i>
+                    </button>
+                </div>
+            </div>
+            <input type="file" id="fileUploadInput" class="d-none" data-upload-input>
             <div class="instance-tree" id="fileTree" aria-live="polite">
                 <div class="text-secondary small py-3 text-center">
                     <div class="spinner-border spinner-border-sm" role="status"></div>

@@ -35,12 +35,12 @@ $avatarMap = [
 ];
 ?>
 <?php if (empty($trashedInstances)): ?>
-<div class="text-center py-5">
+<div class="text-center py-5" data-templates-count="<?= count(iterator_to_array($db->instances->find(['user_id' => $userId]))) ?>" data-trash-count="0">
     <div class="text-secondary opacity-50 mb-2"><i class='bx bx-trash fs-1'></i></div>
     <div class="text-secondary small">Trash is empty.</div>
 </div>
 <?php else: ?>
-<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-3 g-3" id="trashedGrid">
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-3 g-3" id="trashedGrid" data-templates-count="<?= count(iterator_to_array($db->instances->find(['user_id' => $userId]))) ?>" data-trash-count="<?= count($trashedInstances) ?>">
     <?php foreach ($trashedInstances as $item): ?>
     <?php
         $tSlug = $item['slug'] ?? 'unknown';
