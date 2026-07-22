@@ -77,7 +77,7 @@ RewriteRule ^learn/lesson/([^/]+)/chapter/([^/]+)$ app/learnAI/course_view.php?i
 RewriteRule ^system/user/(avatar|private)/([a-zA-Z0-9_-]+)/(.+)$ src/api/system/user_files.php?type=$1&user_id=$2&filename=$3 [L,QSA]
 
 # 9. Instances Routing
-RewriteRule ^instances$ /instances/templates [L,R=302]
+RewriteRule ^instances$ instances/templates [L,QSA]
 RewriteRule ^instances/templates$ app/instances/dashboard.php [L,QSA]
 RewriteRule ^instances/trash$ app/instances/dashboard.php [L,QSA]
 RewriteRule ^instances/([^/]+)/([^/]+)$ app/instances/manage.php?slug=$1&tab=$2 [L,QSA]
