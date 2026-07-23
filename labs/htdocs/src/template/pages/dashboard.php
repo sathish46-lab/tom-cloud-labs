@@ -97,6 +97,12 @@ $jolt = $userStats['jolt'] ?? 0;
 
 $finishedQuizzes = $db->quiz_attempts->countDocuments(['user_email' => $userEmail]);
 
+// 3.5 Fetch additional stats for Welcome Banner
+$challengesSolved = $db->challenge_submissions->countDocuments(['user_email' => $userEmail, 'status' => 'solved']);
+$codeSolved = $db->quiz_attempts->countDocuments(['user_email' => $userEmail, '$expr' => ['$eq' => ['$score', '$total']]]);
+$lessonsCompleted = $db->user_lessons->countDocuments(['user_email' => $userEmail, 'completed' => true]);
+$achievementsCount = $db->user_achievements->countDocuments(['user_email' => $userEmail]);
+
 // 4. Dynamic Recent Activity Aggregator
 $activitiesList = [];
 
@@ -111,8 +117,8 @@ foreach ($attempts as $a) {
         'timestamp' => $time,
         'icon' => "bx bx-award fs-6",
         'color' => "#f1c40f",
-        'bg' => "rgba(241, 196, 15, 0.12)",
-        'border' => "rgba(241, 196, 15, 0.25)",
+        'bg' => "rgba(241, 196, 15, 0.15)",
+        'border' => "rgba(241, 196, 15, 0.30)",
         'text' => "Completed Quiz: scored <strong>" . $a['score'] . "/" . $a['total'] . "</strong>"
     ];
 }
@@ -122,7 +128,7 @@ $labs = $db->deployed_labs->find(
     ['user_id' => $userId],
     ['sort' => ['created_at' => -1], 'limit' => 5]
 );
-foreach ($labs as $l) {
+    foreach ($labs as $l) {
     $time = isset($l['created_at']) ? (int)$l['created_at'] : time();
     $isStopped = isset($l['status']) && $l['status'] === 'stopped';
     
@@ -130,8 +136,8 @@ foreach ($labs as $l) {
         'timestamp' => $time,
         'icon' => $isStopped ? "bx bx-stop-circle fs-6" : "bx bx-server fs-6",
         'color' => $isStopped ? "#636e72" : "#10ac84",
-        'bg' => $isStopped ? "rgba(99, 110, 114, 0.12)" : "rgba(16, 172, 132, 0.12)",
-        'border' => $isStopped ? "rgba(99, 110, 114, 0.25)" : "rgba(16, 172, 132, 0.25)",
+        'bg' => $isStopped ? "rgba(99, 110, 114, 0.15)" : "rgba(16, 172, 132, 0.15)",
+        'border' => $isStopped ? "rgba(99, 110, 114, 0.30)" : "rgba(16, 172, 132, 0.30)",
         'text' => ($isStopped ? "Stopped" : "Deployed") . " <strong>" . ucfirst($l['lab_type'] ?? 'sandbox') . "</strong> Lab"
     ];
 }
@@ -141,14 +147,14 @@ $doms = $db->domains->find(
     ['user_id' => ['$in' => [(string)$userId, $userId]]],
     ['sort' => ['created_at' => -1], 'limit' => 5]
 );
-foreach ($doms as $d) {
+    foreach ($doms as $d) {
     $time = isset($d['created_at']) ? (int)$d['created_at'] : time();
     $activitiesList[] = [
         'timestamp' => $time,
         'icon' => "bx bx-globe fs-6",
         'color' => "#2e86de",
-        'bg' => "rgba(46, 134, 222, 0.12)",
-        'border' => "rgba(46, 134, 222, 0.25)",
+        'bg' => "rgba(46, 134, 222, 0.15)",
+        'border' => "rgba(46, 134, 222, 0.30)",
         'text' => "Mapped domain: <strong>" . htmlspecialchars($d['domain']) . "</strong>"
     ];
 }
@@ -164,8 +170,8 @@ foreach ($keys as $k) {
         'timestamp' => $time,
         'icon' => "bx bx-key fs-6",
         'color' => "#e74c3c",
-        'bg' => "rgba(231, 76, 60, 0.12)",
-        'border' => "rgba(231, 76, 60, 0.25)",
+        'bg' => "rgba(231, 76, 60, 0.15)",
+        'border' => "rgba(231, 76, 60, 0.30)",
         'text' => "Added SSH Key: <strong>" . htmlspecialchars($k['title']) . "</strong>"
     ];
 }
@@ -344,41 +350,41 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
 
                     <!-- Activity stats -->
                     <div class="d-flex gap-1 flex-wrap mb-3">
-                        <span class="stat-pill-success">
-                            <i class='bx bx-check-circle me-1'></i> <?= $finishedQuizzes ?> Quizzes
+                        <span class="badge badge-neon badge-neon-success rounded-pill px-3 py-1">
+                            <i class='bx bx-check-double me-1'></i> <?= number_format($finishedQuizzes) ?> Quizzes
                         </span>
-                        <span class="stat-pill-danger">
-                            <i class='bx bx-swords me-1'></i> 0 Challenges
+                        <span class="badge badge-neon badge-neon-danger rounded-pill px-3 py-1">
+                            <i class='bx bx-diamond me-1'></i> <?= number_format($challengesSolved) ?> Challenges
                         </span>
-                        <span class="stat-pill-primary">
-                            <i class='bx bx-code-alt me-1'></i> 0 Code Solved
+                        <span class="badge badge-neon badge-neon-primary rounded-pill px-3 py-1">
+                            <i class='bx bx-code-block me-1'></i> <?= number_format($codeSolved) ?> Code Solved
                         </span>
-                        <span class="stat-pill-info">
-                            <i class='bx bx-book-open me-1'></i> 0 Lessons
+                        <span class="badge badge-neon badge-neon-info rounded-pill px-3 py-1">
+                            <i class='bx bx-book-reader me-1'></i> <?= number_format($lessonsCompleted) ?> Lessons
                         </span>
-                        <span class="stat-pill-warning">
-                            <i class='bx bx-trophy me-1'></i> 0 Achievements
+                        <span class="badge badge-neon badge-neon-warning rounded-pill px-3 py-1">
+                            <i class='bx bx-medal me-1'></i> <?= number_format($achievementsCount) ?> Achievements
                         </span>
                     </div>
 
                     <!-- Shortcut buttons -->
-                    <div class="d-flex gap-2 flex-wrap">
-                        <a href="/learn" class="btn btn-sm btn-primary rounded-pill fw-bold">
-                            <i class='bx bxs-brain me-1'></i> AI Learning
+                    <div class="d-flex gap-1 flex-wrap">
+                        <a href="/learn" class="btn btn-xs btn-primary rounded-pill fw-bold px-3">
+                            <i class='bx bxs-brain me-1'></i> AI Learning <span class="badge bg-white bg-opacity-25 rounded-pill ms-1"><?= number_format($lessonsCompleted) ?></span>
                         </a>
-                        <a href="/labs" class="btn btn-sm btn-success rounded-pill fw-bold">
-                            <i class='bx bx-desktop me-1'></i> Labs
+                        <a href="/labs" class="btn btn-xs btn-success rounded-pill fw-bold px-3">
+                            <i class='bx bx-desktop me-1'></i> Labs <span class="badge bg-white bg-opacity-25 rounded-pill ms-1"><?= number_format($activeLabsCount) ?></span>
                         </a>
-                        <a href="#" class="btn btn-sm btn-info rounded-pill fw-bold">
-                            <i class='bx bx-code-alt me-1'></i> Code Arena
+                        <a href="#" class="btn btn-xs btn-info rounded-pill fw-bold px-3">
+                            <i class='bx bx-code-alt me-1'></i> Code Arena <span class="badge bg-white bg-opacity-25 rounded-pill ms-1"><?= number_format($codeSolved) ?></span>
                         </a>
-                        <a href="#" class="btn btn-sm btn-warning rounded-pill fw-bold">
+                        <a href="#" class="btn btn-xs btn-warning rounded-pill fw-bold px-3">
                             <i class='bx bx-map-alt me-1'></i> Roadmaps
                         </a>
-                        <a href="/quiz" class="btn btn-sm btn-danger rounded-pill fw-bold">
-                            <i class='bx bx-check-square me-1'></i> Quizzes
+                        <a href="/quiz" class="btn btn-xs btn-danger rounded-pill fw-bold px-3">
+                            <i class='bx bx-check-square me-1'></i> Quizzes <span class="badge bg-white bg-opacity-25 rounded-pill ms-1"><?= number_format($finishedQuizzes) ?></span>
                         </a>
-                        <a href="#" class="btn btn-sm btn-secondary rounded-pill fw-bold">
+                        <a href="#" class="btn btn-xs btn-secondary rounded-pill fw-bold px-3">
                             <i class='bx bx-chat me-1'></i> Discuss
                         </a>
                     </div>
@@ -637,7 +643,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                             <div class="row g-3">
                                 <!-- Connected Devices Card -->
                                 <div class="col-12 col-md-6">
-                                    <div class="device-card h-100">
+                                    <div class="liquid-rim simple-whitebg p-3 h-100">
                                         <div class="d-flex justify-content-between align-items-center mb-3">
                                             <div>
                                                 <h6 class="fw-bold mb-0">Connected Devices</h6>
@@ -651,15 +657,17 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                             <?php if ($activeLabsCount > 0): ?>
                                                 <?php foreach ($labsList as $lab): ?>
                                                 <?php 
-                                                    $bgMap = ['essentials' => '#e95420', 'minio' => '#2f3542', 'n8n' => '#ff6b81'];
-                                                    $bgColor = $bgMap[$lab['type']] ?? '#2f3542';
+                                                    $bgMap = ['essentials' => '#e95420', 'minio' => '#1a8cff', 'n8n' => '#ff6b81'];
+                                                    $bgColor = $bgMap[$lab['type']] ?? '#1a8cff';
+                                                    $bgRgbaMap = ['essentials' => '233,84,32', 'minio' => '26,140,255', 'n8n' => '255,107,129'];
+                                                    $bgRgba = $bgRgbaMap[$lab['type']] ?? '26,140,255';
                                                     $typeIconMap = ['essentials' => 'bxl-tux', 'minio' => 'bx-cube', 'n8n' => 'bx-git-repo-forked'];
                                                     $iconClass = $typeIconMap[$lab['type']] ?? 'bxl-ubuntu';
                                                 ?>
                                                 <div class="d-flex align-items-center justify-content-between py-2" style="border-bottom: 1px solid rgba(var(--cui-body-color-rgb, 255,255,255), 0.08);">
                                                     <div class="d-flex align-items-center gap-3 min-w-0">
-                                                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: <?= $bgColor ?>;">
-                                                            <i class='bx <?= $iconClass ?> text-white'></i>
+                                                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: rgba(<?= $bgRgba ?>, 0.15); border: 1px solid rgba(<?= $bgRgba ?>, 0.30);">
+                                                            <i class='bx <?= $iconClass ?>' style="color: <?= $bgColor ?>;"></i>
                                                         </div>
                                                         <div class="min-w-0">
                                                             <p class="fw-bold mb-0 small text-truncate"><?= htmlspecialchars($lab['name']) ?></p>
@@ -680,8 +688,8 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                             <?php else: ?>
                                                 <div class="d-flex align-items-center justify-content-between py-2">
                                                     <div class="d-flex align-items-center gap-3 min-w-0">
-                                                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: #e95420;">
-                                                            <i class='bx bxl-tux text-white'></i>
+                                                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: rgba(233, 84, 32, 0.15); border: 1px solid rgba(233, 84, 32, 0.30);">
+                                                            <i class='bx bxl-tux' style="color: #e95420;"></i>
                                                         </div>
                                                         <div class="min-w-0">
                                                             <p class="fw-bold mb-0 small">Essentials Lab</p>
@@ -708,7 +716,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
 
                                 <!-- Linked Domains Card -->
                                 <div class="col-12 col-md-6">
-                                    <div class="domain-card h-100">
+                                    <div class="liquid-rim simple-whitebg p-3 h-100">
                                         <div class="d-flex justify-content-between align-items-center mb-3">
                                             <div>
                                                 <h6 class="fw-bold mb-0">Linked Domains</h6>
@@ -723,8 +731,8 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                 <?php foreach ($domains as $d): ?>
                                                 <div class="d-flex align-items-center justify-content-between py-2" style="border-bottom: 1px solid rgba(var(--cui-body-color-rgb, 255,255,255), 0.08);">
                                                     <div class="d-flex align-items-center gap-3 min-w-0">
-                                                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: var(--cui-primary);">
-                                                            <i class='bx bx-globe text-white'></i>
+                                                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: rgba(46, 134, 222, 0.15); border: 1px solid rgba(46, 134, 222, 0.30);">
+                                                            <i class='bx bx-globe' style="color: #2e86de;"></i>
                                                         </div>
                                                         <div class="min-w-0">
                                                             <p class="fw-bold mb-0 small text-truncate" title="<?= htmlspecialchars($d['domain']) ?>"><?= htmlspecialchars($d['domain']) ?></p>
@@ -740,8 +748,8 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                             <?php else: ?>
                                                 <div class="d-flex align-items-center justify-content-between py-2">
                                                     <div class="d-flex align-items-center gap-3 min-w-0">
-                                                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: var(--cui-primary);">
-                                                            <i class='bx bx-globe text-white'></i>
+                                                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: rgba(46, 134, 222, 0.15); border: 1px solid rgba(46, 134, 222, 0.30);">
+                                                            <i class='bx bx-globe' style="color: #2e86de;"></i>
                                                         </div>
                                                         <div class="min-w-0">
                                                             <p class="fw-bold mb-0 small">sathish46.selfmade.fun</p>
@@ -755,8 +763,8 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                 </div>
                                                 <div class="d-flex align-items-center justify-content-between py-2">
                                                     <div class="d-flex align-items-center gap-3 min-w-0">
-                                                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: var(--cui-primary);">
-                                                            <i class='bx bx-globe text-white'></i>
+                                                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: rgba(46, 134, 222, 0.15); border: 1px solid rgba(46, 134, 222, 0.30);">
+                                                            <i class='bx bx-globe' style="color: #2e86de;"></i>
                                                         </div>
                                                         <div class="min-w-0">
                                                             <p class="fw-bold mb-0 small">photogram.selfmade.monster</p>
@@ -780,18 +788,20 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                             <div class="row g-3 mt-0">
                                 <!-- Machine Labs Card -->
                                 <div class="col-12 col-md-7">
-                                    <div class="machine-labs-card h-100">
+                                    <div class="liquid-rim simple-whitebg p-3 h-100">
                                         <div class="d-flex justify-content-between align-items-center mb-3">
                                             <h6 class="fw-bold mb-0">Machine Labs <span class="badge badge-neon badge-neon-success rounded-pill ms-1">live</span></h6>
                                             <small class="text-body-secondary">Limit: <?= $activeLabsCount ?>/<?= $labsLimit ?></small>
                                         </div>
 
                                         <div id="machine-labs-container" class="d-flex flex-column gap-2 machine-labs-list">
-                                                <?php if (!empty($labsList)): ?>
+                                                 <?php if (!empty($labsList)): ?>
                                                  <?php foreach ($labsList as $lab): ?>
                                                      <?php 
-                                                     $bgMap = ['essentials' => '#e95420', 'minio' => '#2f3542', 'n8n' => '#ff6b81', 'docker_lab' => '#2496ed'];
-                                                     $bgColor = $bgMap[$lab['type']] ?? '#2f3542';
+                                                      $bgMap = ['essentials' => '#e95420', 'minio' => '#1a8cff', 'n8n' => '#ff6b81', 'docker_lab' => '#2496ed'];
+                                                      $bgColor = $bgMap[$lab['type']] ?? '#1a8cff';
+                                                      $bgRgbaMap = ['essentials' => '233,84,32', 'minio' => '26,140,255', 'n8n' => '255,107,129', 'docker_lab' => '36,150,237'];
+                                                      $bgRgba = $bgRgbaMap[$lab['type']] ?? '26,140,255';
                                                      $typeIconMap = ['essentials' => 'bxl-tux', 'minio' => 'bx-cube', 'n8n' => 'bx-git-repo-forked', 'docker_lab' => 'bxl-docker'];
                                                      $iconClass = $typeIconMap[$lab['type']] ?? 'bxl-ubuntu';
                                                      $labStatus = strtolower($lab['status']);
@@ -800,8 +810,8 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                  <div class="liquid-rim simple-whitebg p-3">
                                                      <div class="d-flex align-items-center justify-content-between w-100">
                                                          <div class="d-flex align-items-center gap-2">
-                                                             <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 32px; height: 32px; background: <?= $bgColor ?>;">
-                                                                 <i class="bx <?= $iconClass ?> text-white"></i>
+                                                             <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 32px; height: 32px; background: rgba(<?= $bgRgba ?>, 0.15); border: 1px solid rgba(<?= $bgRgba ?>, 0.30);">
+                                                                 <i class="bx <?= $iconClass ?>" style="color: <?= $bgColor ?>;"></i>
                                                              </div>
                                                              <div class="d-flex flex-column gap-0.5">
                                                                  <span class="fw-bold small"><?= $lab['name'] ?> Lab</span>
@@ -843,8 +853,8 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                  <div class="liquid-rim simple-whitebg p-3">
                                                      <div class="d-flex align-items-center justify-content-between w-100">
                                                          <div class="d-flex align-items-center gap-2">
-                                                             <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 32px; height: 32px; background: #e95420;">
-                                                                 <i class="bx bxl-tux text-white"></i>
+                                                             <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 32px; height: 32px; background: rgba(233, 84, 32, 0.15); border: 1px solid rgba(233, 84, 32, 0.30);">
+                                                                 <i class="bx bxl-tux" style="color: #e95420;"></i>
                                                              </div>
                                                              <div class="d-flex flex-column gap-0.5">
                                                                  <span class="fw-bold small">Essentials Lab</span>
@@ -888,7 +898,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
 
                                 <!-- Challenge Labs Card -->
                                 <div class="col-12 col-md-5">
-                                    <div class="challenge-labs-card h-100">
+                                    <div class="liquid-rim simple-whitebg p-3 h-100">
                                         <div class="d-flex justify-content-between align-items-center mb-3">
                                             <h6 class="fw-bold mb-0">Challenge Labs <span class="badge badge-neon badge-neon-success rounded-pill ms-1">live</span></h6>
                                         </div>
@@ -1086,11 +1096,11 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                 <div class="d-flex flex-column gap-3">
                     <?php if (!empty($activitiesList)): ?>
                         <?php foreach ($activitiesList as $act): ?>
-                        <div class="d-flex align-items-start gap-3 small recent-activity-item">
-                            <div class="rounded-circle mt-1 activity-dot" style="background: <?= $act['bg'] ?> !important; border: 1px solid <?= $act['border'] ?> !important;">
+                        <div class="d-flex align-items-center gap-3 small recent-activity-item">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: <?= $act['bg'] ?> !important; border: 1px solid <?= $act['border'] ?> !important;">
                                 <i class='<?= $act['icon'] ?>' style="color: <?= $act['color'] ?> !important;"></i>
                             </div>
-                            <div>
+                            <div class="min-w-0 flex-grow-1">
                                 <span class="text-body fw-medium d-block mb-1 activity-text"><?= $act['text'] ?></span>
                                 <span class="text-body-secondary opacity-50 activity-time"><?= formatActivityTime($act['timestamp']) ?></span>
                             </div>
@@ -1206,16 +1216,6 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
     </div>
 </div>
 <script>
-function switchContinueTab(tab) {
-    document.querySelectorAll('.continue-tab-pane').forEach(p => p.classList.add('d-none'));
-    document.querySelectorAll('#dashboard-tabs .nav-link').forEach(b => b.classList.remove('active'));
-    const pane = document.getElementById('continue-pane-' + tab);
-    if (pane) pane.classList.remove('d-none');
-    const btn = document.querySelector('#dashboard-tabs .nav-link[data-tab="' + tab + '"]');
-    if (btn) btn.classList.add('active');
-}
-window.switchContinueTab = switchContinueTab;
-
 window.onPageLoad(function() {
     // Initialize premium lab metrics polling
     if (typeof window.initDashboardPolling === 'function') {

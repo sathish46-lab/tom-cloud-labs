@@ -134,7 +134,7 @@ try {
     // Tab Switcher and selection persistence
     window.switchContinueTab = function (tabId) {
         // 1. Update buttons by toggling active class cleanly
-        const buttons = document.querySelectorAll('.continue-tab-btn');
+        const buttons = document.querySelectorAll('#dashboard-tabs .nav-link');
         buttons.forEach(btn => {
             if (btn.getAttribute('data-tab') === tabId) {
                 btn.classList.add('active');

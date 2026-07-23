@@ -101,8 +101,11 @@ RUN echo "[Unit]\nDescription=Traefik Edge Router\nAfter=network-online.target\n
 RUN systemctl enable traefik
 
 # Container Setup Systemd Service (runs after DBs)
-RUN echo "[Unit]\nDescription=Container Setup Script\nAfter=mongod.service rabbitmq-server.service mysql.service postgresql.service redis-server.service network.target\n[Service]\nType=oneshot\nTimeoutStartSec=infinity\nExecStart=/usr/local/bin/init-services.sh\nRemainAfterExit=yes\n[Install]\nWantedBy=multi-user.target" > /etc/systemd/system/init-services.service
-RUN systemctl enable mongod.service rabbitmq-server.service mysql.service postgresql.service redis-server.service init-services.service
+RUN echo "[Unit]\nDescription=Container Setup Script\nAfter=mongod.service rabbitmq-server.service postgresql.service redis-server.service network.target\n[Service]\nType=oneshot\nTimeoutStartSec=infinity\nExecStart=/usr/local/bin/init-services.sh\nRemainAfterExit=yes\n[Install]\nWantedBy=multi-user.target" > /etc/systemd/system/init-services.service
+RUN systemctl enable mongod.service rabbitmq-server.service postgresql.service redis-server.service init-services.service
+# Disable unused DBs to save RAM (~600MB)
+RUN rm -f /etc/systemd/system/multi-user.target.wants/mysql.service \
+          /etc/systemd/system/multi-user.target.wants/mariadb.service || true
 
 # Fix PostgreSQL systemd bug in containers (refusing PIDFile)
 RUN mkdir -p /etc/systemd/system/postgresql@.service.d/ && \

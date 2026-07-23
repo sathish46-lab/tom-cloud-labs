@@ -42,21 +42,21 @@
                             <button class="btn btn-link btn-sm p-0 btn-copy-utility clipboard transition-all" 
                                     data-clipboard-text="<?= $labType ?>"
                                     data-tooltip="Copy Lab ID">
-                                <i class='bx bx-copy theme-text fs-6'></i>
+                                <i class='bx bx-copy fs-6' style="color: #fff;"></i>
                             </button>
 
                             <!-- Copy Instance Hash (Icon only) -->
                             <button class="btn btn-link btn-sm p-0 btn-copy-utility clipboard transition-all" 
                                     data-clipboard-text="<?= $fullHash ?>"
                                     data-tooltip="Copy Instance ID">
-                                <i class='bx bx-fingerprint theme-text fs-6'></i>
+                                <i class='bx bx-fingerprint fs-6' style="color: #fff;"></i>
                             </button>
                             
                             <!-- Share Dashboard Link -->
                             <button class="btn btn-link btn-sm p-0 btn-copy-utility clipboard text-decoration-none d-flex align-items-center transition-all" 
                                     data-clipboard-text="<?= $shareUrl ?>"
                                     data-tooltip="Copy Shareable Dashboard URL">
-                                <i class='bx bx-share-alt theme-text fs-6'></i>
+                                <i class='bx bx-share-alt fs-6' style="color: #fff;"></i>
                             </button>
                         </div>
                     </div>

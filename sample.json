@@ -12,8 +12,11 @@
   "smtp": {
     "host": "smtp.gmail.com",
     "port": 465,
-    "user": "sathishp3223@gmail.com",
-    "pass": "*************"
+    "user": "sample@gmail.com",
+    "pass": "*************",
+    "from_email": "sample@gmail.com",
+    "from_name": "Tom Labs Security",
+    "app_url": "https://yourdomain.com"
   },
   "exception_path": "/var/www/labs/htdocs/src/lib/exceptions/",
   "app_log": "/var/log/labs/log.txt",

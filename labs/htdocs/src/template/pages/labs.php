@@ -74,18 +74,18 @@
 
                 <div class="d-flex justify-content-center flex-wrap gap-1 mb-4">
                     <?php foreach($lab['badges'] as $b): ?>
-                        <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 fw-bold badge-lab-tag"><?= $b ?></span>
+                        <span class="badge badge-neon badge-neon-primary rounded-pill px-2 py-1"><?= $b ?></span>
                     <?php endforeach; ?>
 
-                    <span class="badge rounded-pill bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-2 fw-bold badge-lab-tag">
+                    <span class="badge badge-neon badge-neon-warning rounded-pill px-2 py-1">
                         <?= strtoupper($lab['is_public']) ?>
                     </span>
 
                     <?php 
                         $status = strtolower($lab['status']);
-                        $statusClass = ($status === 'running') ? 'bg-success text-success' : 'bg-danger text-danger';
+                        $statusClass = ($status === 'running') ? 'badge-neon-success' : 'badge-neon-danger';
                     ?>
-                    <span class="badge rounded-pill <?= $statusClass ?> bg-opacity-10 border border-opacity-25 px-3 py-1 fw-bold badge-lab-status">
+                    <span class="badge badge-neon <?= $statusClass ?> rounded-pill px-3 py-1">
                         <?= strtoupper($status) ?>
                     </span>
                 </div>

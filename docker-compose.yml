@@ -33,7 +33,7 @@ services:
       - ./traefik-conf:/etc/traefik
     networks:
       tomlabs_dev_net: {}
-      labs_frontend:
+      dev_lab_frontend:
         aliases:
           - mysql.tomweb.in
           - adminer.tomweb.in
@@ -95,6 +95,10 @@ networks:
         - subnet: 10.20.144.0/20
           gateway: 10.20.144.1
     driver: bridge
-  labs_frontend:
-    name: labs_frontend
-    external: true
+  dev_lab_frontend:
+    name: dev_lab_frontend
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.20.160.0/20
+          gateway: 10.20.160.1

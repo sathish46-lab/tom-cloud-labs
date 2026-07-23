@@ -54,9 +54,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email'], $_POST['pass
             ]
         ]);
 
-        if (Mailer::sendVerification($email, $username, $token)) {
-            $success = "Registration successful! Please check your email.";
-        } else {
+        try {
+            if (\Auth\Mailer::sendVerification($email, $username, $token)) {
+                $success = "Registration successful! Please check your email.";
+            } else {
+                $error = "Account created but verification email failed. Please contact support.";
+            }
+        } catch (\Throwable $e) {
+            error_log('Signup mail error: ' . $e->getMessage());
             $error = "Account created but verification email failed. Please contact support.";
         }
     }

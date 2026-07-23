@@ -33,6 +33,8 @@ RewriteRule ^([^/]+)$ app/$1.php [L,QSA]
 # Admin/Superuser Routing
 RewriteRule ^admin/?$ app/admin/dashboard.php [L,QSA]
 RewriteRule ^admin/users/?$ app/admin/users.php [L,QSA]
+RewriteRule ^admin/server-monitor/?$ app/admin/server_monitor.php [L,QSA]
+RewriteRule ^admin/api/?$ app/admin/api.php [L,QSA]
 RewriteRule ^admin/user/([^/]+)/?$ app/admin/user_view.php?email=$1 [L,QSA]
 
 RewriteRule ^home$ app/home.php [L,QSA]

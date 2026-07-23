@@ -41,10 +41,10 @@ if [ -z "$DOCKER_NETWORK" ] || [ "$DOCKER_NETWORK" = "null" ]; then
     DOCKER_NETWORK=$(jq -r '.docker_network_name // empty' /var/www/env.json 2>/dev/null)
 fi
 if [ -z "$DOCKER_NETWORK" ] || [ "$DOCKER_NETWORK" = "null" ]; then
-    DOCKER_NETWORK=$(docker network ls --format '{{.Name}}' | grep -E "(labs_frontend|Dev_lab|TomCloudLab_backend)" | head -n 1)
+    DOCKER_NETWORK=$(docker network ls --format '{{.Name}}' | grep -E "(dev_lab_frontend|Dev_lab)" | head -n 1)
 fi
 if [ -z "$DOCKER_NETWORK" ] || [ "$DOCKER_NETWORK" = "null" ]; then
-    DOCKER_NETWORK="labs_frontend"
+    DOCKER_NETWORK="dev_lab_frontend"
 fi
 
 # Detect Docker bridge interface for forwarding rules

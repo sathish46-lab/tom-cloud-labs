@@ -40,21 +40,19 @@ if systemctl is-active --quiet rabbitmq-server; then
     echo "[INFO] RabbitMQ Admin User verified and permissions applied."
 fi
 
-# 1.5. MySQL Configuration
-if systemctl is-active --quiet mysql; then
-    echo "[INFO] Configuring MySQL Root password..."
-    # Set local root password
-    mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'tomlabs_root_secret'; FLUSH PRIVILEGES;" 2>/dev/null || true
-    # Create wildcard root user for access over Docker network
-    mysql -u root -ptomlabs_root_secret -e "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'tomlabs_root_secret'; GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;" 2>/dev/null || true
-fi
+# 1.5. MySQL Configuration (DISABLED — not used, saves ~400MB RAM)
+# if systemctl is-active --quiet mysql; then
+#     echo "[INFO] Configuring MySQL Root password..."
+#     mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'tomlabs_root_secret'; FLUSH PRIVILEGES;" 2>/dev/null || true
+#     mysql -u root -ptomlabs_root_secret -e "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'tomlabs_root_secret'; GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;" 2>/dev/null || true
+# fi
 
-# 1.6. MariaDB Configuration (Port 3307)
-if systemctl is-active --quiet mariadb; then
-    echo "[INFO] Configuring MariaDB Root password..."
-    mysql --port=3307 -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'tomlabs_root_secret'; FLUSH PRIVILEGES;" 2>/dev/null || true
-    mysql --port=3307 -u root -ptomlabs_root_secret -e "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'tomlabs_root_secret'; GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;" 2>/dev/null || true
-fi
+# 1.6. MariaDB Configuration (Port 3307) (DISABLED — not used)
+# if systemctl is-active --quiet mariadb; then
+#     echo "[INFO] Configuring MariaDB Root password..."
+#     mysql --port=3307 -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'tomlabs_root_secret'; FLUSH PRIVILEGES;" 2>/dev/null || true
+#     mysql --port=3307 -u root -ptomlabs_root_secret -e "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'tomlabs_root_secret'; GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;" 2>/dev/null || true
+# fi
 
 # 1.7. PostgreSQL Configuration
 if systemctl is-active --quiet postgresql; then
@@ -136,10 +134,10 @@ if [ -z "$DOCKER_NETWORK" ] || [ "$DOCKER_NETWORK" = "null" ]; then
     DOCKER_NETWORK=$(jq -r '.docker_network_name // empty' /var/www/env.json 2>/dev/null)
 fi
 if [ -z "$DOCKER_NETWORK" ] || [ "$DOCKER_NETWORK" = "null" ]; then
-    DOCKER_NETWORK=$(docker network ls --format '{{.Name}}' | grep -E "(labs_frontend|Dev_lab|TomCloudLab_backend)" | head -n 1)
+    DOCKER_NETWORK=$(docker network ls --format '{{.Name}}' | grep -E "(dev_lab_frontend|Dev_lab)" | head -n 1)
 fi
 if [ -z "$DOCKER_NETWORK" ] || [ "$DOCKER_NETWORK" = "null" ]; then
-    DOCKER_NETWORK="labs_frontend"
+    DOCKER_NETWORK="dev_lab_frontend"
 fi
 
 BRIDGE_ID=$(docker network inspect "$DOCKER_NETWORK" -f '{{.Id}}' 2>/dev/null | cut -c1-12)
