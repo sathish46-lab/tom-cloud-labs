@@ -42,9 +42,7 @@ class EmailAuth {
                     ]]
                 );
                 
-                if (function_exists('send_password_reset_email')) {
-                    send_password_reset_email($user['email'], $user['username'] ?? $user['email'], $token);
-                }
+                Mailer::sendPasswordReset($user['email'], $user['username'] ?? $user['email'], $token);
                 
                 return $token;
             }

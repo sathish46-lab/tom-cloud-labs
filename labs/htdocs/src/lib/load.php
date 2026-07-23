@@ -198,7 +198,17 @@ function get_header($name) {
 }
 
 spl_autoload_register(function ($class) {
-    // Convert namespace to file path
+    // Handle Auth\ namespace -> src/lib/core/Auth/
+    if (strpos($class, 'Auth\\') === 0) {
+        $relative = str_replace('\\', '/', substr($class, 5));
+        $file = __DIR__ . '/core/Auth/' . $relative . '.class.php';
+        if (file_exists($file)) {
+            require_once $file;
+            return;
+        }
+    }
+
+    // TomLabs\Labs\ namespace -> src/lib/labs/
     $path = str_replace(['TomLabs\\Labs\\', '\\'], ['', '/'], $class);
     $file = __DIR__ . "/labs/" . $path . ".class.php";
     

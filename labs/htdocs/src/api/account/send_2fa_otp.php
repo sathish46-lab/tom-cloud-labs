@@ -27,7 +27,7 @@ try {
     );
 
     // Send Email
-    $sent = send_2fa_otp_email($email, $username, $otp, $context);
+    $sent = \Auth\Mailer::send2faOtp($email, $username, $otp, $context);
     
     if ($sent) {
         echo json_encode(['status' => 'success']);

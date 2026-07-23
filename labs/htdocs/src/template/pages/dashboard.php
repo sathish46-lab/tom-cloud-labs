@@ -496,8 +496,8 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                 </div>
                                             </div>
                                             <div class="d-flex gap-1 flex-wrap mb-2">
-                                                <span class="badge rounded-pill" style="font-size:0.55rem; background: rgba(var(--cui-success-rgb), 0.14); border: 1px solid rgba(var(--cui-success-rgb), 0.45); color: rgba(var(--cui-success-rgb), 0.92);">ports</span>
-                                                <span class="badge rounded-pill" style="font-size:0.55rem; background: rgba(var(--cui-success-rgb), 0.14); border: 1px solid rgba(var(--cui-success-rgb), 0.45); color: rgba(var(--cui-success-rgb), 0.92);">port security</span>
+                                                <span class="badge badge-neon badge-neon-success rounded-pill">ports</span>
+                                                <span class="badge badge-neon badge-neon-success rounded-pill">port security</span>
                                             </div>
                                             <div class="mt-auto">
                                                 <div class="d-flex justify-content-between align-items-center mb-1">
@@ -524,8 +524,8 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                 </div>
                                             </div>
                                             <div class="d-flex gap-1 flex-wrap mb-2">
-                                                <span class="badge rounded-pill" style="font-size:0.55rem; background: rgba(var(--cui-warning-rgb), 0.14); border: 1px solid rgba(var(--cui-warning-rgb), 0.45); color: rgba(var(--cui-warning-rgb), 0.92);">ai-assistant</span>
-                                                <span class="badge rounded-pill" style="font-size:0.55rem; background: rgba(var(--cui-warning-rgb), 0.14); border: 1px solid rgba(var(--cui-warning-rgb), 0.45); color: rgba(var(--cui-warning-rgb), 0.92);">database-design</span>
+                                                <span class="badge badge-neon badge-neon-warning rounded-pill">ai-assistant</span>
+                                                <span class="badge badge-neon badge-neon-warning rounded-pill">database-design</span>
                                             </div>
                                             <div class="mt-auto">
                                                 <div class="d-flex justify-content-between align-items-center mb-1">
@@ -552,8 +552,8 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                 </div>
                                             </div>
                                             <div class="d-flex gap-1 flex-wrap mb-2">
-                                                <span class="badge rounded-pill" style="font-size:0.55rem; background: rgba(var(--cui-success-rgb), 0.14); border: 1px solid rgba(var(--cui-success-rgb), 0.45); color: rgba(var(--cui-success-rgb), 0.92);">HTTP</span>
-                                                <span class="badge rounded-pill" style="font-size:0.55rem; background: rgba(var(--cui-success-rgb), 0.14); border: 1px solid rgba(var(--cui-success-rgb), 0.45); color: rgba(var(--cui-success-rgb), 0.92);">security headers</span>
+                                                <span class="badge badge-neon badge-neon-success rounded-pill">HTTP</span>
+                                                <span class="badge badge-neon badge-neon-success rounded-pill">security headers</span>
                                             </div>
                                             <div class="mt-auto">
                                                 <div class="d-flex justify-content-between align-items-center mb-1">
@@ -580,8 +580,8 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                 </div>
                                             </div>
                                             <div class="d-flex gap-1 flex-wrap mb-2">
-                                                <span class="badge rounded-pill" style="font-size:0.55rem; background: rgba(var(--cui-success-rgb), 0.14); border: 1px solid rgba(var(--cui-success-rgb), 0.45); color: rgba(var(--cui-success-rgb), 0.92);">appsec</span>
-                                                <span class="badge rounded-pill" style="font-size:0.55rem; background: rgba(var(--cui-success-rgb), 0.14); border: 1px solid rgba(var(--cui-success-rgb), 0.45); color: rgba(var(--cui-success-rgb), 0.92);">secure coding</span>
+                                                <span class="badge badge-neon badge-neon-success rounded-pill">appsec</span>
+                                                <span class="badge badge-neon badge-neon-success rounded-pill">secure coding</span>
                                             </div>
                                             <div class="mt-auto">
                                                 <div class="d-flex justify-content-between align-items-center mb-1">
@@ -608,8 +608,8 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                 </div>
                                             </div>
                                             <div class="d-flex gap-1 flex-wrap mb-2">
-                                                <span class="badge rounded-pill" style="font-size:0.55rem; background: rgba(var(--cui-warning-rgb), 0.14); border: 1px solid rgba(var(--cui-warning-rgb), 0.45); color: rgba(var(--cui-warning-rgb), 0.92);">WebSocket</span>
-                                                <span class="badge rounded-pill" style="font-size:0.55rem; background: rgba(var(--cui-warning-rgb), 0.14); border: 1px solid rgba(var(--cui-warning-rgb), 0.45); color: rgba(var(--cui-warning-rgb), 0.92);">STOMP</span>
+                                                <span class="badge badge-neon badge-neon-warning rounded-pill">WebSocket</span>
+                                                <span class="badge badge-neon badge-neon-warning rounded-pill">STOMP</span>
                                             </div>
                                             <div class="mt-auto">
                                                 <div class="d-flex justify-content-between align-items-center mb-1">
@@ -782,19 +782,21 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                 <div class="col-12 col-md-7">
                                     <div class="machine-labs-card h-100">
                                         <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <h6 class="fw-bold mb-0">Machine Labs <span class="badge bg-danger rounded-pill ms-1" style="font-size:0.6rem;">live</span></h6>
+                                            <h6 class="fw-bold mb-0">Machine Labs <span class="badge badge-neon badge-neon-success rounded-pill ms-1">live</span></h6>
                                             <small class="text-body-secondary">Limit: <?= $activeLabsCount ?>/<?= $labsLimit ?></small>
                                         </div>
 
                                         <div id="machine-labs-container" class="d-flex flex-column gap-2 machine-labs-list">
                                                 <?php if (!empty($labsList)): ?>
                                                  <?php foreach ($labsList as $lab): ?>
-                                                 <?php 
+                                                     <?php 
                                                      $bgMap = ['essentials' => '#e95420', 'minio' => '#2f3542', 'n8n' => '#ff6b81', 'docker_lab' => '#2496ed'];
                                                      $bgColor = $bgMap[$lab['type']] ?? '#2f3542';
                                                      $typeIconMap = ['essentials' => 'bxl-tux', 'minio' => 'bx-cube', 'n8n' => 'bx-git-repo-forked', 'docker_lab' => 'bxl-docker'];
                                                      $iconClass = $typeIconMap[$lab['type']] ?? 'bxl-ubuntu';
-                                                 ?>
+                                                     $labStatus = strtolower($lab['status']);
+                                                     $statusColor = ($labStatus === 'running') ? 'success' : (($labStatus === 'offline') ? 'danger' : 'warning');
+                                                     ?>
                                                  <div class="liquid-rim simple-whitebg p-3">
                                                      <div class="d-flex align-items-center justify-content-between w-100">
                                                          <div class="d-flex align-items-center gap-2">
@@ -804,8 +806,8 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                              <div class="d-flex flex-column gap-0.5">
                                                                  <span class="fw-bold small"><?= $lab['name'] ?> Lab</span>
                                                                  <div class="d-flex gap-1 align-items-center">
-                                                                     <span class="badge rounded-pill fw-bold" style="font-size:0.55rem; background: rgba(var(--cui-primary-rgb), 0.14); border: 1px solid rgba(var(--cui-primary-rgb), 0.45); color: rgba(var(--cui-primary-rgb), 0.92);">beta</span>
-                                                                     <span class="badge rounded-pill fw-bold" style="font-size:0.55rem; background: rgba(var(--cui-success-rgb), 0.14); border: 1px solid rgba(var(--cui-success-rgb), 0.45); color: rgba(var(--cui-success-rgb), 0.92);"><?= strtolower($lab['status']) ?></span>
+                                                                     <span class="badge badge-neon badge-neon-primary rounded-pill fw-bold">beta</span>
+                                                                     <span class="badge badge-neon badge-neon-<?= $statusColor ?> rounded-pill"><?= $labStatus ?></span>
                                                                  </div>
                                                              </div>
                                                          </div>
@@ -847,8 +849,8 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                              <div class="d-flex flex-column gap-0.5">
                                                                  <span class="fw-bold small">Essentials Lab</span>
                                                                  <div class="d-flex gap-1 align-items-center">
-                                                                     <span class="badge rounded-pill fw-bold" style="font-size:0.55rem; background: rgba(var(--cui-primary-rgb), 0.14); border: 1px solid rgba(var(--cui-primary-rgb), 0.45); color: rgba(var(--cui-primary-rgb), 0.92);">beta</span>
-                                                                     <span class="badge rounded-pill fw-bold" style="font-size:0.55rem; background: rgba(var(--cui-success-rgb), 0.14); border: 1px solid rgba(var(--cui-success-rgb), 0.45); color: rgba(var(--cui-success-rgb), 0.92);">running</span>
+                                                                     <span class="badge badge-neon badge-neon-primary rounded-pill">beta</span>
+                                                                     <span class="badge badge-neon badge-neon-success rounded-pill">running</span>
                                                                  </div>
                                                              </div>
                                                          </div>
@@ -888,7 +890,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                 <div class="col-12 col-md-5">
                                     <div class="challenge-labs-card h-100">
                                         <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <h6 class="fw-bold mb-0">Challenge Labs <span class="badge bg-danger rounded-pill ms-1" style="font-size:0.6rem;">live</span></h6>
+                                            <h6 class="fw-bold mb-0">Challenge Labs <span class="badge badge-neon badge-neon-success rounded-pill ms-1">live</span></h6>
                                         </div>
                                         <div class="d-flex flex-column gap-2">
                                             <?php if (!empty($challengeLabsList)): ?>
@@ -902,7 +904,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                             <span class="fw-bold small text-truncate" title="<?= htmlspecialchars($clab['name']) ?>"><?= htmlspecialchars($clab['name']) ?></span>
                                                             <div class="d-flex gap-1 align-items-center mt-1">
                                                                 <span class="badge rounded-pill fw-bold" style="font-size:0.55rem; background: <?= $clab['diffColor'] ?>22; border: 1px solid <?= $clab['diffColor'] ?>45; color: <?= $clab['diffColor'] ?>;"><?= htmlspecialchars(strtolower($clab['difficulty'])) ?></span>
-                                                                <span class="badge rounded-pill fw-bold" style="font-size:0.55rem; background: rgba(var(--cui-success-rgb), 0.14); border: 1px solid rgba(var(--cui-success-rgb), 0.45); color: rgba(var(--cui-success-rgb), 0.92);"><?= htmlspecialchars(strtolower($clab['status'])) ?></span>
+                                                                <span class="badge badge-neon badge-neon-success rounded-pill fw-bold"><?= htmlspecialchars(strtolower($clab['status'])) ?></span>
         </div>
 
         <!-- Clan Card -->
@@ -1005,7 +1007,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                 <div class="rounded p-2" style="background: rgba(var(--cui-primary-rgb), 0.1);">
                                                     <i class='bx bx-code-alt' style="color: rgb(var(--cui-primary-rgb));"></i>
                                                 </div>
-                                                <span class="badge rounded-pill" style="font-size:0.55rem; background: rgba(var(--cui-primary-rgb), 0.14); border: 1px solid rgba(var(--cui-primary-rgb), 0.45); color: rgba(var(--cui-primary-rgb), 0.92);">Next Lesson</span>
+                                                <span class="badge badge-neon badge-neon-primary rounded-pill">Next Lesson</span>
                                             </div>
                                             <h6 class="fw-bold mb-1" style="font-size:0.85rem;">Introduction to Cybersecurity for Beginners</h6>
                                             <small class="text-body-secondary">Beginner</small>
@@ -1019,7 +1021,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                 <div class="rounded p-2" style="background: rgba(var(--cui-primary-rgb), 0.1);">
                                                     <i class='bx bx-code-alt' style="color: rgb(var(--cui-primary-rgb));"></i>
                                                 </div>
-                                                <span class="badge rounded-pill" style="font-size:0.55rem; background: rgba(var(--cui-primary-rgb), 0.14); border: 1px solid rgba(var(--cui-primary-rgb), 0.45); color: rgba(var(--cui-primary-rgb), 0.92);">Next Lesson</span>
+                                                <span class="badge badge-neon badge-neon-primary rounded-pill">Next Lesson</span>
                                             </div>
                                             <h6 class="fw-bold mb-1" style="font-size:0.85rem;">Elite Ethical Hacking Roadmap: Beginner to...</h6>
                                             <small class="text-body-secondary">Beginner</small>
@@ -1033,7 +1035,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                 <div class="rounded p-2" style="background: rgba(var(--cui-success-rgb), 0.1);">
                                                     <i class='bx bx-terminal' style="color: rgb(var(--cui-success-rgb));"></i>
                                                 </div>
-                                                <span class="badge rounded-pill" style="font-size:0.55rem; background: rgba(var(--cui-success-rgb), 0.14); border: 1px solid rgba(var(--cui-success-rgb), 0.45); color: rgba(var(--cui-success-rgb), 0.92);">Practice</span>
+                                                <span class="badge badge-neon badge-neon-success rounded-pill">Practice</span>
                                             </div>
                                             <h6 class="fw-bold mb-1" style="font-size:0.85rem;">Calculate the sum of squares by caching co...</h6>
                                             <small class="text-body-secondary">Easy</small>
@@ -1047,7 +1049,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                 <div class="rounded p-2" style="background: rgba(var(--cui-success-rgb), 0.1);">
                                                     <i class='bx bx-terminal' style="color: rgb(var(--cui-success-rgb));"></i>
                                                 </div>
-                                                <span class="badge rounded-pill" style="font-size:0.55rem; background: rgba(var(--cui-success-rgb), 0.14); border: 1px solid rgba(var(--cui-success-rgb), 0.45); color: rgba(var(--cui-success-rgb), 0.92);">Practice</span>
+                                                <span class="badge badge-neon badge-neon-success rounded-pill">Practice</span>
                                             </div>
                                             <h6 class="fw-bold mb-1" style="font-size:0.85rem;">Place stones strategically to cross river ...</h6>
                                             <small class="text-body-secondary">Easy</small>
@@ -1061,7 +1063,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                 <div class="rounded p-2" style="background: rgba(var(--cui-info-rgb), 0.1);">
                                                     <i class='bx bx-chat' style="color: rgb(var(--cui-info-rgb));"></i>
                                                 </div>
-                                                <span class="badge rounded-pill" style="font-size:0.55rem; background: rgba(var(--cui-info-rgb), 0.14); border: 1px solid rgba(var(--cui-info-rgb), 0.45); color: rgba(var(--cui-info-rgb), 0.92);">Join Discussion</span>
+                                                <span class="badge badge-neon badge-neon-primary rounded-pill">Join Discussion</span>
                                             </div>
                                             <h6 class="fw-bold mb-1" style="font-size:0.85rem;">Community Discussions</h6>
                                             <small class="text-body-secondary">Ask questions, share knowledge</small>

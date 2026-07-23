@@ -890,6 +890,48 @@ body.hwa-enabled .card.blur.domain-card {
   padding: 0.15rem 0.5rem !important;
 }
 
+/* Neon outline badges */
+.badge-neon {
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.badge-neon-success {
+  color: #2ecc71;
+  border: 1.5px solid rgba(46, 204, 113, 0.5);
+  background: rgba(46, 204, 113, 0.08);
+  text-shadow: 0 0 6px rgba(46, 204, 113, 0.4);
+  box-shadow: 0 0 8px rgba(46, 204, 113, 0.15);
+}
+
+.badge-neon-danger {
+  color: #ff6b6b;
+  border: 1.5px solid rgba(255, 107, 107, 0.5);
+  background: rgba(255, 107, 107, 0.08);
+  text-shadow: 0 0 6px rgba(255, 107, 107, 0.4);
+  box-shadow: 0 0 8px rgba(255, 107, 107, 0.15);
+}
+
+.badge-neon-warning {
+  color: #f39c12;
+  border: 1.5px solid rgba(243, 156, 18, 0.5);
+  background: rgba(243, 156, 18, 0.08);
+  text-shadow: 0 0 6px rgba(243, 156, 18, 0.4);
+  box-shadow: 0 0 8px rgba(243, 156, 18, 0.15);
+}
+
+.badge-neon-primary {
+  color: #5299E0;
+  border: 1.5px solid rgba(82, 153, 224, 0.5);
+  background: rgba(82, 153, 224, 0.08);
+  text-shadow: 0 0 6px rgba(82, 153, 224, 0.4);
+  box-shadow: 0 0 8px rgba(82, 153, 224, 0.15);
+}
+
 .labs-scroll-container {
   max-height: 220px !important;
   overflow-y: auto !important;

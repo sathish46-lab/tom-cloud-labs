@@ -1237,13 +1237,13 @@ html[data-coreui-theme="light"] body.hwa-enabled .card.blur {
 /* liquid-rim hwa-disabled fallback — solid shadow, no backdrop-filter */
 html[data-coreui-theme="dark"] body.hwa-disabled .liquid-rim,
 html[data-coreui-theme="dark"] body.hwa-disabled .card.blur,
-html[data-coreui-theme="dark"] body.hwa-disabled .dropdown-menu {
+html[data-coreui-theme="dark"] body.hwa-disabled .liquid-rim .dropdown-menu {
   box-shadow: rgba(0, 0, 0, 0.45) 0 12px 28px 0, rgba(0, 0, 0, 0.25) 0 2px 4px 0, rgba(var(--cui-primary-rgb), 0.25) 0 0 32px -4px, rgba(255, 255, 255, 0.12) 0 0 0 1px inset, rgba(255, 255, 255, 0.18) 0 1px 0 0 inset !important;
 }
 
 html[data-coreui-theme="light"] body.hwa-disabled .liquid-rim,
 html[data-coreui-theme="light"] body.hwa-disabled .card.blur,
-html[data-coreui-theme="light"] body.hwa-disabled .dropdown-menu {
+html[data-coreui-theme="light"] body.hwa-disabled .liquid-rim .dropdown-menu {
   box-shadow: rgba(0, 0, 0, 0.18) 0 12px 28px 0, rgba(0, 0, 0, 0.1) 0 2px 4px 0, rgba(var(--cui-primary-rgb), 0.12) 0 0 32px -4px, rgba(0, 0, 0, 0.08) 0 0 0 1px inset, rgba(0, 0, 0, 0.1) 0 1px 0 0 inset !important;
 }
 

@@ -187,7 +187,7 @@
                     <div class="card-header bg-transparent border-0 pt-4 px-4">
                         <h6 class="fw-bold mb-0">IO Stats <span class="small text-muted ms-1">Net and Block</span>
                         <?php if (!$isRunning): ?>
-                            <span class="badge bg-secondary rounded-pill ms-2 badge-offline-pill">Offline</span>
+                            <span class="badge badge-neon badge-neon-danger rounded-pill ms-2 badge-offline-pill">Offline</span>
                         <?php endif; ?>
                         </h6>
                     </div>
@@ -221,9 +221,9 @@
                         <h6 class="fw-bold mb-0">
                         Container Load
                         <?php if ($isRunning): ?>
-                            <span class="badge bg-success rounded-pill ms-2 pulse">Live</span>
+                            <span class="badge badge-neon badge-neon-success rounded-pill ms-2 pulse">Live</span>
                         <?php else: ?>
-                            <span class="badge bg-secondary rounded-pill ms-2">Offline</span>
+                            <span class="badge badge-neon badge-neon-danger rounded-pill ms-2">Offline</span>
                         <?php endif; ?>
                     </h6>
 

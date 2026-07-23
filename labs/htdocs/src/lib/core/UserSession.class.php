@@ -69,7 +69,7 @@ public function getUser() {
                 );
                 
                 $username = $user['username'] ?? 'User';
-                send_2fa_otp_email($email, $username, $otp, 'login');
+                \Auth\Mailer::send2faOtp($email, $username, $otp, 'login');
                 
                 $_SESSION['2fa_pending_email'] = $email;
                 return "2fa_required";

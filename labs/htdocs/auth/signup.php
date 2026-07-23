@@ -8,6 +8,7 @@ if (isset($_SERVER['HTTP_HX_REQUEST']) && $_SERVER['HTTP_HX_REQUEST'] == 'true')
 }
 
 use Auth\GoogleAuth;
+use Auth\Mailer;
 
 // 1. Initialize Google Auth
 $google = new GoogleAuth();
@@ -53,8 +54,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email'], $_POST['pass
             ]
         ]);
 
-        if (send_verification_email($email, $username, $token)) {
+        if (Mailer::sendVerification($email, $username, $token)) {
             $success = "Registration successful! Please check your email.";
+        } else {
+            $error = "Account created but verification email failed. Please contact support.";
         }
     }
 }
