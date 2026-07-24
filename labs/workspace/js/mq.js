@@ -15,8 +15,8 @@ try {
  * Dependencies: stomp.js
  * Used by: lab-dashboard.js
  *
- * @version 1.0.0
- * @author Sathish - Tom Labs
+ * @version 1.0.5
+ * @author Sathish46 - Tom Labs
  * ============================================================================
  */
 
