@@ -64,11 +64,48 @@
     color: #e74c3c !important;
   }
 
-  .badge {
+  .badge:not(.badge-neon) {
     color: #ffffff !important; // Force white text for better contrast on solid badges
     font-weight: 700 !important;
     letter-spacing: 0.5px;
     padding: 4px 10px !important;
+  }
+
+  /* Badge-neon: transparent outline badges — darker colors for light theme */
+  .badge-neon-success {
+    color: #1a9c54 !important;
+    border-color: rgba(26, 156, 84, 0.6) !important;
+    background: rgba(26, 156, 84, 0.12) !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+  }
+  .badge-neon-danger {
+    color: #d63031 !important;
+    border-color: rgba(214, 48, 49, 0.6) !important;
+    background: rgba(214, 48, 49, 0.10) !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+  }
+  .badge-neon-warning {
+    color: #d4820a !important;
+    border-color: rgba(212, 130, 10, 0.6) !important;
+    background: rgba(212, 130, 10, 0.10) !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+  }
+  .badge-neon-primary {
+    color: #2b6cb0 !important;
+    border-color: rgba(43, 108, 176, 0.6) !important;
+    background: rgba(43, 108, 176, 0.10) !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+  }
+  .badge-neon-info {
+    color: #0284c7 !important;
+    border-color: rgba(2, 132, 199, 0.6) !important;
+    background: rgba(2, 132, 199, 0.10) !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
   }
 }
 

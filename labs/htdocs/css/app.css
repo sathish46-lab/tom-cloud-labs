@@ -14474,11 +14474,49 @@ body {
   background-color: rgba(231, 76, 60, 0.1) !important;
   color: #e74c3c !important;
 }
-[data-coreui-theme=light] .badge {
+[data-coreui-theme=light] .badge:not(.badge-neon) {
   color: #ffffff !important;
   font-weight: 700 !important;
   letter-spacing: 0.5px;
   padding: 4px 10px !important;
+}
+[data-coreui-theme=light] {
+  /* Badge-neon: transparent outline badges — darker colors for light theme */
+}
+[data-coreui-theme=light] .badge-neon-success {
+  color: #1a9c54 !important;
+  border-color: rgba(26, 156, 84, 0.6) !important;
+  background: rgba(26, 156, 84, 0.12) !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+[data-coreui-theme=light] .badge-neon-danger {
+  color: #d63031 !important;
+  border-color: rgba(214, 48, 49, 0.6) !important;
+  background: rgba(214, 48, 49, 0.1) !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+[data-coreui-theme=light] .badge-neon-warning {
+  color: #d4820a !important;
+  border-color: rgba(212, 130, 10, 0.6) !important;
+  background: rgba(212, 130, 10, 0.1) !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+[data-coreui-theme=light] .badge-neon-primary {
+  color: #2b6cb0 !important;
+  border-color: rgba(43, 108, 176, 0.6) !important;
+  background: rgba(43, 108, 176, 0.1) !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+[data-coreui-theme=light] .badge-neon-info {
+  color: #0284c7 !important;
+  border-color: rgba(2, 132, 199, 0.6) !important;
+  background: rgba(2, 132, 199, 0.1) !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
 }
 
 /* Global Badge Refinement */
@@ -18590,43 +18628,6 @@ body.hwa-enabled .card.blur.domain-card {
   background: rgba(56, 189, 248, 0.08);
   text-shadow: 0 0 6px rgba(56, 189, 248, 0.4);
   box-shadow: 0 0 8px rgba(56, 189, 248, 0.15);
-}
-
-/* Light theme badge-neon overrides — darker colors for white backgrounds */
-html[data-coreui-theme=light]:not(.bg-mode-spiderman):not(.bg-mode-ironman):not(.bg-mode-IronMan) .badge-neon-success {
-  color: #1a9c54;
-  border-color: rgba(26, 156, 84, 0.6);
-  background: rgba(26, 156, 84, 0.12);
-  text-shadow: none;
-  box-shadow: none;
-}
-html[data-coreui-theme=light]:not(.bg-mode-spiderman):not(.bg-mode-ironman):not(.bg-mode-IronMan) .badge-neon-danger {
-  color: #d63031;
-  border-color: rgba(214, 48, 49, 0.6);
-  background: rgba(214, 48, 49, 0.1);
-  text-shadow: none;
-  box-shadow: none;
-}
-html[data-coreui-theme=light]:not(.bg-mode-spiderman):not(.bg-mode-ironman):not(.bg-mode-IronMan) .badge-neon-warning {
-  color: #d4820a;
-  border-color: rgba(212, 130, 10, 0.6);
-  background: rgba(212, 130, 10, 0.1);
-  text-shadow: none;
-  box-shadow: none;
-}
-html[data-coreui-theme=light]:not(.bg-mode-spiderman):not(.bg-mode-ironman):not(.bg-mode-IronMan) .badge-neon-primary {
-  color: #2b6cb0;
-  border-color: rgba(43, 108, 176, 0.6);
-  background: rgba(43, 108, 176, 0.1);
-  text-shadow: none;
-  box-shadow: none;
-}
-html[data-coreui-theme=light]:not(.bg-mode-spiderman):not(.bg-mode-ironman):not(.bg-mode-IronMan) .badge-neon-info {
-  color: #0284c7;
-  border-color: rgba(2, 132, 199, 0.6);
-  background: rgba(2, 132, 199, 0.1);
-  text-shadow: none;
-  box-shadow: none;
 }
 
 .labs-scroll-container {

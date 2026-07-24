@@ -10,6 +10,12 @@ if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.gc_maxlifetime', $lifetime);
     ini_set('session.cookie_lifetime', $lifetime);
     
+    // Security: HTTPS-only cookies, prevent JS access, strict mode
+    ini_set('session.cookie_httponly', '1');
+    ini_set('session.use_strict_mode', '1');
+    ini_set('session.use_only_cookies', '1');
+    ini_set('session.use_trans_sid', '0');
+    
     // Fix Ubuntu Cron Job Session Deletion Bug
     $sessionPath = '/var/cache/labs/sessions';
     if (!is_dir($sessionPath)) {

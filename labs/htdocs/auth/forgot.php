@@ -3,11 +3,19 @@ define('IS_LOGIN_PAGE', true);
 require_once '../src/load.php';
 use Auth\EmailAuth;
 
+$error = null;
+$success = null;
+
 if (isset($_POST['email'])) {
-    $email = trim($_POST['email']);
-    $auth = new EmailAuth();
-    $token = $auth->requestReset($email);
-    $success = "If an account exists with that email or username, password reset instructions have been generated.";
+    // CSRF validation
+    if (!Session::validateCsrf($_POST['_csrf_token'] ?? '')) {
+        $error = "Invalid security token. Please try again.";
+    } else {
+        $email = trim($_POST['email']);
+        $auth = new EmailAuth();
+        $token = $auth->requestReset($email);
+        $success = "If an account exists with that email or username, password reset instructions have been generated.";
+    }
 }
 
 Session::$pageTitle = "Forgot Password | Tom Labs";
@@ -51,11 +59,18 @@ Session::$pageTitle = "Forgot Password | Tom Labs";
 
                         <?php if (isset($success)): ?>
                         <div class="alert alert-success border-0 text-white bg-success bg-opacity-75 rounded-3 py-3 small mb-4">
-                            <i class='bx bx-check-circle me-1'></i> <?= $success ?>
+                            <i class='bx bx-check-circle me-1'></i> <?= htmlspecialchars($success) ?>
+                        </div>
+                        <?php endif; ?>
+
+                        <?php if (isset($error)): ?>
+                        <div class="alert alert-danger border-0 text-white bg-danger bg-opacity-75 rounded-3 py-3 small mb-4">
+                            <i class='bx bx-error-circle me-1'></i> <?= htmlspecialchars($error) ?>
                         </div>
                         <?php endif; ?>
 
                         <form method="POST">
+                            <?= Session::csrfField() ?>
                             <div class="mb-4">
                                 <label class="small fw-bold text-secondary mb-1">EMAIL OR USERNAME</label>
                                 <div class="input-group">

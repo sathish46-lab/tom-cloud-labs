@@ -16,44 +16,55 @@ $error = null;
 $pending = $_SESSION['pending_user'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username'])) {
-    $db = DatabaseConnection::getDefaultDatabase();
-    $username = trim($_POST['username']);
-
-    // Check if username is taken
-    $exists = $db->users->findOne(['username' => $username]);
-    if ($exists) {
-        $error = "That username is already taken.";
+    // CSRF validation
+    if (!Session::validateCsrf($_POST['_csrf_token'] ?? '')) {
+        $error = "Invalid security token. Please try again.";
     } else {
-        // Create full user record - Mark as verified immediately
-        $db->users->insertOne([
-            'user_id'       => DatabaseConnection::getNextSequence("userid"),
-            'username'      => $username,
-            'email'         => $pending['email'],
-            'first_name'    => $pending['first_name'] ?? '',
-            'last_name'     => $pending['last_name'] ?? '',
-            'avatar_url'    => $pending['avatar'],
-            'google_sub'    => $pending['sub'],
-            'is_verified'   => true,
-            'state'         => 'active',
-            'created_at'    => time(),
-            'last_login'    => time(),
-            'ip_address'    => $_SERVER['REMOTE_ADDR'],
-            'theme_preferences' => [
-                'mode' => 'spiderman',
-                'plain_color' => '#010d12',
-                'accent_color' => '#8b91f9',
-                'custom_slots' => [],
-                'custom_themes' => []
-            ]
-        ]);
+        $db = DatabaseConnection::getDefaultDatabase();
+        $username = trim($_POST['username']);
 
-        // Clean up and Log in
-        unset($_SESSION['pending_user']);
-        $_SESSION['username'] = $username;
-        $_SESSION['auth_status'] = Constants::STATUS_LOGGEDIN;
-        
-        header("Location: /home");
-        exit;
+        // Username validation (same rules as signup)
+        if (!preg_match('/^[a-zA-Z0-9_]{3,20}$/', $username)) {
+            $error = "Username must be 3-20 characters and contain only letters, numbers, and underscores.";
+        } else {
+            // Check if username is taken
+            $exists = $db->users->findOne(['username' => $username]);
+            if ($exists) {
+                $error = "That username is already taken.";
+            } else {
+                // Create full user record - Mark as verified immediately
+                $db->users->insertOne([
+                    'user_id'       => DatabaseConnection::getNextSequence("userid"),
+                    'username'      => $username,
+                    'email'         => $pending['email'],
+                    'first_name'    => $pending['first_name'] ?? '',
+                    'last_name'     => $pending['last_name'] ?? '',
+                    'avatar_url'    => $pending['avatar'],
+                    'google_sub'    => $pending['sub'],
+                    'is_verified'   => true,
+                    'state'         => 'active',
+                    'created_at'    => time(),
+                    'last_login'    => time(),
+                    'ip_address'    => $_SERVER['REMOTE_ADDR'],
+                    'theme_preferences' => [
+                        'mode' => 'spiderman',
+                        'plain_color' => '#010d12',
+                        'accent_color' => '#8b91f9',
+                        'custom_slots' => [],
+                        'custom_themes' => []
+                    ]
+                ]);
+
+                // Clean up and Log in
+                unset($_SESSION['pending_user']);
+                session_regenerate_id(true);
+                $_SESSION['username'] = $username;
+                $_SESSION['auth_status'] = Constants::STATUS_LOGGEDIN;
+                
+                header("Location: /home");
+                exit;
+            }
+        }
     }
 }
 ?>
@@ -127,10 +138,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username'])) {
                         <p class="small text-secondary text-center mb-4">Choose a unique username for your lab profile.</p>
 
                         <?php if ($error): ?>
-                            <div class="alert alert-danger small py-2"><?= $error ?></div>
+                            <div class="alert alert-danger small py-2"><?= htmlspecialchars($error) ?></div>
                         <?php endif; ?>
 
                         <form method="POST">
+                            <?= Session::csrfField() ?>
                             <div class="mb-4">
                                 <label class="small fw-bold text-secondary mb-1">USERNAME</label>
                                 <div class="input-group">

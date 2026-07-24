@@ -92,7 +92,7 @@ apache-logs/
 gitlab_config/
 gitlab_data/
 gitlab_logs/
-scratch/
+labs/tests/
 traefik-conf/
 wireguard-conf/
 # opt/

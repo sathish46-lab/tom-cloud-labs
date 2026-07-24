@@ -201,7 +201,7 @@ function check_global_rate_limit() {
             'pattern' => '#^/(auth/)?signin#i',
             'methods' => ['POST'],
             'key'     => 'auth:rl:signin',
-            'limit'   => 10,
+            'limit'   => 5,
             'window'  => 900
         ],
         [
@@ -210,6 +210,13 @@ function check_global_rate_limit() {
             'key'     => 'auth:rl:signup',
             'limit'   => 5,
             'window'  => 1800
+        ],
+        [
+            'pattern' => '#^/(auth/)?forgot#i',
+            'methods' => ['POST'],
+            'key'     => 'auth:rl:forgot',
+            'limit'   => 3,
+            'window'  => 900
         ],
         [
             'pattern' => '#^/api/auth/verify_login_2fa#i',

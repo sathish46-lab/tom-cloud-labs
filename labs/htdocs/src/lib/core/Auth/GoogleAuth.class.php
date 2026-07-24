@@ -72,7 +72,7 @@ public function getAuthUrl($metadata) {
         'created' => time(),
         'cache_key' => $cacheKey
     ]));
-    chmod($cacheFile, 0666);
+    chmod($cacheFile, 0600);
     
     // Store in persistent cookies (for redundancy)
     $isSecure = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on');
@@ -240,7 +240,7 @@ public function getAuthUrl($metadata) {
 
         $isSecure = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on');
         setcookie('username', $username, [
-            'expires' => time() + (86400 * 30), 'path' => '/',
+            'expires' => time() + (86400 * 7), 'path' => '/',
             'secure' => $isSecure, 'httponly' => true, 'samesite' => 'Lax'
         ]);
 

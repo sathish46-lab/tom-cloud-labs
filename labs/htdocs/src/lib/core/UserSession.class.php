@@ -77,6 +77,10 @@ public function getUser() {
             
             // Standard Login Logic
             $username = $user['username']; 
+            
+            // SECURITY: Regenerate session ID to prevent session fixation
+            session_regenerate_id(true);
+            
             $_SESSION['auth_status'] = \Constants::STATUS_LOGGEDIN;
             $_SESSION['username']    = $username;
             

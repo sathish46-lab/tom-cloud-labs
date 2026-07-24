@@ -22,6 +22,7 @@ if (isset($_GET['code'])) {
     $state = $_GET['state'] ?? null;
     $user = $google->handleCallback($metadata, $_GET['code'], $state);
     if ($user) {
+        session_regenerate_id(true);
         $_SESSION['username'] = $user['username'];
         $_SESSION['auth_status'] = Constants::STATUS_LOGGEDIN;
         header('Location: /home');
@@ -35,14 +36,19 @@ if (isset($_GET['code'])) {
 // Handle Standard Login
 $show2faForm = false;
 if (isset($_POST['email']) && isset($_POST['password'])) {
-    $authResult = UserSession::authenticate($_POST['email'], $_POST['password']);
-    if ($authResult === "2fa_required") {
-        $show2faForm = true;
-    } elseif ($authResult === true) {
-        header("Location: /home");
-        exit;
+    // CSRF validation
+    if (!Session::validateCsrf($_POST['_csrf_token'] ?? '')) {
+        $loginError = "Invalid security token. Please try again.";
     } else {
-        $loginError = Session::get('login_error') ?: "Invalid credentials";
+        $authResult = UserSession::authenticate($_POST['email'], $_POST['password']);
+        if ($authResult === "2fa_required") {
+            $show2faForm = true;
+        } elseif ($authResult === true) {
+            header("Location: /home");
+            exit;
+        } else {
+            $loginError = Session::get('login_error') ?: "Invalid credentials";
+        }
     }
 }
 
@@ -220,6 +226,7 @@ Session::set('seo_keywords', 'Sign In, Tom Labs Login, Virtual Labs, Secure Acce
                         <?php else: ?>
                             <!-- Standard Login Form -->
                             <form method="POST">
+                                <?= Session::csrfField() ?>
                                 <div class="mb-3">
                                     <label class="small fw-bold text-secondary mb-1">USERNAME OR EMAIL</label>
                                     <div class="input-group">

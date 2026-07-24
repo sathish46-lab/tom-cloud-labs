@@ -9,13 +9,37 @@ if (!$token) {
     exit;
 }
 
+$error = null;
+
 if (isset($_POST['password'])) {
-    $auth = new EmailAuth();
-    if ($auth->resetPassword($token, $_POST['password'])) {
-        header("Location: /signin?reset=success");
-        exit;
+    // CSRF validation
+    if (!Session::validateCsrf($_POST['_csrf_token'] ?? '')) {
+        $error = "Invalid security token. Please try again.";
     } else {
-        $error = "Invalid or expired token.";
+        $password = $_POST['password'];
+        // Password strength validation
+        $passwordErrors = [];
+        if (strlen($password) < 8) {
+            $passwordErrors[] = "at least 8 characters";
+        }
+        if (!preg_match('/[A-Za-z]/', $password)) {
+            $passwordErrors[] = "at least one letter";
+        }
+        if (!preg_match('/[0-9]/', $password)) {
+            $passwordErrors[] = "at least one number";
+        }
+        
+        if (!empty($passwordErrors)) {
+            $error = "Password must contain " . implode(', ', $passwordErrors) . ".";
+        } else {
+            $auth = new EmailAuth();
+            if ($auth->resetPassword($token, $password)) {
+                header("Location: /signin?reset=success");
+                exit;
+            } else {
+                $error = "Invalid or expired token.";
+            }
+        }
     }
 }
 
@@ -60,11 +84,12 @@ Session::$pageTitle = "New Password | Tom Labs";
 
                         <?php if (isset($error)): ?>
                         <div class="alert alert-danger border-0 text-white bg-danger bg-opacity-75 rounded-3 py-3 small mb-4">
-                            <i class='bx bx-error-circle me-1'></i> <?= $error ?>
+                            <i class='bx bx-error-circle me-1'></i> <?= htmlspecialchars($error) ?>
                         </div>
                         <?php endif; ?>
 
                         <form method="POST">
+                            <?= Session::csrfField() ?>
                             <div class="mb-4">
                                 <label class="small fw-bold text-secondary mb-1">NEW PASSWORD</label>
                                 <div class="input-group">

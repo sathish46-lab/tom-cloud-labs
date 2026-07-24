@@ -11,6 +11,9 @@ ErrorDocument 404 /app/error.php
 # RewriteCond %{HTTPS} off
 # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
+# Block debug API files from web access
+RewriteRule ^src/api/debug_ - [F,L]
+
 # 2. Skip real files
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
