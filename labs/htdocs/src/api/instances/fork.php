@@ -12,7 +12,6 @@ $userId = (int)$user->getUserId();
 $username = $user->getUsername();
 $email = $user->getEmail();
 $dbInstances = DatabaseConnection::getClient()->selectDatabase('tom_labs_instances_db');
-$dbMain = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
 
 $source_id = $_POST['source_id'] ?? '';
 $name = trim($_POST['name'] ?? '');
@@ -24,8 +23,8 @@ if (empty($source_id)) {
     exit;
 }
 
-// Find source lab in deployed_labs or instances
-$source = $dbMain->deployed_labs->findOne(['instance_hash' => $source_id]);
+// Find source lab in instances
+$source = $dbInstances->instances->findOne(['instance_hash' => $source_id]);
 if (!$source) {
     try {
         $source = $dbInstances->instances->findOne(['_id' => new MongoDB\BSON\ObjectId($source_id)]);

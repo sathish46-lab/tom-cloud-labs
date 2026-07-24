@@ -102,8 +102,7 @@
                 if(!$isRunning || empty($instanceDomains)):
             ?>
                 <div class="d-flex justify-content-center align-items-center vh-10 w-100">
-                    <div class="card p-3 text-center shadow-lg border-0 rounded-4 bg-dark bg-opacity-25" 
-                        class="empty-domains-card">
+                    <div class="card p-4 text-center border-0 rounded-4 blur shadow-sm empty-domains-card">
                         
                         <div class="mb-3 mx-auto">
                             <div class="empty-state-glow"></div>

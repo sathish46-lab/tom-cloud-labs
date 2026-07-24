@@ -1,7 +1,7 @@
 <?php
 // Retrieve the merged device data from the Session
 $resources = Session::get('network_resources', []); 
-Session::addCustomJs('/js/network.js');
+Session::addCustomJs('/assets/js/network.js');
 ?>
 
 <div class="blur mb-3 rounded-0">

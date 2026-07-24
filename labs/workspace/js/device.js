@@ -316,12 +316,31 @@ document.addEventListener('show.coreui.modal', function(e) {
         if (!content || content.getAttribute('data-loaded') === 'true') return;
         
         fetch('/api/device/add')
-            .then(res => res.text())
-            .then(html => {
+            .then(res => {
+                if (res.status === 429) {
+                    return res.json().catch(function() { return {}; }).then(function(data) {
+                        var retry = data.retry_after || 60;
+                        var msg = data.error || 'Too many requests.';
+                        content.innerHTML = '<div class="p-5 text-center">' +
+                            '<i class="bx bx-time-five text-warning" style="font-size:3rem;"></i>' +
+                            '<h5 class="text-white fw-bold mt-3 mb-2">Slow Down</h5>' +
+                            '<p class="text-secondary mb-3" style="font-size:0.85rem;">' + msg + '</p>' +
+                            '<p class="text-warning mb-3" style="font-size:0.8rem;">Try again in ' + retry + ' seconds.</p>' +
+                            '<button class="btn btn-outline-warning rounded-pill px-4 fw-bold" data-coreui-dismiss="modal">Okay</button>' +
+                            '</div>';
+                        // Also show global toast
+                        if (window.showRateLimitToast) window.showRateLimitToast(data);
+                    });
+                }
+                if (!res.ok) throw new Error('Failed to load form');
+                return res.text();
+            })
+            .then(function(html) {
+                if (!html) return;
                 content.innerHTML = html;
                 content.setAttribute('data-loaded', 'true');
             })
-            .catch(err => {
+            .catch(function(err) {
                 console.error(err);
                 content.innerHTML = '<div class="p-4 text-danger text-center">Failed to load form.</div>';
             });

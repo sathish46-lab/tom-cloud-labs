@@ -1,6 +1,6 @@
 <?php
 Session::addMetaTag('<title>MySQL Databases - Tom Labs</title>');
-Session::addCustomJs('/js/services.js');
+Session::addCustomJs('/assets/js/services.js');
 
 $user = Session::getUser();
 $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
@@ -161,3 +161,19 @@ require_once __DIR__ . '/partials/mysql_header.php';
     background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.3)) !important;
 }
 </style>
+
+<script>
+ServiceManager.init({
+    type: 'mysql',
+    apiBase: '/api/services/mysql',
+    entityLabel: 'Database',
+    gridId: 'mysql_db_list',
+    hasEntities: true,
+    entityNameKey: 'db_name',
+    userKey: 'mysql_username',
+    entityCreateEndpoint: 'db_create',
+    entityDeleteEndpoint: 'db_delete',
+    redirectBase: '/services/mysql',
+    exportPrefix: 'MySQL'
+});
+</script>

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../../load.php';
+require_once __DIR__ . '/../../lib/core/RabbitClient.class.php';
 
 if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
     http_response_code(401);
@@ -10,7 +11,6 @@ if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
 $user = Session::getUser();
 $userId = (int)$user->getUserId();
 $username = $user->getUsername();
-$email = $user->getEmail();
 
 $input = json_decode(file_get_contents('php://input'), true) ?? [];
 $slug = trim($input['slug'] ?? $_POST['slug'] ?? '');
@@ -33,8 +33,22 @@ if (!$instance || (int)($instance['user_id'] ?? 0) !== $userId) {
     exit;
 }
 
-$instance['trashed_at'] = new MongoDB\BSON\UTCDateTime();
+$deploy = $instance['deploy'] ?? [];
+$deployStatus = $deploy['status'] ?? 'none';
+$instanceHash = $instance['instance_hash'] ?? '';
+
+if (in_array($deployStatus, ['running', 'deploying', 'starting'])) {
+    $containerName = $instanceHash;
+    @shell_exec("docker stop {$containerName} 2>/dev/null");
+    @shell_exec("docker rm -f {$containerName} 2>/dev/null");
+}
+
+$now = new MongoDB\BSON\UTCDateTime();
+$instance['trashed_at'] = $now;
 $instance['trashed_by'] = $username;
+$instance['status'] = 'stopped';
+$instance['updated_at'] = $now;
+$instance['deploy']['status'] = 'stopped';
 
 $result = $db->instance_trash->insertOne($instance);
 

@@ -3,10 +3,8 @@ $user = Session::getUser();
 $userId = (int)$user->getUserId();
 
 $dbInstances = DatabaseConnection::getClient()->selectDatabase('tom_labs_instances_db');
-$dbMain = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
 $instances = iterator_to_array($dbInstances->instances->find(['user_id' => $userId]));
 $trashedInstances = iterator_to_array($dbInstances->instance_trash->find(['user_id' => $userId]));
-$deployedLabs = iterator_to_array($dbMain->deployed_labs->find(['user_id' => $userId]));
 
 $activeTab = 'templates';
 if (strpos($_SERVER['REQUEST_URI'] ?? '', '/instances/trash') !== false) {
@@ -109,8 +107,8 @@ if (strpos($_SERVER['REQUEST_URI'] ?? '', '/instances/trash') !== false) {
                 <div class="mb-4">
                     <label class="form-label text-secondary small fw-bold mb-2">Lab to fork</label>
                     <select name="source_id" class="form-select border-secondary border-opacity-50 text-white rounded-pill px-3 py-2 shadow-none focus-border-primary" style="background-image: url('data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 16 16\'%3e%3cpath fill=\'none\' stroke=\'%236c757d\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M2 5l6 6 6-6\'/%3e%3c/svg%3e');" required>
-                        <?php if(!empty($deployedLabs)): foreach($deployedLabs as $lab): ?>
-                            <option value="<?= htmlspecialchars($lab['instance_hash']) ?>"><?= htmlspecialchars(ucfirst($lab['lab_type'] ?? 'lab')) ?> (<?= htmlspecialchars($lab['instance_hash']) ?>)</option>
+                        <?php if(!empty($instances)): foreach($instances as $lab): ?>
+                            <option value="<?= htmlspecialchars($lab['instance_hash']) ?>"><?= htmlspecialchars(ucfirst($lab['name'] ?? $lab['template'] ?? 'lab')) ?> (<?= htmlspecialchars(substr($lab['instance_hash'], 0, 8)) ?>)</option>
                         <?php endforeach; else: ?>
                             <option value="">No labs available to fork</option>
                         <?php endif; ?>
@@ -171,6 +169,39 @@ if (strpos($_SERVER['REQUEST_URI'] ?? '', '/instances/trash') !== false) {
                 <button type="button" class="btn btn-dark border border-secondary border-opacity-50 text-white rounded-pill px-4 fw-bold hover-bg-secondary" data-coreui-dismiss="modal">Cancel</button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Trash Confirmation Modal -->
+<div class="modal fade" id="trashConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 overflow-hidden shadow-lg glass-modal-content">
+            <div style="height: 4px; background: linear-gradient(90deg, #ff6b6b 0%, #ff4b2b 100%); width: 100%;"></div>
+            <div class="modal-header border-0 pb-0 pt-4 px-4">
+                <h5 class="modal-title fw-bold text-white d-flex align-items-center gap-2">
+                    <i class='bx bx-trash text-danger'></i> <span id="trashModalTitle">Move to Trash?</span>
+                </h5>
+            </div>
+            <div class="modal-body px-4 py-3">
+                <p class="text-secondary mb-3" id="trashModalDesc">Are you sure you want to move this template to trash?</p>
+                <div id="trashWarningBox" class="d-none rounded-3 p-3 mb-2" style="background-color: rgba(255,107,107,0.08); border: 1px solid rgba(255,107,107,0.2);">
+                    <div class="d-flex align-items-start gap-2">
+                        <i class='bx bx-error-circle text-danger fs-5 mt-1'></i>
+                        <div>
+                            <div class="text-danger fw-bold small mb-1">Instance is running</div>
+                            <div class="text-secondary small">The container will be <strong>stopped</strong> and all active connections (SSH, Code Server, VPN) will be <strong>terminated</strong> before moving to trash.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 px-4 pb-4 pt-0 d-flex justify-content-end gap-2">
+                <button type="button" class="btn rounded-pill px-4 fw-bold" id="trashConfirmBtn"
+                    style="background-color: #ff4b2b; border-color: #ff4b2b; color: white;">
+                    <i class='bx bx-trash me-1'></i> Move to Trash
+                </button>
+                <button type="button" class="btn btn-dark border border-secondary border-opacity-50 text-white rounded-pill px-4 fw-bold" data-coreui-dismiss="modal">Cancel</button>
+            </div>
+        </div>
     </div>
 </div>
 

@@ -1,13 +1,11 @@
 <?php
 Session::addMetaTag('<title>PostgreSQL Databases - Tom Labs</title>');
-Session::addCustomJs('/js/services_postgresql.js');
 
 $user = Session::getUser();
 $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/src/lib/services/PostgreSqlManager.php';
-$mysqlManager = new PostgreSqlManager();
-$collations = $mysqlManager->getCollations();
+$pgManager = new PostgreSqlManager();
 
 // Fetch the PostgreSQL users
 $mysqlUsers = $db->postgresql_users->find(['user_id' => $user->getUserId()])->toArray();
@@ -77,17 +75,11 @@ require_once __DIR__ . '/partials/postgresql_header.php';
                             </div>
                         </div>
                         <div class="mb-4">
-                            <label class="form-label text-secondary small fw-bold">Collation</label>
-                            <select id="new-db-collation" class="form-select text-white shadow-none" style="background-color: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; cursor: pointer; color-scheme: dark;">
-                                <?php foreach ($collations as $charset => $charsetCollations): ?>
-                                    <optgroup label="<?= htmlspecialchars($charset) ?>">
-                                        <?php foreach ($charsetCollations as $col): ?>
-                                            <option value="<?= htmlspecialchars($col) ?>" <?= ($col === 'utf8mb4_0900_ai_ci') ? 'selected' : '' ?>>
-                                                <?= htmlspecialchars($col) ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </optgroup>
-                                <?php endforeach; ?>
+                            <label class="form-label text-secondary small fw-bold">Encoding</label>
+                            <select id="new-db-encoding" class="form-select text-white shadow-none" style="background-color: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; cursor: pointer; color-scheme: dark;">
+                                <option value="UTF8" selected>UTF8</option>
+                                <option value="LATIN1">LATIN1</option>
+                                <option value="SQL_ASCII">SQL_ASCII</option>
                             </select>
                         </div>
                         <button class="btn rounded-pill px-4 shadow-sm text-white" style="background-color: #6366f1; border: none; font-size: 0.85rem; font-weight: 600;" onclick="submitCreatePostgreSQLDbInline()">
@@ -123,7 +115,7 @@ require_once __DIR__ . '/partials/postgresql_header.php';
                                                         <div class="text-secondary small fw-bold mb-1" style="font-size: 0.65rem; letter-spacing: 1px;">DATABASE</div>
                                                         <h6 class="card-title mb-0 text-white font-monospace"><?= htmlspecialchars($dbObj['db_name']) ?></h6>
                                                     </div>
-                                                    <span class="badge bg-dark bg-opacity-50 text-light border border-light border-opacity-10 mysql-collation text-lowercase"><?= htmlspecialchars($dbObj['collation'] ?? 'utf8mb4_0900_ai_ci') ?></span>
+                                                    <span class="badge bg-dark bg-opacity-50 text-light border border-light border-opacity-10 text-lowercase">PostgreSQL</span>
                                                 </div>
 
                                                 <div class="d-grid">
@@ -161,3 +153,19 @@ require_once __DIR__ . '/partials/postgresql_header.php';
     background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.3)) !important;
 }
 </style>
+
+<script>
+ServiceManager.init({
+    type: 'postgresql',
+    apiBase: '/api/services/postgresql',
+    entityLabel: 'Database',
+    gridId: 'postgresql_db_list',
+    hasEntities: true,
+    entityNameKey: 'db_name',
+    userKey: 'postgresql_username',
+    entityCreateEndpoint: 'db_create',
+    entityDeleteEndpoint: 'db_delete',
+    redirectBase: '/services/postgresql',
+    exportPrefix: 'PostgreSQL'
+});
+</script>

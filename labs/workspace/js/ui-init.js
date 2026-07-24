@@ -4,10 +4,7 @@
  */
 
 // Initialize all tooltips globally with body container to fix positioning issues
-window.onPageLoad = window.onPageLoad || function(callback) {
-    document.addEventListener('DOMContentLoaded', callback);
-    document.addEventListener('htmx:afterSettle', callback);
-};
+// window.onPageLoad is provided by htmx-bridge.js (canonical definition)
 
 /**
  * Glass Blur Double-Buffer for HTMX Swaps
@@ -403,3 +400,46 @@ window.addEventListener('DOMContentLoaded', function() {
         window.TomGPU.checkAndWarn();
     }
 });
+
+// =========================================================================
+// Global Rate Limit (429) Handler
+// Intercepts HTMX responses to show a friendly TomNotify toast.
+// =========================================================================
+(function() {
+    var rateLimitShown = false;
+    var RATE_LIMIT_COOLDOWN = 5000;
+
+    function showRateLimitToast(data) {
+        if (rateLimitShown) return;
+        rateLimitShown = true;
+        setTimeout(function() { rateLimitShown = false; }, RATE_LIMIT_COOLDOWN);
+
+        var retry = data.retry_after || 30;
+        var msg = data.error || 'Too many requests. Please slow down.';
+        if (window.TomNotify) {
+            window.TomNotify.show(
+                msg + ' Wait ' + retry + 's.',
+                'Rate Limited',
+                'warning',
+                Math.min(retry * 1000, 8000)
+            );
+        } else {
+            alert('Rate Limited: ' + msg);
+        }
+    }
+
+    // Expose globally so device.js / other modules can call it
+    window.showRateLimitToast = showRateLimitToast;
+
+    // 1. HTMX global 429 response handler — prevents swap + shows toast
+    document.addEventListener('htmx:beforeSwap', function(evt) {
+        var xhr = evt.detail && evt.detail.xhr;
+        if (!xhr || xhr.status !== 429) return;
+
+        evt.preventDefault();
+
+        var data = {};
+        try { data = JSON.parse(xhr.responseText); } catch(e) {}
+        showRateLimitToast(data);
+    });
+})();

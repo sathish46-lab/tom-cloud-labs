@@ -1,6 +1,6 @@
 <?php
 Session::addMetaTag('<title>Adminer - Tom Labs</title>');
-Session::addCustomJs('/js/copy.js');
+Session::addCustomJs('/assets/js/copy.js');
 ?>
 
 <div class="lab-header-section px-2 mt-3 mb-4">

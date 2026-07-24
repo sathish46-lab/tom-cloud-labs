@@ -1,6 +1,6 @@
 <?php
 Session::addMetaTag('<title>Services - Tom Labs</title>');
-Session::addCustomJs('/js/copy.js');
+Session::addCustomJs('/assets/js/copy.js');
 
 $services = [
     [

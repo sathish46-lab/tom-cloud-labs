@@ -83,8 +83,8 @@ const TomSocketClient = function () {
       this.client.debug = null; // Set to console.log for debugging
 
       this.client.connect(
-        "admin",
-        "RootTom@46",
+        (window.MQ_CREDENTIALS && window.MQ_CREDENTIALS.user) || "guest",
+        (window.MQ_CREDENTIALS && window.MQ_CREDENTIALS.pass) || "",
         () => {
           this.isConnecting = false;
           this.isConnected = true;

@@ -9,8 +9,60 @@ from pymongo import MongoClient
 from src.BaseOrchestrator import BaseOrchestrator
 
 class Lab(BaseOrchestrator):
-    def __init__(self, args, session_hash=None):
+    def __init__(self, args, session_hash=None, is_instance=False):
         super().__init__(args, session_hash)
+        self.is_instance = is_instance
+        if is_instance and self.db is not None:
+            self.instances_col = self.mongo_client['tom_labs_instances_db'].instances
+        else:
+            self.instances_col = None
+
+    def _get_deploy_data(self, instance_id):
+        """Read lab data — from instances.deploy for instances, deployed_labs for legacy."""
+        if self.is_instance and self.instances_col:
+            doc = self.instances_col.find_one({"instance_hash": instance_id})
+            if not doc:
+                return None
+            deploy = doc.get('deploy', {})
+            deploy['_instance_doc'] = doc
+            return deploy
+        return self.db.deployed_labs.find_one({"instance_hash": instance_id})
+
+    def _set_deploy_field(self, instance_id, field, value):
+        """Write a single deploy field — to instances.deploy.X or deployed_labs.X."""
+        if self.is_instance and self.instances_col:
+            self.instances_col.update_one(
+                {"instance_hash": instance_id},
+                {"$set": {f"deploy.{field}": value, "updated_at": time.time()}}
+            )
+        else:
+            self.db.deployed_labs.update_one(
+                {"instance_id": instance_id} if not instance_id else {"instance_hash": instance_id},
+                {"$set": {field: value}}
+            )
+
+    def _set_deploy_fields(self, instance_id, fields):
+        """Write multiple deploy fields at once."""
+        if self.is_instance and self.instances_col:
+            set_fields = {}
+            for k, v in fields.items():
+                set_fields[f"deploy.{k}"] = v
+            set_fields["updated_at"] = time.time()
+            self.instances_col.update_one(
+                {"instance_hash": instance_id},
+                {"$set": set_fields}
+            )
+        else:
+            self.db.deployed_labs.update_one(
+                {"instance_hash": instance_id},
+                {"$set": fields}
+            )
+
+    def _get_instance_doc(self, instance_id):
+        """For instances, get the full instances document."""
+        if self.is_instance and self.instances_col:
+            return self.instances_col.find_one({"instance_hash": instance_id})
+        return None
 
     def build(self):
         """Build a Docker image from a specified template"""
@@ -161,7 +213,7 @@ class Lab(BaseOrchestrator):
             return
 
         self.log("Fetching lab metadata from database...", "info", "init")
-        lab_data = self.db.deployed_labs.find_one({"instance_hash": instance_id})
+        lab_data = self._get_deploy_data(instance_id)
         
         if not lab_data:
             self.log(f"Metadata missing for {instance_id}", "error", "init")
@@ -291,7 +343,7 @@ class Lab(BaseOrchestrator):
             "storage": storage_path, 
             "mount_target": mount_target,
             "user": username, 
-            "image": f"{template_name}:lab", 
+            "image": lab_data.get('image', f"{template_name}:lab"), 
             "ip": docker_ip, 
             "vps_docker_ip": vps_docker_ip,
             "tunnel_gw": tunnel_gw,
@@ -463,19 +515,10 @@ class Lab(BaseOrchestrator):
                 else:
                     credentials[key] = val
 
-        self.db.deployed_labs.update_one(
-            {"instance_hash": instance_id}, 
-            {
-                "$set": {
-                    "status": "running", 
-                    "credentials": credentials, 
-                    "updated_at": time.time()
-                },
-                "$unset": {
-                    "staged_preferences": ""
-                }
-            }
-        )
+        self._set_deploy_fields(instance_id, {
+            "status": "running",
+            "credentials": credentials,
+        })
         
         # Phase 10: INIT SCRIPT
         self.log("Running init script...", "info", "init_script")
@@ -491,7 +534,7 @@ class Lab(BaseOrchestrator):
         lab_name = self.session_hash
         self.log(f"Initiating graceful shutdown for: {lab_name}", "info", "init")
         
-        lab_data = self.db.deployed_labs.find_one({"instance_hash": lab_name})
+        lab_data = self._get_deploy_data(lab_name)
         
         if lab_data:
             credentials = lab_data.get('credentials', {})
@@ -505,10 +548,7 @@ class Lab(BaseOrchestrator):
             self.log(f"Stopping Docker container...", "warn", "cleanup")
             self.run(f"docker stop {lab_name} && docker rm -f {lab_name}")
             
-            self.db.deployed_labs.update_one(
-                {"instance_hash": lab_name}, 
-                {"$set": {"status": "stopped"}}
-            )
+            self._set_deploy_field(lab_name, "status", "stopped")
             self.log("Container and process-space cleared.", "success", "cleanup")
 
         self.remove_traefik_config(lab_name)
@@ -524,12 +564,9 @@ class Lab(BaseOrchestrator):
             self.log("Container started.", "success", "container")
             
             if self.db is not None:
-                self.db.deployed_labs.update_one(
-                    {"instance_hash": lab_name}, 
-                    {"$set": {"status": "running"}}
-                )
+                self._set_deploy_field(lab_name, "status", "running")
                 
-            lab_data = self.db.deployed_labs.find_one({"instance_hash": lab_name})
+            lab_data = self._get_deploy_data(lab_name)
             if lab_data:
                 credentials = lab_data.get('credentials', {})
                 tunnel_ip = credentials.get('tunnel_ip')
@@ -585,7 +622,7 @@ class Lab(BaseOrchestrator):
             self.log("Database connection failed", "error")
             return
         
-        lab_data = self.db.deployed_labs.find_one({"instance_hash": lab_name})
+        lab_data = self._get_deploy_data(lab_name)
         
         if lab_data:
             import pprint
@@ -742,7 +779,7 @@ done
             self.log("Missing --user or --hash", "error", "system")
             return
             
-        lab_data = self.db.deployed_labs.find_one({'instance_hash': instance_hash})
+        lab_data = self._get_deploy_data(instance_hash)
         
         if not lab_data:
             self.log("Lab not found in database.", "error", "system")
@@ -799,7 +836,7 @@ done
             return
             
         if not lab_data:
-            lab_data = self.db.deployed_labs.find_one({'instance_hash': instance_hash})
+            lab_data = self._get_deploy_data(instance_hash)
             
         if not lab_data:
             self.log("Lab not found in database.", "error", "system")

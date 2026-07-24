@@ -157,9 +157,9 @@ $instVersion = $instance['version'] ?? 'v0.0.1';
     <div class="container-fluid px-4 pt-3">
         
         <!-- Top Header Navigation -->
-        <a href="/instances" class="text-decoration-none theme-text d-flex align-items-center gap-2 mb-3 hover-text-primary transition-all small fw-bold">
+        <!-- <a href="/instances" class="text-decoration-none theme-text d-flex align-items-center gap-2 mb-3 hover-text-primary transition-all small fw-bold">
             <i class='bx bx-left-arrow-alt'></i> Back to Instances
-        </a>
+        </a> -->
         
         <!-- Header Block -->
         <div class="d-flex align-items-center justify-content-between mb-4">
@@ -192,16 +192,14 @@ $instVersion = $instance['version'] ?? 'v0.0.1';
             </div>
             
             <div class="d-flex gap-1">
-                <button class="btn btn-sm btn-primary rounded-pill px-3 py-1 fw-bold d-flex align-items-center gap-1 small" style="background-color: #ff4b2b; border-color: #ff4b2b; color: white; font-size: 0.78rem;">
-                    <i class='bx bx-play-circle' style="font-size: 0.9rem;"></i> Build & validate
-                </button>
-                <button class="btn btn-sm theme-text rounded-pill px-3 py-1 fw-bold d-flex align-items-center gap-1 small" style="background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); font-size: 0.78rem;">
+                <button id="hdrDeployBtn" class="btn btn-sm theme-text rounded-pill px-3 py-1 fw-bold d-flex align-items-center gap-1 small" style="background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); font-size: 0.78rem;"
+                    data-coreui-toggle="loading-button" data-coreui-spinner-type="grow">
                     <i class='bx bx-rocket text-danger' style="font-size: 0.9rem;"></i> Deploy
                 </button>
-                <button class="btn btn-sm theme-text rounded-pill px-3 py-1 fw-bold d-flex align-items-center gap-1 small" style="background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); font-size: 0.78rem;">
+                <button id="hdrEditorBtn" class="btn btn-sm theme-text rounded-pill px-3 py-1 fw-bold d-flex align-items-center gap-1 small" style="background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); font-size: 0.78rem;">
                     <i class='bx bx-code-alt' style="font-size: 0.9rem;"></i> Open in editor
                 </button>
-                <button class="btn btn-sm theme-text rounded-pill px-2 py-1 d-flex align-items-center justify-content-center" style="background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
+                <button id="hdrMoreBtn" class="btn btn-sm theme-text rounded-pill px-2 py-1 d-flex align-items-center justify-content-center" style="background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
                     <i class='bx bx-dots-vertical-rounded' style="font-size: 0.9rem;"></i>
                 </button>
             </div>
@@ -268,4 +266,164 @@ $instVersion = $instance['version'] ?? 'v0.0.1';
         </div>
     </div>
 </div>
+
+<!-- Server Logs Panel (footer, same as lab dashboard) -->
+<div class="server-logs-panel shadow-lg px-4">
+    <div class="logs-header d-flex justify-content-between align-items-center logs-header-clickable" id="instanceLogsToggleBtn">
+        <div class="logs-title d-flex align-items-center gap-2">
+            <i class='bx bx-terminal fs-5'></i>
+            <i class="bx bxs-circle" id="mq-status-dot"></i>
+            <span class="small fw-bold ls-1 opacity-75">Server Logs</span>
+            <div class="terminal-info-wrapper ms-1">
+                <i class='bx bx-info-circle opacity-50'></i>
+                <div class="terminal-tooltip">Live build/deploy logs from the worker</div>
+            </div>
+            <i class='bx bx-chevron-down server-logs-chevron ms-1'></i>
+        </div>
+        <div class="logs-action text-secondary opacity-75 pe-2">
+            <i class='bx bx-chevron-down server-logs-chevron'></i>
+        </div>
+    </div>
+    <div class="logs-body logs-minimized" id="terminal-viewport">
+        <div id="live-logs-container" class="small"></div>
+    </div>
+</div>
+
+<script>
+(function() {
+    const instanceHash = <?= json_encode($instHash) ?>;
+    if (!instanceHash) return;
+
+    async function apiPost(endpoint, extra) {
+        const body = new URLSearchParams({ hash: instanceHash, ...extra });
+        const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: body.toString()
+        });
+        return res.json();
+    }
+
+    const deployBtn = document.getElementById('hdrDeployBtn');
+    if (deployBtn) {
+        deployBtn.addEventListener('click', async () => {
+            if (typeof Dashboard !== 'undefined') Dashboard.toggleLoading(deployBtn, true);
+            else { deployBtn.disabled = true; deployBtn.innerHTML = '<span class="spinner-grow spinner-grow-sm me-1" role="status"></span> Processing'; }
+            try {
+                const data = await apiPost('/api/instances/deploy_instance');
+                if (data.status === 'success') {
+                    if (window.__loadInstanceTab) window.__loadInstanceTab('deployments');
+                } else {
+                    alert(data.error || 'Deploy failed');
+                    if (typeof Dashboard !== 'undefined') Dashboard.toggleLoading(deployBtn, false);
+                    else { deployBtn.innerHTML = '<i class="bx bx-rocket"></i> Deploy'; deployBtn.disabled = false; }
+                }
+            } catch (e) {
+                alert('Network error');
+                if (typeof Dashboard !== 'undefined') Dashboard.toggleLoading(deployBtn, false);
+                else { deployBtn.innerHTML = '<i class="bx bx-rocket"></i> Deploy'; deployBtn.disabled = false; }
+            }
+        });
+    }
+
+    const editorBtn = document.getElementById('hdrEditorBtn');
+    if (editorBtn) {
+        editorBtn.addEventListener('click', () => {
+            if (window.__loadInstanceTab) window.__loadInstanceTab('files');
+        });
+    }
+})();
+</script>
+
+<script>
+(function() {
+    const instanceHash = <?= json_encode($instHash) ?>;
+    if (!instanceHash) return;
+
+    // --- Log append function (used by Build/Deploy tabs too) ---
+    const container = document.getElementById('live-logs-container');
+    const viewport = document.getElementById('terminal-viewport');
+    if (!container || !viewport) return;
+
+    let lineCount = 0;
+    window.appendInstanceLog = function(msg) {
+        const div = document.createElement('div');
+        div.className = 'log-entry py-1';
+        div.style.whiteSpace = 'pre-wrap';
+        div.style.wordBreak = 'break-all';
+
+        if (typeof msg === 'object' && msg !== null && msg.log) msg = msg.log;
+        if (typeof msg !== 'string') msg = JSON.stringify(msg);
+
+        if (msg.startsWith('[✓]') || msg.includes('success') || msg.includes('Complete')) {
+            div.style.color = '#a6e3a1';
+        } else if (msg.startsWith('[!]') || msg.toLowerCase().includes('error') || msg.toLowerCase().includes('failed')) {
+            div.style.color = '#f38ba8';
+        } else if (msg.startsWith('[*]') || msg.includes('reload')) {
+            div.style.color = '#ffa502';
+        }
+
+        div.innerText = msg;
+        container.appendChild(div);
+        viewport.scrollTop = viewport.scrollHeight;
+
+        lineCount++;
+        if (lineCount % 200 === 0) {
+            while (container.children.length > 1000) container.removeChild(container.firstChild);
+        }
+
+        if (typeof msg === 'string' && msg.includes('[*] reload')) {
+            setTimeout(() => {
+                if (window.__loadInstanceTab) window.__loadInstanceTab('deployments');
+            }, 2500);
+        }
+    };
+
+    // --- LogSocket connection ---
+    const dot = document.getElementById('mq-status-dot');
+    let logSocket = null;
+
+    function connectLogs() {
+        if (logSocket && logSocket.isConnected) return;
+        logSocket = new TomSocketClient();
+        logSocket.connect(
+            'logs.' + instanceHash,
+            (data) => window.appendInstanceLog(data),
+            { dot: dot },
+            () => {
+                if (dot) { dot.style.color = '#a6e3a1'; }
+                // window.appendInstanceLog('[✓] Log stream connected.');
+            }
+        );
+        window.__instanceLogSocket = logSocket;
+    }
+
+    // --- Toggle minimize/expand ---
+    const logsBody = document.getElementById('terminal-viewport');
+    const toggleBtn = document.getElementById('instanceLogsToggleBtn');
+    const chevrons = document.querySelectorAll('.server-logs-chevron');
+
+    if (toggleBtn && logsBody) {
+        toggleBtn.addEventListener('click', function(e) {
+            if (e.target.closest('.terminal-info-wrapper')) return;
+            const willMinimize = logsBody.classList.contains('logs-minimized');
+            if (willMinimize) {
+                logsBody.classList.remove('logs-minimized');
+                chevrons.forEach(c => { c.classList.remove('bx-chevron-up'); c.classList.add('bx-chevron-down'); });
+            } else {
+                logsBody.classList.add('logs-minimized');
+                chevrons.forEach(c => { c.classList.remove('bx-chevron-down'); c.classList.add('bx-chevron-up'); });
+            }
+        });
+    }
+
+    // --- Auto-connect if instance is active ---
+    // Defer until app.js (TomSocketClient) is loaded — scripts load AFTER page body
+    const status = <?= json_encode($instStatus) ?>;
+    window.addEventListener('load', () => connectLogs());
+
+    // Expose for tab scripts
+    window.__connectInstanceLogs = connectLogs;
+})();
+</script>
 

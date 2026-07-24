@@ -10,19 +10,23 @@ class Instance {
 
     public function __construct($instanceHash) {
         $this->hash = $instanceHash;
-        $this->db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
-        $this->metadata = $this->db->deployed_labs->findOne(['instance_hash' => $this->hash]);
+        $this->db = DatabaseConnection::getClient()->selectDatabase('tom_labs_instances_db');
+        $this->metadata = $this->db->instances->findOne(['instance_hash' => $this->hash]);
     }
 
     public function getStatus() {
-        return $this->metadata['status'] ?? 'offline';
+        return $this->metadata['deploy']['status'] ?? $this->metadata['status'] ?? 'offline';
     }
 
     public function getUrl() {
-        return $this->metadata['credentials']['code_server_url'] ?? null;
+        return $this->metadata['deploy']['credentials']['code_server_url'] ?? null;
     }
 
     public function getAssignedIP() {
-        return $this->metadata['internal_ip'] ?? '0.0.0.0';
+        return $this->metadata['deploy']['internal_ip'] ?? '0.0.0.0';
+    }
+
+    public function getDeploy() {
+        return $this->metadata['deploy'] ?? [];
     }
 }

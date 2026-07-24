@@ -1,7 +1,7 @@
 <?php
 Session::addMetaTag('<title>RabbitMQ Server - Tom Labs</title>');
-Session::addCustomJs('/js/services_rabbitmq.js');
-Session::addCustomJs('/js/copy.js');
+// ServiceManager.init handled inline
+Session::addCustomJs('/assets/js/copy.js');
 
 $user = Session::getUser();
 $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
@@ -151,3 +151,19 @@ require_once __DIR__ . '/partials/rabbitmq_header.php';
 .hover-white { transition: color 0.2s; }
 .hover-white:hover { color: #ffffff !important; }
 </style>
+
+<script>
+ServiceManager.init({
+    type: 'rabbitmq',
+    apiBase: '/api/services/rabbitmq',
+    entityLabel: 'Vhost',
+    gridId: 'rabbitmq_db_list',
+    hasEntities: true,
+    entityNameKey: 'vhost_name',
+    userKey: 'rabbitmq_username',
+    entityCreateEndpoint: 'vhost_create',
+    entityDeleteEndpoint: 'vhost_delete',
+    redirectBase: '/services/rabbitmq',
+    exportPrefix: 'RabbitMQ'
+});
+</script>

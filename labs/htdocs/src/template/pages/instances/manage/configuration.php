@@ -1,7 +1,39 @@
 <?php
 // /src/template/partials/instances/manage/configuration.php
+// Reads from nested config object with fallback to flat fields
 $slug = $instance['slug'] ?? '';
-$portsRaw = $instance['ports'] ?? null;
+$cfg = $instance['config'] ?? [];
+
+// Helper: read from config.nested, then flat field, then default
+function cfg($path, $flatField = null, $default = null) {
+    global $cfg, $instance;
+    // Try nested path like 'general.name'
+    $val = $cfg;
+    foreach (explode('.', $path) as $part) {
+        if (!is_array($val) || !array_key_exists($part, $val)) { $val = null; break; }
+        $val = $val[$part];
+    }
+    if ($val !== null && $val !== '') return $val;
+    // Fallback to flat field
+    if ($flatField && isset($instance[$flatField])) return $instance[$flatField];
+    return $default;
+}
+
+$name        = cfg('general.name', 'name', '');
+$description = cfg('general.description', 'description', '');
+$stability   = cfg('general.stability', 'stability', 'alpha');
+$cpu         = cfg('resources.cpu', 'cpu', '2');
+$memory      = cfg('resources.memory', 'memory', '512m');
+$portsRaw    = cfg('resources.ports', 'ports', []);
+$network     = cfg('resources.network', 'network', 'Default (wg0)');
+$sshEnabled  = cfg('users.ssh_enabled', 'ssh_enabled', false);
+$runAsUser   = cfg('users.run_as_signed_in_user', 'run_as_signed_in_user', false);
+$usersRaw    = cfg('users.list', 'users', []);
+$homeEnabled = cfg('storage.home_mount_enabled', 'home_mount_enabled', false);
+$homePath    = cfg('storage.home_mount_path', 'home_mount_path', '/var/labsstorage');
+$bindRaw     = cfg('storage.bind_mounts', 'bind_mounts', []);
+
+// Normalize ports
 if ($portsRaw instanceof MongoDB\Model\BSONArray) {
     $ports = implode(' ', iterator_to_array($portsRaw));
 } elseif (is_array($portsRaw)) {
@@ -9,11 +41,9 @@ if ($portsRaw instanceof MongoDB\Model\BSONArray) {
 } else {
     $ports = (string)($portsRaw ?? '');
 }
-$usersRaw = $instance['users'] ?? [];
-$users = ($usersRaw instanceof MongoDB\Model\BSONArray) ? iterator_to_array($usersRaw) : (is_array($usersRaw) ? $usersRaw : []);
 
-$bindMountsRaw = $instance['bind_mounts'] ?? [];
-$bindMounts = ($bindMountsRaw instanceof MongoDB\Model\BSONArray) ? iterator_to_array($bindMountsRaw) : (is_array($bindMountsRaw) ? $bindMountsRaw : []);
+$users = ($usersRaw instanceof MongoDB\Model\BSONArray) ? iterator_to_array($usersRaw) : (is_array($usersRaw) ? $usersRaw : []);
+$bindMounts = ($bindRaw instanceof MongoDB\Model\BSONArray) ? iterator_to_array($bindRaw) : (is_array($bindRaw) ? $bindRaw : []);
 ?>
 <div class="card blur border-0 rounded-4 p-3 p-md-4">
     <div class="d-flex flex-column gap-4">
@@ -29,7 +59,7 @@ $bindMounts = ($bindMountsRaw instanceof MongoDB\Model\BSONArray) ? iterator_to_
                     
                     <div class="mb-3 d-flex align-items-center">
                         <div style="width: 100px;" class="text-secondary fw-bold small flex-shrink-0">Name</div>
-                        <input type="text" class="form-control config-input flex-grow-1" data-field="name" value="<?= htmlspecialchars($instance['name'] ?? '') ?>">
+                        <input type="text" class="form-control config-input flex-grow-1" data-field="name" value="<?= htmlspecialchars($name) ?>">
                     </div>
                     <div class="mb-3 d-flex align-items-start">
                         <div style="width: 100px;" class="text-secondary fw-bold small pt-2 flex-shrink-0">Slug</div>
@@ -45,15 +75,15 @@ $bindMounts = ($bindMountsRaw instanceof MongoDB\Model\BSONArray) ? iterator_to_
                     </div>
                     <div class="mb-3 d-flex align-items-center">
                         <div style="width: 100px;" class="text-secondary fw-bold small flex-shrink-0">Description</div>
-                        <input type="text" class="form-control config-input flex-grow-1" data-field="description" value="<?= htmlspecialchars($instance['description'] ?? '') ?>">
+                        <input type="text" class="form-control config-input flex-grow-1" data-field="description" value="<?= htmlspecialchars($description) ?>">
                     </div>
                     <div class="mb-0 d-flex align-items-start">
                         <div style="width: 100px;" class="text-secondary fw-bold small pt-2 flex-shrink-0">Stability</div>
                         <div class="flex-grow-1">
                             <select class="form-select config-input w-100" data-field="stability">
-                                <option value="alpha" <?= ($instance['stability'] ?? 'alpha') === 'alpha' ? 'selected' : '' ?>>alpha</option>
-                                <option value="beta" <?= ($instance['stability'] ?? '') === 'beta' ? 'selected' : '' ?>>beta</option>
-                                <option value="stable" <?= ($instance['stability'] ?? '') === 'stable' ? 'selected' : '' ?>>stable</option>
+                                <option value="alpha" <?= $stability === 'alpha' ? 'selected' : '' ?>>alpha</option>
+                                <option value="beta" <?= $stability === 'beta' ? 'selected' : '' ?>>beta</option>
+                                <option value="stable" <?= $stability === 'stable' ? 'selected' : '' ?>>stable</option>
                             </select>
                             <div class="text-secondary opacity-75 mt-1" style="font-size: 0.7rem;">
                                 alpha = private. Move to <strong>beta</strong> or <strong>stable</strong> to share.
@@ -73,12 +103,12 @@ $bindMounts = ($bindMountsRaw instanceof MongoDB\Model\BSONArray) ? iterator_to_
                     
                     <div class="mb-3 d-flex align-items-center">
                         <div style="width: 100px;" class="text-secondary fw-bold small flex-shrink-0">CPU</div>
-                        <input type="text" class="form-control config-input" data-field="cpu" value="<?= htmlspecialchars($instance['cpu'] ?? '2') ?>" style="max-width: 150px;">
+                        <input type="text" class="form-control config-input" data-field="cpu" value="<?= htmlspecialchars($cpu) ?>" style="max-width: 150px;">
                     </div>
                     <div class="mb-3 d-flex align-items-start">
                         <div style="width: 100px;" class="text-secondary fw-bold small pt-2 flex-shrink-0">Memory</div>
                         <div class="flex-grow-1">
-                            <input type="text" class="form-control config-input mb-1" data-field="memory" value="<?= htmlspecialchars($instance['memory'] ?? '512m') ?>" style="max-width: 200px;">
+                            <input type="text" class="form-control config-input mb-1" data-field="memory" value="<?= htmlspecialchars($memory) ?>" style="max-width: 200px;">
                             <div class="text-secondary opacity-75" style="font-size: 0.7rem;">e.g. <span class="text-info">512m, 2g</span></div>
                         </div>
                     </div>
@@ -93,8 +123,8 @@ $bindMounts = ($bindMountsRaw instanceof MongoDB\Model\BSONArray) ? iterator_to_
                         <div style="width: 100px;" class="text-secondary fw-bold small pt-2 flex-shrink-0">Network</div>
                         <div class="flex-grow-1">
                             <select class="form-select config-input mb-1" data-field="network" style="max-width: 200px;">
-                                <option value="Default (wg0)" <?= ($instance['network'] ?? 'Default (wg0)') === 'Default (wg0)' ? 'selected' : '' ?>>Default (wg0)</option>
-                                <option value="Internal only" <?= ($instance['network'] ?? '') === 'Internal only' ? 'selected' : '' ?>>Internal only</option>
+                                <option value="Default (wg0)" <?= $network === 'Default (wg0)' ? 'selected' : '' ?>>Default (wg0)</option>
+                                <option value="Internal only" <?= $network === 'Internal only' ? 'selected' : '' ?>>Internal only</option>
                             </select>
                             <div class="text-secondary opacity-75" style="font-size: 0.7rem;">Default joins shared VPN. Internal only = no WireGuard.</div>
                         </div>
@@ -113,7 +143,7 @@ $bindMounts = ($bindMountsRaw instanceof MongoDB\Model\BSONArray) ? iterator_to_
             <!-- SSH -->
             <div class="form-check form-switch mb-3 d-flex align-items-center gap-3 ps-0">
                 <div style="width: 120px;" class="text-secondary fw-bold small m-0 flex-shrink-0">SSH</div>
-                <input class="form-check-input m-0 fs-5" type="checkbox" role="switch" data-field="ssh_enabled" <?= !empty($instance['ssh_enabled']) ? 'checked' : '' ?> style=" border-color: #ff4b2b;">
+                <input class="form-check-input m-0 fs-5" type="checkbox" role="switch" data-field="ssh_enabled" <?= !empty($sshEnabled) ? 'checked' : '' ?> style=" border-color: #ff4b2b;">
                 <label class="form-check-label text-white small m-0">Enable SSH access</label>
             </div>
 
@@ -122,7 +152,7 @@ $bindMounts = ($bindMountsRaw instanceof MongoDB\Model\BSONArray) ? iterator_to_
                 <div style="width: 120px;" class="text-secondary fw-bold small pt-1 flex-shrink-0">Signed-in user</div>
                 <div class="flex-grow-1">
                     <div class="form-check form-switch mb-1">
-                        <input class="form-check-input" type="checkbox" role="switch" data-field="run_as_signed_in_user" <?= !empty($instance['run_as_signed_in_user']) ? 'checked' : '' ?> style=" border-color: #ff4b2b;">
+                        <input class="form-check-input" type="checkbox" role="switch" data-field="run_as_signed_in_user" <?= !empty($runAsUser) ? 'checked' : '' ?> style=" border-color: #ff4b2b;">
                         <label class="form-check-label text-white small">Run as the signed-in user (shared home)</label>
                     </div>
                     <div class="text-secondary opacity-75" style="font-size: 0.7rem;">Provisions the deployer's platform username at uid 1000 on deploy, with their <strong>shared home</strong> mounted. Coexists with any custom users below.</div>
@@ -134,10 +164,10 @@ $bindMounts = ($bindMountsRaw instanceof MongoDB\Model\BSONArray) ? iterator_to_
                 <div style="width: 120px;" class="text-secondary fw-bold small pt-1 flex-shrink-0">Home mount</div>
                 <div class="flex-grow-1">
                     <div class="form-check form-switch mb-2">
-                        <input class="form-check-input" type="checkbox" role="switch" data-field="home_mount_enabled" <?= !empty($instance['home_mount_enabled']) ? 'checked' : '' ?> style="border-color: #ff4b2b;">
+                        <input class="form-check-input" type="checkbox" role="switch" data-field="home_mount_enabled" <?= !empty($homeEnabled) ? 'checked' : '' ?> style="border-color: #ff4b2b;">
                         <label class="form-check-label text-white small">Mount a persistent home volume</label>
                     </div>
-                    <input type="text" class="form-control config-input mb-1" data-field="home_mount_path" value="<?= htmlspecialchars($instance['home_mount_path'] ?? '/var/labsstorage') ?>" style="max-width: 300px;">
+                    <input type="text" class="form-control config-input mb-1" data-field="home_mount_path" value="<?= htmlspecialchars($homePath) ?>" style="max-width: 300px;">
                     <div class="text-secondary opacity-75" style="font-size: 0.7rem;">In-container path where the per-user volume mounts. Off = ephemeral.</div>
                 </div>
             </div>
@@ -201,3 +231,4 @@ $bindMounts = ($bindMountsRaw instanceof MongoDB\Model\BSONArray) ? iterator_to_
             </div>
         </div>
     </div>
+</div>

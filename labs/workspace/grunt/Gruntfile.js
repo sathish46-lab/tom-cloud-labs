@@ -39,7 +39,7 @@ module.exports = function (grunt) {
           "!../js/htmx-bridge.js",
           "!../js/clipboard.js",
         ],
-        dest: "../../htdocs/js/app.js",
+        dest: "../../htdocs/assets/js/app.js",
       },
     },
 
@@ -51,7 +51,7 @@ module.exports = function (grunt) {
       },
       build: {
         files: {
-          "../../htdocs/js/app.min.js": ["../../htdocs/js/app.js"],
+          "../../htdocs/assets/js/app.min.js": ["../../htdocs/assets/js/app.js"],
         },
       },
     },
@@ -72,7 +72,7 @@ module.exports = function (grunt) {
           selfDefending: false,
         },
         files: {
-          "../../htdocs/js/app.o.js": ["../../htdocs/js/app.js"],
+          "../../htdocs/assets/js/app.o.js": ["../../htdocs/assets/js/app.js"],
         },
       },
       build: {
@@ -84,7 +84,7 @@ module.exports = function (grunt) {
           selfDefending: true,
         },
         files: {
-          "../../htdocs/js/app.o.js": ["../../htdocs/js/app.js"],
+          "../../htdocs/assets/js/app.o.js": ["../../htdocs/assets/js/app.js"],
         },
       },
     },
@@ -98,8 +98,8 @@ module.exports = function (grunt) {
       },
       dist: {
         files: {
-          "../../htdocs/css/app.css": "../sass/app.scss",
-          "../../htdocs/css/htmx-progress.css": "../sass/htmx-progress.scss",
+          "../../htdocs/assets/css/app.css": "../sass/app.scss",
+          "../../htdocs/assets/css/htmx-progress.css": "../sass/htmx-progress.scss",
         },
       },
     },
@@ -116,7 +116,7 @@ module.exports = function (grunt) {
             expand: true,
             flatten: true,
             src: ["../js/ui-init.js", "../js/htmx-bridge.js", "../js/clipboard.js"],
-            dest: "../../htdocs/js/",
+            dest: "../../htdocs/assets/js/",
           },
         ],
       },
@@ -169,8 +169,8 @@ module.exports = function (grunt) {
     "Securely remove source code content from .map files",
     function () {
       const fs = require("fs");
-      const jsFiles = ["../../htdocs/js/app.js", "../../htdocs/js/app.min.js"];
-      const mapFiles = ["../../htdocs/js/app.js.map", "../../htdocs/js/app.min.js.map"];
+      const jsFiles = ["../../htdocs/assets/js/app.js", "../../htdocs/assets/js/app.min.js"];
+      const mapFiles = ["../../htdocs/assets/js/app.js.map", "../../htdocs/assets/js/app.min.js.map"];
 
       jsFiles.forEach(function (file) {
         try {

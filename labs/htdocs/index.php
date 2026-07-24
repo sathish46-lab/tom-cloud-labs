@@ -39,7 +39,7 @@ Session::$pageTitle = "Tom Labs | Virtual Innovation Hub";
 Session::set('seo_description', 'Tom Labs is a premier virtual innovation hub offering advanced cloud environments, scalable VPS, and secure VPN workspaces for elite developers and engineers.');
 Session::set('seo_keywords', 'Virtual Innovation Hub, Tom Labs, Advanced Cloud Infrastructure, Digital Workspace, VPS, Developer Environment');
 define('IS_LANDING_PAGE', true);
-Session::addCustomCss('/css/landing.css');
+Session::addCustomCss('/assets/css/landing.css');
 
 // Initialize random quote for SEO rendering
 $heroQuotes = [
@@ -66,7 +66,7 @@ $initialQuote = $heroQuotes[array_rand($heroQuotes)];
     <link href='https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     
     <!-- Landing Page CSS -->
-    <link rel="stylesheet" href="/css/landing.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="/assets/css/landing.css?v=<?= time() ?>">
     <style>
         body { margin: 0; padding: 0; background-color: #0f172a; color: white; font-family: 'Ubuntu', sans-serif; overflow-x: hidden; }
         a { text-decoration: none; }

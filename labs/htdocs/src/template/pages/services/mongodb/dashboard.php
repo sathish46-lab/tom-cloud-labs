@@ -1,7 +1,7 @@
 <?php
 Session::addMetaTag('<title>MongoDB Server - Tom Labs</title>');
-Session::addCustomJs('/js/services_mongodb.js');
-Session::addCustomJs('/js/copy.js');
+// ServiceManager.init handled inline
+Session::addCustomJs('/assets/js/copy.js');
 
 $user = Session::getUser();
 $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
@@ -151,3 +151,19 @@ require_once __DIR__ . '/partials/mongodb_header.php';
 .hover-white { transition: color 0.2s; }
 .hover-white:hover { color: #ffffff !important; }
 </style>
+
+<script>
+ServiceManager.init({
+    type: 'mongodb',
+    apiBase: '/api/services/mongodb',
+    entityLabel: 'Database',
+    gridId: 'mongodb_db_list',
+    hasEntities: true,
+    entityNameKey: 'db_name',
+    userKey: 'mongodb_username',
+    entityCreateEndpoint: 'db_create',
+    entityDeleteEndpoint: 'db_delete',
+    redirectBase: '/services/mongodb',
+    exportPrefix: 'MongoDB'
+});
+</script>

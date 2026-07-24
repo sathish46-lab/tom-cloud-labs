@@ -109,16 +109,20 @@ const Dashboard = {
 
     // 2. Connect to Instance Logs (Only if session exists and not expired)
     try {
-      if (window.SESSION_HASH && !LogSocket.isConnected && !document.getElementById("session-expired-overlay")) {
-        const dot = document.getElementById("mq-status-dot");
-        // Only connect if the UI element exists or we handle the null UI gracefully
-        const ui = dot ? { dot: dot } : null;
-
-        LogSocket.connect(
-          `logs.${window.SESSION_HASH}`,
-          (data) => this.appendLog(data),
-          ui,
-        );
+      const dot = document.getElementById("mq-status-dot");
+      if (window.SESSION_HASH && !document.getElementById("session-expired-overlay")) {
+        if (!LogSocket.isConnected) {
+          // Fresh connect — pass dot reference
+          const ui = dot ? { dot: dot } : null;
+          LogSocket.connect(
+            `logs.${window.SESSION_HASH}`,
+            (data) => this.appendLog(data),
+            ui,
+          );
+        } else if (dot) {
+          // Already connected — just update the dot color to green
+          dot.style.color = "#a6e3a1";
+        }
       }
     } catch (e) {
       console.error("[Dashboard] LogSocket connection failed:", e);
@@ -133,6 +137,16 @@ const Dashboard = {
    * Initialize all monitoring charts
    */
   initCharts: function () {
+    // Destroy any existing charts first (prevents "Canvas is already in use" on HTMX swap)
+    if (this.charts) {
+      Object.keys(this.charts).forEach(id => {
+        if (this.charts[id]) {
+          this.charts[id].destroy();
+          delete this.charts[id];
+        }
+      });
+    }
+
     const create = (id, color, type = "line", extraOptions = {}) => {
       const ctx = document.getElementById(id);
       if (!ctx) return;

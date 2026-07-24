@@ -95,10 +95,14 @@ if (is_resource($handle)) {
 }
 
 if (!$success && $action === 'deploy') {
-    $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
-    $db->deployed_labs->updateOne(
+    $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_instances_db');
+    $db->instances->updateOne(
         ['instance_hash' => $instanceHash],
-        ['$set' => ['status' => 'failed', 'error' => 'Orchestrator timeout or kernel error']]
+        ['$set' => [
+            'deploy.status' => 'failed',
+            'status' => 'error',
+            'updated_at' => new MongoDB\BSON\UTCDateTime()
+        ]]
     );
     $rabbit->sendMessage(['log' => '[!] Deployment failed. Reverting system state...']);
 }

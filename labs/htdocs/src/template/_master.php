@@ -232,8 +232,8 @@ $classString = implode(' ', $htmlClasses);
     <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="<?= Session::cacheCDN('/css/app.css') ?>">
-    <link rel="stylesheet" href="<?= Session::cacheCDN('/css/htmx-progress.css') ?>">
+    <link rel="stylesheet" href="<?= Session::cacheCDN('/assets/css/app.css') ?>">
+    <link rel="stylesheet" href="<?= Session::cacheCDN('/assets/css/htmx-progress.css') ?>">
 
     <?php foreach (Session::$customCss as $css): ?>
     <link rel="stylesheet" href="<?= Session::cacheCDN($css) ?>">
@@ -244,6 +244,12 @@ $classString = implode(' ', $htmlClasses);
 
     <script src="https://cdn.jsdelivr.net/npm/@coreui/chartjs/dist/js/coreui-chartjs.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script>
+      window.MQ_CREDENTIALS = {
+        user: <?= json_encode(get_config('amqp_user') ?? 'admin') ?>,
+        pass: <?= json_encode(get_config('amqp_pass') ?? '') ?>
+      };
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/parallax/3.1.0/parallax.min.js"></script>
     
     <!-- HTMX for SPA Navigation -->
@@ -548,10 +554,10 @@ $classString = implode(' ', $htmlClasses);
         ui_preferences: <?= json_encode($uiPreferences ?? []) ?>
     };
     </script>
-    <script src="<?= Session::cacheCDN('/js/clipboard.js') ?>"></script>
-    <script src="<?= Session::cacheCDN('/js/app.js') ?>&t=<?= time() ?>"></script>
-    <script src="<?= Session::cacheCDN('/js/ui-init.js') ?>"></script>
-    <script src="<?= Session::cacheCDN('/js/htmx-bridge.js') ?>"></script>
+    <script src="<?= Session::cacheCDN('/assets/js/clipboard.js') ?>"></script>
+    <script src="<?= Session::cacheCDN('/assets/js/app.js') ?>&t=<?= time() ?>"></script>
+    <script src="<?= Session::cacheCDN('/assets/js/ui-init.js') ?>"></script>
+    <script src="<?= Session::cacheCDN('/assets/js/htmx-bridge.js') ?>"></script>
 
     <script>
         // Auto-trigger flash toasts from PHP Sessions

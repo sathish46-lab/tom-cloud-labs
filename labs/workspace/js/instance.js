@@ -141,29 +141,62 @@ async function submitFork() {
 window.submitFork = submitFork;
 
 // --- Trash ---
-async function trashInstance(slug) {
-    if (!confirm('Move this template to trash?')) return;
-    try {
-        const res = await fetch('/api/instances/trash', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ slug: slug })
-        });
-        const data = await res.json();
-        if (data.status === 'success') {
-            const card = document.getElementById('instance-card-' + slug);
-            if (card) card.remove();
-            if (window.__dashboardState) {
-                window.__dashboardState.savedHtml = {};
-                window.__dashboardState.fetching = {};
-            }
-            window.__loadDashboardTab('templates');
-        } else {
-            alert('Error: ' + (data.error || 'Failed'));
-        }
-    } catch (e) {
-        alert('Network error.');
+function trashInstance(slug) {
+    const card = document.getElementById('instance-card-' + slug);
+    const deployStatus = card?.getAttribute('data-deploy-status') || 'none';
+    const isRunning = ['running', 'deploying', 'starting'].includes(deployStatus);
+
+    const modal = document.getElementById('trashConfirmModal');
+    const warningBox = document.getElementById('trashWarningBox');
+    const title = document.getElementById('trashModalTitle');
+    const desc = document.getElementById('trashModalDesc');
+    const confirmBtn = document.getElementById('trashConfirmBtn');
+
+    if (isRunning) {
+        title.textContent = 'Stop & Move to Trash?';
+        desc.innerHTML = 'This instance is <strong>currently running</strong>. It will be stopped and all active connections (SSH, Code Server, VPN) will be <strong>terminated</strong>.';
+        warningBox.classList.remove('d-none');
+        confirmBtn.innerHTML = '<i class="bx bx-trash me-1"></i> Stop & Trash';
+    } else {
+        title.textContent = 'Move to Trash?';
+        desc.innerHTML = 'Are you sure you want to move this template to trash?';
+        warningBox.classList.add('d-none');
+        confirmBtn.innerHTML = '<i class="bx bx-trash me-1"></i> Move to Trash';
     }
+
+    confirmBtn.onclick = async () => {
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<span class="spinner-grow spinner-grow-sm me-1" role="status"></span> Processing...';
+
+        try {
+            const res = await fetch('/api/instances/trash', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ slug: slug })
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                const modalInstance = coreui.Modal.getInstance(modal);
+                if (modalInstance) modalInstance.hide();
+                if (card) card.remove();
+                if (window.__dashboardState) {
+                    window.__dashboardState.savedHtml = {};
+                    window.__dashboardState.fetching = {};
+                }
+                window.__loadDashboardTab('templates');
+            } else {
+                alert('Error: ' + (data.error || 'Failed'));
+            }
+        } catch (e) {
+            alert('Network error.');
+        } finally {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="bx bx-trash me-1"></i> Move to Trash';
+        }
+    };
+
+    const bsModal = new coreui.Modal(modal);
+    bsModal.show();
 }
 window.trashInstance = trashInstance;
 

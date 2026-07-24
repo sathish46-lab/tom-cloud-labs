@@ -1,7 +1,7 @@
 <?php
 Session::addMetaTag('<title>MySQL Server - Tom Labs</title>');
-Session::addCustomJs('/js/services.js');
-Session::addCustomJs('/js/copy.js');
+Session::addCustomJs('/assets/js/services.js');
+Session::addCustomJs('/assets/js/copy.js');
 
 $user = Session::getUser();
 $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
@@ -151,3 +151,19 @@ require_once __DIR__ . '/partials/mysql_header.php';
 .hover-white { transition: color 0.2s; }
 .hover-white:hover { color: #ffffff !important; }
 </style>
+
+<script>
+ServiceManager.init({
+    type: 'mysql',
+    apiBase: '/api/services/mysql',
+    entityLabel: 'Database',
+    gridId: 'mysql_db_list',
+    hasEntities: true,
+    entityNameKey: 'db_name',
+    userKey: 'mysql_username',
+    entityCreateEndpoint: 'db_create',
+    entityDeleteEndpoint: 'db_delete',
+    redirectBase: '/services/mysql',
+    exportPrefix: 'MySQL'
+});
+</script>

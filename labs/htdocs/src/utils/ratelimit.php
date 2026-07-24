@@ -124,11 +124,11 @@ function rate_limit($actionPrefix = 'ssl:rl:refresh', $limit = 3, $window = 600)
             header('Retry-After: ' . $retryAfter);
         }
         
-        $isAjaxOrApi = (strpos($_SERVER['REQUEST_URI'] ?? '', '/api/') !== false) ||
-                       (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') ||
-                       !empty($_SERVER['HTTP_HX_REQUEST']);
-                       
-        if ($isAjaxOrApi) {
+        $isHtmx = !empty($_SERVER['HTTP_HX_REQUEST']);
+        $isApi = (strpos($_SERVER['REQUEST_URI'] ?? '', '/api/') !== false);
+        $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+
+        if ($isHtmx || $isApi || $isAjax) {
             if (!headers_sent()) {
                 header('Content-Type: application/json');
             }
@@ -237,8 +237,8 @@ function check_global_rate_limit() {
         }
     }
 
-    // 2. Default Global Request Limiter (180 req / 60s)
-    $limit = (int)(get_config('rate_limit_max') ?: 180);
+    // 2. Default Global Request Limiter (300 req / 60s = 5 req/s)
+    $limit = (int)(get_config('rate_limit_max') ?: 300);
     $window = (int)(get_config('rate_limit_window') ?: 60);
 
     $clientId = get_rate_limit_identity(false);
@@ -280,11 +280,12 @@ function check_global_rate_limit() {
             header('Retry-After: ' . $retryAfter);
         }
         
-        $isAjaxOrApi = (strpos($_SERVER['REQUEST_URI'] ?? '', '/api/') !== false) ||
-                       (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') ||
-                       !empty($_SERVER['HTTP_HX_REQUEST']);
-                       
-        if ($isAjaxOrApi) {
+        $isHtmx = !empty($_SERVER['HTTP_HX_REQUEST']);
+        $isApi = (strpos($_SERVER['REQUEST_URI'] ?? '', '/api/') !== false);
+        $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+
+        if ($isHtmx || $isApi || $isAjax) {
+            // All AJAX/HTMX/API requests get JSON — JS handles the UI
             if (!headers_sent()) {
                 header('Content-Type: application/json');
             }

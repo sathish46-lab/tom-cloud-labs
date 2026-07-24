@@ -107,6 +107,12 @@ def execute_job(ch, method, properties, body):
                 'challenge', action,
                 f"--user={user}", f"--hash={instance_hash}", f"--challenge={challenge_id}"
             ]
+        elif lab == 'instance':
+            cmd = [
+                'sudo', '/usr/bin/python3', '/opt/labs-control-panel/labsctl.py',
+                'instance', action,
+                f"--user={user}", f"--hash={instance_hash}"
+            ]
         else:
             cmd = [
                 'sudo', '/usr/bin/python3', '/opt/labs-control-panel/labsctl.py',

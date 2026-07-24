@@ -36,6 +36,12 @@ def print_help():
     print("  challenge stop      Stop CTF lab.     Ex: labsctl challenge stop --hash=HASH")
     print("  challenge start     Start CTF lab.    Ex: labsctl challenge start --hash=HASH")
     print("  challenge remove    Remove CTF lab.   Ex: labsctl challenge remove --hash=HASH\n")
+    print("Instance Commands:")
+    print("  instance build      Build instance.   Ex: labsctl instance build --user=sathish --hash=HASH")
+    print("  instance deploy     Deploy instance.  Ex: labsctl instance deploy --user=sathish --hash=HASH")
+    print("  instance stop       Stop instance.    Ex: labsctl instance stop --hash=HASH")
+    print("  instance start      Start instance.   Ex: labsctl instance start --hash=HASH")
+    print("  instance remove     Remove instance.  Ex: labsctl instance remove --hash=HASH\n")
 
 def main():
     args = Arguments(sys.argv)
@@ -103,6 +109,22 @@ def main():
                  print(json.dumps(result))
              else:
                  print("Usage: labsctl quiz generate --topic=ID --subtopic=ID --diff=normal")
+        elif cmd == 'instance':
+            from src.Instance import Instance
+            instance_manager = Instance(args, session_hash)
+            sub = sys.argv[2] if len(sys.argv) > 2 else 'deploy'
+            actions = {
+                'build': instance_manager.build,
+                'deploy': instance_manager.deploy,
+                'stop': instance_manager.stop,
+                'start': instance_manager.start,
+                'remove': instance_manager.remove,
+            }
+            if sub in actions:
+                actions[sub]()
+            else:
+                print(f"Unknown instance command: {sub}")
+                print("Usage: labsctl instance <build|deploy|stop|start|remove> --hash=HASH --user=USER")
         elif cmd == 'challenge':
             # Challenge CTF Lab Routing
             from src.Challenge import Challenge

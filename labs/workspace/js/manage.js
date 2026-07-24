@@ -39,6 +39,15 @@ function initInstanceTabs() {
 
             if (response.ok) {
                 contentContainer.innerHTML = await response.text();
+                // Re-execute <script> tags injected via innerHTML
+                contentContainer.querySelectorAll('script').forEach(old => {
+                    const s = document.createElement('script');
+                    if (old.src) s.src = old.src;
+                    else s.textContent = old.textContent;
+                    old.replaceWith(s);
+                });
+                // Fire event so tab scripts can initialize
+                document.dispatchEvent(new CustomEvent('instanceTabLoaded', { detail: { tab: tabName } }));
             } else {
                 contentContainer.innerHTML = `
                     <div class="alert alert-danger">

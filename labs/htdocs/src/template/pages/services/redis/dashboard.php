@@ -1,7 +1,7 @@
 <?php
 Session::addMetaTag('<title>Redis Server - Tom Labs</title>');
-Session::addCustomJs('/js/services_redis.js');
-Session::addCustomJs('/js/copy.js');
+// ServiceManager.init handled inline
+Session::addCustomJs('/assets/js/copy.js');
 
 $user = Session::getUser();
 $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
@@ -151,3 +151,15 @@ require_once __DIR__ . '/partials/redis_header.php';
 .hover-white { transition: color 0.2s; }
 .hover-white:hover { color: #ffffff !important; }
 </style>
+
+<script>
+ServiceManager.init({
+    type: 'redis',
+    apiBase: '/api/services/redis',
+    entityLabel: 'Data',
+    gridId: 'redis_db_list',
+    hasEntities: false,
+    redirectBase: '/services/redis',
+    exportPrefix: 'Redis'
+});
+</script>

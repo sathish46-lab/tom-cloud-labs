@@ -185,11 +185,7 @@
                 </div>
                 <div class="card border-0 shadow-sm blur rounded-4">
                     <div class="card-header bg-transparent border-0 pt-4 px-4">
-                        <h6 class="fw-bold mb-0">IO Stats <span class="small text-muted ms-1">Net and Block</span>
-                        <?php if (!$isRunning): ?>
-                            <span class="badge badge-neon badge-neon-danger rounded-pill ms-2 badge-offline-pill">Offline</span>
-                        <?php endif; ?>
-                        </h6>
+                        <h6 class="fw-bold mb-0">IO Stats <span class="small text-muted ms-1">Net and Block</span></h6>
                     </div>
                     <div class="card-body p-4">
                         <div class="row g-3">

@@ -11,7 +11,6 @@ $user = Session::getUser();
 $userId = (int)$user->getUserId();
 
 $dbInstances = DatabaseConnection::getClient()->selectDatabase('tom_labs_instances_db');
-$dbMain = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
 $instances = iterator_to_array($dbInstances->instances->find(['user_id' => $userId]));
 
 function templates_relative_time($dt) {
@@ -25,7 +24,7 @@ function templates_relative_time($dt) {
     return date('M j', $ts);
 }
 
-function templates_fork_source($dbInstances, $dbMain, $forkedFrom) {
+function templates_fork_source($dbInstances, $forkedFrom) {
     if (empty($forkedFrom)) return '';
     try {
         $oid = new MongoDB\BSON\ObjectId($forkedFrom);
@@ -33,13 +32,10 @@ function templates_fork_source($dbInstances, $dbMain, $forkedFrom) {
         return '';
     }
     $src = $dbInstances->instances->findOne(['_id' => $oid]);
-    if (!$src) {
-        $src = $dbMain->deployed_labs->findOne(['_id' => $oid]);
-    }
     if (!$src) return '';
     $name = $src['name'] ?? '';
     if (empty($name)) {
-        $name = $src['lab_type'] ?? ($src['instance_hash'] ?? 'source');
+        $name = $src['template'] ?? ($src['instance_hash'] ?? 'source');
     }
     return $name;
 }
@@ -74,7 +70,7 @@ function templates_fork_source($dbInstances, $dbMain, $forkedFrom) {
         $avatarFile = $avatarMap[$tplKey] ?? 'essentials_avatar.png';
         $cover = Session::cdn3('labassets/avatar/' . $avatarFile);
         $forked_from = !empty($instance['forked_from']);
-        $forkSource = templates_fork_source($dbInstances, $dbMain, $instance['forked_from'] ?? null);
+        $forkSource = templates_fork_source($dbInstances, $instance['forked_from'] ?? null);
         $updatedLabel = templates_relative_time($instance['updated_at'] ?? null);
     ?>
     <?php include __DIR__ . '/../../template/partials/_instance_card.php'; ?>
