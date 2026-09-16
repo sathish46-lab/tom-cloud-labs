@@ -4,12 +4,7 @@ require_once "../../../lib/services/MySqlManager.php";
 
 header('Content-Type: application/json');
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
-    exit;
-}
-
-$user = Session::getUser();
+$user = AuthMiddleware::requireAuth();
 $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
 
 $data = json_decode(file_get_contents('php://input'), true);

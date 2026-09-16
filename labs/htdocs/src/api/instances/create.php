@@ -1,18 +1,11 @@
 <?php
 require_once __DIR__ . '/../../load.php';
 require_once __DIR__ . '/../../lib/core/AuditLog.class.php';
-require_once __DIR__ . '/../../lib/core/CsrfProtection.class.php';
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    header('Content-Type: application/json');
-    echo json_encode(['status' => 'error', 'error' => 'Unauthorized']);
-    exit;
-}
-
-CsrfProtection::require();
+$user = AuthMiddleware::requireAuth();
+AuthMiddleware::requireCsrf();
 
 header('Content-Type: application/json');
-$user = Session::getUser();
 $userId = (int)$user->getUserId();
 $username = $user->getUsername();
 $email = $user->getEmail();

@@ -56,8 +56,8 @@ test("trash.php exists", file_exists($trashPath));
 
 if (file_exists($trashPath)) {
     $src = file_get_contents($trashPath);
-    test("trash.php checks auth", strpos($src, 'Session::getAuthStatus()') !== false);
-    test("trash.php enforces CSRF", strpos($src, 'CsrfProtection::require()') !== false);
+    test("trash.php checks auth", strpos($src, 'AuthMiddleware::requireAuth()') !== false || strpos($src, 'Session::getAuthStatus()') !== false);
+    test("trash.php enforces CSRF", strpos($src, 'AuthMiddleware::requireCsrf()') !== false || strpos($src, 'CsrfProtection::require()') !== false);
     test("trash.php uses AuditLog", strpos($src, 'AuditLog::log') !== false);
 }
 
@@ -66,8 +66,8 @@ test("restore.php exists", file_exists($restorePath));
 
 if (file_exists($restorePath)) {
     $src = file_get_contents($restorePath);
-    test("restore.php checks auth", strpos($src, 'Session::getAuthStatus()') !== false);
-    test("restore.php enforces CSRF", strpos($src, 'CsrfProtection::require()') !== false);
+    test("restore.php checks auth", strpos($src, 'AuthMiddleware::requireAuth()') !== false || strpos($src, 'Session::getAuthStatus()') !== false);
+    test("restore.php enforces CSRF", strpos($src, 'AuthMiddleware::requireCsrf()') !== false || strpos($src, 'CsrfProtection::require()') !== false);
     test("restore.php uses AuditLog", strpos($src, 'AuditLog::log') !== false);
 }
 
@@ -76,8 +76,8 @@ test("permanent_delete.php exists", file_exists($deletePath));
 
 if (file_exists($deletePath)) {
     $src = file_get_contents($deletePath);
-    test("permanent_delete.php checks auth", strpos($src, 'Session::getAuthStatus()') !== false);
-    test("permanent_delete.php enforces CSRF", strpos($src, 'CsrfProtection::require()') !== false);
+    test("permanent_delete.php checks auth", strpos($src, 'AuthMiddleware::requireAuth()') !== false || strpos($src, 'Session::getAuthStatus()') !== false);
+    test("permanent_delete.php enforces CSRF", strpos($src, 'AuthMiddleware::requireCsrf()') !== false || strpos($src, 'CsrfProtection::require()') !== false);
 }
 
 // ── Test 3: Runtime — HTTP auth/CSRF tests ──

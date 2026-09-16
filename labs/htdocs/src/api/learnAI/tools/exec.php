@@ -13,17 +13,7 @@ require_once __DIR__ . '/../../../load.php';
 
 header('Content-Type: application/json');
 
-// Internal API auth: Only ai_worker.py can call this
-$headers = getallheaders();
-$authHeader = $headers['Authorization'] ?? ($headers['authorization'] ?? '');
-$envConfig = json_decode(file_get_contents(__DIR__ . '/../../../../../../env.json'), true);
-$internalToken = $envConfig['ai_internal_token'] ?? '';
-
-if (empty($internalToken) || $authHeader !== "Bearer {$internalToken}") {
-    http_response_code(403);
-    echo json_encode(['status' => 'error', 'error' => 'Forbidden: Invalid internal token']);
-    exit;
-}
+AuthMiddleware::requireInternalToken();
 
 $input = json_decode(file_get_contents('php://input'), true);
 $userId = $input['user_id'] ?? null;

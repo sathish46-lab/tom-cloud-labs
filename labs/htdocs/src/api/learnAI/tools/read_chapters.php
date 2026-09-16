@@ -7,24 +7,9 @@ require_once __DIR__ . '/../../../load.php';
 
 header('Content-Type: application/json');
 
-// 1. Verify Internal Token
-$headers = getallheaders();
-$authHeader = $headers['Authorization'] ?? '';
-$internalToken = null;
+AuthMiddleware::requireInternalToken();
 
-$envPath = __DIR__ . '/../../../../../../env.json';
-if (file_exists($envPath)) {
-    $env = json_decode(file_get_contents($envPath), true);
-    $internalToken = $env['ai_internal_token'] ?? null;
-}
-
-if (!$internalToken || $authHeader !== "Bearer $internalToken") {
-    http_response_code(401);
-    echo json_encode(["error" => "Unauthorized access."]);
-    exit;
-}
-
-// 2. Parse payload
+// Parse payload
 $input = json_decode(file_get_contents('php://input'), true);
 $lessonId = $input['lesson_id'] ?? null;
 $chapterIds = $input['chapter_ids'] ?? [];

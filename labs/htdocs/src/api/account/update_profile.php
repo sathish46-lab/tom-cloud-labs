@@ -9,18 +9,12 @@
  * - No user_id accepted from request params
  */
 require_once __DIR__ . '/../../load.php';
-require_once __DIR__ . '/../../lib/core/CsrfProtection.class.php';
 
 header('Content-Type: application/json');
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    echo json_encode(['status' => 'error', 'error' => 'Unauthorized']);
-    exit;
-}
+$user = AuthMiddleware::requireAuth();
+AuthMiddleware::requireCsrf();
 
-CsrfProtection::require();
-
-$user = Session::getUser();
 $db = DatabaseConnection::getDefaultDatabase();
 
 $firstName = trim($_POST['first_name'] ?? '');

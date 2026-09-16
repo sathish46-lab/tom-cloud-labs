@@ -20,8 +20,14 @@ require_once __DIR__ . '/core/DatabaseConnection.class.php';
 
 // 4. Load Session (The Main Controller)
 require_once __DIR__ . '/core/Session.class.php';
+require_once __DIR__ . '/core/SessionAuth.class.php';
+require_once __DIR__ . '/core/SessionCsrf.class.php';
+require_once __DIR__ . '/core/SessionEnv.class.php';
+require_once __DIR__ . '/core/SessionRenderer.class.php';
 require_once __DIR__ . '/core/UserSession.class.php';
 require_once __DIR__ . '/core/WebAPI.class.php';
+require_once __DIR__ . '/core/CsrfProtection.class.php';
+require_once __DIR__ . '/core/AuthMiddleware.class.php';
 require_once __DIR__ . '/labs/LabFeatures.php';
 require_once __DIR__ . '/labs/LabTemplateConfig.php';
 require_once __DIR__ . '/services/LearnAIOrchestrator.class.php';

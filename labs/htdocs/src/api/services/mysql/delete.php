@@ -2,18 +2,12 @@
 require_once "../../../load.php";
 require_once "../../../lib/services/MySqlManager.php";
 require_once "../../../lib/core/AuditLog.class.php";
-require_once "../../../lib/core/CsrfProtection.class.php";
 
 header('Content-Type: application/json');
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
-    exit;
-}
+$user = AuthMiddleware::requireAuth();
+AuthMiddleware::requireCsrf();
 
-CsrfProtection::require();
-
-$user = Session::getUser();
 $data = json_decode(file_get_contents('php://input'), true);
 $dbName = $data['db_name'] ?? '';
 

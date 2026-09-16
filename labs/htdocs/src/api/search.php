@@ -52,6 +52,7 @@ try {
             $results['running'][] = [
                 'type' => 'running', 'label' => $labName ?: ucfirst(str_replace('_', ' ', $labType)),
                 'sub' => $labType, 'icon' => $icon, 'iid' => $hash, 'lab' => $labType,
+                'glyph' => 'tom-terminal', 'colour' => '#22c55e',
                 'action' => 'code', 'codeserver' => true,
             ];
         }
@@ -60,11 +61,11 @@ try {
 
 /* ──────────── 2. LAB CATALOG ──────────── */
 $labCatalog = [
-    ['id' => 'essentials',     'name' => 'Essentials Lab',     'glyph' => 'bx-command', 'colour' => '#E95420'],
-    ['id' => 'gui_essentials', 'name' => 'GUI Essentials Lab', 'glyph' => 'bx-desktop', 'colour' => '#E95420'],
-    ['id' => 'minio',          'name' => 'MinIO S3 Storage',   'glyph' => 'bx-cloud',   'colour' => '#E95420'],
-    ['id' => 'n8n',            'name' => 'n8n Workflow Lab',   'glyph' => 'bx-network-chart', 'colour' => '#E95420'],
-    ['id' => 'docker_lab',     'name' => 'Docker Lab',         'glyph' => 'bxl-docker', 'colour' => '#E95420'],
+    ['id' => 'essentials',     'name' => 'Essentials Lab',     'glyph' => 'tom-flask',          'colour' => '#ff6b1a'],
+    ['id' => 'gui_essentials', 'name' => 'GUI Essentials Lab', 'glyph' => 'tom-desktop',        'colour' => '#ff6b1a'],
+    ['id' => 'minio',          'name' => 'MinIO S3 Storage',   'glyph' => 'tom-database',       'colour' => '#c72c41'],
+    ['id' => 'n8n',            'name' => 'n8n Workflow Lab',   'glyph' => 'tom-workflow',       'colour' => '#ff6d5a'],
+    ['id' => 'docker_lab',     'name' => 'Docker Lab',         'glyph' => 'tom-package',        'colour' => '#0db7ed'],
 ];
 foreach ($labCatalog as $lc) {
     if (stripos($lc['name'], $ql) !== false || stripos($lc['id'], $ql) !== false) {
@@ -79,22 +80,22 @@ foreach ($labCatalog as $lc) {
 
 /* ──────────── 3. APPS / PAGES ──────────── */
 $pages = [
-    ['title' => 'Dashboard',       'section' => 'Main',     'url' => '/dashboard',          'glyph' => 'bx-home',         'colour' => '#3b82f6'],
-    ['title' => 'Machine Labs',    'section' => 'Main',     'url' => '/labs',               'glyph' => 'bxLab',           'colour' => '#22c55e'],
-    ['title' => 'Challenge Labs',  'section' => 'Main',     'url' => '/challenges',         'glyph' => 'bx-trophy',       'colour' => '#ef4444'],
-    ['title' => 'Spot Quiz',       'section' => 'Learn',    'url' => '/quiz',               'glyph' => 'bx-check-circle', 'colour' => '#8b5cf6'],
-    ['title' => 'Code Arena',      'section' => 'Learn',    'url' => '/code',               'glyph' => 'bx-code',         'colour' => '#f59e0b'],
-    ['title' => 'Learn AI',        'section' => 'Learn',    'url' => '/learn',              'glyph' => 'bx-book-open',    'colour' => '#06b6d4'],
-    ['title' => 'Roadmaps',        'section' => 'Learn',    'url' => '/roadmaps',           'glyph' => 'bx-map-pin',      'colour' => '#10b981'],
-    ['title' => 'Syllabus AI',     'section' => 'Learn',    'url' => '/syllabus',           'glyph' => 'bx-notes',        'colour' => '#f472b6'],
-    ['title' => 'Clubs',           'section' => 'Social',   'url' => '/clubs',              'glyph' => 'bx-group',        'colour' => '#ec4899'],
-    ['title' => 'Clans',           'section' => 'Social',   'url' => '/clans',              'glyph' => 'bx-flag',         'colour' => '#ef4444'],
-    ['title' => 'Leaderboard',     'section' => 'Social',   'url' => '/leaderboard-global', 'glyph' => 'bx-bar-chart',    'colour' => '#eab308'],
-    ['title' => 'Feeling Lucky',   'section' => 'Social',   'url' => '/lucky',              'glyph' => 'bx-bolt-circle',  'colour' => '#a855f7'],
-    ['title' => 'MCP Connections', 'section' => 'Network',  'url' => '/mcp',                'glyph' => 'bx-share-boxed',  'colour' => '#22d3ee'],
-    ['title' => 'Domains',         'section' => 'Network',  'url' => '/domains',            'glyph' => 'bx-globe-alt',    'colour' => '#f59e0b'],
-    ['title' => 'Account',         'section' => 'Settings', 'url' => '/account',            'glyph' => 'bx-user',         'colour' => '#6366f1'],
-    ['title' => 'Admin Panel',     'section' => 'Settings', 'url' => '/admin/users',        'glyph' => 'bx-crown',        'colour' => '#ef4444'],
+    ['title' => 'Dashboard',       'section' => 'Main',     'url' => '/dashboard',          'glyph' => 'tom-chart-pie-slice', 'colour' => '#0db7ed'],
+    ['title' => 'Machine Labs',    'section' => 'Main',     'url' => '/labs',               'glyph' => 'tom-monitor',         'colour' => '#22c55e'],
+    ['title' => 'Challenge Labs',  'section' => 'Main',     'url' => '/challenges',         'glyph' => 'tom-shield',          'colour' => '#ef4444'],
+    ['title' => 'Spot Quiz',       'section' => 'Learn',    'url' => '/quiz',               'glyph' => 'tom-check-square',    'colour' => '#8b91f9'],
+    ['title' => 'Code Arena',      'section' => 'Learn',    'url' => '/code',               'glyph' => 'tom-code',            'colour' => '#fbbf24'],
+    ['title' => 'Learn AI',        'section' => 'Learn',    'url' => '/learn',              'glyph' => 'tom-book-open',       'colour' => '#06b6d4'],
+    ['title' => 'Roadmaps',        'section' => 'Learn',    'url' => '/roadmaps',           'glyph' => 'tom-map-trifold',     'colour' => '#10b981'],
+    ['title' => 'Syllabus AI',     'section' => 'Learn',    'url' => '/syllabus',           'glyph' => 'tom-note-blank',      'colour' => '#f472b6'],
+    ['title' => 'Clubs',           'section' => 'Social',   'url' => '/clubs',              'glyph' => 'tom-users-three',     'colour' => '#ec4899'],
+    ['title' => 'Clans',           'section' => 'Social',   'url' => '/clans',              'glyph' => 'tom-flag',            'colour' => '#ef4444'],
+    ['title' => 'Leaderboard',     'section' => 'Social',   'url' => '/leaderboard-global', 'glyph' => 'tom-chart-bar',       'colour' => '#eab308'],
+    ['title' => 'Feeling Lucky',   'section' => 'Social',   'url' => '/lucky',              'glyph' => 'tom-lightning',       'colour' => '#a855f7'],
+    ['title' => 'MCP Connections', 'section' => 'Network',  'url' => '/mcp',                'glyph' => 'tom-share-network',   'colour' => '#22d3ee'],
+    ['title' => 'Domains',         'section' => 'Network',  'url' => '/domains',            'glyph' => 'tom-globe',           'colour' => '#f59e0b'],
+    ['title' => 'Account',         'section' => 'Settings', 'url' => '/account',            'glyph' => 'tom-user',            'colour' => '#6366f1'],
+    ['title' => 'Admin Panel',     'section' => 'Settings', 'url' => '/admin/users',        'glyph' => 'tom-crown',           'colour' => '#ef4444'],
 ];
 foreach ($pages as $p) {
     if (stripos($p['title'], $ql) !== false || stripos($p['section'], $ql) !== false) {
@@ -116,7 +117,7 @@ if (file_exists($challengesFile)) {
             $results['challenges'][] = [
                 'type' => 'challenge', 'label' => $name,
                 'sub' => ($ch['ribbon_text2'] ?? 'CTF') . ' · ' . ($ch['points'] ?? 0) . ' pts',
-                'glyph' => 'bx-trophy', 'colour' => '#ef4444', 'href' => '/challenges',
+                'glyph' => 'tom-shield', 'colour' => '#ef4444', 'href' => '/challenges',
             ];
         }
     }
@@ -133,7 +134,7 @@ foreach ($quizCats as $cat) {
         $results['quiz'][] = [
             'type' => 'quiz_category', 'label' => $cat['title'],
             'sub' => 'Quiz · ' . ($cat['section'] ?? ''),
-            'glyph' => 'bx-check-circle', 'colour' => '#8b5cf6', 'href' => '/quiz/' . ($cat['hash'] ?? ''),
+            'glyph' => 'tom-check-square', 'colour' => '#8b91f9', 'href' => '/quiz/' . ($cat['hash'] ?? ''),
         ];
     }
 }
@@ -149,7 +150,7 @@ foreach ($quizSubs as $sub) {
         $results['quiz'][] = [
             'type' => 'quiz_subtopic', 'label' => $sub['title'],
             'sub' => 'Quiz · ' . ($sub['desc'] ?? ''),
-            'glyph' => 'bx-check-circle', 'colour' => '#8b5cf6',
+            'glyph' => 'tom-check-square', 'colour' => '#8b91f9',
             'href' => $parentHash ? '/quiz/' . $parentHash : '/quiz',
         ];
     }
@@ -171,7 +172,7 @@ try {
         $results[$section][] = [
             'type' => 'topic', 'label' => $lesson['title'] ?? '',
             'sub' => ($isSyllabus ? 'Syllabus' : 'Lesson') . ' · ' . ($lesson['level'] ?? ''),
-            'glyph' => 'bx-book-open', 'colour' => $isSyllabus ? '#f472b6' : '#06b6d4',
+            'glyph' => 'tom-book-open', 'colour' => $isSyllabus ? '#f472b6' : '#06b6d4',
             'href' => '/learn/lesson/' . (string)($lesson['_id']),
         ];
     }
@@ -182,7 +183,7 @@ foreach ($quizSubs as $sub) {
     if (($sub['category_id'] ?? '') === 'roadmap' && stripos($sub['title'] ?? '', $ql) !== false) {
         $results['roadmaps'][] = [
             'type' => 'topic', 'label' => $sub['title'],
-            'sub' => 'Roadmap',             'glyph' => 'bx-map-pin', 'colour' => '#10b981',
+            'sub' => 'Roadmap',             'glyph' => 'tom-map-trifold', 'colour' => '#10b981',
             'href' => '/roadmaps/' . ($sub['hash'] ?? ''),
         ];
     }
@@ -193,7 +194,7 @@ foreach ($quizSubs as $sub) {
     if (($sub['category_id'] ?? '') === 'syllabus' && stripos($sub['title'] ?? '', $ql) !== false) {
         $results['syllabus'][] = [
             'type' => 'topic', 'label' => $sub['title'],
-            'sub' => 'Syllabus', 'glyph' => 'bx-notes', 'colour' => '#f472b6',
+            'sub' => 'Syllabus', 'glyph' => 'tom-note-blank', 'colour' => '#f472b6',
             'href' => '/syllabus/' . ($sub['hash'] ?? ''),
         ];
     }

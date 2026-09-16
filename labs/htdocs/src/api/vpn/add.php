@@ -2,17 +2,10 @@
 require_once __DIR__ . '/../../../src/load.php';
 require_once __DIR__ . '/../../../src/lib/core/VPN.class.php';
 require_once __DIR__ . '/../../../src/lib/core/AuditLog.class.php';
-require_once __DIR__ . '/../../../src/lib/core/CsrfProtection.class.php';
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    http_response_code(401);
-    echo 'Unauthorized';
-    exit;
-}
+$user = AuthMiddleware::requireAuth();
+AuthMiddleware::requireCsrf();
 
-CsrfProtection::require();
-
-$user = Session::getUser();
 $db = DatabaseConnection::getDefaultDatabase();
 
 $publicKey = $_POST['public_key'] ?? null;
