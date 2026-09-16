@@ -2,6 +2,10 @@
 require_once __DIR__ . '/../../../src/load.php';
 
 header('Content-Type: application/json');
+
+$user = AuthMiddleware::requireAuth();
+$userId = (int)$user->getUserId();
+
 $labHash = $_GET['hash'] ?? '';
 
 if (!$labHash) {
@@ -12,9 +16,16 @@ if (!$labHash) {
 try {
     $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
     $col = $db->machine_labs;
-    $inst = $col->findOne(['instance_hash' => $labHash], ['projection' => ['status' => 1]]);
+    $inst = $col->findOne(['instance_hash' => $labHash], ['projection' => ['status' => 1, 'user_id' => 1]]);
     
     if ($inst) {
+        // Ownership check: only the lab owner can view stats
+        if ((int)($inst['user_id'] ?? 0) !== $userId) {
+            http_response_code(403);
+            echo json_encode(['status' => 'error', 'error' => 'Forbidden']);
+            exit;
+        }
+        
         $labStatus = $inst['status'] ?? 'unknown';
         
         if ($labStatus === 'paused') {

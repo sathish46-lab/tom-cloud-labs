@@ -1,11 +1,7 @@
 <?php
 require_once '../../load.php';
 
-// Only allow authenticated users
-if (!Session::getUser()) {
-    http_response_code(401);
-    die("Unauthorized");
-}
+$user = AuthMiddleware::requireAuth();
 ?>
             <div class="modal-body px-4 pt-4">
                 <p class="small opacity-75 mb-3" style="line-height: 1.6;">

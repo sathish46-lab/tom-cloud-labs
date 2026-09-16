@@ -1,6 +1,11 @@
 <?php
 require_once __DIR__ . '/../../load.php';
 
+header('Content-Type: application/json');
+
+// CRITICAL: This is a destructive seeding script — admin only
+$user = AuthMiddleware::requireAdmin();
+
 $db = DatabaseConnection::getDefaultDatabase();
 
 // 1. Clear existing data (optional, but good for testing)

@@ -8,14 +8,12 @@
 
 require_once __DIR__ . '/../../load.php';
 
-use TomLabs\Core\{Auth, DatabaseConnection, Response};
-
 // Set JSON content type
 header('Content-Type: application/json');
 
 try {
     // Require authentication
-    $user = Auth::requireLogin();
+    $user = AuthMiddleware::requireAuth();
     
     // Get instance hash from request
     $hash = $_GET['hash'] ?? null;

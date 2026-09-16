@@ -1,11 +1,7 @@
 <?php
 require_once '../../load.php';
 
-// Only allow authenticated users
-if (!Session::getUser()) {
-    http_response_code(401);
-    die("Unauthorized");
-}
+$user = AuthMiddleware::requireAuth();
 
 $uiPrefs = Session::getUser()->getUiPreferences() ?? [];
 $activeBgTab = $uiPrefs['bg_dialog_tab'] ?? 'swatches';

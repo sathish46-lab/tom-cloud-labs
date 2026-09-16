@@ -1,15 +1,16 @@
 <?php
 header('Content-Type: application/json');
 
-require_once __DIR__ . '/../../vendor/autoload.php';
-require_once __DIR__ . '/../../src/utils/config.php';
-require_once __DIR__ . '/../../src/lib/core/DatabaseConnection.class.php';
+require_once __DIR__ . '/../../src/load.php';
 
-session_start();
+$userId = 0;
+if (AuthMiddleware::isAuthenticated()) {
+    $user = AuthMiddleware::getUser();
+    $userId = (int)$user->getUserId();
+}
 
 $q = isset($_GET['q']) ? trim($_GET['q']) : '';
 $qEscaped = preg_quote($q, '/');
-$userId = $_SESSION['user_id'] ?? 0;
 
 if (empty($q)) {
     echo json_encode(['result' => 'success', 'q' => '', 'groups' => (object)[]]);

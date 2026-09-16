@@ -5,8 +5,9 @@ use TomLabs\Labs\Quiz;
 
 header('Content-Type: application/json');
 
-if (Session::getUser()) {
-    $userEmail = Session::getUser()->getEmail();
+$user = AuthMiddleware::requireAuth();
+{
+    $userEmail = $user->getEmail();
     $quizHash = $_POST['hash'] ?? null;
     $answersJson = $_POST['answers'] ?? '[]';
     $status = $_POST['status'] ?? 'completed';

@@ -5,8 +5,9 @@ use TomLabs\Labs\Quiz;
 
 header('Content-Type: application/json');
 
-if (Session::getUser()) {
-    $userEmail = Session::getUser()->getEmail();
+$user = AuthMiddleware::requireAuth();
+{
+    $userEmail = $user->getEmail();
     $quizHash = $_POST['hash'] ?? null;
 
     if ($quizHash && $userEmail) {
@@ -15,6 +16,4 @@ if (Session::getUser()) {
     } else {
         echo json_encode(['status' => 'error', 'message' => 'Missing hash']);
     }
-} else {
-    echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
 }

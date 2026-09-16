@@ -1,11 +1,8 @@
 <?php
-require_once __DIR__ . '/../../../vendor/autoload.php';
-require_once __DIR__ . '/../../../src/utils/config.php';
-require_once __DIR__ . '/../../../src/lib/core/DatabaseConnection.class.php';
+require_once __DIR__ . '/../../../src/load.php';
 header('Content-Type: application/json');
 
-$user = Session::getUser();
-if (!$user) { http_response_code(401); echo json_encode(['error' => 'Unauthorized']); exit; }
+$user = AuthMiddleware::requireAuth();
 
 $currentUserId = (int)$user->getUserId();
 $slug = $_GET['slug'] ?? '';

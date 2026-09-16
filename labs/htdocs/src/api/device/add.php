@@ -1,13 +1,7 @@
 <?php
 require_once '../../load.php';
 
-// Only allow authenticated users
-if (!Session::getUser()) {
-    http_response_code(401);
-    die("Unauthorized");
-}
-
-$user = Session::getUser();
+$user = AuthMiddleware::requireAuth();
 $db = DatabaseConnection::getDefaultDatabase();
 $instDb = DatabaseConnection::getClient()->selectDatabase('tom_labs_instances_db');
 
