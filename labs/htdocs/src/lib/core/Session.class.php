@@ -137,9 +137,8 @@ class Session
      * Environment helpers (instance-style, kept for backward compat)
      * ------------------------------------------------------------------ */
 
-    public function getEnvironment() { return SessionEnv::getEnvironment(); }
-    public function isBeta()         { return SessionEnv::isBeta(); }
-    public function isProd()         { return SessionEnv::isProd(); }
-    public function isAlpha()        { return SessionEnv::isAlpha(); }
-    public function getEvironment()  { return SessionEnv::getEnvironment(); }
+    public static function getEnvironment() { return SessionEnv::getEnvironment(); }
+    public static function isBeta()         { return SessionEnv::isBeta(); }
+    public static function isProd()         { return SessionEnv::isProd(); }
+    public static function isAlpha()        { return SessionEnv::isAlpha(); }
 }
