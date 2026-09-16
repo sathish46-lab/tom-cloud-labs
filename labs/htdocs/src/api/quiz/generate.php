@@ -33,7 +33,8 @@ try {
     Quiz::updateUserStats($userEmail, 0, -1);
 
     // 3. Trigger Generation
-    $response = Quiz::startGeneration($topicId, $subtopicId, $diff);
+    $userId = $user ? $user->getUserId() : null;
+    $response = Quiz::startGeneration($topicId, $subtopicId, $diff, $userId);
     
     // Add updated balance to response
     $response['new_jolt'] = ($stats['jolt'] ?? 1) - 1;

@@ -157,13 +157,14 @@ class Quiz {
     /**
      * Trigger the AI generation process via labsctl orchestrator and capture PID
      */
-    public static function startGeneration($topicId, $subtopicId, $difficulty = 'normal') {
+    public static function startGeneration($topicId, $subtopicId, $difficulty = 'normal', $userId = null) {
         $db = DatabaseConnection::getDefaultDatabase();
         $jobId = (string) new ObjectId();
 
         // 1. Initialize professional job state
         $jobData = [
             '_id' => $jobId,
+            'user_id' => $userId ? (int)$userId : null,
             'topic_id' => $topicId,
             'subtopic_id' => $subtopicId,
             'difficulty' => $difficulty,
