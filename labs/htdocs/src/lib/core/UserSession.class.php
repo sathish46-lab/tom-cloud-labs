@@ -42,9 +42,17 @@ public function getUser() {
 }
 
 /**
- * Delegate unknown method calls to the inner User object.
- * This allows API code to call $user->getUserId(), $user->getEmail(), etc.
- * on the UserSession returned by AuthMiddleware::requireAuth().
+ * Explicit delegations to User object.
+ * __call delegation to User::__call is unreliable for these methods.
+ */
+public function getEmail()    { return $this->user ? $this->user->getEmail() : null; }
+public function getUsername() { return $this->user ? $this->user->getUsername() : null; }
+public function getUserId()   { return $this->user ? $this->user->getUserId() : null; }
+public function getRole()     { return $this->user ? $this->user->getRole() : null; }
+public function getAvatar()   { return $this->user ? $this->user->getAvatar() : null; }
+
+/**
+ * Delegate remaining unknown method calls to the inner User object.
  */
 public function __call($method, $args) {
     if ($this->user && method_exists($this->user, $method)) {

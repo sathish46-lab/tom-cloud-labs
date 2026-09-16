@@ -7,8 +7,10 @@ header('Content-Type: application/json');
 require_once __DIR__ . '/../../load.php';
 use TomLabs\Labs\Quiz;
 
-// Auth Protection
-$user = AuthMiddleware::requireAuth();
+AuthMiddleware::requireAuth();
+
+$user = Session::getUser();
+$userEmail = $user ? $user->getEmail() : null;
 
 $topicId = $_GET['topic'] ?? null;
 $subtopicId = $_GET['subtopic'] ?? null;
@@ -20,9 +22,6 @@ if (!$topicId || !$subtopicId) {
 }
 
 try {
-    
-    $userEmail = $user ? $user->getEmail() : null;
-    
     // 1. Check for Jolt
     $stats = Quiz::getUserStats($userEmail);
     if (($stats['jolt'] ?? 0) < 1) {
