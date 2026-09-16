@@ -1,0 +1,1065 @@
+// ========================================================================
+// Launchpad — SNA-Style Home Page (Glassmorphism Icon Grid)
+// ========================================================================
+
+// ---------- Shell (matches SNA's .lp-shell) ----------
+.lp-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+// ---------- Top Dock (Glass Navbar) ----------
+.lp-top-dock {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  padding: 0;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: visible;
+  text-align: left;
+}
+
+.lp-menubar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  padding: 0.3rem 1.1rem;
+  border-radius: 0;
+  margin: 0;
+  border-bottom: 1px solid rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.08);
+  position: relative;
+  z-index: 1001;
+  text-align: left;
+
+  body.hwa-enabled & {
+    backdrop-filter: saturate(180%) blur(18px);
+    -webkit-backdrop-filter: saturate(180%) blur(18px);
+  }
+}
+
+[data-coreui-theme="light"] .lp-menubar {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.lp-mb-left {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.lp-mb-logo {
+  height: 30px;
+  width: auto;
+  display: block;
+  flex-shrink: 0;
+  margin: -4px 0;
+}
+
+svg.lp-mb-logo, .lp-mb-logo-glyph {
+  width: 30px;
+  height: 30px;
+  margin: -4px 0;
+  color: rgba(var(--cui-primary-rgb, 139, 145, 249), 1);
+}
+
+.lp-logo-light {
+  display: none;
+}
+
+[data-coreui-theme="light"] .lp-logo-dark {
+  display: none;
+}
+
+[data-coreui-theme="light"] .lp-logo-light {
+  display: block;
+}
+
+.lp-wordmark {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--cui-body-color, #fff);
+  white-space: nowrap;
+}
+
+.lp-plan-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.34rem 0.95rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-decoration: none !important;
+  background: rgba(var(--cui-primary-rgb, 139, 145, 249), 0.92);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(var(--cui-primary-rgb, 139, 145, 249), 0.4);
+
+  .icon {
+    width: 15px;
+    height: 15px;
+  }
+
+  &.lp-plan-pill-sm {
+    padding: 0.2rem 0.62rem;
+    font-size: 0.75rem;
+    gap: 0.3rem;
+    box-shadow: none;
+  }
+}
+
+.lp-mb-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+// MCP Chip
+.lp-mcp-dock {
+  position: relative;
+  display: inline-flex;
+}
+
+.lp-mcp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--cui-body-color, #fff);
+  background: rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.08);
+  transition: background 0.15s ease, color 0.15s ease;
+
+  .icon {
+    width: 15px;
+    height: 15px;
+  }
+
+  &:hover, &[aria-expanded="true"] {
+    background: rgba(var(--cui-primary-rgb, 139, 145, 249), 0.18);
+    color: rgba(var(--cui-primary-rgb, 139, 145, 249), 1);
+  }
+
+  &.lp-mcp-live {
+    background: rgba(var(--cui-primary-rgb, 139, 145, 249), 0.2);
+    color: rgba(var(--cui-primary-rgb, 139, 145, 249), 1);
+  }
+}
+
+.lp-mcp-label {
+  display: inline;
+}
+
+// Clock
+.lp-clock {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--cui-body-color, #fff);
+  white-space: nowrap;
+}
+
+// Icon Buttons
+.lp-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  color: var(--cui-body-color, #fff);
+  background: rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.08);
+  transition: background 0.15s ease, color 0.15s ease;
+  padding: 0;
+
+  .icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover, &[aria-expanded="true"] {
+    background: rgba(var(--cui-primary-rgb, 139, 145, 249), 0.18);
+    color: rgba(var(--cui-primary-rgb, 139, 145, 249), 1);
+  }
+}
+
+// ---------- Hero Section ----------
+.lp-hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1.1rem;
+  margin: 1.7rem 1rem 0;
+}
+
+.lp-hero-avatar-img {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 2px solid rgba(var(--cui-primary-rgb, 139, 145, 249), 0.45);
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.45);
+}
+
+.lp-hero-avatar-wrap {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.lp-hero-text {
+  text-align: left;
+  min-width: 0;
+}
+
+.lp-greeting {
+  text-align: center;
+  margin: 0;
+  font-size: min(1.55rem, 6vw);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--cui-body-color, #fff);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.35);
+}
+
+.lp-tagline {
+  text-align: center;
+  margin: 0.25rem 0 0;
+  font-size: min(0.9rem, 4vw);
+  font-weight: 400;
+  line-height: 1.3;
+  color: rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.7);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
+}
+
+// ---------- Search Bar ----------
+.lp-searchbar {
+  display: flex;
+  justify-content: center;
+  margin: 1.3rem 0 1.6rem;
+  padding: 0 1rem;
+}
+
+.lp-search-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: min(540px, 92%);
+  padding: 0.6rem 1rem;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.12);
+  color: var(--cui-secondary-color, rgba(255, 255, 255, 0.5));
+  cursor: text;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  text-decoration: none;
+  background: transparent;
+
+  body.hwa-enabled & {
+    backdrop-filter: saturate(180%) blur(16px);
+    -webkit-backdrop-filter: saturate(180%) blur(16px);
+  }
+
+  &:hover {
+    border-color: rgba(var(--cui-primary-rgb, 139, 145, 249), 0.45);
+    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.22);
+  }
+}
+
+.lp-search-ico {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.lp-search-ph {
+  flex: 1;
+  text-align: left;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.lp-kbd {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.08rem 0.4rem;
+  border-radius: 0.4rem;
+  border: 1px solid rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.2);
+  background: rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.06);
+  color: var(--cui-secondary-color, rgba(255, 255, 255, 0.5));
+}
+
+// ---------- Launchpad Main Container ----------
+.lp-main {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 0 1rem 3rem;
+}
+
+// ---------- Section ----------
+.lp-section {
+  margin-bottom: 1.5rem;
+}
+
+.lp-heading {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.45);
+  margin-bottom: 0.75rem;
+  text-align: center;
+}
+
+// ---------- Pill Tab Bar ----------
+.lp-pillbar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  position: sticky;
+  top: calc(var(--lp-menu-h, 0px) + 0.5rem);
+  z-index: 60;
+  margin: 0 auto 1rem;
+  width: fit-content;
+  padding: 0.3rem;
+  border-radius: 2rem;
+  background: rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.06);
+  border: 1px solid rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.08);
+
+  body.hwa-enabled & {
+    backdrop-filter: saturate(180%) blur(16px);
+    -webkit-backdrop-filter: saturate(180%) blur(16px);
+  }
+}
+
+#lp-pillbar.lp-pillbar {
+  position: sticky !important;
+  top: calc(var(--lp-menu-h, 0px) + 0.5rem);
+}
+
+.lp-pill {
+  border: 0;
+  border-radius: 2rem;
+  padding: 0.35rem 1rem;
+  background: transparent;
+  color: var(--cui-secondary-color, rgba(255, 255, 255, 0.5));
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+
+  &:hover {
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  &.lp-pill-active {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--cui-primary, #8b91f9);
+    outline-offset: 2px;
+  }
+}
+
+.lp-run-count {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.06rem 0.4rem;
+  border-radius: 999px;
+  margin-left: 0.25rem;
+  vertical-align: 0.06em;
+  background: rgba(var(--cui-success-rgb, 34, 197, 94), 0.16);
+  color: rgba(var(--cui-success-rgb, 34, 197, 94), 1);
+  white-space: nowrap;
+
+  &.lp-run-warn {
+    background: rgba(var(--cui-warning-rgb, 245, 158, 11), 0.16);
+    color: rgba(var(--cui-warning-rgb, 245, 158, 11), 1);
+  }
+}
+
+// ---------- Icon Grid ----------
+.lp-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem 0.4rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+// ---------- Icon Tile ----------
+.lp-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  width: 90px;
+  cursor: pointer;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+
+  &:focus-visible .lp-tile {
+    outline: 2px solid var(--cui-primary, #8b91f9);
+    outline-offset: 2px;
+  }
+}
+
+.lp-tile-wrap {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lp-tile {
+  flex: 0 0 72px;
+  width: 72px;
+  height: 72px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  margin: 0;
+  transition: transform 0.18s ease, filter 0.18s ease;
+
+  .lp-icon:hover & {
+    transform: scale(1.06);
+  }
+}
+
+// ---------- Icon Image ----------
+.lp-img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  border-radius: 8px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+
+  &.lp-img-ready {
+    opacity: 1;
+  }
+}
+
+// ---------- SVG Glyph ----------
+.lp-glyph {
+  width: 34px;
+  height: 34px;
+  fill: currentColor;
+}
+
+.lp-emoji {
+  width: 34px;
+  height: 34px;
+  font-size: 30px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// ---------- Status Dot ----------
+.lp-status {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  z-index: 3;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--cui-body-bg, #0a0a14);
+}
+
+.lp-dot-healthy {
+  background: var(--cui-success, #22c55e);
+}
+
+.lp-dot-starting {
+  background: var(--cui-warning, #f59e0b);
+  animation: lpDotPulse 1.6s ease-in-out infinite;
+}
+
+.lp-dot-unhealthy {
+  background: var(--cui-danger, #ef4444);
+}
+
+.lp-dot-paused {
+  background: rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.5);
+}
+
+@keyframes lpDotPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+// ---------- Stop Badge (for stopped instances) ----------
+.lp-stop-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  z-index: 3;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(20, 20, 24, 0.85);
+  border: 2px solid var(--cui-body-bg, #0a0a14);
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    background: var(--cui-danger, #ef4444);
+  }
+}
+
+// ---------- Stopped State ----------
+.lp-stopped {
+  cursor: pointer;
+
+  .lp-tile {
+    filter: brightness(0.45) saturate(0.3);
+  }
+
+  .lp-tile-wrap::before {
+    opacity: 0.15;
+  }
+
+  .lp-label {
+    color: var(--cui-secondary-color, rgba(255, 255, 255, 0.5));
+  }
+}
+
+// ---------- More Button (⋯) ----------
+.lp-more {
+  position: absolute;
+  bottom: -6px;
+  right: -6px;
+  z-index: 3;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.18);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  color: var(--cui-body-color, #fff);
+  cursor: pointer;
+
+  .lp-icon:hover &, .lp-icon:focus-within &, .lp-icon.lp-touch & {
+    display: flex;
+  }
+
+  .icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  &:hover {
+    background: rgba(var(--cui-primary-rgb, 139, 145, 249), 0.3);
+  }
+}
+
+// ---------- Label ----------
+.lp-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.2;
+  color: var(--cui-body-color, #fff);
+  max-width: 96px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+body[data-bg-luma="dark"] .lp-label {
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+}
+
+// ---------- Deploy Tile ----------
+.lp-deploy-tile .lp-tile {
+  border: 2px dashed rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.25);
+  background: transparent !important;
+
+  &::before {
+    display: none !important;
+  }
+}
+
+.lp-deploy-tile .lp-glyph {
+  width: 30px;
+  height: 30px;
+  color: var(--cui-secondary-color, rgba(255, 255, 255, 0.5));
+}
+
+.lp-deploy-tile .lp-emoji {
+  width: 30px;
+  height: 30px;
+  font-size: 26px;
+}
+
+.lp-deploy-tile:hover .lp-tile {
+  border-color: rgba(var(--cui-primary-rgb, 139, 145, 249), 0.6);
+}
+
+// ---------- Removed Row ----------
+.lp-removed-row {
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+.lp-removed-toggle {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 12px;
+  border-radius: 50px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.7);
+  }
+}
+
+[data-coreui-theme="light"] .lp-removed-toggle {
+  color: rgba(0, 0, 0, 0.4);
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.04);
+    color: rgba(0, 0, 0, 0.7);
+  }
+}
+
+.lp-removed-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.lp-restore-btn {
+  padding: 4px 10px;
+  border-radius: 50px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(34, 197, 94, 0.15);
+    border-color: rgba(34, 197, 94, 0.3);
+    color: #22c55e;
+  }
+}
+
+// ---------- Icon Editor Template ----------
+.lp-icon-editor {
+  padding: 1rem;
+}
+
+.lp-ie-tabs {
+  .nav-link {
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.5);
+    border: 1px solid transparent;
+
+    &:hover {
+      color: rgba(255, 255, 255, 0.8);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    &.active {
+      background: rgba(var(--cui-primary-rgb, 139, 145, 249), 0.2);
+      color: var(--cui-primary, #8b91f9);
+      border-color: rgba(var(--cui-primary-rgb, 139, 145, 249), 0.3);
+    }
+  }
+}
+
+.lp-ie-search {
+  border-radius: 10px;
+  font-size: 0.82rem;
+}
+
+.lp-ie-glyph-grid,
+.lp-ie-brand-grid {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.lp-ie-colour-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.lp-ie-colour-label {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.lp-ie-upload-preview {
+  min-height: 80px;
+}
+
+// ---------- Halo Fill Effect ----------
+.lp-halo-fill {
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 22px;
+    background: radial-gradient(circle at center, var(--lp-icon-glow, rgba(255, 255, 255, 0.1)) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  .lp-icon:hover &::after {
+    opacity: 0.3;
+  }
+}
+
+// ---------- Responsive ----------
+@media (max-width: 640px) {
+  .lp-hero {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.6rem;
+    padding-top: 1.25rem;
+  }
+
+  .lp-hero-text {
+    text-align: center;
+  }
+
+  .lp-greeting {
+    font-size: 1.2rem;
+  }
+
+  .lp-hero-avatar-wrap {
+    width: 56px;
+    height: 56px;
+  }
+
+  .lp-wordmark {
+    display: none;
+  }
+
+  .lp-clock {
+    display: none;
+  }
+
+  .lp-plan-pill {
+    display: none;
+  }
+
+  .lp-top-dock {
+    padding: 0;
+  }
+
+  .lp-menubar {
+    padding: 0.35rem 0.6rem;
+  }
+
+  .lp-mcp-label {
+    display: none;
+  }
+
+  .lp-grid {
+    gap: 0.4rem 0.25rem;
+  }
+
+  .lp-icon {
+    width: 78px;
+  }
+
+  .lp-tile,
+  .lp-tile-wrap {
+    width: 64px;
+    height: 64px;
+  }
+
+  .lp-tile {
+    border-radius: 16px;
+  }
+
+  .lp-label {
+    font-size: 0.62rem;
+    max-width: 72px;
+  }
+
+  .lp-img {
+    width: 36px;
+    height: 36px;
+  }
+
+  .lp-glyph {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+@media (max-width: 400px) {
+  .lp-icon {
+    width: 70px;
+  }
+
+  .lp-tile,
+  .lp-tile-wrap {
+    width: 56px;
+    height: 56px;
+  }
+
+  .lp-label {
+    font-size: 0.58rem;
+    max-width: 64px;
+  }
+}
+
+// ---------- Icon Light/Dark classification (for proper icon rendering) ----------
+.lp-icon-light .lp-img {
+  filter: none;
+}
+
+.lp-icon-dark .lp-img {
+  filter: brightness(0.9) contrast(1.1);
+}
+
+// ---------- App link style (no underline) ----------
+a.lp-icon {
+  text-decoration: none !important;
+}
+
+// ---------- Body-level overrides for home page ----------
+body.lp-home {
+  > #htmx-top-progress { display: none; }
+
+  > .wrapper,
+  > .body,
+  > #main-content {
+    display: none !important;
+  }
+}
+
+// ---------- Spotlight Search Overlay ----------
+.lp-spot-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 10vh 1rem 1rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.16s ease;
+  background: rgba(0, 0, 0, 0.45);
+
+  body.hwa-enabled & {
+    backdrop-filter: blur(6px) saturate(1.2);
+    -webkit-backdrop-filter: blur(6px) saturate(1.2);
+  }
+
+  &.lp-spot-open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.lp-spot-card {
+  width: min(620px, 96vw);
+  max-height: 72vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  transform: translateY(-8px) scale(0.98);
+  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.3, 1);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+
+  .lp-spot-open & {
+    transform: translateY(0) scale(1);
+  }
+}
+
+.lp-spot-inputwrap {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.9rem 1.1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+  .icon {
+    width: 18px;
+    height: 18px;
+    color: rgba(255, 255, 255, 0.4);
+    flex-shrink: 0;
+    fill: currentColor;
+  }
+}
+
+.lp-spot-input {
+  flex: 1;
+  border: none;
+  background: none;
+  outline: none;
+  font-size: 1.05rem;
+  color: #fff;
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.35);
+  }
+}
+
+.lp-spot-results {
+  overflow-y: auto;
+  padding: 0.4rem;
+  max-height: calc(72vh - 60px);
+}
+
+.lp-spot-grouphd {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.4);
+  padding: 0.55rem 0.7rem 0.3rem;
+}
+
+.lp-spot-item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border-radius: 0.7rem;
+  cursor: pointer;
+  color: #fff;
+  text-decoration: none !important;
+  border: none;
+  background: none;
+  text-align: left;
+  transition: background 0.12s ease;
+
+  &.lp-spot-active, &:hover {
+    background: rgba(139, 145, 249, 0.14);
+  }
+}
+
+.lp-spot-ic {
+  width: 34px;
+  height: 34px;
+  border-radius: 0.55rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .icon {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+  }
+}
+
+.lp-spot-txt {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.lp-spot-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lp-spot-sub {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lp-spot-empty {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.9rem;
+}
+
+.lp-grid-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 2rem;
+}

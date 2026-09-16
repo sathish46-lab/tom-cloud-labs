@@ -425,7 +425,7 @@ $classString = implode(' ', $htmlClasses);
     </style>
 </head>
 
-<body class="<?= $isGlassMode ? 'hwa-enabled' : 'hwa-disabled' ?>" data-version="<?= htmlspecialchars(Session::getVersion()) ?>" <?php if (!defined("IS_HOME_PAGE")): ?> hx-boost="true" hx-ext="head-support" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-indicator="#main-content" <?php endif; ?>>
+<body class="<?= $isGlassMode ? 'hwa-enabled' : 'hwa-disabled' ?> <?= defined('IS_HOME_PAGE') ? 'lp-home' : '' ?>" data-version="<?= htmlspecialchars(Session::getVersion()) ?>" <?php if (!defined("IS_HOME_PAGE")): ?> hx-boost="true" hx-ext="head-support" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-indicator="#main-content" <?php endif; ?>>
     <!-- Global HTMX Top Loading Bar -->
     <div id="htmx-top-progress"></div>
 
@@ -436,13 +436,17 @@ $classString = implode(' ', $htmlClasses);
         <div class="bg-cover bg-img-4" data-depth="0.1" style="<?= isset($assets[3]) ? "background-image: url('{$assets[3]}'); display: block;" : '' ?>"></div>
     </div>
 
-    <?php if (!defined('IS_HOME_PAGE') && !Session::get('show_session_expired', false)): Session::getNav(); endif; ?>
+    <?php if (defined('IS_HOME_PAGE')): ?>
+    <div class="lp-shell min-vh-100" id="launchpad">
+    <?php else: ?>
+    <?php if (!Session::get('show_session_expired', false)): Session::getNav(); endif; ?>
 
-    <div class="wrapper d-flex flex-column min-vh-100 bg-transparent" style="<?= (defined('IS_HOME_PAGE') || Session::get('show_session_expired', false)) ? '--cui-sidebar-occupy-start: 0px;' : '' ?>"> 
-    <?php if (!defined('IS_HOME_PAGE') && !Session::get('show_session_expired', false)): Session::getSiteNav(); endif; ?>
+    <div class="wrapper d-flex flex-column min-vh-100 bg-transparent" style="<?= Session::get('show_session_expired', false) ? '--cui-sidebar-occupy-start: 0px;' : '' ?>"> 
+    <?php if (!Session::get('show_session_expired', false)): Session::getSiteNav(); endif; ?>
 
     <div class="body flex-grow-1 bg-transparent d-flex flex-column <?= Session::get('show_session_expired', false) ? 'align-items-center justify-content-center p-0 m-0' : '' ?>"> 
         <div id="main-content" class="bg-transparent" style="display: contents;">
+    <?php endif; ?>
                 <?php
                 // Build htmx-page-bootstrap JSON for breadcrumb + page metadata
                 $pageTitle = Session::$pageTitle ?? 'Dashboard';
@@ -533,11 +537,15 @@ $classString = implode(' ', $htmlClasses);
                         echo Session::loadTemplate('_error');
                     }
                     ?>
+            <?php if (defined('IS_HOME_PAGE')): ?>
+            </div>
+            <?php else: ?>
             </div>
         </div>
 
-        <?php if (!Session::get('footer', false) && !defined('IS_HOME_PAGE') && !Session::get('show_session_expired', false)) { echo Session::generateFooter(); } ?>
+        <?php if (!Session::get('footer', false) && !Session::get('show_session_expired', false)) { echo Session::generateFooter(); } ?>
     </div>
+    <?php endif; ?>
     <!-- Premium Stackable Notification Container -->
     <div id="notification-container" class="toast-container position-fixed top-0 end-0 p-3 notification-container">
         <!-- Toasts will be injected here dynamically -->
