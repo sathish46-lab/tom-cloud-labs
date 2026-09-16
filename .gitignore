@@ -27,9 +27,6 @@
 *.cache
 .env
 .env.*
-.env
-.secrets_env.php
-!env_sample.json
 .DS_Store
 Thumbs.db
 

@@ -5,52 +5,20 @@
  * Handles reading from env.json and session.json with local fallbacks.
  */
 
-/**
- * Secret-to-env-var mapping.
- * Keys are config paths (dot notation), values are env var names.
- * This allows env.json secrets to be replaced by environment variables.
- */
 function get_config($key) {
     static $config_cache = null;
 
     if ($config_cache === null) {
-        // Secret-to-env-var mapping: config key → env var name
-        $secretEnvMap = [
-            'database_file'           => 'DATABASE_FILE',
-            'mongo_pass'              => 'MONGO_PASS',
-            'amqp_pass'               => 'RABBITMQ_PASS',
-            'api_secret'              => 'API_SECRET',
-            'ai_api_key'              => 'AI_API_KEY',
-            'ai_internal_token'       => 'AI_INTERNAL_TOKEN',
-            'smtp.pass'               => 'SMTP_PASS',
-            's3.access_key'           => 'S3_ACCESS_KEY',
-            's3.secret_key'           => 'S3_SECRET_KEY',
-            'google_oauth.client_id'  => 'GOOGLE_CLIENT_ID',
-            'google_oauth.client_secret' => 'GOOGLE_CLIENT_SECRET',
-            'gitlab_oauth.client_id'  => 'GITLAB_CLIENT_ID',
-            'gitlab_oauth.client_secret' => 'GITLAB_CLIENT_SECRET',
-            'wireguard_public_key'    => 'WIREGUARD_PUBLIC_KEY',
-        ];
-
-        // Priority 1: Direct env var (flat keys like 'amqp_host')
+        // Priority 1: Environment variables (production recommended)
+        // Supports flat keys like 'amqp_host' and nested like 's3.access_key' via underscore notation
         $envValue = getenv($key);
         if ($envValue !== false) {
-            $config_cache[$key] = $envValue;
             $config_cache[$key . '__env_source'] = true;
+            // Store for flat key lookup
+            $config_cache[$key] = $envValue;
         }
 
-        // Priority 2: Mapped env vars for secrets (e.g., 'smtp.pass' → SMTP_PASS)
-        foreach ($secretEnvMap as $configKey => $envVar) {
-            if (!isset($config_cache[$configKey])) {
-                $envVal = getenv($envVar);
-                if ($envVal !== false) {
-                    $config_cache[$configKey] = $envVal;
-                    $config_cache[$configKey . '__env_source'] = true;
-                }
-            }
-        }
-
-        // Priority 3: env.json file (legacy, deprecated — secrets should be in env vars)
+        // Priority 2: env.json file (legacy, deprecated in production)
         $path = '/var/www/env.json';
         if (!file_exists($path)) {
             $localPath = __DIR__ . '/../../../../env.json';
@@ -61,36 +29,16 @@ function get_config($key) {
             $data = file_get_contents($path);
             $fileConfig = json_decode($data, true) ?: [];
 
-            // Flatten nested config for merge (e.g., google_oauth.client_id)
-            $flat = [];
+            // Merge file config — env vars take precedence
             foreach ($fileConfig as $k => $v) {
-                if (is_array($v)) {
-                    foreach ($v as $sk => $sv) {
-                        $flat["$k.$sk"] = $sv;
-                    }
-                } else {
-                    $flat[$k] = $v;
-                }
-            }
-
-            // Merge — env vars (direct + mapped) take precedence over file
-            foreach ($flat as $k => $v) {
-                if (!isset($config_cache[$k]) && !isset($config_cache[$k . '__env_source'])) {
+                if (!isset($config_cache[$k . '__env_source'])) {
                     $config_cache[$k] = $v;
                 }
             }
 
-            // Warn if env.json still contains secrets
+            // Warn if env.json is used in production
             if (!is_local()) {
-                $leakedSecrets = [];
-                foreach ($secretEnvMap as $ck => $ev) {
-                    if (isset($flat[$ck]) && !isset($config_cache[$ck . '__env_source'])) {
-                        $leakedSecrets[] = $ck;
-                    }
-                }
-                if (!empty($leakedSecrets)) {
-                    error_log("SECURITY: env.json still contains secrets: " . implode(', ', $leakedSecrets) . ". Move to env vars.");
-                }
+                error_log("CONFIG DEPRECATION: env.json loaded at {$path}. Move secrets to environment variables for production.");
             }
         }
     }
