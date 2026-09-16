@@ -4,6 +4,12 @@
  */
 require_once __DIR__ . '/utils/config.php';
 
+// Load secrets from entrypoint-generated env vars (overrides env.json)
+$secretsEnv = __DIR__ . '/.secrets_env.php';
+if (file_exists($secretsEnv)) {
+    require_once $secretsEnv;
+}
+
 // 1. Start session first (without using any classes yet)
 if (session_status() === PHP_SESSION_NONE) {
     $lifetime = get_session_lifetime();

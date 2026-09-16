@@ -1,0 +1,67 @@
+{
+  "mongo_user": "admin",
+  "mongo_pass": "REPLACE_WITH_MONGO_PASS",
+  "amqp_host": "127.0.0.1",
+  "amqp_port": 5672,
+  "amqp_user": "admin",
+  "amqp_pass": "REPLACE_WITH_RABBITMQ_PASS",
+  "google_oauth": {
+    "client_id": "REPLACE_WITH_GOOGLE_CLIENT_ID",
+    "client_secret": "REPLACE_WITH_GOOGLE_CLIENT_SECRET",
+    "redirect_uri": "http://dev.tomweb.in:9080/signin",
+    "metadata_url": "https://accounts.google.com/.well-known/openid-configuration"
+  },
+  "smtp": {
+    "host": "smtp.gmail.com",
+    "port": 465,
+    "user": "sathishp3223@gmail.com",
+    "pass": "REPLACE_WITH_SMTP_PASS",
+    "from_email": "sathishp3223@gmail.com",
+    "from_name": "Tom Labs Security",
+    "app_url": "https://labs.tomweb.in"
+  },
+  "exception_path": "/var/www/labs/htdocs/src/lib/exceptions/",
+  "app_log": "/var/log/labs/log.txt",
+  "app_cache": "/var/cache/labs",
+  "database_file": "REPLACE_WITH_MONGODB_URI",
+  "main_db": "tom_labs_db",
+  "vpn_db": "tom_labs_vpn",
+  "vpn_url": "http://127.0.0.1:8082/api",
+  "api_secret": "REPLACE_WITH_API_SECRET",
+  "wireguard": {
+    "conf_path": "/etc/wireguard/",
+    "interface": "wg0"
+  },
+  "s3": {
+    "endpoint": "https://s3s.zeal.ninja",
+    "region": "us-east-1",
+    "bucket": "tom-labs-assets",
+    "access_key": "REPLACE_WITH_S3_ACCESS_KEY",
+    "secret_key": "REPLACE_WITH_S3_SECRET_KEY",
+    "use_path_style": true
+  },
+  "allowed_hosts": [
+    "localhost",
+    "labs.tomweb.in",
+    "dev.tomweb.in"
+  ],
+  "wireguard_public_key": "REPLACE_WITH_WIREGUARD_PUBLIC_KEY",
+  "ai_api_key": "REPLACE_WITH_AI_API_KEY",
+  "lm_studio_url": "http://host.docker.internal:1234/v1/chat/completions",
+  "gitlab_oauth": {
+    "client_id": "REPLACE_WITH_GITLAB_CLIENT_ID",
+    "client_secret": "REPLACE_WITH_GITLAB_CLIENT_SECRET",
+    "redirect_uri": "http://work.dev.tomweb.in/callback.php",
+    "base_url": "https://git.tomweb.in",
+    "internal_url": "http://TomCloudLab_gitlab:80"
+  },
+  "wireguard_endpoint_port": 51821,
+  "mq_domain": "mq.dev.tomweb.in",
+  "docker_ip": "172.30.0.",
+  "tunnel_ip": "172.31.0.",
+  "wireguard_mode": "docker",
+  "wireguard_endpoint": "vpn.dev.tomweb.in:51821",
+  "ai_internal_token": "REPLACE_WITH_AI_INTERNAL_TOKEN",
+  "storage_base": "/var/tomlabs/storage",
+  "storage_limit_gb": 25
+}
