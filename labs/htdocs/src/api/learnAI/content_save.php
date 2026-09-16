@@ -7,11 +7,7 @@ require_once __DIR__ . '/../../load.php';
 
 header('Content-Type: application/json');
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Unauthorized']);
-    exit;
-}
+$user = AuthMiddleware::requireAuth();
 
 $input = json_decode(file_get_contents('php://input'), true) ?? [];
 $chapterId = $input['chapter_id'] ?? '';

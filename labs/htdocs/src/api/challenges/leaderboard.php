@@ -7,9 +7,7 @@
 header('Content-Type: application/json');
 require_once __DIR__ . '/../../load.php';
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    echo json_encode(['status' => 'error', 'message' => 'Unauthorized']); exit;
-}
+$user = AuthMiddleware::requireAuth();
 
 $labId = $_GET['lab_id'] ?? '';
 

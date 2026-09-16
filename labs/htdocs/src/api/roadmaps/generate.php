@@ -10,13 +10,9 @@ require_once __DIR__ . '/../../../src/lib/core/DatabaseConnection.class.php';
 header('Content-Type: application/json');
 
 // ── AUTH CHECK ──
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Unauthorized']);
-    exit;
-}
+$user = AuthMiddleware::requireAuth();
 
-$user = Session::getUser();
+
 $userId = (int)$user->getUserId();
 
 // ── INPUT VALIDATION ──

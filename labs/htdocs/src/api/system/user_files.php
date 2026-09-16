@@ -18,10 +18,7 @@ if ($type !== 'avatar' && $type !== 'private') {
 
 // Authorization check for private files
 if ($type === 'private') {
-    if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-        http_response_code(401);
-        exit('Unauthorized');
-    }
+    $user = AuthMiddleware::requireAuth();
     
     $currentUser = Session::getUser();
     if ($currentUser->getUserId() !== $userId) {

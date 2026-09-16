@@ -1,14 +1,10 @@
 <?php
 require_once __DIR__ . '/../../load.php';
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    header('Content-Type: application/json');
-    echo json_encode(['status' => 'error', 'error' => 'Unauthorized']);
-    exit;
-}
+$user = AuthMiddleware::requireAuth();
 
 header('Content-Type: application/json');
-$user = Session::getUser();
+
 $userId = (string)$user->getUserId();
 
 $input = json_decode(file_get_contents('php://input'), true);

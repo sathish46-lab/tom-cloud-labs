@@ -5,11 +5,9 @@ require_once __DIR__ . '/../../lib/core/RabbitClient.class.php';
 
 header('Content-Type: application/json');
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    echo json_encode(['status' => 'error', 'error' => 'Unauthorized']); exit;
-}
+$user = AuthMiddleware::requireAuth();
 
-$user = Session::getUser();
+
 $challengeId = $_POST['challenge_id'] ?? null;
 $instanceHash = $_POST['hash'] ?? null;
 

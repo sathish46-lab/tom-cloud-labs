@@ -7,11 +7,7 @@ require_once __DIR__ . '/../../load.php';
 
 header('Content-Type: application/json');
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Unauthorized']);
-    exit;
-}
+$user = AuthMiddleware::requireAuth();
 
 $requestId = trim($_GET['request_id'] ?? $_POST['request_id'] ?? '');
 
@@ -88,7 +84,7 @@ if ($elapsed <= 1) {
     exit;
 } else {
     // Final step: Create the AI Lesson in database
-    $user = Session::getUser();
+    
     $username = $user ? $user->getUsername() : 'AI Assistant';
     $prompt = trim($job['topic'] ?? 'AI Learning Path');
     $level = $job['level'] ?? 'Beginner';

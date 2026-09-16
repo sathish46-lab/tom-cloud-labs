@@ -2,13 +2,11 @@
 require_once __DIR__ . '/../../../src/load.php';
 
 header('Content-Type: application/json');
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    echo json_encode(['status' => 'error', 'error' => 'Unauthorized']); exit;
-}
+$user = AuthMiddleware::requireAuth();
 
 $data = json_decode(file_get_contents('php://input'), true);
 $keyId = $data['id'] ?? null;
-$user = Session::getUser();
+
 $db = DatabaseConnection::getDefaultDatabase();
 
 if ($keyId) {

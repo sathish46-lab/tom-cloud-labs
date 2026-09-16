@@ -12,13 +12,9 @@ $render = trim($_GET['render'] ?? 'json');
 if ($render === 'json') {
     header('Content-Type: application/json');
 
-    if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Unauthorized']);
-        exit;
-    }
+    $user = AuthMiddleware::requireAuth();
 
-    $user = Session::getUser();
+    
     $userId = (int)$user->getUserId();
     $filter = trim($_GET['filter'] ?? 'all');
     $level = trim($_GET['level'] ?? 'all');
@@ -92,12 +88,9 @@ if ($render === 'json') {
 // ── HTML MODE (raw HTML, like lessons filter) ──
 header('Content-Type: text/html; charset=utf-8');
 
-if (Session::getAuthStatus() != Constants::STATUS_LOGGEDIN) {
-    echo '<div class="text-center py-5"><p class="text-danger small">Please log in to view roadmaps.</p></div>';
-    exit;
-}
+$user = AuthMiddleware::requireAuth();
 
-$user = Session::getUser();
+
 $userId = (int)$user->getUserId();
 $filter = trim($_GET['filter'] ?? 'all');
 $level = trim($_GET['level'] ?? 'all');

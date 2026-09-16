@@ -3,13 +3,9 @@ ob_start();
 require_once "../../load.php";
 require_once "../../lib/core/DomainManager.class.php";
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    http_response_code(401);
-    echo 'Unauthorized';
-    exit;
-}
+$user = AuthMiddleware::requireAuth();
 
-$user = Session::getUser();
+
 $data = json_decode(file_get_contents('php://input'), true);
 
 $domain = trim(strtolower($data['domain'] ?? ''));

@@ -10,12 +10,9 @@ require_once __DIR__ . '/../../../src/lib/core/DatabaseConnection.class.php';
 
 header('Content-Type: text/html; charset=utf-8');
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    echo '<div class="text-center py-4 text-danger">Unauthorized</div>';
-    exit;
-}
+$user = AuthMiddleware::requireAuth();
 
-$user = Session::getUser();
+
 $userId = (int)$user->getUserId();
 $username = $user->getUsername() ?? 'User';
 

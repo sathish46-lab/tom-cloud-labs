@@ -3,11 +3,7 @@ require_once __DIR__ . '/../../../src/load.php';
 
 header('Content-Type: text/html; charset=utf-8');
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    http_response_code(401);
-    echo '<p class="text-danger">Unauthorized</p>';
-    exit;
-}
+$user = AuthMiddleware::requireAuth();
 
 $hash = $_GET['hash'] ?? '';
 if (empty($hash)) {
@@ -28,7 +24,7 @@ if ($inst) {
 } else {
     $labData = [];
 }
-$user = Session::getUser();
+
 $fullHash = $hash;
 
 $labType = $labData['lab_type'] ?? 'essentials';

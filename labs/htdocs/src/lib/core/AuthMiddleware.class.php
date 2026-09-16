@@ -25,7 +25,14 @@ class AuthMiddleware {
             echo json_encode(['success' => false, 'error' => 'Unauthorized']);
             exit;
         }
-        return Session::getUser();
+        $userSession = Session::getUserSession();
+        if ($userSession === null) {
+            http_response_code(401);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+            exit;
+        }
+        return $userSession;
     }
 
     /**
@@ -82,7 +89,7 @@ class AuthMiddleware {
      * Get current user if authenticated, or null.
      */
     public static function getUser(): ?UserSession {
-        return self::isAuthenticated() ? Session::getUser() : null;
+        return self::isAuthenticated() ? Session::getUserSession() : null;
     }
 
     /**

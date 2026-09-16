@@ -8,11 +8,9 @@ use TomLabs\Labs\IPManager;
 
 header('Content-Type: application/json');
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    echo json_encode(['status' => 'error', 'error' => 'Unauthorized']); exit;
-}
+$user = AuthMiddleware::requireAuth();
 
-$user = Session::getUser();
+
 $email = $user->getEmail();
 $labName = $_POST['lab'] ?? 'essentials';
 $instanceHash = $user->getLabHash($labName); 

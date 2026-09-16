@@ -132,7 +132,25 @@ if (!function_exists('global_exception_handler')) {
         while (ob_get_level() > 0) {
             ob_end_clean();
         }
-        // Only handle if Session class is available to render the beautiful page
+
+        // Detect API routes: URL path starts with /api/ or Content-Type is JSON
+        $isApi = false;
+        $uri = $_SERVER['REQUEST_URI'] ?? '';
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+        if (strpos($uri, '/api/') === 0 || strpos($contentType, 'application/json') !== false) {
+            $isApi = true;
+        }
+
+        if ($isApi) {
+            // API routes: always return JSON — never HTML
+            header('Content-Type: application/json');
+            http_response_code(500);
+            error_log("API exception [" . $uri . "]: " . $e->getMessage());
+            echo json_encode(['status' => 'error', 'error' => 'Internal server error']);
+            exit;
+        }
+
+        // Non-API routes: render the beautiful error page
         if (class_exists('Session')) {
             Session::set('error_exception', $e);
             Session::loadErrorPage();

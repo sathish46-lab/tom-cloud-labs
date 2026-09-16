@@ -1,13 +1,9 @@
 <?php
 require_once __DIR__ . '/../../load.php';
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    http_response_code(401);
-    echo 'Unauthorized';
-    exit;
-}
+$user = AuthMiddleware::requireAuth();
 
-$user = Session::getUser();
+
 $userId = (int)$user->getUserId();
 
 $dbInstances = DatabaseConnection::getClient()->selectDatabase('tom_labs_instances_db');

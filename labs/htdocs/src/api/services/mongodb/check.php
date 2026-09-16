@@ -3,12 +3,9 @@ require_once "../../../load.php";
 
 header('Content-Type: application/json');
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
-    exit;
-}
+$user = AuthMiddleware::requireAuth();
 
-$user = Session::getUser();
+
 $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
 
 $username = $_GET['user'] ?? '';

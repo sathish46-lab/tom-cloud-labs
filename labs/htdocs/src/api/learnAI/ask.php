@@ -9,13 +9,9 @@ require_once __DIR__ . '/../../lib/core/RabbitClient.class.php';
 header('Content-Type: application/json');
 
 // 1. Validate Session
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Unauthorized']);
-    exit;
-}
+$user = AuthMiddleware::requireAuth();
 
-$user = Session::getUser();
+
 $userId = (int)$user->getUserId(); // Always cast to int for consistent MongoDB typing
 
 // 2. Get Input & Session Context (Layer 2)

@@ -8,10 +8,7 @@ require_once __DIR__ . '/../../load.php';
 use TomLabs\Labs\Quiz;
 
 // Auth Protection
-if (!Session::getAuthStatus()) {
-    echo json_encode(['error' => 'Unauthorized']);
-    exit;
-}
+$user = AuthMiddleware::requireAuth();
 
 $topicId = $_GET['topic'] ?? null;
 $subtopicId = $_GET['subtopic'] ?? null;
@@ -23,7 +20,7 @@ if (!$topicId || !$subtopicId) {
 }
 
 try {
-    $user = Session::getUser();
+    
     $userEmail = $user ? $user->getEmail() : null;
     
     // 1. Check for Jolt

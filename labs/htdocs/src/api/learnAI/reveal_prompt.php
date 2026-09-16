@@ -5,14 +5,9 @@
  */
 require_once __DIR__ . '/../../load.php';
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    http_response_code(401);
-    header('Content-Type: text/html; charset=UTF-8');
-    echo '<div class="p-4 text-center text-danger">Unauthorized. Please log in.</div>';
-    exit;
-}
+$user = AuthMiddleware::requireAuth();
 
-$user = Session::getUser();
+
 $userId = (int)$user->getUserId();
 $userEmail = $user->getEmail();
 $username = $user->getUsername();

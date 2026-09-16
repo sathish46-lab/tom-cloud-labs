@@ -4,12 +4,9 @@ require_once "../../../lib/services/PostgreSqlManager.php";
 
 header('Content-Type: application/json');
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
-    exit;
-}
+$user = AuthMiddleware::requireAuth();
 
-$user = Session::getUser();
+
 $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
 
 $data = json_decode(file_get_contents('php://input'), true);

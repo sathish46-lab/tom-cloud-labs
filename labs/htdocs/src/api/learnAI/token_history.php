@@ -1,13 +1,9 @@
 <?php
 require_once __DIR__ . '/../../load.php';
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    http_response_code(401);
-    echo '<div class="text-center p-3 text-danger small">Unauthorized.</div>';
-    exit;
-}
+$user = AuthMiddleware::requireAuth();
 
-$user = Session::getUser();
+
 $userId = (int)$user->getUserId();
 $lessonId = $_GET['lesson_id'] ?? '';
 $chapterId = $_GET['chapter_id'] ?? '';

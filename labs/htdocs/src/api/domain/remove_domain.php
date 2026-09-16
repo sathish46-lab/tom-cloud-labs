@@ -2,11 +2,13 @@
 require_once "../../load.php";
 
 header('Content-Type: application/json');
-$user = Session::getUser();
+
+$user = AuthMiddleware::requireAuth();
+
 $data = json_decode(file_get_contents('php://input'), true);
 $domainId = $data['domain_id'] ?? null;
 
-if (!$domainId || Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
+if (!$domainId) {
     echo json_encode(['success' => false, 'error' => 'Invalid request']); exit;
 }
 

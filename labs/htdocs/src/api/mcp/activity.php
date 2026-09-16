@@ -11,13 +11,9 @@ header('Content-Type: application/json');
 header('Cache-Control: no-store');
 header('Pragma: no-cache');
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    http_response_code(401);
-    echo json_encode(['error' => 'unauthorized', 'message' => 'Authentication required']);
-    exit;
-}
+$user = AuthMiddleware::requireAuth();
 
-$user = Session::getUser();
+
 $userId = $user->getUserId();
 
 require_once __DIR__ . '/../../lib/core/MCPOAuth.class.php';

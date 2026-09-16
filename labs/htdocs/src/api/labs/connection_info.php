@@ -1,12 +1,9 @@
 <?php
 require_once __DIR__ . '/../../../src/load.php';
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    http_response_code(401);
-    exit('Unauthorized');
-}
+$user = AuthMiddleware::requireAuth();
 
-$user = Session::getUser();
+
 $hash = $_GET['hash'] ?? '';
 
 if (empty($hash)) {

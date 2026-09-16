@@ -8,13 +8,9 @@ require_once __DIR__ . '/../../../src/lib/core/DatabaseConnection.class.php';
 
 header('Content-Type: application/json');
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Unauthorized']);
-    exit;
-}
+$user = AuthMiddleware::requireAuth();
 
-$user = Session::getUser();
+
 $userId = (int)$user->getUserId();
 
 $roadmapId = trim($_GET['roadmap_id'] ?? '');

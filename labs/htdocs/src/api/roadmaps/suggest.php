@@ -9,9 +9,7 @@ require_once __DIR__ . '/../../../src/lib/core/DatabaseConnection.class.php';
 
 header('Content-Type: text/html; charset=utf-8');
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    exit;
-}
+$user = AuthMiddleware::requireAuth();
 
 $query = trim($_POST['query'] ?? $_GET['q'] ?? '');
 if (strlen($query) < 2) {
@@ -19,7 +17,7 @@ if (strlen($query) < 2) {
     exit;
 }
 
-$user = Session::getUser();
+
 $userId = (int)$user->getUserId();
 
 $db = DatabaseConnection::getDefaultDatabase();

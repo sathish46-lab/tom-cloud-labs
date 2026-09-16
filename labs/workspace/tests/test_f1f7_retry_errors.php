@@ -48,7 +48,7 @@ echo "\n--- Download Filename Sanitization ---\n";
 $downloadPath = SRC_PATH . '/api/vpn/download.php';
 if (file_exists($downloadPath)) {
     $src = file_get_contents($downloadPath);
-    test("download.php checks auth", strpos($src, 'Session::getAuthStatus()') !== false);
+    test("download.php checks auth", strpos($src, 'AuthMiddleware::requireAuth()') !== false || strpos($src, 'Session::getAuthStatus()') !== false);
     test("download.php validates input ID", strpos($src, 'Invalid') !== false || strpos($src, '$_GET') !== false);
 } else {
     skip("Download endpoint checks", "download.php not found");

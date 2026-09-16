@@ -4,10 +4,7 @@ require_once "../../lib/core/DomainManager.class.php";
 
 header('Content-Type: application/json');
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
-    exit;
-}
+$user = AuthMiddleware::requireAuth();
 
 $data = json_decode(file_get_contents('php://input'), true);
 $domain_id = $data['domain_id'] ?? '';

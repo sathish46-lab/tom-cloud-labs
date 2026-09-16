@@ -8,11 +8,7 @@ require_once __DIR__ . '/../../lib/core/Cache.class.php';
 
 header('Content-Type: text/html');
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    http_response_code(401);
-    echo '<div class="text-center p-4 text-danger small">Unauthorized</div>';
-    exit;
-}
+$user = AuthMiddleware::requireAuth();
 
 $chapterId = $_GET['chapter_id'] ?? '';
 if (empty($chapterId)) {

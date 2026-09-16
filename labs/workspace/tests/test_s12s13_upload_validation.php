@@ -34,7 +34,7 @@ test("upload_file.php exists", file_exists($uploadPath));
 
 if (file_exists($uploadPath)) {
     $src = file_get_contents($uploadPath);
-    test("upload_file.php checks auth", strpos($src, 'Session::getAuthStatus()') !== false);
+    test("upload_file.php checks auth", strpos($src, 'AuthMiddleware::requireAuth()') !== false || strpos($src, 'Session::getAuthStatus()') !== false);
     test("upload_file.php has allowed extensions", strpos($src, 'allowedExtensions') !== false || strpos($src, 'extension') !== false);
     test("upload_file.php blocks double extensions", strpos($src, 'double') !== false || substr_count($src, 'pathinfo') >= 1);
     test("upload_file.php has file size limit", strpos($src, 'size') !== false || strpos($src, 'MAX_FILE_SIZE') !== false);
@@ -48,7 +48,7 @@ test("instance file_upload.php exists", file_exists($instanceUploadPath));
 
 if (file_exists($instanceUploadPath)) {
     $src = file_get_contents($instanceUploadPath);
-    test("file_upload.php checks auth", strpos($src, 'Session::getAuthStatus()') !== false);
+    test("file_upload.php checks auth", strpos($src, 'AuthMiddleware::requireAuth()') !== false || strpos($src, 'Session::getAuthStatus()') !== false);
     test("file_upload.php has allowed extensions", strpos($src, 'allowedExtensions') !== false || strpos($src, 'extension') !== false);
     test("file_upload.php validates file type", strpos($src, 'pathinfo') !== false || strpos($src, 'extension') !== false);
 }

@@ -3,14 +3,7 @@ require_once __DIR__ . '/../../../src/load.php';
 
 header('Content-Type: application/json');
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    echo json_encode(['status' => 'error', 'error' => 'Unauthorized']); exit;
-}
-
-$user = Session::getUser();
-if ($user->getRole() !== 'superuser') {
-    echo json_encode(['status' => 'error', 'error' => 'Forbidden']); exit;
-}
+$user = AuthMiddleware::requireAdmin();
 
 $scope = $_POST['scope'] ?? 'user'; // 'global', 'master', 'matrix', 'mcp_settings', or 'user'
 $email = $_POST['email'] ?? '';

@@ -7,9 +7,7 @@ require_once __DIR__ . '/../../load.php';
 
 header('Content-Type: text/html; charset=utf-8');
 
-if (Session::getAuthStatus() != Constants::STATUS_LOGGEDIN) {
-    exit;
-}
+$user = AuthMiddleware::requireAuth();
 
 $query = trim($_POST['query'] ?? '');
 if (strlen($query) < 2) {
@@ -21,7 +19,7 @@ if (strlen($query) < 2) {
 }
 
 $db = DatabaseConnection::getDefaultDatabase();
-$user = Session::getUser();
+
 $currentUsername = $user ? $user->getUsername() : '';
 $currentEmail = $user ? $user->getEmail() : '';
 $currentUserId = $user ? (int)$user->getUserId() : 0;

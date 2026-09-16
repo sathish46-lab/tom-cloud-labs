@@ -9,12 +9,9 @@ require_once "../../lib/core/SSLManager.class.php";
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
-    exit;
-}
+$user = AuthMiddleware::requireAuth();
 
-$user = Session::getUser();
+
 if (!$user) {
     echo json_encode(['success' => false, 'error' => 'User session invalid']);
     exit;

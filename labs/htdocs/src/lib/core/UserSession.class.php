@@ -41,6 +41,18 @@ public function getUser() {
     return $this->user;
 }
 
+/**
+ * Delegate unknown method calls to the inner User object.
+ * This allows API code to call $user->getUserId(), $user->getEmail(), etc.
+ * on the UserSession returned by AuthMiddleware::requireAuth().
+ */
+public function __call($method, $args) {
+    if ($this->user && method_exists($this->user, $method)) {
+        return call_user_func_array([$this->user, $method], $args);
+    }
+    return null;
+}
+
     /**
      * Authenticate local users and set recovery cookies.
      */

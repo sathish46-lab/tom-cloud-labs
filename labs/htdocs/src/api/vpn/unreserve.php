@@ -3,9 +3,7 @@ require_once __DIR__ . '/../../../src/load.php';
 
 header('Content-Type: application/json');
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    echo json_encode(['result' => false]); exit;
-}
+$user = AuthMiddleware::requireAuth();
 
 $data = json_decode(file_get_contents('php://input'), true);
 $ip = $data['ip'] ?? null;
@@ -15,7 +13,7 @@ if (!$ip) {
 }
 
 $db = DatabaseConnection::getDefaultDatabase();
-$user = Session::getUser();
+
 
 try {
     $db->ip_registry->updateOne(

@@ -3,13 +3,10 @@ require_once __DIR__ . '/../../../src/load.php';
 
 header('Content-Type: application/json');
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    echo json_encode(['status' => 'error', 'error' => 'Unauthorized']);
-    exit;
-}
+$user = AuthMiddleware::requireAuth();
 
 try {
-    $user = Session::getUser();
+    
     $userId = (int) $user->getUserId();
     $slug = $_GET['slug'] ?? '';
     $path = $_GET['path'] ?? '';

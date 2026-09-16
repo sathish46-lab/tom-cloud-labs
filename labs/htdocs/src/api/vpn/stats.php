@@ -3,11 +3,9 @@ require_once __DIR__ . '/../../../src/load.php';
 require_once __DIR__ . '/../../../src/lib/core/VPN.class.php';
 header('Content-Type: application/json');
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    echo json_encode(['error' => 'Unauthorized']); exit;
-}
+$user = AuthMiddleware::requireAuth();
 
-$user = Session::getUser();
+
 $db = DatabaseConnection::getDefaultDatabase();
 
 $myDevices = $db->devices->find(['user_id' => $user->getUserId(), 'status' => ['$ne' => 'deleted']])->toArray();

@@ -11,11 +11,9 @@ require_once __DIR__ . '/../../lib/core/RabbitClient.class.php';
 
 header('Content-Type: application/json');
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    echo json_encode(['status' => 'error', 'error' => 'Unauthorized']); exit;
-}
+$user = AuthMiddleware::requireAuth();
 
-$user = Session::getUser();
+
 $input = json_decode(file_get_contents('php://input'), true);
 
 if (!$input || empty($input['hash'])) {

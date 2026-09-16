@@ -111,11 +111,9 @@ $txnId = MCPOAuth::createTransaction(
     $codeChallengeMethod
 );
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    // Not logged in — send the user to sign in, returning to the consent page
-    header('Location: /signin?redirect=' . urlencode('/mcp/consent?txn_id=' . $txnId));
-    exit;
-}
+header('Content-Type: application/json');
+
+$user = AuthMiddleware::requireAuth();
 
 // Already logged in — go straight to consent
 header('Location: /mcp/consent?txn_id=' . $txnId);

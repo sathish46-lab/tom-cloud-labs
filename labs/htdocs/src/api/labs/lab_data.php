@@ -3,12 +3,9 @@ require_once __DIR__ . '/../../../src/load.php';
 
 header('Content-Type: application/json');
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    http_response_code(401);
-    exit(json_encode(['error' => 'Unauthorized']));
-}
+$user = AuthMiddleware::requireAuth();
 
-$user = Session::getUser();
+
 $labHash = $_GET['hash'] ?? '';
 $datatype = $_GET['type'] ?? 'all';
 

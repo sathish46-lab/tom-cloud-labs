@@ -6,11 +6,9 @@ require_once __DIR__ . '/../../lib/core/jobs/Worker.class.php';
 
 header('Content-Type: application/json');
 
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    echo json_encode(['status' => 'error', 'error' => 'Unauthorized']); exit;
-}
+$user = AuthMiddleware::requireAuth();
 
-$user = Session::getUser();
+
 $labName = $_POST['lab'] ?? 'essentials'; // Default to essentials if not provided, but usually we just need the hash
 
 try {

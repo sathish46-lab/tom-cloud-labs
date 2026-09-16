@@ -2,14 +2,7 @@
 require_once __DIR__ . '/../../../src/load.php';
 
 header('Content-Type: application/json');
-
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    echo json_encode(['status' => 'error', 'error' => 'Unauthorized']); exit;
-}
-$user = Session::getUser();
-if ($user->getRole() !== 'superuser') {
-    echo json_encode(['status' => 'error', 'error' => 'Forbidden']); exit;
-}
+$user = AuthMiddleware::requireAdmin();
 
 $action = $_GET['action'] ?? $_POST['action'] ?? 'processes';
 

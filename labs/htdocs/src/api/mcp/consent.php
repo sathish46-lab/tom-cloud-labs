@@ -32,10 +32,7 @@ if (!$txn) {
 }
 
 // Ensure the user is authenticated (the main site session)
-if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-    header('Location: /signin?redirect=' . urlencode('/mcp/consent?txn_id=' . $txnId));
-    exit;
-}
+$user = AuthMiddleware::requireAuth();
 
 // The 302 back to the client callback after allow/deny must be permitted
 // by the CSP form-action directive. Build a page-specific CSP that allows
@@ -59,7 +56,7 @@ $pageCsp = "default-src 'self'; "
     . "form-action 'self' " . $redirectOrigin;
 header('Content-Security-Policy: ' . $pageCsp);
 
-$user = Session::getUser();
+
 $userId = $user->getUserId();
 $username = $user->getUsername();
 $email = $user->getEmail();
