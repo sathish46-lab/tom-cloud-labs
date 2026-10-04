@@ -60,6 +60,6 @@ try {
         'redirect'=> '/home',
     ]);
 } catch (Throwable $e) {
-    error_log('impersonate: ' . $e->getMessage());
+    errors_report(['context' => 'admin/impersonate', 'message' => 'impersonate: ' . $e->getMessage()]);
     echo json_encode(['status' => 'error', 'error' => 'Failed to start impersonation']);
 }

@@ -1,6 +1,18 @@
 <?php
 $e = Session::get('error_exception');
 $reqId = $_SERVER['UNIQUE_ID'] ?? 'N/A';
+$ref = (string)(Session::get('error_ref') ?? '');
+if ($ref === '' && function_exists('errors_report') && $e) {
+    // Reached without going through the global handler — audit it now.
+    $ref = errors_report([
+        'context' => 'exception.page',
+        'message' => $e->getMessage(),
+        'extra'   => ['class' => get_class($e), 'file' => $e->getFile(), 'line' => $e->getLine(), 'trace' => errors_excerpt($e->getTraceAsString(), 2000)],
+    ]);
+    Session::set('error_ref', $ref);
+}
+$isAdmin = false;
+try { $isAdmin = AuthMiddleware::isAdmin(); } catch (Throwable $ignored) {}
 ?>
 <style>
 .error-card {
@@ -143,34 +155,38 @@ html[data-coreui-theme="dark"] .raw-trace {
 
 <div class="error-card">
     <div class="error-header">
-        <h1 class="error-title">Error!</h1>
+        <h1 class="error-title">Oops!</h1>
         <div class="error-subtitle">
-            <h4>Oops! You're lost.</h4>
-            <p>The page you are looking is broken.</p>
-            <div class="req-id">Request ID: <?= htmlspecialchars($reqId) ?></div>
+            <h4>Something went wrong on our side.</h4>
+            <p>This is our fault, not yours. Please try again — if it keeps happening,
+               contact an admin and quote the reference below so we can find it.</p>
+            <div class="req-id">Reference: <code><?= htmlspecialchars($ref !== '' ? $ref : $reqId) ?></code></div>
         </div>
     </div>
 
-    <?php if ($e): ?>
-    <div class="error-trace-container">
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1.5rem;">
+        <a href="/home" class="btn btn-primary btn-sm rounded-pill px-4" data-no-boost="true">Back to Labs</a>
+        <a href="javascript:location.reload()" class="btn btn-outline-secondary btn-sm rounded-pill px-4">Try again</a>
+    </div>
+
+    <?php if ($isAdmin && $e): ?>
+    <div class="error-trace-container" style="margin-top:2rem;">
         <div class="trace-headline">
             Caused by: <?= htmlspecialchars(get_class($e)) ?>: <span class="trace-message"><?= htmlspecialchars($e->getMessage()) ?></span>
         </div>
-        
+
         <?php
-        // Manually format the first line (the file where error originated)
         $file = basename($e->getFile());
         $line = $e->getLine();
         echo "<div class='trace-line'><span class='trace-keyword'>at</span> <span class='trace-function'>include</span>(<span class='trace-file'>{$file}</span>:<span class='trace-line-num'>{$line}</span>)</div>";
 
-        // Format the trace array
         $trace = $e->getTrace();
         foreach ($trace as $t) {
             $tfile = isset($t['file']) ? basename($t['file']) : 'unknown';
             $tline = $t['line'] ?? '0';
             $tclass = isset($t['class']) ? htmlspecialchars($t['class']) . htmlspecialchars($t['type']) : '';
             $tfunc = isset($t['function']) ? htmlspecialchars($t['function']) : '';
-            
+
             echo "<div class='trace-line'><span class='trace-keyword'>at</span> {$tclass}<span class='trace-function'>{$tfunc}</span>(<span class='trace-file'>{$tfile}</span>:<span class='trace-line-num'>{$tline}</span>)</div>";
         }
         ?>
@@ -180,7 +196,5 @@ Stack Trace:
 <?= htmlspecialchars($e->getTraceAsString()) ?>
         </div>
     </div>
-    <?php else: ?>
-        <p>An unknown error occurred and no exception details were provided.</p>
     <?php endif; ?>
 </div>

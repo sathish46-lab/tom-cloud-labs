@@ -139,7 +139,7 @@ try {
     }
 
 } catch (Exception $e) {
-    error_log("MCP Token Error: " . $e->getMessage());
+    errors_report(['context' => 'mcp/token', 'message' => "MCP Token Error: " . $e->getMessage()]);
     http_response_code(500);
     echo json_encode(['error' => 'server_error', 'error_description' => 'Internal server error']);
     exit;

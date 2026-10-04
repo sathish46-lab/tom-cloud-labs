@@ -41,5 +41,5 @@ try {
     
     echo json_encode($response);
 } catch (Exception $e) {
-    echo json_encode(['error' => $e->getMessage()]);
+    echo json_encode(['error' => errors_from_exception($e, 'quiz/generate')['error']]);
 }

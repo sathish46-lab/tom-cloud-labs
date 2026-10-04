@@ -127,5 +127,5 @@ try {
     ]);
     
 } catch (Exception $e) {
-    Response::error('Internal server error: ' . $e->getMessage(), 500);
+    Response::error('Internal server error: ' . errors_from_exception($e, 'lab/deploy_progress')['error'], 500);
 }

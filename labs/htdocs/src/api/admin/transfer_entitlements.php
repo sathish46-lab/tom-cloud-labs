@@ -96,6 +96,6 @@ try {
         'to'      => ['email' => $toEmail,   'balance' => (int)($toAfter[$type] ?? 0)],
     ]);
 } catch (Throwable $e) {
-    error_log('transfer_entitlements: ' . $e->getMessage());
+    errors_report(['context' => 'admin/transfer_entitlements', 'message' => 'transfer_entitlements: ' . $e->getMessage()]);
     echo json_encode(['status' => 'error', 'error' => 'Transfer failed']);
 }

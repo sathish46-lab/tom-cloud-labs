@@ -58,7 +58,7 @@ try {
         }
     }
 } catch (Exception $e) {
-    error_log("MinIO list_files Error: " . $e->getMessage());
+    errors_report(['context' => 'account/list_files', 'message' => "MinIO list_files Error: " . $e->getMessage()]);
 }
 
 usort($filesData, function($a, $b) {

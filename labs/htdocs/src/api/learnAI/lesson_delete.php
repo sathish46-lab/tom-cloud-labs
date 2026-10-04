@@ -53,5 +53,5 @@ try {
     echo json_encode(['status' => 'success', 'lesson_id' => $lessonId]);
 } catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Failed to delete lesson: ' . $e->getMessage()]);
+    echo json_encode(['error' => 'Failed to delete lesson: ' . errors_from_exception($e, 'learnAI/lesson_delete')['error']]);
 }

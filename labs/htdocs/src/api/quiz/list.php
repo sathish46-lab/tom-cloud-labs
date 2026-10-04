@@ -27,5 +27,5 @@ try {
         include __DIR__ . '/../../template/pages/quiz/_card.php';
     }
 } catch (Exception $e) {
-    echo "<!-- Error: " . $e->getMessage() . " -->";
+    echo "<!-- Error: " . errors_from_exception($e, 'quiz/list')['error'] . " -->";
 }

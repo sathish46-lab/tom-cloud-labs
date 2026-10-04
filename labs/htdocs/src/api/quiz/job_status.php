@@ -32,10 +32,29 @@ try {
         exit;
     }
 
+    // The worker writes the upstream provider's raw text into status_text.
+    // Audit it, then hand the browser a plain-English stand-in plus a reference.
+    $statusText = (string)($job['status_text'] ?? '');
+    $publicError = '';
+    if (!empty($job['generation_failed'])) {
+        $friendly = errors_sanitize($statusText);
+        $ref = errors_report([
+            'context'    => 'quiz.generate',
+            'message'    => $statusText !== '' ? $statusText : 'AI generation failed',
+            'user_email' => (string)($user->getEmail() ?? ''),
+            'extra'      => ['job_id' => (string)$jobId, 'attempt' => (int)($job['generation_attempt'] ?? 0)],
+        ]);
+        $publicError = errors_public($ref, $friendly);
+        $statusText = $friendly !== '' ? $friendly : 'Generation failed.';
+    } elseif (errors_is_technical($statusText)) {
+        $statusText = errors_to_user($statusText);
+    }
+
     echo json_encode([
         'available' => $job['available'] ?? false,
         'percentage' => $job['percentage'] ?? 0,
-        'status_text' => $job['status_text'] ?? '',
+        'status_text' => $statusText,
+        'error' => $publicError,
         'generation_started' => $job['generation_started'] ?? null,
         'generation_attempt' => $job['generation_attempt'] ?? 0,
         'generation_success' => $job['generation_success'] ?? false,
@@ -47,5 +66,6 @@ try {
     ]);
 
 } catch (Exception $e) {
-    echo json_encode(['error' => $e->getMessage()]);
+    $ref = errors_report(['context' => 'quiz.job_status', 'message' => $e->getMessage()]);
+    echo json_encode(['error' => errors_public($ref)]);
 }

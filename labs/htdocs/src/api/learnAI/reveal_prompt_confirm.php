@@ -94,5 +94,5 @@ try {
     ]);
 } catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Failed to confirm reveal: ' . $e->getMessage()]);
+    echo json_encode(['error' => 'Failed to confirm reveal: ' . errors_from_exception($e, 'learnAI/reveal_prompt_confirm')['error']]);
 }

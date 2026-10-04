@@ -90,7 +90,7 @@ try {
     exit;
 
 } catch (Exception $e) {
-    error_log("MCP Register Error: " . $e->getMessage());
+    errors_report(['context' => 'mcp/register', 'message' => "MCP Register Error: " . $e->getMessage()]);
     http_response_code(500);
     echo json_encode(['error' => 'server_error', 'error_description' => 'Internal server error']);
     exit;

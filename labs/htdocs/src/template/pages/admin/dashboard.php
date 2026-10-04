@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/../../../../src/load.php';
 $db = DatabaseConnection::getDefaultDatabase();
+require_once __DIR__ . '/../../../../src/utils/errors.php';
+$openErrors = function_exists('errors_count') ? errors_count(['status' => 'open']) : 0;
 
 /* BSON-safe stringifier for audit detail / dates (BSONDocument has no __toString) */
 $fmtWhen = function ($v) {
@@ -264,6 +266,22 @@ $quickJump = [
 </div>
 
 <div class="container-fluid px-4">
+
+    <?php if ($openErrors > 0): ?>
+    <div class="alert alert-danger d-flex align-items-center justify-content-between gap-3 rounded-3 mb-4 py-3" role="alert">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+            <i class='bx bx-error-circle fs-4'></i>
+            <div>
+                <div class="fw-semibold"><?= number_format($openErrors) ?> error<?= $openErrors === 1 ? '' : 's' ?> awaiting review</div>
+                <div class="small opacity-75 mb-0">Something failed for your learners and nobody has looked at it yet.</div>
+            </div>
+        </div>
+        <a href="/admin/errors" hx-boost="false" class="btn btn-sm btn-light text-danger rounded-pill px-3 fw-semibold">
+            Open Error Monitor
+        </a>
+    </div>
+    <?php endif; ?>
+
 
     <!-- ========================== Status masthead ========================== -->
 <div class="card border-0 rounded-4 blur shadow-sm mb-4 adm-glow">

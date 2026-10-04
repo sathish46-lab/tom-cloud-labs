@@ -70,7 +70,7 @@ if ($result->getInsertedCount() > 0) {
         $instance['_id'] = $newId;
         InstanceFileStore::ensureBaseForInstance($instance);
     } catch (Exception $e) {
-        error_log('Instance file seed failed: ' . $e->getMessage());
+        errors_report(['context' => 'instances/create', 'message' => 'Instance file seed failed: ' . $e->getMessage()]);
     }
     ob_start();
     ?>

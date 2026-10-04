@@ -27,5 +27,5 @@ try {
         'cached_until' => date('H:i:s', time() + 900)
     ]);
 } catch (Exception $e) {
-    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    echo json_encode(['success' => false, 'error' => errors_from_exception($e, 'ssl/get_certs')['error']]);
 }

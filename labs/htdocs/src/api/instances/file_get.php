@@ -47,6 +47,6 @@ try {
         'modified' => $file['modified'],
     ]);
 } catch (Exception $e) {
-    error_log('file_get error: ' . $e->getMessage());
-    echo json_encode(['status' => 'error', 'error' => 'Server error: ' . $e->getMessage()]);
+    errors_report(['context' => 'instances/file_get', 'message' => 'file_get error: ' . $e->getMessage()]);
+    echo json_encode(['status' => 'error', 'error' => 'Server error: ' . errors_from_exception($e, 'instances/file_get')['error']]);
 }

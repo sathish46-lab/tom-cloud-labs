@@ -48,5 +48,5 @@ try {
     ]);
 } catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Failed to queue content job: ' . $e->getMessage()]);
+    echo json_encode(['error' => 'Failed to queue content job: ' . errors_from_exception($e, 'learnAI/content_generate')['error']]);
 }

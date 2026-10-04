@@ -33,5 +33,5 @@ try {
         throw new Exception("Domain not found or unauthorized access.");
     }
 } catch (Exception $e) {
-    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    echo json_encode(['success' => false, 'error' => errors_from_exception($e, 'domain/remove_domain')['error']]);
 }

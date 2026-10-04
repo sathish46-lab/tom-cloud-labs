@@ -57,5 +57,5 @@ try {
 
 } catch (Exception $e) {
     // Never break the launch flow — report not-running so the UI falls back to ensure.
-    echo json_encode(['status' => 'error', 'error' => $e->getMessage(), 'running' => false]);
+    echo json_encode(['status' => 'error', 'error' => errors_from_exception($e, 'labs/code_status')['error'], 'running' => false]);
 }

@@ -64,14 +64,24 @@ if ($job['status'] === 'completed') {
 
 // ── FAILED JOB ──
 if ($job['status'] === 'failed') {
+    $rawError = (string)($job['error_message'] ?? '');
+    $friendly = errors_sanitize($rawError);
+    $ref = errors_report([
+        'context'    => 'roadmaps.generate',
+        'message'    => $rawError !== '' ? $rawError : 'Roadmap generation failed',
+        'user_email' => (string)$user->getEmail(),
+        'extra'      => ['request_id' => (string)$requestId],
+    ]);
+    $public = errors_public($ref, $friendly);
     echo json_encode([
         'status' => 'failed',
-        'message' => $job['error_message'] ?? 'Generation failed',
+        'message' => $public,
         'roadmap_id' => null,
         'request_id' => $requestId,
         'completed' => false,
         'failed' => true,
-        'error_message' => $job['error_message'] ?? 'Unknown error',
+        'error_message' => $public,
+        'ref' => $ref,
     ]);
     exit;
 }

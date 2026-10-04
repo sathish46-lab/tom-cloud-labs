@@ -81,5 +81,5 @@ try {
     <?php
 } catch (Exception $e) {
     http_response_code(500);
-    echo '<div class="text-center p-4 text-danger small">Failed to fetch content: ' . htmlspecialchars($e->getMessage()) . '</div>';
+    echo '<div class="text-center p-4 text-danger small">Failed to fetch content: ' . htmlspecialchars(errors_from_exception($e, 'learnAI/content_fetch')['error']) . '</div>';
 }

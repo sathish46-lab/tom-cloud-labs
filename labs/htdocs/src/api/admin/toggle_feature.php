@@ -94,5 +94,5 @@ try {
 
     echo json_encode(['status' => 'success']);
 } catch (Exception $e) {
-    echo json_encode(['status' => 'error', 'error' => $e->getMessage()]);
+    echo json_encode(['status' => 'error', 'error' => errors_from_exception($e, 'admin/toggle_feature')['error']]);
 }

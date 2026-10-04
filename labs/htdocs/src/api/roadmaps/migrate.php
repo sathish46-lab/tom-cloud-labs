@@ -95,6 +95,6 @@ try {
     echo "\n=== Migration Complete ===\n";
     
 } catch (Exception $e) {
-    echo "ERROR: " . $e->getMessage() . "\n";
+    echo "ERROR: " . errors_from_exception($e, 'roadmaps/migrate')['error'] . "\n";
     exit(1);
 }

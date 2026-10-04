@@ -92,5 +92,5 @@ try {
     ]);
 } catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Failed to unlock AI Assist: ' . $e->getMessage()]);
+    echo json_encode(['error' => 'Failed to unlock AI Assist: ' . errors_from_exception($e, 'learnAI/unlock_ai_assist')['error']]);
 }

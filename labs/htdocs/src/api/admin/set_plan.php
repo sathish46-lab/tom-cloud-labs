@@ -41,6 +41,6 @@ try {
 
     echo json_encode(['status' => 'success', 'plan' => $plan]);
 } catch (Throwable $e) {
-    error_log('set_plan: ' . $e->getMessage());
+    errors_report(['context' => 'admin/set_plan', 'message' => 'set_plan: ' . $e->getMessage()]);
     echo json_encode(['status' => 'error', 'error' => 'Failed to update plan']);
 }

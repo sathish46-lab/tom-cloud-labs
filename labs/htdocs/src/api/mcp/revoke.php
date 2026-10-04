@@ -72,7 +72,7 @@ try {
     echo json_encode([]);
 
 } catch (Exception $e) {
-    error_log("MCP Revoke Error: " . $e->getMessage());
+    errors_report(['context' => 'mcp/revoke', 'message' => "MCP Revoke Error: " . $e->getMessage()]);
     // Per RFC 7009, don't reveal internal errors
     http_response_code(200);
     echo json_encode([]);

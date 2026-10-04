@@ -160,5 +160,5 @@ try {
 
 } catch (Exception $e) {
     http_response_code(500);
-    echo '<div class="text-center text-danger py-3"><i class="bx bx-error-circle fs-4 mb-2 d-block"></i>' . htmlspecialchars($e->getMessage()) . '</div>';
+    echo '<div class="text-center text-danger py-3"><i class="bx bx-error-circle fs-4 mb-2 d-block"></i>' . htmlspecialchars(errors_from_exception($e, 'labs/code_info')['error']) . '</div>';
 }

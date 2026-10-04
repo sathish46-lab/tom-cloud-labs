@@ -70,7 +70,7 @@ try {
         exit('File not found');
     }
     
-    error_log("MinIO GetObject Error: " . $e->getMessage());
+    errors_report(['context' => 'system/user_files', 'message' => "MinIO GetObject Error: " . $e->getMessage()]);
     http_response_code(500);
     exit('Internal Server Error');
 }

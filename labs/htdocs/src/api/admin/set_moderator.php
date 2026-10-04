@@ -37,6 +37,6 @@ try {
 
     echo json_encode(['status' => 'success', 'moderator' => $state]);
 } catch (Throwable $e) {
-    error_log('set_moderator: ' . $e->getMessage());
+    errors_report(['context' => 'admin/set_moderator', 'message' => 'set_moderator: ' . $e->getMessage()]);
     echo json_encode(['status' => 'error', 'error' => 'Failed to update moderator flag']);
 }

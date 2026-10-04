@@ -86,6 +86,7 @@ RewriteRule ^admin/mcp/?$ app/admin/mcp_tools.php [L,QSA]
 RewriteRule ^admin/instances/?$ app/admin/instances.php [L,QSA]
 RewriteRule ^admin/storage/?$ app/admin/storage.php [L,QSA]
 RewriteRule ^admin/transactions/?$ app/admin/transactions.php [L,QSA]
+RewriteRule ^admin/errors/?$ app/admin/errors.php [L,QSA]
 RewriteRule ^admin/appearance/?$ app/admin/appearance.php [L,QSA]
 
 RewriteRule ^home$ app/home.php [L,QSA]

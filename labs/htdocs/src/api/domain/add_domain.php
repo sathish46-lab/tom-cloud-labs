@@ -73,5 +73,5 @@ try {
     // Clean buffer to prevent HTML pollution
     if (ob_get_length()) ob_clean();
     http_response_code(400);
-    echo $e->getMessage();
+    echo errors_from_exception($e, 'domain/add_domain')['error'];
 }

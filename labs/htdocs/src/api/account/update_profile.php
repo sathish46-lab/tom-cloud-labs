@@ -47,6 +47,6 @@ try {
     echo json_encode(['status' => 'success']);
 
 } catch (Exception $e) {
-    error_log("Profile update error: " . $e->getMessage());
+    errors_report(['context' => 'account/update_profile', 'message' => "Profile update error: " . $e->getMessage()]);
     echo json_encode(['status' => 'error', 'error' => 'Database update failed.']);
 }

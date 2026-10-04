@@ -32,6 +32,6 @@ try {
 
     echo json_encode(['status' => 'success'] + $summary);
 } catch (Throwable $e) {
-    error_log('audit_storage: ' . $e->getMessage());
+    errors_report(['context' => 'admin/audit_storage', 'message' => 'audit_storage: ' . $e->getMessage()]);
     echo json_encode(['status' => 'error', 'error' => 'Storage audit failed']);
 }

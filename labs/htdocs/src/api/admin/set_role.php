@@ -57,6 +57,6 @@ try {
 
     echo json_encode(['status' => 'success', 'role' => $role]);
 } catch (Throwable $e) {
-    error_log('set_role: ' . $e->getMessage());
+    errors_report(['context' => 'admin/set_role', 'message' => 'set_role: ' . $e->getMessage()]);
     echo json_encode(['status' => 'error', 'error' => 'Failed to update role']);
 }

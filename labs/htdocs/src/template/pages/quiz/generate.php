@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         htmx.ajax('GET', `/quiz/v/${data.result_hash}`, {target: '#main-content'});
                     }, 1000);
                 } else if (data.generation_failed) {
-                    statusText.innerText = 'Error: ' + (data.status_text || 'Generation failed.');
+                    statusText.innerText = 'Error: ' + (data.error || data.status_text || 'Generation failed.');
                     progressBar.classList.remove('bg-success');
                     progressBar.classList.add('bg-danger');
                 } else {

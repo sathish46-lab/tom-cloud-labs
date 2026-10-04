@@ -56,5 +56,5 @@ try {
     echo json_encode(['status' => 'success', 'visibility' => $targetVisibility, 'lesson_id' => $lessonId]);
 } catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Failed to update visibility: ' . $e->getMessage()]);
+    echo json_encode(['error' => 'Failed to update visibility: ' . errors_from_exception($e, 'learnAI/visibility_toggle')['error']]);
 }

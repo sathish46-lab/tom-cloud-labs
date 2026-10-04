@@ -194,6 +194,6 @@ try {
     ]);
 
 } catch (Exception $e) {
-    error_log("Deploy API Error: " . $e->getMessage());
-    echo json_encode(['status' => 'error', 'error' => $e->getMessage()]);
+    errors_report(['context' => 'labs/deploy', 'message' => "Deploy API Error: " . $e->getMessage()]);
+    echo json_encode(['status' => 'error', 'error' => errors_from_exception($e, 'labs/deploy')['error']]);
 }

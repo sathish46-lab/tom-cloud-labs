@@ -155,5 +155,5 @@ HTML;
 } catch (Exception $e) {
     http_response_code(500);
     header('Content-Type: text/html; charset=UTF-8');
-    echo '<div class="p-4 text-center text-danger">Failed to retrieve prompt: ' . htmlspecialchars($e->getMessage()) . '</div>';
+    echo '<div class="p-4 text-center text-danger">Failed to retrieve prompt: ' . htmlspecialchars(errors_from_exception($e, 'learnAI/reveal_prompt')['error']) . '</div>';
 }

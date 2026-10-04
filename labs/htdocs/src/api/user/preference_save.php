@@ -40,5 +40,5 @@ try {
         'value' => $value
     ]);
 } catch (Exception $e) {
-    echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+    echo json_encode(['status' => 'error', 'message' => errors_from_exception($e, 'user/preference_save')['error']]);
 }

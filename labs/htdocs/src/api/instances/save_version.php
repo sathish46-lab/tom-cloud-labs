@@ -50,5 +50,5 @@ try {
     echo json_encode(['status' => 'success', 'message' => 'Version saved']);
 } catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(['status' => 'error', 'error' => $e->getMessage()]);
+    echo json_encode(['status' => 'error', 'error' => errors_from_exception($e, 'instances/save_version')['error']]);
 }

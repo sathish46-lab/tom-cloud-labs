@@ -85,6 +85,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/utils/common.php'; 
 require_once __DIR__ . '/utils/currency.php';
 require_once __DIR__ . '/lib/load.php';
+require_once __DIR__ . '/utils/errors.php';
 
 // 3. NOW we can use Constants class - regenerate session cookie
 if (isset($_SESSION['auth_status']) && $_SESSION['auth_status'] === Constants::STATUS_LOGGEDIN) {
@@ -142,23 +143,51 @@ if (!function_exists('global_exception_handler')) {
             $isApi = true;
         }
 
+        // Audit first: the raw failure goes to the admin queue, never to the user.
+        $ref = '';
+        if (function_exists('errors_report')) {
+            $email = '';
+            try {
+                if (class_exists('Session')) {
+                    $u = Session::getUser();
+                    if ($u && method_exists($u, 'getEmail')) $email = (string)$u->getEmail();
+                }
+            } catch (Throwable $ignored) { /* session may be half-built */ }
+
+            $ref = errors_report([
+                'context'    => $isApi ? 'exception.api' : 'exception.page',
+                'message'    => $e->getMessage(),
+                'user_email' => $email,
+                'extra'      => [
+                    'class' => get_class($e),
+                    'file'  => $e->getFile(),
+                    'line'  => $e->getLine(),
+                    'trace' => function_exists('errors_excerpt') ? errors_excerpt($e->getTraceAsString(), 2000) : '',
+                ],
+            ]);
+        }
+
+        $public = function_exists('errors_public')
+            ? errors_public($ref)
+            : 'Something went wrong on our side. Please try again.';
+
         if ($isApi) {
-            // API routes: always return JSON — never HTML
+            // API routes: always return JSON — never HTML, never internals
             header('Content-Type: application/json');
             http_response_code(500);
-            error_log("API exception [" . $uri . "]: " . $e->getMessage());
-            echo json_encode(['status' => 'error', 'error' => 'Internal server error']);
+            echo json_encode(['status' => 'error', 'error' => $public, 'ref' => $ref]);
             exit;
         }
 
         // Non-API routes: render the beautiful error page
         if (class_exists('Session')) {
             Session::set('error_exception', $e);
+            Session::set('error_ref', $ref);
             Session::loadErrorPage();
             exit;
         } else {
             // Fallback for extremely early fatal errors
-            echo "Fatal Error: " . htmlspecialchars($e->getMessage());
+            echo htmlspecialchars($public);
             exit;
         }
     }

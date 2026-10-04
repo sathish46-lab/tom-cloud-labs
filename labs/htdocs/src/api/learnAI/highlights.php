@@ -86,5 +86,5 @@ try {
     echo json_encode(['status' => 'error', 'message' => 'Method not allowed']);
 } catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+    echo json_encode(['status' => 'error', 'message' => errors_from_exception($e, 'learnAI/highlights')['error']]);
 }

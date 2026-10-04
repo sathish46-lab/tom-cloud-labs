@@ -269,5 +269,6 @@ try {
 
 } catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Failed to process AI request: ' . $e->getMessage()]);
+    $ref = errors_report(['context' => 'roadmaps.ask', 'message' => $e->getMessage()]);
+    echo json_encode(['error' => errors_public($ref), 'ref' => $ref]);
 }

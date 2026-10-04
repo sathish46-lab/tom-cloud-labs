@@ -67,7 +67,7 @@ try {
             ['upsert' => true]
         );
     } catch (Throwable $e) {
-        error_log('set_storage_limit usage sync: ' . $e->getMessage());
+        errors_report(['context' => 'admin/set_storage_limit', 'message' => 'set_storage_limit usage sync: ' . $e->getMessage()]);
     }
 
     $after = $reset ? null : (int)$limit;
@@ -97,6 +97,6 @@ try {
         'unchanged'     => $before === $after,
     ]);
 } catch (Throwable $e) {
-    error_log('set_storage_limit: ' . $e->getMessage());
+    errors_report(['context' => 'admin/set_storage_limit', 'message' => 'set_storage_limit: ' . $e->getMessage()]);
     echo json_encode(['status' => 'error', 'error' => 'Failed to update storage limit']);
 }

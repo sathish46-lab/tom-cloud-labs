@@ -25,7 +25,7 @@ if (isset($_POST['reset']) && $_POST['reset'] !== '' && $_POST['reset'] !== '0')
         AuditLog::log('update', 'settings', Appearance::DOC_ID, ['action' => 'reset_defaults', 'from' => $before], (string)($admin->getUserId() ?? 'unknown'));
         echo json_encode(['status' => 'success', 'appearance' => $next]);
     } catch (Throwable $e) {
-        error_log('appearance_save reset: ' . $e->getMessage());
+        errors_report(['context' => 'admin/appearance_save', 'message' => 'appearance_save reset: ' . $e->getMessage()]);
         echo json_encode(['status' => 'error', 'error' => 'Failed to reset appearance settings']);
     }
     exit;
@@ -111,6 +111,6 @@ try {
 
     echo json_encode(['status' => 'success', 'appearance' => $next]);
 } catch (Throwable $e) {
-    error_log('appearance_save: ' . $e->getMessage());
+    errors_report(['context' => 'admin/appearance_save', 'message' => 'appearance_save: ' . $e->getMessage()]);
     echo json_encode(['status' => 'error', 'error' => 'Failed to save appearance settings']);
 }

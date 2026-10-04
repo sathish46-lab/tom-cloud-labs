@@ -55,6 +55,6 @@ try {
     
     echo json_encode(['status' => 'success', 'new_name' => $newName]);
 } catch (Exception $e) {
-    error_log("MinIO rename_file Error: " . $e->getMessage());
+    errors_report(['context' => 'account/rename_file', 'message' => "MinIO rename_file Error: " . $e->getMessage()]);
     echo json_encode(['status' => 'error', 'error' => 'Could not rename the file.']);
 }

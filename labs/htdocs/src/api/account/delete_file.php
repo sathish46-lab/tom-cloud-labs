@@ -38,6 +38,6 @@ try {
     
     echo json_encode(['status' => 'success']);
 } catch (Exception $e) {
-    error_log("MinIO delete_file Error: " . $e->getMessage());
+    errors_report(['context' => 'account/delete_file', 'message' => "MinIO delete_file Error: " . $e->getMessage()]);
     echo json_encode(['status' => 'error', 'error' => 'Could not delete the file.']);
 }

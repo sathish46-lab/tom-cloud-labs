@@ -61,6 +61,7 @@ $current = Session::getCurrentFile();
                     ['label' => 'MCP Tools',      'url' => '/admin/mcp',     'icon' => 'bx-bot',            'match' => ''],
                     ['label' => 'Storage Quotas', 'url' => '/admin/storage', 'icon' => 'bx-hdd',            'match' => ''],
                     ['label' => 'Transactions',   'url' => '/admin/transactions', 'icon' => 'bx-transfer', 'match' => ''],
+                    ['label' => 'Errors',         'url' => '/admin/errors', 'icon' => 'bx-error-circle', 'match' => ''],
                 ],
                 'groups' => [
                     [

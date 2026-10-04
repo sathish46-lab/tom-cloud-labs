@@ -34,6 +34,6 @@ try {
 
     echo json_encode(['status' => 'success', 'restored' => $imp['username']]);
 } catch (Throwable $e) {
-    error_log('exit_impersonation: ' . $e->getMessage());
+    errors_report(['context' => 'admin/exit_impersonation', 'message' => 'exit_impersonation: ' . $e->getMessage()]);
     echo json_encode(['status' => 'error', 'error' => 'Failed to exit impersonation']);
 }

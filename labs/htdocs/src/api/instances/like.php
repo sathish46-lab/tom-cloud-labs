@@ -102,5 +102,5 @@ if (!$instance) {
     }
 } catch (Throwable $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Failed to process like: ' . $e->getMessage()]);
+    echo json_encode(['error' => 'Failed to process like: ' . errors_from_exception($e, 'instances/like')['error']]);
 }

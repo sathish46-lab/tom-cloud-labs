@@ -95,6 +95,6 @@ try {
     echo json_encode(['status' => 'success', 'message' => 'Password changed successfully.']);
 
 } catch (Exception $e) {
-    error_log("Password change error: " . $e->getMessage());
+    errors_report(['context' => 'account/change_password', 'message' => "Password change error: " . $e->getMessage()]);
     echo json_encode(['status' => 'error', 'error' => 'Failed to change password.']);
 }

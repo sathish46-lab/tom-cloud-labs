@@ -40,5 +40,5 @@ try {
     $version = InstanceFileStore::saveFile($instanceHash, $templateFolder, $path, $content, $username, $email);
     echo json_encode(['status' => 'success', 'version' => $version, 'modified' => true]);
 } catch (Exception $e) {
-    echo json_encode(['status' => 'error', 'error' => 'Save failed: ' . $e->getMessage()]);
+    echo json_encode(['status' => 'error', 'error' => 'Save failed: ' . errors_from_exception($e, 'instances/file_save')['error']]);
 }
