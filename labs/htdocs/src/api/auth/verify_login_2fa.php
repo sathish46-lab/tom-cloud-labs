@@ -72,7 +72,7 @@ try {
                 'created_at' => time(),
                 'last_activity' => time()
             ]],
-            '$set' => ['last_login' => time()]
+            '$set' => ['last_login' => time(), 'ip_address' => $clientIp]
         ]
     );
     

@@ -57,16 +57,23 @@ function get_rate_limit_identity($rawEmailOnly = false) {
     }
 
     // 3rd Preference: Fallback to Client IP Address
-    // Only trust X-Forwarded-For if request comes from a known proxy
-    $clientIp = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-        // Check if the direct client is a known proxy
-        $trustedProxies = ['127.0.0.1', '::1']; // Add your proxy IPs here
-        $directClient = $_SERVER['REMOTE_ADDR'] ?? '';
-        if (in_array($directClient, $trustedProxies)) {
-            // Take the leftmost (original client) IP from X-Forwarded-For
-            $forwardedIps = array_map('trim', explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']));
-            $clientIp = $forwardedIps[0] ?? $clientIp;
+    if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])
+        && filter_var($_SERVER['HTTP_CF_CONNECTING_IP'], FILTER_VALIDATE_IP)) {
+        $clientIp = $_SERVER['HTTP_CF_CONNECTING_IP'];
+    } else {
+        $clientIp = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            // Check if the direct client is a known proxy
+            $trustedProxies = ['127.0.0.1', '::1']; // Add your proxy IPs here
+            $directClient = $_SERVER['REMOTE_ADDR'] ?? '';
+            if (in_array($directClient, $trustedProxies)) {
+                // Take the leftmost (original client) IP from X-Forwarded-For
+                $forwardedIps = array_map('trim', explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']));
+                $forwardedIp = $forwardedIps[0] ?? '';
+                if (filter_var($forwardedIp, FILTER_VALIDATE_IP)) {
+                    $clientIp = $forwardedIp;
+                }
+            }
         }
     }
     return 'ip_' . md5($clientIp);

@@ -72,7 +72,7 @@ try {
             [
                 'token_hash' => $currentTokenHash,
                 'token_id'   => $currentTokenId,
-                'ip' => $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '',
+                'ip' => get_client_ip(),
                 'browser' => $_SERVER['HTTP_USER_AGENT'] ?? '',
                 'created_at' => time(),
                 'last_activity' => time(),

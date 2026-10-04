@@ -184,13 +184,6 @@ class Logger {
      * Get client IP address.
      */
     private static function getClientIp(): string {
-        if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-            $ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
-            return trim($ips[0]);
-        }
-        if (!empty($_SERVER['HTTP_X_REAL_IP'])) {
-            return $_SERVER['HTTP_X_REAL_IP'];
-        }
-        return $_SERVER['REMOTE_ADDR'] ?? 'cli';
+        return !empty($_SERVER['REMOTE_ADDR']) ? get_client_ip() : 'cli';
     }
 }

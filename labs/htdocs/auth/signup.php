@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email'], $_POST['pass
             'is_verified' => false,
             'state' => 'pending',
             'created_at' => time(),
-            'ip_address' => $_SERVER['REMOTE_ADDR'],
+            'ip_address' => get_client_ip(),
             'theme_preferences' => [
                 'mode' => 'spiderman',
                 'plain_color' => '#010d12',

@@ -126,6 +126,22 @@ test("Multiple XFF values → leftmost IP used",
     $identity === $multiExpected,
     "Expected: $multiExpected, Got: $identity");
 
+// Test I: Cf-Connecting-Ip (Cloudflare / tunnel path) takes priority
+$_SERVER = ['REMOTE_ADDR' => '127.0.0.1', 'HTTP_CF_CONNECTING_IP' => '203.0.113.45'];
+$identity = get_rate_limit_identity();
+$cfExpected = 'ip_' . md5('203.0.113.45');
+test("Cf-Connecting-Ip takes priority over REMOTE_ADDR",
+    $identity === $cfExpected,
+    "Expected: $cfExpected, Got: $identity");
+
+// Test J: invalid Cf-Connecting-Ip falls back to REMOTE_ADDR
+$_SERVER = ['REMOTE_ADDR' => '10.0.0.50', 'HTTP_CF_CONNECTING_IP' => 'not-an-ip'];
+$identity = get_rate_limit_identity();
+$invalidExpected = 'ip_' . md5('10.0.0.50');
+test("Invalid Cf-Connecting-Ip ignored",
+    $identity === $invalidExpected,
+    "Expected: $invalidExpected, Got: $identity");
+
 // Clean up superglobals
 $_GET = [];
 $_POST = [];
