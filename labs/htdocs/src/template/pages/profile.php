@@ -24,7 +24,6 @@ $pfName   = trim(($pfTarget['first_name'] ?? '') . ' ' . ($pfTarget['last_name']
 $pfName   = $pfName !== '' ? $pfName : $pfUser;
 $pfSelf   = $pfMe && $pfEmail !== '' && $pfEmail === $pfMe->getEmail();
 $pfRole   = (string)($pfTarget['role'] ?? 'user');
-$pfIsStaff = in_array($pfRole, ['admin', 'superuser'], true);
 $pfIsAdmin = in_array($pfMe?->getRole(), ['admin', 'superuser'], true);
 
 // Owner (or staff reviewing the account) unlocks the private cards, the email
@@ -146,9 +145,6 @@ $pfLineCard = function (string $key, string $label, string $icon, string $color,
                     <div class="d-flex align-items-center gap-2 flex-wrap">
                         <h3 class="fw-bold m-0 pf-name"><?= $pfEsc($pfName) ?></h3>
                         <span class="pf-rank-pill"><i class="bxs-shield"></i>Lv <?= (int)$pfRank['index'] ?> · <?= $pfEsc($pfRank['title']) ?></span>
-                        <?php if ($pfIsStaff): ?>
-                            <span class="pf-role-pill pf-role-<?= $pfEsc($pfRole) ?>"><?= $pfEsc(ucfirst($pfRole)) ?></span>
-                        <?php endif; ?>
                     </div>
                     <div class="pf-handle">
                         @<?= $pfEsc($pfUser) ?>
