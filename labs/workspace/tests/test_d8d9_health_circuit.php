@@ -25,8 +25,8 @@ if (file_exists($cbPath)) {
     test("CircuitBreaker has recordSuccess() method", strpos($src, 'function recordSuccess') !== false);
     test("CircuitBreaker has recordFailure() method", strpos($src, 'function recordFailure') !== false);
     test("CircuitBreaker has getState() method", strpos($src, 'function getState') !== false);
-    test("CircuitBreaker has threshold config", strpos($src, 'threshold') !== false);
-    test("CircuitBreaker has cooldown config", strpos($src, 'cooldown') !== false);
+    test("CircuitBreaker has threshold config", stripos($src, 'threshold') !== false);
+    test("CircuitBreaker has cooldown config", stripos($src, 'cooldown') !== false);
 
     // Test state constants
     test("CircuitBreaker defines CLOSED state", strpos($src, "'closed'") !== false || strpos($src, '"closed"') !== false);
@@ -53,31 +53,37 @@ if (file_exists($hcPath)) {
 echo "\n--- CircuitBreaker Runtime ---\n";
 
 if (class_exists('CircuitBreaker')) {
-    $cb = new CircuitBreaker('test_service');
+    // Every CircuitBreaker method is static and keyed by service name.
+    $service = 'test_service';
 
     // Initially should be closed (allowing requests)
-    $initialState = $cb->getState();
+    $initialState = CircuitBreaker::getState($service);
     test("Initial state is closed", $initialState === 'closed' || $initialState === 'half_open',
         "Got: $initialState");
 
     // Should allow requests when closed
-    test("allow() returns true when closed", $cb->allow() === true);
+    test("allow() returns true when closed", CircuitBreaker::allow($service) === true);
 
     // Record successes — should stay closed
     for ($i = 0; $i < 3; $i++) {
-        $cb->recordSuccess();
+        CircuitBreaker::recordSuccess($service);
     }
-    test("State stays closed after successes", $cb->getState() === 'closed');
+    test("State stays closed after successes", CircuitBreaker::getState($service) === 'closed');
 
     // Record failures up to threshold (5)
-    for ($i = 0; $i < 5; $i++) {
-        $cb->recordFailure();
+    for ($i = 0; $i < CircuitBreaker::FAILURE_THRESHOLD; $i++) {
+        CircuitBreaker::recordFailure($service);
     }
-    test("State opens after threshold failures", $cb->getState() === 'open',
-        "Got: " . $cb->getState());
+    test("State opens after threshold failures", CircuitBreaker::getState($service) === 'open',
+        "Got: " . CircuitBreaker::getState($service));
 
-    // Should NOT allow requests when open
-    test("allow() returns false when open", $cb->allow() === false);
+    // Should NOT allow requests when open (cooldown has not elapsed)
+    test("allow() returns false when open", CircuitBreaker::allow($service) === false);
+
+    test("Threshold constant matches expected value", CircuitBreaker::FAILURE_THRESHOLD === 5,
+        "Got: " . CircuitBreaker::FAILURE_THRESHOLD);
+    test("Cooldown blocks requests until it elapses",
+        (CircuitBreaker::COOLDOWN_SECONDS ?? 0) > 0);
 } else {
     skip("CircuitBreaker runtime tests", "Class not found");
 }

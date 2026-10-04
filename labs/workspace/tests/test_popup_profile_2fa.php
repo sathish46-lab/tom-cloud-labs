@@ -36,8 +36,10 @@ if (file_exists($templatePath)) {
     test("Has resend button", strpos($src, 'Resend') !== false || strpos($src, 'resend') !== false);
     test("Has autocomplete one-time-code", strpos($src, 'autocomplete="one-time-code"') !== false || strpos($src, 'autocomplete=\'one-time-code\'') !== false);
 
-    // Activity & Analytics link
-    test("Has Activity & Analytics link", strpos($src, 'Activity') !== false || strpos($src, 'activity') !== false || strpos($src, 'Analytics') !== false);
+    // Activity & Analytics moved to the profile page; the old account activity
+    // APIs were removed with the account page, so the modal must not link to them.
+    test("No dead Activity & Analytics link",
+        strpos($src, 'activity_analytics') === false && strpos($src, '/api/account/activity') === false);
 }
 
 // ── Test 2: Runtime — modal loads via HTTP ──
