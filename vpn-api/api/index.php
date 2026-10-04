@@ -38,8 +38,9 @@ class API extends REST {
         }
         else {
             if(isset($_GET['namespace'])){
-                // Whitelist allowed namespaces to prevent LFI
-                $allowedNamespaces = ['wireguard', 'vpn'];
+                // Whitelist allowed namespaces to prevent LFI.
+                // MUST match the actual directories under api/apis/
+                $allowedNamespaces = ['wg', 'ip', 'auth'];
                 $namespace = preg_replace('/[^a-zA-Z0-9_]/', '', $_GET['namespace']);
                 if (!in_array($namespace, $allowedNamespaces)) {
                     $this->response($this->json(['error' => 'invalid_namespace']), 403);

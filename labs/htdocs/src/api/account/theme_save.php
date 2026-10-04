@@ -14,6 +14,7 @@ if (!$payload) {
 }
 
 $mode = $payload['mode'] ?? null;
+$theme = $payload['theme'] ?? null;
 $plainColor = $payload['plainColor'] ?? null;
 $accentColor = $payload['accentColor'] ?? null;
 $customSlots = $payload['customSlots'] ?? null;
@@ -21,6 +22,7 @@ $customThemes = $payload['customThemes'] ?? null;
 
 $updateData = [];
 if ($mode !== null) $updateData['theme_preferences.mode'] = $mode;
+if ($theme !== null && in_array($theme, ['light', 'dark', 'auto'], true)) $updateData['theme_preferences.theme'] = $theme;
 if ($plainColor !== null) $updateData['theme_preferences.plain_color'] = $plainColor;
 if ($accentColor !== null) $updateData['theme_preferences.accent_color'] = $accentColor;
 if ($customSlots !== null) $updateData['theme_preferences.custom_slots'] = $customSlots;

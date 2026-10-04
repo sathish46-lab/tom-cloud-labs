@@ -25,6 +25,30 @@ $labIconMap = [
 ];
 ?>
 
+<?php $impHome = !empty($_SESSION['impersonator']['username']) ? Session::getUser() : null; ?>
+<?php if ($impHome !== null): ?>
+<style>
+    /* Shown only while a superuser is impersonating — sits in the top dock,
+       immediately left of the MCP chip, and matches the launchpad chip look. */
+    .lp-exit-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.25rem 0.7rem;
+        border-radius: 999px;
+        border: 1px solid rgba(250, 204, 21, 0.55);
+        background: rgba(250, 204, 21, 0.10);
+        color: #facc15;
+        font-size: 0.78rem;
+        font-weight: 600;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+    .lp-exit-chip:hover { background: rgba(250, 204, 21, 0.20); }
+    .lp-exit-chip[disabled] { opacity: 0.6; cursor: default; }
+</style>
+<?php endif; ?>
+
 <div class="lp-top-dock">
     <header class="lp-menubar blur">
         <div class="lp-mb-left">
@@ -36,6 +60,12 @@ $labIconMap = [
             </span>
         </div>
         <div class="lp-mb-right">
+            <?php if ($impHome !== null): ?>
+            <button type="button" id="exit-impersonation" class="lp-exit-chip"
+                    title="Impersonating <?= htmlspecialchars($impHome?->getUsername() ?? '') ?> — still signed in as <?= htmlspecialchars((string)$_SESSION['impersonator']['username']) ?>. Click to exit.">
+                <i class='bx bx-log-out-circle'></i>Exit impersonation
+            </button>
+            <?php endif; ?>
             <div class="lp-mcp-dock">
                 <button type="button" class="lp-mcp-chip" id="lp-mcp-chip" title="MCP — connect your editor to your labs">
                     <svg class="icon lp-mcp-glyph"><use xlink:href="/assets/icons/duotone.svg#tom-wifi-high"></use></svg>

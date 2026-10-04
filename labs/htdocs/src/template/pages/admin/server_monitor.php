@@ -86,18 +86,22 @@
                         </div>
                     </div>
                     <div class="d-flex flex-column gap-1">
-                        <h3 class="fw-bold mb-0 ls-tight lab-header-title">Superuser Admin Panel</h3>
+                        <h3 class="fw-bold mb-0 ls-tight lab-header-title">Services</h3>
                         <div class="d-flex flex-wrap align-items-center gap-2 small">
                             <div class="d-flex align-items-center text-secondary">
-                                <span class="me-1 opacity-75">Manage users and global feature flags</span>
+                                <span class="me-1 opacity-75">Service state, system health and background workers</span>
                             </div>
                         </div>
                     </div>
                 </div>
+                <div class="d-flex align-items-center gap-2">
+                    <a href="/home" data-no-boost="true"
+                       class="btn btn-sm btn-outline-secondary border-secondary border-opacity-25 rounded-pill px-3 text-nowrap">
+                        <i class='bx bx-left-arrow-circle me-1'></i>Back to Labs
+                    </a>
+                </div>
             </div>
         
-            <!-- Navigation Tabs -->
-            <?php include __DIR__ . '/admin_nav.php'; ?>
         </div>
     </div>
 </div>
@@ -206,7 +210,7 @@
             </div>
 
             <div class="card border-0 rounded-4 blur shadow-sm mb-4">
-                <div class="card-header border-bottom border-body-secondary border-opacity-10 py-2 px-3" style="background: rgba(var(--cui-body-bg-rgb, 255,255,255), 0.5);">
+                <div class="card-header border-bottom border-body-secondary border-opacity-10 py-2 px-3" style="background: transparent;">
                     <h6 class="mb-0 fw-bold"><i class='bx bx-bar-chart text-warning me-2'></i>Top Processes by Memory</h6>
                 </div>
                 <div class="card-body p-0">
@@ -234,7 +238,7 @@
         <!-- Processes Tab -->
         <div id="tab-processes" class="tab-pane d-none">
             <div class="card border-0 rounded-4 blur shadow-sm">
-                <div class="card-header border-bottom border-body-secondary border-opacity-10 py-2 px-3 d-flex justify-content-between align-items-center" style="background: rgba(var(--cui-body-bg-rgb, 255,255,255), 0.5);">
+                <div class="card-header border-bottom border-body-secondary border-opacity-10 py-2 px-3 d-flex justify-content-between align-items-center" style="background: transparent;">
                     <h6 class="mb-0 fw-bold"><i class='bx bx-list-ul text-info me-2'></i>All Processes</h6>
                     <div class="d-flex gap-2 align-items-center">
                         <input type="text" class="form-control form-control-sm bg-body-secondary bg-opacity-25 border-0 text-body rounded-pill px-3" style="width:200px; font-size:0.75rem;" placeholder="Filter..." id="procFilter" oninput="filterProcesses()">

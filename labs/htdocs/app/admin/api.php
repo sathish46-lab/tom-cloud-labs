@@ -5,10 +5,9 @@ if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
     header("Location: /signin"); exit;
 }
 
-$user = Session::getUser();
-if ($user->getRole() !== 'superuser') {
+if (!AuthMiddleware::isAdmin()) {
     header("Location: /home"); exit;
 }
 
-Session::$pageTitle = "Admin Panel - API & Features";
+Session::$pageTitle = "Admin / Modules";
 Session::loadMaster();

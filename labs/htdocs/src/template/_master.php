@@ -10,6 +10,8 @@ header('Expires: Thu, 01 Jan 1970 00:00:00 GMT');
 $serverTheme = [];
 $uiPreferences = [];
 require_once $_SERVER['DOCUMENT_ROOT'] . '/src/config/themes.php';
+require_once __DIR__ . '/../lib/core/Appearance.class.php';
+$appearance = Appearance::get();
 
 if (Session::getAuthStatus() == Constants::STATUS_LOGGEDIN) {
     $user = Session::getUser();
@@ -19,13 +21,20 @@ if (Session::getAuthStatus() == Constants::STATUS_LOGGEDIN) {
     }
 }
 
-$coreUiTheme = $serverTheme['theme'] ?? 'dark';
+$coreUiTheme = $appearance['force_color_mode'] !== '' ? $appearance['force_color_mode'] : ($serverTheme['theme'] ?? 'dark');
 if ($coreUiTheme === 'auto') {
     // Default to dark server-side if auto, JS will correct it
     $coreUiTheme = 'dark';
 }
 
-$mode = $serverTheme['mode'] ?? 'spiderman';
+$isPublicPage = defined('IS_PUBLIC_PAGE');
+
+// Signed-out profile pages take their wallpaper from Admin → Appearance:
+// either one fixed background for every public URL, or the profile owner's
+// own saved choice. Everywhere else it is still "locked → the viewer's → default".
+$mode = $isPublicPage
+    ? Appearance::resolvePublicMode(Session::get('profile_owner_email') ?: null)
+    : Appearance::resolveMode($serverTheme['mode'] ?? null);
 
 $isGlassMode = ($uiPreferences['visual_blur'] ?? 'true') !== 'false';
 $isSidebarNarrow = ($uiPreferences['sidebar_unfoldable'] ?? 'false') === 'true';
@@ -95,8 +104,20 @@ $classString = implode(' ', $htmlClasses);
 
             // 1. Sync Server Preferences to LocalStorage (Server is Source of Truth)
             const serverTheme = <?= json_encode($serverTheme) ?>;
-            
-            if (serverTheme && serverTheme.mode) localStorage.setItem('tom-labs-bg-mode', serverTheme.mode);
+
+            // Admin appearance controls (Admin → Settings → Appearance)
+            window.RESOLVED_BG_MODE   = <?= json_encode($mode) ?>;
+            window.FORCED_BG_MODE     = <?= json_encode($appearance['force_mode'] !== '' ? $appearance['force_mode'] : null) ?>;
+            window.FORCED_COLOR_MODE  = <?= json_encode($appearance['force_color_mode'] !== '' ? $appearance['force_color_mode'] : null) ?>;
+            window.DISABLED_BG_MODES  = <?= json_encode($appearance['disabled_modes']) ?>;
+            // Public (signed-out) pages: RESOLVED_BG_MODE already is the admin's
+            // public choice, so JS must apply it and never touch the stored one.
+            window.BG_MODE_LOCKED     = <?= json_encode($isPublicPage ? 1 : 0) ?>;
+
+            if (window.BG_MODE_LOCKED) {
+                // leave localStorage alone — it belongs to the signed-in account
+            } else if (serverTheme && serverTheme.mode) localStorage.setItem('tom-labs-bg-mode', window.RESOLVED_BG_MODE);
+            else if (!localStorage.getItem('tom-labs-bg-mode')) localStorage.setItem('tom-labs-bg-mode', window.RESOLVED_BG_MODE);
             if (serverTheme && serverTheme.plain_color) localStorage.setItem('tom-labs-plain-color', serverTheme.plain_color);
             if (serverTheme && serverTheme.custom_slots && Array.isArray(serverTheme.custom_slots)) {
                 serverTheme.custom_slots.forEach((color, i) => {
@@ -111,7 +132,7 @@ $classString = implode(' ', $htmlClasses);
             }
 
             // 2. Apply Theme & Layout State immediately to DOM
-            let savedTheme = localStorage.getItem('tom-labs-theme') || 'dark';
+            let savedTheme = window.FORCED_COLOR_MODE || localStorage.getItem('tom-labs-theme') || serverTheme.theme || 'dark';
             let themeToApply = (savedTheme === 'auto') ?
                 (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') :
                 savedTheme;
@@ -258,7 +279,9 @@ $classString = implode(' ', $htmlClasses);
     <script src="https://cdn.jsdelivr.net/npm/htmx-ext-head-support@2.0.4/head-support.js" defer></script>
 
     <?php
-    $mode = $serverTheme['mode'] ?? 'spiderman';
+    $mode = $isPublicPage
+        ? Appearance::resolvePublicMode(Session::get('profile_owner_email') ?: null)
+        : Appearance::resolveMode($serverTheme['mode'] ?? null);
 
     require_once __DIR__ . '/tom_color_utils.php';
     require_once __DIR__ . '/../config/themes.php';
@@ -423,26 +446,71 @@ $classString = implode(' ', $htmlClasses);
         body { background: transparent !important; }
         <?php endif; ?>
     </style>
+    <!-- Admin surfaces live in their own file: HTMX head-support reliably
+         picks up <link> elements by href, but not edits inside this inline
+         <style>, which is what left admin tiles/nav see-through. -->
+    <link rel="stylesheet" href="<?= Session::cacheCDN('/assets/css/admin.css') ?>">
+    <!-- Profile page surfaces (hero, tabs, medals, charts) -->
+    <link rel="stylesheet" href="<?= Session::cacheCDN('/assets/css/profile.css') ?>">
 </head>
 
 <body class="<?= $isGlassMode ? 'hwa-enabled' : 'hwa-disabled' ?> <?= defined('IS_HOME_PAGE') ? 'lp-home' : '' ?>" data-version="<?= htmlspecialchars(Session::getVersion()) ?>" <?php if (!defined("IS_HOME_PAGE")): ?> hx-boost="true" hx-ext="head-support" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-indicator="#main-content" <?php endif; ?>>
     <!-- Global HTMX Top Loading Bar -->
     <div id="htmx-top-progress"></div>
 
+    <?php if (!empty($_SESSION['impersonator']['username'])): ?>
+    <script>
+    /* Delegated so the button can live in the header (or the home chip) —
+       the header is rendered later in the document than this script. */
+    document.addEventListener('click', async function (e) {
+        const btn = e.target && e.target.closest ? e.target.closest('#exit-impersonation') : null;
+        if (!btn) return;
+        e.preventDefault();
+        btn.disabled = true;
+        try {
+            const res = await fetch('/api/admin/exit_impersonation', {
+                method: 'POST',
+                headers: { 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '' }
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                window.location.href = '/admin/users';
+            } else {
+                btn.disabled = false;
+                if (window.TomNotify) TomNotify.show(data.error || 'Failed to exit', 'Error', 'error', 4000);
+            }
+        } catch (err) {
+            btn.disabled = false;
+            if (window.TomNotify) TomNotify.show('Network error', 'Error', 'error', 4000);
+        }
+    });
+    </script>
+    <?php endif; ?>
+
+
     <div id="scene" style="<?= $mode !== 'plain' ? 'display: block;' : 'display: none;' ?>">
-        <div class="bg-cover bg-img-1" data-depth="0.8" style="<?= isset($assets[0]) ? "background-image: url('{$assets[0]}'); display: block;" : '' ?>"></div>
-        <div class="bg-cover bg-img-2" data-depth="0.5" style="<?= isset($assets[1]) ? "background-image: url('{$assets[1]}'); display: block;" : '' ?>"></div>
-        <div class="bg-cover bg-img-3" data-depth="0.3" style="<?= isset($assets[2]) ? "background-image: url('{$assets[2]}'); display: block;" : '' ?>"></div>
-        <div class="bg-cover bg-img-4" data-depth="0.1" style="<?= isset($assets[3]) ? "background-image: url('{$assets[3]}'); display: block;" : '' ?>"></div>
+        <?php
+        $layerDepths = [0.8, 0.5, 0.3, 0.1, 0.05, 0.04, 0.03, 0.02];
+        foreach (array_values($assets) as $layerIndex => $layerSrc):
+            $layerDepth = $layerDepths[$layerIndex] ?? 0.02;
+        ?>
+        <div class="bg-cover bg-img-<?= $layerIndex + 1 ?>" data-depth="<?= $layerDepth ?>" style="background-image: url('<?= htmlspecialchars($layerSrc) ?>'); display: block;"></div>
+        <?php endforeach; ?>
     </div>
 
     <?php if (defined('IS_HOME_PAGE')): ?>
     <div class="lp-shell min-vh-100" id="launchpad">
     <?php else: ?>
-    <?php if (!Session::get('show_session_expired', false)): Session::getNav(); endif; ?>
+    <?php if (!Session::get('show_session_expired', false) && !defined('IS_PUBLIC_PAGE')): Session::getNav(); endif; ?>
 
     <div class="wrapper d-flex flex-column min-vh-100 bg-transparent" style="<?= Session::get('show_session_expired', false) ? '--cui-sidebar-occupy-start: 0px;' : '' ?>"> 
-    <?php if (!Session::get('show_session_expired', false)): Session::getSiteNav(); endif; ?>
+    <?php if (!Session::get('show_session_expired', false)): ?>
+        <?php if (defined('IS_PUBLIC_PAGE')): ?>
+            <?php include __DIR__ . '/partials/_public_header.php'; ?>
+        <?php else: ?>
+            <?php Session::getSiteNav(); ?>
+        <?php endif; ?>
+    <?php endif; ?>
 
     <div class="body flex-grow-1 bg-transparent d-flex flex-column <?= Session::get('show_session_expired', false) ? 'align-items-center justify-content-center p-0 m-0' : '' ?>"> 
         <div id="main-content" class="bg-transparent" style="display: contents;">

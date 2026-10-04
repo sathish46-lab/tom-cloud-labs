@@ -2021,17 +2021,10 @@ if (typeof window !== 'undefined' && !window.__snlUnhandledHooked) {
         // bridge only re-renders #main, so without this branch every mid-session
         // theme change leaves the chrome styled by the original cold-load theme
         // until a hard refresh. Triggers:
-        //   - /api/app/set_theme from a fetch wrapper (in-page theme picker)
-        //   - future SPA-driven swatch pickers
         //   - any boosted nav landing on a page whose session theme differs
         //     from the cold-load theme (e.g. user changed theme in tab A,
         //     then SPA-navs in tab B — covered ONLY if tab B's nav triggers
         //     a server round-trip; see cross-tab note below).
-        // NOT triggered by /theme/editor's "Apply" button — that page is
-        // boost-excluded (str_starts_with(path, '/theme/editor') in
-        // Session::isExcludedFromHtmx), so its callback `set_theme` +
-        // `window.location.href='/dashboard'` does a full reload of the
-        // destination, which re-renders the chrome from scratch.
         try { applyThemeFromBootstrap(data.theme); } catch (e) {
             if (window.console) console.warn('[htmx-bridge] theme apply failed', e);
         }

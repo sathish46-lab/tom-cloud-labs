@@ -139,6 +139,12 @@
     // 4. Sidebar Active Navigation Synchronizer
     // =========================================================================
     function syncSidebarActiveState(targetUrl) {
+        // _nav.php owns the sidebar active state (exact / data-match / exit rules).
+        if (typeof window.syncSidebarActiveState === 'function') {
+            window.syncSidebarActiveState(targetUrl);
+            return;
+        }
+
         const sidebar = document.getElementById('sidebar');
         if (!sidebar) return;
 
@@ -149,9 +155,19 @@
         sidebar.querySelectorAll('.nav-link').forEach((link) => {
             const href = link.getAttribute('href');
             if (!href) return;
+            if (link.dataset.adminExit) {
+                link.classList.remove('active');
+                return;
+            }
             const linkPath = href.split('?')[0].split('#')[0];
+            const extra = link.dataset.match || null;
+            const hit = link.dataset.exact
+                ? path === linkPath
+                : (path === linkPath
+                    || (linkPath !== '/' && linkPath !== '/home' && path.startsWith(linkPath + '/'))
+                    || (extra && path.startsWith(extra)));
 
-            if (linkPath === path || (path.startsWith(linkPath) && linkPath !== '/' && linkPath !== '/home')) {
+            if (hit) {
                 link.classList.add('active');
             } else {
                 link.classList.remove('active');

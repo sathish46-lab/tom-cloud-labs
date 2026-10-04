@@ -1,0 +1,42 @@
+/* ==========================================================================
+   Admin panel surfaces.
+
+   Admin pages sit on top of the full-bleed background art, so every surface
+   has to be opaque. The glass tokens (--glass-bg) are intentionally
+   translucent for regular cards, which made admin stat tiles, the identity
+   card and the Storage tab bar read as "see-through" next to the real cards.
+
+   --glass-bg-solid resolves to #0f1928 (dark) / #ffffff (light) — always
+   fully opaque in both themes.
+
+   This lives in its own file rather than the inline <style> in _master.php
+   because htmx's head-support merges <link> elements by href but does not
+   re-read edits inside an inline <style> already present in <head>.
+   ========================================================================== */
+
+.adm-stat,
+.adm-tile,
+.adm-ident,
+.adm-qj,
+.adm-surface,
+.adm-nav {
+    background-color: var(--glass-bg-solid, rgba(11, 30, 54, 0.95)) !important;
+    border: 1px solid rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.06);
+}
+
+/* Frosted backdrop only — the background itself stays opaque so artwork can
+   never bleed through an admin control. */
+body.hwa-enabled .adm-stat,
+body.hwa-enabled .adm-tile,
+body.hwa-enabled .adm-ident,
+body.hwa-enabled .adm-qj,
+body.hwa-enabled .adm-surface,
+body.hwa-enabled .adm-nav {
+    -webkit-backdrop-filter: saturate(200%) blur(18px);
+    backdrop-filter: saturate(200%) blur(18px);
+}
+
+/* Tab / filter bars: opaque track, translucent active pill. */
+.adm-nav {
+    border-color: rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.08);
+}

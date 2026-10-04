@@ -36,7 +36,133 @@ $current = Session::getCurrentFile();
         </div>
     </div>
 
-    <ul class="sidebar-nav" data-coreui="navigation" data-simplebar>
+    <?php $isSuperuser = Session::getUser()?->getRole() === 'superuser'; ?>
+    <?php if ($isSuperuser): ?>
+    <!-- ============ ADMIN SIDEBAR (superuser only) ============
+         Rendered on EVERY page: HTMX navigations do not swap the sidebar, so
+         both nav lists must exist in the DOM. JS toggles which one is visible
+         on htmx:afterSettle; PHP sets the initial state for full reloads.
+
+         Structure follows the Admin guide's six groups. Every group except
+         Platform belongs to a module — switching that module off hides it.
+         Tier A ships Platform; the other groups are appended as they land. -->
+    <ul class="sidebar-nav admin-sidebar-nav <?= $current === 'admin' ? '' : 'd-none' ?>"
+        data-coreui="navigation" data-simplebar>
+        <?php
+        $adminPath   = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+        $adminGroups = [
+            [
+                'title'  => 'Platform',
+                'module' => null, // Platform is never hidden by a module
+                'items'  => [
+                    ['label' => 'Dashboard',      'url' => '/admin',         'icon' => 'bx-tachometer',     'match' => '', 'exact' => true],
+                    ['label' => 'Users',          'url' => '/admin/users',   'icon' => 'bx-group',          'match' => '/admin/user/'],
+                    ['label' => 'Access Control', 'url' => '/admin/acl',     'icon' => 'bx-shield-quarter', 'match' => ''],
+                    ['label' => 'MCP Tools',      'url' => '/admin/mcp',     'icon' => 'bx-bot',            'match' => ''],
+                    ['label' => 'Storage Quotas', 'url' => '/admin/storage', 'icon' => 'bx-hdd',            'match' => ''],
+                ],
+                'groups' => [
+                    [
+                        'label' => 'Settings',
+                        'icon'  => 'bx-cog',
+                        'items' => [
+                            ['label' => 'Services',  'url' => '/admin/services',  'icon' => 'bx-desktop',     'match' => ''],
+                            ['label' => 'Modules',   'url' => '/admin/modules',   'icon' => 'bx-toggle-right', 'match' => ''],
+                            ['label' => 'Appearance', 'url' => '/admin/appearance', 'icon' => 'bx-palette',    'match' => ''],
+                        ],
+                    ],
+                ],
+            ],
+
+            [
+                'title'  => 'Labs',
+                'module' => null,
+                'items'  => [
+                    ['label' => 'Instances', 'url' => '/admin/instances', 'icon' => 'bx-server', 'match' => ''],
+                ],
+            ],
+        ];
+
+        $adminItem = function (array $it) use ($adminPath) {
+            $isActive = strpos($adminPath, $it['url']) === 0
+                     || (($it['match'] ?? '') !== '' && strpos($adminPath, $it['match']) === 0);
+            // /admin itself must not light up on every child route
+            if (!empty($it['exact'])) {
+                $isActive = ($adminPath === $it['url']);
+            }
+            echo '<li class="nav-item">';
+            echo '  <a class="nav-link' . ($isActive ? ' active' : '') . '" href="' . htmlspecialchars($it['url']) . '"';
+            echo ' data-admin-link="1"';
+            if (!empty($it['exact'])) echo ' data-exact="1"';
+            if (($it['match'] ?? '') !== '') echo ' data-match="' . htmlspecialchars($it['match']) . '"';
+            echo '><i class="nav-icon bx ' . htmlspecialchars($it['icon']) . '"></i> ' . htmlspecialchars($it['label']) . '</a>';
+            echo '</li>';
+        };
+        ?>
+
+        <?php
+        $adminModules = [];
+        $adminModulesLoaded = false;
+        ?>
+        <?php foreach ($adminGroups as $g): ?>
+            <?php
+            // Lazily load module flags — only if a group actually declares one.
+            if (($g['module'] ?? null) !== null) {
+                if (!$adminModulesLoaded) {
+                    $adminModulesLoaded = true;
+                    try {
+                        $gdb = DatabaseConnection::getDefaultDatabase();
+                        foreach (['master_switches', 'lab_features'] as $sid) {
+                            foreach ((array)$gdb->global_settings->findOne(['_id' => $sid]) as $k => $v) {
+                                if ($k !== '_id' && is_bool($v)) $adminModules[$k] = $v;
+                            }
+                        }
+                    } catch (Throwable $e) {
+                        $adminModules = [];
+                    }
+                }
+                // A group hides only when its flag is explicitly false.
+                if (array_key_exists($g['module'], $adminModules) && $adminModules[$g['module']] === false) {
+                    continue;
+                }
+            }
+            ?>
+            <li class="nav-title"><?= htmlspecialchars($g['title']) ?></li>
+
+            <?php foreach (($g['items'] ?? []) as $it) $adminItem($it); ?>
+
+            <?php foreach (($g['groups'] ?? []) as $sub): ?>
+                <?php
+                $hasActive = false;
+                foreach ($sub['items'] as $it) {
+                    if (strpos($adminPath, $it['url']) === 0
+                        || (($it['match'] ?? '') !== '' && strpos($adminPath, $it['match']) === 0)) {
+                        $hasActive = true;
+                        break;
+                    }
+                }
+                ?>
+                <li class="nav-group <?= $hasActive ? 'show' : '' ?>">
+                    <a class="nav-link nav-group-toggle" href="javascript:void(0);">
+                        <i class="nav-icon bx <?= htmlspecialchars($sub['icon']) ?>"></i> <?= htmlspecialchars($sub['label']) ?>
+                    </a>
+                    <ul class="nav-group-items">
+                        <?php foreach ($sub['items'] as $it) $adminItem($it); ?>
+                    </ul>
+                </li>
+            <?php endforeach; ?>
+        <?php endforeach; ?>
+
+        <li class="nav-item mt-auto pt-2 border-top border-light border-opacity-10">
+            <a class="nav-link" href="/home" hx-boost="false" data-admin-link="1" data-admin-exit="1">
+                <svg class="nav-icon" viewBox="0 0 256 256"><use href="/assets/icons/duotone.svg#tom-desktop-tower"></use></svg> Back to Labs
+            </a>
+        </li>
+    </ul>
+    <?php endif; ?>
+
+    <ul class="sidebar-nav main-sidebar-nav <?= ($isSuperuser && $current === 'admin') ? 'd-none' : '' ?>"
+        data-coreui="navigation" data-simplebar>
         <li class="nav-item">
             <a class="nav-link <?= $current == 'dashboard' ? 'active' : '' ?>" href="<?= Session::url('dashboard') ?>">
                 <svg class="nav-icon">
@@ -261,32 +387,58 @@ $current = Session::getCurrentFile();
 })();
 
 // Sidebar Active State Sync & Cleanup
-function syncSidebarActiveState() {
-    const path = window.location.pathname;
-    document.querySelectorAll('.sidebar-nav .nav-link').forEach(link => {
+// Runs on DOMContentLoaded (full page reload) AND htmx:afterSettle (HTMX nav).
+// The sidebar lives OUTSIDE #main-content, so HTMX never swaps it — this
+// function is the single source of truth for admin visibility + active state.
+function syncSidebarActiveState(targetUrl) {
+    let path = (targetUrl || window.location.pathname).split('?')[0].split('#')[0];
+    const isAdminPath = path === '/admin' || path.startsWith('/admin/');
+
+    const adminNav = document.querySelector('.admin-sidebar-nav');
+    const mainNav  = document.querySelector('.main-sidebar-nav');
+
+    // Show EXACTLY ONE nav list. The admin list only exists for superusers.
+    const showAdmin = isAdminPath && !!adminNav;
+    if (adminNav) adminNav.classList.toggle('d-none', !showAdmin);
+    if (mainNav)  mainNav.classList.toggle('d-none', showAdmin);
+
+    const nav = showAdmin ? adminNav : mainNav;
+    if (!nav) return;
+
+    // --- Active link ---
+    nav.querySelectorAll('.nav-link').forEach(link => {
         link.classList.remove('active');
         const href = link.getAttribute('href');
+
+        // Back to Labs points at /home — never mark it active
+        if (link.dataset.adminExit) return;
+
         if (href && !href.startsWith('javascript:') && href !== '#' && href !== '/') {
-            if (path === href || path.startsWith(href + '/')) {
+            // Optional data-match supplies extra prefixes (e.g. /admin/user/xxx -> /admin/users)
+            const extra = link.dataset.match || null;
+            // data-exact = prefix matching off (/admin must not match /admin/users)
+            const hit = link.dataset.exact
+                ? path === href
+                : (path === href
+                    || path.startsWith(href + '/')
+                    || (extra && path.startsWith(extra)));
+            if (hit) {
                 link.classList.add('active');
                 const navGroup = link.closest('.nav-group');
-                if (navGroup) {
-                    navGroup.classList.add('show');
-                }
+                if (navGroup) navGroup.classList.add('show');
             }
         } else if (href === '/' && path === '/') {
             link.classList.add('active');
         }
     });
 
-    document.querySelectorAll('.sidebar-nav .nav-group').forEach(group => {
-        const hasActiveChild = group.querySelector('.nav-group-items .nav-link.active');
+    // --- Collapse groups that have no active child ---
+    nav.querySelectorAll('.nav-group').forEach(group => {
+        if (group.querySelector('.nav-group-items .nav-link.active')) return;
         const toggle = group.querySelector('.nav-group-toggle');
-        if (!hasActiveChild) {
-            if (toggle) toggle.classList.remove('active');
-            if (window.location.hash === '#' || path.includes('/dashboard')) {
-                group.classList.remove('show');
-            }
+        if (toggle) toggle.classList.remove('active');
+        if (window.location.hash === '#' || path.includes('/dashboard')) {
+            group.classList.remove('show');
         }
     });
 }

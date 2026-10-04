@@ -95,7 +95,7 @@ $pages = [
     ['title' => 'Feeling Lucky',   'section' => 'Social',   'url' => '/lucky',              'glyph' => 'tom-lightning',       'colour' => '#a855f7'],
     ['title' => 'MCP Connections', 'section' => 'Network',  'url' => '/mcp',                'glyph' => 'tom-share-network',   'colour' => '#22d3ee'],
     ['title' => 'Domains',         'section' => 'Network',  'url' => '/domains',            'glyph' => 'tom-globe',           'colour' => '#f59e0b'],
-    ['title' => 'Account',         'section' => 'Settings', 'url' => '/account',            'glyph' => 'tom-user',            'colour' => '#6366f1'],
+    ['title' => 'My Profile',      'section' => 'Settings', 'url' => '/account',            'glyph' => 'tom-user',            'colour' => '#6366f1'],
     ['title' => 'Admin Panel',     'section' => 'Settings', 'url' => '/admin/users',        'glyph' => 'tom-crown',           'colour' => '#ef4444'],
 ];
 foreach ($pages as $p) {

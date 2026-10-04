@@ -291,6 +291,7 @@ providers:
     watch: true
 EOF
 
+mkdir -p /etc/traefik/dynamic_conf
 cat <<EOF > /etc/traefik/dynamic_conf/dynamic_conf.yml
 http:
   middlewares:

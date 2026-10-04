@@ -19,7 +19,7 @@ class SessionRenderer {
         }
         Session::set('master_rendered', true);
 
-        if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN && !defined('IS_LOGIN_PAGE') && !defined('IS_LANDING_PAGE')) {
+        if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN && !defined('IS_LOGIN_PAGE') && !defined('IS_LANDING_PAGE') && !defined('IS_PUBLIC_PAGE')) {
             self::handleSessionExpired();
         }
 
@@ -261,6 +261,15 @@ class SessionRenderer {
                     echo '<div class="alert alert-danger">Error: Template not found for ' . htmlspecialchars($relPath) . '</div>';
                 }
             } else {
+                // Signed-out pages opt in via IS_PUBLIC_PAGE, and may only ever
+                // render their own template — never another area's.
+                if (defined('IS_PUBLIC_PAGE') && $relPath === 'profile') {
+                    $file = $templateRoot . $relPath . '.php';
+                    if (file_exists($file)) {
+                        include $file;
+                        return;
+                    }
+                }
                 self::handleSessionExpired();
             }
         } catch (Throwable $e) {

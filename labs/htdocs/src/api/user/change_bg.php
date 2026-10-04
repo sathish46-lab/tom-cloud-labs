@@ -39,6 +39,20 @@ $templates = [
     ['mode' => 'spiderman', 'name' => 'Spiderman Mode', 'img' => '/assets/Background_Img/spiderman/spiderman.jpg'],
     ['mode' => 'ironman', 'name' => 'Iron Man Mode', 'img' => '/assets/Background_Img/IronMan/0.jpg'],
 ];
+
+require_once __DIR__ . '/../../lib/core/Appearance.class.php';
+$appearance = Appearance::get();
+if ((string)$appearance['force_mode'] !== '') {
+    $lockedMode = (string)$appearance['force_mode'];
+    $templates = array_values(array_filter($templates, function ($t) use ($lockedMode) {
+        return $t['mode'] === $lockedMode;
+    }));
+} else {
+    $disabledModes = $appearance['disabled_modes'];
+    $templates = array_values(array_filter($templates, function ($t) use ($disabledModes) {
+        return !in_array($t['mode'], $disabledModes, true);
+    }));
+}
 ?>
 <!-- Tab Navigation -->
 <div class="px-4 pt-3">

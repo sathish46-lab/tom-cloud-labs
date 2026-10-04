@@ -50,18 +50,22 @@ $featuresList = [
                         </div>
                     </div>
                     <div class="d-flex flex-column gap-1">
-                        <h3 class="fw-bold mb-0 ls-tight lab-header-title">Superuser Admin Panel</h3>
+                        <h3 class="fw-bold mb-0 ls-tight lab-header-title">User Management</h3>
                         <div class="d-flex flex-wrap align-items-center gap-2 small">
                             <div class="d-flex align-items-center text-secondary">
-                                <span class="me-1 opacity-75">Manage users and global feature flags</span>
+                                <span class="me-1 opacity-75">Find and create accounts, change plans and limits, grant admin rights</span>
                             </div>
                         </div>
                     </div>
                 </div>
+                <div class="d-flex align-items-center gap-2">
+                    <a href="/home" data-no-boost="true"
+                       class="btn btn-sm btn-outline-secondary border-secondary border-opacity-25 rounded-pill px-3 text-nowrap">
+                        <i class='bx bx-left-arrow-circle me-1'></i>Back to Labs
+                    </a>
+                </div>
             </div>
         
-            <!-- Navigation Tabs -->
-            <?php include __DIR__ . '/admin_nav.php'; ?>
         </div>
     </div>
 </div>
@@ -153,9 +157,20 @@ async function loadUsers(reset = false) {
                 users.forEach(u => {
                     const tr = document.createElement('tr');
                     
-                    const roleBadge = u.role === 'superuser' 
+                    const roleBadge = u.role === 'superuser'
                         ? `<span class="badge bg-warning text-dark"><i class='bx bx-crown me-1'></i>Superuser</span>`
-                        : `<span class="badge bg-body-secondary">User</span>`;
+                        : u.role === 'admin'
+                            ? `<span class="badge bg-danger">Admin</span>`
+                            : `<span class="badge bg-body-secondary">Member</span>`;
+                    const modBadge = u.moderator
+                        ? ` <span class="badge bg-info text-dark" title="Platform moderator"><i class='bx bx-shield-quarter'></i></span>`
+                        : '';
+                    const planLabels = { free: ['Free', 'secondary'], default: ['Default', 'success'], pro: ['Pro', 'primary'] };
+                    const plan = planLabels[u.plan] || planLabels.default;
+                    const planBadge = ` <span class="badge bg-${plan[1]} ms-1">${plan[0]}</span>`;
+                    const stateDot = (u.state || 'active') === 'active'
+                        ? ''
+                        : ` <span class="badge bg-danger ms-1">${escapeHtml(u.state)}</span>`;
                         
                     tr.innerHTML = `
                         <td class="ps-4">
@@ -167,7 +182,7 @@ async function loadUsers(reset = false) {
                                 </div>
                             </div>
                         </td>
-                        <td>${roleBadge}</td>
+                        <td>${roleBadge}${modBadge}${planBadge}${stateDot}</td>
                         <td class="text-body-secondary small">${u.created_at}</td>
                         <td class="text-body-secondary small">${u.last_login}</td>
                         <td class="text-end pe-4">

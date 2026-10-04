@@ -42,7 +42,10 @@ foreach ($usersCursor as $u) {
         'email' => $email,
         'name' => $uObj->getFullName() ?? 'Unknown',
         'avatar' => $avatar,
-        'role' => $u['role'] ?? 'user',
+        'role' => (!empty($u['role']) && in_array($u['role'], ['superuser', 'admin'], true)) ? $u['role'] : 'user',
+        'moderator' => !empty($u['moderator']),
+        'plan' => $u['plan'] ?? 'free',
+        'state' => $u['state'] ?? 'active',
         'quizzes_count' => isset($u['quizzes_completed']) ? count($u['quizzes_completed']) : 0,
         'last_login' => $lastLoginTs ? date('M j, Y h:i A', $lastLoginTs) : 'Never',
         'created_at' => $createdTs ? date('M j, Y', $createdTs) : 'Unknown'

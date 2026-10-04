@@ -50,6 +50,16 @@
                 $navUser = Session::getUser();
                 $navStats = $navUser ? \TomLabs\Labs\Quiz::getUserStats($navUser->getEmail()) : ['zeal' => 0, 'jolt' => 10];
             ?>
+            <?php if (!empty($_SESSION['impersonator']['username'])): ?>
+            <li class="nav-item me-2">
+                <button type="button" id="exit-impersonation"
+                        class="btn btn-sm fw-semibold rounded-pill px-3 text-nowrap d-inline-flex align-items-center gap-1"
+                        style="border: 1px solid rgba(250,204,21,.55); color: #facc15; background: rgba(250,204,21,.10);"
+                        title="Impersonating <?= htmlspecialchars($navUser?->getUsername() ?? '') ?> — still signed in as <?= htmlspecialchars((string)$_SESSION['impersonator']['username']) ?>. Click to exit.">
+                    <i class='bx bx-user-circle'></i><span class="d-none d-sm-inline">Exit impersonation</span>
+                </button>
+            </li>
+            <?php endif; ?>
             <li class="nav-item d-none d-md-flex align-items-center me-3">
                 <div class="d-flex align-items-center gap-3 rounded-pill px-3 py-1 border border-secondary border-opacity-10 shadow-sm" style="background: rgba(var(--cui-emphasis-color-rgb, 128, 128, 128), 0.05);">
                     <div class="d-flex align-items-center gap-1" title="Total Zeal (Experience Points)">
@@ -94,7 +104,15 @@
                 </button>
                 <div class="dropdown-menu dropdown-menu-end theme-mega-container border-0 bg-transparent shadow-none p-0">
                     <div class="d-flex align-items-start gap-3 p-2 flex-row-reverse">
+                        <?php
+                            require_once __DIR__ . '/../lib/core/Appearance.class.php';
+                            $appearance = Appearance::get();
+                            $appearanceLocked = (string)$appearance['force_mode'] !== '';
+                            $appearanceDisabled = $appearance['disabled_modes'];
+                            $colorModeLocked = (string)$appearance['force_color_mode'] !== '';
+                        ?>
                         <!-- Mode Selector Card (Rightmost, under the icon) -->
+                        <?php if (!$colorModeLocked): ?>
                         <div class="mode-selector-card shadow-lg">
                             <button class="mode-item" onclick="changeTheme('light')" onmouseenter="TomVisuals.switchBGTheme('light')" data-coreui-value="light">
                                 <i class='bx bx-sun'></i> <span>Light</span>
@@ -106,18 +124,23 @@
                                 <i class='bx bx-circle-half'></i> <span>Auto</span>
                             </button>
                         </div>
+                        <?php endif; ?>
 
                         <!-- Background Selector Card (Reveals to the left) -->
+                        <?php if (!$appearanceLocked): ?>
                         <div class="bg-selector-card shadow-lg">
                             <?php require $_SERVER['DOCUMENT_ROOT'] . '/src/config/themes.php'; ?>
                             
                             <!-- Dark Mode Backgrounds -->
                             <div class="theme-bg-grid p-3" id="bg-grid-dark" data-theme="dark">
+                                <?php if (!in_array('plain', $appearanceDisabled, true)): ?>
                                 <div class="theme-bg-item" onclick="TomBG.setMode('plain')" data-mode="plain">
                                     <div class="theme-bg-thumb-wrapper"><div style="width:100%; height:100%; background: linear-gradient(45deg, #010d12, #0b1e36);"></div></div>
                                     <span class="theme-bg-label">Plain</span>
                                 </div>
+                                <?php endif; ?>
                                 <?php foreach ($tomThemes as $id => $theme): 
+                                    if (in_array($id, $appearanceDisabled, true)) continue;
                                     $label = ($id === 'robo') ? 'Lab' : (($id === 'ninja') ? 'War' : (($id === 'robotower') ? 'Tower' : (($id === 'spiderman') ? 'Spidey' : (($id === 'ironman') ? 'Iron Man' : ucfirst($id)))));
                                     $thumb = $theme['assets'][0]; // Use the first layer as thumb
                                     if (strpos($thumb, '.png') !== false && !strpos($thumb, 'robo.jpg') && !strpos($thumb, 'ninja.jpg')) {
@@ -140,11 +163,14 @@
 
                             <!-- Light Mode Backgrounds (Same list for now as requested) -->
                             <div class="theme-bg-grid p-3 d-none" id="bg-grid-light" data-theme="light">
+                                <?php if (!in_array('plain', $appearanceDisabled, true)): ?>
                                 <div class="theme-bg-item" onclick="TomBG.setMode('plain')" data-mode="plain">
                                     <div class="theme-bg-thumb-wrapper"><div style="width:100%; height:100%; background: linear-gradient(45deg, #f8f9fa, #e9ecef);"></div></div>
                                     <span class="theme-bg-label">Plain</span>
                                 </div>
+                                <?php endif; ?>
                                 <?php foreach ($tomThemes as $id => $theme): 
+                                    if (in_array($id, $appearanceDisabled, true)) continue;
                                     $label = ($id === 'robo') ? 'Lab' : (($id === 'ninja') ? 'War' : (($id === 'robotower') ? 'Tower' : (($id === 'spiderman') ? 'Spidey' : (($id === 'ironman') ? 'Iron Man' : ucfirst($id)))));
                                     $thumb = $theme['assets'][0];
                                     if ($id === 'robo') $thumb = '/assets/Background_Img/robo/robo.jpg';
@@ -165,6 +191,7 @@
                                 <i class="bx bx-color-fill me-1"></i> Custom Theme Designer
                             </a>
                         </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </li>
@@ -224,11 +251,11 @@
                             <span style="font-size: 0.8rem; font-weight: 500;">Change Background</span>
                         </a>
 
-                        <a class="dropdown-item d-flex align-items-center px-2 py-1 rounded pointer" 
+                        <!-- <a class="dropdown-item d-flex align-items-center px-2 py-1 rounded pointer" 
                             data-coreui-toggle="modal" data-coreui-target="#plainColorModal">
                             <i class="bx bx-color-fill text-secondary me-2" style="font-size: 1rem;"></i>
                             <span style="font-size: 0.8rem; font-weight: 500;">Plain Theme Color</span>
-                        </a>
+                        </a> -->
 
                         <a class="dropdown-item d-flex align-items-center px-2 py-1 rounded pointer"
                             onclick="openAccountSettings()">

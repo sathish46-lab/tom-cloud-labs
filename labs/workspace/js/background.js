@@ -27,8 +27,12 @@ var TomBG = {
     _this.themes = window.TOM_THEMES || {};
     
     // Apply background instantly from localStorage
-    var saved = localStorage.getItem("tom-labs-bg-mode") || "spiderman";
-    var modeToUse = window.FORCED_BG_MODE || saved;
+    // Public (signed-out) pages lock the wallpaper to what PHP rendered, so a
+    // stored preference from the signed-in account cannot flash over it.
+    var saved = localStorage.getItem("tom-labs-bg-mode") || window.RESOLVED_BG_MODE || "spiderman";
+    var modeToUse = window.FORCED_BG_MODE ||
+      (window.BG_MODE_LOCKED ? window.RESOLVED_BG_MODE : saved) ||
+      saved;
     _this.apply(modeToUse);
 
     // Watch for theme changes (Light/Dark mode toggle) to update colors instantly
@@ -38,7 +42,8 @@ var TomBG = {
         if (mutation.attributeName === "data-coreui-theme") {
           var currentMode =
             window.FORCED_BG_MODE ||
-            localStorage.getItem("tom-labs-bg-mode") ||
+            (window.BG_MODE_LOCKED ? window.RESOLVED_BG_MODE : localStorage.getItem("tom-labs-bg-mode")) ||
+            window.RESOLVED_BG_MODE ||
             "spiderman";
           _this.apply(currentMode);
         }
@@ -929,6 +934,16 @@ var TomBG = {
       }
 
       var layers = scene.querySelectorAll(".bg-cover");
+      var layerDepths = [0.8, 0.5, 0.3, 0.1, 0.05, 0.04, 0.03, 0.02];
+      while (layers.length < assets.length) {
+        var layerIndex = layers.length;
+        var newLayer = document.createElement("div");
+        newLayer.className = "bg-cover bg-img-" + (layerIndex + 1);
+        newLayer.setAttribute("data-depth", layerDepths[layerIndex] !== undefined ? layerDepths[layerIndex] : 0.02);
+        newLayer.style.display = "block";
+        scene.appendChild(newLayer);
+        layers = scene.querySelectorAll(".bg-cover");
+      }
       layers.forEach(function (layer, index) {
         if (assets[index]) {
           layer.style.backgroundImage = "url('" + assets[index] + "')";
@@ -1069,13 +1084,23 @@ var TomBG = {
   },
 
   setMode: function (mode) {
+    // Admin appearance controls: locked / hidden backgrounds cannot be picked
+    if (window.FORCED_BG_MODE && mode !== window.FORCED_BG_MODE) {
+      if (window.TomNotify) TomNotify.show("The background is locked by your administrator", "Background locked", "info", 3500);
+      return;
+    }
+    if (window.DISABLED_BG_MODES && window.DISABLED_BG_MODES.indexOf(mode) !== -1) {
+      if (window.TomNotify) TomNotify.show("That background is not available", "Not available", "info", 3500);
+      return;
+    }
+
     // Auto-switch theme (light/dark) to match the visible background grid
     // This ensures that selecting a dark wallpaper also switches to dark theme and vice versa
     var visibleGrid = document.querySelector('.theme-bg-grid[style*="display: grid"], .theme-bg-grid:not(.d-none):not([style*="display: none"])');
     if (visibleGrid) {
       var gridTheme = visibleGrid.getAttribute('data-theme');
       var currentTheme = localStorage.getItem('tom-labs-theme') || 'dark';
-      if (gridTheme && gridTheme !== currentTheme) {
+      if (gridTheme && gridTheme !== currentTheme && !window.FORCED_COLOR_MODE) {
         // Switch the full theme (colors, sidebar, header, icon) to match the grid
         if (typeof window.changeTheme === 'function') {
           window.changeTheme(gridTheme);
@@ -1100,7 +1125,8 @@ var TomBG = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          mode: mode, plainColor: plainColor, accentColor: accentColor, customSlots: customSlots, customThemes: customThemes
+          mode: mode, theme: localStorage.getItem('tom-labs-theme') || undefined,
+          plainColor: plainColor, accentColor: accentColor, customSlots: customSlots, customThemes: customThemes
         })
       }).finally(function() {
         window.location.reload();
@@ -1290,6 +1316,7 @@ var TomBG = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           mode: mode,
+          theme: localStorage.getItem('tom-labs-theme') || undefined,
           plainColor: plainColor,
           accentColor: accentColor,
           customSlots: customSlots,
@@ -1320,6 +1347,10 @@ window.updateThemeIcon = function (theme) {
 };
 
 window.changeTheme = function (themeName) {
+  if (window.FORCED_COLOR_MODE && themeName !== window.FORCED_COLOR_MODE) {
+    if (window.TomNotify) TomNotify.show("Color mode is locked by your administrator", "Color mode locked", "info", 3500);
+    return;
+  }
   var themeToApply = themeName;
   if (themeName === 'auto') {
     themeToApply = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -1336,6 +1367,11 @@ window.changeTheme = function (themeName) {
   if (window.TomVisuals) {
     window.TomVisuals.switchBGTheme(themeName);
   }
+  fetch('/api/account/theme_save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ theme: themeName })
+  }).catch(function () {});
   window.dispatchEvent(new Event('themeChanged'));
 };
 

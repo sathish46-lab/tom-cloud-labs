@@ -50,17 +50,22 @@ $mcpSettings = ($mcpDoc && is_object($mcpDoc) && method_exists($mcpDoc, 'getArra
                         </div>
                     </div>
                     <div class="d-flex flex-column gap-1">
-                        <h3 class="fw-bold mb-0 ls-tight lab-header-title">Superuser Admin Panel</h3>
+                        <h3 class="fw-bold mb-0 ls-tight lab-header-title">Modules</h3>
                         <div class="d-flex flex-wrap align-items-center gap-2 small">
                             <div class="d-flex align-items-center text-secondary">
-                                <span class="me-1 opacity-75">Manage users and global feature flags</span>
+                                <span class="me-1 opacity-75">Switch a module off to hide its features and its admin sidebar group</span>
                             </div>
                         </div>
                     </div>
                 </div>
+                <div class="d-flex align-items-center gap-2">
+                    <a href="/home" data-no-boost="true"
+                       class="btn btn-sm btn-outline-secondary border-secondary border-opacity-25 rounded-pill px-3 text-nowrap">
+                        <i class='bx bx-left-arrow-circle me-1'></i>Back to Labs
+                    </a>
+                </div>
             </div>
         
-            <?php include __DIR__ . '/admin_nav.php'; ?>
         </div>
     </div>
 </div>
@@ -79,7 +84,7 @@ $mcpSettings = ($mcpDoc && is_object($mcpDoc) && method_exists($mcpDoc, 'getArra
                     <div class="row">
                         <?php foreach ($featuresList as $key => $label): ?>
                         <div class="col-md-6 mb-3">
-                            <div class="d-flex justify-content-between align-items-center p-3 rounded-4 h-100" style="background: rgba(var(--cui-body-bg-rgb, 11,30,54), 0.4); border: 1px solid rgba(var(--cui-body-color-rgb, 255,255,255), 0.06);">
+                            <div class="d-flex justify-content-between align-items-center p-3 rounded-4 h-100 adm-stat">
                                 <div>
                                     <h6 class="mb-1 fw-semibold"><?= $label ?></h6>
                                 </div>
@@ -105,7 +110,7 @@ $mcpSettings = ($mcpDoc && is_object($mcpDoc) && method_exists($mcpDoc, 'getArra
                     <div class="row">
                         <?php foreach ($featuresList as $key => $label): ?>
                         <div class="col-md-6 mb-3">
-                            <div class="d-flex justify-content-between align-items-center p-3 rounded-4 h-100" style="background: rgba(var(--cui-body-bg-rgb, 11,30,54), 0.4); border: 1px solid rgba(var(--cui-body-color-rgb, 255,255,255), 0.06);">
+                            <div class="d-flex justify-content-between align-items-center p-3 rounded-4 h-100 adm-stat">
                                 <div>
                                     <h6 class="mb-1 fw-semibold"><?= $label ?></h6>
                                 </div>
@@ -130,7 +135,7 @@ $mcpSettings = ($mcpDoc && is_object($mcpDoc) && method_exists($mcpDoc, 'getArra
                     <small class="text-body-secondary">Configure who can use MCP tools.</small>
                 </div>
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center p-3 rounded-4" style="background: rgba(var(--cui-body-bg-rgb, 11,30,54), 0.4); border: 1px solid rgba(var(--cui-body-color-rgb, 255,255,255), 0.06);">
+                    <div class="d-flex justify-content-between align-items-center p-3 rounded-4 adm-stat">
                         <div>
                             <h6 class="mb-1 fw-semibold">Admin-Only Mode</h6>
                             <small class="text-body-secondary">When enabled, only superusers can connect to MCP tools. Regular users are blocked.</small>
@@ -208,7 +213,7 @@ $mcpSettings = ($mcpDoc && is_object($mcpDoc) && method_exists($mcpDoc, 'getArra
                     ];
                     $bxClass = $adminIconMap[$labKey] ?? 'bx-cube';
                 ?>
-                <div class="d-flex align-items-center mb-4 p-4 rounded-4" style="background: rgba(var(--cui-body-bg-rgb, 11,30,54), 0.4); border: 1px solid rgba(var(--cui-body-color-rgb, 255,255,255), 0.06);">
+                <div class="d-flex align-items-center mb-4 p-4 rounded-4 adm-stat">
                     <div class="rounded-circle d-flex align-items-center justify-content-center me-4 bg-primary bg-opacity-10" style="width: 72px; height: 72px; flex-shrink: 0;">
                         <?php if ($labKey === 'minio'): ?>
                             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" height="40" width="40" class="text-primary">
@@ -250,7 +255,7 @@ $mcpSettings = ($mcpDoc && is_object($mcpDoc) && method_exists($mcpDoc, 'getArra
                 
                 <?php if ($isApplicable): ?>
                 <div class="col-md-6">
-                    <div class="d-flex justify-content-between align-items-center p-3 h-100 rounded-4" style="background: rgba(var(--cui-body-bg-rgb, 11,30,54), 0.4); border: 1px solid rgba(var(--cui-body-color-rgb, 255,255,255), 0.06);">
+                    <div class="d-flex justify-content-between align-items-center p-3 h-100 rounded-4 adm-stat">
                         <div class="d-flex align-items-center">
                             <div class="rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 42px; height: 42px; background: rgba(var(--cui-body-color-rgb, 255,255,255), 0.05);">
                                 <i class='bx <?= $fIcon ?> fs-4 text-primary'></i>
@@ -268,7 +273,7 @@ $mcpSettings = ($mcpDoc && is_object($mcpDoc) && method_exists($mcpDoc, 'getArra
                 </div>
                 <?php else: ?>
                 <div class="col-md-6">
-                    <div class="d-flex justify-content-between align-items-center p-3 h-100 rounded-4 opacity-50" style="background: rgba(var(--cui-body-bg-rgb, 11,30,54), 0.2); border: 1px dashed rgba(var(--cui-body-color-rgb, 255,255,255), 0.06);">
+                    <div class="d-flex justify-content-between align-items-center p-3 h-100 rounded-4 opacity-50 adm-stat">
                         <div class="d-flex align-items-center">
                             <div class="rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 42px; height: 42px; background: rgba(var(--cui-body-color-rgb, 255,255,255), 0.02);">
                                 <i class='bx <?= $fIcon ?> fs-4 text-body-secondary opacity-50'></i>

@@ -90,8 +90,7 @@ $currentUserRole = $currentUser?->getRole() ?? 'user';
                         </form>
 
                         <div class="d-flex flex-wrap gap-2 mb-2">
-                            <a class="btn btn-sm btn-outline-primary rounded-pill" href="/<?= htmlspecialchars($currentUserUsername) ?>"><i class="bx bx-user me-1"></i> View my profile</a>
-                            <a class="btn btn-sm btn-outline-secondary rounded-pill" href="/account"><i class="bx bx-bar-chart-alt-2 me-1"></i> Activity & Analytics</a>
+                            <a class="btn btn-sm btn-outline-primary rounded-pill" href="/<?= htmlspecialchars($currentUserUsername) ?>"><i class="bx bx-user me-1"></i> My profile</a>
                         </div>
                         <hr class="border-secondary border-opacity-10">
                         <div class="fw-semibold small text-body-secondary text-uppercase mb-1">Shortcuts</div>
@@ -262,9 +261,9 @@ $currentUserRole = $currentUser?->getRole() ?? 'user';
                         <div class="d-flex align-items-center justify-content-between gap-3 py-2">
                             <div>
                                 <div class="fw-semibold">Background</div>
-                                <div class="small text-body-secondary">Pick a theme or upload your own.</div>
+                                <div class="small text-body-secondary">Pick a background theme or design your own colors.</div>
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill" onclick="coreui.Modal.getInstance(document.getElementById('accountSettingsModal')).hide(); setTimeout(()=>document.querySelector('[data-coreui-target=bgSelectModal]')?.click(),400)">
+                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill" onclick="(()=>{const s=coreui.Modal.getInstance(document.getElementById('accountSettingsModal')); if(s) s.hide(); setTimeout(()=>new coreui.Modal(document.getElementById('bgSelectModal')).show(),400)})()">
                                 <i class="bx bx-palette me-1"></i> Change background
                             </button>
                         </div>
@@ -272,9 +271,9 @@ $currentUserRole = $currentUser?->getRole() ?? 'user';
                         <div class="d-flex align-items-center justify-content-between gap-3 py-2">
                             <div>
                                 <div class="fw-semibold">Theme editor</div>
-                                <div class="small text-body-secondary">Author a custom parallax theme.</div>
+                                <div class="small text-body-secondary">Design a custom color theme.</div>
                             </div>
-                            <a class="btn btn-sm btn-outline-secondary rounded-pill" href="/theme/editor"><i class="bx bx-edit me-1"></i> Open editor</a>
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" onclick="(()=>{const s=coreui.Modal.getInstance(document.getElementById('accountSettingsModal')); if(s) s.hide(); setTimeout(()=>new coreui.Modal(document.getElementById('plainColorModal')).show(),400)})()"><i class="bx bx-edit me-1"></i> Open editor</button>
                         </div>
                     </div>
 

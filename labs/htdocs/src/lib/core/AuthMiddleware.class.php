@@ -39,17 +39,60 @@ class AuthMiddleware {
      * Require superuser role. Returns UserSession or sends 403 and exits.
      * Also calls requireAuth() internally, so no need to call both.
      *
+     * While impersonating, the session user is the impersonation target and is
+     * normally NOT a superuser. The original superuser keeps admin authority, so
+     * resolve and return that identity instead — admin APIs keep acting as the
+     * person who actually pressed the button, never as the person being viewed.
+     *
      * @return UserSession
      */
     public static function requireAdmin(): UserSession {
         $user = self::requireAuth();
         if ($user->getRole() !== Constants::GROUP_SUPERUSER) {
+            $original = self::getImpersonatorSession();
+            if ($original !== null && $original->getRole() === Constants::GROUP_SUPERUSER) {
+                return $original;
+            }
             http_response_code(403);
             header('Content-Type: application/json');
             echo json_encode(['success' => false, 'error' => 'Forbidden']);
             exit;
         }
         return $user;
+    }
+
+    /**
+     * True when this session is currently impersonating another user.
+     */
+    public static function isImpersonating(): bool {
+        return !empty($_SESSION['impersonator']['username']);
+    }
+
+    /**
+     * Non-destructive admin check for page entry scripts.
+     *
+     * Same rule as requireAdmin(), but returns a bool so a page can redirect
+     * instead of emitting a JSON 403 — while impersonating, admin pages stay
+     * reachable because the original superuser is still the one browsing.
+     */
+    public static function isAdmin(): bool {
+        if (!self::isAuthenticated()) return false;
+        $user = Session::getUserSession();
+        if ($user !== null && $user->getRole() === Constants::GROUP_SUPERUSER) return true;
+        $original = self::getImpersonatorSession();
+        return $original !== null && $original->getRole() === Constants::GROUP_SUPERUSER;
+    }
+
+    /**
+     * Session for the superuser who started the impersonation, or null.
+     * Loads the original identity from the session; never trusts a client value.
+     */
+    public static function getImpersonatorSession(): ?UserSession {
+        if (empty($_SESSION['impersonator']['username'])) {
+            return null;
+        }
+        $session = new UserSession((string) $_SESSION['impersonator']['username']);
+        return $session->getUser() !== null ? $session : null;
     }
 
     /**

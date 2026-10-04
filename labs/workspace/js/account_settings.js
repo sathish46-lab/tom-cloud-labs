@@ -417,6 +417,7 @@
         btn.classList.add('active');
         const mode = btn.dataset.mode;
         if (window.TomVisuals) TomVisuals.switchBGTheme(mode);
+        if (window.changeTheme) window.changeTheme(mode);
         // Save preference
         fetch('/api/account/theme_save', {
             method: 'POST',

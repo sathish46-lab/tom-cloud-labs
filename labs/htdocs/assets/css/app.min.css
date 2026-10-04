@@ -14830,7 +14830,7 @@ body::before {
   /* Pattern only shows in parallax modes, hidden in plain mode for clean colors */
 }
 :root:not(.mode-plain) body::before {
-  background-image: url("https://www.transparenttextures.com/patterns/carbon-fibre.png");
+  background-image: url("/assets/img/patterns/carbon-fibre.png");
   opacity: 0.02;
 }
 body::before {

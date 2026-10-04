@@ -1,0 +1,956 @@
+/* ==========================================================================
+   Profile page (unified public profile + activity + achievements).
+
+   Kept in its own file and linked from <head> — an inline <style> would not be
+   re-read by htmx's head-support extension, which merges <link> by href only.
+   Surfaces use --glass-bg-solid so the tab bar stays opaque over the
+   background art; regular cards keep the standard .blur glass.
+   ========================================================================== */
+
+#pfApp {
+    max-width: 1440px;
+    margin-inline: auto;
+}
+
+/* ------------------------------------------------------------------ hero */
+.pf-hero {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--glass-bg-solid, #0f1928) !important;
+    border: 1px solid rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.07) !important;
+}
+
+.pf-hero::before {
+    content: "";
+    position: absolute;
+    inset: -60% -20% auto auto;
+    width: 420px;
+    height: 420px;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.35), transparent 65%);
+    pointer-events: none;
+}
+
+body.hwa-enabled .pf-hero {
+    -webkit-backdrop-filter: saturate(200%) blur(18px);
+    backdrop-filter: saturate(200%) blur(18px);
+}
+
+.pf-hero > .card-body {
+    position: relative;
+    z-index: 1;
+}
+
+.pf-avatar-wrap {
+    position: relative;
+    flex: 0 0 auto;
+}
+
+.pf-avatar {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.16);
+    box-shadow: 0 0 0 5px rgba(99, 102, 241, 0.18);
+    background: rgba(148, 163, 184, 0.14);
+}
+
+.pf-presence {
+    position: absolute;
+    right: 4px;
+    bottom: 4px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #64748b;
+    border: 3px solid var(--glass-bg-solid, #0f1928);
+}
+
+.pf-presence.is-on {
+    background: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25);
+}
+
+.pf-name {
+    font-size: 1.55rem;
+    line-height: 1.2;
+}
+
+.pf-rank-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.14);
+    border: 1px solid rgba(251, 191, 36, 0.35);
+    white-space: nowrap;
+}
+
+.pf-role-pill {
+    padding: 4px 11px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.pf-role-superuser {
+    color: #f472b6;
+    background: rgba(244, 114, 182, 0.14);
+    border: 1px solid rgba(244, 114, 182, 0.35);
+}
+
+.pf-role-admin {
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.14);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+}
+
+.pf-handle,
+.pf-sub {
+    color: var(--cui-secondary-color, #94a3b8);
+    font-size: 0.9rem;
+    margin-top: 6px;
+}
+
+.pf-sub {
+    font-size: 0.82rem;
+    margin-top: 3px;
+}
+
+.pf-dot-sep {
+    opacity: 0.45;
+    margin-inline: 6px;
+}
+
+.pf-strip {
+    display: flex;
+    gap: 10px;
+    flex: 0 0 auto;
+}
+
+.pf-strip-item {
+    min-width: 96px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    text-align: center;
+    background: rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.05);
+    border: 1px solid rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.08);
+}
+
+.pf-strip-num {
+    font-size: 1.3rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.pf-strip-lbl {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--cui-secondary-color, #94a3b8);
+    margin-top: 4px;
+}
+
+.pf-c-zeal {
+    color: #f87171;
+}
+
+.pf-c-jolt {
+    color: #fbbf24;
+}
+
+/* ----------------------------------------------------------- card header */
+.pf-card {
+    background-color: var(--glass-bg, rgba(15, 25, 40, 0.7)) !important;
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.15)) !important;
+}
+
+.pf-sec-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--cui-secondary-color, #94a3b8);
+    margin-bottom: 12px;
+}
+
+.pf-sec-title i {
+    font-size: 1rem;
+    color: #6366f1;
+}
+
+/* --------------------------------------------------------------- skills */
+.pf-skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.pf-skill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 0.83rem;
+    font-weight: 500;
+    background: rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.07);
+    border: 1px solid rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.1);
+}
+
+.pf-skill b {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: rgba(99, 102, 241, 0.25);
+    color: #a5b4fc;
+}
+
+/* ------------------------------------------------------- zeal / jolt card */
+.pf-meter-head {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.pf-meter-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 11px;
+    font-size: 1.1rem;
+    background: rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.08);
+}
+
+.pf-meter-lbl {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    font-size: 0.85rem;
+}
+
+.pf-meter-note {
+    font-size: 0.72rem;
+    color: var(--cui-secondary-color, #94a3b8);
+    margin-left: auto;
+}
+
+.pf-meter-val {
+    font-size: 2.1rem;
+    font-weight: 800;
+    line-height: 1.1;
+    margin: 10px 0 9px;
+}
+
+.pf-meter-bar {
+    height: 7px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.1);
+}
+
+.pf-meter-bar span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+}
+
+.pf-meter-zeal .pf-meter-icon {
+    color: #f87171;
+}
+
+.pf-meter-zeal .pf-meter-bar span {
+    background: linear-gradient(90deg, #ef4444, #f87171);
+}
+
+.pf-meter-jolt .pf-meter-icon {
+    color: #fbbf24;
+}
+
+.pf-meter-jolt .pf-meter-bar span {
+    background: linear-gradient(90deg, #f59e0b, #fcd34d);
+}
+
+/* ---------------------------------------------------------- rank progress */
+.pf-rank-now {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 0.98rem;
+    margin-bottom: 9px;
+}
+
+.pf-rank-idx {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--cui-secondary-color, #94a3b8);
+}
+
+.pf-rankbar {
+    height: 9px;
+    border-radius: 999px;
+    background: rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.1);
+    overflow: hidden;
+}
+
+.pf-rankbar span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #6366f1, #22d3ee);
+}
+
+.pf-rank-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 0.8rem;
+    color: var(--cui-secondary-color, #94a3b8);
+    margin-top: 9px;
+}
+
+.pf-rank-foot b {
+    color: var(--cui-body-color, #e2e8f0);
+}
+
+.pf-rank-need {
+    font-size: 0.75rem;
+}
+
+/* ------------------------------------------------------------------ tabs */
+.pf-tabs {
+    background-color: var(--glass-bg-solid, #0f1928) !important;
+    border: 1px solid rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.08) !important;
+}
+
+body.hwa-enabled .pf-tabs {
+    -webkit-backdrop-filter: saturate(200%) blur(18px);
+    backdrop-filter: saturate(200%) blur(18px);
+}
+
+.pf-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--cui-secondary-color, #94a3b8);
+    border: 1px solid transparent;
+    transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.pf-tab i {
+    font-size: 1.05rem;
+}
+
+.pf-tab:hover {
+    color: var(--cui-body-color, #e2e8f0);
+    background: rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.06);
+}
+
+.pf-tab.active {
+    color: #fff;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35);
+}
+
+/* ------------------------------------------------------- facts / minigrid */
+.pf-facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1px;
+    background: rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.07);
+    border: 1px solid rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.07);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.pf-fact {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 11px 14px;
+    background: rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.03);
+    font-size: 0.86rem;
+}
+
+.pf-fact span {
+    color: var(--cui-secondary-color, #94a3b8);
+}
+
+.pf-fact b {
+    font-weight: 600;
+    text-align: right;
+    word-break: break-word;
+}
+
+.pf-ok {
+    color: #4ade80;
+}
+
+.pf-bad {
+    color: #f87171;
+}
+
+.pf-mini-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.pf-mini-grid > div {
+    padding: 12px;
+    border-radius: 12px;
+    text-align: center;
+    background: rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.05);
+    border: 1px solid rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.07);
+}
+
+.pf-mini-grid b {
+    display: block;
+    font-size: 1.35rem;
+    font-weight: 800;
+    line-height: 1.15;
+}
+
+.pf-mini-grid span {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--cui-secondary-color, #94a3b8);
+}
+
+/* --------------------------------------------------------------- stat row */
+.pf-stat-lbl {
+    font-size: 0.75rem;
+    color: var(--cui-secondary-color, #94a3b8);
+    margin-bottom: 5px;
+}
+
+.pf-stat-lbl i {
+    margin-right: 5px;
+}
+
+.pf-stat-num {
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.pf-stat-word {
+    font-size: 1.05rem;
+}
+
+/* ---------------------------------------------------------------- charts */
+.pf-chart-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+
+.pf-range {
+    display: inline-flex;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 999px;
+    background: rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.07);
+}
+
+.pf-range button {
+    border: 0;
+    background: transparent;
+    color: var(--cui-secondary-color, #94a3b8);
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 5px 13px;
+    border-radius: 999px;
+    cursor: pointer;
+}
+
+.pf-range button.active {
+    background: #6366f1;
+    color: #fff;
+}
+
+.pf-chartbox {
+    position: relative;
+    height: 240px;
+}
+
+/* ------------------------------------------------------------- top areas */
+.pf-areas {
+    display: grid;
+    gap: 9px;
+}
+
+.pf-area {
+    display: grid;
+    grid-template-columns: 110px 1fr 62px;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.85rem;
+}
+
+.pf-area-lbl {
+    font-weight: 600;
+}
+
+.pf-area-bar {
+    height: 8px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.1);
+}
+
+.pf-area-bar span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #6366f1, #22d3ee);
+}
+
+.pf-area-num {
+    text-align: right;
+    color: var(--cui-secondary-color, #94a3b8);
+    font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------- achievements */
+.pf-progress {
+    height: 10px;
+    flex: 1 1 180px;
+    border-radius: 999px;
+    background: rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.1);
+    overflow: hidden;
+}
+
+.pf-progress-sm {
+    height: 8px;
+    flex: 0 1 160px;
+}
+
+.pf-progress span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #6366f1, #22d3ee);
+}
+
+.pf-ach-pct {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #a5b4fc;
+}
+
+.pf-group-title {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 14px;
+}
+
+.pf-group-title i {
+    font-size: 1.2rem;
+    color: var(--gc, #6366f1);
+}
+
+.pf-group-count {
+    margin-left: auto;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.07);
+    color: var(--cui-secondary-color, #94a3b8);
+}
+
+.pf-medals {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+    gap: 14px 10px;
+}
+
+.pf-medal {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 5px;
+}
+
+.pf-medal-ic {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 62px;
+    height: 62px;
+    border-radius: 50%;
+    font-size: 1.7rem;
+    color: var(--mc, #6366f1);
+    background:
+        radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.28), transparent 55%),
+        rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.08);
+    border: 2px solid var(--mc, #6366f1);
+    box-shadow: 0 6px 18px -8px var(--mc, #6366f1);
+}
+
+.pf-medal.is-locked .pf-medal-ic {
+    color: var(--cui-secondary-color, #64748b);
+    border-color: rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.16);
+    box-shadow: none;
+    background: rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.04);
+}
+
+.pf-medal-lock {
+    position: absolute;
+    right: -3px;
+    bottom: -3px;
+    font-size: 0.85rem;
+    width: 21px;
+    height: 21px;
+    line-height: 21px;
+    border-radius: 50%;
+    background: var(--glass-bg-solid, #0f1928);
+    border: 1px solid rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.2);
+    color: var(--cui-secondary-color, #94a3b8);
+    text-align: center;
+}
+
+.pf-medal-name {
+    font-size: 0.8rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.pf-medal.is-locked .pf-medal-name {
+    color: var(--cui-secondary-color, #94a3b8);
+}
+
+.pf-medal-desc {
+    font-size: 0.68rem;
+    line-height: 1.25;
+    color: var(--cui-secondary-color, #94a3b8);
+}
+
+/* ------------------------------------------------------- insight grid */
+.pf-chartbox-sm {
+    height: 180px;
+}
+
+.pf-chart-note {
+    font-size: 0.72rem;
+    line-height: 1.4;
+    color: var(--cui-secondary-color, #94a3b8);
+    margin-top: 10px;
+}
+
+.pf-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 150px;
+    padding: 24px 12px;
+    text-align: center;
+    border-radius: 12px;
+    border: 1px dashed rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.14);
+    background: rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.03);
+    color: var(--cui-secondary-color, #94a3b8);
+    font-size: 0.83rem;
+}
+
+.pf-empty i {
+    font-size: 1.7rem;
+    opacity: 0.6;
+}
+
+/* Full skill list: hot (top 3) reads orange, the rest cool blue. */
+.pf-skills.is-all {
+    gap: 9px;
+}
+
+.pf-skills.is-all .pf-skill {
+    font-size: 0.85rem;
+    padding: 7px 13px;
+}
+
+.pf-skills.is-all .pf-skill i {
+    font-size: 0.95rem;
+    line-height: 1;
+}
+
+.pf-skill.is-hot {
+    color: #fdba74;
+    background: rgba(249, 115, 22, 0.14);
+    border-color: rgba(249, 115, 22, 0.4);
+}
+
+.pf-skill.is-hot b {
+    background: rgba(249, 115, 22, 0.28);
+    color: #fed7aa;
+}
+
+.pf-skill.is-cool {
+    color: #93c5fd;
+    background: rgba(59, 130, 246, 0.14);
+    border-color: rgba(59, 130, 246, 0.4);
+}
+
+.pf-skill.is-cool b {
+    background: rgba(59, 130, 246, 0.28);
+    color: #bfdbfe;
+}
+
+/* ------------------------------------------------------ activity feed */
+.pf-feed {
+    display: grid;
+    gap: 10px;
+}
+
+.pf-feed-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 13px;
+    padding: 13px 15px;
+    border-radius: 14px;
+    background-color: var(--glass-bg, rgba(15, 25, 40, 0.7)) !important;
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.15));
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.12);
+    transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+body.hwa-enabled .pf-feed-row {
+    backdrop-filter: saturate(200%) blur(18px);
+    -webkit-backdrop-filter: saturate(200%) blur(18px);
+}
+
+/* Same surface .card.blur resolves to, so rows match every other card. */
+html[data-coreui-theme="dark"] body.hwa-enabled .pf-feed-row {
+    background-color: rgba(0, 0, 0, 0.65) !important;
+}
+
+html[data-coreui-theme="light"] body.hwa-enabled .pf-feed-row {
+    background-color: rgba(255, 255, 255, 0.65) !important;
+}
+
+/* Blur off: .card.blur falls back to the solid glass token — follow it. */
+body.hwa-disabled .pf-feed-row {
+    background-color: var(--glass-bg-solid, #0f1928) !important;
+    border-color: transparent;
+}
+
+html[data-coreui-theme="light"] body.hwa-disabled .pf-feed-row {
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+.pf-feed-row:hover {
+    border-color: rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.28);
+    box-shadow: 0 14px 36px -12px rgba(0, 0, 0, 0.28);
+}
+
+.pf-feed-avatar {
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.14);
+    background: rgba(148, 163, 184, 0.14);
+}
+
+.pf-feed-main {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.pf-feed-head {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 5px;
+    font-size: 0.8rem;
+}
+
+.pf-feed-name {
+    font-weight: 700;
+    color: var(--cui-body-color, #e2e8f0);
+}
+
+.pf-feed-handle {
+    color: var(--cui-secondary-color, #94a3b8);
+}
+
+.pf-feed-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.7rem;
+    background: rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.07);
+    color: var(--cui-body-color, #e2e8f0);
+    font-variant-numeric: tabular-nums;
+}
+
+.pf-feed-chip i {
+    font-size: 0.78rem;
+}
+
+.pf-feed-chip[title="Total Zeal"] i {
+    color: #f87171;
+}
+
+.pf-feed-chip[title="Available Jolt"] i {
+    color: #fbbf24;
+}
+
+.pf-feed-rank {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 9px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #a5b4fc;
+    background: rgba(99, 102, 241, 0.18);
+    border: 1px solid rgba(99, 102, 241, 0.35);
+}
+
+.pf-feed-rank i {
+    font-size: 0.75rem;
+}
+
+.pf-feed-time {
+    margin-left: auto;
+    color: var(--cui-secondary-color, #94a3b8);
+    font-size: 0.74rem;
+    white-space: nowrap;
+}
+
+.pf-feed-text {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 0.88rem;
+    color: var(--cui-body-color, #e2e8f0);
+}
+
+.pf-feed-text > i {
+    color: var(--cui-secondary-color, #94a3b8);
+    font-size: 1.05rem;
+    flex: 0 0 auto;
+}
+
+.pf-feed-text b {
+    font-weight: 700;
+}
+
+.pf-feed-earned {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #fca5a5;
+    background: rgba(239, 68, 68, 0.14);
+    border: 1px solid rgba(239, 68, 68, 0.32);
+    white-space: nowrap;
+}
+
+.pf-feed-earned i {
+    font-size: 0.8rem;
+}
+
+/* ------------------------------------------------- hero status inline */
+.pf-status-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pf-presence-mini {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #64748b;
+    display: inline-block;
+}
+
+.pf-presence-mini.is-on {
+    background: #4ade80;
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.22);
+}
+
+/* ------------------------------------------------------------- responsive */
+@media (max-width: 575.98px) {
+    .pf-avatar {
+        width: 74px;
+        height: 74px;
+    }
+
+    .pf-name {
+        font-size: 1.25rem;
+    }
+
+    .pf-strip {
+        width: 100%;
+    }
+
+    .pf-strip-item {
+        flex: 1 1 0;
+        min-width: 0;
+        padding: 10px 6px;
+    }
+
+    .pf-strip-num {
+        font-size: 1.1rem;
+    }
+
+    .pf-area {
+        grid-template-columns: 84px 1fr 52px;
+        gap: 8px;
+        font-size: 0.78rem;
+    }
+
+    .pf-medals {
+        grid-template-columns: repeat(auto-fill, minmax(94px, 1fr));
+    }
+
+    .pf-medal-ic {
+        width: 54px;
+        height: 54px;
+        font-size: 1.5rem;
+    }
+}

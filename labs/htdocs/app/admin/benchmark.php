@@ -1,6 +1,13 @@
 <?php
 require_once __DIR__ . '/../../src/load.php';
 
+if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
+    header("Location: /signin"); exit;
+}
+if (!AuthMiddleware::isAdmin()) {
+    header("Location: /home"); exit;
+}
+
 function benchmark($name, $callback, $iterations = 10000) {
     $start = microtime(true);
     for ($i = 0; $i < $iterations; $i++) {
