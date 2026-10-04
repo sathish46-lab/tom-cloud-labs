@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username'])) {
                     'state'         => 'active',
                     'created_at'    => time(),
                     'last_login'    => time(),
-                    'ip_address'    => get_client_ip(),
+                    ...get_client_ip_fields(),
                     'theme_preferences' => [
                         'mode' => 'spiderman',
                         'plain_color' => '#010d12',

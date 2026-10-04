@@ -252,6 +252,22 @@ function get_client_ip() {
     return '0.0.0.0';
 }
 
+/**
+ * User-document IP fields: overall last IP plus per-family last IP.
+ * Only the family of the current request is written, so a known IPv4
+ * is never clobbered by an IPv6 visit (and vice-versa).
+ */
+function get_client_ip_fields($ip = null) {
+    $ip = $ip ?: get_client_ip();
+    $fields = ['ip_address' => $ip];
+    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+        $fields['ip_address_v6'] = $ip;
+    } elseif (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+        $fields['ip_address_v4'] = $ip;
+    }
+    return $fields;
+}
+
 // CENTRALIZED LOGOUT HANDLER (POST only — prevents CSRF logout via img tags)
 if (isset($_POST['logout']) && $_POST['logout'] == 1) {
     UserSession::logout(); 

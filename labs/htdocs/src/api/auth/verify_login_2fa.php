@@ -72,7 +72,7 @@ try {
                 'created_at' => time(),
                 'last_activity' => time()
             ]],
-            '$set' => ['last_login' => time(), 'ip_address' => $clientIp]
+            '$set' => array_merge(['last_login' => time()], get_client_ip_fields($clientIp))
         ]
     );
     
