@@ -54,7 +54,7 @@ if ($hasCompletedBefore) {
     <div class="evaluation-bg"></div>
 
     <!-- 2. Header Section (Title, Desc, Tags, Stats) -->
-    <div class="lab-header-section pt-5 pb-1 mb-4 shadow-sm border-bottom border-secondary border-opacity-10" style="z-index: 10; position: relative;">
+    <div class="lab-header-section quiz-glass-panel quiz-glass-strip pt-5 pb-1 mb-4" style="z-index: 10; position: relative;">
         <div class="container d-flex flex-column align-items-center">
             <!-- Narrative Block -->
             <div class="col-md-8 col-xl-8 text-center mb-3 mt-2">
@@ -68,7 +68,7 @@ if ($hasCompletedBefore) {
             <div class="col-12 text-center mb-3">
                 <div class="d-flex flex-wrap justify-content-center gap-2">
                     <?php foreach ($tags as $tag): ?>
-                        <span class="badge bg-primary bg-opacity-75 text-white px-3 py-2 rounded-pill shadow-sm" style="font-size: 0.85rem; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1); letter-spacing: 0.5px;"><?= strtolower($tag) ?></span>
+                        <span class="badge bg-primary bg-opacity-75 text-white px-3 py-2 rounded-pill shadow-sm" style="font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.1); letter-spacing: 0.5px;"><?= strtolower($tag) ?></span>
                     <?php endforeach; ?>
                     <button class="btn btn-link text-body-secondary p-0 ms-1" title="Share Quiz"><i class="bx bx-share-alt small"></i></button>
                 </div>
@@ -100,8 +100,8 @@ if ($hasCompletedBefore) {
     </div>
 
     <!-- 3. Interactive Area Section -->
-    <div class="container-fluid px-0 mb-3 pb-3">
-        <div class="card border-0 shadow-lg p-4 p-lg-4 py-xl-4 mt-4" style="background: rgba(var(--bs-body-bg-rgb, 11, 30, 54), 0.45); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08) !important; border-radius: 24px;">
+    <div class="container-fluid  mb-3 pb-3">
+        <div class="card border-0 quiz-glass-panel shadow-lg p-4 p-lg-4 py-xl-4 mt-4" style="border-radius: 24px;">
             <div class="row justify-content-center">
                 <div class="col-lg-10">
                     

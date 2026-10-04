@@ -360,6 +360,38 @@
   gap: 4px;
 }
 
+
+// -----------------------------------------------------------------------------
+// QUIZ GLASS PANELS — mirror .sidebar exactly
+// -----------------------------------------------------------------------------
+// The quiz intro strip and the question card used to hardcode
+// `backdrop-filter: blur(16px)` inline, so they blurred even when the global
+// visual-blur toggle was off and never matched the sidebar. These rules copy
+// the sidebar's: solid fallback when blur is off, translucent + blurred glass
+// when body.hwa-enabled.
+.quiz-glass-panel {
+  background: var(--glass-bg-solid, rgba(11, 30, 54, 0.95)) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid var(--cui-card-border-color, rgba(255, 255, 255, 0.08)) !important;
+}
+
+body.hwa-enabled .quiz-glass-panel {
+  background: var(--glass-bg) !important;
+  backdrop-filter: saturate(200%) blur(18px) !important;
+  -webkit-backdrop-filter: saturate(200%) blur(18px) !important;
+}
+
+// Full-bleed strip (intro header): keep only the hairline underneath.
+.quiz-glass-strip {
+  border-width: 0 0 1px 0 !important;
+  border-radius: 0 !important;
+}
+
+html[data-coreui-theme="light"] .quiz-glass-panel {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+}
 // -----------------------------------------------------------------------------
 // 5. ENGINE-SPECIFIC COMPONENTS (SPOT QUIZ)
 // -----------------------------------------------------------------------------

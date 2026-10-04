@@ -382,6 +382,15 @@ function initModal() {
 }
 
 document.addEventListener('DOMContentLoaded', initModal);
+
+// htmx swaps only #main-content, but the modal was moved to <body>, so it
+// survives every navigation. Close it whenever the page content changes.
+document.addEventListener('htmx:beforeSwap', function (evt) {
+    if (evt.detail && evt.detail.target && evt.detail.target.id === 'main-content') {
+        stopPolling = true;
+        hideGenerationModal();
+    }
+});
 window.addEventListener('pageshow', function (event) {
     if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
         if (!generationModal) initModal();
@@ -483,8 +492,24 @@ window.startGenerationProcess = function() {
         });
 };
 
+let stopPolling = false;
+
+/** Hide the generation modal wherever it lives (it may have been moved to body). */
+function hideGenerationModal() {
+    try {
+        const el = document.getElementById('spotQuizModal');
+        if (!el || typeof coreui === 'undefined') return;
+        const inst = coreui.Modal.getInstance(el) || new coreui.Modal(el);
+        inst.hide();
+    } catch (e) {
+        console.warn('[Quiz Hub] could not hide modal', e);
+    }
+}
+
 function pollStatus(jobId) {
+    stopPolling = false;
     const check = () => {
+        if (stopPolling) return;
         fetch(`/api/quiz/job_status?job_id=${jobId}`)
             .then(res => res.json())
             .then(job => {
@@ -501,7 +526,13 @@ function pollStatus(jobId) {
 
                 if (job.generation_success && job.result_hash) {
                     if (sText) sText.innerText = 'Generation Complete!';
+                    if (pBar) { pBar.style.width = '100%'; pBar.classList.add('bg-success'); }
+                    stopPolling = true;
                     setTimeout(() => {
+                        // The modal is re-parented to <body>, so the htmx swap of
+                        // #main-content never removes it — hide it explicitly or it
+                        // sits there at 100% forever.
+                        hideGenerationModal();
                         htmx.ajax('GET', `/quiz/v/${job.result_hash}`, {target: '#main-content'});
                     }, 800);
                 } else if (job.generation_failed) {
