@@ -70,7 +70,11 @@ try {
     }
 
     // Deduct 25 Jolt and record unlock
-    \TomLabs\Labs\Quiz::updateUserStats($userEmail, 0, -$requiredJolt);
+    \TomLabs\Labs\Quiz::updateUserStats(
+        $userEmail, 0, -$requiredJolt,
+        'AI Assist',
+        'Unlocked AI Assist for a lesson (' . $requiredJolt . ' Jolt)'
+    );
     $db->ai_unlocked_lessons->updateOne(
         ['user_id' => $userId, 'lesson_id' => (string)$lessonId],
         ['$set' => ['unlocked_at' => time()]],

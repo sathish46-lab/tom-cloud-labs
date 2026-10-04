@@ -69,7 +69,13 @@ if ($quizHash && $userEmail) {
             elseif ($diff === 'hard') { $joltEarned = 5; }
             else { $joltEarned = 2; } // Normal
 
-            Quiz::updateUserStats($userEmail, $zealEarned, $joltEarned);
+            Quiz::updateUserStats(
+                $userEmail,
+                $zealEarned,
+                $joltEarned,
+                'Quiz Completion',
+                trim(($quiz['title'] ?? $quiz['topic'] ?? 'Quiz') . ' · ' . $score . '/' . $total)
+            );
             $rewarded = true;
         } else {
             error_log("[Quiz API] Failed to find quiz for reward: $quizHash");

@@ -83,6 +83,7 @@ if (!function_exists('send_security_headers')) {
 // 2. Load Composer and Libraries FIRST (before using any classes)
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/utils/common.php'; 
+require_once __DIR__ . '/utils/currency.php';
 require_once __DIR__ . '/lib/load.php';
 
 // 3. NOW we can use Constants class - regenerate session cookie

@@ -275,15 +275,50 @@ class Quiz {
     }
 
     /**
-     * Update user statistics by adding Zeal and Jolt
+     * Update user statistics by adding Zeal and Jolt.
+     *
+     * Non-zero movements are also appended to the `transactions` ledger so the
+     * admin Transaction Monitor can explain the balance. `$type` must be one of
+     * currency_groups(); an unknown type falls back to a system entry.
+     *
+     * @param string|null $type        ledger type, e.g. 'Quiz Completion'
+     * @param string|null $description human readable detail for the table
      */
-    public static function updateUserStats($userEmail, $zeal, $jolt) {
+    public static function updateUserStats($userEmail, $zeal, $jolt, $type = null, $description = null) {
         if (!$userEmail) return false;
         $db = DatabaseConnection::getDefaultDatabase();
-        return $db->user_stats->updateOne(
-            ['user_email' => $userEmail],
-            ['$inc' => ['zeal' => (int)$zeal, 'jolt' => (int)$jolt]]
-        );
+        $zeal = (int)$zeal;
+        $jolt = (int)$jolt;
+
+        $inc = ['$inc' => ['zeal' => $zeal, 'jolt' => $jolt]];
+        $res = $db->user_stats->updateOne(['user_email' => $userEmail], $inc);
+
+        if ($res->getMatchedCount() === 0) {
+            // First ever movement for this account: seed the starter row, then apply.
+            $db->user_stats->updateOne(
+                ['user_email' => $userEmail],
+                ['$set' => ['zeal' => 0, 'jolt' => 10]], // 10 starter jolt
+                ['upsert' => true]
+            );
+            $res = $db->user_stats->updateOne(['user_email' => $userEmail], $inc);
+        }
+
+        if (($zeal !== 0 || $jolt !== 0) && function_exists('currency_record')) {
+            foreach ([['zeal', $zeal], ['jolt', $jolt]] as [$cur, $delta]) {
+                if ($delta === 0) continue;
+                currency_record([
+                    'user_email'  => $userEmail,
+                    'direction'   => $delta > 0 ? 'earned' : 'spent',
+                    'currency'    => $cur,
+                    'amount'      => abs($delta),
+                    'type'        => $type ?: ($delta > 0 ? 'System Top-up' : 'Correction'),
+                    'description' => (string)($description !== null ? $description : ''),
+                    'source'      => 'system',
+                ]);
+            }
+        }
+
+        return $res;
     }
 
     /**

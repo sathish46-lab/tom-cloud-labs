@@ -82,6 +82,25 @@ try { $domains = iterator_to_array($db->domains->find(['email' => $email])); } c
 
 $quizCount = is_array($userData['quizzes_completed'] ?? null) ? count($userData['quizzes_completed']) : 0;
 
+$lastIpV4 = $userData['ip_address_v4'] ?? null;
+$lastIpV6 = $userData['ip_address_v6'] ?? null;
+$lastIpAny = $userData['ip_address'] ?? null;
+if (empty($lastIpV4) && !empty($lastIpAny) && filter_var($lastIpAny, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+    $lastIpV4 = $lastIpAny;
+}
+if (empty($lastIpV6) && !empty($lastIpAny) && filter_var($lastIpAny, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+    $lastIpV6 = $lastIpAny;
+}
+
+/* -------------------------------------------------------------- ledger */
+$txBreakdown = currency_breakdown($email, 'earned', 'zeal');
+$txRecent    = currency_recent($email, 5);
+$txCount     = currency_count(['user_email' => $email, 'valid' => true]);
+$txTypeDesc  = [];
+foreach (currency_groups() as $txGroup => $txTypes) {
+    foreach ($txTypes as $txType => $txDesc) $txTypeDesc[$txType] = $txDesc;
+}
+
 /* --------------------------------------------------------------- storage */
 $storageRow    = null;
 try { $storageRow = $db->storage_usage->findOne(['user_email' => $email]); } catch (Throwable $e) {}
@@ -269,6 +288,69 @@ $csrf = htmlspecialchars(Session::csrfToken());
                 </div>
                 <?php endforeach; ?>
             </div>
+
+            <div class="card border-0 rounded-4 blur shadow-sm mt-3">
+                <div class="card-header bg-transparent border-bottom border-body-secondary border-opacity-10 py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold"><i class='bx bx-slider-alt text-success me-2'></i>Adjust currency</h5>
+                    <a class="small text-body-secondary" href="/admin/transactions?user=<?= urlencode($email) ?>" title="Transaction Monitor">Monitor<i class='bx bx-link-external ms-1'></i></a>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between small mb-2">
+                        <span class="text-body-secondary">Zeal 🔥 <span id="uvZealBal" class="fw-bold text-body"><?= number_format($zeal) ?></span></span>
+                        <span class="text-body-secondary">Jolt ⚡ <span id="uvJoltBal" class="fw-bold text-body"><?= number_format($jolt) ?></span></span>
+                    </div>
+
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label small text-body-secondary mb-1" for="uvAdjCurrency">Currency</label>
+                            <select id="uvAdjCurrency" class="form-select form-select-sm bg-transparent border-secondary border-opacity-25">
+                                <option value="zeal">Zeal 🔥</option>
+                                <option value="jolt">Jolt ⚡</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-body-secondary mb-1" for="uvAdjDirection">Action</label>
+                            <select id="uvAdjDirection" class="form-select form-select-sm bg-transparent border-secondary border-opacity-25">
+                                <option value="add">Credit (+)</option>
+                                <option value="subtract">Debit (−)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label small text-body-secondary mb-1" for="uvAdjAmount">Amount</label>
+                        <input type="number" id="uvAdjAmount" class="form-control form-control-sm bg-transparent border-secondary border-opacity-25"
+                               min="1" max="1000000" step="1" value="1">
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label small text-body-secondary mb-1" for="uvAdjReason">Reason <span class="text-danger">*</span></label>
+                        <textarea id="uvAdjReason" rows="2" maxlength="300"
+                                  class="form-control form-control-sm bg-transparent border-secondary border-opacity-25"
+                                  placeholder="Why is this balance being adjusted?"></textarea>
+                    </div>
+
+                    <button type="button" id="uvAdjustSave" class="btn btn-sm btn-warning fw-semibold rounded-pill w-100">
+                        Apply adjustment
+                    </button>
+                    <div class="form-text text-start">Written to the ledger with your reason and the audit log.</div>
+
+                    <?php if ($txRecent): ?>
+                    <ul class="list-unstyled small mt-2 mb-0 border-top border-body-secondary border-opacity-10 pt-2">
+                        <?php foreach ($txRecent as $txRow): $txCur = (string)($txRow['currency'] ?? 'zeal'); ?>
+                        <li class="d-flex justify-content-between gap-2 py-1 border-bottom border-body-secondary border-opacity-5">
+                            <span class="text-body-secondary text-truncate" title="<?= htmlspecialchars((string)($txRow['description'] ?? '')) ?>">
+                                <?= (string)($txRow['direction'] ?? '') === 'earned' ? '+' : '−' ?>
+                                <?= number_format((int)($txRow['amount'] ?? 0)) ?> <?= htmlspecialchars(currency_label($txCur)) ?>
+                            </span>
+                            <span class="text-nowrap text-body-secondary opacity-75"><?= htmlspecialchars($ago((int)($txRow['created_at'] ?? 0))) ?></span>
+                        </li>
+                        <?php endforeach; ?>
+                    </ul>
+                    <a class="small d-inline-block mt-1" href="/admin/transactions?user=<?= urlencode($email) ?>">All <?= number_format($txCount) ?> transactions</a>
+                    <?php endif; ?>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -290,7 +372,11 @@ $csrf = htmlspecialchars(Session::csrfToken());
                     <div class="adm-kv"><span class="text-body-secondary small">Plan</span><span class="badge rounded-pill text-bg-<?= $plans[$plan][2] ?>"><?= $plans[$plan][1] ?></span></div>
                     <div class="adm-kv"><span class="text-body-secondary small">2FA</span><span class="small fw-semibold"><?= !empty($userData['two_factor_enabled']) ? 'Enabled' : 'Disabled' ?></span></div>
                     <div class="adm-kv"><span class="text-body-secondary small">Profile</span><?php if ($username): ?><a class="small fw-semibold" href="/<?= htmlspecialchars($username) ?>" target="_blank">View Public Profile <i class='bx bx-link-external'></i></a><?php else: ?><span class="small">—</span><?php endif; ?></div>
-                    <div class="adm-kv"><span class="text-body-secondary small">Transactions</span><span class="small text-body-secondary">Not tracked yet</span></div>
+                    <div class="adm-kv"><span class="text-body-secondary small">Transactions</span>
+                        <a class="small fw-semibold" href="/admin/transactions?user=<?= urlencode($email) ?>">
+                            <?= $txCount ? number_format($txCount) . ' recorded' : 'View monitor' ?> <i class='bx bx-link-external'></i>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -313,6 +399,7 @@ $csrf = htmlspecialchars(Session::csrfToken());
                                 </tr>
                             </thead>
                             <tbody>
+                                <?php if (!$txBreakdown): ?>
                                 <tr>
                                     <td colspan="3" class="ps-4 pe-4 text-center text-body-secondary py-5">
                                         <i class='bx bx-data fs-1 d-block mb-2 opacity-50'></i>
@@ -320,6 +407,25 @@ $csrf = htmlspecialchars(Session::csrfToken());
                                         only the running totals above are stored.
                                     </td>
                                 </tr>
+                                <?php else:
+                                    $txTotalZeal = 0; $txTotalCount = 0;
+                                    foreach ($txBreakdown as $txRow) { $txTotalZeal += $txRow['total']; $txTotalCount += $txRow['count']; }
+                                    foreach ($txBreakdown as $txRow): ?>
+                                <tr>
+                                    <td class="ps-4 align-top">
+                                        <span class="fw-semibold"><?= htmlspecialchars($txRow['type']) ?></span>
+                                        <div class="small text-body-secondary"><?= htmlspecialchars($txTypeDesc[$txRow['type']] ?? '') ?></div>
+                                    </td>
+                                    <td class="text-end align-top"><?= number_format($txRow['count']) ?></td>
+                                    <td class="text-end pe-4 align-top fw-semibold text-danger"><?= number_format($txRow['total']) ?> 🔥</td>
+                                </tr>
+                                <?php endforeach; ?>
+                                <tr class="border-top border-body-secondary border-opacity-10">
+                                    <td class="ps-4 fw-semibold">Total</td>
+                                    <td class="text-end fw-semibold"><?= number_format($txTotalCount) ?></td>
+                                    <td class="text-end pe-4 fw-bold text-danger"><?= number_format($txTotalZeal) ?> 🔥</td>
+                                </tr>
+                                <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
@@ -377,7 +483,8 @@ $csrf = htmlspecialchars(Session::csrfToken());
                         <span class="badge rounded-pill text-bg-<?= !empty($userData['two_factor_enabled']) ? 'success' : 'secondary' ?>"><?= !empty($userData['two_factor_enabled']) ? 'Enabled' : 'Disabled' ?></span></div>
                     <div class="adm-kv"><span class="text-body-secondary small">Failed logins</span><span class="small fw-semibold"><?= (int)($userData['failed_login_attempts'] ?? 0) ?></span></div>
                     <div class="adm-kv"><span class="text-body-secondary small">Locked until</span><span class="small fw-semibold"><?= !empty($userData['locked_until']) && $userData['locked_until'] > time() ? $fmtWhen($userData['locked_until']) : 'Not locked' ?></span></div>
-                    <div class="adm-kv"><span class="text-body-secondary small">Last IP</span><code class="small"><?= htmlspecialchars((string)($userData['ip_address'] ?? '—')) ?></code></div>
+                    <div class="adm-kv"><span class="text-body-secondary small">Last IPv4</span><code class="small"><?= htmlspecialchars((string)($lastIpV4 ?: '—')) ?></code></div>
+                    <div class="adm-kv"><span class="text-body-secondary small">Last IPv6</span><code class="small"><?= htmlspecialchars((string)($lastIpV6 ?: '—')) ?></code></div>
                     <div class="adm-kv"><span class="text-body-secondary small">Active sessions</span><span class="small fw-semibold"><?= count((array)($userData['session_tokens'] ?? [])) ?></span></div>
                     <div class="adm-kv"><span class="text-body-secondary small">Last sign-in</span><span class="small fw-semibold"><?= htmlspecialchars($fmtWhen($lastLoginTs ?: null)) ?></span></div>
                 </div>
@@ -606,6 +713,34 @@ $csrf = htmlspecialchars(Session::csrfToken());
             if (res.status === 'success') { notify('Moderator flag ' + (state ? 'enabled' : 'disabled') + '.', 'Saved'); setTimeout(() => location.reload(), 600); }
             else { notify(res.error || 'Failed', 'Error', 'error'); this.checked = !state; }
         } catch (e) { notify('Network error', 'Error', 'error'); this.checked = !state; }
+    });
+
+    /* ------------------------------------------------------------ currency */
+    document.getElementById('uvAdjustSave')?.addEventListener('click', async function () {
+        const currency  = document.getElementById('uvAdjCurrency').value;
+        const direction = document.getElementById('uvAdjDirection').value;
+        const amount    = parseInt(document.getElementById('uvAdjAmount').value, 10);
+        const reason    = document.getElementById('uvAdjReason').value.trim();
+
+        if (!amount || amount < 1) { notify('Amount must be at least 1', 'Error', 'error'); return; }
+        if (reason.length < 3) { notify('A reason is required (3 characters minimum)', 'Error', 'error'); return; }
+
+        this.disabled = true;
+        try {
+            const res = await post('/api/admin/adjust_currency', {
+                email: EMAIL, currency: currency, direction: direction, amount: amount, reason: reason
+            });
+            if (res.status === 'success') {
+                const unit = currency === 'jolt' ? 'Jolt' : 'Zeal';
+                notify((direction === 'add' ? 'Credited ' : 'Debited ') + amount + ' ' + unit +
+                       ' — new balance ' + res.balance, 'Adjustment applied', 'success');
+                document.getElementById('uvAdjReason').value = '';
+                setTimeout(() => location.reload(), 700);
+            } else {
+                notify(res.error || 'Failed', 'Error', 'error');
+            }
+        } catch (e) { notify('Network error', 'Error', 'error'); }
+        this.disabled = false;
     });
 
     /* ---------------------------------------------------------------- plan */

@@ -76,7 +76,7 @@ try {
         exit;
     }
 
-    \TomLabs\Labs\Quiz::updateUserStats($userEmail, 0, -1);
+    \TomLabs\Labs\Quiz::updateUserStats($userEmail, 0, -1, 'Hint', 'Revealed a prompt (1 Jolt)');
     $db->ai_unlocked_prompts->updateOne(
         ['user_id' => $userId, 'lesson_id' => (string)$lessonId],
         ['$set' => ['unlocked_at' => time()]],

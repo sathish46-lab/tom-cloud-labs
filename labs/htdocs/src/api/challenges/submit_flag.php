@@ -78,7 +78,13 @@ try {
             $zealEarned = (int)round($baseZeal * $multiplier);
             
             // Credit points to user stats!
-            \TomLabs\Labs\Quiz::updateUserStats($user->getEmail(), $zealEarned, $joltEarned);
+            \TomLabs\Labs\Quiz::updateUserStats(
+                $user->getEmail(),
+                $zealEarned,
+                $joltEarned,
+                'CTF Challenge',
+                'Solved ' . $challengeId . ' on attempt ' . $completedOnAttempt
+            );
             
             $db->challenge_instances->updateOne(
                 ['instance_hash' => $instanceHash],

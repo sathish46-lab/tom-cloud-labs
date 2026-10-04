@@ -30,7 +30,7 @@ try {
     }
 
     // 2. Deduct 1 Jolt
-    Quiz::updateUserStats($userEmail, 0, -1);
+    Quiz::updateUserStats($userEmail, 0, -1, 'Generated Problem', 'Generated a quiz set (1 Jolt)');
 
     // 3. Trigger Generation
     $userId = $user ? $user->getUserId() : null;
