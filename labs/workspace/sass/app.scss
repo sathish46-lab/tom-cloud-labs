@@ -49,6 +49,8 @@
 @use "components/mcp";
 @use "components/roadmaps";
 @use "components/launchpad";
+@use "components/sna_design";
+@use "components/leaderboard";
 // CodeMirror base + dark editor theme (file content pane is forced dark)
 @use "../grunt/node_modules/codemirror/lib/codemirror";
 @use "../grunt/node_modules/codemirror/theme/material-darker";

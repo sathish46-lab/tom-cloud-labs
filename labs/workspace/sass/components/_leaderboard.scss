@@ -1,0 +1,180 @@
+// -----------------------------------------------------------------------------
+// MASTERY HALL — Global Leaderboard (/leaderboard-global) + League of Ronin (/leagues)
+//
+// The winner-card look (giant rank number, crown, rank colours, badges) and the
+// .level-name / .level-avatar helpers come from the reference stylesheet — see
+// _sna_design.scss. This file only carries the layout bits our templates add.
+// -----------------------------------------------------------------------------
+
+// ── Hero (heading + copy) ────────────────────────────────────────────────────
+.lb-hero {
+  max-width: 60rem;
+
+  .lb-hero-title {
+    font-size: clamp(1.6rem, 2.4vw, 2.2rem);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.5rem;
+  }
+
+  .lb-hero-copy {
+    font-size: 1.02rem;
+    line-height: 1.7;
+    opacity: 0.85;
+    margin-bottom: 0;
+  }
+}
+
+// Keep the metric columns above the giant rank number.
+.winner-card-wrap > .d-flex {
+  position: relative;
+  z-index: 1;
+}
+
+// ── Ranked table ─────────────────────────────────────────────────────────────
+.ninja-leaderboard {
+  border-radius: 14px;
+  color: inherit;
+  min-width: 1050px;
+
+  thead th {
+    background: transparent;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    white-space: nowrap;
+    color: inherit;
+    opacity: 0.8;
+  }
+
+  tbody tr {
+    border-color: rgba(255, 255, 255, 0.05);
+  }
+
+  h3 {
+    font-size: 1.45rem;
+    margin: 0;
+    font-weight: 700;
+  }
+
+  .text-decoration-none {
+    font-weight: 600;
+  }
+
+  .progress {
+    background: rgba(0, 0, 0, 0.25);
+  }
+
+  [data-coreui-theme="light"] & {
+    thead th {
+      border-bottom-color: rgba(0, 0, 0, 0.1) !important;
+    }
+
+    tbody tr {
+      border-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .progress {
+      background: rgba(0, 0, 0, 0.1);
+    }
+  }
+}
+
+// ── League badge pill (SNA paints the frame; we size the contents) ──────────
+.league_badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  line-height: 1.2;
+  max-width: 100%;
+  vertical-align: middle;
+
+  img {
+    object-fit: cover;
+    border-radius: 0.35rem;
+    flex-shrink: 0;
+  }
+
+  .level-name {
+    font-size: 13px;
+    font-weight: 500;
+  }
+}
+
+@media screen and (max-width: 1125px) {
+  .league_badge .level-name {
+    font-size: 11px;
+  }
+}
+
+.level-avatar {
+  object-fit: cover;
+  border-radius: 0.35rem;
+}
+
+// ── League of Ronin level card ───────────────────────────────────────────────
+// The card's art is painted by _sna_design.scss as a faint watermark
+// (.achievement .modal-bg-image, 20% opacity). Only state accents live here.
+.achievement {
+  border: 1px solid var(--cui-card-border-color, rgba(255, 255, 255, 0.08));
+  border-radius: 16px;
+  overflow: hidden;
+  height: 100%;
+  position: relative;
+
+  .reward.zeal-reward {
+    white-space: nowrap;
+  }
+
+  &.league-state-locked {
+    opacity: 0.62;
+
+    .modal-bg-image {
+      filter: grayscale(0.85);
+    }
+  }
+
+  &.league-state-progress {
+    border-color: rgba(244, 63, 94, 0.35);
+  }
+
+  &.league-state-completed {
+    border-color: rgba(34, 197, 94, 0.3);
+  }
+
+  [data-coreui-theme="light"] & {
+    border-color: rgba(0, 0, 0, 0.1);
+
+    &.league-state-progress {
+      border-color: rgba(225, 29, 72, 0.35);
+    }
+
+    &.league-state-completed {
+      border-color: rgba(22, 163, 74, 0.3);
+    }
+  }
+}
+
+// Single-avatar stack used by the league accordion headers
+#leagueFlush {
+  .avatars-stack .avatar {
+    width: 2.4rem;
+    height: 2.4rem;
+  }
+
+  .avatars-stack .avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .accordion-button {
+    gap: 0.25rem;
+  }
+
+  .accordion-body {
+    background: transparent;
+  }
+}

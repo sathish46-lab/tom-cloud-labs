@@ -231,9 +231,27 @@ $current = Session::getCurrentFile();
             </ul>
         </li>
         <li class="nav-item">
-            <a class="nav-link <?= (str_contains($current, 'lucky')) ? 'active' : '' ?>" href="/lucky">
+            <a class="nav-link <?= str_contains($current, 'lucky') ? 'active' : '' ?>" href="/lucky">
                 <svg class="nav-icon" viewBox="0 0 256 256"><use href="/assets/icons/duotone.svg#tom-sparkles"></use></svg> Feeling Lucky ✨
             </a>
+        </li>
+        <li class="nav-group <?= (str_contains($current, 'leaderboard') || str_contains($current, 'leagues')) ? 'show' : '' ?>">
+            <a class="nav-link nav-group-toggle" href="javascript:void(0);">
+                <i class="nav-icon bx bx-trophy"></i> Mastery Hall
+                <span class="badge rounded-pill bg-warning bg-opacity-10 text-warning ms-auto" style="font-size: 0.55rem; letter-spacing: 0.04em;">featured</span>
+            </a>
+            <ul class="nav-group-items">
+                <li class="nav-item">
+                    <a class="nav-link <?= str_contains($current, 'leaderboard') ? 'active' : '' ?>" href="/leaderboard-global">
+                        <i class="nav-icon bx bx-trophy"></i> Global Leaderboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= str_contains($current, 'leagues') ? 'active' : '' ?>" href="/leagues">
+                        <i class="nav-icon bx bx-medal"></i> League of Ronin
+                    </a>
+                </li>
+            </ul>
         </li>
         <li class="nav-title">Tom Labs</li>
         <li class="nav-group <?= (str_contains($current, 'devices') || str_contains($current, 'network') || str_contains($current, 'domains')) ? 'show' : '' ?>">

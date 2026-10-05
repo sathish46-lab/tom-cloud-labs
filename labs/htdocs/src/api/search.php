@@ -92,6 +92,7 @@ $pages = [
     ['title' => 'Clubs',           'section' => 'Social',   'url' => '/clubs',              'glyph' => 'tom-users-three',     'colour' => '#ec4899'],
     ['title' => 'Clans',           'section' => 'Social',   'url' => '/clans',              'glyph' => 'tom-flag',            'colour' => '#ef4444'],
     ['title' => 'Leaderboard',     'section' => 'Social',   'url' => '/leaderboard-global', 'glyph' => 'tom-chart-bar',       'colour' => '#eab308'],
+    ['title' => 'League of Ronin', 'section' => 'Social',   'url' => '/leagues',            'glyph' => 'tom-shield-checkered','colour' => '#f43f5e'],
     ['title' => 'Feeling Lucky',   'section' => 'Social',   'url' => '/lucky',              'glyph' => 'tom-lightning',       'colour' => '#a855f7'],
     ['title' => 'MCP Connections', 'section' => 'Network',  'url' => '/mcp',                'glyph' => 'tom-share-network',   'colour' => '#22d3ee'],
     ['title' => 'Domains',         'section' => 'Network',  'url' => '/domains',            'glyph' => 'tom-globe',           'colour' => '#f59e0b'],
