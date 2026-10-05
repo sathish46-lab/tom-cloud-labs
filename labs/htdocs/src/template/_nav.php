@@ -238,7 +238,6 @@ $current = Session::getCurrentFile();
         <li class="nav-group <?= (str_contains($current, 'leaderboard') || str_contains($current, 'leagues')) ? 'show' : '' ?>">
             <a class="nav-link nav-group-toggle" href="javascript:void(0);">
                 <i class="nav-icon bx bx-trophy"></i> Mastery Hall
-                <span class="badge rounded-pill bg-warning bg-opacity-10 text-warning ms-auto" style="font-size: 0.55rem; letter-spacing: 0.04em;">featured</span>
             </a>
             <ul class="nav-group-items">
                 <li class="nav-item">
