@@ -247,6 +247,13 @@ function check_global_rate_limit() {
             'key'     => 'account:rl:change_password',
             'limit'   => 3,
             'window'  => 3600
+        ],
+        [
+            'pattern' => '#^/api/admin/delete_user#i',
+            'methods' => ['POST'],
+            'key'     => 'admin:rl:delete_user',
+            'limit'   => 10,
+            'window'  => 300
         ]
     ];
 

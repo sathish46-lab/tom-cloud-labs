@@ -37,6 +37,29 @@ function profile_resolve($requested): ?array
         if ($doc) {
             return $doc->getArrayCopy();
         }
+
+        // Deleted account: superusers still get the archived public URL as a
+        // read-only snapshot. Anyone else falls through to the old behaviour.
+        $viewer = Session::getUser();
+        if ($viewer && in_array($viewer->getRole(), ['admin', 'superuser'], true)) {
+            try {
+                $del = $db->deleted_users->findOne(
+                    ['$or' => [['username' => $requested], ['email' => $requested]]],
+                    ['sort' => ['deleted_at' => -1]]
+                );
+            } catch (Throwable $e) {
+                $del = null;
+            }
+            $snapUser = $del ? ($del['snapshot']['user'] ?? null) : null;
+            if ($snapUser) {
+                $arr = $snapUser instanceof ArrayObject ? $snapUser->getArrayCopy() : (array)$snapUser;
+                $arr['is_deleted_snapshot'] = true;
+                $arr['snapshot_id'] = (string)$del['_id'];
+                $arr['deleted_at'] = $del['deleted_at'] ?? 0;
+                $arr['deleted_by'] = (string)($del['deleted_by'] ?? '');
+                return $arr;
+            }
+        }
     }
 
     $viewer = Session::getUser();

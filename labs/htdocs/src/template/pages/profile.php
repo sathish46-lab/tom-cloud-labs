@@ -38,6 +38,11 @@ $pfState  = (string)($pfTarget['state'] ?? 'active');
 $pfCreated = (int)($pfTarget['created_at'] ?? 0);
 $pfLast   = (int)($pfTarget['last_login'] ?? 0);
 
+$pfDeleted = !empty($pfTarget['is_deleted_snapshot']);
+$pfDelId   = (string)($pfTarget['snapshot_id'] ?? '');
+$pfDelAt   = (int)($pfTarget['deleted_at'] ?? 0);
+$pfDelBy   = (string)($pfTarget['deleted_by'] ?? '');
+
 $pfScores = profile_scores($pfTarget, $pfDb);
 $pfGlobal = profile_global_rank($pfTarget, $pfDb);
 $pfRank   = rank_for($pfScores['zeal']);
@@ -131,6 +136,21 @@ $pfLineCard = function (string $key, string $label, string $icon, string $color,
 ?>
 
 <div id="pfApp" class="container-fluid px-3 py-3">
+
+    <?php if ($pfDeleted): ?>
+        <!-- Archived account: admin-only read-only snapshot -->
+        <div class="alert alert-warning d-flex align-items-start gap-2 border-0 rounded-4 shadow-sm mb-3 py-2 px-3" role="alert">
+            <i class='bx bx-archive fs-4 mt-1'></i>
+            <div>
+                <div class="fw-bold">Deleted account — admin-only snapshot</div>
+                <div class="small mb-0">
+                    This profile was deleted on <?= $pfEsc(date('d M Y, H:i', $pfDelAt)) ?>
+                    by <?= $pfEsc($pfDelBy) ?>. You are viewing archived data (read-only).
+                    <a href="/admin/deleted-users/<?= $pfEsc($pfDelId) ?>" class="fw-semibold">Open full snapshot &rarr;</a>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
 
     <!-- ================= HERO ================= -->
     <div class="pf-hero card blur border-0 shadow-sm rounded-4 mb-3">

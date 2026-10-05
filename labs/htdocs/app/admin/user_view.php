@@ -18,6 +18,12 @@ $db = DatabaseConnection::getDefaultDatabase();
 $userData = $db->users->findOne(['email' => $email]);
 
 if (!$userData) {
+    // Deleted accounts keep their snapshot — send the admin there instead.
+    $delSnap = $db->deleted_users->findOne(['email' => $email], ['sort' => ['deleted_at' => -1]]);
+    if ($delSnap) {
+        header('Location: /admin/deleted-users/' . (string)$delSnap['_id']);
+        exit;
+    }
     header("Location: /admin/users"); exit;
 }
 

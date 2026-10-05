@@ -98,6 +98,34 @@ class Mailer {
     }
 
     /**
+     * Confirmation code for an admin-initiated account deletion. The code goes
+     * to the acting admin, never to the user being deleted.
+     */
+    public static function sendDeleteUserOtp(string $email, string $username, string $otp, string $targetEmail): bool {
+        try {
+            $mail = self::build();
+            $mail->Timeout = 5;
+            $mail->addAddress($email, $username);
+            $mail->isHTML(true);
+            $mail->Subject = 'Confirm deletion of ' . $targetEmail;
+            $mail->Body    = "
+                <h2>User Deletion Confirmation</h2>
+                <p>Hi {$username},</p>
+                <p>You asked to permanently delete <b>{$targetEmail}</b>. A full backup will be kept and the account can be restored later.</p>
+                <p>Your 6-digit confirmation code is:</p>
+                <div style='background:#f4f4f4; padding:15px; border-radius:8px; font-size:24px; font-weight:bold; letter-spacing:5px; text-align:center; margin:20px 0;'>{$otp}</div>
+                <p style='color:#e74c3c; font-weight:bold;'>This code expires in exactly 2 minutes.</p>
+                <p>If you did not request this, ignore this email — nothing will be deleted.</p>
+            ";
+
+            return $mail->send();
+        } catch (Exception $e) {
+            error_log('Mailer::sendDeleteUserOtp failed: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Send password reset email.
      */
     public static function sendPasswordReset(string $email, string $username, string $token): bool {

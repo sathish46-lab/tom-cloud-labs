@@ -87,6 +87,8 @@ RewriteRule ^admin/instances/?$ app/admin/instances.php [L,QSA]
 RewriteRule ^admin/storage/?$ app/admin/storage.php [L,QSA]
 RewriteRule ^admin/transactions/?$ app/admin/transactions.php [L,QSA]
 RewriteRule ^admin/errors/?$ app/admin/errors.php [L,QSA]
+RewriteRule ^admin/deleted-users/?$ app/admin/deleted_users.php [L,QSA]
+RewriteRule ^admin/deleted-users/([a-f0-9]{24})/?$ app/admin/deleted_users.php?id=$1 [L,QSA]
 RewriteRule ^admin/appearance/?$ app/admin/appearance.php [L,QSA]
 
 RewriteRule ^home$ app/home.php [L,QSA]

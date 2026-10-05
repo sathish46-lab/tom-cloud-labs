@@ -57,6 +57,7 @@ $current = Session::getCurrentFile();
                 'items'  => [
                     ['label' => 'Dashboard',      'url' => '/admin',         'icon' => 'bx-tachometer',     'match' => '', 'exact' => true],
                     ['label' => 'Users',          'url' => '/admin/users',   'icon' => 'bx-group',          'match' => '/admin/user/'],
+                    ['label' => 'Deleted Users',  'url' => '/admin/deleted-users', 'icon' => 'bx-archive',  'match' => '/admin/deleted-users'],
                     ['label' => 'Access Control', 'url' => '/admin/acl',     'icon' => 'bx-shield-quarter', 'match' => ''],
                     ['label' => 'MCP Tools',      'url' => '/admin/mcp',     'icon' => 'bx-bot',            'match' => ''],
                     ['label' => 'Storage Quotas', 'url' => '/admin/storage', 'icon' => 'bx-hdd',            'match' => ''],

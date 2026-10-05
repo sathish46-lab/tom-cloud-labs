@@ -154,6 +154,8 @@ $csrf = htmlspecialchars(Session::csrfToken());
 .adm-btn-xfer:hover { background: rgba(244,114,182,.16); }
 .adm-btn-stor { border: 1px solid rgba(77,171,247,.55) !important; color: #4dabf7 !important; background: rgba(77,171,247,.06); }
 .adm-btn-stor:hover { background: rgba(77,171,247,.16); }
+.adm-btn-del { border: 1px solid rgba(248,113,113,.55) !important; color: #f87171 !important; background: rgba(248,113,113,.06); }
+.adm-btn-del:hover { background: rgba(248,113,113,.16); }
 .adm-spct { height: 7px; border-radius: 999px; background: rgba(0,0,0,.35); overflow: hidden; }
 .adm-spct > i { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg,#ffd200,#ff8a00); }
 .adm-spct.over > i { background: linear-gradient(90deg,#ff5f6d,#ff8a5c); }
@@ -201,7 +203,7 @@ $csrf = htmlspecialchars(Session::csrfToken());
 
     <div class="row g-4 mb-4">
         <!-- ========================= Identity card ========================= -->
-        <div class="col-lg-3 col-md-4">
+        <div class="col-lg-3 col-md-4" style="align-self: start;">
             <div class="card border-0 rounded-4 blur shadow-sm h-100">
                 <div class="card-body text-center py-4">
                     <img src="<?= htmlspecialchars($avatar) ?>" alt=""
@@ -267,6 +269,20 @@ $csrf = htmlspecialchars(Session::csrfToken());
                     </div>
                 </div>
             </div>
+
+            <!-- ============================ Danger zone (separate card) ============================ -->
+            <div class="card border-0 rounded-4 blur shadow-sm mt-3 border-danger border-opacity-25">
+                <div class="card-body py-3 text-center">
+                    <h6 class="fw-bold mb-2 text-danger"><i class='bx bx-error-circle me-1'></i>Danger Zone</h6>
+                    <div class="small text-body-secondary mb-3">
+                        Deletes this account and everything it owns. A full backup is taken first —
+                        restore any time from <b>Admin → Deleted Users</b>.
+                    </div>
+                    <button type="button" id="uvDelete" class="btn btn-sm rounded-pill fw-semibold w-100 adm-btn-del">
+                        <i class='bx bx-trash me-1'></i>Delete User
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- ============================ Tiles ============================ -->
@@ -289,43 +305,42 @@ $csrf = htmlspecialchars(Session::csrfToken());
                 <?php endforeach; ?>
             </div>
 
-            <div class="card border-0 rounded-4 blur shadow-sm mt-3">
-                <div class="card-header bg-transparent border-bottom border-body-secondary border-opacity-10 py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 fw-bold"><i class='bx bx-slider-alt text-success me-2'></i>Adjust currency</h5>
+            <div class="card border-0 rounded-4 blur shadow-sm mt-3 uv-adjust-card">
+                <div class="card-header bg-transparent border-bottom border-body-secondary border-opacity-10 py-2 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold fs-6"><i class='bx bx-slider-alt text-success me-1'></i>Adjust currency</h5>
                     <a class="small text-body-secondary" href="/admin/transactions?user=<?= urlencode($email) ?>" title="Transaction Monitor">Monitor<i class='bx bx-link-external ms-1'></i></a>
                 </div>
-                <div class="card-body">
+                <div class="card-body py-3">
                     <div class="d-flex justify-content-between small mb-2">
                         <span class="text-body-secondary">Zeal 🔥 <span id="uvZealBal" class="fw-bold text-body"><?= number_format($zeal) ?></span></span>
                         <span class="text-body-secondary">Jolt ⚡ <span id="uvJoltBal" class="fw-bold text-body"><?= number_format($jolt) ?></span></span>
                     </div>
 
                     <div class="row g-2 mb-2">
-                        <div class="col-6">
+                        <div class="col-4">
                             <label class="form-label small text-body-secondary mb-1" for="uvAdjCurrency">Currency</label>
                             <select id="uvAdjCurrency" class="form-select form-select-sm bg-transparent border-secondary border-opacity-25">
                                 <option value="zeal">Zeal 🔥</option>
                                 <option value="jolt">Jolt ⚡</option>
                             </select>
                         </div>
-                        <div class="col-6">
+                        <div class="col-4">
                             <label class="form-label small text-body-secondary mb-1" for="uvAdjDirection">Action</label>
                             <select id="uvAdjDirection" class="form-select form-select-sm bg-transparent border-secondary border-opacity-25">
                                 <option value="add">Credit (+)</option>
                                 <option value="subtract">Debit (−)</option>
                             </select>
                         </div>
-                    </div>
-
-                    <div class="mb-2">
-                        <label class="form-label small text-body-secondary mb-1" for="uvAdjAmount">Amount</label>
-                        <input type="number" id="uvAdjAmount" class="form-control form-control-sm bg-transparent border-secondary border-opacity-25"
-                               min="1" max="1000000" step="1" value="1">
+                        <div class="col-4">
+                            <label class="form-label small text-body-secondary mb-1" for="uvAdjAmount">Amount</label>
+                            <input type="number" id="uvAdjAmount" class="form-control form-control-sm bg-transparent border-secondary border-opacity-25"
+                                   min="1" max="1000000" step="1" value="1">
+                        </div>
                     </div>
 
                     <div class="mb-2">
                         <label class="form-label small text-body-secondary mb-1" for="uvAdjReason">Reason <span class="text-danger">*</span></label>
-                        <textarea id="uvAdjReason" rows="2" maxlength="300"
+                        <textarea id="uvAdjReason" rows="1" maxlength="300"
                                   class="form-control form-control-sm bg-transparent border-secondary border-opacity-25"
                                   placeholder="Why is this balance being adjusted?"></textarea>
                     </div>
@@ -336,9 +351,9 @@ $csrf = htmlspecialchars(Session::csrfToken());
                     <div class="form-text text-start">Written to the ledger with your reason and the audit log.</div>
 
                     <?php if ($txRecent): ?>
-                    <ul class="list-unstyled small mt-2 mb-0 border-top border-body-secondary border-opacity-10 pt-2">
+                    <ul class="list-unstyled small mt-1 mb-0 border-top border-body-secondary border-opacity-10 pt-1">
                         <?php foreach ($txRecent as $txRow): $txCur = (string)($txRow['currency'] ?? 'zeal'); ?>
-                        <li class="d-flex justify-content-between gap-2 py-1 border-bottom border-body-secondary border-opacity-5">
+                        <li class="d-flex justify-content-between gap-2 py-0 border-bottom border-body-secondary border-opacity-5">
                             <span class="text-body-secondary text-truncate" title="<?= htmlspecialchars((string)($txRow['description'] ?? '')) ?>">
                                 <?= (string)($txRow['direction'] ?? '') === 'earned' ? '+' : '−' ?>
                                 <?= number_format((int)($txRow['amount'] ?? 0)) ?> <?= htmlspecialchars(currency_label($txCur)) ?>
@@ -651,6 +666,52 @@ $csrf = htmlspecialchars(Session::csrfToken());
     </div>
 </div>
 
+<!-- ============================ Delete user modal ============================ -->
+<div class="modal fade" id="uvDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 blur shadow-lg">
+            <div class="modal-header border-bottom border-body-secondary border-opacity-10">
+                <h5 class="modal-title fw-bold"><i class='bx bx-trash me-2 text-danger'></i>Delete User</h5>
+                <button type="button" class="btn-close" data-coreui-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger border-0 rounded-3 small mb-3 py-2">
+                    Backs up <b>everything</b> first — profile, labs, instances, devices, IPs, points and the
+                    home folder — then removes the account and releases its resources. Restore any time from
+                    <b>Admin → Deleted Users</b>.
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small text-body-secondary mb-1">Target</label>
+                    <input type="text" class="form-control bg-transparent border-secondary border-opacity-25"
+                           value="<?= htmlspecialchars($email) ?>" disabled>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small text-body-secondary mb-1" for="uvDelConfirm">
+                        Type <code id="uvDelPhrase"></code> to confirm
+                    </label>
+                    <input type="text" id="uvDelConfirm"
+                           class="form-control bg-transparent border-secondary border-opacity-25"
+                           placeholder="DELETE someone@example.com" autocomplete="off">
+                </div>
+                <button type="button" id="uvDelSend"
+                        class="btn btn-sm btn-outline-danger rounded-pill w-100 mb-2">
+                    <i class='bx bx-envelope me-1'></i>Send confirmation code to my email
+                </button>
+                <div id="uvDelOtpGroup" class="d-none">
+                    <input type="text" id="uvDelOtp" inputmode="numeric" maxlength="6"
+                           class="form-control form-control-lg text-center bg-transparent border-secondary border-opacity-25 fw-bold"
+                           placeholder="000000" style="letter-spacing:8px;" autocomplete="one-time-code">
+                    <div class="form-text" id="uvDelOtpNote">6-digit code — expires in 2 minutes.</div>
+                </div>
+            </div>
+            <div class="modal-footer border-top border-body-secondary border-opacity-10">
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" data-coreui-dismiss="modal">Cancel</button>
+                <button type="button" id="uvDelGo" class="btn btn-sm btn-danger fw-semibold rounded-pill px-3">Delete user</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 (function () {
     const EMAIL = <?= json_encode($email) ?>;
@@ -841,6 +902,57 @@ $csrf = htmlspecialchars(Session::csrfToken());
                 setTimeout(() => location.reload(), 700);
             } else {
                 notify(res.error || 'Transfer failed', 'Error', 'error');
+            }
+        } catch (e) { notify('Network error', 'Error', 'error'); }
+        this.disabled = false;
+    });
+    /* --------------------------------------------------------- delete user */
+    const delModal = document.getElementById('uvDeleteModal');
+
+    document.getElementById('uvDelete')?.addEventListener('click', () => {
+        document.getElementById('uvDelPhrase').textContent = 'DELETE ' + EMAIL;
+        document.getElementById('uvDelConfirm').value = '';
+        document.getElementById('uvDelOtp').value = '';
+        document.getElementById('uvDelOtpGroup').classList.add('d-none');
+        new coreui.Modal(delModal).show();
+    });
+
+    document.getElementById('uvDelSend')?.addEventListener('click', async function () {
+        const typed = document.getElementById('uvDelConfirm').value.trim();
+        const expected = 'DELETE ' + EMAIL;
+        if (typed !== expected) { notify('Type exactly: ' + expected, 'Confirmation required', 'warning'); return; }
+        this.disabled = true;
+        try {
+            const res = await post('/api/admin/delete_user_request', { email: EMAIL });
+            if (res.status === 'success') {
+                document.getElementById('uvDelOtpGroup').classList.remove('d-none');
+                document.getElementById('uvDelOtpNote').textContent =
+                    'Code sent to ' + res.sent_to + ' · expires in ' + res.expires_in + ' seconds.';
+                document.getElementById('uvDelOtp').focus();
+                notify('Confirmation code sent to ' + res.sent_to, 'Check your email');
+            } else {
+                notify(res.error || 'Could not send the code', 'Error', 'error');
+            }
+        } catch (e) { notify('Network error', 'Error', 'error'); }
+        this.disabled = false;
+    });
+
+    document.getElementById('uvDelGo')?.addEventListener('click', async function () {
+        const expected = 'DELETE ' + EMAIL;
+        const typed = document.getElementById('uvDelConfirm').value.trim();
+        const otp = document.getElementById('uvDelOtp').value.trim();
+        if (typed !== expected) { notify('Type exactly: ' + expected, 'Confirmation required', 'warning'); return; }
+        if (!/^\d{6}$/.test(otp)) { notify('Enter the 6-digit confirmation code', 'Error', 'error'); return; }
+        this.disabled = true;
+        try {
+            const res = await post('/api/admin/delete_user',
+                { email: EMAIL, otp: otp, confirm: typed });
+            if (res.status === 'success') {
+                notify('User deleted — full backup kept, restore any time', 'Account deleted');
+                coreui.Modal.getInstance(delModal)?.hide();
+                setTimeout(() => { window.location.href = '/admin/deleted-users'; }, 1000);
+            } else {
+                notify(res.error || 'Delete failed', 'Error', 'error');
             }
         } catch (e) { notify('Network error', 'Error', 'error'); }
         this.disabled = false;
