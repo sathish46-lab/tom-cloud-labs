@@ -29,7 +29,7 @@ function achievements_metrics(array $user, $db): array
         }
     };
 
-    $stats = $email ? $db->user_stats->findOne(['user_email' => $email]) : null;
+    $stats = $email ? $db->user_stats->findOne(['email' => $email]) : null;
 
     $first = $db->user_activity->findOne(['user_id' => $byUid['user_id']], ['sort' => ['timestamp' => 1], 'projection' => ['timestamp' => 1]]);
     $last  = $db->user_activity->findOne(['user_id' => $byUid['user_id']], ['sort' => ['timestamp' => -1], 'projection' => ['timestamp' => 1]]);

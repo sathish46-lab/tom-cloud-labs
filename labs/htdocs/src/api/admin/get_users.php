@@ -13,8 +13,15 @@ $query = [];
 if (!empty($search)) {
     // Escape regex special characters to prevent NoSQL injection
     $escapedSearch = preg_quote($search, '/');
+    $regex = ['$regex' => $escapedSearch, '$options' => 'i'];
+    // Match on any identity field: email, first/last name or username.
     $query = [
-        'email' => ['$regex' => $escapedSearch, '$options' => 'i']
+        '$or' => [
+            ['email'      => $regex],
+            ['first_name' => $regex],
+            ['last_name'  => $regex],
+            ['username'   => $regex],
+        ]
     ];
 }
 
@@ -38,9 +45,16 @@ foreach ($usersCursor as $u) {
     $lastLoginTs = isset($u['last_login']) ? (is_numeric($u['last_login']) ? (int)$u['last_login'] : strtotime($u['last_login'])) : 0;
     $createdTs = isset($u['created_at']) ? (is_numeric($u['created_at']) ? (int)$u['created_at'] : strtotime($u['created_at'])) : 0;
     
+    $firstName = trim((string)($u['first_name'] ?? ''));
+    $lastName  = trim((string)($u['last_name'] ?? ''));
+    $displayName = $uObj->getFullName()
+        ?: trim($firstName . ' ' . $lastName)
+        ?: ($firstName ?: ($u['username'] ?? 'Unknown'));
+
     $users[] = [
         'email' => $email,
-        'name' => $uObj->getFullName() ?? 'Unknown',
+        'name' => $displayName ?: 'Unknown',
+        'first_name' => $firstName,
         'avatar' => $avatar,
         'role' => (!empty($u['role']) && in_array($u['role'], ['superuser', 'admin'], true)) ? $u['role'] : 'user',
         'moderator' => !empty($u['moderator']),

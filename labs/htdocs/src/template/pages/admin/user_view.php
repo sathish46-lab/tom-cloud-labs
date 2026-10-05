@@ -67,7 +67,7 @@ $stateBadge = $state === 'active' ? ['Active', 'success']
             : ($state === 'suspended' ? ['Suspended', 'danger'] : [ucfirst($state ?: 'unknown'), 'secondary']);
 
 /* ------------------------------------------------------------------- Stats */
-$statsDoc = $db->user_stats->findOne(['user_email' => $email]);
+$statsDoc = $db->user_stats->findOne(['email' => $email]);
 $zeal = (int)($statsDoc['zeal'] ?? $userData['zeal_stats']['zeal'] ?? 0);
 $jolt = (int)($statsDoc['jolt'] ?? $userData['zeal_stats']['jolt'] ?? 0);
 

@@ -91,7 +91,7 @@ $userEmail = $user->getEmail();
 $username = $user->getUsername();
 $avatar = Session::getAvatar();
 
-$userStats = $db->user_stats->findOne(['user_email' => $userEmail]);
+$userStats = $db->user_stats->findOne(['email' => $userEmail]);
 $zeal = $userStats['zeal'] ?? 0;
 $jolt = $userStats['jolt'] ?? 0;
 

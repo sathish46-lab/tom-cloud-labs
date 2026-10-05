@@ -266,9 +266,9 @@ class Quiz {
     public static function getUserStats($userEmail) {
         if (!$userEmail) return ['zeal' => 0, 'jolt' => 0];
         $db = DatabaseConnection::getDefaultDatabase();
-        $stats = $db->user_stats->findOne(['user_email' => $userEmail]);
+        $stats = $db->user_stats->findOne(['email' => $userEmail]);
         if (!$stats) {
-            $stats = ['user_email' => $userEmail, 'zeal' => 0, 'jolt' => 10]; // 10 starter jolt
+            $stats = ['email' => $userEmail, 'zeal' => 0, 'jolt' => 10]; // 10 starter jolt
             $db->user_stats->insertOne($stats);
         }
         return $stats;
@@ -291,16 +291,16 @@ class Quiz {
         $jolt = (int)$jolt;
 
         $inc = ['$inc' => ['zeal' => $zeal, 'jolt' => $jolt]];
-        $res = $db->user_stats->updateOne(['user_email' => $userEmail], $inc);
+        $res = $db->user_stats->updateOne(['email' => $userEmail], $inc);
 
         if ($res->getMatchedCount() === 0) {
             // First ever movement for this account: seed the starter row, then apply.
             $db->user_stats->updateOne(
-                ['user_email' => $userEmail],
+                ['email' => $userEmail],
                 ['$set' => ['zeal' => 0, 'jolt' => 10]], // 10 starter jolt
                 ['upsert' => true]
             );
-            $res = $db->user_stats->updateOne(['user_email' => $userEmail], $inc);
+            $res = $db->user_stats->updateOne(['email' => $userEmail], $inc);
         }
 
         if (($zeal !== 0 || $jolt !== 0) && function_exists('currency_record')) {

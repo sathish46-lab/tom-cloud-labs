@@ -222,17 +222,17 @@ function currency_adjust(
         }
 
         // Balances always live in `user_stats`, seeded like Quiz::getUserStats().
-        if (!$db->user_stats->findOne(['user_email' => $email], ['projection' => ['_id' => 1]])) {
-            $db->user_stats->insertOne(['user_email' => $email, 'zeal' => 0, 'jolt' => 10]);
+        if (!$db->user_stats->findOne(['email' => $email], ['projection' => ['_id' => 1]])) {
+            $db->user_stats->insertOne(['email' => $email, 'zeal' => 0, 'jolt' => 10]);
         }
 
-        $before = (int)($db->user_stats->findOne(['user_email' => $email])[$currency] ?? 0);
+        $before = (int)($db->user_stats->findOne(['email' => $email])[$currency] ?? 0);
 
         if ($direction === 'earned') {
-            $db->user_stats->updateOne(['user_email' => $email], ['$inc' => [$currency => $amount]]);
+            $db->user_stats->updateOne(['email' => $email], ['$inc' => [$currency => $amount]]);
         } else {
             $res = $db->user_stats->updateOne(
-                ['user_email' => $email, $currency => ['$gte' => $amount]],
+                ['email' => $email, $currency => ['$gte' => $amount]],
                 ['$inc' => [$currency => -$amount]]
             );
             if ($res->getMatchedCount() === 0) {
@@ -240,7 +240,7 @@ function currency_adjust(
             }
         }
 
-        $after = (int)($db->user_stats->findOne(['user_email' => $email])[$currency] ?? 0);
+        $after = (int)($db->user_stats->findOne(['email' => $email])[$currency] ?? 0);
 
         // Denormalized copy used by profile/nav before user_stats is read.
         try {

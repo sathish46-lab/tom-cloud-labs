@@ -42,19 +42,19 @@ try {
     // Make sure both balance documents exist before the conditional decrement.
     foreach ([$fromEmail, $toEmail] as $em) {
         $db->user_stats->updateOne(
-            ['user_email' => $em],
-            ['$setOnInsert' => ['user_email' => $em, 'zeal' => 0, 'jolt' => 0]],
+            ['email' => $em],
+            ['$setOnInsert' => ['email' => $em, 'zeal' => 0, 'jolt' => 0]],
             ['upsert' => true]
         );
     }
 
     // Conditional update: never drive the donor negative even under concurrency.
     $debit = $db->user_stats->updateOne(
-        ['user_email' => $fromEmail, $type => ['$gte' => $amount]],
+        ['email' => $fromEmail, $type => ['$gte' => $amount]],
         ['$inc' => [$type => -$amount]]
     );
     if ($debit->getMatchedCount() === 0) {
-        $current = $db->user_stats->findOne(['user_email' => $fromEmail]);
+        $current = $db->user_stats->findOne(['email' => $fromEmail]);
         $balance = (int)($current[$type] ?? 0);
         echo json_encode([
             'status'  => 'error',
@@ -64,14 +64,14 @@ try {
         exit;
     }
 
-    $db->user_stats->updateOne(['user_email' => $toEmail], ['$inc' => [$type => $amount]]);
+    $db->user_stats->updateOne(['email' => $toEmail], ['$inc' => [$type => $amount]]);
 
     // Keep the denormalised copy on the user document in step.
     $db->users->updateOne(['email' => $fromEmail], ['$inc' => ["zeal_stats.$type" => -$amount]]);
     $db->users->updateOne(['email' => $toEmail],   ['$inc' => ["zeal_stats.$type" =>  $amount]]);
 
-    $fromAfter = $db->user_stats->findOne(['user_email' => $fromEmail]);
-    $toAfter   = $db->user_stats->findOne(['user_email' => $toEmail]);
+    $fromAfter = $db->user_stats->findOne(['email' => $fromEmail]);
+    $toAfter   = $db->user_stats->findOne(['email' => $toEmail]);
 
     AuditLog::log(
         'transfer',

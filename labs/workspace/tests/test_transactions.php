@@ -69,7 +69,7 @@ $actor  = 'tx_admin_' . time() . '@example.com';
 create_test_user($email, 'user');
 
 $balance = function (string $e, string $cur) use ($db): int {
-    $row = $db->user_stats->findOne(['user_email' => $e]);
+    $row = $db->user_stats->findOne(['email' => $e]);
     return $row ? (int)($row[$cur] ?? 0) : -1;
 };
 $rowsFor = function (string $e) use ($db): array {
@@ -398,7 +398,7 @@ test("Monitor shows the acting admin on admin rows", strpos($txAll, $adminEmail)
 echo "\n--- Cleanup ---\n";
 
 $db->transactions->deleteMany(['user_email' => ['$in' => $txAccounts]]);
-$db->user_stats->deleteMany(['user_email' => ['$in' => $txAccounts]]);
+$db->user_stats->deleteMany(['email' => ['$in' => $txAccounts]]);
 cleanup_test_user($firstAccount);
 cleanup_test_user($userEmail);
 cleanup_test_user($adminEmail);

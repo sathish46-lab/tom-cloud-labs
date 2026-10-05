@@ -108,7 +108,7 @@ function profile_global_rank(array $user, $db): ?int
         return null;
     }
     try {
-        $stats = $db->user_stats->findOne(['user_email' => $email], ['projection' => ['zeal' => 1]]);
+        $stats = $db->user_stats->findOne(['email' => $email], ['projection' => ['zeal' => 1]]);
         if (!$stats) {
             return null;
         }
@@ -127,7 +127,7 @@ function profile_scores(array $user, $db): array
     $jolt = (int)($user['zeal_stats']['jolt'] ?? 0);
     try {
         if ($email !== '') {
-            $stats = $db->user_stats->findOne(['user_email' => $email]);
+            $stats = $db->user_stats->findOne(['email' => $email]);
             if ($stats) {
                 $zeal = (int)($stats['zeal'] ?? $zeal);
                 $jolt = (int)($stats['jolt'] ?? $jolt);
