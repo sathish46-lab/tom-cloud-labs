@@ -1,5 +1,5 @@
 <?php
-Session::addMetaTag('<title>MongoDB Databases - Tom Labs</title>');
+Session::addMetaTag('<title>MongoDB Databases - ' . Session::siteName() . '</title>');
 
 
 $user = Session::getUser();

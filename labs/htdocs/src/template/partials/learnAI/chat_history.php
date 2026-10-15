@@ -8,7 +8,7 @@ try {
     $userId = $userId ?? (int)Session::getUser()->getUserId();
     $userAvatar = $userAvatar ?? Session::getAvatar();
     $userAvatarStyle = $userAvatarStyle ?? Session::getAvatarStyle();
-    $aiAvatar = $aiAvatar ?? "/assets/logo/logo.png";
+    $aiAvatar = $aiAvatar ?? Session::logo();
     $lessonId = (string)($lessonId ?? '');
     $chapterId = (string)($chapterId ?? '');
 

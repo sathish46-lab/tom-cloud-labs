@@ -1,5 +1,5 @@
 <?php
-Session::addMetaTag('<title>MariaDB Server - Tom Labs</title>');
+Session::addMetaTag('<title>MariaDB Server - ' . Session::siteName() . '</title>');
 // ServiceManager.init handled inline
 Session::addCustomJs('/assets/js/copy.js');
 

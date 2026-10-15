@@ -116,6 +116,7 @@ $featuresList = [
 
 
 <script>
+(function () {
 let usersSkip = 0;
 const usersLimit = 20;
 let usersHasMore = true;
@@ -201,6 +202,8 @@ async function loadUsers(reset = false) {
     }
 }
 
+window.loadUsers = loadUsers;
+
 function escapeHtml(unsafe) {
     return (unsafe || '').toString()
          .replace(/&/g, "&amp;")
@@ -209,10 +212,6 @@ function escapeHtml(unsafe) {
          .replace(/"/g, "&quot;")
          .replace(/'/g, "&#039;");
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-    // No auto-load — click refresh to load
-});
 
 usersTableContainer.addEventListener('scroll', () => {
     if (usersTableContainer.scrollTop + usersTableContainer.clientHeight >= usersTableContainer.scrollHeight - 50) {
@@ -228,4 +227,5 @@ userSearchInput.addEventListener('input', (e) => {
         loadUsers(true);
     }, 300);
 });
+})();
 </script>

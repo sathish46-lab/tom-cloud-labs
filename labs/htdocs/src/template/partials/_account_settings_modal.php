@@ -245,7 +245,7 @@ $currentUserRole = $currentUser?->getRole() ?? 'user';
                                 <div class="small text-body-secondary">Frosted-glass panels across the dashboard.</div>
                             </div>
                             <div class="form-check form-switch mb-0">
-                                <input class="form-check-input" type="checkbox" role="switch" id="acctBlurToggle" <?= ($uiPreferences['visual_blur'] ?? 'true') !== 'false' ? 'checked' : '' ?>>
+                                <input class="form-check-input" type="checkbox" role="switch" id="acctBlurToggle" <?= ($uiPreferences['visual_blur'] ?? ($appearance['visual_blur_default'] !== '0' ? 'true' : 'false')) !== 'false' ? 'checked' : '' ?>>
                             </div>
                         </div>
                         <hr class="my-2 border-secondary border-opacity-10">

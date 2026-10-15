@@ -1,5 +1,5 @@
 <?php
-Session::addMetaTag('<title>Services - Tom Labs</title>');
+Session::addMetaTag('<title>Services - ' . Session::siteName() . '</title>');
 Session::addCustomJs('/assets/js/copy.js');
 
 $services = [

@@ -53,7 +53,7 @@ function serveDefaultPage($statusCode = '502') {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title><?= $statusCode ?> <?= $statusText ?> - Tom Labs</title>
+        <title><?= $statusCode ?> <?= $statusText ?> - <?= htmlspecialchars(Session::siteName()) ?></title>
         <style>
             *{margin:0;padding:0;box-sizing:border-box}
             body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#0a0a0a 0%,#1a1a2e 50%,#0a0a0a 100%);color:#e0e0e0;min-height:100vh;display:flex;align-items:center;justify-content:center}

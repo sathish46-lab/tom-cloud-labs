@@ -11,6 +11,7 @@ $serverTheme = [];
 $uiPreferences = [];
 require_once $_SERVER['DOCUMENT_ROOT'] . '/src/config/themes.php';
 require_once __DIR__ . '/../lib/core/Appearance.class.php';
+require_once __DIR__ . '/../lib/core/SiteFont.class.php';
 $appearance = Appearance::get();
 
 if (Session::getAuthStatus() == Constants::STATUS_LOGGEDIN) {
@@ -36,7 +37,10 @@ $mode = $isPublicPage
     ? Appearance::resolvePublicMode(Session::get('profile_owner_email') ?: null)
     : Appearance::resolveMode($serverTheme['mode'] ?? null);
 
-$isGlassMode = ($uiPreferences['visual_blur'] ?? 'true') !== 'false';
+// Visual blur: the user's own saved preference wins; otherwise the admin's
+// default (Admin → Appearance → Background), which applies from first login.
+$defaultBlur = $appearance['visual_blur_default'] !== '0' ? 'true' : 'false';
+$isGlassMode = ($uiPreferences['visual_blur'] ?? $defaultBlur) !== 'false';
 $isSidebarNarrow = ($uiPreferences['sidebar_unfoldable'] ?? 'false') === 'true';
 $isSidebarHidden = ($uiPreferences['sidebar_hidden'] ?? 'false') === 'true';
 
@@ -55,8 +59,8 @@ $classString = implode(' ', $htmlClasses);
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
     <meta name="csrf-token" content="<?= Session::csrfToken() ?>">
     <title><?= Session::$pageTitle ?></title>
-    <link rel="icon" type="image/png" href="<?= Session::cdn3('logo/favicon.png') ?>">
-    <link rel="shortcut icon" type="image/png" href="<?= Session::cdn3('logo/favicon.png') ?>">
+    <link rel="icon" type="image/png" href="<?= Session::favicon() ?>">
+    <link rel="shortcut icon" type="image/png" href="<?= Session::favicon() ?>">
 
     <script type="text/javascript">
     // Prevent BFCache from showing stale logged-in pages when pressing browser Back button
@@ -204,10 +208,11 @@ $classString = implode(' ', $htmlClasses);
 
     <!-- Professional SEO Meta Tags -->
     <?php
-    $seoTitle = Session::$pageTitle ?? 'Tom Labs - Advanced Development Environment';
-    $seoDesc = Session::get('seo_description', 'Experience the ultimate cloud development environment. Tom Labs provides a highly secure, fast, and feature-rich development workspace, VPS, and VPN tailored for professionals.');
-    $seoKeywords = Session::get('seo_keywords', 'Advanced Development Environment, Cloud IDE, VPS Hosting, Secure VPN, Docker Labs, Tom Labs, Coding Workspace');
-    $seoAuthor = Session::get('seo_author', 'Sathish');
+    require_once __DIR__ . '/../lib/core/SiteSeo.class.php';
+    $seoTitle = Session::$pageTitle ?? SiteSeo::title();
+    $seoDesc = Session::get('seo_description', SiteSeo::description());
+    $seoKeywords = Session::get('seo_keywords', SiteSeo::keywords());
+    $seoAuthor = Session::get('seo_author', SiteSeo::author());
     $seoUrl = "https://" . ($_SERVER['HTTP_HOST'] ?? 'labs.tomweb.in') . ($_SERVER['REQUEST_URI'] ?? '/');
     $seoImage = Session::get('seo_image', "https://" . ($_SERVER['HTTP_HOST'] ?? 'labs.tomweb.in') . "/assets/images/og-image.jpg");
     ?>
@@ -221,12 +226,12 @@ $classString = implode(' ', $htmlClasses);
     {
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
-      "name": "Tom Labs",
+      "name": "<?= htmlspecialchars(Session::siteName()) ?>",
       "operatingSystem": "Web, Windows, macOS, Linux",
       "applicationCategory": "DeveloperApplication",
       "creator": {
         "@type": "Person",
-        "name": "Sathish"
+        "name": "<?= htmlspecialchars(SiteSeo::author()) ?>"
       },
       "description": "<?= htmlspecialchars($seoDesc) ?>",
       "url": "<?= htmlspecialchars($seoUrl) ?>"
@@ -252,7 +257,13 @@ $classString = implode(' ', $htmlClasses);
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Fira+Code:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Preload critical sidebar fonts so they're ready before first paint (kills font-swap layout "shake") -->
+    <?php $siteFontPreload = SiteFont::preloadUrl(); ?>
+    <?php if ($siteFontPreload !== null): ?>
+    <link rel="preload" href="<?= $siteFontPreload ?>" as="font" type="font/woff2" crossorigin>
+    <?php endif; ?>
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/fonts/boxicons.woff2" as="font" type="font/woff2" crossorigin>
+    <link href="<?= SiteFont::googleUrl() ?>" rel="stylesheet">
     
     <link rel="stylesheet" href="<?= Session::cacheCDN('/assets/css/app.css') ?>&t=<?= time() ?>">
     <link rel="stylesheet" href="<?= Session::cacheCDN('/assets/css/htmx-progress.css') ?>">
@@ -262,6 +273,19 @@ $classString = implode(' ', $htmlClasses);
     <?php endforeach; ?>
 
     <link href='https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <!-- Override boxicons @font-face with font-display:block: swap would paint fallback (glyphless) boxes = tofu □ on first paint.
+         Sidebar icon slots are fixed 1rem×1rem (no layout dependency on the font) and the woff2 is preloaded above,
+         so block only keeps glyphs invisible for the (short) fetch, then they appear — no tofu, no layout shift. -->
+    <style>
+        @font-face {
+            font-family: boxicons;
+            font-weight: 400;
+            font-style: normal;
+            font-display: block;
+            src: url("https://cdn.jsdelivr.net/npm/boxicons@2.1.4/fonts/boxicons.woff2") format("woff2"),
+                 url("https://cdn.jsdelivr.net/npm/boxicons@2.1.4/fonts/boxicons.woff") format("woff");
+        }
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/@coreui/chartjs/dist/js/coreui-chartjs.js"></script>
@@ -452,6 +476,10 @@ $classString = implode(' ', $htmlClasses);
     <link rel="stylesheet" href="<?= Session::cacheCDN('/assets/css/admin.css') ?>">
     <!-- Profile page surfaces (hero, tabs, medals, charts) -->
     <link rel="stylesheet" href="<?= Session::cacheCDN('/assets/css/profile.css') ?>">
+    <?php if (SiteFont::isActive()): ?>
+    <!-- Admin-set body font (Admin → Appearance → Site font): real <link> so HTMX head-support carries it across navigations -->
+    <link rel="stylesheet" href="<?= Session::cacheCDN('/assets/css/site-font.css') ?>&t=<?= @filemtime(SiteFont::CSS_FILE) ?: time() ?>">
+    <?php endif; ?>
 </head>
 
 <body class="<?= $isGlassMode ? 'hwa-enabled' : 'hwa-disabled' ?> <?= defined('IS_HOME_PAGE') ? 'lp-home' : '' ?>" data-version="<?= htmlspecialchars(Session::getVersion()) ?>" <?php if (!defined("IS_HOME_PAGE")): ?> hx-boost="true" hx-ext="head-support" hx-target="#main-content" hx-swap="innerHTML show:window:top" hx-indicator="#main-content" <?php endif; ?>>

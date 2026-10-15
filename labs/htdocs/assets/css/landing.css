@@ -529,7 +529,7 @@ main {
 /* --- Portfolio/Home Section Wrapper --- */
 .hero-section-wrapper {
   position: relative;
-  min-height: 100vh;
+  min-height: min(100vh, 860px);
   display: flex;
   align-items: center;
   justify-content: center;

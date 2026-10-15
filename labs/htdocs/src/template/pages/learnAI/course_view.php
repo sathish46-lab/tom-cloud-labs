@@ -72,7 +72,7 @@ foreach ($chapters as $chap) {
 
 $userAvatar = Session::getAvatar();
 $userAvatarStyle = Session::getAvatarStyle();
-$aiAvatar = "/assets/logo/logo.png";
+$aiAvatar = Session::logo();
 
 $userObj = Session::getUser();
 $userUiPrefs = $userObj ? ($userObj->getUiPreferences() ?? []) : [];

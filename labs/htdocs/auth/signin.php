@@ -64,18 +64,24 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
 $google_url = $google->getAuthUrl($metadata);
 define('IS_LOGIN_PAGE', true);
 Session::$pageTitle = "Sign In";
-Session::set('seo_description', 'Sign in to Tom Labs to access your isolated environments and deploy scalable database services.');
-Session::set('seo_keywords', 'Sign In, Tom Labs Login, Virtual Labs, Secure Access');
+Session::set('seo_description', 'Sign in to ' . Session::siteName() . ' to access your isolated environments and deploy scalable database services.');
+Session::set('seo_keywords', 'Sign In, ' . Session::siteName() . ' Login, Virtual Labs, Secure Access');
+// Admin SEO defaults (Appearance → SEO) win over the page copy when customized
+require_once __DIR__ . '/../src/lib/core/SiteSeo.class.php';
+$seoCustom = SiteSeo::stored();
+if ($seoCustom['description'] !== '') Session::set('seo_description', SiteSeo::description());
+if ($seoCustom['keywords'] !== '')    Session::set('seo_keywords', SiteSeo::keywords());
 ?>
 <!DOCTYPE html>
 <html lang="en" data-coreui-theme="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
-    <meta name="description" content="<?= Session::get('seo_description') ?>">
-    <meta name="keywords" content="<?= Session::get('seo_keywords') ?>">
+    <meta name="description" content="<?= htmlspecialchars((string)Session::get('seo_description')) ?>">
+    <meta name="keywords" content="<?= htmlspecialchars((string)Session::get('seo_keywords')) ?>">
+    <meta name="author" content="<?= htmlspecialchars(SiteSeo::author()) ?>">
     <title><?= Session::$pageTitle ?></title>
-    <link rel="icon" type="image/png" href="<?= Session::cdn3('logo/favicon.png') ?>">
+    <link rel="icon" type="image/png" href="<?= Session::favicon() ?>">
     
     <!-- CoreUI & Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/@coreui/coreui@5.0.2/dist/css/coreui.min.css" rel="stylesheet">
@@ -110,7 +116,7 @@ window.addEventListener('pageshow', function(e) {
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-5 d-none d-lg-block pe-lg-5 text-white" style="text-shadow: 0 2px 10px rgba(0,0,0,0.5);">
-                <img src="<?= Session::cdn3('logo/logo.png') ?>" width="80" class="mb-4" alt="Logo" style="filter: drop-shadow(0 0 10px rgba(15,159,248,0.5));">
+                <img src="<?= Session::logo() ?>" width="80" class="mb-4" alt="Logo" style="filter: drop-shadow(0 0 10px rgba(15,159,248,0.5));">
                 <h1 id="animated-heading" class="display-4 fw-bolder mb-4" style="line-height: 1.1; letter-spacing: -1px; transition: opacity 0.5s ease-in-out;">
                     Build <span style="color: #fb923c;">Faster.</span><br>
                     Scale <span style="color: #38bdf8;">Smarter.</span>
@@ -119,13 +125,13 @@ window.addEventListener('pageshow', function(e) {
                 <div class="p-4 rounded-4" style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
                     <i class='bx bxs-quote-alt-left fs-2 mb-3 opacity-75' style="color: #fb923c;"></i>
                     <p class="fs-5 fst-italic text-white mb-4" style="line-height: 1.6; text-shadow: 0 1px 2px rgba(0,0,0,0.8);">
-                        "Tom Labs has fundamentally transformed how we spin up and tear down our virtual environments. It's not just a tool; it's our entire engineering foundation."
+                        "<?= htmlspecialchars(Session::siteName()) ?> has fundamentally transformed how we spin up and tear down our virtual environments. It's not just a tool; it's our entire engineering foundation."
                     </p>
                     <a href="#" onclick="event.preventDefault(); window.open('https://sathish46.in', '_blank'); setTimeout(() => { window.open('https://sathish46.selfmade.fun', '_blank'); }, 800);" class="d-flex align-items-center gap-3 text-decoration-none text-light" style="transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
                         <img src="<?= Session::cdn3('author/sathish.png') ?>" width="50" height="50" class="rounded-circle border border-2" style="border-color: #9ca3af; object-fit: cover;" alt="Avatar">
                         <div>
                             <div class="fw-bold fs-6 text-white" style="text-shadow: 0 1px 2px rgba(0,0,0,0.8);">Sathish46 🔥</div>
-                            <div class="small" style="color: rgba(255, 255, 255, 0.9); text-shadow: 0 1px 2px rgba(0,0,0,0.8);">CEO & Founder, Tom Labs 😎</div>
+                            <div class="small" style="color: rgba(255, 255, 255, 0.9); text-shadow: 0 1px 2px rgba(0,0,0,0.8);">CEO & Founder, <?= htmlspecialchars(Session::siteName()) ?> 😎</div>
                         </div>
                     </a>
                 </div>
@@ -156,7 +162,7 @@ window.addEventListener('pageshow', function(e) {
                 <div class="card shadow-lg border-0 rounded-4 p-4">
                     <div class="card-body">
                         <div class="text-center mb-4 d-lg-none">
-                            <img src="<?= Session::cdn3('logo/logo.png') ?>" width="50" class="mb-3" alt="Tom Labs Logo">
+                            <img src="<?= Session::logo() ?>" width="50" class="mb-3" alt="<?= htmlspecialchars(Session::siteName()) ?> Logo">
                         </div>
                         
                         <h3 class="fw-bold mb-4 text-body">Sign in</h3>

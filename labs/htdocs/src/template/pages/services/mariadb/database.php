@@ -1,5 +1,5 @@
 <?php
-Session::addMetaTag('<title>MariaDB Databases - Tom Labs</title>');
+Session::addMetaTag('<title>MariaDB Databases - ' . Session::siteName() . '</title>');
 
 
 $user = Session::getUser();

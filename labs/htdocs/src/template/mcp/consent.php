@@ -20,7 +20,7 @@ $avatar = Session::getAvatar();
 $displayName = $user ? ($user->getFirstName() . ' ' . $user->getLastName() ?: $user->getUsername()) : 'User';
 $userEmail = $user ? $user->getEmail() : '';
 
-Session::$pageTitle = 'Approve Access - Tom Labs';
+Session::$pageTitle = 'Approve Access - ' . Session::siteName();
 Session::addMetaTag(['name' => 'robots', 'content' => 'noindex, nofollow']);
 ?>
 <!DOCTYPE html>
@@ -195,7 +195,7 @@ Session::addMetaTag(['name' => 'robots', 'content' => 'noindex, nofollow']);
 </head>
 <body>
     <div class="card">
-        <div class="brand">Tom Labs</div>
+        <div class="brand"><?= htmlspecialchars(Session::siteName()) ?></div>
 
         <h1>Approve access</h1>
         <p class="desc"><strong><?= htmlspecialchars($clientName) ?></strong> is asking to use your labs. If you allow it, it acts as you, with exactly the permissions your account already has.</p>
@@ -213,7 +213,7 @@ Session::addMetaTag(['name' => 'robots', 'content' => 'noindex, nofollow']);
             <div class="callback-url"><?= htmlspecialchars($redirectUri) ?></div>
         </div>
 
-        <p class="warning">Allow this only if you started <?= htmlspecialchars($clientName) ?> yourself and you recognise the address above. Nobody from Tom Labs will ever ask you to approve this screen.</p>
+        <p class="warning">Allow this only if you started <?= htmlspecialchars($clientName) ?> yourself and you recognise the address above. Nobody from <?= htmlspecialchars(Session::siteName()) ?> will ever ask you to approve this screen.</p>
 
         <button class="details-toggle" onclick="var el=document.getElementById('details');el.classList.toggle('show');this.textContent=el.classList.contains('show')?'− Connection details':'+ Connection details'">+ Connection details</button>
         <div class="details-content" id="details">

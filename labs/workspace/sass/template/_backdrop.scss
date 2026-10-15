@@ -33,7 +33,8 @@
     /* Overall Polish: Sleek typography and contrast */
     color: var(--cui-body-color) !important;
     /* Theme-aware text color */
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    /* No font-family pin here: sidebar/header/footer must inherit the body font
+       (default Rubik or the admin-selected Site font) */
 
     /* Ensure sidebar links and text are visible */
     .nav-link,

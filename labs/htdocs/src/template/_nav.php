@@ -28,11 +28,11 @@ $current = Session::getCurrentFile();
         <div class="sidebar-brand text-decoration-none">
             <div class="sidebar-brand-full">
                 <div class="d-flex align-items-center justify-content-center gap-2">
-                    <img src="/assets/logo/logo.png" width="44" height="44" alt="Tom Labs Icon" style="border-radius: 8px;">
-                    <span class="fs-4 fw-bold mb-0" style="color: var(--cui-sidebar-brand-color, inherit); letter-spacing: 0.5px; line-height: 1;">Tom Labs</span>
+                    <img src="<?= Session::logo() ?>" width="44" height="44" alt="<?= htmlspecialchars(Session::siteName()) ?> Icon" style="border-radius: 8px;">
+                    <span id="siteBrandName" data-site-name class="fs-4 fw-bold mb-0" style="color: var(--cui-sidebar-brand-color, inherit); letter-spacing: 0.5px; line-height: 1;"><?= htmlspecialchars(Session::siteName()) ?></span>
                 </div>
             </div>
-            <img class="sidebar-brand-narrow" src="/assets/logo/logo.png" width="44" height="44" alt="TL" style="border-radius: 8px;">
+            <img class="sidebar-brand-narrow" src="<?= Session::logo() ?>" width="44" height="44" alt="TL" style="border-radius: 8px;">
         </div>
     </div>
 
@@ -235,24 +235,7 @@ $current = Session::getCurrentFile();
                 <svg class="nav-icon" viewBox="0 0 256 256"><use href="/assets/icons/duotone.svg#tom-sparkles"></use></svg> Feeling Lucky ✨
             </a>
         </li>
-        <li class="nav-group <?= (str_contains($current, 'leaderboard') || str_contains($current, 'leagues')) ? 'show' : '' ?>">
-            <a class="nav-link nav-group-toggle" href="javascript:void(0);">
-                <i class="nav-icon bx bx-trophy"></i> Mastery Hall
-            </a>
-            <ul class="nav-group-items">
-                <li class="nav-item">
-                    <a class="nav-link <?= str_contains($current, 'leaderboard') ? 'active' : '' ?>" href="/leaderboard-global">
-                        <i class="nav-icon bx bx-trophy"></i> Global Leaderboard
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= str_contains($current, 'leagues') ? 'active' : '' ?>" href="/leagues">
-                        <i class="nav-icon bx bx-medal"></i> League of Ronin
-                    </a>
-                </li>
-            </ul>
-        </li>
-        <li class="nav-title">Tom Labs</li>
+        <li class="nav-title" data-site-name><?= htmlspecialchars(Session::siteName()) ?></li>
         <li class="nav-group <?= (str_contains($current, 'devices') || str_contains($current, 'network') || str_contains($current, 'domains')) ? 'show' : '' ?>">
             <a class="nav-link nav-group-toggle" href="javascript:void(0);">
                 <svg class="nav-icon" viewBox="0 0 256 256"><use href="/assets/icons/duotone.svg#tom-cell-tower"></use></svg> Connectivity
@@ -313,6 +296,23 @@ $current = Session::getCurrentFile();
             </a>
         </li>
         <?php endif; ?>
+        <li class="nav-group <?= (str_contains($current, 'leaderboard') || str_contains($current, 'leagues')) ? 'show' : '' ?>">
+            <a class="nav-link nav-group-toggle" href="javascript:void(0);">
+                <i class="nav-icon bx bx-trophy"></i> Mastery Hall
+            </a>
+            <ul class="nav-group-items">
+                <li class="nav-item">
+                    <a class="nav-link <?= str_contains($current, 'leaderboard') ? 'active' : '' ?>" href="/leaderboard-global">
+                        <i class="nav-icon bx bx-trophy"></i> Global Leaderboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= str_contains($current, 'leagues') ? 'active' : '' ?>" href="/leagues">
+                        <i class="nav-icon bx bx-medal"></i> League of Ronin
+                    </a>
+                </li>
+            </ul>
+        </li>
         <li class="nav-item">
             <a class="nav-link <?= $current == 'test' ? 'active' : '' ?>" href="/test">
                 <svg class="nav-icon">
@@ -462,6 +462,9 @@ function syncSidebarActiveState(targetUrl) {
         }
     });
 }
-document.addEventListener('DOMContentLoaded', syncSidebarActiveState);
-document.addEventListener('htmx:afterSettle', syncSidebarActiveState);
+document.addEventListener('DOMContentLoaded', () => syncSidebarActiveState(window.location.pathname));
+document.addEventListener('htmx:afterSettle', (e) => {
+    const xhr = e.detail && e.detail.xhr;
+    syncSidebarActiveState(xhr && xhr.responseURL ? new URL(xhr.responseURL).pathname : window.location.pathname);
+});
 </script>

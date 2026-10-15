@@ -1,5 +1,5 @@
 <?php
-Session::addMetaTag('<title>RabbitMQ Vhosts - Tom Labs</title>');
+Session::addMetaTag('<title>RabbitMQ Vhosts - ' . Session::siteName() . '</title>');
 
 
 $user = Session::getUser();

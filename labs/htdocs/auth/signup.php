@@ -89,18 +89,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email'], $_POST['pass
 
 define('IS_LOGIN_PAGE', true);
 Session::$pageTitle = "Register";
-Session::set('seo_description', 'Create a free Tom Labs account to start deploying your own automated lab environments today.');
-Session::set('seo_keywords', 'Register, Sign Up, Tom Labs, Create Account');
+Session::set('seo_description', 'Create a free ' . Session::siteName() . ' account to start deploying your own automated lab environments today.');
+Session::set('seo_keywords', 'Register, Sign Up, ' . Session::siteName() . ', Create Account');
+// Admin SEO defaults (Appearance → SEO) win over the page copy when customized
+require_once __DIR__ . '/../src/lib/core/SiteSeo.class.php';
+$seoCustom = SiteSeo::stored();
+if ($seoCustom['description'] !== '') Session::set('seo_description', SiteSeo::description());
+if ($seoCustom['keywords'] !== '')    Session::set('seo_keywords', SiteSeo::keywords());
 ?>
 <!DOCTYPE html>
 <html lang="en" data-coreui-theme="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
-    <meta name="description" content="<?= Session::get('seo_description') ?>">
-    <meta name="keywords" content="<?= Session::get('seo_keywords') ?>">
+    <meta name="description" content="<?= htmlspecialchars((string)Session::get('seo_description')) ?>">
+    <meta name="keywords" content="<?= htmlspecialchars((string)Session::get('seo_keywords')) ?>">
+    <meta name="author" content="<?= htmlspecialchars(SiteSeo::author()) ?>">
     <title><?= Session::$pageTitle ?></title>
-    <link rel="icon" type="image/png" href="<?= Session::cdn3('logo/favicon.png') ?>">
+    <link rel="icon" type="image/png" href="<?= Session::favicon() ?>">
     
     <!-- CoreUI & Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/@coreui/coreui@5.0.2/dist/css/coreui.min.css" rel="stylesheet">
@@ -131,7 +137,7 @@ Session::set('seo_keywords', 'Register, Sign Up, Tom Labs, Create Account');
         <div class="row justify-content-center align-items-center">
             
             <div class="col-lg-5 d-none d-lg-block pe-lg-5 text-white" style="text-shadow: 0 2px 10px rgba(0,0,0,0.5);">
-                <img src="<?= Session::cdn3('logo/logo.png') ?>" width="60" class="mb-3" alt="Logo" style="filter: drop-shadow(0 0 10px rgba(56,189,248,0.5));">
+                <img src="<?= Session::logo() ?>" width="60" class="mb-3" alt="Logo" style="filter: drop-shadow(0 0 10px rgba(56,189,248,0.5));">
                 <h1 id="animated-heading" class="display-4 fw-bolder mb-3" style="line-height: 1.1; letter-spacing: -1px; transition: opacity 0.5s ease-in-out;">
                     Join the <span style="color: #fb923c;">Hub.</span><br>
                     Ignite <span style="color: #38bdf8;">Innovation.</span>
@@ -146,7 +152,7 @@ Session::set('seo_keywords', 'Register, Sign Up, Tom Labs, Create Account');
                         <img src="<?= Session::cdn3('author/sathish.png') ?>" width="40" height="40" class="rounded-circle border border-2" style="border-color: #9ca3af; object-fit: cover;" alt="Avatar">
                         <div>
                             <div class="fw-bold fs-6 text-white" style="text-shadow: 0 1px 2px rgba(0,0,0,0.8);">Sathish46 🔥</div>
-                            <div class="small" style="color: rgba(255, 255, 255, 0.9); text-shadow: 0 1px 2px rgba(0,0,0,0.8);">CEO & Founder, Tom Labs 😎</div>
+                            <div class="small" style="color: rgba(255, 255, 255, 0.9); text-shadow: 0 1px 2px rgba(0,0,0,0.8);">CEO & Founder, <?= htmlspecialchars(Session::siteName()) ?> 😎</div>
                         </div>
                     </a>
                 </div>

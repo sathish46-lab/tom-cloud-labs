@@ -8,7 +8,7 @@
         <div class="row justify-content-center align-items-center g-5">
             <!-- Left Column: Branding & Value Proposition -->
             <div class="col-lg-6 d-none d-lg-block pe-lg-4 text-white branding-section">
-                <img src="<?= Session::cdn3('logo/logo.png') ?>" width="80" class="mb-4 logo-img" alt="Logo">
+                <img src="<?= Session::logo() ?>" width="80" class="mb-4 logo-img" alt="Logo">
                 <h1 class="display-4 fw-bolder mb-4 branding-heading">
                     Session <span class="text-orange">Expired.</span><br>
                     Security <span class="text-blue">Active.</span>

@@ -1,5 +1,5 @@
 <?php
-Session::addMetaTag('<title>Adminer - Tom Labs</title>');
+Session::addMetaTag('<title>Adminer - ' . Session::siteName() . '</title>');
 Session::addCustomJs('/assets/js/copy.js');
 ?>
 

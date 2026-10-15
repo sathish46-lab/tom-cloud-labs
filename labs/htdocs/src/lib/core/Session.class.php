@@ -97,6 +97,9 @@ class Session
     public static function getVersion()       { return SessionEnv::getVersion(); }
     public static function cacheCDN($url)     { return SessionEnv::cacheCDN($url); }
     public static function cdn3($path)        { return SessionEnv::cdn3($path); }
+    public static function favicon()         { return SessionEnv::favicon(); }
+    public static function logo()            { return SessionEnv::logo(); }
+    public static function siteName()        { return SessionEnv::siteName(); }
     public static function getProcessorCount(){ return SessionEnv::getProcessorCount(); }
 
     /* ==================================================================

@@ -1,5 +1,5 @@
 <?php
-Session::addMetaTag('<title>Redis Server - Tom Labs</title>');
+Session::addMetaTag('<title>Redis Server - ' . Session::siteName() . '</title>');
 // ServiceManager.init handled inline
 Session::addCustomJs('/assets/js/copy.js');
 

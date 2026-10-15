@@ -1,5 +1,5 @@
 <?php
-Session::addMetaTag('<title>MySQL Databases - Tom Labs</title>');
+Session::addMetaTag('<title>MySQL Databases - ' . Session::siteName() . '</title>');
 Session::addCustomJs('/assets/js/services.js');
 
 $user = Session::getUser();

@@ -364,6 +364,8 @@ document.addEventListener('keydown', function(e) {
     var debounceTimer = null;
 
     var groupMeta = {
+        admin:      { label: 'Admin Features',  icon: 'tom-crown',   colour: '#f43f5e' },
+        devices:    { label: 'Your Devices',    icon: 'tom-devices', colour: '#38bdf8' },
         running:    { label: 'Your Labs',        icon: 'bx-hard-hat',  colour: '#22c55e' },
         catalog:    { label: 'Lab Catalog',       icon: 'bx-diamond',   colour: '#E95420' },
         apps:       { label: 'Pages & Apps',      icon: 'bx-grid-alt',  colour: '#6366f1' },
@@ -376,7 +378,12 @@ document.addEventListener('keydown', function(e) {
 
     function highlightMatch(text, query) {
         if (!query) return text;
-        var re = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+        var tokens = query.split(/\s+/).filter(Boolean).map(function(t) {
+            return t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        });
+        if (!tokens.length) return text;
+        tokens.sort(function(a, b) { return b.length - a.length; });
+        var re = new RegExp('(' + tokens.join('|') + ')', 'gi');
         return text.replace(re, '<strong>$1</strong>');
     }
 
@@ -421,7 +428,7 @@ document.addEventListener('keydown', function(e) {
     function renderPaletteResults(data) {
         var groups = data.groups || {};
         var query = data.q || '';
-        var order = ['running', 'catalog', 'apps', 'challenges', 'quiz', 'learn', 'roadmaps', 'syllabus'];
+        var order = ['admin', 'devices', 'running', 'catalog', 'apps', 'challenges', 'quiz', 'learn', 'roadmaps', 'syllabus'];
         var hasResults = order.some(function(k) { return groups[k] && groups[k].length > 0; });
 
         if (!hasResults) {

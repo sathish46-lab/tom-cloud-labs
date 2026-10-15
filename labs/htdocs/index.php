@@ -13,7 +13,7 @@ if ($isSessionExpired) {
     if (!empty($_SESSION['show_session_expired'])) {
         unset($_SESSION['show_session_expired']);
     }
-    Session::$pageTitle = "Authentication Required | Tom Labs";
+    Session::$pageTitle = "Authentication Required | " . Session::siteName();
     Session::set('show_session_expired', true);
     ?>
     <!DOCTYPE html>
@@ -22,7 +22,7 @@ if ($isSessionExpired) {
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title><?= Session::$pageTitle ?></title>
-        <link rel="icon" type="image/png" href="<?= Session::cdn3('logo/favicon.png') ?>">
+        <link rel="icon" type="image/png" href="<?= Session::favicon() ?>">
     </head>
     <body style="margin:0; padding:0; background:#0f172a;">
     <?php
@@ -35,9 +35,9 @@ if ($isSessionExpired) {
 }
 
 // 2. Set Page Metadata
-Session::$pageTitle = "Tom Labs | Virtual Innovation Hub";
-Session::set('seo_description', 'Tom Labs is a premier virtual innovation hub offering advanced cloud environments, scalable VPS, and secure VPN workspaces for elite developers and engineers.');
-Session::set('seo_keywords', 'Virtual Innovation Hub, Tom Labs, Advanced Cloud Infrastructure, Digital Workspace, VPS, Developer Environment');
+Session::$pageTitle = Session::siteName() . " | Virtual Innovation Hub";
+Session::set('seo_description', Session::siteName() . ' is a premier virtual innovation hub offering advanced cloud environments, scalable VPS, and secure VPN workspaces for elite developers and engineers.');
+Session::set('seo_keywords', 'Virtual Innovation Hub, ' . Session::siteName() . ', Advanced Cloud Infrastructure, Digital Workspace, VPS, Developer Environment');
 define('IS_LANDING_PAGE', true);
 Session::addCustomCss('/assets/css/landing.css');
 
@@ -59,7 +59,7 @@ $initialQuote = $heroQuotes[array_rand($heroQuotes)];
     <meta name="description" content="<?= Session::get('seo_description') ?>">
     <meta name="keywords" content="<?= Session::get('seo_keywords') ?>">
     <title><?= Session::$pageTitle ?></title>
-    <link rel="icon" type="image/png" href="<?= Session::cdn3('logo/favicon.png') ?>">
+    <link rel="icon" type="image/png" href="<?= Session::favicon() ?>">
     
     <!-- Fonts and Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -77,7 +77,7 @@ $initialQuote = $heroQuotes[array_rand($heroQuotes)];
 
 <header class="portfolio-header" style="border-radius: 20px; display: flex; align-items: center; width: 95%; max-width: 1400px;">
     <a href="/" class="header-logo" style="display: flex; align-items: center; gap: 12px; text-decoration: none; flex-shrink: 0;">
-        <img src="<?= Session::cdn3('logo/favicon.png') ?>" width="44" height="44" alt="Tom Labs Icon" style="border-radius: 8px; object-fit: contain;">
+        <img src="<?= Session::favicon() ?>" width="44" height="44" alt="<?= htmlspecialchars(Session::siteName()) ?> Icon" style="border-radius: 8px; object-fit: contain;">
         <div style="display: flex; flex-direction: column; line-height: 1.1;">
             <span style="font-size: 1.2rem; font-weight: 800; color: white; text-transform: uppercase; letter-spacing: 0.5px;">Tom <span style="color: var(--primary-color);">Labs</span></span>
             <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 500;">Virtual Innovation Hub</span>
@@ -137,8 +137,8 @@ $initialQuote = $heroQuotes[array_rand($heroQuotes)];
 
 <!-- <header class="portfolio-header">
     <a href="/" class="header-logo" style="gap: 12px;">
-        <img src="/assets/logo/logo.png" width="44" height="44" alt="Tom Labs Icon" style="border-radius: 8px;">
-        <span style="font-size: 1.5rem;">Tom Labs</span>
+        <img src="/assets/logo/logo.png" width="44" height="44" alt="<?= htmlspecialchars(Session::siteName()) ?> Icon" style="border-radius: 8px;">
+        <span style="font-size: 1.5rem;"><?= htmlspecialchars(Session::siteName()) ?></span>
     </a>
     
     <div class="header-nav-container">
@@ -535,9 +535,9 @@ $initialQuote = $heroQuotes[array_rand($heroQuotes)];
                     <div class="card-icon">
                         <i class='bx bxs-rocket' style="color: #4ade80;"></i>
                         <h3>The Result</h3>
-                        <img src="<?= Session::cdn3('logo/logo.png') ?>" alt="Tom Labs" class="card-img-avatar">
+                        <img src="<?= Session::logo() ?>" alt="<?= htmlspecialchars(Session::siteName()) ?>" class="card-img-avatar">
                     </div>
-                    <h4>Tom Labs</h4>
+                    <h4><?= htmlspecialchars(Session::siteName()) ?></h4>
                     <p>The outcome of excellent mentorship and learning. A virtual innovation hub built to empower the next generation.</p>
                     <div class="card-stats">
                         <div class="stat">
@@ -647,9 +647,9 @@ $initialQuote = $heroQuotes[array_rand($heroQuotes)];
                     <div class="card-icon">
                         <i class='bx bxs-rocket' style="color: #4ade80;"></i>
                         <h3>The Result</h3>
-                        <img src="<?= Session::cdn3('logo/logo.png') ?>" alt="Tom Labs" class="card-img-avatar">
+                        <img src="<?= Session::logo() ?>" alt="<?= htmlspecialchars(Session::siteName()) ?>" class="card-img-avatar">
                     </div>
-                    <h4>Tom Labs</h4>
+                    <h4><?= htmlspecialchars(Session::siteName()) ?></h4>
                     <p>The outcome of excellent mentorship and learning. A virtual innovation hub built to empower the next generation.</p>
                     <div class="card-stats">
                         <div class="stat">

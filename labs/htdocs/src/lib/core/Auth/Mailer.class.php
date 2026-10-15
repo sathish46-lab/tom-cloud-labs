@@ -5,6 +5,8 @@ namespace Auth;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
+require_once __DIR__ . '/../SiteBrand.class.php';
+
 /**
  * Centralized mailer for all auth-related emails.
  * Reads SMTP config from env.json via get_config('smtp').
@@ -34,7 +36,7 @@ class Mailer {
         $mail->Port       = $config['port'];
         $mail->setFrom(
             $config['from_email'] ?? $config['user'],
-            $config['from_name']  ?? 'Tom Labs'
+            $config['from_name']  ?? \SiteBrand::name()
         );
 
         return $mail;
@@ -52,7 +54,7 @@ class Mailer {
             $mail = self::build();
             $mail->addAddress($email, $username);
             $mail->isHTML(true);
-            $mail->Subject = 'Verify your Tom Labs Account';
+            $mail->Subject = 'Verify your ' . \SiteBrand::name() . ' Account';
             $mail->Body    = "
                 <h1>Welcome {$username}!</h1>
                 <p>Click below to activate your account:</p>
@@ -137,12 +139,12 @@ class Mailer {
             $mail = self::build();
             $mail->addAddress($email, $username);
             $mail->isHTML(true);
-            $mail->Subject = 'Reset Your Password | Tom Labs Security';
+            $mail->Subject = 'Reset Your Password | ' . \SiteBrand::name() . ' Security';
             $mail->Body    = "
                 <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #0f172a; color: #ffffff; border-radius: 10px;'>
                     <h2 style='color: #fb923c;'>Password Reset Request</h2>
                     <p style='color: #cbd5e1;'>Hi {$username},</p>
-                    <p style='color: #cbd5e1;'>We received a request to reset the password for your Tom Labs account associated with this email address.</p>
+                    <p style='color: #cbd5e1;'>We received a request to reset the password for your <?= htmlspecialchars(\SiteBrand::name()) ?> account associated with this email address.</p>
                     <div style='text-align: center; margin: 30px 0;'>
                         <a href='{$resetLink}' style='padding: 14px 28px; background: linear-gradient(135deg, #fb923c, #f97316); color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;'>Reset Password</a>
                     </div>

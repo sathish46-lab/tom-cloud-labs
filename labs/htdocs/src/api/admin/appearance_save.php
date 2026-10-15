@@ -39,6 +39,8 @@ $forceColor    = trim($_POST['force_color_mode'] ?? '');
 $publicBg      = array_key_exists('public_bg_mode', $_POST)
     ? trim((string)$_POST['public_bg_mode'])
     : (string)Appearance::get()['public_bg_mode'];
+// Default visual blur for users with no saved preference (first login).
+$blurDefault   = isset($_POST['visual_blur_default']) && $_POST['visual_blur_default'] === '0' ? '0' : '1';
 $disabledRaw   = $_POST['disabled_modes'] ?? [];
 if (!is_array($disabledRaw)) $disabledRaw = $disabledRaw === '' ? [] : [$disabledRaw];
 
@@ -74,6 +76,7 @@ $next['force_mode']       = $forceMode;
 $next['disabled_modes']   = $disabled;
 $next['force_color_mode'] = $forceColor;
 $next['public_bg_mode']   = $publicBg;
+$next['visual_blur_default'] = $blurDefault;
 $next['updated_at']       = time();
 $next['updated_by']       = (string)$admin->getEmail();
 
@@ -97,6 +100,7 @@ try {
                 'disabled_modes'   => $before['disabled_modes'],
                 'force_color_mode' => $before['force_color_mode'],
                 'public_bg_mode'   => $before['public_bg_mode'],
+                'visual_blur_default' => $before['visual_blur_default'],
             ],
             'to' => [
                 'default_mode'     => $next['default_mode'],
@@ -104,6 +108,7 @@ try {
                 'disabled_modes'   => $next['disabled_modes'],
                 'force_color_mode' => $next['force_color_mode'],
                 'public_bg_mode'   => $next['public_bg_mode'],
+                'visual_blur_default' => $next['visual_blur_default'],
             ],
         ],
         (string)($admin->getUserId() ?? 'unknown')

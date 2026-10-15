@@ -46,6 +46,32 @@ body.hwa-enabled .sidebar {
     padding-bottom: 0 !important;
 }
 
+/* First-paint fix: ul.sidebar-nav is flex column with align-items:flex-start, so
+   nav items shrink to text width until SimpleBar wraps them in .simplebar-content
+   (full-width block) at load — that "narrow → expand" jump. Force full width so
+   the very first render matches the final layout. */
+.sidebar-nav > .nav-item,
+.sidebar-nav > .nav-group,
+.sidebar-nav > .nav-title,
+.sidebar-nav .simplebar-content > .nav-item,
+.sidebar-nav .simplebar-content > .nav-group,
+.sidebar-nav .simplebar-content > .nav-title {
+    width: 100%;
+}
+
+/* Vertical-rhythm fix: nav-link's own 2px top/bottom margins are *contained*
+   inside li while the nav is a flex container (pre-SimpleBar first render)
+   but *collapse* once SimpleBar wraps it in a block (.simplebar-content) —
+   every item jumped up 3/6/9px at load (gap 5.2px → 2.2px = the list "shake").
+   Keep link vertical margins at 0 and space items only with li margin-top,
+   which resolves to the same 2px in both flex and block contexts. */
+.sidebar-nav .nav-item + .nav-item,
+.sidebar-nav .nav-item + .nav-group,
+.sidebar-nav .nav-group + .nav-item,
+.sidebar-nav .nav-group + .nav-group {
+    margin-top: 2px !important;
+}
+
 /* Apply better transparency to inner layer only when glass-mode is enabled */
 body.hwa-enabled[data-coreui-theme="dark"] .sidebar-inner-layer,
 body.hwa-enabled .sidebar-inner-layer {
@@ -66,7 +92,7 @@ body.hwa-enabled[data-coreui-theme="light"] .sidebar-inner-layer {
 .sidebar-nav .nav-group-toggle,
 .sidebar .nav-link {
     border-radius: 8px !important;
-    margin: 2px 8px !important; /* Tighter margins */
+    margin: 0 8px !important; /* vertical margins must stay 0: they shake (contained in flex li pre-SimpleBar, collapse post-SimpleBar) — spacing comes from li margin-top instead */
     padding: 0.4rem 0.8rem !important; /* Tighter padding */
     font-size: 0.85rem !important; /* Scaled down font size */
     color: var(--glass-text, rgba(255, 255, 255, 0.85)) !important;
@@ -160,7 +186,7 @@ body.hwa-enabled[data-coreui-theme="light"] .sidebar-inner-layer {
 .sidebar-narrow .sidebar-nav .nav-group-toggle,
 .sidebar-narrow-unfoldable:not(:hover) .sidebar-nav .nav-link,
 .sidebar-narrow-unfoldable:not(:hover) .sidebar-nav .nav-group-toggle {
-    margin: 2px 4px !important;
+    margin: 0 4px !important;
     padding: 0.6rem 0 !important;
     justify-content: center !important;
     color: transparent !important; /* Hide text */

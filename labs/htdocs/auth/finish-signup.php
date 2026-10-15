@@ -73,8 +73,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username'])) {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
-    <title>Choose Username — Tom Labs</title>
-    <link rel="icon" type="image/png" href="<?= Session::cdn3('logo/favicon.png') ?>">
+    <title>Choose Username — <?= htmlspecialchars(Session::siteName()) ?></title>
+    <link rel="icon" type="image/png" href="<?= Session::favicon() ?>">
     
     <!-- CoreUI & Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/@coreui/coreui@5.0.2/dist/css/coreui.min.css" rel="stylesheet">
@@ -102,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username'])) {
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-5 d-none d-lg-block pe-lg-5 text-white" style="text-shadow: 0 2px 10px rgba(0,0,0,0.5);">
-                <img src="<?= Session::cdn3('logo/logo.png') ?>" width="80" class="mb-4" alt="Logo" style="filter: drop-shadow(0 0 10px rgba(15,159,248,0.5));">
+                <img src="<?= Session::logo() ?>" width="80" class="mb-4" alt="Logo" style="filter: drop-shadow(0 0 10px rgba(15,159,248,0.5));">
                 <h1 class="display-4 fw-bolder mb-4" style="line-height: 1.1; letter-spacing: -1px;">
                     Almost <span style="color: #fb923c;">There!</span><br>
                     Choose Your <span style="color: #38bdf8;">Identity.</span>
@@ -111,13 +111,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username'])) {
                 <div class="p-4 rounded-4" style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
                     <i class='bx bxs-quote-alt-left fs-2 mb-3 opacity-75' style="color: #fb923c;"></i>
                     <p class="fs-5 fst-italic text-white mb-4" style="line-height: 1.6; text-shadow: 0 1px 2px rgba(0,0,0,0.8);">
-                        "Your username is your identity in Tom Labs. Pick something that represents you."
+                        "Your username is your identity in <?= htmlspecialchars(Session::siteName()) ?>. Pick something that represents you."
                     </p>
                     <a href="#" class="d-flex align-items-center gap-3 text-decoration-none text-light" style="transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
                         <img src="<?= Session::cdn3('author/sathish.png') ?>" width="50" height="50" class="rounded-circle border border-2" style="border-color: #9ca3af; object-fit: cover;" alt="Avatar">
                         <div>
                             <div class="fw-bold fs-6 text-white" style="text-shadow: 0 1px 2px rgba(0,0,0,0.8);">Sathish46</div>
-                            <div class="small" style="color: rgba(255, 255, 255, 0.9); text-shadow: 0 1px 2px rgba(0,0,0,0.8);">CEO & Founder, Tom Labs</div>
+                            <div class="small" style="color: rgba(255, 255, 255, 0.9); text-shadow: 0 1px 2px rgba(0,0,0,0.8);">CEO & Founder, <?= htmlspecialchars(Session::siteName()) ?></div>
                         </div>
                     </a>
                 </div>
@@ -127,7 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username'])) {
                 <div class="card shadow-lg border-0 rounded-4 p-4">
                     <div class="card-body">
                         <div class="text-center mb-4 d-lg-none">
-                            <img src="<?= Session::cdn3('logo/logo.png') ?>" width="50" class="mb-3" alt="Tom Labs Logo">
+                            <img src="<?= Session::logo() ?>" width="50" class="mb-3" alt="<?= htmlspecialchars(Session::siteName()) ?> Logo">
                         </div>
 
                         <div class="text-center mb-4">

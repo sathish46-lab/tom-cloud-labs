@@ -24,6 +24,9 @@ class Appearance {
             // Signed-out profile pages get one wallpaper for everybody by
             // default (War); admins can override it or follow the owner.
             'public_bg_mode'   => 'ninja',
+            // Default visual blur (glass effect) for users with no saved
+            // preference — i.e. first login. '1' = on, '0' = off.
+            'visual_blur_default' => '1',
             'updated_at'       => 0,
             'updated_by'       => '',
         ];
@@ -38,10 +41,11 @@ class Appearance {
             $doc = $db->global_settings->findOne(['_id' => self::DOC_ID]);
             if ($doc) {
                 $doc = (array)$doc;
-                foreach (['default_mode', 'force_mode', 'force_color_mode', 'updated_at', 'updated_by', 'public_bg_mode'] as $k) {
+                foreach (['default_mode', 'force_mode', 'force_color_mode', 'updated_at', 'updated_by', 'public_bg_mode', 'visual_blur_default'] as $k) {
                     if (array_key_exists($k, $doc)) $cfg[$k] = $doc[$k];
                 }
                 $cfg['public_bg_mode'] = (string)$cfg['public_bg_mode'];
+                $cfg['visual_blur_default'] = ((string)$cfg['visual_blur_default'] === '0') ? '0' : '1';
                 $disabled = $doc['disabled_modes'] ?? [];
                 if ($disabled instanceof Traversable) $disabled = iterator_to_array($disabled, false);
                 if (is_array($disabled)) {

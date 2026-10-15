@@ -1,5 +1,5 @@
 <?php
-Session::addMetaTag('<title>MySQL Server - Tom Labs</title>');
+Session::addMetaTag('<title>MySQL Server - ' . Session::siteName() . '</title>');
 Session::addCustomJs('/assets/js/services.js');
 Session::addCustomJs('/assets/js/copy.js');
 

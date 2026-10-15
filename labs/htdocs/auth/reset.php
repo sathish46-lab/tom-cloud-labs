@@ -43,7 +43,7 @@ if (isset($_POST['password'])) {
     }
 }
 
-Session::$pageTitle = "New Password | Tom Labs";
+Session::$pageTitle = "New Password | " . Session::siteName();
 ?>
 <!DOCTYPE html>
 <html lang="en" data-coreui-theme="dark">
@@ -51,7 +51,7 @@ Session::$pageTitle = "New Password | Tom Labs";
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
     <title><?= Session::$pageTitle ?></title>
-    <link rel="icon" type="image/png" href="<?= Session::cdn3('logo/favicon.png') ?>">
+    <link rel="icon" type="image/png" href="<?= Session::favicon() ?>">
     <link href="https://cdn.jsdelivr.net/npm/@coreui/coreui@5.0.2/dist/css/coreui.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href='https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
@@ -77,7 +77,7 @@ Session::$pageTitle = "New Password | Tom Labs";
                 <div class="card shadow-lg border-0 rounded-4 p-4" style="background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1) !important;">
                     <div class="card-body">
                         <div class="text-center mb-4">
-                            <img src="<?= Session::cdn3('logo/logo.png') ?>" width="60" class="mb-3" alt="Logo">
+                            <img src="<?= Session::logo() ?>" width="60" class="mb-3" alt="Logo">
                             <h3 class="fw-bold mb-2 text-white">New Password</h3>
                             <p class="text-secondary small mb-0">Choose a strong enterprise password.</p>
                         </div>

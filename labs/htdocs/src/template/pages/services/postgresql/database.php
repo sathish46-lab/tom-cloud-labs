@@ -1,5 +1,5 @@
 <?php
-Session::addMetaTag('<title>PostgreSQL Databases - Tom Labs</title>');
+Session::addMetaTag('<title>PostgreSQL Databases - ' . Session::siteName() . '</title>');
 
 $user = Session::getUser();
 $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');

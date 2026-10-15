@@ -1,5 +1,5 @@
 <?php
-Session::addMetaTag('<title>MongoDB Server - Tom Labs</title>');
+Session::addMetaTag('<title>MongoDB Server - ' . Session::siteName() . '</title>');
 // ServiceManager.init handled inline
 Session::addCustomJs('/assets/js/copy.js');
 

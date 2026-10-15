@@ -67,7 +67,7 @@ try {
             }
 
             $html .= '<div class="message-row ai-row"' . $usageAttrs . '>
-                <div class="msg-avatar"><img src="/assets/logo/logo.png" style="width:30px;" alt="AI"></div>
+                <div class="msg-avatar"><img src="<?= Session::logo() ?>" style="width:30px;" alt="AI"></div>
                 <div class="msg-content-wrapper d-flex flex-column" style="max-width:85%;width:100%;">
                     <div class="msg-bubble w-100 ai-transparent-bubble" style="background:transparent!important;border:none!important;box-shadow:none!important;padding:0!important;">
                         <p class="m-0" data-raw-md="' . $rawMd . '">' . $contentHtml . '</p>

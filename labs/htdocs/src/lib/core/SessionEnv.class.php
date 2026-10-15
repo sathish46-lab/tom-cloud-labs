@@ -69,6 +69,35 @@ class SessionEnv {
     }
 
     /**
+     * Site favicon — always served from the local file so the admin panel
+     * can overwrite it directly (no DB). Cache-busted via file mtime.
+     */
+    public static function favicon() {
+        $file = __DIR__ . '/../../../assets/logo/favicon.png';
+        $v = file_exists($file) ? filemtime($file) : '1';
+        return '/assets/logo/favicon.png?v=' . $v;
+    }
+
+    /**
+     * Site brand logo (sidebar, header, auth pages) — same file-overwrite
+     * scheme as favicon(): local file, mtime cache-busted, no DB.
+     */
+    public static function logo() {
+        $file = __DIR__ . '/../../../assets/logo/logo.png';
+        $v = file_exists($file) ? filemtime($file) : '1';
+        return '/assets/logo/logo.png?v=' . $v;
+    }
+
+    /**
+     * Site display name shown beside the logo (sidebar, auth headers).
+     * File-based via SiteBrand — no DB. Default "Tom Labs".
+     */
+    public static function siteName() {
+        require_once __DIR__ . '/SiteBrand.class.php';
+        return SiteBrand::name();
+    }
+
+    /**
      * Calculate the time taken to render the page.
      */
     public static function getRenderTime() {

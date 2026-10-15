@@ -157,15 +157,38 @@ $udKv = static function (string $label, $value) use ($udEsc): void {
 <?php if (!$record): ?>
 <?php /* ---------------------------------------------------------- LIST VIEW */ ?>
 
-<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-    <div>
-        <h4 class="fw-bold mb-0"><i class='bx bx-archive me-2'></i>Deleted Users</h4>
-        <div class="small text-body-secondary">Archived accounts with full snapshots — open one to inspect, or use Return Back to restore it.</div>
+<div class="blur banner mb-3 rounded-0 border-bottom border-secondary border-opacity-10">
+    <div class="card-body p-0" style="margin-left: 1rem; margin-right: 1rem;">
+        <div class="container-fluid pt-3 pb-1">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="position-relative flex-shrink-0">
+                        <div class="avatar lab-header-avatar">
+                            <div class="avatar-img d-flex align-items-center justify-content-center bg-dark bg-opacity-25 rounded-circle p-2">
+                                <i class='bx bx-archive'></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column gap-1">
+                        <h3 class="fw-bold mb-0 ls-tight lab-header-title">Deleted Users</h3>
+                        <div class="d-flex flex-wrap align-items-center gap-2 small">
+                            <div class="d-flex align-items-center text-secondary">
+                                <span class="me-1 opacity-75">Archived accounts with full snapshots — open one to inspect, or use Return Back to restore it.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <a href="/admin/users" class="btn btn-sm btn-outline-secondary border-secondary border-opacity-25 rounded-pill px-3 text-nowrap">
+                        <i class='bx bx-left-arrow-circle me-1'></i>Back to Users
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
-    <a href="/admin/users" class="btn btn-sm btn-outline-secondary rounded-pill">
-        <i class='bx bx-group me-1'></i>Back to Users
-    </a>
 </div>
+
+<div class="container-fluid px-4 pb-4">
 
 <div class="card border-0 rounded-4 blur shadow-sm">
     <div class="card-body">
@@ -230,6 +253,8 @@ $udKv = static function (string $label, $value) use ($udEsc): void {
     </div>
 </div>
 
+</div>
+
 <?php else: ?>
 <?php /* --------------------------------------------------------- DETAIL VIEW */ ?>
 
@@ -252,24 +277,47 @@ $udGet     = static function (string $col) use ($udCols): array {
 };
 ?>
 
-<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-    <div class="d-flex align-items-center gap-2 flex-wrap">
-        <a href="/admin/deleted-users" class="btn btn-sm btn-outline-secondary rounded-pill">
-            <i class='bx bx-arrow-back me-1'></i>Deleted Users
-        </a>
-        <h4 class="fw-bold mb-0"><?= $udEsc($udUserNm ?: $udEmail) ?></h4>
-        <?= $udStatusBadge($udStatus) ?>
-        <span class="small text-body-secondary"><?= $udEsc($udEmail) ?></span>
-    </div>
-    <div class="d-flex gap-2 align-items-center">
-        <?php if ($udStatus !== 'restored'): ?>
-            <button type="button" class="btn btn-sm btn-warning fw-semibold rounded-pill"
-                    data-ud-restore="<?= $udEsc((string)$record['_id']) ?>" data-email="<?= $udEsc($udEmail) ?>">
-                <i class='bx bx-undo me-1'></i>Return Back
-            </button>
-        <?php endif; ?>
+<div class="blur banner mb-3 rounded-0 border-bottom border-secondary border-opacity-10">
+    <div class="card-body p-0" style="margin-left: 1rem; margin-right: 1rem;">
+        <div class="container-fluid pt-3 pb-1">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <div class="position-relative flex-shrink-0">
+                        <div class="avatar lab-header-avatar">
+                            <div class="avatar-img d-flex align-items-center justify-content-center bg-dark bg-opacity-25 rounded-circle p-2">
+                                <i class='bx bx-archive'></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column gap-1">
+                        <h3 class="fw-bold mb-0 ls-tight lab-header-title"><?= $udEsc($udUserNm ?: $udEmail) ?></h3>
+                        <div class="d-flex flex-wrap align-items-center gap-2 small">
+                            <div class="d-flex align-items-center text-secondary">
+                                <span class="me-1 opacity-75"><?= $udEsc($udEmail) ?></span>
+                                <span class="me-1 opacity-75">·</span>
+                                <span class="me-1 opacity-75">Deleted <?= ud_when($record['deleted_at'] ?? null) ?> by <?= $udEsc((string)($record['deleted_by'] ?? '—')) ?></span>
+                                <?= $udStatusBadge($udStatus) ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <a href="/admin/deleted-users" class="btn btn-sm btn-outline-secondary border-secondary border-opacity-25 rounded-pill px-3 text-nowrap">
+                        <i class='bx bx-left-arrow-circle me-1'></i>Deleted Users
+                    </a>
+                    <?php if ($udStatus !== 'restored'): ?>
+                        <button type="button" class="btn btn-sm btn-warning fw-semibold rounded-pill px-3 text-nowrap"
+                                data-ud-restore="<?= $udEsc((string)$record['_id']) ?>" data-email="<?= $udEsc($udEmail) ?>">
+                            <i class='bx bx-undo me-1'></i>Return Back
+                        </button>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+<div class="container-fluid px-4 pb-4">
 
 <div class="card border-0 rounded-4 blur shadow-sm mb-3">
     <div class="card-body py-3 small">
@@ -440,6 +488,8 @@ foreach ($udSum['collections'] ?? [] as $col => $n) {
 }
 $udTable('Other stored data', $udOther, ['collection' => 'Collection', 'documents' => 'Documents'], '');
 ?>
+</div>
+
 <?php endif; ?>
 
 <!-- ====================== Restore modal (shared by list + detail) ====================== -->
