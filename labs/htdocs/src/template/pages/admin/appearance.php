@@ -321,6 +321,8 @@ function brand_tile(string $badge, bool $isCur, int $v, string $urlPath, string 
                     </div>
                 </div>
             </div>
+
+            <!-- ── Public profile background ── -->
 <div class="card border-0 rounded-4 blur shadow-sm ap-curve c-plain" data-notch="none">
                 <div class="card-header bg-transparent border-bottom border-body-secondary border-opacity-10 py-3 d-flex align-items-center justify-content-between gap-2 flex-wrap">
                     <span class="fw-bold"><i class='bx bx-globe me-2'></i>Public profile background</span>
