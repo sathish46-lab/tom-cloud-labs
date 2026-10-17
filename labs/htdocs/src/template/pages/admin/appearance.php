@@ -124,7 +124,7 @@ function brand_tile(string $badge, bool $isCur, int $v, string $urlPath, string 
 
     .b2 { grid-template-columns: minmax(0,1fr) var(--ap-b) minmax(0,1.5fr); }
     .b2 .c-wide  { grid-column: 2 / 4; grid-row: 1; }
-    .b2 .c-tall  { grid-column: 1 / 3; grid-row: 1 / 3; }
+    .b2 .c-tall  { grid-column: 1 / 3; grid-row: 1 / 3; align-self: start; }
     .b2 .c-plain { grid-column: 3; grid-row: 2; }
 
     /* keep content clear of the notch */

@@ -1,6 +1,7 @@
 <?php
 require_once "../../../load.php";
-require_once "../../../lib/services/MySqlManager.php";
+require_once "../../../lib/services/ServiceManager.class.php";
+
 require_once "../../../lib/core/AuditLog.class.php";
 
 header('Content-Type: application/json');
@@ -14,11 +15,11 @@ try {
     // Limit to 5 databases per user to prevent abuse
     $dbCount = $db->mysql_services->countDocuments(['user_id' => $user->getUserId(), 'status' => ['$ne' => 'deleted']]);
     if ($dbCount >= 5) {
-        echo json_encode(['success' => false, 'error' => 'You have reached the maximum limit of 5 MySQL databases.']);
+        \TomLabs\Services\ServiceResponse::sendError('You have reached the maximum limit of 5 MySQL databases.');
         exit;
     }
 
-    $manager = new MySqlManager();
+    $manager = \TomLabs\Services\ServiceManager::driver('mysql');
 
     // Generate unique credentials
     // Format: username_randomhex

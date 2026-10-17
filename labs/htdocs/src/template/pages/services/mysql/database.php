@@ -5,8 +5,8 @@ Session::addCustomJs('/assets/js/services.js');
 $user = Session::getUser();
 $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/src/lib/services/MySqlManager.php';
-$mysqlManager = new MySqlManager();
+require_once $_SERVER['DOCUMENT_ROOT'] . '/src/lib/services/drivers/MySqlDriver.class.php';
+$mysqlManager = new MySqlDriver();
 $collations = $mysqlManager->getCollations();
 
 // Fetch the MySQL users

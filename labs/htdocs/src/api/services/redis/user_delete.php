@@ -1,61 +1,21 @@
 <?php
 require_once "../../../load.php";
-require_once "../../../lib/services/RedisManager.php";
+require_once "../../../lib/services/ServiceValidator.class.php";
+require_once "../../../lib/services/Permission.class.php";
+
+use TomLabs\Services\Permission;
+use TomLabs\Services\ServiceResponse;
+use TomLabs\Services\ServiceStatusCodes;
+use TomLabs\Services\ServiceValidator;
 
 header('Content-Type: application/json');
 
 $user = AuthMiddleware::requireAuth();
 
-
-$db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
-
-$data = json_decode(file_get_contents('php://input'), true);
-$mysqlUsername = $data['username'] ?? '';
-
-if (empty($mysqlUsername)) {
-    echo json_encode(['success' => false, 'error' => 'Username is required.']);
-    exit;
-}
-
 try {
-    // Verify ownership of the Redis user
-    $userRecord = $db->redis_users->findOne([
-        'user_id' => $user->getUserId(),
-        'email' => $user->getEmail(),
-        'redis_username' => $mysqlUsername
-    ]);
-
-    if (!$userRecord) {
-        throw new Exception("Redis User not found or permission denied.");
-    }
-
-    $manager = new RedisManager();
-
-    // 1. Find and Drop all databases owned by this user
-    /* $databases = $db->redis_databases->find([
-        'redis_user_id' => (string)$userRecord['_id'],
-        'user_id' => $user->getUserId(),
-        'email' => $user->getEmail()
-    ]);
-    foreach ($databases as $dbDoc) {
-        $manager->deleteDatabase($dbDoc['db_name']);
-        // Delete the MongoDB record
-        $db->redis_databases->deleteOne(['_id' => $dbDoc['_id']]);
-    } */
-
-    // 2. Delete Redis User
-    if (!$manager->deleteUser($mysqlUsername)) {
-        error_log("Failed to drop user {$mysqlUsername} in Redis, but continuing with MongoDB cleanup.");
-    }
-
-    // 3. Remove user from MongoDB
-    $db->redis_users->deleteOne(['_id' => $userRecord['_id']]);
-
-    echo json_encode([
-        'success' => true,
-        'message' => 'Redis user and all associated databases deleted successfully.'
-    ]);
-
-} catch (Exception $e) {
-    echo json_encode(['success' => false, 'error' => errors_from_exception($e, 'services/redis/user_delete')['error']]);
+    $data = ServiceValidator::input();
+    $username = ServiceValidator::requiredField($data, 'username', 'Username');
+    (new Permission($user, 'redis'))->deleteUser($username)->send();
+} catch (\ServiceValidationException $e) {
+    ServiceResponse::error($e->getCode())->send();
 }

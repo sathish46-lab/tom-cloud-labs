@@ -1,6 +1,6 @@
 <?php
 
-class RedisManager
+class RedisDriver
 {
     private string $host;
     private int $port = 6379;

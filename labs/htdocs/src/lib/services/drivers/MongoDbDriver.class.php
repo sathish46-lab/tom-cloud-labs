@@ -1,6 +1,6 @@
 <?php
 
-class MongoDbManager
+class MongoDbDriver
 {
     private $adminClient;
     private $adminDb;
@@ -69,7 +69,7 @@ class MongoDbManager
         }
     }
 
-    public function createDatabase(string $dbName, string $ownerName): bool
+    public function createDatabase(string $dbName, string $ownerName, string $collation = ''): bool
     {
         if (!$this->isValidIdentifier($dbName) || !$this->isValidIdentifier($ownerName)) {
             return false;

@@ -1,64 +1,20 @@
 <?php
 require_once "../../../load.php";
-require_once "../../../lib/services/RabbitMqManager.php";
+require_once "../../../lib/services/ServiceValidator.class.php";
+require_once "../../../lib/services/Permission.class.php";
+
+use TomLabs\Services\Permission;
+use TomLabs\Services\ServiceResponse;
+use TomLabs\Services\ServiceStatusCodes;
+use TomLabs\Services\ServiceValidator;
 
 header('Content-Type: application/json');
 
 $user = AuthMiddleware::requireAuth();
 
-
-$db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
-
-$data = json_decode(file_get_contents('php://input'), true);
-$rawUsername = trim($data['username'] ?? '');
-$password = $data['password'] ?? '';
-
-if (empty($rawUsername) || empty($password)) {
-    echo json_encode(['success' => false, 'error' => 'Username and password are required.']);
-    exit;
-}
-
-// Clean username (alphanumeric and underscores only)
-$dbUser = preg_replace('/[^a-zA-Z0-9_]/', '', strtolower($rawUsername));
-if ($dbUser !== $rawUsername) {
-    echo json_encode(['success' => false, 'error' => 'Username can only contain lowercase letters, numbers, and underscores.']);
-    exit;
-}
-
 try {
-    // Limit to 5 RabbitMQ users per account
-    $userCount = $db->rabbitmq_users->countDocuments([
-        'user_id' => $user->getUserId(),
-        'email' => $user->getEmail()
-    ]);
-    if ($userCount >= 5) {
-        echo json_encode(['success' => false, 'error' => 'You have reached the maximum limit of 5 RabbitMQ users.']);
-        exit;
-    }
-
-    $manager = new RabbitMqManager();
-
-    // 1. Create RabbitMQ User
-    if (!$manager->createUser($dbUser, $password)) {
-        throw new Exception("Failed to create RabbitMQ user. The username '{$dbUser}' might already be taken globally.");
-    }
-
-    // 2. Save to MongoDB
-    $dbRecord = [
-        'user_id' => $user->getUserId(),
-        'email' => $user->getEmail(),
-        'rabbitmq_username' => $dbUser,
-        'rabbitmq_password' => base64_encode($password),
-        'created_at' => new MongoDB\BSON\UTCDateTime()
-    ];
-    
-    $db->rabbitmq_users->insertOne($dbRecord);
-
-    echo json_encode([
-        'success' => true,
-        'message' => 'RabbitMQ user created successfully.'
-    ]);
-
-} catch (Exception $e) {
-    echo json_encode(['success' => false, 'error' => errors_from_exception($e, 'services/rabbitmq/user_create')['error']]);
+    [$username, $password] = ServiceValidator::usernamePassword(ServiceValidator::input());
+    (new Permission($user, 'rabbitmq'))->createUser($username, $password)->send();
+} catch (\ServiceValidationException $e) {
+    ServiceResponse::error($e->getCode())->send();
 }

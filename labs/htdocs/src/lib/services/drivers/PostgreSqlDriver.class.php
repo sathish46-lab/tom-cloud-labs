@@ -1,6 +1,6 @@
 <?php
 
-class PostgreSqlManager
+class PostgreSqlDriver
 {
     private PDO $adminConnection;
 
@@ -63,7 +63,7 @@ class PostgreSqlManager
         }
     }
 
-    public function createDatabase(string $dbName, string $ownerName): bool
+    public function createDatabase(string $dbName, string $ownerName, string $collation = ''): bool
     {
         if (!$this->isValidIdentifier($dbName) || !$this->isValidIdentifier($ownerName)) {
             return false;

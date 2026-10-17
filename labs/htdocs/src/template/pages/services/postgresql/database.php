@@ -4,8 +4,8 @@ Session::addMetaTag('<title>PostgreSQL Databases - ' . Session::siteName() . '</
 $user = Session::getUser();
 $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/src/lib/services/PostgreSqlManager.php';
-$pgManager = new PostgreSqlManager();
+require_once $_SERVER['DOCUMENT_ROOT'] . '/src/lib/services/drivers/PostgreSqlDriver.class.php';
+$pgManager = new PostgreSqlDriver();
 
 // Fetch the PostgreSQL users
 $mysqlUsers = $db->postgresql_users->find(['user_id' => $user->getUserId()])->toArray();

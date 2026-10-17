@@ -5,8 +5,8 @@ Session::addMetaTag('<title>MongoDB Databases - ' . Session::siteName() . '</tit
 $user = Session::getUser();
 $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/src/lib/services/MongoDbManager.php';
-$mongoManager = new MongoDbManager();
+require_once $_SERVER['DOCUMENT_ROOT'] . '/src/lib/services/drivers/MongoDbDriver.class.php';
+$mongoManager = new MongoDbDriver();
 
 // Fetch the MongoDB users
 $mysqlUsers = $db->mongodb_users->find(['user_id' => $user->getUserId()])->toArray();

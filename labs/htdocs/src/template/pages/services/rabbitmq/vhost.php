@@ -5,8 +5,8 @@ Session::addMetaTag('<title>RabbitMQ Vhosts - ' . Session::siteName() . '</title
 $user = Session::getUser();
 $db = VhostConnection::getClient()->selectVhost('tom_labs_db');
 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/src/lib/services/RabbitMqManager.php';
-$rabbitManager = new RabbitMqManager();
+require_once $_SERVER['DOCUMENT_ROOT'] . '/src/lib/services/drivers/RabbitMqDriver.class.php';
+$rabbitManager = new RabbitMqDriver();
 
 // Fetch the RabbitMQ users
 $mysqlUsers = $db->rabbitmq_users->find(['user_id' => $user->getUserId()])->toArray();

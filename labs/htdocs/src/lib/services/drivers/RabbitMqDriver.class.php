@@ -1,6 +1,6 @@
 <?php
 
-class RabbitMqManager
+class RabbitMqDriver
 {
     private string $adminUser = '';
     private string $adminPassword = '';
@@ -73,7 +73,7 @@ class RabbitMqManager
         }
     }
 
-    public function createVhost(string $vhostName, string $ownerName): bool
+    public function createVhost(string $vhostName, string $ownerName, string $collation = ''): bool
     {
         if (!$this->isValidVhostName($vhostName) || !$this->isValidIdentifier($ownerName)) {
             return false;

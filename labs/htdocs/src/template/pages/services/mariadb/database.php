@@ -5,8 +5,8 @@ Session::addMetaTag('<title>MariaDB Databases - ' . Session::siteName() . '</tit
 $user = Session::getUser();
 $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/src/lib/services/MariaDbManager.php';
-$mysqlManager = new MariaDbManager();
+require_once $_SERVER['DOCUMENT_ROOT'] . '/src/lib/services/drivers/MariaDbDriver.class.php';
+$mysqlManager = new MariaDbDriver();
 $collations = $mysqlManager->getCollations();
 
 // Fetch the MariaDB users

@@ -1,6 +1,7 @@
 <?php
 require_once "../../../load.php";
-require_once "../../../lib/services/MySqlManager.php";
+require_once "../../../lib/services/ServiceManager.class.php";
+
 require_once "../../../lib/core/AuditLog.class.php";
 
 header('Content-Type: application/json');
@@ -12,7 +13,7 @@ $data = json_decode(file_get_contents('php://input'), true);
 $dbName = $data['db_name'] ?? '';
 
 if (empty($dbName)) {
-    echo json_encode(['success' => false, 'error' => 'Database name is required.']);
+    \TomLabs\Services\ServiceResponse::sendError('Database name is required.');
     exit;
 }
 
@@ -26,11 +27,11 @@ try {
     ]);
 
     if (!$dbRecord) {
-        echo json_encode(['success' => false, 'error' => 'Database not found or permission denied.']);
+        \TomLabs\Services\ServiceResponse::sendError('Database not found or permission denied.');
         exit;
     }
 
-    $manager = new MySqlManager();
+    $manager = \TomLabs\Services\ServiceManager::driver('mysql');
 
     // 1. Delete MySQL Database
     if (!$manager->deleteDatabase($dbRecord['db_name'])) {
