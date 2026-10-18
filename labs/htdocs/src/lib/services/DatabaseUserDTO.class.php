@@ -4,12 +4,17 @@ namespace TomLabs\Services;
 
 class DatabaseUserDTO
 {
-    public string $userId;
+    /** @var int|string */
+    public $userId;
     public string $email;
     public string $username;
     public string $password;
 
-    public function __construct(string $userId, string $email, string $username, string $password)
+    /**
+     * @param int|string $userId Preserved as-is so Mongo records keep the
+     *                           same type the UI queries with (int for user_id).
+     */
+    public function __construct($userId, string $email, string $username, string $password)
     {
         $this->userId = $userId;
         $this->email = $email;

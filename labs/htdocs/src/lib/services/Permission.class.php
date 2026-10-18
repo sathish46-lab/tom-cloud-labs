@@ -41,7 +41,7 @@ class Permission
         return $this->config['label'];
     }
 
-    private function userId(): string
+    private function userId()
     {
         return $this->user->getUserId();
     }
