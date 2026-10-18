@@ -269,20 +269,6 @@ $csrf = htmlspecialchars(Session::csrfToken());
                     </div>
                 </div>
             </div>
-
-            <!-- ============================ Danger zone (separate card) ============================ -->
-            <div class="card border-0 rounded-4 blur shadow-sm mt-3 border-danger border-opacity-25">
-                <div class="card-body py-3 text-center">
-                    <h6 class="fw-bold mb-2 text-danger"><i class='bx bx-error-circle me-1'></i>Danger Zone</h6>
-                    <div class="small text-body-secondary mb-3">
-                        Deletes this account and everything it owns. A full backup is taken first —
-                        restore any time from <b>Admin → Deleted Users</b>.
-                    </div>
-                    <button type="button" id="uvDelete" class="btn btn-sm rounded-pill fw-semibold w-100 adm-btn-del">
-                        <i class='bx bx-trash me-1'></i>Delete User
-                    </button>
-                </div>
-            </div>
         </div>
 
         <!-- ============================ Tiles ============================ -->
@@ -305,7 +291,25 @@ $csrf = htmlspecialchars(Session::csrfToken());
                 <?php endforeach; ?>
             </div>
 
-            <div class="card border-0 rounded-4 blur shadow-sm mt-3 uv-adjust-card">
+            <!-- ── Danger Zone (left) + Adjust currency (right, reduced) ── -->
+            <div class="row g-3 mt-3">
+                <div class="col-lg-4 col-md-5">
+                    <div class="card border-0 rounded-4 blur shadow-sm border-danger border-opacity-25">
+                        <div class="card-body py-3 text-center">
+                            <h6 class="fw-bold mb-2 text-danger"><i class='bx bx-error-circle me-1'></i>Danger Zone</h6>
+                            <div class="small text-body-secondary mb-3">
+                                Deletes this account and everything it owns. A full backup is taken first —
+                                restore any time from <b>Admin → Deleted Users</b>.
+                            </div>
+                            <button type="button" id="uvDelete" class="btn btn-sm rounded-pill fw-semibold w-100 adm-btn-del">
+                                <i class='bx bx-trash me-1'></i>Delete User
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-8 col-md-7">
+                    <div class="card border-0 rounded-4 blur shadow-sm h-100 uv-adjust-card">
                 <div class="card-header bg-transparent border-bottom border-body-secondary border-opacity-10 py-2 d-flex justify-content-between align-items-center">
                     <h5 class="mb-0 fw-bold fs-6"><i class='bx bx-slider-alt text-success me-1'></i>Adjust currency</h5>
                     <a class="small text-body-secondary" href="/admin/transactions?user=<?= urlencode($email) ?>" title="Transaction Monitor">Monitor<i class='bx bx-link-external ms-1'></i></a>
@@ -364,6 +368,8 @@ $csrf = htmlspecialchars(Session::csrfToken());
                     </ul>
                     <a class="small d-inline-block mt-1" href="/admin/transactions?user=<?= urlencode($email) ?>">All <?= number_format($txCount) ?> transactions</a>
                     <?php endif; ?>
+                </div>
+            </div>
                 </div>
             </div>
         </div>
