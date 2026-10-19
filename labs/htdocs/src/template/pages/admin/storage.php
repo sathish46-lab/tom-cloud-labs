@@ -100,8 +100,8 @@ $tabs = [
     'pools' => ['Pools',         'bx-hdd'],
     'mig'   => ['Migrations',    'bx-transfer'],
 ];
-$activeTab = $_GET['tab'] ?? 'pools';
-if (!isset($tabs[$activeTab])) $activeTab = 'pools';
+// $activeTab = $_GET['tab'] ?? 'pools';
+// if (!isset($tabs[$activeTab])) $activeTab = 'pools';
 ?>
 <style>
 .adm-pool-card { border: 1px solid rgba(var(--cui-body-color-rgb,255,255,255),.10); border-radius: 1rem; }
