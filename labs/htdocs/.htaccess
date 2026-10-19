@@ -78,7 +78,7 @@ RewriteRule ^admin/users/?$ app/admin/users.php [L,QSA]
 RewriteRule ^admin/user/([^/]+)/?$ app/admin/user_view.php?email=$1 [L,QSA]
 # Labels per the Admin guide; these two pages keep their original scripts.
 RewriteRule ^admin/server-monitor/?$ app/admin/server_monitor.php [L,QSA]
-RewriteRule ^admin/services/?$ app/admin/server_monitor.php [L,QSA]
+RewriteRule ^admin/services/?$ app/admin/services.php [L,QSA]
 RewriteRule ^admin/api/?$ app/admin/api.php [L,QSA]
 RewriteRule ^admin/modules/?$ app/admin/api.php [L,QSA]
 RewriteRule ^admin/acl/?$ app/admin/acl.php [L,QSA]
@@ -106,6 +106,10 @@ RewriteRule ^network/interfaces/?$ app/network/interfaces.php [L,QSA]
 # MySQL
 RewriteRule ^services/mysql$ app/services/mysql/dashboard.php [L,QSA]
 RewriteRule ^services/mysql/database$ app/services/mysql/database.php [L,QSA]
+
+# MariaDB
+RewriteRule ^services/mariadb$ app/services/mariadb/dashboard.php [L,QSA]
+RewriteRule ^services/mariadb/database$ app/services/mariadb/database.php [L,QSA]
 
 # PostgreSQL
 RewriteRule ^services/postgresql$ app/services/postgresql/dashboard.php [L,QSA]

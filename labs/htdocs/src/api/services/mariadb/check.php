@@ -1,9 +1,9 @@
 <?php
 require_once "../../../load.php";
 require_once "../../../lib/services/ServiceValidator.class.php";
-require_once "../../../lib/services/Permission.class.php";
+require_once "../../../lib/services/mariadb/Permission.class.php";
 
-use TomLabs\Services\Permission;
+use TomLabs\Services\Mariadb\Permission;
 use TomLabs\Services\ServiceResponse;
 use TomLabs\Services\ServiceStatusCodes;
 use TomLabs\Services\ServiceValidator;
@@ -14,7 +14,7 @@ $user = AuthMiddleware::requireAuth();
 
 try {
     $username = ServiceValidator::requiredField($_GET, 'user', 'Username');
-    (new Permission($user, 'mariadb'))->getDatabaseList($username)->send();
+    (new Permission($user))->getDatabaseList($username)->send();
 } catch (\ServiceValidationException $e) {
     ServiceResponse::error($e->getCode())->send();
 }

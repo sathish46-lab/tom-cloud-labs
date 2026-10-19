@@ -21,7 +21,6 @@ class ServiceConfig
             self::$services = [
                 'mysql' => [
                     'label' => 'MySQL',
-                    'driver' => 'MySqlDriver',
                     'driver_type' => 'database',
                     'users_collection' => 'mysql_users',
                     'resources_collection' => 'mysql_databases',
@@ -37,7 +36,6 @@ class ServiceConfig
                 ],
                 'mariadb' => [
                     'label' => 'MariaDB',
-                    'driver' => 'MariaDbDriver',
                     'driver_type' => 'database',
                     'users_collection' => 'mariadb_users',
                     'resources_collection' => 'mariadb_databases',
@@ -47,13 +45,12 @@ class ServiceConfig
                     'max_users' => 5,
                     'max_resources' => 10,
                     'resource_noun' => 'databases',
-                    'default_collation' => 'utf8mb4_0900_ai_ci',
+                    'default_collation' => 'utf8mb4_general_ci',
                     'soft_delete_user' => false,
                     'vhost_connection' => false,
                 ],
                 'mongodb' => [
                     'label' => 'MongoDB',
-                    'driver' => 'MongoDbDriver',
                     'driver_type' => 'database',
                     'users_collection' => 'mongodb_users',
                     'resources_collection' => 'mongodb_databases',
@@ -69,7 +66,6 @@ class ServiceConfig
                 ],
                 'postgresql' => [
                     'label' => 'PostgreSQL',
-                    'driver' => 'PostgreSqlDriver',
                     'driver_type' => 'database',
                     'users_collection' => 'postgresql_users',
                     'resources_collection' => 'postgresql_databases',
@@ -85,7 +81,6 @@ class ServiceConfig
                 ],
                 'redis' => [
                     'label' => 'Redis',
-                    'driver' => 'RedisDriver',
                     'driver_type' => 'user_only',
                     'users_collection' => 'redis_users',
                     'resources_collection' => 'redis_databases',
@@ -101,7 +96,6 @@ class ServiceConfig
                 ],
                 'rabbitmq' => [
                     'label' => 'RabbitMQ',
-                    'driver' => 'RabbitMqDriver',
                     'driver_type' => 'vhost',
                     'users_collection' => 'rabbitmq_users',
                     'resources_collection' => 'rabbitmq_vhosts',

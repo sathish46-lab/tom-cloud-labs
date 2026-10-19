@@ -153,17 +153,26 @@ require_once __DIR__ . '/partials/mariadb_header.php';
 </style>
 
 <script>
-ServiceManager.init({
-    type: 'mariadb',
-    apiBase: '/api/services/mariadb',
-    entityLabel: 'Database',
-    gridId: 'mariadb_db_list',
-    hasEntities: true,
-    entityNameKey: 'db_name',
-    userKey: 'mariadb_username',
-    entityCreateEndpoint: 'db_create',
-    entityDeleteEndpoint: 'db_delete',
-    redirectBase: '/services/mariadb',
-    exportPrefix: 'MariaDB'
-});
+(function () {
+    function bootServiceManager() {
+    ServiceManager.init({
+        type: 'mariadb',
+        apiBase: '/api/services/mariadb',
+        entityLabel: 'Database',
+        gridId: 'mariadb_db_list',
+        hasEntities: true,
+        entityNameKey: 'db_name',
+        userKey: 'mariadb_username',
+        entityCreateEndpoint: 'db_create',
+        entityDeleteEndpoint: 'db_delete',
+        redirectBase: '/services/mariadb',
+        exportPrefix: 'MariaDB'
+    });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bootServiceManager);
+    } else {
+        bootServiceManager();
+    }
+})();
 </script>

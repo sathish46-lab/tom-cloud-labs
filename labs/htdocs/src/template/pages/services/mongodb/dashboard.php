@@ -153,17 +153,26 @@ require_once __DIR__ . '/partials/mongodb_header.php';
 </style>
 
 <script>
-ServiceManager.init({
-    type: 'mongodb',
-    apiBase: '/api/services/mongodb',
-    entityLabel: 'Database',
-    gridId: 'mongodb_db_list',
-    hasEntities: true,
-    entityNameKey: 'db_name',
-    userKey: 'mongodb_username',
-    entityCreateEndpoint: 'db_create',
-    entityDeleteEndpoint: 'db_delete',
-    redirectBase: '/services/mongodb',
-    exportPrefix: 'MongoDB'
-});
+(function () {
+    function bootServiceManager() {
+    ServiceManager.init({
+        type: 'mongodb',
+        apiBase: '/api/services/mongodb',
+        entityLabel: 'Database',
+        gridId: 'mongodb_db_list',
+        hasEntities: true,
+        entityNameKey: 'db_name',
+        userKey: 'mongodb_username',
+        entityCreateEndpoint: 'db_create',
+        entityDeleteEndpoint: 'db_delete',
+        redirectBase: '/services/mongodb',
+        exportPrefix: 'MongoDB'
+    });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bootServiceManager);
+    } else {
+        bootServiceManager();
+    }
+})();
 </script>

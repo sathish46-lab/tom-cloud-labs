@@ -153,6 +153,7 @@ class Router:
     container    Docker container management
     system       System health, workers, cleanup
     user         User SSH sync, listing
+    service      Learner service engine ops (users, databases, vhosts)
 
   Instance Commands:
     labsctl instance build --hash=HASH       Build instance image

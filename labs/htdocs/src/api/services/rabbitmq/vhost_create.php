@@ -1,9 +1,9 @@
 <?php
 require_once "../../../load.php";
 require_once "../../../lib/services/ServiceValidator.class.php";
-require_once "../../../lib/services/Permission.class.php";
+require_once "../../../lib/services/rabbitmq/Permission.class.php";
 
-use TomLabs\Services\Permission;
+use TomLabs\Services\Rabbitmq\Permission;
 use TomLabs\Services\ServiceResponse;
 use TomLabs\Services\ServiceStatusCodes;
 use TomLabs\Services\ServiceValidator;
@@ -14,7 +14,7 @@ $user = AuthMiddleware::requireAuth();
 
 try {
     $data = ServiceValidator::input();
-    (new Permission($user, 'rabbitmq'))->createVhost(
+    (new Permission($user))->createVhost(
         $data['rabbitmq_username'] ?? '',
         trim($data['vhost_name'] ?? ''),
         trim($data['collation'] ?? '')

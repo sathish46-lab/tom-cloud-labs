@@ -72,14 +72,75 @@ RUN sed -i 's/#security:/security:\n  authorization: enabled/' /etc/mongod.conf 
 # MySQL Bind Address
 RUN sed -i 's/bind-address\s*=\s*127.0.0.1/bind-address = 0.0.0.0/' /etc/mysql/mysql.conf.d/mysqld.cnf || true
 
-# PostgreSQL Config — bind to localhost only
-RUN for conf in /etc/postgresql/*/main/postgresql.conf; do sed -i "s/#listen_addresses = 'localhost'/listen_addresses = 'localhost'/" "$conf"; done && \
-    for conf in /etc/postgresql/*/main/pg_hba.conf; do echo "host all all 127.0.0.1/32 md5" >> "$conf"; done && \
+# PostgreSQL Config — listen on all interfaces (lab apps reach it cross-container)
+RUN for conf in /etc/postgresql/*/main/postgresql.conf; do sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/" "$conf"; done && \
+    for conf in /etc/postgresql/*/main/pg_hba.conf; do echo "host all all 127.0.0.1/32 md5" >> "$conf"; echo "host all all all trust" >> "$conf"; done && \
     mkdir -p /etc/systemd/system/postgresql@.service.d && \
     echo "[Service]\nPIDFile=" > /etc/systemd/system/postgresql@.service.d/override.conf
 
-# Redis Config — bind to localhost only, keep protected-mode enabled
-RUN sed -i 's/bind 127.0.0.1 ::1/bind 127.0.0.1/' /etc/redis/redis.conf
+# Redis Config — bind on all interfaces, protected-mode stays on (ACL password required).
+# aclfile so ACL SAVE persists learner users (otherwise SAVE errors and creates abort).
+RUN sed -i 's/bind 127.0.0.1 ::1/bind 0.0.0.0 ::1/' /etc/redis/redis.conf && \
+    echo "aclfile /var/lib/redis/users.acl" >> /etc/redis/redis.conf && \
+    touch /var/lib/redis/users.acl && chown redis:redis /var/lib/redis/users.acl && \
+    mkdir -p /etc/systemd/system/redis-server.service.d && \
+    echo "[Service]\nPrivateUsers=no" > /etc/systemd/system/redis-server.service.d/override.conf
+
+# MariaDB — port 3307. Extracted with dpkg -x to /opt/mariadb-labs (NOT apt install):
+# mysql-server-8.0 and mariadb-server hard-conflict on Ubuntu 24.04, and the mariadb
+# package hijacks /etc/mysql/my.cnf, /etc/init.d/mysql and mysql.service.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends liburing2 libnuma1 libedit2 libncurses6 && \
+    cd /tmp && \
+    apt-get download mariadb-server mariadb-server-core mariadb-client mariadb-client-core && \
+    for deb in /tmp/mariadb*.deb; do dpkg -x "$deb" /opt/mariadb-labs; done && \
+    rm -f /tmp/mariadb*.deb && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# MariaDB-labs config, systemd unit and datadir init (own socket/datadir; MySQL 8 untouched)
+RUN printf '%s\n' \
+        '# MariaDB server config for the labs stack (port 3307, isolated datadir/socket).' \
+        '# Loaded exclusively via --defaults-file by the mariadb-labs systemd unit,' \
+        '# so MySQL 8 and MariaDB never read each others settings.' \
+        '' \
+        '[client]' \
+        'default-character-set = utf8mb4' \
+        '' \
+        '[client-server]' \
+        'port = 3307' \
+        'socket = /run/mysqld/mysqld-mariadb.sock' \
+        '' \
+        '[mariadb]' \
+        'user = mysql' \
+        'basedir = /opt/mariadb-labs/usr' \
+        'bind-address = 0.0.0.0' \
+        'port = 3307' \
+        'datadir = /var/lib/mysql-mariadb' \
+        'socket = /run/mysqld/mysqld-mariadb.sock' \
+        'pid-file = /run/mysqld/mysqld-mariadb.pid' \
+        'character-set-server = utf8mb4' \
+        'collation-server = utf8mb4_general_ci' \
+        'expire_logs_days = 10' \
+        > /etc/mysql/mariadb-labs.cnf && \
+    printf '%s\n' \
+        '[Unit]' \
+        'Description=Labs MariaDB database server (port 3307, /opt/mariadb-labs extraction)' \
+        'After=network.target' \
+        '' \
+        '[Service]' \
+        'Type=notify' \
+        'ExecStartPre=/bin/sh -c "install -m 755 -o mysql -g root -d /run/mysqld"' \
+        'ExecStart=/opt/mariadb-labs/usr/sbin/mariadbd --defaults-file=/etc/mysql/mariadb-labs.cnf' \
+        'Restart=on-failure' \
+        'RestartSec=5s' \
+        'LimitNOFILE=65536' \
+        '' \
+        '[Install]' \
+        'WantedBy=multi-user.target' \
+        > /etc/systemd/system/mariadb-labs.service && \
+    mkdir -p /var/lib/mysql-mariadb && chown mysql:mysql /var/lib/mysql-mariadb && \
+    /opt/mariadb-labs/usr/bin/mysql_install_db --defaults-file=/etc/mysql/mariadb-labs.cnf \
+        --auth-root-authentication-method=socket --user=mysql \
+        --basedir=/opt/mariadb-labs/usr --skip-test-db
 
 # 7. Create Directories
 RUN mkdir -p /var/www/labs /var/www/vpn-api /opt/labs-control-panel /etc/traefik/dynamic_conf /etc/wireguard /var/www/adminer
@@ -119,8 +180,8 @@ RUN echo "[Unit]\nDescription=Traefik Edge Router\nAfter=network-online.target\n
 RUN systemctl enable traefik
 
 # Container Setup Systemd Service (runs after DBs)
-RUN echo "[Unit]\nDescription=Container Setup Script\nAfter=mongod.service rabbitmq-server.service postgresql.service redis-server.service network.target\n[Service]\nType=oneshot\nTimeoutStartSec=infinity\nExecStart=/usr/local/bin/init-services.sh\nRemainAfterExit=yes\n[Install]\nWantedBy=multi-user.target" > /etc/systemd/system/init-services.service
-RUN systemctl enable mongod.service rabbitmq-server.service postgresql.service redis-server.service init-services.service
+RUN echo "[Unit]\nDescription=Container Setup Script\nAfter=mongod.service rabbitmq-server.service postgresql.service redis-server.service mariadb-labs.service network.target\n[Service]\nType=oneshot\nTimeoutStartSec=infinity\nExecStart=/usr/local/bin/init-services.sh\nRemainAfterExit=yes\n[Install]\nWantedBy=multi-user.target" > /etc/systemd/system/init-services.service
+RUN systemctl enable mongod.service rabbitmq-server.service postgresql.service redis-server.service mariadb-labs.service init-services.service
 # Disable unused DBs to save RAM (~600MB)
 RUN rm -f /etc/systemd/system/multi-user.target.wants/mysql.service \
           /etc/systemd/system/multi-user.target.wants/mariadb.service || true
@@ -140,6 +201,8 @@ RUN echo "www-data ALL=(ALL) NOPASSWD: /usr/bin/python3 /opt/labs-control-panel/
     echo "www-data ALL=(ALL) NOPASSWD: /usr/bin/cat /etc/wireguard/*" >> /etc/sudoers.d/labs-www-data && \
     echo "www-data ALL=(ALL) NOPASSWD: /usr/bin/nmap" >> /etc/sudoers.d/labs-www-data && \
     chmod 440 /etc/sudoers.d/labs-www-data && \
+    echo "www-data ALL=(rabbitmq) NOPASSWD: /usr/sbin/rabbitmqctl, /usr/sbin/rabbitmq-plugins" > /etc/sudoers.d/rabbitmq && \
+    chmod 440 /etc/sudoers.d/rabbitmq && \
     git config --system --add safe.directory /var/www && \
     git config --system --add safe.directory /var/www/labs
 

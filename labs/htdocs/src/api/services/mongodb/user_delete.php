@@ -1,9 +1,9 @@
 <?php
 require_once "../../../load.php";
 require_once "../../../lib/services/ServiceValidator.class.php";
-require_once "../../../lib/services/Permission.class.php";
+require_once "../../../lib/services/mongodb/Permission.class.php";
 
-use TomLabs\Services\Permission;
+use TomLabs\Services\Mongodb\Permission;
 use TomLabs\Services\ServiceResponse;
 use TomLabs\Services\ServiceStatusCodes;
 use TomLabs\Services\ServiceValidator;
@@ -15,7 +15,7 @@ $user = AuthMiddleware::requireAuth();
 try {
     $data = ServiceValidator::input();
     $username = ServiceValidator::requiredField($data, 'username', 'Username');
-    (new Permission($user, 'mongodb'))->deleteUser($username)->send();
+    (new Permission($user))->deleteUser($username)->send();
 } catch (\ServiceValidationException $e) {
     ServiceResponse::error($e->getCode())->send();
 }

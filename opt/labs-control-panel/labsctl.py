@@ -13,6 +13,15 @@ Command Groups:
   container   Container operations (Docker management)
   system      System operations (status, workers, images, db, clean)
   user        User operations (quota, SSH keys)
+  service     Learner service engine operations (users, databases, vhosts)
+
+Service Engine Operations:
+  labsctl service <slug> <action>          slug: mysql|mariadb|mongodb|postgresql|redis|rabbitmq
+  labsctl service mariadb ping
+  labsctl service mariadb --email=EMAIL createuser --username=NAME --password=PASS
+  labsctl service mariadb --email=EMAIL createdb --username=NAME --database=DB [--charset=C] [--collation=C]
+  labsctl service rabbitmq --email=EMAIL createvhost --username=NAME --vhost=NAME
+  Output is always a single JSON line (status/code/message/data).
 
 Instance Bulk Deploy:
   labsctl instance bulk                 Bulk deploy instances
@@ -48,6 +57,7 @@ from src.commands.proxy import ProxyCmd
 from src.commands.container import ContainerCmd
 from src.commands.system import SystemCmd
 from src.commands.user import UserCmd
+from src.commands.service import ServiceCmd
 
 
 def build_router():
@@ -61,6 +71,7 @@ def build_router():
     router.register("container", ContainerCmd)
     router.register("system", SystemCmd)
     router.register("user", UserCmd)
+    router.register("service", ServiceCmd)
 
     # ── Legacy flat commands (backward compat) ──────────────────
     def legacy_handler(cmd_name):

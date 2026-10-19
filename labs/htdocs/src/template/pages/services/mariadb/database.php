@@ -5,9 +5,17 @@ Session::addMetaTag('<title>MariaDB Databases - ' . Session::siteName() . '</tit
 $user = Session::getUser();
 $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/src/lib/services/drivers/MariaDbDriver.class.php';
-$mysqlManager = new MariaDbDriver();
-$collations = $mysqlManager->getCollations();
+require_once $_SERVER['DOCUMENT_ROOT'] . '/src/lib/services/mariadb/Permission.class.php';
+
+$collations = ['utf8mb4' => ['utf8mb4_general_ci']];
+try {
+    $collationResp = (new \TomLabs\Services\Mariadb\Permission($user))->getCollations();
+    if ($collationResp->isSuccess() && is_array($collationResp->data) && $collationResp->data) {
+        $collations = $collationResp->data;
+    }
+} catch (\Throwable $e) {
+    error_log('getCollations(mariadb): ' . $e->getMessage());
+}
 
 // Fetch the MariaDB users
 $mysqlUsers = $db->mariadb_users->find(['user_id' => $user->getUserId()])->toArray();
@@ -82,7 +90,7 @@ require_once __DIR__ . '/partials/mariadb_header.php';
                                 <?php foreach ($collations as $charset => $charsetCollations): ?>
                                     <optgroup label="<?= htmlspecialchars($charset) ?>">
                                         <?php foreach ($charsetCollations as $col): ?>
-                                            <option value="<?= htmlspecialchars($col) ?>" <?= ($col === 'utf8mb4_0900_ai_ci') ? 'selected' : '' ?>>
+                                            <option value="<?= htmlspecialchars($col) ?>" <?= ($col === 'utf8mb4_general_ci') ? 'selected' : '' ?>>
                                                 <?= htmlspecialchars($col) ?>
                                             </option>
                                         <?php endforeach; ?>
@@ -123,7 +131,7 @@ require_once __DIR__ . '/partials/mariadb_header.php';
                                                         <div class="text-secondary small fw-bold mb-1" style="font-size: 0.65rem; letter-spacing: 1px;">DATABASE</div>
                                                         <h6 class="card-title mb-0 text-white font-monospace"><?= htmlspecialchars($dbObj['db_name']) ?></h6>
                                                     </div>
-                                                    <span class="badge bg-dark bg-opacity-50 text-light border border-light border-opacity-10 mysql-collation text-lowercase"><?= htmlspecialchars($dbObj['collation'] ?? 'utf8mb4_0900_ai_ci') ?></span>
+                                                    <span class="badge bg-dark bg-opacity-50 text-light border border-light border-opacity-10 mysql-collation text-lowercase"><?= htmlspecialchars($dbObj['collation'] ?? 'utf8mb4_general_ci') ?></span>
                                                 </div>
 
                                                 <div class="d-grid">
@@ -163,17 +171,26 @@ require_once __DIR__ . '/partials/mariadb_header.php';
 </style>
 
 <script>
-ServiceManager.init({
-    type: 'mariadb',
-    apiBase: '/api/services/mariadb',
-    entityLabel: 'Database',
-    gridId: 'mariadb_db_list',
-    hasEntities: true,
-    entityNameKey: 'db_name',
-    userKey: 'mariadb_username',
-    entityCreateEndpoint: 'db_create',
-    entityDeleteEndpoint: 'db_delete',
-    redirectBase: '/services/mariadb',
-    exportPrefix: 'MariaDB'
-});
+(function () {
+    function bootServiceManager() {
+    ServiceManager.init({
+        type: 'mariadb',
+        apiBase: '/api/services/mariadb',
+        entityLabel: 'Database',
+        gridId: 'mariadb_db_list',
+        hasEntities: true,
+        entityNameKey: 'db_name',
+        userKey: 'mariadb_username',
+        entityCreateEndpoint: 'db_create',
+        entityDeleteEndpoint: 'db_delete',
+        redirectBase: '/services/mariadb',
+        exportPrefix: 'MariaDB'
+    });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bootServiceManager);
+    } else {
+        bootServiceManager();
+    }
+})();
 </script>

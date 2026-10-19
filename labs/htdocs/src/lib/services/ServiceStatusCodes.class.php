@@ -21,6 +21,7 @@ class ServiceStatusCodes
     const OPERATION_FAILED = 500;
     const INTERNAL_ERROR = 501;
     const SERVICE_UNAVAILABLE = 503;
+    const SERVICE_DISABLED = 1010;
 
     public static function message(int $code): string
     {
@@ -47,6 +48,7 @@ class ServiceStatusCodes
             case 1007:                          return 'Username is required.';
             case 1008:                          return 'Database name is required.';
             case 1009:                          return 'Vhost name is required.';
+            case 1010:                          return 'This service has been disabled by an administrator.';
             default:                            return 'Internal error.';
         }
     }

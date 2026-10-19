@@ -153,17 +153,26 @@ require_once __DIR__ . '/partials/mysql_header.php';
 </style>
 
 <script>
-ServiceManager.init({
-    type: 'mysql',
-    apiBase: '/api/services/mysql',
-    entityLabel: 'Database',
-    gridId: 'mysql_db_list',
-    hasEntities: true,
-    entityNameKey: 'db_name',
-    userKey: 'mysql_username',
-    entityCreateEndpoint: 'db_create',
-    entityDeleteEndpoint: 'db_delete',
-    redirectBase: '/services/mysql',
-    exportPrefix: 'MySQL'
-});
+(function () {
+    function bootServiceManager() {
+    ServiceManager.init({
+        type: 'mysql',
+        apiBase: '/api/services/mysql',
+        entityLabel: 'Database',
+        gridId: 'mysql_db_list',
+        hasEntities: true,
+        entityNameKey: 'db_name',
+        userKey: 'mysql_username',
+        entityCreateEndpoint: 'db_create',
+        entityDeleteEndpoint: 'db_delete',
+        redirectBase: '/services/mysql',
+        exportPrefix: 'MySQL'
+    });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bootServiceManager);
+    } else {
+        bootServiceManager();
+    }
+})();
 </script>

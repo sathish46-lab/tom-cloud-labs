@@ -153,13 +153,22 @@ require_once __DIR__ . '/partials/redis_header.php';
 </style>
 
 <script>
-ServiceManager.init({
-    type: 'redis',
-    apiBase: '/api/services/redis',
-    entityLabel: 'Data',
-    gridId: 'redis_db_list',
-    hasEntities: false,
-    redirectBase: '/services/redis',
-    exportPrefix: 'Redis'
-});
+(function () {
+    function bootServiceManager() {
+    ServiceManager.init({
+        type: 'redis',
+        apiBase: '/api/services/redis',
+        entityLabel: 'Data',
+        gridId: 'redis_db_list',
+        hasEntities: false,
+        redirectBase: '/services/redis',
+        exportPrefix: 'Redis'
+    });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bootServiceManager);
+    } else {
+        bootServiceManager();
+    }
+})();
 </script>

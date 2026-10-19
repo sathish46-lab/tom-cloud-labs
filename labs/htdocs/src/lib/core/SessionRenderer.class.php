@@ -240,6 +240,19 @@ class SessionRenderer {
 
         try {
             if (Session::getAuthStatus() == Constants::STATUS_LOGGEDIN) {
+                // Service availability gate: admin enable/disable toggles.
+                // Covers every page under /services/<slug>/... in one place.
+                if (strpos($relPath, 'services/') === 0) {
+                    $gateSlug = explode('/', $relPath)[1] ?? '';
+                    if ($gateSlug !== ''
+                        && class_exists('TomLabs\Services\ServiceFlags')
+                        && !\TomLabs\Services\ServiceFlags::isEnabled($gateSlug)) {
+                        $slug = $gateSlug;
+                        include $templateRoot . 'services/_disabled.php';
+                        return;
+                    }
+                }
+
                 $file = $templateRoot . $relPath . '.php';
                 if (file_exists($file)) {
                     include $file;

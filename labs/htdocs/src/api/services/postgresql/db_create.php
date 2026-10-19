@@ -1,9 +1,9 @@
 <?php
 require_once "../../../load.php";
 require_once "../../../lib/services/ServiceValidator.class.php";
-require_once "../../../lib/services/Permission.class.php";
+require_once "../../../lib/services/postgresql/Permission.class.php";
 
-use TomLabs\Services\Permission;
+use TomLabs\Services\Postgresql\Permission;
 use TomLabs\Services\ServiceResponse;
 use TomLabs\Services\ServiceStatusCodes;
 use TomLabs\Services\ServiceValidator;
@@ -14,10 +14,10 @@ $user = AuthMiddleware::requireAuth();
 
 try {
     $data = ServiceValidator::input();
-    (new Permission($user, 'postgresql'))->createDatabase(
-        $data['postgresql_username'] ?? '',
+    (new Permission($user))->createDatabase(
         trim($data['db_name'] ?? ''),
-        trim($data['collation'] ?? '')
+        $data['postgresql_username'] ?? '',
+        collation: trim($data['collation'] ?? '')
     )->send();
 } catch (\ServiceValidationException $e) {
     ServiceResponse::error($e->getCode())->send();

@@ -23,6 +23,12 @@ if systemctl is-active --quiet rabbitmq-server; then
     until rabbitmqctl status >/dev/null 2>&1; do
         sleep 2
     done
+    # Erlang cookie must be rabbitmq-owned and owner-only so the web app can
+    # escalate to the rabbitmq user (sudo -u rabbitmq rabbitmqctl) for CLI calls.
+    if [ -f /var/lib/rabbitmq/.erlang.cookie ]; then
+        chown rabbitmq:rabbitmq /var/lib/rabbitmq/.erlang.cookie
+        chmod 0400 /var/lib/rabbitmq/.erlang.cookie
+    fi
     rabbitmq-plugins enable rabbitmq_management rabbitmq_stomp rabbitmq_web_stomp || true
     # Create RabbitMQ Admin User and verify it exists
     until rabbitmqctl list_users | grep -qw "^admin"; do
@@ -41,32 +47,87 @@ if systemctl is-active --quiet rabbitmq-server; then
     echo "[INFO] RabbitMQ Admin User verified and permissions applied."
 fi
 
-# 1.5. MySQL Configuration (DISABLED — not used, saves ~400MB RAM)
-# if systemctl is-active --quiet mysql; then
-#     echo "[INFO] Configuring MySQL Root password..."
-#     mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'tomlabs_root_secret'; FLUSH PRIVILEGES;" 2>/dev/null || true
-#     mysql -u root -ptomlabs_root_secret -e "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'tomlabs_root_secret'; GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;" 2>/dev/null || true
-# fi
+# 1.5. MySQL Configuration (root@localhost password + root@'%' so TCP drivers work)
+if systemctl is-active --quiet mysql; then
+    echo "[INFO] Configuring MySQL root password..."
+    MYSQL_ROOT_PASS=$(jq -r '.mysql_root_pass // empty' /var/www/env.json 2>/dev/null)
+    if [ -n "$MYSQL_ROOT_PASS" ]; then
+        MYSQL_SQL="ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY '${MYSQL_ROOT_PASS}'; CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '${MYSQL_ROOT_PASS}'; GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;"
+        mysql --protocol=socket -u root -p"${MYSQL_ROOT_PASS}" -e "${MYSQL_SQL}" 2>/dev/null || \
+        mysql --protocol=socket -u root -e "${MYSQL_SQL}" 2>/dev/null || true
+        echo "[INFO] MySQL root password verified."
+    else
+        echo "[WARN] mysql_root_pass missing in env.json — skipping MySQL root password."
+    fi
+fi
 
-# 1.6. MariaDB Configuration (Port 3307) (DISABLED — not used)
-# if systemctl is-active --quiet mariadb; then
-#     echo "[INFO] Configuring MariaDB Root password..."
-#     mysql --port=3307 -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'tomlabs_root_secret'; FLUSH PRIVILEGES;" 2>/dev/null || true
-#     mysql --port=3307 -u root -ptomlabs_root_secret -e "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'tomlabs_root_secret'; GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;" 2>/dev/null || true
-# fi
+# 1.6. MariaDB-labs Configuration (Port 3307, binaries in /opt/mariadb-labs)
+if systemctl is-active --quiet mariadb-labs.service; then
+    MARIADB_ROOT_PASS=$(jq -r '.mysql_root_pass // empty' /var/www/env.json 2>/dev/null)
+    echo "[INFO] Waiting for MariaDB-labs socket..."
+    until { [ -n "$MARIADB_ROOT_PASS" ] && /opt/mariadb-labs/usr/bin/mariadb-admin --defaults-file=/etc/mysql/mariadb-labs.cnf -p"${MARIADB_ROOT_PASS}" ping >/dev/null 2>&1; } || \
+          /opt/mariadb-labs/usr/bin/mariadb-admin --defaults-file=/etc/mysql/mariadb-labs.cnf ping >/dev/null 2>&1; do
+        sleep 2
+    done
+    # Driver and labsctl connect over TCP as root; 127.0.0.1 matches root@localhost,
+    # so root@localhost must carry the password (root@'%' alone is not enough).
+    if [ -n "$MARIADB_ROOT_PASS" ]; then
+        MARIADB_SQL="ALTER USER 'root'@'localhost' IDENTIFIED BY '${MARIADB_ROOT_PASS}'; CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '${MARIADB_ROOT_PASS}'; GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;"
+        /opt/mariadb-labs/usr/bin/mariadb --defaults-file=/etc/mysql/mariadb-labs.cnf -p"${MARIADB_ROOT_PASS}" -e "${MARIADB_SQL}" 2>/dev/null || \
+        /opt/mariadb-labs/usr/bin/mariadb --defaults-file=/etc/mysql/mariadb-labs.cnf -e "${MARIADB_SQL}" 2>/dev/null || true
+        echo "[INFO] MariaDB-labs root password verified."
+    else
+        echo "[WARN] mysql_root_pass missing in env.json — skipping MariaDB-labs root password."
+    fi
+fi
 
-# 1.7. PostgreSQL Configuration
+# 1.7. PostgreSQL Configuration (admin password must match mysql_root_pass — PostgreSqlDriver uses it)
 if systemctl is-active --quiet postgresql; then
     echo "[INFO] Configuring PostgreSQL Admin password..."
-    sudo -u postgres psql -c "CREATE ROLE tomlabs_admin WITH LOGIN SUPERUSER PASSWORD 'tomlabs_root_secret';" 2>/dev/null || true
-    sudo -u postgres psql -c "ALTER ROLE tomlabs_admin WITH PASSWORD 'tomlabs_root_secret';" 2>/dev/null || true
+    PG_ADMIN_PASS=$(jq -r '.mysql_root_pass // empty' /var/www/env.json 2>/dev/null)
+    if [ -n "$PG_ADMIN_PASS" ]; then
+        sudo -u postgres psql -c "CREATE ROLE tomlabs_admin WITH LOGIN SUPERUSER PASSWORD '${PG_ADMIN_PASS}';" 2>/dev/null || true
+        sudo -u postgres psql -c "ALTER ROLE tomlabs_admin WITH PASSWORD '${PG_ADMIN_PASS}';" 2>/dev/null || true
+        echo "[INFO] PostgreSQL tomlabs_admin password verified."
+    else
+        echo "[WARN] mysql_root_pass missing in env.json — skipping PostgreSQL admin password."
+    fi
 fi
 
 # 1.8. Redis Configuration
 if systemctl is-active --quiet redis-server; then
     echo "[INFO] Configuring Redis Admin password..."
-    redis-cli ACL SETUSER default on >tomlabs_redis_secret ~* +@all 2>/dev/null || true
+    redis-cli ACL SETUSER default on '>tomlabs_redis_secret' ~* +@all 2>/dev/null || true
     redis-cli ACL SAVE 2>/dev/null || true
+fi
+
+# 1.9. MongoDB learner admin user (fresh datadir → localhost exception allows bootstrap)
+if systemctl is-active --quiet mongod; then
+    MONGO_USER=$(jq -r '.mongo_user // "admin"' /var/www/env.json 2>/dev/null)
+    MONGO_PASS=$(jq -r '.mongo_pass // empty' /var/www/env.json 2>/dev/null)
+    if [ -n "$MONGO_USER" ] && [ -n "$MONGO_PASS" ]; then
+        echo "[INFO] Waiting for mongod..."
+        for i in $(seq 1 30); do
+            mongosh --quiet --eval 'db.runCommand({ping:1})' >/dev/null 2>&1 && break
+            sleep 1
+        done
+        MONGO_BOOT=$(mongosh --quiet --eval "
+            const admin = db.getSiblingDB('admin');
+            try {
+                admin.runCommand({createUser: '${MONGO_USER}', pwd: '${MONGO_PASS}', roles: [{role: 'root', db: 'admin'}]});
+                print('MONGO_BOOTSTRAP_CREATED');
+            } catch (e) {
+                if (/already exists/i.test(e.message)) { print('MONGO_BOOTSTRAP_EXISTS'); }
+                else { print('MONGO_BOOTSTRAP_ERR ' + e.message); }
+            }" 2>/dev/null | tail -1)
+        case "$MONGO_BOOT" in
+            *CREATED*) echo "[INFO] MongoDB learner admin user '${MONGO_USER}' created." ;;
+            *EXISTS*)  echo "[INFO] MongoDB learner admin user '${MONGO_USER}' already present." ;;
+            *)         echo "[WARN] MongoDB bootstrap: ${MONGO_BOOT:-no output}" ;;
+        esac
+    else
+        echo "[WARN] mongo_pass missing in env.json — skipping MongoDB admin bootstrap."
+    fi
 fi
 
 # 2. Build dependencies (if directories exist)

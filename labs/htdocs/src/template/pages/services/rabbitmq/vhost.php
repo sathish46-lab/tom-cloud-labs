@@ -3,10 +3,7 @@ Session::addMetaTag('<title>RabbitMQ Vhosts - ' . Session::siteName() . '</title
 
 
 $user = Session::getUser();
-$db = VhostConnection::getClient()->selectVhost('tom_labs_db');
-
-require_once $_SERVER['DOCUMENT_ROOT'] . '/src/lib/services/drivers/RabbitMqDriver.class.php';
-$rabbitManager = new RabbitMqDriver();
+$db = VhostConnection::selectVhost('tom_labs_db');
 
 // Fetch the RabbitMQ users
 $mysqlUsers = $db->rabbitmq_users->find(['user_id' => $user->getUserId()])->toArray();
@@ -82,7 +79,7 @@ require_once __DIR__ . '/partials/rabbitmq_header.php';
                                 <option value="on">On</option>
                             </select>
                         </div>
-                        <button class="btn rounded-pill px-4 shadow-sm text-white" style="background-color: #6366f1; border: none; font-size: 0.85rem; font-weight: 600;" onclick="submitCreateRabbitMQVhostInline()">
+                        <button class="btn rounded-pill px-4 shadow-sm text-white" style="background-color: #6366f1; border: none; font-size: 0.85rem; font-weight: 600;" onclick="submitCreateRabbitMQDbInline()">
                             Create Vhost
                         </button>
                     </div>
@@ -155,17 +152,26 @@ require_once __DIR__ . '/partials/rabbitmq_header.php';
 </style>
 
 <script>
-ServiceManager.init({
-    type: 'rabbitmq',
-    apiBase: '/api/services/rabbitmq',
-    entityLabel: 'Vhost',
-    gridId: 'rabbitmq_db_list',
-    hasEntities: true,
-    entityNameKey: 'vhost_name',
-    userKey: 'rabbitmq_username',
-    entityCreateEndpoint: 'vhost_create',
-    entityDeleteEndpoint: 'vhost_delete',
-    redirectBase: '/services/rabbitmq',
-    exportPrefix: 'RabbitMQ'
-});
+(function () {
+    function bootServiceManager() {
+    ServiceManager.init({
+        type: 'rabbitmq',
+        apiBase: '/api/services/rabbitmq',
+        entityLabel: 'Vhost',
+        gridId: 'rabbitmq_db_list',
+        hasEntities: true,
+        entityNameKey: 'vhost_name',
+        userKey: 'rabbitmq_username',
+        entityCreateEndpoint: 'vhost_create',
+        entityDeleteEndpoint: 'vhost_delete',
+        redirectBase: '/services/rabbitmq',
+        exportPrefix: 'RabbitMQ'
+    });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bootServiceManager);
+    } else {
+        bootServiceManager();
+    }
+})();
 </script>

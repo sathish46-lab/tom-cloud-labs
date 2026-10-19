@@ -41,10 +41,10 @@ $services = [
         "manage" => "/services/mariadb",
         "learn" => "https://mariadb.com/kb/en/",
         "ports" => [
-            "MariaDB Database Service" => "3306"
+            "MariaDB Database Service" => "3307"
         ],
         "pf" => [
-            "VS Code Desktop" => "mariadb.tomweb.in:3306"
+            "VS Code Desktop" => "mariadb.tomweb.in:3307"
         ]
     ],
     [
@@ -143,8 +143,14 @@ $services = [
     <div class="row row-cols-1 row-cols-md-3 g-4 pb-4 align-items-start" id="masonry-area" data-masonry='{"percentPosition": true }'>
 
     <?php foreach ($services as $i => $svc): ?>
+    <?php
+        $svcSlug = preg_replace('#^/services/#', '', $svc['manage']);
+        $svcDisabled = $svcSlug !== ''
+            && class_exists('TomLabs\Services\ServiceFlags')
+            && !\TomLabs\Services\ServiceFlags::isEnabled($svcSlug);
+    ?>
     <div class="col card-entrance">
-        <div class="card glass-lab-card h-100 border-0 shadow-lg rounded-4 blur" style="--card-accent: var(--accent-muted);">
+        <div class="card glass-lab-card h-100 border-0 shadow-lg rounded-4 blur<?= $svcDisabled ? ' service-card-disabled' : '' ?>" style="--card-accent: var(--accent-muted);">
             <div class="glass-lab-card-glow"></div>
             <div class="glass-lab-card-body d-flex flex-column h-100 p-4 position-relative" style="z-index: 2;">
                 <div class="d-flex align-items-center gap-3 mb-3">
@@ -161,6 +167,9 @@ $services = [
                         </h5>
                         <div class="glass-lab-subtitle d-flex align-items-center gap-2 mt-1">
                             <span class="glass-badge"><?= htmlspecialchars($svc['host']) ?></span>
+                            <?php if ($svcDisabled): ?>
+                            <span class="glass-badge service-disabled-badge">Disabled</span>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -210,9 +219,15 @@ $services = [
                 <?php endif; ?>
 
                 <div class="mt-auto d-flex gap-2 pt-3">
+                    <?php if ($svcDisabled): ?>
+                    <span class="glass-btn flex-grow-1 text-secondary text-center" aria-disabled="true">
+                        <i class='bx bx-ban'></i> Disabled
+                    </span>
+                    <?php else: ?>
                     <a href="<?= htmlspecialchars($svc['manage']) ?>" class="glass-btn glass-btn-primary flex-grow-1">
                         <i class='bx bx-cog'></i> Manage
                     </a>
+                    <?php endif; ?>
                     <a href="<?= htmlspecialchars($svc['learn']) ?>" target="_blank" class="glass-btn glass-btn-success flex-grow-1">
                         <i class='bx bx-book-open'></i> Learn More
                     </a>
@@ -229,6 +244,8 @@ $services = [
 .cursor-pointer { cursor: pointer; }
 .hover-white { transition: color 0.2s; }
 .hover-white:hover { color: #ffffff !important; }
+.service-card-disabled { opacity: 0.55; }
+.service-disabled-badge { background: rgba(220, 53, 69, 0.18); color: #ff6b6b; border: 1px solid rgba(220, 53, 69, 0.35); }
 </style>
 <script>
     // Initialize Masonry manually like domains.php

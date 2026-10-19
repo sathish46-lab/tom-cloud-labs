@@ -547,5 +547,45 @@ WantedBy=multi-user.target
 EOF
 systemctl enable rabbitmq-init.service || true
 
+# 11. Enable MySQL + ensure root@'%' admin exists for services drivers
+# (Dockerfile intentionally disables mysql.service to save RAM; services
+#  pages need a real mysqld, and drivers connect over TCP as root using
+#  mysql_root_pass from env.json)
+echo "[INFO] Enabling MySQL for services..."
+systemctl enable mysql.service 2>/dev/null || true
+
+cat <<'SCRIPT' > /usr/local/bin/mysql-bootstrap-admin.sh
+#!/bin/bash
+# Wait for mysqld, then ensure root@'%' matches mysql_root_pass in env.json
+until mysqladmin ping --silent 2>/dev/null; do sleep 1; done
+MYSQL_ROOT_PASS=$(python3 -c "import json; print(json.load(open('/var/www/env.json')).get('mysql_root_pass',''))" 2>/dev/null || echo '')
+if [ -n "$MYSQL_ROOT_PASS" ]; then
+  mysql -uroot <<SQL
+CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '${MYSQL_ROOT_PASS}';
+ALTER USER 'root'@'%' IDENTIFIED BY '${MYSQL_ROOT_PASS}';
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+SQL
+fi
+SCRIPT
+chmod +x /usr/local/bin/mysql-bootstrap-admin.sh
+
+cat <<EOF > /etc/systemd/system/mysql-bootstrap.service
+[Unit]
+Description=Ensure MySQL root@% admin for services drivers
+After=mysql.service
+Requires=mysql.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/mysql-bootstrap-admin.sh
+TimeoutStartSec=infinity
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+systemctl enable mysql-bootstrap.service || true
+
 echo "[INFO] Handing over control to systemd!"
 exec /lib/systemd/systemd

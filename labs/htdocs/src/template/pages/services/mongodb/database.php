@@ -5,9 +5,6 @@ Session::addMetaTag('<title>MongoDB Databases - ' . Session::siteName() . '</tit
 $user = Session::getUser();
 $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/src/lib/services/drivers/MongoDbDriver.class.php';
-$mongoManager = new MongoDbDriver();
-
 // Fetch the MongoDB users
 $mysqlUsers = $db->mongodb_users->find(['user_id' => $user->getUserId()])->toArray();
 
@@ -154,17 +151,26 @@ require_once __DIR__ . '/partials/mongodb_header.php';
 </style>
 
 <script>
-ServiceManager.init({
-    type: 'mongodb',
-    apiBase: '/api/services/mongodb',
-    entityLabel: 'Database',
-    gridId: 'mongodb_db_list',
-    hasEntities: true,
-    entityNameKey: 'db_name',
-    userKey: 'mongodb_username',
-    entityCreateEndpoint: 'db_create',
-    entityDeleteEndpoint: 'db_delete',
-    redirectBase: '/services/mongodb',
-    exportPrefix: 'MongoDB'
-});
+(function () {
+    function bootServiceManager() {
+    ServiceManager.init({
+        type: 'mongodb',
+        apiBase: '/api/services/mongodb',
+        entityLabel: 'Database',
+        gridId: 'mongodb_db_list',
+        hasEntities: true,
+        entityNameKey: 'db_name',
+        userKey: 'mongodb_username',
+        entityCreateEndpoint: 'db_create',
+        entityDeleteEndpoint: 'db_delete',
+        redirectBase: '/services/mongodb',
+        exportPrefix: 'MongoDB'
+    });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bootServiceManager);
+    } else {
+        bootServiceManager();
+    }
+})();
 </script>

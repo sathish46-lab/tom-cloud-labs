@@ -4,9 +4,6 @@ Session::addMetaTag('<title>PostgreSQL Databases - ' . Session::siteName() . '</
 $user = Session::getUser();
 $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/src/lib/services/drivers/PostgreSqlDriver.class.php';
-$pgManager = new PostgreSqlDriver();
-
 // Fetch the PostgreSQL users
 $mysqlUsers = $db->postgresql_users->find(['user_id' => $user->getUserId()])->toArray();
 
@@ -155,17 +152,26 @@ require_once __DIR__ . '/partials/postgresql_header.php';
 </style>
 
 <script>
-ServiceManager.init({
-    type: 'postgresql',
-    apiBase: '/api/services/postgresql',
-    entityLabel: 'Database',
-    gridId: 'postgresql_db_list',
-    hasEntities: true,
-    entityNameKey: 'db_name',
-    userKey: 'postgresql_username',
-    entityCreateEndpoint: 'db_create',
-    entityDeleteEndpoint: 'db_delete',
-    redirectBase: '/services/postgresql',
-    exportPrefix: 'PostgreSQL'
-});
+(function () {
+    function bootServiceManager() {
+    ServiceManager.init({
+        type: 'postgresql',
+        apiBase: '/api/services/postgresql',
+        entityLabel: 'Database',
+        gridId: 'postgresql_db_list',
+        hasEntities: true,
+        entityNameKey: 'db_name',
+        userKey: 'postgresql_username',
+        entityCreateEndpoint: 'db_create',
+        entityDeleteEndpoint: 'db_delete',
+        redirectBase: '/services/postgresql',
+        exportPrefix: 'PostgreSQL'
+    });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bootServiceManager);
+    } else {
+        bootServiceManager();
+    }
+})();
 </script>

@@ -29,7 +29,7 @@ class DatabaseUserDTO
             'email' => $this->email,
             $usernameField => $this->username,
             str_replace('_username', '_password', $usernameField) => base64_encode($this->password),
-            'created_at' => new \MongoDB\BSON\UTCDateTime()
+            'created_at' => \TimeHelper::now()
         ];
     }
 }

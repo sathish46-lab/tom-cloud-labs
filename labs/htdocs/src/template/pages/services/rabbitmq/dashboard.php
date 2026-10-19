@@ -153,17 +153,26 @@ require_once __DIR__ . '/partials/rabbitmq_header.php';
 </style>
 
 <script>
-ServiceManager.init({
-    type: 'rabbitmq',
-    apiBase: '/api/services/rabbitmq',
-    entityLabel: 'Vhost',
-    gridId: 'rabbitmq_db_list',
-    hasEntities: true,
-    entityNameKey: 'vhost_name',
-    userKey: 'rabbitmq_username',
-    entityCreateEndpoint: 'vhost_create',
-    entityDeleteEndpoint: 'vhost_delete',
-    redirectBase: '/services/rabbitmq',
-    exportPrefix: 'RabbitMQ'
-});
+(function () {
+    function bootServiceManager() {
+    ServiceManager.init({
+        type: 'rabbitmq',
+        apiBase: '/api/services/rabbitmq',
+        entityLabel: 'Vhost',
+        gridId: 'rabbitmq_db_list',
+        hasEntities: true,
+        entityNameKey: 'vhost_name',
+        userKey: 'rabbitmq_username',
+        entityCreateEndpoint: 'vhost_create',
+        entityDeleteEndpoint: 'vhost_delete',
+        redirectBase: '/services/rabbitmq',
+        exportPrefix: 'RabbitMQ'
+    });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bootServiceManager);
+    } else {
+        bootServiceManager();
+    }
+})();
 </script>

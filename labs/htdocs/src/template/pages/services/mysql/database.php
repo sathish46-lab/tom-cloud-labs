@@ -5,9 +5,17 @@ Session::addCustomJs('/assets/js/services.js');
 $user = Session::getUser();
 $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/src/lib/services/drivers/MySqlDriver.class.php';
-$mysqlManager = new MySqlDriver();
-$collations = $mysqlManager->getCollations();
+require_once $_SERVER['DOCUMENT_ROOT'] . '/src/lib/services/mysql/Permission.class.php';
+
+$collations = ['utf8mb4' => ['utf8mb4_0900_ai_ci']];
+try {
+    $collationResp = (new \TomLabs\Services\Mysql\Permission($user))->getCollations();
+    if ($collationResp->isSuccess() && is_array($collationResp->data) && $collationResp->data) {
+        $collations = $collationResp->data;
+    }
+} catch (\Throwable $e) {
+    error_log('getCollations(mysql): ' . $e->getMessage());
+}
 
 // Fetch the MySQL users
 $mysqlUsers = $db->mysql_users->find(['user_id' => $user->getUserId()])->toArray();
@@ -163,17 +171,26 @@ require_once __DIR__ . '/partials/mysql_header.php';
 </style>
 
 <script>
-ServiceManager.init({
-    type: 'mysql',
-    apiBase: '/api/services/mysql',
-    entityLabel: 'Database',
-    gridId: 'mysql_db_list',
-    hasEntities: true,
-    entityNameKey: 'db_name',
-    userKey: 'mysql_username',
-    entityCreateEndpoint: 'db_create',
-    entityDeleteEndpoint: 'db_delete',
-    redirectBase: '/services/mysql',
-    exportPrefix: 'MySQL'
-});
+(function () {
+    function bootServiceManager() {
+    ServiceManager.init({
+        type: 'mysql',
+        apiBase: '/api/services/mysql',
+        entityLabel: 'Database',
+        gridId: 'mysql_db_list',
+        hasEntities: true,
+        entityNameKey: 'db_name',
+        userKey: 'mysql_username',
+        entityCreateEndpoint: 'db_create',
+        entityDeleteEndpoint: 'db_delete',
+        redirectBase: '/services/mysql',
+        exportPrefix: 'MySQL'
+    });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bootServiceManager);
+    } else {
+        bootServiceManager();
+    }
+})();
 </script>
