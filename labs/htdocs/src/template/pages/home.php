@@ -107,7 +107,7 @@ $labIconMap = [
                 <ul class="dropdown-menu dropdown-menu-end blur" aria-labelledby="lp-user-toggle">
                     <li><a class="dropdown-item" href="/profile"><svg class="icon me-2"><use xlink:href="/assets/icons/duotone.svg#tom-user"></use></svg>My Account</a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="/?logout"><svg class="icon me-2"><use xlink:href="/assets/icons/duotone.svg#tom-sign-out"></use></svg>Sign out</a></li>
+                    <li><a class="dropdown-item" href="/logout"><svg class="icon me-2"><use xlink:href="/assets/icons/duotone.svg#tom-sign-out"></use></svg>Sign out</a></li>
                 </ul>
             </div>
         </div>
