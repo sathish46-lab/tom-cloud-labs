@@ -51,6 +51,16 @@ class WebAPI {
     $sessionToken = $_COOKIE['session_token'] ?? null;
 
     if ($username) {
+        // Absolute session lifetime (industry standard): even an actively used
+        // session ends 30 days after login. auth_since is stamped at login;
+        // a missing key is migration grace (adopt now, enforced from here on).
+        if (!isset($_SESSION['auth_since'])) {
+            $_SESSION['auth_since'] = time();
+        }
+        if ((time() - $_SESSION['auth_since']) > 30 * 86400) {
+            UserSession::logout();
+            return;
+        }
         // Already active in current session
         Session::$userSession = new UserSession($username);
         if (Session::getUser() !== null) {
@@ -96,9 +106,24 @@ class WebAPI {
                 return;
             }
 
+            // Idle check on the remember-token path (mirrors the PHP-session
+            // idle check at the top of this method): a token untouched for
+            // longer than the session lifetime is dead even if younger than
+            // the 30-day absolute cap. Legacy entries without last_activity
+            // skip the check (no data to judge idleness by).
+            if (isset($matchedTokenData['last_activity'])
+                && (time() - $matchedTokenData['last_activity']) > $lifetime) {
+                UserSession::logout(); // also revokes this stale token
+                return;
+            }
+
             // Token is valid and not expired, rebuild session
             $_SESSION['username'] = $matchedUser['username'];
             $_SESSION['auth_status'] = \Constants::STATUS_LOGGEDIN;
+            // Absolute clock starts from the token's original login time, so a
+            // rebuilt session cannot extend the original 30-day window.
+            $_SESSION['auth_since'] = $matchedTokenData['created_at'] ?? time();
+            unset($_SESSION['token_touch']);
 
             // Update last_activity for this token
             $db->users->updateOne(

@@ -60,6 +60,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username'])) {
                 session_regenerate_id(true);
                 $_SESSION['username'] = $username;
                 $_SESSION['auth_status'] = Constants::STATUS_LOGGEDIN;
+                // Absolute session lifetime starts now (30-day cap in initSession).
+                $_SESSION['auth_since'] = time();
+                unset($_SESSION['token_touch']);
+                // Re-sync BOTH PHPSESSID variants to the regenerated id.
+                Session::refreshAuthCookies();
                 
                 header("Location: /home");
                 exit;

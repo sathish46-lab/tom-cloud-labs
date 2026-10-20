@@ -111,7 +111,8 @@ public function __call($method, $args) {
                     ['email' => $email],
                     ['$set' => [
                         'two_factor_otp' => $otpHash,
-                        'two_factor_expires' => $expires
+                        'two_factor_expires' => $expires,
+                        'two_factor_attempts' => 0
                     ]]
                 );
                 
@@ -130,6 +131,9 @@ public function __call($method, $args) {
             
             $_SESSION['auth_status'] = \Constants::STATUS_LOGGEDIN;
             $_SESSION['username']    = $username;
+            // Absolute session lifetime starts now (30-day cap in initSession).
+            $_SESSION['auth_since']  = time();
+            unset($_SESSION['token_touch']);
             
             // Set cookies with environment-aware expiration from session.json
             $lifetime = get_session_lifetime();
@@ -145,21 +149,51 @@ public function __call($method, $args) {
             $clientIp = get_client_ip();
             
             // STORE HASHED TOKEN + DEVICE INFO IN DATABASE (Supports multi-device login)
+            // Single atomic pipeline update: appends this browser's new token,
+            // drops the token this browser is replacing (old cookie), prunes
+            // entries past the 30-day absolute cap, and keeps only the newest
+            // 10 — so repeated logins update the list instead of growing it
+            // (previously every login $pushed forever, orphaning old entries).
+            $now = time();
+            $prune = ['$gte' => ['$$t.created_at', $now - 30 * 86400]];
+            $oldTokenId = !empty($_COOKIE['session_token'])
+                ? hash('sha256', (string) $_COOKIE['session_token']) : null;
+            if ($oldTokenId !== null) {
+                $prune = ['$and' => [
+                    ['$gte' => ['$$t.created_at', $now - 30 * 86400]],
+                    ['$ne' => ['$$t.token_id', $oldTokenId]],
+                ]];
+            }
+            $newToken = [
+                // $$literal: bcrypt output starts with '$' — without it the
+                // aggregation context parses it as a field path and drops it.
+                'token_hash' => ['$literal' => $tokenHash],
+                'token_id'   => hash('sha256', $sessionToken),
+                'ip' => $clientIp,
+                'browser' => $deviceInfo['browser'],
+                'os' => $deviceInfo['os'],
+                'mobile' => $deviceInfo['mobile'],
+                'created_at' => $now,
+                'last_activity' => $now
+            ];
             $instance->usersCollection->updateOne(
                 ['email' => $email],
-                [
-                    '$push' => ['session_tokens' => [
-                        'token_hash' => $tokenHash,
-                        'token_id'   => hash('sha256', $sessionToken),
-                        'ip' => $clientIp,
-                        'browser' => $deviceInfo['browser'],
-                        'os' => $deviceInfo['os'],
-                        'mobile' => $deviceInfo['mobile'],
-                        'created_at' => time(),
-                        'last_activity' => time()
-                    ]],
-                    '$set' => array_merge(['last_login' => time()], get_client_ip_fields($clientIp))
-                ]
+                [[
+                    '$set' => array_merge(
+                        ['session_tokens' => ['$slice' => [
+                            ['$filter' => [
+                                'input' => ['$concatArrays' => [
+                                    ['$ifNull' => ['$session_tokens', []]],
+                                    [$newToken],
+                                ]],
+                                'as' => 't', 'cond' => $prune,
+                            ]],
+                            -10,
+                        ]]],
+                        ['last_login' => $now],
+                        get_client_ip_fields($clientIp)
+                    )
+                ]]
             );
 
             // SET THE NEW SECURE TOKEN COOKIE
@@ -173,7 +207,13 @@ public function __call($method, $args) {
                 'httponly' => true,
                 'samesite' => 'Lax'
             ]);
-            
+            $_COOKIE['session_token'] = $sessionToken;
+
+            // Re-sync BOTH PHPSESSID cookie variants (host-only + Domain) to
+            // the regenerated id and echo the new token — the bootstrap
+            // refresh ran before this login and would carry the old id.
+            Session::refreshAuthCookies();
+
             return true;
         }
         

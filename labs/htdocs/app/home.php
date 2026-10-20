@@ -8,6 +8,11 @@ if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
     exit;
 }
 
+// Anti-hijacking: rotate the session id on every /home hit — new id, same
+// session (auth/CSRF carry over), so the user stays logged in. Must run
+// before any output.
+SessionAuth::rotateSessionId();
+
 define('IS_HOME_PAGE', true);
 Session::$pageTitle = "Home";
 Session::set('seo_description', 'Access your Tom Labs dashboard to manage your Docker containers, VPS nodes, and VPN environments efficiently.');

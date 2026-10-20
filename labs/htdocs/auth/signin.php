@@ -35,6 +35,12 @@ if (isset($_GET['code'])) {
         session_regenerate_id(true);
         $_SESSION['username'] = $user['username'];
         $_SESSION['auth_status'] = Constants::STATUS_LOGGEDIN;
+        // Absolute session lifetime starts now (30-day cap in initSession).
+        $_SESSION['auth_since'] = time();
+        unset($_SESSION['token_touch']);
+        // Re-sync BOTH PHPSESSID variants to the regenerated id (bootstrap
+        // refresh ran before this login) + echo the token GoogleAuth set.
+        Session::refreshAuthCookies();
         header('Location: ' . $redirectTarget);
         exit;
     } else {

@@ -2,6 +2,17 @@
 /**
  * Main Loader: Handles environment, vendors, and core libraries.
  */
+
+// Idempotency guard: composer.json's autoload.files also requires this exact
+// file while we are mid-execution (reached via our own require of
+// vendor/autoload.php), and that path is textually different from callers'
+// require_once paths — so without this guard the whole loader (including
+// Session::refreshAuthCookies at the bottom) ran twice per request.
+if (defined('LABS_LOAD_BOOTSTRAPPED')) {
+    return;
+}
+define('LABS_LOAD_BOOTSTRAPPED', true);
+
 require_once __DIR__ . '/utils/config.php';
 
 // 1. Start session first (without using any classes yet)
@@ -87,26 +98,11 @@ require_once __DIR__ . '/utils/currency.php';
 require_once __DIR__ . '/lib/load.php';
 require_once __DIR__ . '/utils/errors.php';
 
-// 3. NOW we can use Constants class - regenerate session cookie
-if (isset($_SESSION['auth_status']) && $_SESSION['auth_status'] === Constants::STATUS_LOGGEDIN) {
-    $cookieParams = session_get_cookie_params();
-    $lifetime = get_session_lifetime();
-    $domain = get_session_domain();
-
-    setcookie(
-        session_name(),
-        session_id(),
-        [
-            'expires'  => time() + $lifetime,
-            'path'     => $cookieParams['path'],
-            'domain'   => $domain,
-            'secure'   => (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || 
-                          (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https'),
-            'httponly' => true,
-            'samesite' => 'Lax'
-        ]
-    );
-}
+// 3. NOW we can use classes - refresh auth cookies (single source of truth:
+// keeps the host-only + Domain PHPSESSID variants convergent so the session
+// id can never flip between requests, slides session_token expiry, and
+// throttles the server-side token last_activity touch)
+Session::refreshAuthCookies();
 
 $composerAutoload = __DIR__ . '/../vendor/autoload.php';
 if (file_exists($composerAutoload)) {

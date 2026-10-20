@@ -75,6 +75,7 @@ class Session
     public static function getAvatar()       { return SessionAuth::getAvatar(); }
     public static function getAvatarForUsername($u) { return SessionAuth::getAvatarForUsername($u); }
     public static function getAvatarStyle()  { return SessionAuth::getAvatarStyle(); }
+    public static function refreshAuthCookies() { SessionAuth::refreshAuthCookies(); }
 
     /* ==================================================================
      * Meta tags / render time — delegates to SessionEnv

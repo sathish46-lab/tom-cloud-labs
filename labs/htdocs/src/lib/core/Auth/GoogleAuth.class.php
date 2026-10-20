@@ -238,6 +238,9 @@ public function getAuthUrl($metadata) {
         $username = $user['username'];
         $_SESSION['username']    = $username;
         $_SESSION['auth_status'] = \Constants::STATUS_LOGGEDIN;
+        // Absolute session lifetime starts now (30-day cap in initSession).
+        $_SESSION['auth_since']  = time();
+        unset($_SESSION['token_touch']);
 
         // Generate session token (same as normal login)
         $sessionToken = bin2hex(random_bytes(32));
@@ -246,21 +249,45 @@ public function getAuthUrl($metadata) {
         $lifetime = get_session_lifetime();
         $domain = get_session_domain();
 
+        // Same hygiene as UserSession::authenticate: append new token, drop
+        // this browser's replaced token, prune past 30-day cap, keep newest 10.
+        $now = time();
+        $prune = ['$gte' => ['$$t.created_at', $now - 30 * 86400]];
+        $oldTokenId = !empty($_COOKIE['session_token'])
+            ? hash('sha256', (string) $_COOKIE['session_token']) : null;
+        if ($oldTokenId !== null) {
+            $prune = ['$and' => [
+                ['$gte' => ['$$t.created_at', $now - 30 * 86400]],
+                ['$ne' => ['$$t.token_id', $oldTokenId]],
+            ]];
+        }
         $this->db->users->updateOne(
             ['email' => $userinfo->email],
-            [
-                '$push' => ['session_tokens' => [
-                    'token_hash' => password_hash($sessionToken, PASSWORD_DEFAULT),
-                    'token_id'   => hash('sha256', $sessionToken),
-                    'ip' => $clientIp,
-                    'browser' => $deviceInfo['browser'],
-                    'os' => $deviceInfo['os'],
-                    'mobile' => $deviceInfo['mobile'],
-                    'created_at' => time(),
-                    'last_activity' => time()
-                ]],
-                '$set' => array_merge(['last_login' => time()], get_client_ip_fields($clientIp))
-            ]
+            [[
+                '$set' => array_merge(
+                    ['session_tokens' => ['$slice' => [
+                        ['$filter' => [
+                            'input' => ['$concatArrays' => [
+                                ['$ifNull' => ['$session_tokens', []]],
+                                [[
+                                    'token_hash' => ['$literal' => password_hash($sessionToken, PASSWORD_DEFAULT)],
+                                    'token_id'   => hash('sha256', $sessionToken),
+                                    'ip' => $clientIp,
+                                    'browser' => $deviceInfo['browser'],
+                                    'os' => $deviceInfo['os'],
+                                    'mobile' => $deviceInfo['mobile'],
+                                    'created_at' => $now,
+                                    'last_activity' => $now
+                                ]],
+                            ]],
+                            'as' => 't', 'cond' => $prune,
+                        ]],
+                        -10,
+                    ]]],
+                    ['last_login' => $now],
+                    get_client_ip_fields($clientIp)
+                )
+            ]]
         );
 
         $isSecure = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on');
@@ -276,6 +303,7 @@ public function getAuthUrl($metadata) {
             'httponly' => true,
             'samesite' => 'Lax'
         ]);
+        $_COOKIE['session_token'] = $sessionToken;
 
         return $user;
     }
