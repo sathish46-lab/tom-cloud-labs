@@ -25,10 +25,14 @@ try {
  */
 const TomSocketClient = function () {
   this.client = null;
+  this.ws = null;
   this.isConnected = false;
   this.isConnecting = false;
   this.isSubscribed = false;
   this.subRetryCount = 0;
+  this._manualClosed = false;
+  this._reconnectTimer = null;
+  this._gen = 0;
 
   /**
    * Establish WebSocket connection to RabbitMQ
@@ -79,6 +83,24 @@ const TomSocketClient = function () {
       
       console.log(`[MQ] Connecting to WebSocket: ${wsUrl}`);
       const ws = new WebSocket(wsUrl);
+      this.ws = ws;
+      this._manualClosed = false;
+      const gen = (this._gen = this._gen + 1);
+      // Detect mid-session drops (stomp.js only reliably reports connect
+      // failures): on unexpected close, auto-reconnect so onSubscribed fires
+      // again and the log gap-fill can recover missed lines.
+      ws.addEventListener("close", () => {
+        if (this._manualClosed || gen !== this._gen) return;
+        this.isConnected = false;
+        this.isSubscribed = false;
+        if (ui && ui.dot) ui.dot.style.color = "#f38ba8";
+        console.warn("[MQ] WebSocket closed. Reconnecting in 2s...");
+        clearTimeout(this._reconnectTimer);
+        this._reconnectTimer = setTimeout(
+          () => this.connect(exchange, callback, ui, onSubscribed),
+          2000,
+        );
+      });
       this.client = Stomp.over(ws);
       this.client.debug = null; // Set to console.log for debugging
 
@@ -102,7 +124,11 @@ const TomSocketClient = function () {
           if (ui && ui.dot) ui.dot.style.color = "#f38ba8"; // Red
 
           console.warn("Socket connection failed, retrying in 2s...", err);
-          setTimeout(() => this.connect(exchange, callback, ui, onSubscribed), 2000);
+          clearTimeout(this._reconnectTimer);
+          this._reconnectTimer = setTimeout(
+            () => this.connect(exchange, callback, ui, onSubscribed),
+            2000,
+          );
         },
         "/",
       );
@@ -116,6 +142,8 @@ const TomSocketClient = function () {
    * Gracefully disconnect the WebSocket
    */
   this.disconnect = function () {
+    this._manualClosed = true;
+    clearTimeout(this._reconnectTimer);
     if (this.client && this.isConnected) {
       this.client.disconnect(() => {
         console.log("Socket gracefully disconnected to save resources.");

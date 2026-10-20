@@ -67,7 +67,8 @@ $logHandle = fopen($logFile, 'a');
 $tz = new DateTimeZone('Asia/Kolkata');
 $now = new DateTime('now', $tz);
 $istTime = $now->format('d M Y h:i:s A');
-fwrite($logHandle, "\n=== " . $istTime . " IST | Action: $action | Hash: $instanceHash ===\n");
+$utcTs = (new DateTime('now', new DateTimeZone('UTC')))->format('Y-m-d\TH:i:s.v') . 'Z';
+fwrite($logHandle, "\n[{$utcTs}] === " . $istTime . " IST | Action: $action | Hash: $instanceHash ===\n");
 
 $handle = popen($cmd, 'r');
 $success = false;
@@ -77,7 +78,8 @@ if (is_resource($handle)) {
         $line = fgets($handle); 
         if ($line) {
             $trimmed = trim($line);
-            fwrite($logHandle, $trimmed . "\n");
+            $lineTs = (new DateTime('now', new DateTimeZone('UTC')))->format('Y-m-d\TH:i:s.v') . 'Z';
+            fwrite($logHandle, "[{$lineTs}] " . $trimmed . "\n");
             fflush($logHandle);
             
             // Attempt to parse as JSON from our structured logger

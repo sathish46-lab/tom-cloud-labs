@@ -2,12 +2,14 @@ import pika
 import json
 import subprocess
 import os
+import re
 import sys
 import time
 import threading
 import queue
 import pymongo
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timezone
 
 # Configuration
 AMQP_HOST = os.environ.get('RABBITMQ_HOST', '127.0.0.1')
@@ -17,15 +19,32 @@ AMQP_PASS = os.environ.get('RABBITMQ_PASS', '')
 QUEUE_NAME = 'labs_jobs'
 DLQ_NAME = 'labs_jobs_dlq'
 LOG_FILE = '/var/log/labsctl/labsctl.log'
+RUNS_DIR = '/var/log/labsctl/runs'
+RUN_FILE_TTL = 7 * 86400  # keep per-run log files for gap-fill history for 7 days
 MAX_WORKERS = int(os.environ.get('MAX_WORKERS', '5'))
 
 def _file_log(msg):
     try:
         os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
+        ts = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
         with open(LOG_FILE, 'a') as f:
-            f.write(msg + '\n')
+            f.write(f"[{ts}] {msg}\n")
     except Exception as e:
         print(f" [!] _file_log write failed: {e}")
+
+def _cleanup_old_run_files():
+    """Delete per-run log files older than RUN_FILE_TTL (startup housekeeping)."""
+    try:
+        os.makedirs(RUNS_DIR, exist_ok=True)
+        cutoff = time.time() - RUN_FILE_TTL
+        for name in os.listdir(RUNS_DIR):
+            if not name.endswith('.log'):
+                continue
+            path = os.path.join(RUNS_DIR, name)
+            if os.path.getmtime(path) < cutoff:
+                os.remove(path)
+    except Exception as e:
+        print(f" [!] run-file cleanup failed: {e}")
 
 def _publish_to_dlq(job_data, reason="unknown"):
     """Publish failed job to Dead Letter Queue for later inspection."""
@@ -102,7 +121,7 @@ def reap_expired_challenges():
                 expires_at = inst.get('expires_at') or created_at + (inst.get('duration', 15) * 60)
                 if now_time >= expires_at:
                     subprocess.run([
-                        'sudo', '/usr/bin/python3', '/opt/labs-control-panel/labsctl.py',
+                        'sudo', 'labsctl',
                         'challenge', 'stop', f'--user={user}', f'--hash={hash_id}'
                     ])
                     try:
@@ -115,10 +134,15 @@ def reap_expired_challenges():
             print(f" [Reaper Error] {e}")
         time.sleep(15)
 
-def log_to_user(channel, exchange_name, routing_key, message):
+def log_to_user(channel, exchange_name, routing_key, message, seq=None, run=None):
     try:
-        payload = json.dumps({'log': message})
-        channel.basic_publish(exchange=exchange_name, routing_key=routing_key, body=payload)
+        payload = {'log': message}
+        if seq is not None:
+            payload['seq'] = seq
+        if run:
+            payload['run'] = run
+        body = json.dumps(payload)
+        channel.basic_publish(exchange=exchange_name, routing_key=routing_key, body=body)
     except Exception as e:
         print(f"Failed to log to user: {e}")
 
@@ -171,7 +195,7 @@ DEPLOY_PROGRESS_STEPS = [
     (r'Deployment Complete|Deploy complete|Access URL:', 100, 'Complete'),
 ]
 
-def _save_deploy_logs(instance_hash, logs, error_msg, is_build=False, action='deploy', duration=None, exit_code=None, user=None):
+def _save_deploy_logs(instance_hash, logs, error_msg, is_build=False, action='deploy', duration=None, exit_code=None, user=None, run_id=None):
     try:
         db = _get_mongo_client('tom_labs_instances_db')
         if not db:
@@ -183,6 +207,7 @@ def _save_deploy_logs(instance_hash, logs, error_msg, is_build=False, action='de
             'logs': logs[-200:],
             'status': 'error' if error_msg else 'success',
             'message': error_msg or '',
+            'run_id': run_id or '',
             'created_at': now,
             'expire_at': now + 300
         }
@@ -211,6 +236,7 @@ def _save_deploy_logs(instance_hash, logs, error_msg, is_build=False, action='de
                 'user': user or '',
                 'duration': duration or '',
                 'exit_code': exit_code if exit_code is not None else '',
+                'run_id': run_id or '',
                 'timestamp': now
             }
             labs_db.machine_labs.update_one(
@@ -232,7 +258,27 @@ def _run_job(job_data):
     """Execute a single job — thread owns its own AMQP connection"""
     instance_hash = None
     routing_key = None
+    run_id = None
+    ch = None
+    all_logs = []
+    error_lines = []
+    last_progress = 0
+    state = {'seq': -1, 'path': None, 'run': None}
     thread_name = threading.current_thread().name
+
+    def emit(msg, record=False):
+        """Single funnel for user-visible lines: seq + per-run file + AMQP (+ Mongo buffer)."""
+        state['seq'] += 1
+        try:
+            if state['path']:
+                with open(state['path'], 'a') as fh:
+                    fh.write(msg + '\n')
+        except Exception:
+            pass
+        if ch is not None and routing_key:
+            log_to_user(ch, "amq.topic", routing_key, msg, seq=state['seq'], run=state['run'])
+        if record:
+            all_logs.append(msg)
 
     try:
         job = json.loads(job_data)
@@ -241,25 +287,34 @@ def _run_job(job_data):
         user = job.get('user')
         action = job.get('action', 'deploy')
         lab = job.get('lab', 'essentials')
+        run_id = job.get('run_id')
 
-        print(f" [x] [{thread_name}] Received: {action} {instance_hash}")
+        # Per-run log file — the gap-fill source for browser WS reconnects.
+        # Filename is stable: explicit run_id, else instance_hash (legacy jobs).
+        os.makedirs(RUNS_DIR, exist_ok=True)
+        run_key = str(run_id or instance_hash or f'job-{int(time.time())}')
+        run_key = re.sub(r'[^A-Za-z0-9._-]', '_', run_key)[:80]
+        state['run'] = run_key
+        state['path'] = os.path.join(RUNS_DIR, f'{run_key}.log')
+
+        print(f" [x] [{thread_name}] Received: {action} {instance_hash} run={run_id or '-'}")
 
         conn = _get_amqp_connection()
         ch = conn.channel()
 
-        log_to_user(ch, "amq.topic", routing_key, f"[Queue] Job accepted. Worker [{thread_name}] assigned.")
-        _file_log(f"=== {time.strftime('%Y-%m-%d %H:%M:%S')} | {action} | {instance_hash} | user={user} | worker={thread_name} ===")
+        emit(f"[Queue] Job accepted. Worker [{thread_name}] assigned.")
+        _file_log(f"=== {time.strftime('%Y-%m-%d %H:%M:%S')} | {action} | {instance_hash} | user={user} | worker={thread_name} | run={run_id or '-'} ===")
 
         # Build command
         if job.get('is_challenge'):
-            cmd = ['sudo', '/usr/bin/python3', '/opt/labs-control-panel/labsctl.py',
+            cmd = ['sudo', 'labsctl',
                    'challenge', action, f"--user={user}", f"--hash={instance_hash}",
                    f"--challenge={job.get('challenge_id')}"]
         elif lab == 'instance':
-            cmd = ['sudo', '/usr/bin/python3', '/opt/labs-control-panel/labsctl.py',
+            cmd = ['sudo', 'labsctl',
                    'instance', action, f"--user={user}", f"--hash={instance_hash}"]
         else:
-            cmd = ['sudo', '/usr/bin/python3', '/opt/labs-control-panel/labsctl.py',
+            cmd = ['sudo', 'labsctl',
                    'lab', action, f"--user={user}", f"--hash={instance_hash}"]
             for flag, key in [("--vsc-domain", "vsc_domain"),
                               ("--minio-console-domain", "minio_console_domain"),
@@ -271,9 +326,9 @@ def _run_job(job_data):
         # TEST MODE
         if job.get('test_mode'):
             for step in range(3):
-                log_to_user(ch, "amq.topic", routing_key, f"[TEST] Simulation step {step+1}/3...")
+                emit(f"[TEST] Simulation step {step+1}/3...")
                 time.sleep(1)
-            log_to_user(ch, "amq.topic", routing_key, "[TEST] Simulation completed.")
+            emit("[TEST] Simulation completed.")
             conn.close()
             return
 
@@ -283,16 +338,11 @@ def _run_job(job_data):
 
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
 
-        error_lines = []
-        all_logs = []
-        last_progress = 0
-        import re
         for line in process.stdout:
             clean_line = line.strip()
             if clean_line:
-                log_to_user(ch, "amq.topic", routing_key, clean_line)
+                emit(clean_line, record=True)
                 _file_log(f"  {clean_line}")
-                all_logs.append(clean_line)
                 # Detect progress from log lines and send structured progress to browser
                 for pattern, pct, label in DEPLOY_PROGRESS_STEPS:
                     if re.search(pattern, clean_line, re.IGNORECASE) and pct > last_progress:
@@ -310,18 +360,18 @@ def _run_job(job_data):
         is_build = (action == 'build')
         if process.returncode == 0:
             if action == 'stop':
-                log_to_user(ch, "amq.topic", routing_key, "[*] Instance stopped. Page will reload in few seconds.")
+                emit("[*] Instance stopped. Page will reload in few seconds.")
             else:
-                log_to_user(ch, "amq.topic", routing_key, "[*] Your lab is up and ready to experiment... Page will reload in few seconds.")
-            log_to_user(ch, "amq.topic", routing_key, "[*] reload")
+                emit("[*] Your lab is up and ready to experiment... Page will reload in few seconds.")
+            emit("[*] reload")
             _file_log(f"[OK] {action} completed for {instance_hash}")
-            _save_deploy_logs(instance_hash, all_logs, None, is_build, action, duration_str, exit_code, user)
+            _save_deploy_logs(instance_hash, all_logs, None, is_build, action, duration_str, exit_code, user, run_id)
         else:
             error_msg = error_lines[-1] if error_lines else f"Exit code {process.returncode}"
-            log_to_user(ch, "amq.topic", routing_key, f"[!] {error_msg}")
-            log_to_user(ch, "amq.topic", routing_key, "[*] reload")
+            emit(f"[!] {error_msg}")
+            emit("[*] reload")
             _file_log(f"[FAIL] {action} failed for {instance_hash}: {error_msg}")
-            _save_deploy_logs(instance_hash, all_logs, error_msg, is_build, action, duration_str, exit_code, user)
+            _save_deploy_logs(instance_hash, all_logs, error_msg, is_build, action, duration_str, exit_code, user, run_id)
 
         conn.close()
 
@@ -333,13 +383,14 @@ def _run_job(job_data):
             try:
                 err_conn = _get_amqp_connection()
                 err_ch = err_conn.channel()
-                log_to_user(err_ch, "amq.topic", routing_key, f"[!] System Error: {str(e)}")
-                log_to_user(err_ch, "amq.topic", routing_key, "[*] reload")
+                ch = err_ch
+                emit(f"[!] System Error: {str(e)}")
+                emit("[*] reload")
                 err_conn.close()
             except Exception as err_notify_err:
                 print(f" [!] Failed to send error notification to user: {err_notify_err}")
         if instance_hash:
-            _save_deploy_logs(instance_hash, [f"[!] System Error: {str(e)}"], str(e))
+            _save_deploy_logs(instance_hash, [f"[!] System Error: {str(e)}"], str(e), run_id=run_id)
 
     finally:
         print(f" [x] [{thread_name}] Job Done")
@@ -349,6 +400,7 @@ def main():
     reaper = threading.Thread(target=reap_expired_challenges, daemon=True)
     reaper.start()
 
+    _cleanup_old_run_files()
     _file_log(f"=== Worker started | MAX_WORKERS={MAX_WORKERS} | PID={os.getpid()} ===")
 
     executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)

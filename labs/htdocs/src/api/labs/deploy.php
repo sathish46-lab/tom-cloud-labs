@@ -1,7 +1,5 @@
 <?php
 require_once __DIR__ . '/../../../src/load.php';
-require_once __DIR__ . '/../../lib/core/jobs/Process.class.php';
-require_once __DIR__ . '/../../lib/core/jobs/Worker.class.php';
 require_once __DIR__ . '/../../lib/core/RabbitClient.class.php';
 
 use TomLabs\Labs\IPManager;
@@ -13,7 +11,17 @@ $user = AuthMiddleware::requireAuth();
 
 $email = $user->getEmail();
 $labName = $_POST['lab'] ?? 'essentials';
-$instanceHash = $user->getLabHash($labName); 
+$instanceHash = $user->getLabHash($labName);
+
+// Unique per-run ID for THIS deploy invocation (kernel CSPRNG via
+// /proc/sys/kernel/random/uuid — ~0.33ms). Distinguishes concurrent runs of
+// the same lab (redeploy-during-deploy) and acts as an audit key in
+// deploy_log / deploy_history. Falls back to PHP CSPRNG if proc unavailable.
+$runId = @file_get_contents('/proc/sys/kernel/random/uuid');
+$runId = is_string($runId) ? trim($runId) : '';
+if ($runId === '') {
+    $runId = bin2hex(random_bytes(16));
+}
 
 try {
     $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
@@ -94,6 +102,7 @@ try {
                 'expose_web'    => $expose_web,
                 'http_proxies'  => $httpProxies,
                 'status'        => 'deploying',
+                'deploy_run_id' => $runId,
                 'created_at'    => time(),
                 'storage_path'  => get_config('storage_base') . "/" . md5($user->getEmail())
             ],
@@ -143,7 +152,8 @@ try {
                 'internal_ip'  => $internalIp,
                 'docker_ip'    => $dockerIp,
                 'tunnel_ip'    => $internalIp,
-                'status'       => 'deploying'
+                'status'       => 'deploying',
+                'deploy_run_id' => $runId
             ],
             '$push' => [
                 'activity_log' => [
@@ -183,6 +193,7 @@ try {
         'hash' => $instanceHash, 
         'user' => $user->getUsername(),
         'vsc_domain' => $code_domain,
+        'run_id' => $runId,
     ];
 
     $rabbit->sendToQueue('labs_jobs', $work);
@@ -190,7 +201,8 @@ try {
     echo json_encode([
         'status' => 'success', 
         'message' => 'Deployment queued',
-        'hash' => $instanceHash
+        'hash' => $instanceHash,
+        'run_id' => $runId,
     ]);
 
 } catch (Exception $e) {

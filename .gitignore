@@ -57,6 +57,8 @@ labs/htdocs/uploads/users/*
 # labs/htdocs/css/app.css
 
 labs/workspace/tools/*
+!labs/workspace/tools/trace_deploy.py
+!labs/workspace/tools/trace_deploy_mint_session.php
 
 # =========================
 # VPN API specific ignores

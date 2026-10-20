@@ -20700,6 +20700,9 @@ const Dashboard = {
   charts: {},
   historyLimit: 20,
   isFirstLoad: true,
+  // Per-run log sequence tracking (WS drop → reconnect gap recovery)
+  logSeq: {},
+  logGap: { fetching: false, pending: [] },
 
   /* ========================================================================
    * INITIALIZATION
@@ -20794,6 +20797,7 @@ const Dashboard = {
             `logs.${window.SESSION_HASH}`,
             (data) => this.appendLog(data),
             ui,
+            () => Dashboard.gapFillLogs(),
           );
         } else if (dot) {
           // Already connected — just update the dot color to green
@@ -21255,11 +21259,25 @@ const Dashboard = {
         const status = data.progress >= 100 ? 'completed' : 'running';
         DeployProgress.smoothUpdate(data.progress, data.label, status);
         if (data.progress >= 100) {
-          DeployProgress.active = false;
-          setTimeout(() => window.location.reload(), 2000);
+          DeployProgress.markComplete();
         }
       }
       return; // Progress messages don't go into the log panel
+    }
+
+    // Per-run sequence dedupe: drop lines already rendered (gap-fill overlap,
+    // reconnect races). While a gap-fill fetch is in flight, hold live lines
+    // so fetched (older) lines render first, then flush — order stays intact.
+    if (data && typeof data.seq === 'number') {
+      const seqKey = data.run || window.SESSION_HASH || '';
+      if (typeof Dashboard.logSeq[seqKey] === 'number' && data.seq <= Dashboard.logSeq[seqKey]) {
+        return;
+      }
+      if (Dashboard.logGap.fetching) {
+        Dashboard.logGap.pending.push(data);
+        return;
+      }
+      Dashboard.logSeq[seqKey] = data.seq;
     }
 
     // Extract message
@@ -21319,6 +21337,13 @@ const Dashboard = {
         ActivityTracker.setProcessing(false);
       }
 
+      // markComplete() already scheduled a reload (2s) — don't schedule a
+      // second, competing one here. Only the htmx fallback fires when the
+      // structured/raw-log completion path did not run (e.g. stop, offline).
+      if (typeof DeployProgress !== "undefined" && DeployProgress._completed) {
+        return;
+      }
+
       // Increased delay to 4s to ensure DB writes are fully committed/visible to PHP
       setTimeout(() => {
         if (typeof htmx !== 'undefined') {
@@ -21327,6 +21352,41 @@ const Dashboard = {
           location.reload();
         }
       }, 4000);
+    }
+  },
+
+  /**
+   * Recover log lines missed while the WebSocket was disconnected.
+   * Called via LogSocket's onSubscribed — fires on first subscribe AND after
+   * every auto-reconnect. STOMP topics have no replay, so we refill from the
+   * per-run file (/var/log/labsctl/runs/<run>.log) through /api/labs/logs.
+   * Seq dedupe in appendLog guarantees every line appears exactly once.
+   */
+  gapFillLogs: async function (hash) {
+    const target = hash || window.SESSION_HASH;
+    if (!target) return;
+    if (Dashboard.logGap.fetching) return;
+    Dashboard.logGap.fetching = true;
+    try {
+      const resp = await fetch(
+        `/api/labs/logs?hash=${encodeURIComponent(target)}&after=-1&ts=${Date.now()}`
+      );
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data && data.success && data.active && Array.isArray(data.lines)) {
+          for (const l of data.lines) {
+            Dashboard.appendLog({ log: l.log, seq: l.seq, run: data.run_id });
+          }
+        }
+      } else {
+        console.warn("[Dashboard] log gap-fill HTTP " + resp.status);
+      }
+    } catch (e) {
+      console.warn("[Dashboard] log gap-fill failed:", e);
+    } finally {
+      Dashboard.logGap.fetching = false;
+      const pend = Dashboard.logGap.pending.splice(0);
+      for (const p of pend) Dashboard.appendLog(p);
     }
   },
 };
@@ -21591,15 +21651,19 @@ async function executeRedeploy(labType) {
     const data = await response.json();
 
     if (data.status === 'success' && data.hash) {
-      // UPDATE GLOBAL HASH
+      const prevHash = window.SESSION_HASH;
       window.SESSION_HASH = data.hash;
 
-      // RECONNECT SOCKET to ensure we are listening to the active channel
-      console.log("[Dashboard] specific socket reconnecting to: " + data.hash);
-      LogSocket.disconnect();
-      setTimeout(() => {
-        LogSocket.connect("logs." + data.hash, (d) => Dashboard.appendLog(d));
-      }, 100);
+      // Only reconnect if the topic actually changed or the socket dropped.
+      // Tearing down a healthy socket opens a gap where early worker output
+      // is lost forever (topic exchange, no durable queue for the browser),
+      // so the bar would sit at 0%. For a same-hash redeploy the socket is
+      // already on logs.<hash> — leave it alone.
+      if (data.hash !== prevHash || !LogSocket.isConnected) {
+        console.log("[Dashboard] socket reconnecting to: " + data.hash);
+        LogSocket.disconnect();
+        LogSocket.connect("logs." + data.hash, (d) => Dashboard.appendLog(d), null, () => Dashboard.gapFillLogs());
+      }
     }
 
     Dashboard.appendLog("[*] Handshake accepted. Starting stream...");
@@ -21623,6 +21687,7 @@ async function executeRedeploy(labType) {
 const DeployProgress = {
   active: false,
   progress: 0,
+  _completed: false,
   
   // Deploy step patterns mapped to percentage
   steps: [
@@ -21716,11 +21781,10 @@ const DeployProgress = {
       }
     }
     
-    // Check completion
+    // Check completion — route through markComplete so we only ever
+    // schedule ONE reload no matter which path detects it first.
     if (/Deployment Complete|Deploy complete|Access URL:/i.test(line)) {
-      this.update(100, 'Complete', 'completed');
-      this.active = false;
-      setTimeout(() => window.location.reload(), 2000);
+      this.markComplete();
     }
     
     // Check failure
@@ -21752,9 +21816,22 @@ const DeployProgress = {
     animate();
   },
   
+  // Single completion path. Both the structured {progress:100} message and
+  // the raw "Deployment Complete" log can detect the end of a deploy — this
+  // makes them idempotent so only ONE reload is ever scheduled.
+  markComplete() {
+    if (this._completed) return;
+    this._completed = true;
+    this.progress = 100;
+    this.update(100, 'Complete', 'completed');
+    this.active = false;
+    setTimeout(() => window.location.reload(), 2000);
+  },
+
   start() {
     this.active = true;
     this.progress = 0;
+    this._completed = false;
     this.show();
     this.update(0, 'Starting deployment...', 'running');
   },
@@ -22069,7 +22146,7 @@ async function launchCodeIDE(event, targetUrl = null) {
 
         // Ensure we're listening on the live log channel for this lab
         if (window.LogSocket && !window.LogSocket.isConnected) {
-          window.LogSocket.connect(`logs.${window.SESSION_HASH}`, (d) => Dashboard.appendLog(d));
+          window.LogSocket.connect(`logs.${window.SESSION_HASH}`, (d) => Dashboard.appendLog(d), null, () => Dashboard.gapFillLogs());
         }
 
         let response = await fetch("/api/labs/ensure_codeserver", {
@@ -26448,10 +26525,14 @@ try {
  */
 const TomSocketClient = function () {
   this.client = null;
+  this.ws = null;
   this.isConnected = false;
   this.isConnecting = false;
   this.isSubscribed = false;
   this.subRetryCount = 0;
+  this._manualClosed = false;
+  this._reconnectTimer = null;
+  this._gen = 0;
 
   /**
    * Establish WebSocket connection to RabbitMQ
@@ -26502,6 +26583,24 @@ const TomSocketClient = function () {
       
       console.log(`[MQ] Connecting to WebSocket: ${wsUrl}`);
       const ws = new WebSocket(wsUrl);
+      this.ws = ws;
+      this._manualClosed = false;
+      const gen = (this._gen = this._gen + 1);
+      // Detect mid-session drops (stomp.js only reliably reports connect
+      // failures): on unexpected close, auto-reconnect so onSubscribed fires
+      // again and the log gap-fill can recover missed lines.
+      ws.addEventListener("close", () => {
+        if (this._manualClosed || gen !== this._gen) return;
+        this.isConnected = false;
+        this.isSubscribed = false;
+        if (ui && ui.dot) ui.dot.style.color = "#f38ba8";
+        console.warn("[MQ] WebSocket closed. Reconnecting in 2s...");
+        clearTimeout(this._reconnectTimer);
+        this._reconnectTimer = setTimeout(
+          () => this.connect(exchange, callback, ui, onSubscribed),
+          2000,
+        );
+      });
       this.client = Stomp.over(ws);
       this.client.debug = null; // Set to console.log for debugging
 
@@ -26525,7 +26624,11 @@ const TomSocketClient = function () {
           if (ui && ui.dot) ui.dot.style.color = "#f38ba8"; // Red
 
           console.warn("Socket connection failed, retrying in 2s...", err);
-          setTimeout(() => this.connect(exchange, callback, ui, onSubscribed), 2000);
+          clearTimeout(this._reconnectTimer);
+          this._reconnectTimer = setTimeout(
+            () => this.connect(exchange, callback, ui, onSubscribed),
+            2000,
+          );
         },
         "/",
       );
@@ -26539,6 +26642,8 @@ const TomSocketClient = function () {
    * Gracefully disconnect the WebSocket
    */
   this.disconnect = function () {
+    this._manualClosed = true;
+    clearTimeout(this._reconnectTimer);
     if (this.client && this.isConnected) {
       this.client.disconnect(() => {
         console.log("Socket gracefully disconnected to save resources.");

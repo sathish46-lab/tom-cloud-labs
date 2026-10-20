@@ -150,7 +150,6 @@ if (!$dryRun && $success > 0) {
     echo "\nLabs are now queued for redeployment.\n";
     echo "Monitor progress via:\n";
     echo "  - Dashboard: /labs/dashboard/\n";
-    echo "  - API: /api/labs/deploy_progress.php?hash=INSTANCE_HASH\n";
 }
 
 echo "\nDone.\n";
