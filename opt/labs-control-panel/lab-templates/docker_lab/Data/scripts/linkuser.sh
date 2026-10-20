@@ -161,11 +161,13 @@ chmod -R 755 "$HTCONFIG"
 # Reload Apache to apply any config changes
 service apache2 reload || true
 
-# 5. Code-Server Setup
-echo "[*] Setting up Code-Server..."
+# 5. Code-Server Setup (on-demand only)
+# Write config here; do NOT start the process at deploy.
+# It starts only via `labsctl lab ensure-codeserver` (UI "Launch Code IDE"),
+# which also installs the idle monitor.
+echo "[*] Configuring Code-Server (on-demand)..."
 pkill -9 -u "$USER_NAME" -f code-server 2>/dev/null || true
 fuser -k 8080/tcp 2>/dev/null || true
-sleep 2
 
 USER_CONFIG="$USER_HOME/.config/code-server/config.yaml"
 mkdir -p "$(dirname "$USER_CONFIG")"
@@ -179,19 +181,6 @@ CODE_CONFIG
 
 chown -R "$USER_NAME":"$USER_NAME" "$USER_HOME/.config" 2>&1 || true
 chmod 644 "$USER_CONFIG"
-
-# Optimized code-server startup with performance flags
-sudo -u "$USER_NAME" -H bash -c "nohup code-server \
-    --config $USER_CONFIG \
-    --disable-telemetry \
-    --disable-update-check \
-    > $USER_HOME/.code-server.log 2>&1 &"
-sleep 2
-
-if pgrep -u "$USER_NAME" -f code-server > /dev/null; then
-    echo "[✓] Code-server started"
-else
-    echo "[!] Code-server failed to start"
-fi
+echo "[✓] Code-server configured — starts on Launch Code IDE"
 
 echo "[✓] User configuration complete"

@@ -933,9 +933,8 @@ done
         self.run(f"docker exec {instance_id} fuser -k 8080/tcp 2>/dev/null || true")
         time.sleep(2)
 
-        # In-container home is the username-based mount (/var/labsstorage/home/<user>),
-        # NOT the md5 host storage path.
-        user_home = f"/var/labsstorage/home/{username}"
+        # In-container home is /home/<username> (bind-mount of the host storage dir).
+        user_home = f"/home/{username}"
         config_file = f"{user_home}/.config/code-server/config.yaml"
         log_file = f"{user_home}/.code-server.log"
         start_cmd = f"nohup code-server --disable-telemetry --disable-update-check --config {config_file} > {log_file} 2>&1 &"
@@ -998,7 +997,7 @@ done
             return
         script_content = lab_data.get("init_script", "#!/bin/bash\n")
         b64 = base64.b64encode(script_content.encode()).decode()
-        user_home = f"/var/labsstorage/home/{username}"
+        user_home = f"/home/{username}"
         rc, _ = self.run(
             f"docker exec {instance_id} bash -c 'echo {b64} | base64 -d > {user_home}/init.sh'",
             capture=True,

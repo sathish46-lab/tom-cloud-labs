@@ -83,8 +83,9 @@ if ! pgrep -f xfce4-session > /dev/null 2>&1; then
 fi
 
 LAB_USER=$(awk -F: '$3 >= 1000 && $3 < 65534 && $1 != "nobody" {print $1; exit}' /etc/passwd 2>/dev/null)
-if [ "${ENABLE_CODESERVER:-true}" = "true" ] && [ -n "$LAB_USER" ] && ! pgrep -u "$LAB_USER" -f code-server > /dev/null 2>&1; then
-    echo "[*] Starting code-server..."
+# Code-Server: write config only — starts on demand via ensure-codeserver (Launch Code IDE)
+if [ -n "$LAB_USER" ]; then
+    echo "[*] Configuring code-server (on-demand)..."
     USER_HOME=$(eval echo "~$LAB_USER")
     mkdir -p "$USER_HOME/.config/code-server"
     # Extract VNC password from kasmpasswd (first line of kasmvncpasswd -o output)
@@ -100,11 +101,7 @@ password: ${CODE_PASS}
 cert: false
 EOF
     chown -R "$LAB_USER:$LAB_USER" "$USER_HOME/.config"
-    sudo -u "$LAB_USER" -H bash -c "nohup code-server --config $USER_HOME/.config/code-server/config.yaml --disable-telemetry --disable-update-check > $USER_HOME/.code-server.log 2>&1 &"
-    sleep 2
-    pgrep -u "$LAB_USER" -f code-server > /dev/null && echo "[✓] Code-server started" || echo "[!] Code-server failed"
-else
-    echo "[*] Code-server disabled — skipping"
+    echo "[✓] Code-server configured — starts on Launch Code IDE"
 fi
 
 echo "[✓] GUI Essentials Lab ready — SSH(22) KasmVNC(8444)"

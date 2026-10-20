@@ -382,8 +382,7 @@ if [ -f "$XFCE_SETUP" ]; then
     bash "$XFCE_SETUP" "$USER_NAME" 2>/dev/null || echo "[!] XFCE layout setup skipped"
 fi
 
-# Start code-server
-if [ "${ENABLE_CODESERVER:-true}" = "true" ]; then
+# Code-Server config (on-demand only — starts via Launch Code IDE / ensure-codeserver)
 CODE_CONFIG="$USER_HOME/.config/code-server/config.yaml"
 mkdir -p "$(dirname "$CODE_CONFIG")"
 cat <<CODE_CONFIG_EOF > "$CODE_CONFIG"
@@ -393,17 +392,6 @@ password: ${VNC_PASSWORD}
 cert: false
 CODE_CONFIG_EOF
 chown -R "$USER_NAME:$USER_NAME" "$USER_HOME/.config"
-
-sudo -u "$USER_NAME" -H bash -c "nohup code-server --config $CODE_CONFIG --disable-telemetry --disable-update-check > $USER_HOME/.code-server.log 2>&1 &"
-sleep 2
-
-if pgrep -u "$USER_NAME" -f code-server > /dev/null; then
-    echo "[✓] Code-server started on port 8080"
-else
-    echo "[!] Code-server failed to start"
-fi
-else
-    echo "[*] Code-server disabled — skipping"
-fi
+echo "[✓] Code-server configured — starts on Launch Code IDE"
 
 echo "[✓] User configuration complete"
