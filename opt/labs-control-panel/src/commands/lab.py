@@ -73,8 +73,8 @@ class LabCmd(Command):
 
     def _cleanup_stale_docker_ips(self):
         """Release Docker IPs claimed by non-running labs."""
-        docker_ip_col = self.db["docker_ip_registry"] if self.db else None
-        if not docker_ip_col:
+        docker_ip_col = self.db["docker_ip_registry"] if self.db is not None else None
+        if docker_ip_col is None:
             return
         claimed = docker_ip_col.find({"status": "claimed"})
         released = 0
@@ -289,11 +289,12 @@ class LabCmd(Command):
             return
 
         # IPs — IPManager-style allocation from lab_ips pool
-        lab_ips_col = self.db["ip_registry"] if self.db else None
-        instances_col = self.instances_db().instances if self.instances_db() else None
+        lab_ips_col = self.db["ip_registry"] if self.db is not None else None
+        instances_db = self.instances_db()
+        instances_col = instances_db.instances if instances_db is not None else None
 
         # Get user email for IP registry
-        user_profile = self.db.users.find_one({"username": username}) if self.db else None
+        user_profile = self.db.users.find_one({"username": username}) if self.db is not None else None
         user_email = user_profile.get('email', username) if user_profile else username
 
         allocated_ip = None
@@ -305,21 +306,21 @@ class LabCmd(Command):
             self.log(f"Reusing existing lab IP from DB: {allocated_ip}")
 
         # Priority 2: Check ip_registry for IP allocated to this instance
-        if not allocated_ip and lab_ips_col:
+        if not allocated_ip and lab_ips_col is not None:
             existing = lab_ips_col.find_one({"allocated_to": instance_id})
             if existing:
                 allocated_ip = existing["ip_addr"]
                 self.log(f"Reusing allocated IP: {allocated_ip}")
 
         # Mark the IP as reserved in ip_registry
-        if allocated_ip and lab_ips_col:
+        if allocated_ip and lab_ips_col is not None:
             lab_ips_col.update_one(
                 {"ip_addr": allocated_ip},
                 {"$set": {"status": "reserved", "allocated_to": instance_id, "email": user_email, "reserved_to": username}}
             )
 
         # Priority 3: Allocate new IP from pool
-        if not allocated_ip and lab_ips_col:
+        if not allocated_ip and lab_ips_col is not None:
             result = lab_ips_col.find_one_and_update(
                 {"status": "available", "ip_numeric": {"$gt": 1}},
                 {
@@ -343,7 +344,7 @@ class LabCmd(Command):
                 self._fail_deploy(instance_id, "IP Pool Exhausted!")
                 return
 
-        if allocated_ip and instances_col:
+        if allocated_ip and instances_col is not None:
             last_octet = allocated_ip.split(".")[-1]
             try:
                 instances_col.update_one(
@@ -446,10 +447,10 @@ class LabCmd(Command):
 
         # -- Atomic Docker IP Allocation via MongoDB --
         # findOneAndUpdate is atomic at document level -- only ONE process wins each claim.
-        docker_ip_col = self.db["docker_ip_registry"] if self.db else None
+        docker_ip_col = self.db["docker_ip_registry"] if self.db is not None else None
         docker_ip = None
 
-        if docker_ip_col:
+        if docker_ip_col is not None:
             docker_ip_col.create_index("octet", unique=True, background=True)
             if docker_ip_col.count_documents({}) == 0:
                 bulk = [{"octet": i, "ip": self.cfg.docker_ip + str(i), "status": "available"} for i in range(3, 255)]
@@ -533,8 +534,8 @@ class LabCmd(Command):
         if not result:
             self._fail_deploy(instance_id, "Container failed to start")
             # Release the Docker IP we claimed
-            docker_ip_col = self.db["docker_ip_registry"] if self.db else None
-            if docker_ip_col:
+            docker_ip_col = self.db["docker_ip_registry"] if self.db is not None else None
+            if docker_ip_col is not None:
                 docker_ip_col.update_one(
                     {"instance_hash": instance_id, "status": "claimed"},
                     {"$set": {"status": "available", "instance_hash": "", "user": "", "claimed_at": 0}}
@@ -590,7 +591,7 @@ service apache2 reload 2>/dev/null || true
         # Phase: CONFIGURE — User environment
         self.log(f"Configuring user environment for {username}...")
 
-        user_keys = list(self.db.ssh_keys.find({"username": username})) if self.db else []
+        user_keys = list(self.db.ssh_keys.find({"username": username})) if self.db is not None else []
         auth_content = "\n".join([k['public_key'] for k in user_keys if 'public_key' in k])
         ssh_enabled = len(user_keys) > 0
         self.log(f"Syncing ssh authorized_keys for {username} ({len(user_keys)} key(s))")
@@ -744,10 +745,30 @@ grep -q "{vpn_domain}" /etc/hosts || echo "{tunnel_gw_internal} {vpn_domain}" >>
     def _gen_traefik(self, instance_id, docker_ip, lab_spec, lab_data, args=None):
         """Generate Traefik YAML config."""
         # TLS on/off. Dev (tls_enabled=false) → plain-HTTP routers (no tls, reachable
-        # via http://host:9080 without certs); prod (tls_enabled=true, default) → HTTPS.
+        # via http://host:9080 without certs); prod (tls_enabled=true, default) → both.
+        # The Cloudflare tunnel forwards public traffic as PLAIN HTTP to :80, while
+        # direct /etc/hosts access uses HTTPS on :443. Traefik only matches `tls: {}`
+        # routers over TLS and only plain routers over plain HTTP, so in prod we emit
+        # TWO routers per rule: plain `[web]` + `-tls` twin on `[websecure]`.
         tls_enabled = bool(self.cfg.get("tls_enabled", True))
-        _entrypoints = "[web, websecure]" if tls_enabled else "[web]"
-        _tls = "      tls: {}\n" if tls_enabled else ""
+
+        def _router(key, rule, service, priority, middlewares=None):
+            mw = f"      middlewares: [{', '.join(middlewares)}]\n" if middlewares else ""
+            out = f"    {key}:\n"
+            out += f'      rule: "{rule}"\n'
+            out += f"      entryPoints: [web]\n"
+            out += f"      service: {service}\n"
+            out += f"      priority: {priority}\n"
+            out += mw
+            if tls_enabled:
+                out += f"    {key}-tls:\n"
+                out += f'      rule: "{rule}"\n'
+                out += f"      entryPoints: [websecure]\n"
+                out += f"      tls: {{}}\n"
+                out += f"      service: {service}\n"
+                out += f"      priority: {priority}\n"
+                out += mw
+            return out
 
         services_spec = lab_spec.get("services", {})
         base_domain = self.cfg.code_domain
@@ -783,11 +804,7 @@ grep -q "{vpn_domain}" /etc/hosts || echo "{tunnel_gw_internal} {vpn_domain}" >>
             router_key = f"router-{instance_id}-{svc_name}"
             service_key = f"service-{instance_id}-{svc_name}"
 
-            routers += f"    {router_key}:\n"
-            routers += f'      rule: "Host(`{domain}`)"\n'
-            routers += f"      service: {service_key}\n"
-            routers += f"      entryPoints: {_entrypoints}\n{_tls}"
-            routers += f"      priority: 100\n"
+            routers += _router(router_key, f"Host(`{domain}`)", service_key, 100)
 
             services += f"    {service_key}:\n"
             services += f"      loadBalancer:\n"
@@ -808,21 +825,14 @@ grep -q "{vpn_domain}" /etc/hosts || echo "{tunnel_gw_internal} {vpn_domain}" >>
             services += f"      loadBalancer:\n"
             services += f"        servers: [{{url: \"http://{docker_ip}:{web_port}\"}}]\n"
             for idx, domain in enumerate(user_domains):
-                routers += f"    router-{instance_id}-custom-{idx}:\n"
-                routers += f'      rule: "Host(`{domain}`)"\n'
-                routers += f"      service: {web_svc}\n"
-                routers += f"      entryPoints: {_entrypoints}\n{_tls}"
-                routers += f"      priority: 100\n"
+                routers += _router(f"router-{instance_id}-custom-{idx}", f"Host(`{domain}`)", web_svc, 100)
 
         for idx, proxy in enumerate(lab_data.get("http_proxies", [])):
             p_port = proxy.get("port")
             p_domain = proxy.get("domain")
             if p_port and p_domain:
-                routers += f"    router-{instance_id}-proxy-{idx}:\n"
-                routers += f'      rule: "Host(`{p_domain}`)"\n'
-                routers += f"      service: service-{instance_id}-proxy-{idx}\n"
-                routers += f"      entryPoints: {_entrypoints}\n{_tls}"
-                routers += f"      priority: 150\n"
+                routers += _router(f"router-{instance_id}-proxy-{idx}", f"Host(`{p_domain}`)",
+                                   f"service-{instance_id}-proxy-{idx}", 150)
                 services += f"    service-{instance_id}-proxy-{idx}:\n"
                 services += f"      loadBalancer:\n"
                 services += f"        servers: [{{url: \"http://{docker_ip}:{p_port}\"}}]\n"
@@ -857,7 +867,7 @@ grep -q "{vpn_domain}" /etc/hosts || echo "{tunnel_gw_internal} {vpn_domain}" >>
         """Start code-server on demand and install an idle monitor that stops it."""
         if not self.docker_running(instance_id):
             self.log(f"Container {instance_id} not found/not running", "error")
-            return
+            return False
 
         # Lock file to prevent concurrent starts (race condition fix)
         lock_file = "/tmp/.codeserver_starting.lock"
@@ -866,7 +876,7 @@ grep -q "{vpn_domain}" /etc/hosts || echo "{tunnel_gw_internal} {vpn_domain}" >>
         lock_check = self.run(f"docker exec {instance_id} bash -c 'if [ -f {lock_file} ]; then age=$(($(date +%s) - $(stat -c %Y {lock_file} 2>/dev/null || echo 0))); if [ $age -lt 30 ]; then exit 1; fi; fi; touch {lock_file} && exit 0'", capture=True)
         if lock_check[0] != 0:
             self.log("Code-server start already in progress (lock held), skipping.", "warn")
-            return
+            return False
         
         # Check if code-server is already running
         check = f"docker exec {instance_id} pgrep -u {username} -f code-server"
@@ -874,7 +884,7 @@ grep -q "{vpn_domain}" /etc/hosts || echo "{tunnel_gw_internal} {vpn_domain}" >>
         if code == 0:
             self.log("Code-server is already running.", "success")
             self.run(f"docker exec {instance_id} rm -f {lock_file}")
-            return
+            return True
         
         # Kill any zombie code-server processes before starting fresh
         self.run(f"docker exec {instance_id} pkill -9 -u {username} -f code-server 2>/dev/null || true")
@@ -925,7 +935,7 @@ done
             count = count_out[1].strip() if count_out[1] else "?"
             self.log(f"Code-server is already running ({count} procs).", "success")
             self.run(f"docker exec {instance_id} rm -f {lock_file}")
-            return
+            return True
 
         # Kill ALL zombie code-server processes before starting fresh
         self.log("Cleaning up zombie code-server processes...", "info")
@@ -940,25 +950,31 @@ done
         start_cmd = f"nohup code-server --disable-telemetry --disable-update-check --config {config_file} > {log_file} 2>&1 &"
         docker_cmd = f"docker exec -d -u {username} {instance_id} bash -c '{start_cmd}'"
         code, _ = self.run(docker_cmd)
+        started = False
         if code == 0:
             time.sleep(2)
             code, _ = self.run(check, capture=True)
             if code == 0:
                 self.log("Code-server started successfully.", "success")
+                started = True
             else:
                 self.log("Code-server failed to stay running.", "error")
         else:
             self.log("Failed to start code-server.", "error")
-        
+
         # Remove lock file
         self.run(f"docker exec {instance_id} rm -f {lock_file}")
+        return started
 
     def _ensure_codeserver_cmd(self, args):
         instance_id, username = self._resolve_user_hash_args(args)
         if not instance_id or not username:
-            return
+            sys.exit(1)
         self.log("Ensuring code-server is running...", "info")
-        self._ensure_codeserver(instance_id, username)
+        if not self._ensure_codeserver(instance_id, username):
+            # Non-zero exit: labs_worker keys its success lines and the UI's
+            # ready-marker wait on rc — a silent 0 would read as "launched".
+            sys.exit(1)
 
     def _code_status(self, instance_id, username):
         """Report whether code-server is currently running for the user (JSON on stdout)."""
@@ -1087,8 +1103,8 @@ done
             self._set_deploy_field(instance_id, "status", "stopped")
 
             # Release Docker IP back to pool
-            docker_ip_col = self.db["docker_ip_registry"] if self.db else None
-            if docker_ip_col:
+            docker_ip_col = self.db["docker_ip_registry"] if self.db is not None else None
+            if docker_ip_col is not None:
                 docker_ip_col.update_one(
                     {"instance_hash": instance_id, "status": "claimed"},
                     {"$set": {"status": "available", "instance_hash": "", "user": "", "claimed_at": 0}}
@@ -1166,7 +1182,7 @@ done
 
         self._stop(args)
 
-        if username and self.db:
+        if username and self.db is not None:
             remaining = self.db.machine_labs.count_documents({
                 "username": username,
                 "instance_hash": {"$ne": instance_id}
@@ -1209,7 +1225,7 @@ done
 
         self.log(f"Syncing permissions for user: {username}...")
 
-        if not self.db:
+        if self.db is None:
             self.log("Database connection failed", "error")
             return
 
@@ -1219,7 +1235,7 @@ done
             return
 
         import hashlib
-        user_profile = self.db.users.find_one({"username": username}) if self.db else None
+        user_profile = self.db.users.find_one({"username": username}) if self.db is not None else None
         user_email = user_profile.get("email", username) if user_profile else username
         user_hash = hashlib.md5(user_email.encode()).hexdigest()
 

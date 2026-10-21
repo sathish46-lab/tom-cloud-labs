@@ -292,7 +292,7 @@ class Challenge(BaseOrchestrator):
         self.log(f"Stopping challenge: {container_name}", "info", "init")
 
         # Fetch metadata
-        challenge_data = self.db.challenge_instances.find_one({"instance_hash": instance_id}) if self.db else None
+        challenge_data = self.db.challenge_instances.find_one({"instance_hash": instance_id}) if self.db is not None else None
 
         if challenge_data:
             tunnel_ip = challenge_data.get('credentials', {}).get('tunnel_ip') or challenge_data.get('tunnel_ip')
@@ -307,7 +307,7 @@ class Challenge(BaseOrchestrator):
         if self.docker.container_exists(container_name):
             self.run(f"docker rm -f {container_name}")
 
-            if self.db:
+            if self.db is not None:
                 self.db.challenge_instances.update_one(
                     {"instance_hash": instance_id},
                     {"$set": {"status": "stopped", "updated_at": time.time()}}
@@ -334,7 +334,7 @@ class Challenge(BaseOrchestrator):
             self.log("Challenge container started.", "success", "container")
             
             # Re-apply routing rules on start
-            challenge_data = self.db.challenge_instances.find_one({"instance_hash": instance_id}) if self.db else None
+            challenge_data = self.db.challenge_instances.find_one({"instance_hash": instance_id}) if self.db is not None else None
             if challenge_data:
                 tunnel_ip = challenge_data.get('credentials', {}).get('tunnel_ip')
                 docker_ip = challenge_data.get('credentials', {}).get('docker_ip')
@@ -347,7 +347,7 @@ class Challenge(BaseOrchestrator):
                     bridge_id = self.detect_bridge(docker_network)
                     self.configure_routing(tunnel_ip, docker_ip, bridge_id, dnat=True)
 
-            if self.db:
+            if self.db is not None:
                 self.db.challenge_instances.update_one(
                     {"instance_hash": instance_id},
                     {"$set": {"status": "running", "updated_at": time.time()}}
@@ -368,7 +368,7 @@ class Challenge(BaseOrchestrator):
 
         self.stop()
 
-        if self.db:
+        if self.db is not None:
             result = self.db.challenge_instances.delete_one({"instance_hash": instance_id})
             if result.deleted_count > 0:
                 self.log("Challenge assignment removed from database.", "success", "done")
@@ -417,7 +417,7 @@ class Challenge(BaseOrchestrator):
         challenge_ip = f"10.20.0.{next_octet}"
 
         # Register in the VPN network pool
-        challenge_user = self.db.users.find_one({"username": username}) if self.db else None
+        challenge_user = self.db.users.find_one({"username": username}) if self.db is not None else None
         challenge_email = challenge_user.get('email', username) if challenge_user else username
         vpn_db.networks.insert_one({
             "email": challenge_email,

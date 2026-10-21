@@ -25,12 +25,12 @@ class InstanceBulkCmd(Command):
     def _get_collection(self, name):
         """Get MongoDB collection."""
         db = self.mongo_client['tom_labs_db'] if self.mongo_client else None
-        return db[name] if db else None
+        return db[name] if db is not None else None
 
     def _find_labs(self, filters):
         """Find labs matching filters."""
         col = self._get_collection('machine_labs')
-        if not col:
+        if col is None:
             return []
 
         query = {}
@@ -56,7 +56,7 @@ class InstanceBulkCmd(Command):
     def _update_lab_status(self, instance_id, status, extra_fields=None):
         """Update lab status in database."""
         col = self._get_collection('machine_labs')
-        if not col:
+        if col is None:
             return
 
         update = {'status': status, 'updated_at': datetime.utcnow()}
@@ -71,7 +71,7 @@ class InstanceBulkCmd(Command):
     def _update_deploy_status(self, instance_id, status, extra_fields=None):
         """Update deploy status in database."""
         col = self._get_collection('machine_labs')
-        if not col:
+        if col is None:
             return
 
         update = {'deploy.status': status, 'updated_at': datetime.utcnow()}
@@ -133,7 +133,7 @@ class InstanceBulkCmd(Command):
 
         # Enqueue jobs
         queue_col = self._get_collection('deploy_queue')
-        if not queue_col:
+        if queue_col is None:
             print("  ERROR: Cannot access deploy_queue collection")
             return
 
@@ -347,7 +347,7 @@ class InstanceBulkCmd(Command):
     def _queue_status(self, args):
         """Show queue status."""
         queue_col = self._get_collection('deploy_queue')
-        if not queue_col:
+        if queue_col is None:
             print("  Queue not available")
             return
 
@@ -383,7 +383,7 @@ class InstanceBulkCmd(Command):
     def _cancel(self, args):
         """Cancel pending jobs."""
         queue_col = self._get_collection('deploy_queue')
-        if not queue_col:
+        if queue_col is None:
             print("  Queue not available")
             return
 
@@ -401,7 +401,7 @@ class InstanceBulkCmd(Command):
         """Cleanup old queue entries."""
         days = int(args.flag('days', '7'))
         queue_col = self._get_collection('deploy_queue')
-        if not queue_col:
+        if queue_col is None:
             print("  Queue not available")
             return
 

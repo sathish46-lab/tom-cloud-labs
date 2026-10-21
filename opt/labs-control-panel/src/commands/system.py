@@ -129,7 +129,7 @@ class SystemCmd(Command):
         print("  " + "-" * 85 + "\n")
 
     def _db(self, args):
-        if not self.db:
+        if self.db is None:
             self.log("Database not connected", "error")
             return
 

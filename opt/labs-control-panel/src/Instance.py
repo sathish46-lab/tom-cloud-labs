@@ -53,7 +53,7 @@ class Instance(Lab):
 
     def _overlay_user_files(self, instance_id, template_name, dest_dir):
         """Read user files from DB and write them on top of base template."""
-        if not self.files_db:
+        if self.files_db is None:
             self.log("Files DB not available", "warn", "build")
             return
 

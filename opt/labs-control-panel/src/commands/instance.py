@@ -35,15 +35,15 @@ class InstanceCmd(Command):
 
     def _inst_col(self):
         idb = self.instances_db()
-        return idb.instances if idb else None
+        return idb.instances if idb is not None else None
 
     def _get(self, instance_id):
         col = self._inst_col()
-        return col.find_one({"instance_hash": instance_id}) if col else None
+        return col.find_one({"instance_hash": instance_id}) if col is not None else None
 
     def _set_status(self, instance_id, status):
         col = self._inst_col()
-        if col:
+        if col is not None:
             col.update_one(
                 {"instance_hash": instance_id},
                 {"$set": {"status": status, "updated_at": time.time()}}
@@ -51,7 +51,7 @@ class InstanceCmd(Command):
 
     def _set_deploy_field(self, instance_id, field, value):
         col = self._inst_col()
-        if col:
+        if col is not None:
             col.update_one(
                 {"instance_hash": instance_id},
                 {"$set": {f"deploy.{field}": value, "updated_at": time.time()}}
@@ -67,12 +67,12 @@ class InstanceCmd(Command):
     def _get_collection(self, name):
         """Get MongoDB collection from main DB."""
         db = self.mongo_client['tom_labs_db'] if self.mongo_client else None
-        return db[name] if db else None
+        return db[name] if db is not None else None
 
     def _find_labs(self, filters):
         """Find labs matching filters from machine_labs."""
         col = self._get_collection('machine_labs')
-        if not col:
+        if col is None:
             return []
 
         query = {}
@@ -100,7 +100,7 @@ class InstanceCmd(Command):
     def _update_lab_status(self, instance_id, status, extra_fields=None):
         """Update lab status in machine_labs."""
         col = self._get_collection('machine_labs')
-        if not col:
+        if col is None:
             return
 
         update = {'status': status, 'updated_at': datetime.utcnow()}
@@ -150,7 +150,7 @@ class InstanceCmd(Command):
 
             # Overlay user files from DB
             files_db = self.mongo_client["tom_labs_instances_db"] if self.mongo_client else None
-            if files_db:
+            if files_db is not None:
                 user_doc = files_db.instance_files.find_one({"instance_id": instance_id})
                 if user_doc:
                     count = 0
@@ -180,7 +180,7 @@ class InstanceCmd(Command):
                 self._set_status(instance_id, "built")
                 # Store build info
                 col = self._inst_col()
-                if col:
+                if col is not None:
                     col.update_one(
                         {"instance_hash": instance_id},
                         {"$set": {"build": {
@@ -238,10 +238,10 @@ class InstanceCmd(Command):
         # Override write methods to target instances collection, not machine_labs
         col = self._inst_col()
         def _inst_set_deploy_field(iid, field, value):
-            if col:
+            if col is not None:
                 col.update_one({"instance_hash": iid}, {"$set": {f"deploy.{field}": value, "updated_at": time.time()}})
         def _inst_set_deploy_fields(iid, fields):
-            if col:
+            if col is not None:
                 sf = {}
                 for k, v in fields.items():
                     sf[f"deploy.{k}"] = v
@@ -255,7 +255,7 @@ class InstanceCmd(Command):
             import sys, time as _t
             lab_cmd.log(msg, "error")
             _inst_set_deploy_field(iid, "status", "error")
-            if col:
+            if col is not None:
                 now = _t.time()
                 col.update_one({"instance_hash": iid}, {"$set": {
                     "deploy.last_error": msg,
@@ -408,7 +408,7 @@ class InstanceCmd(Command):
         self._stop(args)
 
         # Release quota if user has no more labs (check machine_labs collection)
-        if username and self.db:
+        if username and self.db is not None:
             remaining = self.db.machine_labs.count_documents({
                 "username": username,
                 "instance_hash": {"$ne": instance_id}
@@ -505,7 +505,7 @@ class InstanceCmd(Command):
 
         # Enqueue jobs
         queue_col = self._get_collection('deploy_queue')
-        if not queue_col:
+        if queue_col is None:
             print("  ERROR: Cannot access deploy_queue collection")
             return
 
@@ -719,7 +719,7 @@ class InstanceCmd(Command):
     def _queue_status(self, args):
         """Show queue status."""
         queue_col = self._get_collection('deploy_queue')
-        if not queue_col:
+        if queue_col is None:
             print("  Queue not available")
             return
 
@@ -755,7 +755,7 @@ class InstanceCmd(Command):
     def _cancel(self, args):
         """Cancel pending jobs."""
         queue_col = self._get_collection('deploy_queue')
-        if not queue_col:
+        if queue_col is None:
             print("  Queue not available")
             return
 
@@ -773,7 +773,7 @@ class InstanceCmd(Command):
         """Cleanup old queue entries."""
         days = int(args.flag('days', '7'))
         queue_col = self._get_collection('deploy_queue')
-        if not queue_col:
+        if queue_col is None:
             print("  Queue not available")
             return
 

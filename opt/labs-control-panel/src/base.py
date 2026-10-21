@@ -48,7 +48,7 @@ class Base:
 
     def col(self, name):
         """Get a collection from the main DB."""
-        return self.db[name] if self.db else None
+        return self.db[name] if self.db is not None else None
 
     def instances_db(self):
         """Get the instances database."""
@@ -208,12 +208,39 @@ class Base:
 
     # ── Traefik helpers ─────────────────────────────────────────
 
+    def _reload_traefik(self):
+        """Pick up new/changed router files.
+
+        /etc/traefik (including dynamic_conf) is a host bind-mount, so
+        Traefik's file-provider inotify watch never fires for files written
+        from inside this container — a restart is the only reliable way to
+        load changes. Best-effort: on failure routing keeps whatever set was
+        loaded before, so never fail the caller.
+        """
+        code, out = self.run("systemctl restart traefik 2>/dev/null", capture=True)
+        if code != 0:
+            self.log(f"Traefik reload failed (routing may be stale): {out or 'systemctl unavailable'}", "warn")
+
     def write_traefik(self, instance_id, yaml_content):
         path = os.path.join(self.cfg.traefik_conf_dir, f"{instance_id}.yml")
         try:
-            with open(path, "w") as f:
+            previous = None
+            if os.path.exists(path):
+                try:
+                    with open(path, "r") as f:
+                        previous = f.read()
+                except Exception:
+                    previous = None
+            if previous == yaml_content:
+                self.log(f"Traefik config unchanged: {path}")
+                return
+            # Atomic: a concurrent reload must never read a half-written file.
+            tmp_path = f"{path}.tmp.{os.getpid()}"
+            with open(tmp_path, "w") as f:
                 f.write(yaml_content)
+            os.replace(tmp_path, path)
             self.log(f"Traefik config written: {path}", "success")
+            self._reload_traefik()
         except Exception as e:
             self.log(f"Traefik write failed: {e}", "error")
 
@@ -223,6 +250,7 @@ class Base:
             try:
                 os.remove(path)
                 self.log(f"Traefik config removed: {instance_id}", "success")
+                self._reload_traefik()
             except Exception as e:
                 self.log(f"Traefik remove failed: {e}", "warn")
 

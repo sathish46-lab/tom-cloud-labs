@@ -162,14 +162,40 @@ class BaseOrchestrator:
             return True
         return False
 
+    def _reload_traefik(self):
+        """Pick up new/changed router files.
+
+        /etc/traefik (incl. dynamic_conf) is a host bind-mount, so Traefik's
+        file-provider inotify watch never fires for files written from inside
+        this container — a restart is the only reliable way to load changes.
+        Best-effort: never fail the caller if systemctl is unavailable.
+        """
+        code, out = self.run("systemctl restart traefik 2>/dev/null", capture=True)
+        if code != 0:
+            self.log(f"Traefik reload failed (routing may be stale): {out or 'systemctl unavailable'}", "warn", "traefik")
+
     def write_traefik_config(self, instance_id, config_content):
         """Writes a Traefik YAML from a string."""
         traefik_conf_dir = self.config.get('traefik_conf_dir', '/etc/traefik/dynamic_conf')
         traefik_file_path = os.path.join(traefik_conf_dir, f"{instance_id}.yml")
         try:
-            with open(traefik_file_path, "w") as f:
+            previous = None
+            if os.path.exists(traefik_file_path):
+                try:
+                    with open(traefik_file_path, "r") as f:
+                        previous = f.read()
+                except Exception:
+                    previous = None
+            if previous == config_content:
+                self.log(f"Traefik config unchanged: {traefik_file_path}", "info", "traefik")
+                return
+            # Atomic: a concurrent reload must never read a half-written file.
+            tmp_path = f"{traefik_file_path}.tmp.{os.getpid()}"
+            with open(tmp_path, "w") as f:
                 f.write(config_content)
+            os.replace(tmp_path, traefik_file_path)
             self.log("Traefik configuration applied", "success", "traefik")
+            self._reload_traefik()
         except Exception as e:
             self.log(f"Traefik config failed: {str(e)}", "error", "traefik")
 
@@ -181,5 +207,6 @@ class BaseOrchestrator:
             try:
                 os.remove(traefik_file_path)
                 self.log(f"Traefik route removed for {instance_id}", "success", "traefik")
+                self._reload_traefik()
             except Exception as e:
                 self.log(f"Traefik cleanup error: {str(e)}", "warn", "traefik")

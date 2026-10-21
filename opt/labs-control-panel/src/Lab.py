@@ -144,9 +144,29 @@ class Lab(BaseOrchestrator):
         base_domain = self.cfg.code_domain
 
         # TLS on/off (config.json tls_enabled). Dev=false → plain-HTTP routers.
+        # Prod=true → TWO routers per rule: plain `[web]` (the Cloudflare tunnel
+        # forwards public traffic as plain HTTP to :80) + a `-tls` twin on
+        # `[websecure]` (direct /etc/hosts HTTPS on :443). Traefik only matches
+        # `tls: {}` routers over TLS and only plain routers over plain HTTP.
         tls_enabled = bool(self.config.get('tls_enabled', True))
-        _entrypoints = "[web, websecure]" if tls_enabled else "[web]"
-        _tls = "      tls: {}\n" if tls_enabled else ""
+
+        def _router(key, rule, service, priority, middlewares):
+            mw = f"      middlewares: [{', '.join(middlewares)}]\n" if middlewares else ""
+            out = f"    {key}:\n"
+            out += f'      rule: "{rule}"\n'
+            out += f"      entryPoints: [web]\n"
+            out += f"      service: {service}\n"
+            out += f"      priority: {priority}\n"
+            out += mw
+            if tls_enabled:
+                out += f"    {key}-tls:\n"
+                out += f'      rule: "{rule}"\n'
+                out += f"      entryPoints: [websecure]\n"
+                out += f"      tls: {{}}\n"
+                out += f"      service: {service}\n"
+                out += f"      priority: {priority}\n"
+                out += mw
+            return out
 
         routers = ""
         services = ""
@@ -178,16 +198,11 @@ class Lab(BaseOrchestrator):
             
             router_key = f"router-{instance_id}-{svc_name}"
             service_key = f"service-{instance_id}-{svc_name}"
-            
-            routers += f"    {router_key}:\n"
-            routers += f"      rule: \"Host(`{domain}`)\"\n"
-            routers += f"      service: {service_key}\n"
-            routers += f"      entryPoints: {_entrypoints}\n{_tls}"
-            routers += f"      priority: 100\n"
+
             mw_list = ['custom-errors']
             if svc_spec.get('middlewares'):
                 mw_list.extend(svc_spec['middlewares'])
-            routers += f"      middlewares: [{', '.join(mw_list)}]\n"
+            routers += _router(router_key, f"Host(`{domain}`)", service_key, 100, mw_list)
             
             services += f"    {service_key}:\n"
             services += f"      loadBalancer:\n"
@@ -205,12 +220,8 @@ class Lab(BaseOrchestrator):
             services += f"        servers: [{{url: \"http://{docker_ip}:{web_port}\"}}]\n"
             
             for idx, domain in enumerate(user_domains):
-                routers += f"    router-{instance_id}-custom-{idx}:\n"
-                routers += f"      rule: \"Host(`{domain}`)\"\n"
-                routers += f"      service: {web_service_key}\n"
-                routers += f"      entryPoints: {_entrypoints}\n{_tls}"
-                routers += f"      priority: 100\n"
-                routers += f"      middlewares: [custom-errors]\n"
+                routers += _router(f"router-{instance_id}-custom-{idx}", f"Host(`{domain}`)",
+                                   web_service_key, 100, ['custom-errors'])
         
         # C. Handle HTTP Proxies
         http_proxies = lab_data.get('http_proxies', [])
@@ -220,13 +231,8 @@ class Lab(BaseOrchestrator):
             if p_port and p_domain:
                 proxy_router = f"router-{instance_id}-proxy-{idx}"
                 proxy_service = f"service-{instance_id}-proxy-{idx}"
-                
-                routers += f"    {proxy_router}:\n"
-                routers += f"      rule: \"Host(`{p_domain}`)\"\n"
-                routers += f"      service: {proxy_service}\n"
-                routers += f"      entryPoints: {_entrypoints}\n{_tls}"
-                routers += f"      priority: 150\n" # Higher priority to override wildcard web
-                routers += f"      middlewares: [custom-errors]\n"
+
+                routers += _router(proxy_router, f"Host(`{p_domain}`)", proxy_service, 150, ['custom-errors'])
                 
                 services += f"    {proxy_service}:\n"
                 services += f"      loadBalancer:\n"
