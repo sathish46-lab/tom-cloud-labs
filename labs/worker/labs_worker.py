@@ -202,7 +202,11 @@ def _save_deploy_logs(instance_hash, logs, error_msg, is_build=False, action='de
             return
 
         now = time.time()
-        log_key = 'build_log' if is_build else 'deploy_log'
+        # ensure-codeserver logs are their own artifact — never clobber the
+        # deploy_log / deploy.last_error / lab status shown on the dashboard
+        # (the container itself is fine; only the IDE start/stop is at stake).
+        is_ensure = (action == 'ensure-codeserver')
+        log_key = 'build_log' if is_build else ('ensure_log' if is_ensure else 'deploy_log')
         log_doc = {
             'logs': logs[-200:],
             'status': 'error' if error_msg else 'success',
@@ -212,23 +216,26 @@ def _save_deploy_logs(instance_hash, logs, error_msg, is_build=False, action='de
             'expire_at': now + 300
         }
 
-        status_val = 'error' if error_msg else ('running' if action == 'deploy' else None)
-        set_fields = {f'deploy.{log_key}': log_doc, 'deploy.last_error': error_msg or ''}
-        if status_val is not None:
-            set_fields['status'] = status_val
-            set_fields['deploy.status'] = status_val
+        if is_ensure:
+            status_val = None
+            set_fields = {f'deploy.{log_key}': log_doc}
+        else:
+            status_val = 'error' if error_msg else ('running' if action == 'deploy' else None)
+            set_fields = {f'deploy.{log_key}': log_doc, 'deploy.last_error': error_msg or ''}
+            if status_val is not None:
+                set_fields['status'] = status_val
+                set_fields['deploy.status'] = status_val
 
         db.instances.update_one({'instance_hash': instance_hash}, {'$set': set_fields})
 
         # Push to deploy_history array in machine_labs
         labs_db = _get_mongo_client('tom_labs_db')
         if labs_db:
-            flat_fields = {
-                log_key: log_doc,
-                'last_error': error_msg or '',
-            }
-            if status_val is not None:
-                flat_fields['status'] = status_val
+            flat_fields = {log_key: log_doc}
+            if not is_ensure:
+                flat_fields['last_error'] = error_msg or ''
+                if status_val is not None:
+                    flat_fields['status'] = status_val
 
             history_entry = {
                 'status': 'success' if not error_msg else 'failed',
@@ -259,6 +266,7 @@ def _run_job(job_data):
     instance_hash = None
     routing_key = None
     run_id = None
+    action = 'deploy'
     ch = None
     all_logs = []
     error_lines = []
@@ -361,15 +369,24 @@ def _run_job(job_data):
         if process.returncode == 0:
             if action == 'stop':
                 emit("[*] Instance stopped. Page will reload in few seconds.")
+                emit("[*] reload")
+            elif action == 'ensure-codeserver':
+                # The Launch flow opens the IDE itself — a "[*] reload" here
+                # (or the generic "lab is up" line) would wipe the live log
+                # panel the user is watching mid-launch.
+                emit("[✓] Code-server ready.")
             else:
                 emit("[*] Your lab is up and ready to experiment... Page will reload in few seconds.")
-            emit("[*] reload")
+                emit("[*] reload")
             _file_log(f"[OK] {action} completed for {instance_hash}")
             _save_deploy_logs(instance_hash, all_logs, None, is_build, action, duration_str, exit_code, user, run_id)
         else:
             error_msg = error_lines[-1] if error_lines else f"Exit code {process.returncode}"
             emit(f"[!] {error_msg}")
-            emit("[*] reload")
+            if action != 'ensure-codeserver':
+                # Keep the failure lines on screen for a launch — the UI shows
+                # the error instead of reloading the dashboard away from it.
+                emit("[*] reload")
             _file_log(f"[FAIL] {action} failed for {instance_hash}: {error_msg}")
             _save_deploy_logs(instance_hash, all_logs, error_msg, is_build, action, duration_str, exit_code, user, run_id)
 
@@ -385,7 +402,8 @@ def _run_job(job_data):
                 err_ch = err_conn.channel()
                 ch = err_ch
                 emit(f"[!] System Error: {str(e)}")
-                emit("[*] reload")
+                if action != 'ensure-codeserver':
+                    emit("[*] reload")
                 err_conn.close()
             except Exception as err_notify_err:
                 print(f" [!] Failed to send error notification to user: {err_notify_err}")

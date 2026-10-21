@@ -21320,6 +21320,11 @@ const Dashboard = {
 
     // Check for completion messages
     const lower = msg.toLowerCase();
+    // Code-server launch markers ("started successfully" from labsctl, the
+    // worker's "[✓] Code-server ready.") complete the Launch flow — they must
+    // never trigger the dashboard auto-reload: the IDE opens in its own tab
+    // and reloading here wipes the live log panel the user is watching.
+    const isCodeServerLaunch = /Code-server (started successfully|is already running|ready)/i.test(msg);
     if (
       msg.includes("[*] reload") ||
       (msg.includes("[✓]") &&
@@ -21336,6 +21341,8 @@ const Dashboard = {
       if (typeof ActivityTracker !== "undefined") {
         ActivityTracker.setProcessing(false);
       }
+
+      if (isCodeServerLaunch) return;
 
       // markComplete() already scheduled a reload (2s) — don't schedule a
       // second, competing one here. Only the htmx fallback fires when the
@@ -22086,6 +22093,10 @@ async function launchCodeIDE(event, targetUrl = null) {
 
   const btn = event.target.closest("button");
   const originalText = btn.innerHTML;
+  // True once the wake-up flow streamed worker logs into the panel — the
+  // pre-launch "Connecting..." step must then NOT reset the terminal (that
+  // would wipe the very log the user was shown during launch).
+  let wakeStreamed = false;
 
   // 3. Auto-Start Logic (Only for Code-Server currently)
   // We move this BEFORE the URL check because we might get the URL from the response.
@@ -22123,23 +22134,31 @@ async function launchCodeIDE(event, targetUrl = null) {
       Dashboard.resetTerminal();
       Dashboard.appendCommand(`labsctl ensure code-server --hash=${window.SESSION_HASH}`);
       Dashboard.appendLog(`[*] Ensuring ${actionName} is running...`);
+      wakeStreamed = true;
 
+      // finishReady(ok): ok=true only when a worker success marker was seen.
+      // The 45s timeout and every early-out resolve ok=false — the launch is
+      // judged by this value plus a final code_status re-check, never assumed.
+      let finishReady = null;
       try {
-        // Stream the worker's real logs and only open the editor once code-server is
-        // actually ready (worker success marker) — not a blind fixed delay. If the
-        // marker is missed we fall back to a safety timeout so the launch never hangs.
         const readyPromise = new Promise((resolveReady) => {
           const origAppend = Dashboard.appendLog;
           let done = false;
-          const finish = () => { if (!done) { done = true; Dashboard.appendLog = origAppend; resolveReady(); } };
-          const timer = setTimeout(finish, 45000);
+          const finish = (ok) => {
+            if (done) return;
+            done = true;
+            clearTimeout(timer);
+            Dashboard.appendLog = origAppend;
+            resolveReady(ok);
+          };
+          finishReady = finish;
+          const timer = setTimeout(() => finish(false), 45000);
 
           Dashboard.appendLog = function (d) {
             origAppend.call(Dashboard, d);
             const msg = (d && d.log) || (d && d.message) || d || "";
-            if (msg && /Code-server started successfully|Code-server is already running/i.test(msg)) {
-              clearTimeout(timer);
-              finish();
+            if (msg && /Code-server started successfully|Code-server is already running|Code-server ready/i.test(msg)) {
+              finish(true);
             }
           };
         });
@@ -22154,7 +22173,19 @@ async function launchCodeIDE(event, targetUrl = null) {
           body: formData
         });
 
-        let data = await response.json();
+        let data = {};
+        try { data = await response.json(); } catch (_) { /* non-JSON error body */ }
+
+        if (!response.ok || data.status === "error") {
+          // Queuing failed (lab stopped, deploying, access denied, ...): show
+          // the real reason instead of waiting out the 45s timer.
+          if (finishReady) finishReady(false);
+          Dashboard.appendLog(`[!] ${data.error || `Launch failed (HTTP ${response.status}).`}`);
+          btn.classList.remove("disabled");
+          btn.innerHTML = originalText;
+          return;
+        }
+
         if (data.url) {
           url = data.url; // Use fresh URL from backend if provided
           window.CODE_SERVER_URL = url;
@@ -22162,11 +22193,41 @@ async function launchCodeIDE(event, targetUrl = null) {
         }
 
         // Wait for the worker's success marker (or the 45s safety timeout)
-        await readyPromise;
+        const gotMarker = await readyPromise;
+
+        if (!gotMarker) {
+          // Marker missed or timed out — confirm reality before deciding.
+          // (The marker may be absent even on success if the log stream was
+          // interrupted; code_status is the ground truth.)
+          let confirmed = false;
+          try {
+            const st2 = await fetch("/api/labs/code_status", { method: "POST", body: formData });
+            const st2data = await st2.json();
+            if (st2data && (st2data.running || st2data.codeserver_running)) {
+              confirmed = true;
+              if (st2data.url) {
+                url = st2data.url;
+                window.CODE_SERVER_URL = url;
+              }
+              Dashboard.appendLog("[✓] Code-server confirmed running (status re-check).");
+            }
+          } catch (_) { /* re-check failed → treat as not running */ }
+
+          if (!confirmed) {
+            Dashboard.appendLog("[!] Code-server did not start — see the errors above, then try again.");
+            btn.classList.remove("disabled");
+            btn.innerHTML = originalText;
+            return;
+          }
+        }
 
       } catch (e) {
         console.error("Auto-start failed", e);
-        Dashboard.appendLog(`[!] Warning: Auto-start trigger failed. Trying saved URL...`);
+        if (finishReady) finishReady(false);
+        Dashboard.appendLog(`[!] Auto-start trigger failed: ${e && e.message ? e.message : e}`);
+        btn.classList.remove("disabled");
+        btn.innerHTML = originalText;
+        return;
       }
     }
   }
@@ -22183,7 +22244,11 @@ async function launchCodeIDE(event, targetUrl = null) {
   btn.classList.add("disabled");
   btn.innerHTML = '<span class="spinner-grow spinner-grow-sm me-2" role="status" aria-hidden="true"></span> Launching...';
 
-  Dashboard.resetTerminal();
+  // Preserve the wake-up log stream (if one ran) — only a direct/fast-path
+  // open starts from a clean terminal.
+  if (!wakeStreamed) {
+    Dashboard.resetTerminal();
+  }
 
   // 3. Show validation logs (Visual feedback)
   Dashboard.appendLog(`[*] Connecting to ${url}...`);

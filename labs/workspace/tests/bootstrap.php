@@ -12,9 +12,11 @@ ini_set('display_errors', '1');
 ini_set('log_errors', '0');
 
 // Test configuration
-define('TEST_BASE_URL', $_ENV['TEST_BASE_URL'] ?? 'http://localhost:8083');
+// $_ENV is empty under variables_order=GPCS (php-cli default) — fall back to getenv()
+// so `-e TEST_HOST_HEADER=...` / run_tests.sh exports actually reach the tests.
+define('TEST_BASE_URL', (($_ENV['TEST_BASE_URL'] ?? getenv('TEST_BASE_URL')) ?: 'http://localhost:8083'));
 define('TEST_DB_NAME', 'tom_labs_test_db');
-define('TEST_HOST_HEADER', $_ENV['TEST_HOST_HEADER'] ?? 'dev.tomweb.in');
+define('TEST_HOST_HEADER', (($_ENV['TEST_HOST_HEADER'] ?? getenv('TEST_HOST_HEADER')) ?: 'dev.tomweb.in'));
 
 // Detect project root (works both locally and inside Docker container)
 function detect_project_root(): string {

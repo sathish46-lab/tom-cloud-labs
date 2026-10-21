@@ -63,12 +63,20 @@ $cmd .= " 2>&1";
 $logDir = '/var/log/labsctl';
 if (!is_dir($logDir)) mkdir($logDir, 0777, true);
 $logFile = $logDir . '/labsctl.log';
-$logHandle = fopen($logFile, 'a');
+// This legacy worker runs as www-data while labsctl.log is created root-owned —
+// fopen can legitimately fail here. Never let the audit log kill the job
+// (fwrite(false) is a fatal TypeError in PHP 8 → labsctl never ran at all).
+$logHandle = @fopen($logFile, 'a');
+if (!is_resource($logHandle)) {
+    $logHandle = null;
+}
 $tz = new DateTimeZone('Asia/Kolkata');
 $now = new DateTime('now', $tz);
 $istTime = $now->format('d M Y h:i:s A');
 $utcTs = (new DateTime('now', new DateTimeZone('UTC')))->format('Y-m-d\TH:i:s.v') . 'Z';
-fwrite($logHandle, "\n[{$utcTs}] === " . $istTime . " IST | Action: $action | Hash: $instanceHash ===\n");
+if ($logHandle) {
+    fwrite($logHandle, "\n[{$utcTs}] === " . $istTime . " IST | Action: $action | Hash: $instanceHash ===\n");
+}
 
 $handle = popen($cmd, 'r');
 $success = false;
@@ -78,9 +86,11 @@ if (is_resource($handle)) {
         $line = fgets($handle); 
         if ($line) {
             $trimmed = trim($line);
-            $lineTs = (new DateTime('now', new DateTimeZone('UTC')))->format('Y-m-d\TH:i:s.v') . 'Z';
-            fwrite($logHandle, "[{$lineTs}] " . $trimmed . "\n");
-            fflush($logHandle);
+            if ($logHandle) {
+                $lineTs = (new DateTime('now', new DateTimeZone('UTC')))->format('Y-m-d\TH:i:s.v') . 'Z';
+                fwrite($logHandle, "[{$lineTs}] " . $trimmed . "\n");
+                fflush($logHandle);
+            }
             
             // Attempt to parse as JSON from our structured logger
             $decoded = json_decode($trimmed, true);
@@ -112,7 +122,9 @@ if (is_resource($handle)) {
         }
     }
     pclose($handle);
-    fclose($logHandle);
+    if (is_resource($logHandle)) {
+        fclose($logHandle);
+    }
 }
 
 if (!$success && $action === 'deploy') {

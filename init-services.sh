@@ -149,6 +149,13 @@ if [ -f "/opt/labs-control-panel/requirements.txt" ]; then
     echo "[INFO] Installing Python requirements..."
     pip3 install -r /opt/labs-control-panel/requirements.txt --break-system-packages
 fi
+if [ -f "/opt/labs-control-panel/requirements-mcp.txt" ]; then
+    echo "[INFO] Installing MCP Python requirements..."
+    # Debian's python3-jwt lacks a pip RECORD, so pip cannot upgrade it in place.
+    # Pre-seed a pip-managed PyJWT alongside it (ignored dists win on sys.path).
+    pip3 install "pyjwt==2.15.1" --break-system-packages --ignore-installed > /dev/null 2>&1 || true
+    pip3 install -r /opt/labs-control-panel/requirements-mcp.txt --break-system-packages || echo "[WARN] MCP Python requirements install failed."
+fi
 
 # 4. VPN Network Sync
 if [ -f "/var/www/vpn-api/syncnetwork.php" ]; then
