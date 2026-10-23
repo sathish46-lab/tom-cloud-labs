@@ -7,7 +7,10 @@ $instDoc = $instDb->instances->findOne(['instance_hash' => $hash]);
 $deploy = $instDoc['deploy'] ?? [];
 $depStatus = $deploy['status'] ?? 'none';
 $credentials = $deploy['credentials'] ?? [];
-$codeUrl = $credentials['code_server_url'] ?? '';
+$codeUrl = \TomLabs\Labs\LabUrl::ideUrl((array)$instance);
+if ($codeUrl === '') {
+    $codeUrl = \TomLabs\Labs\LabUrl::withScheme((string)($credentials['code_server_url'] ?? ''));
+}
 $sshCmd = $credentials['ssh'] ?? '';
 $dockerIp = $credentials['docker_ip'] ?? '';
 $tunnelIp = $credentials['tunnel_ip'] ?? '';

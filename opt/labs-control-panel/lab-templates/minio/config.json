@@ -24,8 +24,8 @@
   "credentials_template": {
     "minio_access_key": "{username}",
     "minio_secret_key": "{password}",
-    "minio_url_console": "https://{s3-ui_domain}",
-    "minio_url_api": "https://{s3-api_domain}",
+    "minio_url_console": "{code_url_scheme}://{s3-ui_domain}",
+    "minio_url_api": "{code_url_scheme}://{s3-api_domain}",
     "minio_port_console": 9001,
     "minio_port_api": 9000,
     "code_server_pass": "{password}",

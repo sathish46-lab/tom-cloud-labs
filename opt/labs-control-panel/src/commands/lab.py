@@ -9,6 +9,7 @@ import shlex
 import subprocess
 from src.router import Command
 from src.config import validate_username, validate_name
+from src.laburls import code_domain as resolve_code_domain, gui_domain as resolve_gui_domain, url as build_url
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
@@ -688,8 +689,8 @@ grep -q "{vpn_domain}" /etc/hosts || echo "{tunnel_gw_internal} {vpn_domain}" >>
 
         # Phase: METADATA
         self.log("Finalizing routing metadata...")
-        code_domain = getattr(args, 'vsc_domain', None) or lab_data.get("code_domain") or f"code-{instance_id}.{self.cfg.code_domain}"
-        gui_domain = getattr(args, 'gui_domain', None) or lab_data.get("gui_domain") or f"gui-{instance_id}.{self.cfg.code_domain}"
+        code_domain = resolve_code_domain(self.cfg, instance_id, lab_data, getattr(args, 'vsc_domain', None))
+        gui_domain = resolve_gui_domain(self.cfg, instance_id, lab_data, getattr(args, 'gui_domain', None))
         credentials.update({
             "ssh": f"ssh {username}@{tunnel_ip}",
             "ssh_proxy": f'ssh -o "ProxyCommand=ssh -W %h:%p -i ~/.ssh/id_ed25519 root@127.0.0.1 -p 2222" {username}@{docker_ip}',
@@ -699,8 +700,8 @@ grep -q "{vpn_domain}" /etc/hosts || echo "{tunnel_gw_internal} {vpn_domain}" >>
             "password": dynamic_pass,
             "su_pass": su_pass,
             "sshKey": ssh_enabled,
-            "code_server_url": f"https://{code_domain}",
-            "gui_url": f"https://{gui_domain}",
+            "code_server_url": build_url(self.cfg, code_domain),
+            "gui_url": build_url(self.cfg, gui_domain),
             "vnc_pass": vnc_pass,
             "wg_pubkey": lab_pub_key,
             "wg_privkey": lab_priv_key,
@@ -715,6 +716,7 @@ grep -q "{vpn_domain}" /etc/hosts || echo "{tunnel_gw_internal} {vpn_domain}" >>
                 "email": user_email,
                 "su_pass": su_pass,
                 "vnc_pass": vnc_pass,
+                "code_url_scheme": self.cfg.code_url_scheme,
             }
             for key, val in cred_template.items():
                 if isinstance(val, str):
@@ -771,13 +773,13 @@ grep -q "{vpn_domain}" /etc/hosts || echo "{tunnel_gw_internal} {vpn_domain}" >>
             return out
 
         services_spec = lab_spec.get("services", {})
-        base_domain = self.cfg.code_domain
+        base_domain = self.cfg.instance_domain_zone
         db_domain = lab_data.get("code_domain")
         db_gui_domain = lab_data.get("gui_domain")
         vsc_domain = getattr(args, 'vsc_domain', None) if args else None
         gui_domain_arg = getattr(args, 'gui_domain', None) if args else None
-        code_domain = vsc_domain or db_domain or f"code-{instance_id}.{base_domain}"
-        gui_domain = gui_domain_arg or db_gui_domain or f"gui-{instance_id}.{base_domain}"
+        code_domain = resolve_code_domain(self.cfg, instance_id, lab_data, vsc_domain)
+        gui_domain = resolve_gui_domain(self.cfg, instance_id, lab_data, gui_domain_arg)
 
         # Extract base domain from code_domain for gui (e.g. "x.tomweb.shop" → "tomweb.shop")
         if db_domain and "." in db_domain:

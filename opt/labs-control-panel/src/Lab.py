@@ -8,6 +8,7 @@ import base64
 import shlex
 from pymongo import MongoClient
 from src.BaseOrchestrator import BaseOrchestrator
+from src.laburls import code_domain as resolve_code_domain, gui_domain as resolve_gui_domain, url as build_url
 
 class Lab(BaseOrchestrator):
     def __init__(self, args, session_hash=None, is_instance=False):
@@ -141,7 +142,7 @@ class Lab(BaseOrchestrator):
     def generate_traefik_config(self, instance_id, docker_ip, lab_spec, lab_data):
         """Build Traefik config from template services definition."""
         services_spec = lab_spec.get('services', {})
-        base_domain = self.cfg.code_domain
+        base_domain = self.cfg.instance_domain_zone
 
         # TLS on/off (config.json tls_enabled). Dev=false → plain-HTTP routers.
         # Prod=true → TWO routers per rule: plain `[web]` (the Cloudflare tunnel
@@ -187,8 +188,7 @@ class Lab(BaseOrchestrator):
                 domain = custom if custom else f"{domain_prefix}{instance_id}.{base_domain}"
             elif svc_name == 'code':
                 # Code domain logic from arguments or DB
-                db_domain = lab_data.get('code_domain')
-                selected_code_domain = self.args.getFlagValue('vsc_domain') or db_domain or f"code-{instance_id}.{base_domain}"
+                selected_code_domain = resolve_code_domain(self.cfg, instance_id, lab_data, self.args.getFlagValue('vsc_domain'))
                 domain = selected_code_domain
             elif svc_name == 'web':
                 # Web domains are handled separately below from 'domains' array
@@ -497,7 +497,7 @@ class Lab(BaseOrchestrator):
             # Sanitize inputs
             if custom_n8n and (custom_n8n == 'default_n8n' or 'default' in custom_n8n):
                 custom_n8n = None
-            base_domain = self.cfg.code_domain
+            base_domain = self.cfg.instance_domain_zone
             selected_n8n_domain = custom_n8n if custom_n8n else f"n8n-{instance_id}.{base_domain}"
 
         # Pass email to linkuser.sh (8th argument)
@@ -549,10 +549,9 @@ class Lab(BaseOrchestrator):
         # Phase 9: METADATA
         self.log("[*] Finalizing routing metadata...", "info", "metadata")
         
-        base_domain = self.cfg.code_domain
-        db_domain = lab_data.get('code_domain')
-        selected_code_domain = self.args.getFlagValue('vsc_domain') or db_domain or f"{instance_id}.{base_domain}"
-        code_server_url = f"https://{selected_code_domain}"
+        base_domain = self.cfg.instance_domain_zone
+        selected_code_domain = resolve_code_domain(self.cfg, instance_id, lab_data, self.args.getFlagValue('vsc_domain'))
+        code_server_url = build_url(self.cfg, selected_code_domain)
         
         credentials = {
             "ssh": f"ssh {username}@{tunnel_ip}",
@@ -574,7 +573,8 @@ class Lab(BaseOrchestrator):
                 "username": username,
                 "password": dynamic_pass,
                 "email": user_email,
-                "su_pass": su_pass
+                "su_pass": su_pass,
+                "code_url_scheme": self.cfg.code_url_scheme,
             }
             # Dynamically pull domain values
             for svc_name, svc_spec in lab_spec.get('services', {}).items():

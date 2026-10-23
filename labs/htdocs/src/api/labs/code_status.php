@@ -42,11 +42,17 @@ try {
         }
     }
 
-    // Fresh URL (code_server_url is stored under credentials in the deploy doc).
-    $latestData = $user->getLabData($labName);
-    $freshUrl = (is_array($latestData) && isset($latestData['credentials']['code_server_url']))
-        ? $latestData['credentials']['code_server_url']
-        : "";
+    // Fresh URL — derived from the instance document (host) + effective scheme.
+    $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
+    $inst = $db->machine_labs->findOne(['instance_hash' => $instanceHash]);
+    $freshUrl = \TomLabs\Labs\LabUrl::ideUrl((array)($inst ?: []));
+
+    if ($freshUrl === '') {
+        $latestData = $user->getLabData($labName);
+        $freshUrl = (is_array($latestData) && isset($latestData['credentials']['code_server_url']))
+            ? \TomLabs\Labs\LabUrl::withScheme((string)$latestData['credentials']['code_server_url'])
+            : "";
+    }
 
     echo json_encode([
         'status'  => 'success',

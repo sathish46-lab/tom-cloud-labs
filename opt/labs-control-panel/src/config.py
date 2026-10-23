@@ -132,6 +132,23 @@ class Config:
         return os.environ.get('CODE_DOMAIN', self.env('code_domain', 'tomweb.fun'))
 
     @property
+    def code_url_scheme(self):
+        return os.environ.get('CODE_URL_SCHEME', self.env('code_url_scheme', 'https'))
+
+    @property
+    def instance_domain_zone(self):
+        """Base domain the instance hostnames live under (e.g. tomweb.shop).
+
+        Deliberately separate from code_domain, which names the platform's own
+        Code service host (env var CODE_DOMAIN) — using that value here built
+        instance hostnames under the wrong zone.
+        """
+        return os.environ.get(
+            'INSTANCE_DOMAIN_ZONE',
+            self.env('instance_domain_zone', self.get('code_domain', 'tomweb.fun'))
+        )
+
+    @property
     def vpn_domain(self):
         return os.environ.get('VPN_DOMAIN', self.env('vpn_domain', 'vpn.tomweb.in'))
 

@@ -27,7 +27,14 @@ try {
     $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
     $inst = $db->machine_labs->findOne(
         ['instance_hash' => $instanceHash],
-        ['projection' => ['user_id' => 1, 'status' => 1, 'credentials' => 1]]
+        ['projection' => [
+            'user_id' => 1,
+            'status' => 1,
+            'credentials' => 1,
+            'instance_hash' => 1,
+            'code_domain' => 1,
+            'gui_domain' => 1,
+        ]]
     );
     if (!$inst) {
         throw new Exception('Lab not found');
@@ -78,11 +85,16 @@ try {
     ]);
 
     // Fresh URL from machine_labs — same source labsctl code-status uses.
+    $ideUrl = \TomLabs\Labs\LabUrl::ideUrl((array)($inst ?: []));
+    if ($ideUrl === '') {
+        $ideUrl = \TomLabs\Labs\LabUrl::withScheme((string)($inst['credentials']['code_server_url'] ?? ''));
+    }
+
     echo json_encode([
         'status'  => 'success',
         'message' => 'Code-server startup queued',
         'hash'    => $instanceHash,
-        'url'     => (string)($inst['credentials']['code_server_url'] ?? ''),
+        'url'     => $ideUrl,
         'run_id'  => $runId,
     ]);
 

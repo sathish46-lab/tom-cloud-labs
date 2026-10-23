@@ -43,8 +43,12 @@ class LabTemplateConfig {
             case 'minio':
                 $minioAccess = $creds['minio_access_key'] ?? $currentUser;
                 $minioSecret = $creds['minio_secret_key'] ?? $password;
-                $minioConsoleUrl = $creds['minio_url_console'] ?? "https://s3-{$labData['instance_hash']}.tomweb.shop";
-                $minioApiUrl = $creds['minio_url_api'] ?? "https://api-{$labData['instance_hash']}.tomweb.shop";
+                $minioConsoleUrl = !empty($creds['minio_url_console'])
+                    ? LabUrl::withScheme((string)$creds['minio_url_console'])
+                    : LabUrl::url(LabUrl::serviceHost($labData, 's3-'));
+                $minioApiUrl = !empty($creds['minio_url_api'])
+                    ? LabUrl::withScheme((string)$creds['minio_url_api'])
+                    : LabUrl::url(LabUrl::serviceHost($labData, 'api-'));
 
                 $fields = [
                     ['label' => 'MinIO Access Key', 'value' => $minioAccess, 'type' => 'text', 'copy' => true],
@@ -60,7 +64,9 @@ class LabTemplateConfig {
             case 'n8n':
                 $n8nUser = $creds['n8n_username'] ?? $currentUser;
                 $n8nPass = $creds['n8n_password'] ?? $password;
-                $n8nUrl = $creds['n8n_url'] ?? "https://n8n-{$labData['instance_hash']}.tomweb.shop";
+                $n8nUrl = !empty($creds['n8n_url'])
+                    ? LabUrl::withScheme((string)$creds['n8n_url'])
+                    : LabUrl::url(LabUrl::serviceHost($labData, 'n8n-'));
                 
                 $fields = [
                     ['label' => 'n8n Username', 'value' => $n8nUser, 'type' => 'text', 'copy' => true],
@@ -73,8 +79,8 @@ class LabTemplateConfig {
                 break;
 
             case 'gui_essentials':
-                $codeServerUrl = $creds['code_server_url'] ?? "https://{$labData['instance_hash']}.tomweb.shop";
-                $guiUrl = $creds['gui_url'] ?? "https://gui-{$labData['instance_hash']}.tomweb.shop";
+                $codeServerUrl = LabUrl::ideUrl($labData);
+                $guiUrl = LabUrl::guiUrl($labData);
                 $vncPass = $creds['vnc_pass'] ?? $password;
                 $fields = [
                     ['label' => 'Device IP', 'value' => $tunnelIp, 'type' => 'text', 'copy' => true],
@@ -91,7 +97,7 @@ class LabTemplateConfig {
             case 'docker_lab':
             case 'essentials':
             default:
-                $codeServerUrl = $creds['code_server_url'] ?? "https://{$labData['instance_hash']}.tomweb.shop";
+                $codeServerUrl = LabUrl::ideUrl($labData);
                 $fields = [
                     ['label' => 'Device IP', 'value' => $tunnelIp, 'type' => 'text', 'copy' => true],
                     ['label' => 'SSH Command', 'value' => $sshCommand, 'type' => 'text', 'copy' => true, 'mono' => true],

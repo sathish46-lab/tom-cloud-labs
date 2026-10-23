@@ -141,7 +141,7 @@
 ?>
 
 <script>
-    window.CODE_SERVER_URL = "<?= $creds['code_server_url'] ?? '' ?>";
+    window.CODE_SERVER_URL = "<?= \TomLabs\Labs\LabUrl::ideUrl((array)$configData) ?>";
 </script>
 
 <?php 

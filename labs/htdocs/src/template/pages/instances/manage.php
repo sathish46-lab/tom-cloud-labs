@@ -109,7 +109,12 @@ if ($isAjax) {
             <?php
             $hdrDeployStatus = $instance['deploy']['status'] ?? 'none';
             $hdrIsRunning = ($hdrDeployStatus === 'running');
-            $hdrCodeUrl = $instance['deploy']['credentials']['code_server_url'] ?? '';
+            $hdrCodeUrl = \TomLabs\Labs\LabUrl::ideUrl((array)$instance);
+            if ($hdrCodeUrl === '') {
+                $hdrCodeUrl = \TomLabs\Labs\LabUrl::withScheme(
+                    (string)($instance['deploy']['credentials']['code_server_url'] ?? '')
+                );
+            }
             ?>
             <div class="instance-header-actions">
                 <?php if ($hdrIsRunning): ?>
