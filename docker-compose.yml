@@ -56,6 +56,8 @@ services:
           - work.tomweb.in
           - labs.tomweb.in
     ports:
+      - "80:80"
+      - "443:443"
       - "9080:80"
       - "9443:443"
       - "9081:8081"
