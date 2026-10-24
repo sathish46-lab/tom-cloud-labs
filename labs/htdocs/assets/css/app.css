@@ -23576,6 +23576,7 @@ body.hwa-disabled .split-panel-view .split-panel > .card {
   flex-shrink: 0 !important;
   min-width: 70px !important;
   max-width: 40% !important;
+  visibility: hidden !important;
 }
 .learn-app-wrapper #learn-panel-2,
 .split-panel-view #learn-panel-2 {
@@ -23583,6 +23584,7 @@ body.hwa-disabled .split-panel-view .split-panel > .card {
   width: 0 !important;
   flex: 1 1 0% !important;
   min-width: 300px !important;
+  visibility: hidden !important;
 }
 .learn-app-wrapper #learn-panel-3,
 .split-panel-view #learn-panel-3 {
@@ -23590,6 +23592,7 @@ body.hwa-disabled .split-panel-view .split-panel > .card {
   flex-shrink: 0 !important;
   min-width: 300px !important;
   max-width: 35% !important;
+  visibility: hidden !important;
 }
 .learn-app-wrapper .gutter.gutter-horizontal,
 .learn-app-wrapper .gutter-horizontal,
@@ -23602,6 +23605,18 @@ body.hwa-disabled .split-panel-view .split-panel > .card {
   z-index: 1000;
   position: relative;
   flex-shrink: 0;
+}
+.learn-app-wrapper,
+.split-panel-view {
+  /* Reveal panels after JS applies DB sizes — prevents flash of wrong sizes on reload */
+}
+.learn-app-wrapper #learn-panel-1.split-panel-visible,
+.learn-app-wrapper #learn-panel-2.split-panel-visible,
+.learn-app-wrapper #learn-panel-3.split-panel-visible,
+.split-panel-view #learn-panel-1.split-panel-visible,
+.split-panel-view #learn-panel-2.split-panel-visible,
+.split-panel-view #learn-panel-3.split-panel-visible {
+  visibility: visible !important;
 }
 
 body.resizing-active,

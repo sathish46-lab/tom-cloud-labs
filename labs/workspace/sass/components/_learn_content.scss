@@ -255,12 +255,12 @@ body:has(.split-panel-view) {
         }
     }
 
-    // minSize: [70, 300, 300]
     #learn-panel-1 {
         flex-grow: 0 !important;
         flex-shrink: 0 !important;
         min-width: 70px !important;
         max-width: 40% !important;  // Clamp outline sidebar so it never squeezes out main content
+        visibility: hidden !important;  // Hidden until JS applies DB size (no flicker)
     }
 
     #learn-panel-2 {
@@ -268,6 +268,7 @@ body:has(.split-panel-view) {
         width: 0 !important;
         flex: 1 1 0% !important;
         min-width: 300px !important;
+        visibility: hidden !important;  // Hidden until JS applies DB size (no flicker)
     }
 
     #learn-panel-3 {
@@ -275,6 +276,7 @@ body:has(.split-panel-view) {
         flex-shrink: 0 !important;
         min-width: 300px !important;
         max-width: 35% !important;  // Clamp AI pane so it never squeezes out panels 1 and 2
+        visibility: hidden !important;  // Hidden until JS applies DB size (no flicker)
     }
 
     .gutter.gutter-horizontal,
@@ -286,6 +288,13 @@ body:has(.split-panel-view) {
         z-index: 1000;
         position: relative;
         flex-shrink: 0;
+    }
+
+    /* Reveal panels after JS applies DB sizes — prevents flash of wrong sizes on reload */
+    #learn-panel-1.split-panel-visible,
+    #learn-panel-2.split-panel-visible,
+    #learn-panel-3.split-panel-visible {
+        visibility: visible !important;
     }
 }
 

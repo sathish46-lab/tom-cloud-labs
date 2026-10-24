@@ -894,6 +894,13 @@ try {
                     }
                 } catch (e) {}
             }
+
+            // Reveal panels after sizes applied — prevents flash of wrong-sized panels on reload
+            ['learn-panel-1', 'learn-panel-2', 'learn-panel-3'].forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el) el.classList.add('split-panel-visible');
+            });
+
             var zf = document.getElementById('learn-panel-zero-flicker');
             if (zf) zf.remove();
         },
