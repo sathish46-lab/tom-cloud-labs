@@ -22,10 +22,10 @@ const TomParallax = {
       relativeInput: true, // Movement relative to the element
       hoverOnly: false, // Track across the whole viewport like reference
       pointerEvents: false,
-      frictionX: 1.0, // Instant movement matching SN
-      frictionY: 1.0,
-      scalarX: 2.0, // Subtle movement range matching SN
-      scalarY: 2.0,
+      frictionX: 0.15, // Smooth damping — removes snap-shake
+      frictionY: 0.15,
+      scalarX: 1.0, // Subtle movement range
+      scalarY: 1.0,
       invertX: true, // Opposite direction tracking
       invertY: true,
       originX: 0.5,

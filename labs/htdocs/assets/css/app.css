@@ -18024,10 +18024,10 @@ html[data-coreui-theme=light] .badge.bg-dark-gradient {
 
 #scene {
   position: fixed;
-  top: -2%;
-  left: -2%;
-  height: 104%;
-  width: 104%;
+  top: -1%;
+  left: -1%;
+  height: 102%;
+  width: 102%;
   z-index: -1;
   overflow: hidden;
   pointer-events: none;
@@ -23575,6 +23575,7 @@ body.hwa-disabled .split-panel-view .split-panel > .card {
   flex-grow: 0 !important;
   flex-shrink: 0 !important;
   min-width: 70px !important;
+  max-width: 40% !important;
 }
 .learn-app-wrapper #learn-panel-2,
 .split-panel-view #learn-panel-2 {
@@ -23588,6 +23589,7 @@ body.hwa-disabled .split-panel-view .split-panel > .card {
   flex-grow: 0 !important;
   flex-shrink: 0 !important;
   min-width: 300px !important;
+  max-width: 35% !important;
 }
 .learn-app-wrapper .gutter.gutter-horizontal,
 .learn-app-wrapper .gutter-horizontal,

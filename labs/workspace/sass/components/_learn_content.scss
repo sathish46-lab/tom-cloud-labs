@@ -260,6 +260,7 @@ body:has(.split-panel-view) {
         flex-grow: 0 !important;
         flex-shrink: 0 !important;
         min-width: 70px !important;
+        max-width: 40% !important;  // Clamp outline sidebar so it never squeezes out main content
     }
 
     #learn-panel-2 {
@@ -273,6 +274,7 @@ body:has(.split-panel-view) {
         flex-grow: 0 !important;
         flex-shrink: 0 !important;
         min-width: 300px !important;
+        max-width: 35% !important;  // Clamp AI pane so it never squeezes out panels 1 and 2
     }
 
     .gutter.gutter-horizontal,

@@ -23369,9 +23369,9 @@ try {
                     currentPage = 1;
                     hasMoreLessons = true;
                     masonryArea.innerHTML = `
-                        <div class="col-12 text-center py-5">
-                            <div class="spinner-border text-info mb-2" role="status"></div>
-                            <p class="text-secondary small mb-0">Loading lessons...</p>
+                        <div class="col-12 py-5 mt-4" style="display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;">
+                            <div class="spinner-border text-info mb-2" role="status" style="margin: 0 auto;"></div>
+                            <p class="text-secondary small mb-0" style="text-align: center; margin: 0 auto;">Loading lessons...</p>
                         </div>`;
                 }
 
@@ -23381,8 +23381,9 @@ try {
                 if (!reset) {
                     let loader = document.createElement('div');
                     loader.id = 'masonry-loader';
-                    loader.className = 'col-12 text-center py-4 masonry-loader w-100';
-                    loader.innerHTML = '<div class="spinner-border spinner-border-sm text-info mb-2" role="status"></div><p class="text-secondary small mb-0">Loading more...</p>';
+                    loader.className = 'col-12 py-4 masonry-loader w-100';
+                    loader.style.cssText = 'display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;';
+                    loader.innerHTML = '<div class="spinner-border spinner-border-sm text-info mb-2" role="status" style="margin: 0 auto;"></div><p class="text-secondary small mb-0" style="text-align: center; margin: 0 auto;">Loading more...</p>';
                     masonryArea.appendChild(loader);
                     if (window.Masonry) {
                         const msnry = Masonry.data(masonryArea) || new Masonry(masonryArea, { percentPosition: true });
@@ -23790,10 +23791,7 @@ try {
         },
 
         savePaneWidth: function (id, width) {
-            localStorage.removeItem(`learn-pane-${id}`);
-            sessionStorage.removeItem(`learn-pane-${id}`);
-
-            // Compute and save ONLY learnAiThreePanelSizes (SNA-style: raw percentages)
+            // Do NOT write to browser storage — save only to DB via savePreferenceToDB
             const wrapper = document.querySelector('.split-panel-body') || document.querySelector('.learn-app-wrapper');
             if (wrapper) {
                 const totalW = wrapper.offsetWidth || window.innerWidth;
@@ -23807,9 +23805,11 @@ try {
                     if (isP3Visible) {
                         pct3 = (p3El.offsetWidth / totalW) * 100;
                     } else {
-                        // Preserve existing Panel 3 percentage
+                        // Read existing saved percentage from DB prefs
                         try {
-                            const prev = JSON.parse(localStorage.getItem('learnAiThreePanelSizes') || '[]');
+                            const prefs = (window.TOM_CONFIG && window.TOM_CONFIG.ui_preferences) || {};
+                            const prevStr = prefs['learnAiThreePanelSizes'];
+                            const prev = prevStr ? JSON.parse(prevStr) : [];
                             pct3 = (Array.isArray(prev) && prev[2] > 5) ? prev[2] : 25;
                         } catch(e) { pct3 = 25; }
                     }
@@ -23818,9 +23818,18 @@ try {
                     if (pct1 > 0 && pct2 > 0 && pct3 > 0) {
                         const sum = pct1 + pct2 + pct3;
                         const normalized = [pct1 * 100 / sum, pct2 * 100 / sum, pct3 * 100 / sum];
+                        // Clamp panel sizes so outline sidebar never squeezes out panels 2 and 3
+                        if (normalized[0] > 40) normalized[0] = 40;
+                        if (normalized[2] > 35) normalized[2] = 35;
+                        const sum2 = normalized[0] + normalized[1] + normalized[2];
+                        if (sum2 > 0) {
+                            normalized[0] = normalized[0] * 100 / sum2;
+                            normalized[1] = normalized[1] * 100 / sum2;
+                            normalized[2] = normalized[2] * 100 / sum2;
+                        }
                         const sizesStr = JSON.stringify(normalized.map(v => Math.round(v * 100) / 100));
-                        localStorage.setItem('learnAiThreePanelSizes', sizesStr);
-                        sessionStorage.setItem('learnAiThreePanelSizes', sizesStr);
+                        localStorage.removeItem('learnAiThreePanelSizes');
+                        sessionStorage.removeItem('learnAiThreePanelSizes');
                         this.savePreferenceToDB('learnAiThreePanelSizes', sizesStr);
                     }
                 }
@@ -23835,11 +23844,10 @@ try {
                 sessionStorage.removeItem('learn-pane-' + id);
             });
 
-            var threePanelSizes = localStorage.getItem('learnAiThreePanelSizes') || sessionStorage.getItem('learnAiThreePanelSizes') || prefs['learnAiThreePanelSizes'];
+            // Read ONLY from DB prefs — no localStorage/sessionStorage reads (avoids reload flicker)
+            var threePanelSizes = prefs['learnAiThreePanelSizes'];
             if (threePanelSizes && typeof threePanelSizes !== 'string') threePanelSizes = JSON.stringify(threePanelSizes);
             if (threePanelSizes) {
-                localStorage.setItem('learnAiThreePanelSizes', threePanelSizes);
-                sessionStorage.setItem('learnAiThreePanelSizes', threePanelSizes);
                 try {
                     var arr = JSON.parse(threePanelSizes);
                     if (Array.isArray(arr) && arr.length === 3) {
@@ -23855,6 +23863,14 @@ try {
                         if (sizes[0] + sizes[2] > 75) {
                             var excess = (sizes[0] + sizes[2]) - 75;
                             sizes[2] = Math.max(18, sizes[2] - excess);
+                        }
+
+                        // Clamp panel sizes to reasonable ranges: outline sidebar should not consume most of the width
+                        if (sizes[0] > 40) sizes[0] = 40;
+                        if (sizes[2] > 35) sizes[2] = 35;
+                        var sum2 = sizes[0] + sizes[1] + sizes[2];
+                        if (sum2 > 0) {
+                            sizes = sizes.map(function(v) { return v * 100 / sum2; });
                         }
 
                         if (p1El) {
@@ -23967,6 +23983,9 @@ try {
                 var minW = 70;
                 var p3W = isP3Visible ? p3.offsetWidth : 0;
                 var maxW = totalW - 300 - p3W - 16;
+                // Clamp panel 1 to max 40% so it never squeezes out panels 2 and 3
+                var maxPctW = totalW * 0.40;
+                if (maxW > maxPctW) maxW = maxPctW;
                 if (maxW < minW) maxW = minW;
 
                 if (newWidth < minW) newWidth = minW;
@@ -23982,6 +24001,9 @@ try {
                 var minW = 300;
                 var p1W = p1 ? p1.offsetWidth : 70;
                 var maxW = totalW - 300 - p1W - 16;
+                // Clamp panel 3 to max 35% so it never squeezes out panels 1 and 2
+                var maxPctW3 = totalW * 0.35;
+                if (maxW > maxPctW3) maxW = maxPctW3;
                 if (maxW < minW) maxW = minW;
 
                 if (newWidth < minW) newWidth = minW;
@@ -27171,10 +27193,10 @@ const TomParallax = {
       relativeInput: true, // Movement relative to the element
       hoverOnly: false, // Track across the whole viewport like reference
       pointerEvents: false,
-      frictionX: 1.0, // Instant movement matching SN
-      frictionY: 1.0,
-      scalarX: 2.0, // Subtle movement range matching SN
-      scalarY: 2.0,
+      frictionX: 0.15, // Smooth damping — removes snap-shake
+      frictionY: 0.15,
+      scalarX: 1.0, // Subtle movement range
+      scalarY: 1.0,
       invertX: true, // Opposite direction tracking
       invertY: true,
       originX: 0.5,
