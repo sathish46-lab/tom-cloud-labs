@@ -260,6 +260,7 @@ body:has(.split-panel-view) {
         flex-shrink: 0 !important;
         min-width: 70px !important;
         max-width: 40% !important;  // Clamp outline sidebar so it never squeezes out main content
+        overflow-y: auto !important;  // Allow scrolling chapter outline
         visibility: hidden !important;  // Hidden until JS applies DB size (no flicker)
     }
 
@@ -268,6 +269,7 @@ body:has(.split-panel-view) {
         width: 0 !important;
         flex: 1 1 0% !important;
         min-width: 300px !important;
+        overflow-y: auto !important;  // Allow scrolling lesson content
         visibility: hidden !important;  // Hidden until JS applies DB size (no flicker)
     }
 
@@ -276,6 +278,7 @@ body:has(.split-panel-view) {
         flex-shrink: 0 !important;
         min-width: 300px !important;
         max-width: 35% !important;  // Clamp AI pane so it never squeezes out panels 1 and 2
+        overflow-y: auto !important;  // Allow scrolling AI pane content
         visibility: hidden !important;  // Hidden until JS applies DB size (no flicker)
     }
 

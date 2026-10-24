@@ -23576,6 +23576,7 @@ body.hwa-disabled .split-panel-view .split-panel > .card {
   flex-shrink: 0 !important;
   min-width: 70px !important;
   max-width: 40% !important;
+  overflow-y: auto !important;
   visibility: hidden !important;
 }
 .learn-app-wrapper #learn-panel-2,
@@ -23584,6 +23585,7 @@ body.hwa-disabled .split-panel-view .split-panel > .card {
   width: 0 !important;
   flex: 1 1 0% !important;
   min-width: 300px !important;
+  overflow-y: auto !important;
   visibility: hidden !important;
 }
 .learn-app-wrapper #learn-panel-3,
@@ -23592,6 +23594,7 @@ body.hwa-disabled .split-panel-view .split-panel > .card {
   flex-shrink: 0 !important;
   min-width: 300px !important;
   max-width: 35% !important;
+  overflow-y: auto !important;
   visibility: hidden !important;
 }
 .learn-app-wrapper .gutter.gutter-horizontal,
