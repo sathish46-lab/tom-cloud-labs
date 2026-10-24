@@ -24316,6 +24316,7 @@ try {
                 chatHistory.removeAttribute('data-preloaded');
                 chatHistory.dataset.chatLoaded = 'true';
                 LearnApp._processChatHistoryHtml();
+                chatHistory.scrollTop = chatHistory.scrollHeight;
             } else {
                 const lessonId = document.getElementById('currentLessonId')?.value || '';
                 if (!chapterId) {
@@ -24329,6 +24330,7 @@ try {
                             chatHistory.innerHTML = html;
                             chatHistory.dataset.chatLoaded = 'true';
                             LearnApp._processChatHistoryHtml();
+                            chatHistory.scrollTop = chatHistory.scrollHeight;
                         })
                         .catch(err => {
                             chatHistory.innerHTML = '<div class="text-center p-3 text-danger small">Failed to load chat history.</div>';
