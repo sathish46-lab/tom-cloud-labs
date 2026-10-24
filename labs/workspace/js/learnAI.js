@@ -1299,7 +1299,18 @@ try {
             }
 
             // Check if AI Assist is locked for this user on this lesson
-            if (document.getElementById('isAiAssistUnlocked') && document.getElementById('isAiAssistUnlocked').value !== '1') {
+            const unlockedInput = document.getElementById('isAiAssistUnlocked');
+            const lockedScreen = document.getElementById('aiAssistLockedScreen');
+
+            // If locked screen element exists, AI is locked — don't load chat, clear any spinner
+            if (lockedScreen) {
+                if (chatHistory) chatHistory.innerHTML = '';
+                return;
+            }
+
+            // If unlocked input exists but value is not '1', AI is locked
+            if (unlockedInput && unlockedInput.value !== '1') {
+                if (chatHistory) chatHistory.innerHTML = '';
                 return;
             }
 
@@ -2827,6 +2838,7 @@ try {
             const messageId = 'content_msg_' + Math.random().toString(36).substr(2, 9);
 
             let accumulatedMd = "";
+            let lastSeq = 0;
 
             if (typeof TomSocketClient !== 'undefined') {
                 const contentSocket = new TomSocketClient();
@@ -2839,6 +2851,10 @@ try {
                             try { payload = JSON.parse(frame.body); } catch(e) {}
                         }
                         if (payload && payload.type === 'text_delta') {
+                            if (typeof payload.seq === 'number') {
+                                if (payload.seq <= lastSeq) return; // duplicate/replayed chunk
+                                lastSeq = payload.seq;
+                            }
                             accumulatedMd += payload.data;
                             this.renderMarkdownWithHighlighting(accumulatedMd, container);
                         } else if (payload && payload.type === 'stream_end') {
@@ -2867,6 +2883,107 @@ try {
                     console.error('Content generate trigger failed:', err);
                     if (statusDiv) statusDiv.classList.add('d-none');
                 });
+        },
+
+        resumeContentStream: function (container, chapterId) {
+            // Catch up on an in-flight chapter generation after a reload: fetch
+            // the worker's persisted partial (content_partial* fields), render
+            // it, then keep appending live chunks with seq-guarded dedup.
+            if (!container || !chapterId) return Promise.resolve();
+            if (container.dataset.contentResume) return Promise.resolve();
+            container.dataset.contentResume = 'pending';
+
+            const statusDiv = document.getElementById('contentGeneratingStatus');
+            const partialUrl = '/api/learnAI/content_partial?chapter_id=' + encodeURIComponent(chapterId);
+            const contentUrl = '/api/learnAI/content_fetch?chapter_id=' + encodeURIComponent(chapterId);
+            let finished = false;
+
+            const fetchPartial = () =>
+                fetch(partialUrl, { credentials: 'include' })
+                    .then(r => (r.ok ? r.json() : null))
+                    .catch(() => null);
+
+            const refreshSaved = () => {
+                fetch(contentUrl, { credentials: 'include' })
+                    .then(r => (r.ok ? r.text() : null))
+                    .then(html => {
+                        if (!html) return;
+                        container.innerHTML = html;
+                        this._bindCopyButtons(container);
+                        this.loadStudyHighlights(container, chapterId);
+                    })
+                    .catch(() => {});
+            };
+
+            return fetchPartial().then(state => {
+                container.dataset.contentResume = 'done';
+                if (!state || !state.partial) return;
+
+                if (state.status !== 'streaming' || !state.session_id) {
+                    // failed / interrupted / stale — show what was produced
+                    this.renderMarkdownWithHighlighting(state.partial, container);
+                    return;
+                }
+
+                if (statusDiv) statusDiv.classList.remove('d-none');
+                let buffer = state.partial;
+                let lastSeq = state.seq || 0;
+                const sessionId = state.session_id;
+                this.renderMarkdownWithHighlighting(buffer, container);
+
+                if (typeof TomSocketClient === 'undefined') return;
+                const sock = new TomSocketClient();
+                sock.connect('/topic/content_stream.' + sessionId, (frame) => {
+                    try {
+                        let payload = frame;
+                        if (typeof frame === 'string') {
+                            try { payload = JSON.parse(frame); } catch (e) {}
+                        } else if (frame && frame.body) {
+                            try { payload = JSON.parse(frame.body); } catch (e) {}
+                        }
+                        if (payload && payload.type === 'text_delta') {
+                            if (typeof payload.seq === 'number') {
+                                if (payload.seq <= lastSeq) return; // already rendered from partial
+                                lastSeq = payload.seq;
+                            }
+                            buffer += payload.data;
+                            this.renderMarkdownWithHighlighting(buffer, container);
+                        } else if (payload && payload.type === 'stream_end') {
+                            finished = true;
+                            if (statusDiv) statusDiv.classList.add('d-none');
+                            this.renderMarkdownWithHighlighting(buffer, container);
+                            sock.disconnect();
+                            // Worker saves final content right after stream_end
+                            setTimeout(refreshSaved, 1000);
+                        }
+                    } catch (e) {
+                        console.error('Content resume error:', e);
+                    }
+                });
+
+                // Reconcile chunks missed around subscribe time or across WS
+                // drops: the server partial wins whenever it is ahead of us.
+                const reconcile = () => {
+                    if (finished) return;
+                    fetchPartial().then(s2 => {
+                        if (finished) return;
+                        if (!s2 || !s2.partial) {
+                            // partial cleared → final content was saved
+                            finished = true;
+                            if (statusDiv) statusDiv.classList.add('d-none');
+                            refreshSaved();
+                            return;
+                        }
+                        if ((s2.seq || 0) > lastSeq) {
+                            lastSeq = s2.seq || 0;
+                            buffer = s2.partial;
+                            this.renderMarkdownWithHighlighting(buffer, container);
+                        }
+                    });
+                };
+                setTimeout(reconcile, 1500);
+                setTimeout(reconcile, 4500);
+            });
         },
 
         initContentGenerator: function () {
@@ -2907,6 +3024,10 @@ try {
                     const chId = btnHeader ? btnHeader.getAttribute('data-chapter-id') : document.getElementById('currentChapterId')?.value;
                     this.triggerGenerate(chId);
                 });
+            }
+
+            if (initChId) {
+                this.resumeContentStream(container, initChId);
             }
         },
 
@@ -3087,14 +3208,19 @@ try {
                     var chatHistory = document.getElementById('aiChatHistory');
                     if (chatHistory) {
                         if (!isOverview && chatHistory.dataset.chatLoaded !== 'true') {
-                            chatHistory.innerHTML = '<div class="text-center py-4 my-auto text-secondary small d-flex flex-column align-items-center gap-2"><i class="bx bx-loader-circle bx-spin fs-4 text-primary"></i><span>Loading conversation...</span></div>';
-                            fetch('/api/learnAI/history?lesson_id=' + lessonId + '&chapter_id=' + chapterId)
-                                .then(function(r) { return r.text(); })
-                                .then(function(chatHtml) {
-                                    chatHistory.innerHTML = chatHtml;
-                                    chatHistory.dataset.chatLoaded = 'true';
-                                    self._processChatHistoryHtml();
-                                });
+                            // Don't load chat if AI Assist is locked
+                            if (document.getElementById('aiAssistLockedScreen')) {
+                                chatHistory.innerHTML = '';
+                            } else {
+                                chatHistory.innerHTML = '<div class="text-center py-4 my-auto text-secondary small d-flex flex-column align-items-center gap-2"><i class="bx bx-loader-circle bx-spin fs-4 text-primary"></i><span>Loading conversation...</span></div>';
+                                fetch('/api/learnAI/history?lesson_id=' + lessonId + '&chapter_id=' + chapterId)
+                                    .then(function(r) { return r.text(); })
+                                    .then(function(chatHtml) {
+                                        chatHistory.innerHTML = chatHtml;
+                                        chatHistory.dataset.chatLoaded = 'true';
+                                        self._processChatHistoryHtml();
+                                    });
+                            }
                         }
                     }
                     
