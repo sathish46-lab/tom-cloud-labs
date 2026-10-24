@@ -2844,15 +2844,22 @@ try {
 
             if (typeof TomSocketClient !== 'undefined') {
                 const contentSocket = new TomSocketClient();
-                contentSocket.connect('/topic/content_stream.' + sessionId, (frame) => {
+                contentSocket.connect('/topic/content_stream.' + sessionId, (frame, headers) => {
                     try {
                         let payload = frame;
-                        if (typeof frame === 'string') {
-                            try { payload = JSON.parse(frame); } catch(e) {}
-                        } else if (frame && frame.body) {
-                            try { payload = JSON.parse(frame.body); } catch(e) {}
+                        if (payload && typeof payload === 'object' && !payload.type && typeof payload.body === 'string') {
+                            try { payload = JSON.parse(payload.body); } catch(e) {}
                         }
-                        if (payload && payload.type === 'text_delta') {
+                        const hdrSeq = headers && headers.seq != null ? parseInt(headers.seq, 10) : NaN;
+                        if (typeof payload === 'string') {
+                            // Pure-content delta: body IS the text, seq rides in STOMP headers
+                            if (!Number.isNaN(hdrSeq)) {
+                                if (hdrSeq <= lastSeq) return; // duplicate/replayed chunk
+                                lastSeq = hdrSeq;
+                            }
+                            accumulatedMd += payload;
+                            this.renderMarkdownWithHighlighting(accumulatedMd, container);
+                        } else if (payload && payload.type === 'text_delta') {
                             if (typeof payload.seq === 'number') {
                                 if (payload.seq <= lastSeq) return; // duplicate/replayed chunk
                                 lastSeq = payload.seq;
@@ -2935,15 +2942,22 @@ try {
 
                 if (typeof TomSocketClient === 'undefined') return;
                 const sock = new TomSocketClient();
-                sock.connect('/topic/content_stream.' + sessionId, (frame) => {
+                sock.connect('/topic/content_stream.' + sessionId, (frame, headers) => {
                     try {
                         let payload = frame;
-                        if (typeof frame === 'string') {
-                            try { payload = JSON.parse(frame); } catch (e) {}
-                        } else if (frame && frame.body) {
-                            try { payload = JSON.parse(frame.body); } catch (e) {}
+                        if (payload && typeof payload === 'object' && !payload.type && typeof payload.body === 'string') {
+                            try { payload = JSON.parse(payload.body); } catch (e) {}
                         }
-                        if (payload && payload.type === 'text_delta') {
+                        const hdrSeq = headers && headers.seq != null ? parseInt(headers.seq, 10) : NaN;
+                        if (typeof payload === 'string') {
+                            // Pure-content delta: body IS the text, seq rides in STOMP headers
+                            if (!Number.isNaN(hdrSeq)) {
+                                if (hdrSeq <= lastSeq) return; // already rendered from partial
+                                lastSeq = hdrSeq;
+                            }
+                            buffer += payload;
+                            this.renderMarkdownWithHighlighting(buffer, container);
+                        } else if (payload && payload.type === 'text_delta') {
                             if (typeof payload.seq === 'number') {
                                 if (payload.seq <= lastSeq) return; // already rendered from partial
                                 lastSeq = payload.seq;
