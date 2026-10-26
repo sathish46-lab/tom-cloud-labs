@@ -1,0 +1,5 @@
+Create a concise summary of this conversation. Include key topics discussed, important facts shared, user preferences, and any personal information the user revealed. Keep it under 300 words. Focus on facts that would help continue the conversation naturally.
+
+--- CONVERSATION ---
+{conversation}
+--- END ---

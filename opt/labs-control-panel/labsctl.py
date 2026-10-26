@@ -14,6 +14,7 @@ Command Groups:
   system      System operations (status, workers, images, db, clean)
   user        User operations (quota, SSH keys)
   service     Learner service engine operations (users, databases, vhosts)
+  learn       Learn AI generation (lessons, chapters, roadmaps)
 
 Service Engine Operations:
   labsctl service <slug> <action>          slug: mysql|mariadb|mongodb|postgresql|redis|rabbitmq
@@ -58,6 +59,7 @@ from src.commands.container import ContainerCmd
 from src.commands.system import SystemCmd
 from src.commands.user import UserCmd
 from src.commands.service import ServiceCmd
+from src.commands.learn import LearnCmd
 
 
 def build_router():
@@ -72,6 +74,7 @@ def build_router():
     router.register("system", SystemCmd)
     router.register("user", UserCmd)
     router.register("service", ServiceCmd)
+    router.register("learn", LearnCmd)
 
     # ── Legacy flat commands (backward compat) ──────────────────
     def legacy_handler(cmd_name):

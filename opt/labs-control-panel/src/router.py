@@ -6,7 +6,7 @@ class Args:
     """Argument parser — supports --flag=value, -f value, and positional args."""
 
     def __init__(self, argv=None):
-        self.argv = list(argv or sys.argv[1:])
+        self.argv = list(sys.argv[1:] if argv is None else argv)
         self._positional = []
         self._flags = {}
         self._parse()

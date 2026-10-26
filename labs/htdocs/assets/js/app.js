@@ -25841,6 +25841,14 @@ try {
 
             if (typeof TomSocketClient !== 'undefined') {
                 const contentSocket = new TomSocketClient();
+                let renderTimer = null;
+                const scheduleRender = () => {
+                    if (renderTimer) return;
+                    renderTimer = setTimeout(() => {
+                        renderTimer = null;
+                        this.renderMarkdownWithHighlighting(accumulatedMd, container);
+                    }, 80);
+                };
                 contentSocket.connect('/topic/content_stream.' + sessionId, (frame, headers) => {
                     try {
                         let payload = frame;
@@ -25855,15 +25863,16 @@ try {
                                 lastSeq = hdrSeq;
                             }
                             accumulatedMd += payload;
-                            this.renderMarkdownWithHighlighting(accumulatedMd, container);
+                            scheduleRender();
                         } else if (payload && payload.type === 'text_delta') {
                             if (typeof payload.seq === 'number') {
                                 if (payload.seq <= lastSeq) return; // duplicate/replayed chunk
                                 lastSeq = payload.seq;
                             }
                             accumulatedMd += payload.data;
-                            this.renderMarkdownWithHighlighting(accumulatedMd, container);
+                            scheduleRender();
                         } else if (payload && payload.type === 'stream_end') {
+                            if (renderTimer) { clearTimeout(renderTimer); renderTimer = null; }
                             if (statusDiv) statusDiv.classList.add('d-none');
                             this.renderMarkdownWithHighlighting(accumulatedMd, container);
                             contentSocket.disconnect();
@@ -25939,6 +25948,14 @@ try {
 
                 if (typeof TomSocketClient === 'undefined') return;
                 const sock = new TomSocketClient();
+                let renderTimer = null;
+                const scheduleRender = () => {
+                    if (renderTimer) return;
+                    renderTimer = setTimeout(() => {
+                        renderTimer = null;
+                        this.renderMarkdownWithHighlighting(buffer, container);
+                    }, 80);
+                };
                 sock.connect('/topic/content_stream.' + sessionId, (frame, headers) => {
                     try {
                         let payload = frame;
@@ -25953,16 +25970,17 @@ try {
                                 lastSeq = hdrSeq;
                             }
                             buffer += payload;
-                            this.renderMarkdownWithHighlighting(buffer, container);
+                            scheduleRender();
                         } else if (payload && payload.type === 'text_delta') {
                             if (typeof payload.seq === 'number') {
                                 if (payload.seq <= lastSeq) return; // already rendered from partial
                                 lastSeq = payload.seq;
                             }
                             buffer += payload.data;
-                            this.renderMarkdownWithHighlighting(buffer, container);
+                            scheduleRender();
                         } else if (payload && payload.type === 'stream_end') {
                             finished = true;
+                            if (renderTimer) { clearTimeout(renderTimer); renderTimer = null; }
                             if (statusDiv) statusDiv.classList.add('d-none');
                             this.renderMarkdownWithHighlighting(buffer, container);
                             sock.disconnect();
@@ -26796,26 +26814,37 @@ const TomSocketClient = function () {
       return;
     }
     this.isConnecting = true;
-    try {
-      // Read MQ domain from server-injected config (env.json → PHP → window.TOM_CONFIG)
-      // Each environment (dev/prod) has its own mq_domain in env.json
-      let mqDomain = (window.TOM_CONFIG && window.TOM_CONFIG.mq_domain) ? window.TOM_CONFIG.mq_domain : null;
-      
-      if (!mqDomain) {
-        // Fallback: dynamically resolve if TOM_CONFIG is not available
+      try {
+        // Read MQ domain from server-injected config (env.json → PHP → window.TOM_CONFIG)
+        // Each environment (dev/prod) has its own mq_domain in env.json
+        let mqDomain = (window.TOM_CONFIG && window.TOM_CONFIG.mq_domain) ? window.TOM_CONFIG.mq_domain : null;
+        
+        // Determine current host for fallback logic
         const currentHost = window.location.hostname;
-        if (currentHost.includes("dev.tomweb.in")) {
-          mqDomain = "mq.dev.tomweb.in";
-        } else if (currentHost === "localhost" || currentHost === "127.0.0.1") {
-          mqDomain = "localhost:15674"; 
-        } else {
-          mqDomain = "mq.tomweb.in";
+        
+        if (!mqDomain) {
+          // Fallback: dynamically resolve if TOM_CONFIG is not available
+          if (currentHost.includes("dev.tomweb.in")) {
+            mqDomain = "mq.dev.tomweb.in";
+          } else if (currentHost === "localhost" || currentHost === "127.0.0.1") {
+            mqDomain = "localhost:15674"; 
+          } else {
+            mqDomain = "mq.tomweb.in";
+          }
         }
-      }
-      
-      const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
-      const port = window.location.port ? ":" + window.location.port : "";
-      const wsUrl = `${wsProtocol}://${mqDomain}${port}/ws`;
+        
+        const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+        // Determine WebSocket port: use configured MQ port or fallback based on host
+        // RabbitMQ WebStomp plugin listens on 15674; HTTP vhost may be on different port
+        let wsPort = "";
+        if (window.TOM_CONFIG && window.TOM_CONFIG.mq_ws_port) {
+          wsPort = ":" + window.TOM_CONFIG.mq_ws_port;
+        } else if (currentHost.includes("dev.tomweb.in")) {
+          wsPort = ":15674";  // RabbitMQ web_stomp plugin on Dev_lab
+        } else if (window.location.port) {
+          wsPort = ":" + window.location.port;
+        }
+        const wsUrl = `${wsProtocol}://${mqDomain}${wsPort}/ws`;
       
       console.log(`[MQ] Connecting to WebSocket: ${wsUrl}`);
       const ws = new WebSocket(wsUrl);

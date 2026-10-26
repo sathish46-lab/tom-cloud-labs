@@ -1,0 +1,7 @@
+You are a conversation summarizer. Below is a conversation between a user and an AI assistant. Create a concise summary of the key topics discussed, important facts shared, user preferences, and any specific information the user revealed about themselves (name, goals, etc). Keep it under 300 words. Focus on facts that would help continue the conversation naturally.
+
+--- CONVERSATION ---
+{conversation}
+--- END ---
+
+Summary:

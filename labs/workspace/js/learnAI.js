@@ -2844,6 +2844,14 @@ try {
 
             if (typeof TomSocketClient !== 'undefined') {
                 const contentSocket = new TomSocketClient();
+                let renderTimer = null;
+                const scheduleRender = () => {
+                    if (renderTimer) return;
+                    renderTimer = setTimeout(() => {
+                        renderTimer = null;
+                        this.renderMarkdownWithHighlighting(accumulatedMd, container);
+                    }, 80);
+                };
                 contentSocket.connect('/topic/content_stream.' + sessionId, (frame, headers) => {
                     try {
                         let payload = frame;
@@ -2858,15 +2866,16 @@ try {
                                 lastSeq = hdrSeq;
                             }
                             accumulatedMd += payload;
-                            this.renderMarkdownWithHighlighting(accumulatedMd, container);
+                            scheduleRender();
                         } else if (payload && payload.type === 'text_delta') {
                             if (typeof payload.seq === 'number') {
                                 if (payload.seq <= lastSeq) return; // duplicate/replayed chunk
                                 lastSeq = payload.seq;
                             }
                             accumulatedMd += payload.data;
-                            this.renderMarkdownWithHighlighting(accumulatedMd, container);
+                            scheduleRender();
                         } else if (payload && payload.type === 'stream_end') {
+                            if (renderTimer) { clearTimeout(renderTimer); renderTimer = null; }
                             if (statusDiv) statusDiv.classList.add('d-none');
                             this.renderMarkdownWithHighlighting(accumulatedMd, container);
                             contentSocket.disconnect();
@@ -2942,6 +2951,14 @@ try {
 
                 if (typeof TomSocketClient === 'undefined') return;
                 const sock = new TomSocketClient();
+                let renderTimer = null;
+                const scheduleRender = () => {
+                    if (renderTimer) return;
+                    renderTimer = setTimeout(() => {
+                        renderTimer = null;
+                        this.renderMarkdownWithHighlighting(buffer, container);
+                    }, 80);
+                };
                 sock.connect('/topic/content_stream.' + sessionId, (frame, headers) => {
                     try {
                         let payload = frame;
@@ -2956,16 +2973,17 @@ try {
                                 lastSeq = hdrSeq;
                             }
                             buffer += payload;
-                            this.renderMarkdownWithHighlighting(buffer, container);
+                            scheduleRender();
                         } else if (payload && payload.type === 'text_delta') {
                             if (typeof payload.seq === 'number') {
                                 if (payload.seq <= lastSeq) return; // already rendered from partial
                                 lastSeq = payload.seq;
                             }
                             buffer += payload.data;
-                            this.renderMarkdownWithHighlighting(buffer, container);
+                            scheduleRender();
                         } else if (payload && payload.type === 'stream_end') {
                             finished = true;
+                            if (renderTimer) { clearTimeout(renderTimer); renderTimer = null; }
                             if (statusDiv) statusDiv.classList.add('d-none');
                             this.renderMarkdownWithHighlighting(buffer, container);
                             sock.disconnect();

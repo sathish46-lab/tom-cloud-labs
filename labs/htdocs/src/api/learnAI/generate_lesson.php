@@ -4,6 +4,7 @@
  * Initiates AI Lesson Generation and returns a request_id to track progress
  */
 require_once __DIR__ . '/../../load.php';
+require_once __DIR__ . '/../../lib/core/RabbitClient.class.php';
 
 header('Content-Type: application/json');
 
@@ -38,6 +39,7 @@ $requestId = sha1(uniqid('lesson_gen_', true) . $userId . microtime(true));
 $job = [
     'request_id' => $requestId,
     'user_id' => $userId,
+    'username' => $user->getUsername(),
     'topic' => $topic,
     'level' => $level,
     'status' => 'running',
@@ -54,6 +56,38 @@ try {
     $db->ai_lesson_jobs->insertOne($job);
 } catch (Exception $e) {
     // If table/db insertion fails, return error
+}
+
+// Queue generation to the AI worker (labsctl src/learn/curriculum generates the curriculum)
+try {
+    $rabbit = new RabbitClient();
+    $rabbit->sendToQueue('lesson_generation', [
+        'request_id' => $requestId,
+        'user_id' => $userId,
+        'username' => $user->getUsername(),
+        'topic' => $topic,
+        'level' => $level,
+    ]);
+} catch (Exception $e) {
+    $db->ai_lesson_jobs->updateOne(
+        ['request_id' => $requestId],
+        ['$set' => [
+            'status' => 'failed',
+            'failed' => true,
+            'error_message' => 'Could not queue lesson generation'
+        ]]
+    );
+    http_response_code(500);
+    echo json_encode([
+        'status' => 'failed',
+        'message' => 'Could not queue lesson generation',
+        'lesson_id' => null,
+        'request_id' => $requestId,
+        'completed' => false,
+        'failed' => true,
+        'error_message' => 'Could not queue lesson generation'
+    ]);
+    exit;
 }
 
 echo json_encode([

@@ -8,6 +8,7 @@ import re
 import requests
 import redis
 from fast_interceptor import FastInterceptor
+from prompt_loader import load_prompt
 try:
     import markdown
 except ImportError:
@@ -16,6 +17,17 @@ import google.generativeai as genai
 from google.generativeai import caching as genai_caching
 from pymongo import MongoClient
 from bson.objectid import ObjectId
+
+# Generation logic (prompts + Gemini calls) lives in labsctl: opt/labs-control-panel/src/learn/
+_LABSCTL_ROOT = next(
+    (p for p in ('/var/www/opt/labs-control-panel', '/opt/labs-control-panel') if os.path.isdir(p)),
+    None,
+)
+if _LABSCTL_ROOT is None:
+    raise RuntimeError("labsctl not found — Learn generation lives in opt/labs-control-panel")
+sys.path.insert(0, _LABSCTL_ROOT)
+from src.learn import chapter as chapter_gen, curriculum as curriculum_gen, roadmap as roadmap_gen
+from src.learn.streaming import chunk_text as safe_chunk_text
 
 # Configuration
 CONFIG_PATH = '/var/www/env.json' if os.path.exists('/var/www/env.json') else '/host_www/www/env.json' if os.path.exists('/host_www/www/env.json') else '../../env.json'
@@ -42,6 +54,8 @@ QUEUE_NAME = 'ai_jobs'
 CONTENT_QUEUE_NAME = 'ai_content_jobs'
 DLQ_NAME = 'ai_jobs_dlq'
 CONTENT_DLQ_NAME = 'ai_content_jobs_dlq'
+LESSON_QUEUE_NAME = 'lesson_generation'
+LESSON_DLQ_NAME = 'lesson_generation_dlq'
 
 # AI Worker running in stateless API mode.
 print("AI Worker running in stateless API mode.", flush=True)
@@ -55,16 +69,153 @@ except Exception as e:
     print(f"Redis connection warning: {e}", flush=True)
     redis_client = None
 
-# Gemini Config
-GEMINI_MODEL_NAME = 'models/gemini-2.5-flash-lite'
-print(f"Configuring Gemini API with model: {GEMINI_MODEL_NAME}...", flush=True)
-_gemini_key = config.get('ai_api_key', '')
-if _gemini_key:
-    os.environ['GOOGLE_API_KEY'] = _gemini_key
-    genai.configure(api_key=_gemini_key)
-else:
+# Gemini Config - Multi-key / Multi-model support with auto-rotation on rate limit
+GEMINI_MODEL_NAMES = [m.strip() for m in config.get('gemini_models', 'models/gemini-2.5-flash-lite').split(',') if m.strip()]
+GEMINI_API_KEYS = [k.strip() for k in config.get('ai_api_keys', config.get('ai_api_key', '')).split(',') if k.strip()]
+
+if not GEMINI_API_KEYS:
     print("WARNING: No ai_api_key found in config!", flush=True)
-    genai.configure()
+    GEMINI_API_KEYS = ['']
+    GEMINI_MODEL_NAMES = ['models/gemini-2.5-flash-lite']
+
+_current_key_index = 0
+_current_model_index = 0
+
+
+def get_current_gemini_config():
+    """Get current API key and model name"""
+    return GEMINI_API_KEYS[_current_key_index], GEMINI_MODEL_NAMES[_current_model_index]
+
+
+def switch_to_next_key():
+    """Rotate to next API key"""
+    global _current_key_index
+    _current_key_index = (_current_key_index + 1) % len(GEMINI_API_KEYS)
+    key, model_name = get_current_gemini_config()
+    os.environ['GOOGLE_API_KEY'] = key
+    genai.configure(api_key=key)
+    print(f" [Gemini] Switched to API key {_current_key_index + 1}/{len(GEMINI_API_KEYS)}, model: {model_name}", flush=True)
+    return key, model_name
+
+
+def switch_to_next_model():
+    """Rotate to next model"""
+    global _current_model_index
+    _current_model_index = (_current_model_index + 1) % len(GEMINI_MODEL_NAMES)
+    key, model_name = get_current_gemini_config()
+    os.environ['GOOGLE_API_KEY'] = key
+    genai.configure(api_key=key)
+    print(f" [Gemini] Switched to model: {model_name} (key {_current_key_index + 1}/{len(GEMINI_API_KEYS)})", flush=True)
+    return key, model_name
+
+
+def create_gemini_model():
+    """Create a new Gemini model instance with the current API key"""
+    key, model_name = get_current_gemini_config()
+    os.environ['GOOGLE_API_KEY'] = key
+    genai.configure(api_key=key)
+    return genai.GenerativeModel(model_name, tools=ai_tools), key, model_name
+
+
+def is_rate_limit_error(e):
+    """Check if exception is a rate limit / quota error"""
+    error_str = str(e).lower()
+    return any(kw in error_str for kw in [
+        '429', 'quota', 'rate limit', 'rate_limit', 'resource exhausted',
+        'too many requests', 'billing', 'quota exceeded', 'models/gemini'
+    ])
+
+
+def generate_with_retry(chat_history, query, max_retries=None):
+    """Generate content with automatic model/key switching on rate limit.
+    
+    Retries with next API key, then next model, cycling through all combinations.
+    Returns the streaming response iterator.
+    """
+    global _current_key_index, _current_model_index
+    if max_retries is None:
+        max_retries = max(len(GEMINI_API_KEYS), 1) * max(len(GEMINI_MODEL_NAMES), 1) * 2
+
+    last_error = None
+    for attempt in range(max_retries):
+        try:
+            model, key, model_name = create_gemini_model()
+            chat_session = model.start_chat(history=chat_history)
+            response = chat_session.send_message(query, stream=True)
+            # If we get here, connection established successfully
+            print(f" [Gemini] Using key {_current_key_index + 1}/{len(GEMINI_API_KEYS)}, model: {model_name}", flush=True)
+            return response
+        except Exception as e:
+            last_error = e
+            if is_rate_limit_error(e):
+                print(f" [!] Rate limit on key {_current_key_index + 1}/{len(GEMINI_API_KEYS)}, model {GEMINI_MODEL_NAMES[_current_model_index]}: {str(e)[:100]}")
+                # Rotate to next key first
+                if _current_key_index < len(GEMINI_API_KEYS) - 1:
+                    switch_to_next_key()
+                elif _current_model_index < len(GEMINI_MODEL_NAMES) - 1:
+                    switch_to_next_model()
+                else:
+                    # All exhausted, reset to first
+                    _current_key_index = 0
+                    _current_model_index = 0
+                    key, model_name = get_current_gemini_config()
+                    os.environ['GOOGLE_API_KEY'] = key
+                    genai.configure(api_key=key)
+                    print(f" [!] All keys/models exhausted, resetting to first: {model_name}", flush=True)
+                continue
+            else:
+                # Non-rate-limit error, re-raise immediately
+                raise e
+
+    # All retries exhausted
+    raise last_error
+
+
+class GenAIClient:
+    """Gemini client with automatic API key/model rotation on rate limit."""
+
+    def __init__(self, history):
+        self.history = history
+        self.model = None
+        self.chat_session = None
+        self._create_new_session()
+
+    def _create_new_session(self):
+        model, key, model_name = create_gemini_model()
+        self.model = model
+        self.chat_session = model.start_chat(history=self.history)
+        print(f" [Gemini] Using key {_current_key_index + 1}/{len(GEMINI_API_KEYS)}, model: {model_name}", flush=True)
+
+    def send_message(self, message):
+        """Send message with auto key rotation on rate limit."""
+        last_error = None
+        max_retries = max(len(GEMINI_API_KEYS), 1) * max(len(GEMINI_MODEL_NAMES), 1) * 2
+        for attempt in range(max_retries):
+            try:
+                return self.chat_session.send_message(message, stream=True)
+            except Exception as e:
+                last_error = e
+                if is_rate_limit_error(e):
+                    print(f" [!] Rate limit on key {_current_key_index + 1}/{len(GEMINI_API_KEYS)}, model {GEMINI_MODEL_NAMES[_current_model_index]}: {str(e)[:100]}")
+                    if _current_key_index < len(GEMINI_API_KEYS) - 1:
+                        switch_to_next_key()
+                    elif _current_model_index < len(GEMINI_MODEL_NAMES) - 1:
+                        switch_to_next_model()
+                    else:
+                        _current_key_index = 0
+                        _current_model_index = 0
+                        key, model_name = get_current_gemini_config()
+                        os.environ['GOOGLE_API_KEY'] = key
+                        genai.configure(api_key=key)
+                        print(f" [!] All keys/models exhausted, resetting to first: {model_name}", flush=True)
+                    # Recreate model and chat session with new key
+                    model, key, model_name = create_gemini_model()
+                    self.model = model
+                    self.chat_session = model.start_chat(history=self.history)
+                else:
+                    raise e
+        raise last_error
+
 
 # MongoDB Config
 print("Configuring MongoDB...", flush=True)
@@ -166,8 +317,8 @@ ai_tools = [
     read_student_progress_func,
 ]
 
-model = genai.GenerativeModel(GEMINI_MODEL_NAME, tools=ai_tools)
-print(f"Gemini model initialized ({GEMINI_MODEL_NAME}) with {len(ai_tools)} tools.", flush=True)
+model, _, _ = create_gemini_model()
+print(f"Gemini model initialized ({GEMINI_MODEL_NAMES[_current_model_index]}) with {len(ai_tools)} tools.", flush=True)
 
 # ===========================================================================
 # CONTEXT CACHING: Cache system prompt + lesson context for cost savings
@@ -214,7 +365,7 @@ def get_or_create_cached_context(user_id, lesson_id, system_context_text, histor
     
     try:
         cached_content = genai_caching.CachedContent.create(
-            model=GEMINI_MODEL_NAME,
+            model=GEMINI_MODEL_NAMES[_current_model_index],
             display_name=f"learn_ai_{user_id}_{lesson_id}",
             contents=contents_to_cache,
             ttl=datetime.timedelta(minutes=30)
@@ -249,14 +400,7 @@ def generate_summary_via_lm_studio(messages_to_summarize):
         role_label = "User" if role == 'user' else "AI Assistant"
         conversation_text += f"{role_label}: {msg.get('content', '')}\n\n"
     
-    summary_prompt = (
-        "You are a conversation summarizer. Below is a conversation between a user and an AI assistant. "
-        "Create a concise summary of the key topics discussed, important facts shared, user preferences, "
-        "and any specific information the user revealed about themselves (name, goals, etc). "
-        "Keep it under 300 words. Focus on facts that would help continue the conversation naturally.\n\n"
-        f"--- CONVERSATION ---\n{conversation_text}\n--- END ---\n\n"
-        "Summary:"
-    )
+    summary_prompt = load_prompt('Tutor/summarizer_local.txt', conversation=conversation_text)
     
     # Fetch model ID
     base_url = lm_studio_url.replace('/chat/completions', '')
@@ -300,12 +444,7 @@ def generate_summary_via_gemini(messages_to_summarize):
         role_label = "User" if role == 'user' else "AI Assistant"
         conversation_text += f"{role_label}: {msg.get('content', '')}\n\n"
     
-    summary_prompt = (
-        "Create a concise summary of this conversation. Include key topics discussed, "
-        "important facts shared, user preferences, and any personal information the user revealed. "
-        "Keep it under 300 words. Focus on facts that would help continue the conversation naturally.\n\n"
-        f"--- CONVERSATION ---\n{conversation_text}\n--- END ---"
-    )
+    summary_prompt = load_prompt('Tutor/summarizer.txt', conversation=conversation_text)
     
     try:
         response = model.generate_content(summary_prompt)
@@ -437,9 +576,19 @@ def stream_lm_studio(query, url, stream_callback, history=None):
         stream_callback(f"Failed to connect to LM Studio: {e}\nPlease check if it is running and accessible at {url}", is_final=False)
         return ""
 
-def stream_to_user(channel, session_id, message_id, chunk_text, is_final=False, topic_prefix="ai_stream", usage=None, source='llm'):
-    """Publish a stream chunk to a specific topic"""
+def stream_to_user(channel, session_id, message_id, chunk_text, is_final=False, topic_prefix="ai_stream", usage=None, source='llm', seq=None):
+    """Publish a stream chunk to a specific topic.
+
+    content_stream frames carry PURE TEXT as the body (json-encoded string,
+    e.g. " chapters") with metadata in AMQP headers — RabbitMQ maps custom
+    headers onto STOMP headers, so subscribers read seq/frame_type/message_id
+    from the frame headers. Chat (ai_stream) keeps the legacy JSON envelope.
+    """
     try:
+        # Using amq.topic for routing to browser session
+        routing_key = f"{topic_prefix}.{session_id}"
+        bare = topic_prefix == "content_stream"
+        properties = None
         if is_final:
             msg = {
                 'type': 'stream_end',
@@ -450,16 +599,30 @@ def stream_to_user(channel, session_id, message_id, chunk_text, is_final=False, 
             if usage:
                 msg['usage'] = usage
             payload = json.dumps(msg)
+            if bare:
+                properties = pika.BasicProperties(
+                    content_type='application/json',
+                    headers={'frame_type': 'stream_end', 'message_id': message_id}
+                )
+        elif bare:
+            payload = json.dumps(chunk_text)
+            headers = {'frame_type': 'text_delta', 'message_id': message_id}
+            if seq is not None:
+                # Monotonic per-job sequence so reconnecting clients can drop
+                # duplicates and detect gaps (see content_partial resume flow)
+                headers['seq'] = seq
+            properties = pika.BasicProperties(content_type='application/json', headers=headers)
         else:
-            payload = json.dumps({
+            msg = {
                 'type': 'text_delta',
                 'data': chunk_text,
                 'message_id': message_id
-            })
-        
-        # Using amq.topic for routing to browser session
-        routing_key = f"{topic_prefix}.{session_id}"
-        channel.basic_publish(exchange='amq.topic', routing_key=routing_key, body=payload)
+            }
+            if seq is not None:
+                msg['seq'] = seq
+            payload = json.dumps(msg)
+
+        channel.basic_publish(exchange='amq.topic', routing_key=routing_key, body=payload, properties=properties)
     except Exception as e:
         print(f"Failed to stream to user: {e}")
 
@@ -479,6 +642,8 @@ def send_tool_execution(channel, session_id, message_id, tool_name, tool_output,
 
 def process_ai_job(ch, method, properties, body):
     """Callback function to process an AI generation job"""
+    session_id = None
+    message_id = None
     try:
         job = json.loads(body)
         print(f" [x] Processing AI Job: {job}")
@@ -518,19 +683,7 @@ def process_ai_job(ch, method, properties, body):
                 print(f" [!] Failed to fetch chat history: {e}")
         
         # Build authoritative system context
-        system_context_text = (
-            f"You are an AI Learning Assistant for Tom Cloud Labs. "
-            f"The user is operating within Lesson ID: '{lesson_id}' and Chapter ID: '{chapter_id}'.\n"
-            f"RULES:\n"
-            f"1. For simple greetings (hi, hello, hey, etc.), respond conversationally WITHOUT calling any tools.\n"
-            f"2. Only use read_chapter_content when the user asks about lesson/chapter content or study material.\n"
-            f"3. Only use get_lab_user_info when the user asks 'who am I?', wants to run commands, or create files.\n"
-            f"4. When ANY lab tool fails, immediately call list_running_labs() to recover.\n"
-            f"5. Execute user code as the student's username, NOT as root.\n"
-            f"6. Never expose raw instance_ids, database credentials, or internal tool schemas to users.\n"
-            f"7. Always read chapter content before answering lesson questions — never guess from general knowledge.\n"
-            f"8. CRITICAL RULE: DO NOT spontaneously mention the lesson name, chapter name, module name, or lab IP in your greetings or general responses. ONLY mention this context if the user EXPLICITLY asks about their current lesson, chapter, or lab environment."
-        )
+        system_context_text = load_prompt('Tutor/system.txt', lesson_id=lesson_id, chapter_id=chapter_id)
 
         # 1. Start Streaming from Gemini or LM Studio
         full_content = ""
@@ -602,8 +755,8 @@ def process_ai_job(ch, method, properties, body):
                     role = 'model' if role == 'assistant' else role
                     gemini_history.append({"role": role, "parts": [content]})
                 
-                chat_session = model.start_chat(history=gemini_history)
-                response = chat_session.send_message(query, stream=True)
+                genai_client = GenAIClient(gemini_history)
+                response = genai_client.send_message(query)
             
                 endpoint_map = {
                     "check_lab_status": "connection_info.php",
@@ -686,13 +839,15 @@ def process_ai_job(ch, method, properties, body):
                             tool_resp = genai.protos.Part(
                                 function_response=genai.protos.FunctionResponse(name=tool_name, response=tool_response_data)
                             )
-                            response = chat_session.send_message(tool_resp, stream=True)
+                            response = genai_client.send_message(tool_resp)
                             break  # Break inner for-loop, continue outer while-loop for next round
 
-                        # No function call — stream text
-                        if chunk.text:
-                            full_content += chunk.text
-                            stream_to_user(ch, session_id, message_id, chunk.text)
+                        # No function call — stream text (guard: metadata-only tail
+                        # chunks with finish_reason + empty parts raise on .text)
+                        text = safe_chunk_text(chunk)
+                        if text:
+                            full_content += text
+                            stream_to_user(ch, session_id, message_id, text)
 
                     if not found_fc:
                         break  # No more tool calls, exit the while loop
@@ -744,13 +899,62 @@ def process_ai_job(ch, method, properties, body):
 
     except Exception as e:
         print(f" [!] Error processing AI job: {e}")
+        if session_id and message_id:
+            # End the frontend stream so a failed generation doesn't hang the UI
+            stream_to_user(ch, session_id, message_id, "", is_final=True)
             
     finally:
         ch.basic_ack(delivery_tag=method.delivery_tag)
         print(" [x] AI Job Done")
 
+_PARTIAL_FLUSH_INTERVAL = 0.8  # seconds between partial-content flushes
+_PARTIAL_FIELDS = {
+    'content_partial', 'content_partial_session', 'content_partial_seq',
+    'content_partial_status', 'content_partial_at',
+}
+
+
+def _flush_content_partial(chapter_id, text, session_id, seq, status='streaming'):
+    """Persist the in-flight generated markdown so a reloaded page can resume."""
+    try:
+        db.ai_chapters.update_one(
+            {'_id': ObjectId(chapter_id)},
+            {'$set': {
+                'content_partial': text,
+                'content_partial_session': session_id,
+                'content_partial_seq': seq,
+                'content_partial_status': status,
+                'content_partial_at': int(time.time()),
+            }}
+        )
+    except Exception as pe:
+        print(f" [!] Partial content flush failed: {pe}")
+
+
+_WIRE_PIECE_RE = re.compile(r'\s*\S+')
+
+
+def _wire_pieces(text):
+    """Yield word-sized pieces so each wire frame is a small pure-content
+    chunk (sample-style: one word like " chapters" per frame). Concatenation
+    of all pieces equals the original text exactly."""
+    if not text:
+        return
+    pos = 0
+    for m in _WIRE_PIECE_RE.finditer(text):
+        pos = m.end()
+        yield m.group(0)
+    if pos < len(text):
+        yield text[pos:]
+
+
 def process_content_job(ch, method, properties, body):
     """Callback function to generate human-like tutorial chapter content and stream it"""
+    session_id = None
+    message_id = 'content_msg'
+    chapter_id = None
+    full_content = ""
+    seq = 0
     try:
         job = json.loads(body)
         print(f" [x] Processing Content Generation Job: {job}")
@@ -777,31 +981,26 @@ def process_content_job(ch, method, properties, body):
         module_name = chapter.get('module_name', 'Module 1')
         chapter_title = chapter.get('title', 'Lesson Chapter')
 
-        # Human Tutor Prompt Tuning
-        prompt = (
-            f"Act as an exceptionally experienced, engaging human senior mentor and tech educator teaching a live course on '{lesson_title}'.\n"
-            f"You are currently writing the official lesson material for the chapter: '{chapter_title}' (part of '{module_name}').\n\n"
-            "CRITICAL INSTRUCTIONS FOR YOUR TONE AND STYLE:\n"
-            "1. Write like a warm, relatable human mentor explaining practical engineering concepts clearly. Avoid robotic AI phrases (e.g. 'Delve into', 'In conclusion', 'As an AI').\n"
-            "2. Keep the content focused, practical, and highly digestible (concise enough for rapid testing and focused learning, no unnecessary filler).\n"
-            "3. Use structured Markdown:\n"
-            "   - Start directly with Level 2 (`##`) and Level 3 (`###`) subheadings.\n"
-            "   - Provide clean real-world examples and bullet points.\n"
-            "4. SYNTAX HIGHLIGHTING & CODE BLOCKS: Whenever you include code examples or commands in ANY language (Python, JavaScript, PHP, SQL, Bash, JSON, C++, Go, Rust, HTML/CSS, etc.), YOU MUST enclose them in standard Markdown fenced code blocks with the exact language name explicitly specified on the opening backticks (e.g. ```python, ```javascript, ```php, ```sql, ```bash). Every code block must have a valid language tag.\n"
+        # Human Tutor Prompt Tuning (prompt build + model call live in labsctl)
+        prompt = chapter_gen.build_chapter_prompt(
+            lesson_title=lesson_title, module_name=module_name,
+            chapter_title=chapter_title, custom_prompt=custom_prompt,
         )
-        if custom_prompt:
-            prompt += f"\nSpecific focus requested by the user: {custom_prompt}\n"
 
         stream_to_user(ch, session_id, message_id, "", is_final=False, topic_prefix="content_stream")
 
-        full_content = ""
-        content_model = genai.GenerativeModel(GEMINI_MODEL_NAME)
-        response = content_model.generate_content(prompt, stream=True)
-        for chunk in response:
-            if chunk.text:
-                full_content += chunk.text
-                stream_to_user(ch, session_id, message_id, chunk.text, topic_prefix="content_stream")
+        last_partial = time.monotonic()
+        for text in chapter_gen.stream_chapter_content(prompt):
+            full_content += text
+            for piece in _wire_pieces(text):
+                seq += 1
+                stream_to_user(ch, session_id, message_id, piece, topic_prefix="content_stream", seq=seq)
+            if time.monotonic() - last_partial >= _PARTIAL_FLUSH_INTERVAL:
+                _flush_content_partial(chapter_id, full_content, session_id, seq, 'streaming')
+                last_partial = time.monotonic()
 
+        if full_content:
+            _flush_content_partial(chapter_id, full_content, session_id, seq, 'streaming')
         stream_to_user(ch, session_id, message_id, "", is_final=True, topic_prefix="content_stream")
         print(" [✓] Content Generation Stream completed.")
 
@@ -815,14 +1014,16 @@ def process_content_job(ch, method, properties, body):
             else:
                 rendered_html = f'<div class="raw-markdown">{full_content}</div>'
 
-            # Save to MongoDB
+            # Save to MongoDB (atomically drop the resume-partial fields)
+            unset_partial = {f: '' for f in _PARTIAL_FIELDS}
             db.ai_chapters.update_one(
                 {'_id': ObjectId(chapter_id)},
                 {'$set': {
                     'content': full_content,
                     'content_html': rendered_html,
                     'content_updated_at': int(time.time())
-                }}
+                },
+                 '$unset': unset_partial}
             )
             print(f" [✓] Updated MongoDB ai_chapters with generated content & pre-rendered HTML for chapter {chapter_id}")
 
@@ -836,6 +1037,12 @@ def process_content_job(ch, method, properties, body):
 
     except Exception as e:
         print(f" [!] Error processing content job: {e}")
+        if chapter_id and full_content:
+            # Keep what was generated for resume-after-reload, marked failed
+            _flush_content_partial(chapter_id, full_content, session_id, seq, 'failed')
+        if session_id:
+            # End the frontend stream so a failed generation doesn't hang the UI
+            stream_to_user(ch, session_id, message_id, "", is_final=True, topic_prefix="content_stream")
     finally:
         ch.basic_ack(delivery_tag=method.delivery_tag)
         print(" [x] Content Generation Job Done")
@@ -843,42 +1050,7 @@ def process_content_job(ch, method, properties, body):
 # ===========================================================================
 # ROADMAP GENERATION — Streaming section-by-section via RabbitMQ
 # ===========================================================================
-ROADMAP_STRUCTURE_PROMPT_TEMPLATE = """You are an expert curriculum designer. Generate a structured learning roadmap.
-
-User Request: "{prompt}"
-Difficulty Level: {level}
-
-Return ONLY valid JSON (no markdown, no code fences) with this exact structure:
-{{
-  "title": "Concise roadmap title (max 60 chars, specific to the topic)",
-  "description": "1-2 sentence roadmap description",
-  "level": "{level}",
-  "hours": 45,
-  "tags": ["tag1", "tag2", "tag3"],
-  "sections": [
-    {{
-      "title": "Section Title",
-      "topics": [
-        {{
-          "title": "Specific Topic Name",
-          "items": [
-            {{ "text": "Specific concept like 'Radio frequency (RF) basics'", "type": "concept" }},
-            {{ "text": "Skill assertion like 'You can explain the main factors affecting signal strength'", "type": "milestone" }},
-            {{ "text": "Hands-on task like 'Measure signal strength using a basic receiver'", "type": "checkpoint" }},
-            {{ "text": "Choice like 'Choose primary frequency band — weigh range vs interference'", "type": "decision" }}
-          ]
-        }}
-      ]
-    }}
-  ]
-}}
-
-CRITICAL RULES:
-1. Create 3-5 sections, each with 2-4 topics.
-2. Each topic has 3-6 items mixing types: concept, milestone, checkpoint, decision.
-3. Item text must be SPECIFIC and DESCRIPTIVE — never generic like "Learn basics of X".
-4. Titles must be unique and specific. Tags: 3-5 relevant keywords. Hours: 10-100.
-5. Return ONLY the raw JSON object, nothing else."""
+# Roadmap structure prompt: opt/labs-control-panel/src/learn/prompts/roadmaps/structure.txt (labsctl src/learn/roadmap.py)
 
 def publish_roadmap_event(channel, session_id, event_type, data):
     """Publish a roadmap stream event to RabbitMQ topic"""
@@ -1025,70 +1197,18 @@ def process_roadmap_gen_job(ch, method, properties, body):
         publish_roadmap_event(ch, session_id, 'progress', {
             'percentage': 5, 'message': 'Analyzing your topic...', 'title': 'Generating...'
         })
+        # Prompt + streamed generation with model fallback live in labsctl.
+        full_text = ""
 
-        ai_prompt = ROADMAP_STRUCTURE_PROMPT_TEMPLATE.format(prompt=prompt, level=level)
+        def _roadmap_progress(evt):
+            publish_roadmap_event(ch, session_id, 'progress', evt)
 
         publish_roadmap_event(ch, session_id, 'progress', {
             'percentage': 10, 'message': 'AI is designing roadmap...',
         })
 
-        full_text = ""
-        emitted_section_titles = []   # track sections emitted during streaming (unused now, kept for compat)
-
-        # Fallback model chain — switch model on each rate-limit retry
-        # All verified to support JSON output mode
-        fallback_models = [
-            'models/gemini-2.5-flash-lite',   # 30 RPM, 1500 RPD
-            'models/gemini-3.1-flash-lite',   # new gen, separate quota
-            'models/gemini-2.5-flash',        # 10 RPM, 500 RPD
-        ]
-        current_model_idx = 0
-        gen_model = genai.GenerativeModel(fallback_models[current_model_idx])
-
-        # Retry with model fallback for rate limits (429)
-        max_retries = len(fallback_models)
-        for attempt in range(max_retries):
-            try:
-                response = gen_model.generate_content(
-                    ai_prompt,
-                    generation_config=genai.types.GenerationConfig(
-                        temperature=0.7, max_output_tokens=4096,
-                        response_mime_type='application/json',
-                    ),
-                    stream=True
-                )
-
-                chunk_count = 0
-                for chunk in response:
-                    if chunk.text:
-                        full_text += chunk.text
-                        chunk_count += 1
-
-                        pct = min(10 + (chunk_count * 2), 55)
-                        if chunk_count % 5 == 0:
-                            publish_roadmap_event(ch, session_id, 'progress', {
-                                'percentage': pct,
-                                'message': f'Designing structure... ({chunk_count * 20} tokens)',
-                            })
-                break  # success, exit retry loop
-
-            except Exception as gemini_err:
-                err_str = str(gemini_err)
-                if ('429' in err_str or 'quota' in err_str.lower() or 'rate' in err_str.lower()) and attempt < max_retries - 1:
-                    current_model_idx += 1
-                    next_model = fallback_models[current_model_idx]
-                    gen_model = genai.GenerativeModel(next_model)
-                    model_short = next_model.split('/')[-1]
-                    print(f" [!] Rate limited on {fallback_models[attempt].split('/')[-1]}, switching to {model_short} (attempt {attempt+1}/{max_retries})", flush=True)
-                    publish_roadmap_event(ch, session_id, 'progress', {
-                        'percentage': 10,
-                        'message': f'Rate limited — switching to {model_short}...',
-                    })
-                    time.sleep(2)  # brief pause before retry
-                    continue
-                if '429' in err_str or 'quota' in err_str.lower():
-                    raise Exception("AI rate limit exceeded on all models. Please try again in a few minutes.")
-                raise
+        for text_chunk in roadmap_gen.stream_structure(prompt, level, on_progress=_roadmap_progress):
+            full_text += text_chunk
 
         if not full_text.strip():
             raise Exception("Empty response from Gemini")
@@ -1154,7 +1274,7 @@ def process_roadmap_gen_job(ch, method, properties, body):
             'type': 'roadmap', 'visibility': visibility,
             'user_id': user_id, 'author': username, 'author_email': email,
             'sections': structure['sections'], 'markdown': md,
-            'ai_model': GEMINI_MODEL_NAME, 'progress': 0,
+            'ai_model': GEMINI_MODEL_NAMES[_current_model_index], 'progress': 0,
             'checkpoints_total': total_items, 'checkpoints_completed': 0,
             'created_at': datetime.datetime.utcnow(),
             'updated_at': datetime.datetime.utcnow(),
@@ -1205,6 +1325,103 @@ def process_roadmap_gen_job(ch, method, properties, body):
         ch.basic_ack(delivery_tag=method.delivery_tag)
         print(" [x] Roadmap Generation Job Done")
 
+def process_lesson_job(ch, method, properties, body):
+    """Generate a lesson curriculum via labsctl and persist lesson + chapters.
+
+    Ported from labs/htdocs/src/api/learnAI/job_status.php (inline Gemini block).
+    Progress is written back to ai_lesson_jobs; PHP job_status.php now only reads.
+    """
+    request_id = None
+    try:
+        job = json.loads(body)
+        request_id = job.get('request_id')
+        topic = (job.get('topic') or '').strip()
+        level = job.get('level') or 'Beginner'
+        user_id = job.get('user_id')
+        username = job.get('username') or 'AI Assistant'
+
+        if not request_id or not topic:
+            print(" [!] Lesson job missing request_id/topic, skipping...", flush=True)
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+            return
+
+        print(f" [x] Processing Lesson Generation Job: {request_id} ({topic!r})", flush=True)
+
+        def update_job(**fields):
+            try:
+                db.ai_lesson_jobs.update_one({'request_id': request_id}, {'$set': fields})
+            except Exception as ue:
+                print(f" [!] Lesson job update failed: {ue}", flush=True)
+
+        update_job(status='running', percentage=35,
+                   message='Analyzing learning goals & structuring curriculum...')
+
+        result = curriculum_gen.generate_curriculum(topic, level)
+
+        update_job(status='running', percentage=70,
+                   message='Generating structured modules & practical exercises...')
+
+        title = result['title']
+        subject = result.get('topic') or title
+        description = result.get('description') or ('AI-generated professional curriculum for ' + subject + '.')
+        modules_data = result['modules']
+
+        tag_subject = re.sub(r'[^a-z0-9]+', '-', subject.lower())
+        tags = [t for t in tag_subject.split('-') if t][:3]
+        tags.append('ai-generated')
+
+        lesson_id = ObjectId()
+        db.ai_lessons.insert_one({
+            '_id': lesson_id,
+            'title': title,
+            'topic': subject,
+            'prompt': topic,
+            'description': description,
+            'level': level,
+            'visibility': 'Private',
+            'modules_count': len(modules_data),
+            'chapters_count': sum(len(m.get('chapters') or []) for m in modules_data),
+            'tags': tags,
+            'thumbnail': '/assets/images/learn/ai-assistant.png',
+            'progress': 0,
+            'author': username,
+            'created_at': int(time.time()),
+        })
+
+        order = 1
+        for mod in modules_data:
+            mod_name = mod.get('module_name', 'Module')
+            for ch_title in (mod.get('chapters') or []):
+                db.ai_chapters.insert_one({
+                    'lesson_id': lesson_id,
+                    'module_name': mod_name,
+                    'title': ch_title,
+                    'content': '',
+                    'order': order,
+                    'status': 'in_progress' if order == 1 else 'pending',
+                })
+                order += 1
+
+        update_job(status='completed', percentage=100,
+                   message='Lesson generated successfully!',
+                   lesson_id=str(lesson_id), completed=True)
+        print(f" [+] Lesson generated: {title} ({lesson_id})", flush=True)
+
+    except Exception as e:
+        print(f" [!] Error processing lesson job: {e}", flush=True)
+        try:
+            if request_id:
+                db.ai_lesson_jobs.update_one(
+                    {'request_id': request_id},
+                    {'$set': {'status': 'failed', 'failed': True,
+                              'error_message': str(e)[:500]}}
+                )
+        except Exception:
+            pass
+    finally:
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+
+
 def main():
     while True:
         try:
@@ -1226,6 +1443,11 @@ def main():
                 durable=True,
                 arguments={'x-message-ttl': 604800000}  # 7 days
             )
+            channel.queue_declare(
+                queue=LESSON_DLQ_NAME,
+                durable=True,
+                arguments={'x-message-ttl': 604800000}  # 7 days
+            )
             
             # Declare main queues with DLQ routing
             channel.queue_declare(
@@ -1244,11 +1466,19 @@ def main():
                     'x-dead-letter-routing-key': CONTENT_DLQ_NAME,
                 }
             )
+            channel.queue_declare(
+                queue=LESSON_QUEUE_NAME,
+                durable=True,
+                arguments={
+                    'x-dead-letter-exchange': '',
+                    'x-dead-letter-routing-key': LESSON_DLQ_NAME,
+                }
+            )
             
             # Fair dispatch
             channel.basic_qos(prefetch_count=1)
             
-            print(f" [*] AI Worker waiting for jobs in '{QUEUE_NAME}' & '{CONTENT_QUEUE_NAME}'.", flush=True)
+            print(f" [*] AI Worker waiting for jobs in '{QUEUE_NAME}', '{CONTENT_QUEUE_NAME}' & '{LESSON_QUEUE_NAME}'.", flush=True)
             
             def dispatch_ai_job(ch, method, properties, body):
                 """Route ai_jobs messages to the correct handler"""
@@ -1263,6 +1493,7 @@ def main():
             
             channel.basic_consume(queue=QUEUE_NAME, on_message_callback=dispatch_ai_job)
             channel.basic_consume(queue=CONTENT_QUEUE_NAME, on_message_callback=process_content_job)
+            channel.basic_consume(queue=LESSON_QUEUE_NAME, on_message_callback=process_lesson_job)
             channel.start_consuming()
             
         except pika.exceptions.AMQPConnectionError:

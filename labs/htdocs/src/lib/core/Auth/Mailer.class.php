@@ -34,6 +34,9 @@ class Mailer {
         $mail->Password   = $config['pass'];
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
         $mail->Port       = $config['port'];
+        // Bound the SMTP connect/write wait: PHPMailer defaults to 300s, which
+        // would hang web requests (e.g. the 2FA login page) on a slow mail host.
+        $mail->Timeout    = 5;
         $mail->setFrom(
             $config['from_email'] ?? $config['user'],
             $config['from_name']  ?? \SiteBrand::name()

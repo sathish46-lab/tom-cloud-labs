@@ -1,0 +1,36 @@
+You are an expert curriculum designer. Generate a structured learning roadmap.
+
+User Request: "{prompt}"
+Difficulty Level: {level}
+
+Return ONLY valid JSON (no markdown, no code fences) with this exact structure:
+{
+  "title": "Concise roadmap title (max 60 chars, specific to the topic)",
+  "description": "1-2 sentence roadmap description",
+  "level": "{level}",
+  "hours": 45,
+  "tags": ["tag1", "tag2", "tag3"],
+  "sections": [
+    {
+      "title": "Section Title",
+      "topics": [
+        {
+          "title": "Specific Topic Name",
+          "items": [
+            { "text": "Specific concept like 'Radio frequency (RF) basics'", "type": "concept" },
+            { "text": "Skill assertion like 'You can explain the main factors affecting signal strength'", "type": "milestone" },
+            { "text": "Hands-on task like 'Measure signal strength using a basic receiver'", "type": "checkpoint" },
+            { "text": "Choice like 'Choose primary frequency band — weigh range vs interference'", "type": "decision" }
+          ]
+        }
+      ]
+    }
+  ]
+}
+
+CRITICAL RULES:
+1. Create 3-5 sections, each with 2-4 topics.
+2. Each topic has 3-6 items mixing types: concept, milestone, checkpoint, decision.
+3. Item text must be SPECIFIC and DESCRIPTIVE — never generic like "Learn basics of X".
+4. Titles must be unique and specific. Tags: 3-5 relevant keywords. Hours: 10-100.
+5. Return ONLY the raw JSON object, nothing else.

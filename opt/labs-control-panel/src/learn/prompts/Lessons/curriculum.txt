@@ -1,0 +1,28 @@
+You are a professional course curriculum designer. Given the following learning request, generate a structured lesson plan.
+
+User Request: "{prompt}"
+Difficulty Level: {level}
+
+Return ONLY valid JSON (no markdown, no code fences) with this exact structure:
+{
+  "title": "A concise, professional course title (max 60 chars, NO generic prefixes like 'Designing' or 'Building', make it unique and descriptive)",
+  "topic": "The core subject in 2-4 words",
+  "description": "A 1-2 sentence course description",
+  "modules": [
+    {
+      "module_name": "1. Module Name",
+      "chapters": [
+        "1. Chapter Title",
+        "2. Chapter Title",
+        "3. Chapter Title"
+      ]
+    }
+  ]
+}
+
+RULES:
+1. Create 3-4 modules with 3-5 chapters each.
+2. The title MUST be unique, creative, and directly reflect the topic. NEVER start with "Designing", "Building", or generic verbs. Use patterns like: "Python for Data Science", "Docker Container Orchestration", "Redis: High-Performance Caching", "Mastering Linux Networking", "TCP/IP Deep Dive".
+3. Module and chapter names must be specific to the requested topic, not generic.
+4. Tailor the depth and complexity to the "{level}" difficulty level.
+5. Return ONLY the raw JSON object, nothing else.
