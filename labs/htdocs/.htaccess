@@ -38,6 +38,9 @@ RewriteRule ^mcp/metadata/?$ src/api/mcp/metadata.php [L,QSA]
 RewriteRule ^mcp/clients/?$ src/api/mcp/clients.php [L,QSA]
 RewriteRule ^mcp/activity/data/?$ src/api/mcp/activity.php [L,QSA]
 
+# JWKS — proxied to the Python MCP server (SDK fetches it to verify tokens)
+RewriteRule ^mcp/jwks/?$ http://127.0.0.1:8099/mcp/jwks [P,L,QSA]
+
 # OAuth well-known discovery endpoints
 RewriteRule ^\.well-known/oauth-authorization-server/?$ src/api/mcp/metadata.php [L,QSA]
 RewriteCond %{REQUEST_METHOD} =GET [OR]

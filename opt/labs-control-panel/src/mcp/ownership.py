@@ -58,34 +58,39 @@ class OwnershipResolver:
             OwnershipError: If lab not found or access denied
         """
         if lab_name:
-            # Derive hash from user's email + lab_name
-            expected_hash = self.get_lab_hash(user["email"], lab_name)
-
-            # Verify it exists and belongs to this user
-            doc = self.db.machine_labs.find_one({
-                "instance_hash": expected_hash,
-                "user_id": user["user_id"]
-            })
-
-            if not doc:
-                raise OwnershipError(f"Lab '{lab_name}' not found for your account")
-
-            return expected_hash
-
+            value = lab_name.strip()
         elif instance_hash:
-            # Verify the hash belongs to this user (never trust client-supplied hash)
-            doc = self.db.machine_labs.find_one({
-                "instance_hash": instance_hash,
-                "user_id": user["user_id"]
-            })
-
-            if not doc:
-                raise OwnershipError("Instance not found or access denied")
-
-            return instance_hash
-
+            value = instance_hash.strip()
         else:
             raise OwnershipError("Either lab_name or instance_hash must be provided")
+
+        # 1) exact instance_hash match (must belong to this user)
+        doc = self.db.machine_labs.find_one({
+            "instance_hash": value,
+            "user_id": user["user_id"]
+        })
+        if doc:
+            return value
+
+        # 2) derive hash from the lab name
+        expected_hash = self.get_lab_hash(user["email"], value)
+        doc = self.db.machine_labs.find_one({
+            "instance_hash": expected_hash,
+            "user_id": user["user_id"]
+        })
+        if doc:
+            return expected_hash
+
+        # 3) not found — tell the caller what IS available so agents can self-correct
+        labs = self.list_user_labs(user)
+        available = ", ".join(
+            f"{l.get('instance_hash')}" + (f" ({l.get('lab_name')})" if l.get("lab_name") else "")
+            for l in labs
+        ) or "none"
+        raise OwnershipError(
+            f"Lab '{value}' not found for your account. "
+            f"Available labs: {available} — pass instance_hash or exact lab name"
+        )
 
     def list_user_labs(self, user: Dict[str, Any]) -> list:
         """List all labs owned by the user."""

@@ -12,9 +12,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
     """Register process management tools."""
 
     @mcp.tool()
-    async def labs_list_lab_processes(lab: str, ctx: Context) -> str:
+    async def list_lab_processes(lab: str, ctx: Context) -> dict[str, Any]:
         """List running processes in the lab."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -52,9 +51,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_stop_lab_process(lab: str, pid: int, ctx: Context, signal: str = "TERM") -> str:
+    async def stop_lab_process(lab: str, pid: int, ctx: Context, signal: str = "TERM") -> dict[str, Any]:
         """Stop a process in the lab."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -75,9 +73,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_wait_for_process(lab: str, pid: int, ctx: Context, timeout: int = 60) -> str:
+    async def wait_for_process(lab: str, pid: int, ctx: Context, timeout: int = 60) -> dict[str, Any]:
         """Wait for a process to complete."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         import asyncio
         ownership = get_ownership()
@@ -101,9 +98,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
             await asyncio.sleep(2)
 
     @mcp.tool()
-    async def labs_lab_stats(lab: str, ctx: Context) -> str:
+    async def lab_stats(lab: str, ctx: Context) -> dict[str, Any]:
         """Get resource usage stats (CPU, memory, disk)."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -144,9 +140,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_storage_usage(lab: str, ctx: Context) -> str:
+    async def storage_usage(lab: str, ctx: Context) -> dict[str, Any]:
         """Get detailed storage usage breakdown."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -177,9 +172,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_probe_lab(lab: str, ctx: Context) -> str:
+    async def probe_lab(lab: str, ctx: Context) -> dict[str, Any]:
         """Probe lab connectivity and services."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)

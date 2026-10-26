@@ -13,10 +13,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
     """Register account-related tools."""
 
     @mcp.tool()
-    async def labs_whoami(ctx: Context) -> str:
+    async def whoami(ctx: Context) -> dict[str, Any]:
         """Get current authenticated user identity."""
-        user = await get_current_user(ctx)
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         return json_response({
             "user_id": user["user_id"],
@@ -27,10 +25,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_list_labs(ctx: Context) -> str:
+    async def list_labs(ctx: Context) -> dict[str, Any]:
         """List all labs owned by the current user."""
-        user = await get_current_user(ctx)
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         labs = ownership.list_user_labs(user)
@@ -49,10 +45,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_my_mcp_clients(ctx: Context) -> str:
+    async def my_mcp_clients(ctx: Context) -> dict[str, Any]:
         """List MCP clients (connected agents) for the current user."""
-        user = await get_current_user(ctx)
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         db = getattr(mcp, '_db', None)
         if db is None:
@@ -80,7 +74,7 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_my_history(ctx: Context, limit: int = 50) -> str:
+    async def my_history(ctx: Context, limit: int = 50) -> dict[str, Any]:
         """Get recent activity history for the current user."""
         user = await get_current_user(ctx)
         db = getattr(mcp, '_db', None)
@@ -114,76 +108,74 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_help(ctx: Context) -> str:
+    async def help(ctx: Context) -> dict[str, Any]:
         """List all available MCP tools with descriptions."""
         user = await get_current_user(ctx)
         tools = [
-            {"name": "labs_whoami", "description": "Get current authenticated user identity"},
-            {"name": "labs_list_labs", "description": "List all labs owned by the current user"},
-            {"name": "labs_lab_status", "description": "Check if a lab is running, stopped, etc."},
-            {"name": "labs_lab_info", "description": "Get full lab information including credentials"},
-            {"name": "labs_lab_logs", "description": "Get deployment logs for a lab"},
-            {"name": "labs_deploy_lab", "description": "Deploy a lab"},
-            {"name": "labs_stop_lab", "description": "Stop a running lab"},
-            {"name": "labs_start_lab", "description": "Start a stopped lab"},
-            {"name": "labs_pause_lab", "description": "Pause a lab (freeze container)"},
-            {"name": "labs_resume_lab", "description": "Resume a paused lab"},
-            {"name": "labs_terminate_lab", "description": "Permanently delete a lab"},
-            {"name": "labs_renew_lab", "description": "Renew lab expiration (extend TTL)"},
-            {"name": "labs_ensure_codeserver", "description": "Start code-server on demand"},
-            {"name": "labs_code_status", "description": "Check if code-server is running"},
-            {"name": "labs_run_command", "description": "Run a shell command inside the lab container"},
-            {"name": "labs_read_lab_file", "description": "Read a file from the lab filesystem"},
-            {"name": "labs_write_lab_file", "description": "Write a file to the lab filesystem"},
-            {"name": "labs_edit_lab_file", "description": "Edit a file in the lab filesystem"},
-            {"name": "labs_list_lab_files", "description": "List files in a directory"},
-            {"name": "labs_glob_lab_files", "description": "Find files matching a glob pattern"},
-            {"name": "labs_grep_lab_files", "description": "Search file contents with grep"},
-            {"name": "labs_lab_file_tree", "description": "Get directory tree structure"},
-            {"name": "labs_download_lab_file", "description": "Download a file from the lab"},
-            {"name": "labs_upload_lab_file", "description": "Upload a file to the lab"},
-            {"name": "labs_list_lab_processes", "description": "List running processes in the lab"},
-            {"name": "labs_stop_lab_process", "description": "Stop a process in the lab"},
-            {"name": "labs_wait_for_process", "description": "Wait for a process to complete"},
-            {"name": "labs_lab_stats", "description": "Get resource usage stats (CPU, memory, disk)"},
-            {"name": "labs_storage_usage", "description": "Get detailed storage usage breakdown"},
-            {"name": "labs_wait_for_deploy", "description": "Wait for lab deployment to complete"},
-            {"name": "labs_test_autologin", "description": "Test SSH auto-login to lab"},
-            {"name": "labs_verify_restart", "description": "Verify lab restarts correctly"},
-            {"name": "labs_run_startup_script", "description": "Run the lab's init.sh startup script"},
-            {"name": "labs_apply_preferences", "description": "Hot-reload Traefik + run init.sh"},
-            {"name": "labs_workspace_pin", "description": "Pin a workspace tab in code-server"},
-            {"name": "labs_workspace_unpin", "description": "Unpin a workspace tab"},
-            {"name": "labs_workspace_preferences", "description": "Get code-server preferences"},
-            {"name": "labs_apply_workspace_preferences", "description": "Apply code-server preferences"},
-            {"name": "labs_networks", "description": "List Docker networks"},
-            {"name": "labs_create_network", "description": "Create a Docker network"},
-            {"name": "labs_delete_network", "description": "Delete a Docker network"},
-            {"name": "labs_network_devices", "description": "List devices on a network"},
-            {"name": "labs_add_network_device", "description": "Add a device to a network"},
-            {"name": "labs_remove_network_device", "description": "Remove a device from a network"},
-            {"name": "labs_wireguard_config", "description": "Get WireGuard config for a lab"},
-            {"name": "labs_domains", "description": "List custom domains for a lab"},
-            {"name": "labs_add_domain", "description": "Add a custom domain"},
-            {"name": "labs_remove_domain", "description": "Remove a custom domain"},
-            {"name": "labs_domain_ssl", "description": "Get SSL certificate info for a domain"},
-            {"name": "labs_domain_error_pages", "description": "Get custom error pages for a domain"},
-            {"name": "labs_databases", "description": "List databases for a lab"},
-            {"name": "labs_create_database", "description": "Create a database"},
-            {"name": "labs_delete_database", "description": "Delete a database"},
-            {"name": "labs_service_credentials", "description": "List service credentials"},
-            {"name": "labs_create_service_credential", "description": "Create service credential"},
-            {"name": "labs_delete_service_credential", "description": "Delete service credential"},
-            {"name": "labs_service_users", "description": "List service users"},
-            {"name": "labs_add_service_user", "description": "Add a service user"},
-            {"name": "labs_remove_service_user", "description": "Remove a service user"},
-            {"name": "labs_ssh_keys", "description": "List SSH keys for user"},
-            {"name": "labs_add_ssh_key", "description": "Add an SSH key"},
-            {"name": "labs_delete_ssh_key", "description": "Delete an SSH key"},
-            {"name": "labs_enable_ssh_key", "description": "Enable/disable an SSH key"},
-            {"name": "labs_my_mcp_clients", "description": "List connected MCP clients"},
-            {"name": "labs_my_history", "description": "Get recent activity history"},
-            {"name": "labs_help", "description": "List all available MCP tools"},
+            {"name": "whoami", "description": "Get current authenticated user identity"},
+            {"name": "list_labs", "description": "List all labs owned by the current user"},
+            {"name": "lab_status", "description": "Check if a lab is running, stopped, etc."},
+            {"name": "lab_info", "description": "Get full lab information including credentials"},
+            {"name": "lab_logs", "description": "Get deployment logs for a lab"},
+            {"name": "deploy_lab", "description": "Deploy a lab"},
+            {"name": "stop_lab", "description": "Stop a running lab"},
+            {"name": "start_lab", "description": "Start a stopped lab"},
+            {"name": "pause_lab", "description": "Pause a lab (freeze container)"},
+            {"name": "resume_lab", "description": "Resume a paused lab"},
+            {"name": "terminate_lab", "description": "Permanently delete a lab"},
+            {"name": "renew_lab", "description": "Renew lab expiration (extend TTL)"},
+            {"name": "ensure_codeserver", "description": "Start code-server on demand"},
+            {"name": "code_status", "description": "Check if code-server is running"},
+            {"name": "read_lab_file", "description": "Read a file from the lab filesystem"},
+            {"name": "write_lab_file", "description": "Write a file to the lab filesystem"},
+            {"name": "edit_lab_file", "description": "Edit a file in the lab filesystem"},
+            {"name": "list_lab_files", "description": "List files in a directory"},
+            {"name": "glob_lab_files", "description": "Find files matching a glob pattern"},
+            {"name": "grep_lab_files", "description": "Search file contents with grep"},
+            {"name": "lab_file_tree", "description": "Get directory tree structure"},
+            {"name": "download_lab_file", "description": "Download a file from the lab"},
+            {"name": "upload_lab_file", "description": "Upload a file to the lab"},
+            {"name": "list_lab_processes", "description": "List running processes in the lab"},
+            {"name": "stop_lab_process", "description": "Stop a process in the lab"},
+            {"name": "wait_for_process", "description": "Wait for a process to complete"},
+            {"name": "lab_stats", "description": "Get resource usage stats (CPU, memory, disk)"},
+            {"name": "storage_usage", "description": "Get detailed storage usage breakdown"},
+            {"name": "wait_for_deploy", "description": "Wait for lab deployment to complete"},
+            {"name": "test_autologin", "description": "Test SSH auto-login to lab"},
+            {"name": "verify_restart", "description": "Verify lab restarts correctly"},
+            {"name": "run_startup_script", "description": "Run the lab's init.sh startup script"},
+            {"name": "apply_preferences", "description": "Hot-reload Traefik + run init.sh"},
+            {"name": "workspace_pin", "description": "Pin a workspace tab in code-server"},
+            {"name": "workspace_unpin", "description": "Unpin a workspace tab"},
+            {"name": "workspace_preferences", "description": "Get code-server preferences"},
+            {"name": "apply_workspace_preferences", "description": "Apply code-server preferences"},
+            {"name": "networks", "description": "List Docker networks"},
+            {"name": "create_network", "description": "Create a Docker network"},
+            {"name": "delete_network", "description": "Delete a Docker network"},
+            {"name": "network_devices", "description": "List devices on a network"},
+            {"name": "add_network_device", "description": "Add a device to a network"},
+            {"name": "remove_network_device", "description": "Remove a device from a network"},
+            {"name": "wireguard_config", "description": "Get WireGuard config for a lab"},
+            {"name": "add_domain", "description": "Add a custom domain"},
+            {"name": "remove_domain", "description": "Remove a custom domain"},
+            {"name": "domain_ssl", "description": "Get SSL certificate info for a domain"},
+            {"name": "domain_error_pages", "description": "Get custom error pages for a domain"},
+            {"name": "databases", "description": "List databases for a lab"},
+            {"name": "create_database", "description": "Create a database"},
+            {"name": "delete_database", "description": "Delete a database"},
+            {"name": "service_credentials", "description": "List service credentials"},
+            {"name": "create_service_credential", "description": "Create service credential"},
+            {"name": "delete_service_credential", "description": "Delete service credential"},
+            {"name": "service_users", "description": "List service users"},
+            {"name": "add_service_user", "description": "Add a service user"},
+            {"name": "remove_service_user", "description": "Remove a service user"},
+            {"name": "ssh_keys", "description": "List SSH keys for user"},
+            {"name": "add_ssh_key", "description": "Add an SSH key"},
+            {"name": "delete_ssh_key", "description": "Delete an SSH key"},
+            {"name": "enable_ssh_key", "description": "Enable/disable an SSH key"},
+            {"name": "my_mcp_clients", "description": "List connected MCP clients"},
+            {"name": "my_history", "description": "Get recent activity history"},
+            {"name": "help", "description": "List all available MCP tools"},
         ]
 
         return json_response({"tools": tools, "count": len(tools)})

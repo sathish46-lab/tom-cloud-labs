@@ -12,7 +12,7 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
     """Register network management tools."""
 
     @mcp.tool()
-    async def labs_networks(user: Dict[str, Any], ctx: Context) -> str:
+    async def networks(ctx: Context) -> dict[str, Any]:
         """List Docker networks."""
         user = await get_current_user(ctx)
         result = await run_docker_exec(
@@ -36,9 +36,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         return json_response({"networks": networks, "count": len(networks)})
 
     @mcp.tool()
-    async def labs_create_network(name: str, ctx: Context, driver: str = "bridge") -> str:
+    async def create_network(name: str, ctx: Context, driver: str = "bridge") -> dict[str, Any]:
         """Create a Docker network."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         # Validate name
         import re
@@ -60,9 +59,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_delete_network(name: str, ctx: Context) -> str:
+    async def delete_network(name: str, ctx: Context) -> dict[str, Any]:
         """Delete a Docker network."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         result = await run_docker_exec(
             "any",
@@ -78,9 +76,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_network_devices(lab: str, ctx: Context, network: str = None) -> str:
+    async def network_devices(lab: str, ctx: Context, network: str = None) -> dict[str, Any]:
         """List devices on a network."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -115,9 +112,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_add_network_device(lab: str, device_ip: str, ctx: Context) -> str:
+    async def add_network_device(lab: str, device_ip: str, ctx: Context) -> dict[str, Any]:
         """Add a device to a network (WireGuard peer)."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -150,9 +146,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_remove_network_device(lab: str, device_ip: str, ctx: Context) -> str:
+    async def remove_network_device(lab: str, device_ip: str, ctx: Context) -> dict[str, Any]:
         """Remove a device from a network."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -164,9 +159,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_wireguard_config(lab: str, ctx: Context) -> str:
+    async def wireguard_config(lab: str, ctx: Context) -> dict[str, Any]:
         """Get WireGuard config for a lab."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)

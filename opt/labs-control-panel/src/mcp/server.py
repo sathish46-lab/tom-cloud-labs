@@ -290,9 +290,9 @@ async def run_docker_host(command: str, timeout: int = 60) -> Dict[str, Any]:
         return {"exit_code": -1, "stdout": "", "stderr": str(e), "success": False}
 
 
-def json_response(data: Any) -> str:
-    """Format response as JSON string."""
-    return json.dumps(data, default=str, indent=2)
+def json_response(data: Any) -> dict:
+    """Return a JSON-safe dict payload (coerces non-serializable values like json.dumps(default=str))."""
+    return json.loads(json.dumps(data, default=str))
 
 
 # ─── OAuth 2.1 + PKCE Implementation ───
@@ -780,39 +780,38 @@ h1{{font-size:24px;font-weight:700;color:#fff;margin-bottom:12px}}
             # This would need to call the MCP tools/list method
             # For now, return static list from account.py help
             tools_list = [
-                {"name": "labs_whoami", "description": "Get current authenticated user identity", "category": "Account"},
-                {"name": "labs_list_labs", "description": "List all labs owned by the current user", "category": "Account"},
-                {"name": "labs_lab_status", "description": "Check if a lab is running, stopped, etc.", "category": "Lifecycle"},
-                {"name": "labs_lab_info", "description": "Get full lab information including credentials", "category": "Lifecycle"},
-                {"name": "labs_deploy_lab", "description": "Deploy a lab", "category": "Lifecycle"},
-                {"name": "labs_stop_lab", "description": "Stop a running lab", "category": "Lifecycle"},
-                {"name": "labs_start_lab", "description": "Start a stopped lab", "category": "Lifecycle"},
-                {"name": "labs_terminate_lab", "description": "Permanently delete a lab", "category": "Lifecycle"},
-                {"name": "labs_renew_lab", "description": "Renew lab expiration (extend TTL)", "category": "Lifecycle"},
-                {"name": "labs_read_lab_file", "description": "Read a file from the lab filesystem", "category": "Files"},
-                {"name": "labs_write_lab_file", "description": "Write a file to the lab filesystem", "category": "Files"},
-                {"name": "labs_list_lab_files", "description": "List files in a directory", "category": "Files"},
-                {"name": "labs_glob_lab_files", "description": "Find files matching a glob pattern", "category": "Files"},
-                {"name": "labs_grep_lab_files", "description": "Search file contents with grep", "category": "Files"},
-                {"name": "labs_download_lab_file", "description": "Download a file from the lab", "category": "Files"},
-                {"name": "labs_upload_lab_file", "description": "Upload a file to the lab", "category": "Files"},
-                {"name": "labs_list_lab_processes", "description": "List running processes in the lab", "category": "Processes"},
-                {"name": "labs_stop_lab_process", "description": "Stop a process in the lab", "category": "Processes"},
-                {"name": "labs_lab_stats", "description": "Get resource usage stats (CPU, memory, disk)", "category": "Processes"},
-                {"name": "labs_storage_usage", "description": "Get detailed storage usage breakdown", "category": "Processes"},
-                {"name": "labs_networks", "description": "List Docker networks", "category": "Networks"},
-                {"name": "labs_wireguard_config", "description": "Get WireGuard config for a lab", "category": "Networks"},
-                {"name": "labs_domains", "description": "List custom domains for a lab", "category": "Domains"},
-                {"name": "labs_add_domain", "description": "Add a custom domain", "category": "Domains"},
-                {"name": "labs_remove_domain", "description": "Remove a custom domain", "category": "Domains"},
-                {"name": "labs_databases", "description": "List databases for a lab", "category": "Services"},
-                {"name": "labs_create_database", "description": "Create a database", "category": "Services"},
-                {"name": "labs_service_credentials", "description": "List service credentials", "category": "Services"},
-                {"name": "labs_ssh_keys", "description": "List SSH keys for user", "category": "SSH"},
-                {"name": "labs_add_ssh_key", "description": "Add an SSH key", "category": "SSH"},
-                {"name": "labs_workspace_pin", "description": "Pin a workspace tab in code-server", "category": "Workspace"},
-                {"name": "labs_workspace_preferences", "description": "Get code-server preferences", "category": "Workspace"},
-                {"name": "labs_help", "description": "List all available MCP tools", "category": "Account"},
+                {"name": "whoami", "description": "Get current authenticated user identity", "category": "Account"},
+                {"name": "list_labs", "description": "List all labs owned by the current user", "category": "Account"},
+                {"name": "lab_status", "description": "Check if a lab is running, stopped, etc.", "category": "Lifecycle"},
+                {"name": "lab_info", "description": "Get full lab information including credentials", "category": "Lifecycle"},
+                {"name": "deploy_lab", "description": "Deploy a lab", "category": "Lifecycle"},
+                {"name": "stop_lab", "description": "Stop a running lab", "category": "Lifecycle"},
+                {"name": "start_lab", "description": "Start a stopped lab", "category": "Lifecycle"},
+                {"name": "terminate_lab", "description": "Permanently delete a lab", "category": "Lifecycle"},
+                {"name": "renew_lab", "description": "Renew lab expiration (extend TTL)", "category": "Lifecycle"},
+                {"name": "read_lab_file", "description": "Read a file from the lab filesystem", "category": "Files"},
+                {"name": "write_lab_file", "description": "Write a file to the lab filesystem", "category": "Files"},
+                {"name": "list_lab_files", "description": "List files in a directory", "category": "Files"},
+                {"name": "glob_lab_files", "description": "Find files matching a glob pattern", "category": "Files"},
+                {"name": "grep_lab_files", "description": "Search file contents with grep", "category": "Files"},
+                {"name": "download_lab_file", "description": "Download a file from the lab", "category": "Files"},
+                {"name": "upload_lab_file", "description": "Upload a file to the lab", "category": "Files"},
+                {"name": "list_lab_processes", "description": "List running processes in the lab", "category": "Processes"},
+                {"name": "stop_lab_process", "description": "Stop a process in the lab", "category": "Processes"},
+                {"name": "lab_stats", "description": "Get resource usage stats (CPU, memory, disk)", "category": "Processes"},
+                {"name": "storage_usage", "description": "Get detailed storage usage breakdown", "category": "Processes"},
+                {"name": "networks", "description": "List Docker networks", "category": "Networks"},
+                {"name": "wireguard_config", "description": "Get WireGuard config for a lab", "category": "Networks"},
+                {"name": "add_domain", "description": "Add a custom domain", "category": "Domains"},
+                {"name": "remove_domain", "description": "Remove a custom domain", "category": "Domains"},
+                {"name": "databases", "description": "List databases for a lab", "category": "Services"},
+                {"name": "create_database", "description": "Create a database", "category": "Services"},
+                {"name": "service_credentials", "description": "List service credentials", "category": "Services"},
+                {"name": "ssh_keys", "description": "List SSH keys for user", "category": "SSH"},
+                {"name": "add_ssh_key", "description": "Add an SSH key", "category": "SSH"},
+                {"name": "workspace_pin", "description": "Pin a workspace tab in code-server", "category": "Workspace"},
+                {"name": "workspace_preferences", "description": "Get code-server preferences", "category": "Workspace"},
+                {"name": "help", "description": "List all available MCP tools", "category": "Account"},
             ]
         except Exception as e:
             logger.warning(f"Could not load tools list: {e}")

@@ -12,9 +12,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
     """Register workspace management tools."""
 
     @mcp.tool()
-    async def labs_workspace_pin(lab: str, tab_id: str, ctx: Context) -> str:
+    async def workspace_pin(lab: str, tab_id: str, ctx: Context) -> dict[str, Any]:
         """Pin a workspace tab in code-server."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -39,9 +38,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         return json_response({"instance_hash": instance_hash, "pinned": tab_id, "result": result})
 
     @mcp.tool()
-    async def labs_workspace_unpin(lab: str, tab_id: str, ctx: Context) -> str:
+    async def workspace_unpin(lab: str, tab_id: str, ctx: Context) -> dict[str, Any]:
         """Unpin a workspace tab in code-server."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -63,9 +61,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         return json_response({"instance_hash": instance_hash, "unpinned": tab_id, "result": result})
 
     @mcp.tool()
-    async def labs_workspace_preferences(lab: str, ctx: Context) -> str:
+    async def workspace_preferences(lab: str, ctx: Context) -> dict[str, Any]:
         """Get code-server preferences."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -90,9 +87,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         return json_response({"instance_hash": instance_hash, "preferences": {}, "raw": result["stdout"]})
 
     @mcp.tool()
-    async def labs_apply_workspace_preferences(lab: str, preferences: Dict[str, Any], ctx: Context) -> str:
+    async def apply_workspace_preferences(lab: str, preferences: Dict[str, Any], ctx: Context) -> dict[str, Any]:
         """Apply code-server preferences."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -122,9 +118,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         return json_response({"instance_hash": instance_hash, "applied": True, "result": result})
 
     @mcp.tool()
-    async def labs_read_lab_file(lab: str, path: str, ctx: Context) -> str:
+    async def read_lab_file(lab: str, path: str, ctx: Context) -> dict[str, Any]:
         """Read a file from the lab filesystem."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -153,9 +148,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_write_lab_file(lab: str, path: str, content: str, ctx: Context) -> str:
+    async def write_lab_file(lab: str, path: str, content: str, ctx: Context) -> dict[str, Any]:
         """Write a file to the lab filesystem."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -185,9 +179,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_edit_lab_file(lab: str, path: str, old_text: str, new_text: str, ctx: Context) -> str:
+    async def edit_lab_file(lab: str, path: str, old_text: str, new_text: str, ctx: Context) -> dict[str, Any]:
         """Edit a file in the lab filesystem (replace old_text with new_text)."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)

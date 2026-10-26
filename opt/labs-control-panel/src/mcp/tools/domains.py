@@ -2,12 +2,12 @@
 MCP Domain Tools
 Two-step domain flow: Register → Assign to Lab.
 
-STEP 1 (Register): labs_register_domain or labs_claim_tom_domain
+STEP 1 (Register): register_domain or claim_tom_domain
   - Adds domain to the 'domains' collection (global inventory)
   - DNS verification for custom domains
   - Tom domains (*.tomweb.shop) auto-verified
 
-STEP 2 (Assign): labs_add_domain
+STEP 2 (Assign): add_domain
   - Associates a registered domain with a specific lab
   - Updates machine_labs.domains[]
   - Reloads Traefik routing
@@ -37,23 +37,23 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
     # ──────────────────────────────────────────────────
 
     @mcp.tool()
-    async def labs_available_domains(ctx: Context) -> str:
+    async def available_domains(ctx: Context) -> dict[str, Any]:
         """List available Tom Lab wildcard domains that users can claim for free.
 
         Call this FIRST when the user wants to add a domain. It shows what
         wildcard domains are available (e.g. *.tomweb.shop). The user can
-        pick one and then call labs_claim_tom_domain to register it.
+        pick one and then call claim_tom_domain to register it.
 
         For custom third-party domains (e.g. example.com), the user should
-        call labs_register_domain instead.
+        call register_domain instead.
         """
         return json_response({
             "wildcard_domains": AVAILABLE_TOM_DOMAINS,
             "server_ip": "106.51.76.75",
             "instructions": (
-                "To use a Tom domain: call labs_claim_tom_domain with a desired subdomain prefix. "
-                "To use a custom domain: call labs_register_domain with the full domain. "
-                "After registration, call labs_add_domain to assign it to a lab."
+                "To use a Tom domain: call claim_tom_domain with a desired subdomain prefix. "
+                "To use a custom domain: call register_domain with the full domain. "
+                "After registration, call add_domain to assign it to a lab."
             )
         })
 
@@ -62,7 +62,7 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
     # ──────────────────────────────────────────────────
 
     @mcp.tool()
-    async def labs_register_domain(domain: str, ctx: Context) -> str:
+    async def register_domain(domain: str, ctx: Context) -> dict[str, Any]:
         """Register a custom domain in the domain inventory.
 
         This is STEP 1 for custom third-party domains (e.g. example.com, myapp.io).
@@ -72,10 +72,10 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         1. Create a DNS A record pointing the domain to server IP 106.51.76.75
         2. Wait for DNS propagation (may take a few minutes)
 
-        After registration succeeds, call labs_add_domain to assign it to a lab.
+        After registration succeeds, call add_domain to assign it to a lab.
 
         If the user wants a free wildcard domain (*.tomweb.shop), use
-        labs_claim_tom_domain instead of this tool.
+        claim_tom_domain instead of this tool.
 
         Returns:
         - registered: bool
@@ -107,7 +107,7 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
                     "error": "Domain already registered by you",
                     "domain": domain,
                     "verified": existing.get("verified", False),
-                    "next_step": f"Domain is already in your inventory. Call labs_add_domain to assign it to a lab."
+                    "next_step": f"Domain is already in your inventory. Call add_domain to assign it to a lab."
                 })
             else:
                 return json_response({
@@ -160,7 +160,7 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         }
 
         if is_verified:
-            result["next_step"] = f"Domain verified! Now call labs_add_domain(lab='<lab_name>', domain='{domain}') to assign it to a lab."
+            result["next_step"] = f"Domain verified! Now call add_domain(lab='<lab_name>', domain='{domain}') to assign it to a lab."
         else:
             result["dns_issue"] = (
                 f"DNS A record not pointing to {server_ip}"
@@ -168,7 +168,7 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
             )
             result["next_step"] = (
                 f"Domain registered but NOT verified. Create a DNS A record: {domain} → {server_ip}. "
-                "Then call labs_verify_domain to re-check, or labs_add_domain to assign anyway (SSL may fail)."
+                "Then call verify_domain to re-check, or add_domain to assign anyway (SSL may fail)."
             )
 
         return json_response(result)
@@ -178,7 +178,7 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
     # ──────────────────────────────────────────────────
 
     @mcp.tool()
-    async def labs_claim_tom_domain(subdomain: str, ctx: Context) -> str:
+    async def claim_tom_domain(subdomain: str, ctx: Context) -> dict[str, Any]:
         """Claim a free Tom Lab wildcard domain (e.g. *.tomweb.shop).
 
         This is STEP 1 for Tom domains. It registers a subdomain under one of
@@ -188,10 +188,10 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         The wildcard SSL certificate covers all subdomains automatically.
 
         BEFORE calling this:
-        - Call labs_available_domains to see available wildcard domains
+        - Call available_domains to see available wildcard domains
         - Pick a subdomain prefix (e.g. "myproject", "sathish-apps")
 
-        After claiming, call labs_add_domain to assign it to a lab.
+        After claiming, call add_domain to assign it to a lab.
 
         Returns:
         - claimed: bool
@@ -247,7 +247,7 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
             "domains": registered_domains,
             "next_step": (
                 f"Domains claimed: {', '.join(registered_domains)}. "
-                "Now call labs_add_domain(lab='<lab_name>', domain='<domain>') to assign one to a lab."
+                "Now call add_domain(lab='<lab_name>', domain='<domain>') to assign one to a lab."
             )
         })
 
@@ -256,11 +256,11 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
     # ──────────────────────────────────────────────────
 
     @mcp.tool()
-    async def labs_add_domain(lab: str, domain: str, ctx: Context) -> str:
+    async def add_domain(lab: str, domain: str, ctx: Context) -> dict[str, Any]:
         """Assign a registered domain to a specific lab for public web exposure.
 
         This is STEP 2 in the domain workflow. The domain MUST already be
-        registered via labs_register_domain or labs_claim_tom_domain.
+        registered via register_domain or claim_tom_domain.
 
         The domain will be added to the lab's public exposure list and Traefik
         will be configured to route traffic to the lab container.
@@ -270,9 +270,9 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         - instance_hash (e.g. "3fb0fe5d53738d9ccf5170b0f89f0458")
 
         When the user says 'add domain', FIRST ask:
-        1. Which lab? (use labs_list_labs to show available labs)
-        2. Which domain? (use labs_list_domains to show registered domains)
-        3. If no domains registered yet → use labs_register_domain or labs_claim_tom_domain first
+        1. Which lab? (use list_labs to show available labs)
+        2. Which domain? (use list_domains to show registered domains)
+        3. If no domains registered yet → use register_domain or claim_tom_domain first
 
         Returns:
         - added: bool
@@ -303,8 +303,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
             return json_response({
                 "error": f"Domain '{domain}' is not registered",
                 "action_required": (
-                    "Register it first: call labs_register_domain(domain='{domain}') for custom domains, "
-                    f"or labs_claim_tom_domain(subdomain='...') for a free *.tomweb.shop domain."
+                    "Register it first: call register_domain(domain='{domain}') for custom domains, "
+                    f"or claim_tom_domain(subdomain='...') for a free *.tomweb.shop domain."
                 )
             })
 
@@ -353,7 +353,7 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
     # ──────────────────────────────────────────────────
 
     @mcp.tool()
-    async def labs_list_domains(ctx: Context) -> str:
+    async def list_domains(ctx: Context) -> dict[str, Any]:
         """List all domains registered by the current user.
 
         Shows the global domain inventory with verification status and usage.
@@ -391,14 +391,14 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
     # ──────────────────────────────────────────────────
 
     @mcp.tool()
-    async def labs_remove_domain(lab: str, domain: str, ctx: Context) -> str:
+    async def remove_domain(lab: str, domain: str, ctx: Context) -> dict[str, Any]:
         """Remove a domain from a lab's public exposure.
 
         This unassigns the domain from the lab but does NOT delete it from
         the domain inventory. The domain remains registered and can be
         reassigned to another lab later.
 
-        To fully delete a domain from the inventory, use labs_delete_domain.
+        To fully delete a domain from the inventory, use delete_domain.
 
         The 'lab' parameter accepts lab_type or instance_hash.
         """
@@ -450,14 +450,14 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
     # ──────────────────────────────────────────────────
 
     @mcp.tool()
-    async def labs_delete_domain(domain: str, ctx: Context) -> str:
+    async def delete_domain(domain: str, ctx: Context) -> dict[str, Any]:
         """Delete a domain from the global domain inventory.
 
         This permanently removes the domain from the user's inventory.
         If the domain is currently assigned to any lab, it will be removed
         from all labs and Traefik will be reconfigured.
 
-        Use labs_remove_domain to just unassign from a specific lab instead.
+        Use remove_domain to just unassign from a specific lab instead.
         """
         user = await get_current_user(ctx)
 
@@ -514,7 +514,7 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
     # ──────────────────────────────────────────────────
 
     @mcp.tool()
-    async def labs_verify_domain(domain: str, ctx: Context) -> str:
+    async def verify_domain(domain: str, ctx: Context) -> dict[str, Any]:
         """Re-verify DNS A record for a registered domain.
 
         Checks if the domain's A record points to the server IP (106.51.76.75).
@@ -578,7 +578,7 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
     # ──────────────────────────────────────────────────
 
     @mcp.tool()
-    async def labs_domain_ssl(lab: str, domain: str, ctx: Context) -> str:
+    async def domain_ssl(lab: str, domain: str, ctx: Context) -> dict[str, Any]:
         """Get SSL certificate info for a domain on a lab.
         The 'lab' parameter accepts lab_type or instance_hash.
         """
@@ -603,7 +603,7 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_domain_error_pages(lab: str, domain: str, ctx: Context) -> str:
+    async def domain_error_pages(lab: str, domain: str, ctx: Context) -> dict[str, Any]:
         """Get custom error pages for a domain.
         The 'lab' parameter accepts lab_type or instance_hash.
         """

@@ -55,6 +55,7 @@ labs/htdocs/uploads/users/*
 # labs/htdocs/js/app.js
 # labs/htdocs/js/app.o.js
 # labs/htdocs/css/app.css
+labs/htdocs/assets/js/app.o.js
 
 labs/workspace/tools/*
 !labs/workspace/tools/trace_deploy.py

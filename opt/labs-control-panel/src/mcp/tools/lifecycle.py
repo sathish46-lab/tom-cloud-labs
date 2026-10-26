@@ -13,10 +13,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
     """Register lifecycle management tools."""
 
     @mcp.tool()
-    async def labs_lab_status(lab: str, ctx: Context) -> str:
+    async def lab_status(lab: str, ctx: Context) -> dict[str, Any]:
         """Check if a lab is running, stopped, etc."""
-        user = await get_current_user(ctx)
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -41,10 +39,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_lab_info(lab: str, ctx: Context) -> str:
+    async def lab_info(lab: str, ctx: Context) -> dict[str, Any]:
         """Get full lab information including credentials."""
-        user = await get_current_user(ctx)
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -86,7 +82,7 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_lab_logs(lab: str, ctx: Context, lines: int = 100) -> str:
+    async def lab_logs(lab: str, ctx: Context, lines: int = 100) -> dict[str, Any]:
         """Get deployment logs for a lab."""
         user = await get_current_user(ctx)
         ownership = get_ownership()
@@ -131,11 +127,13 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_deploy_lab(lab: str, ctx: Context) -> str:
-        """Deploy a lab.
-        
+    async def deploy_lab(lab: str, ctx: Context) -> dict[str, Any]:
+        """Redeploy an existing lab (provision or re-provision it).
+
+        Requires an existing lab — pass `lab` as the instance_hash returned
+        by list_labs (or the exact lab name). Does NOT create new labs.
         Returns deployment result with logs. For real-time progress tracking,
-        poll labs_deploy_progress after calling this tool.
+        poll deploy_progress after calling this tool.
         """
         user = await get_current_user(ctx)
         ownership = get_ownership()
@@ -152,10 +150,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         return json_response(result)
 
     @mcp.tool()
-    async def labs_stop_lab(lab: str, ctx: Context) -> str:
+    async def stop_lab(lab: str, ctx: Context) -> dict[str, Any]:
         """Stop a running lab."""
-        user = await get_current_user(ctx)
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -164,7 +160,7 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         return json_response(result)
 
     @mcp.tool()
-    async def labs_start_lab(lab: str, ctx: Context) -> str:
+    async def start_lab(lab: str, ctx: Context) -> dict[str, Any]:
         """Start a stopped lab."""
         user = await get_current_user(ctx)
         ownership = get_ownership()
@@ -174,10 +170,10 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         return json_response(result)
 
     @mcp.tool()
-    async def labs_deploy_progress(lab: str, ctx: Context) -> str:
+    async def deploy_progress(lab: str, ctx: Context) -> dict[str, Any]:
         """Get real-time deployment progress for a lab.
         
-        Poll this tool after calling labs_deploy_lab or labs_redeploy_lab
+        Poll this tool after calling deploy_lab or redeploy_lab
         to get current progress percentage and status.
         
         Returns:
@@ -224,7 +220,7 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         return json_response(progress)
 
     @mcp.tool()
-    async def labs_pause_lab(lab: str, ctx: Context) -> str:
+    async def pause_lab(lab: str, ctx: Context) -> dict[str, Any]:
         """Pause a lab (freeze container). Zero CPU, memory preserved, resume is instant."""
         user = await get_current_user(ctx)
         ownership = get_ownership()
@@ -252,7 +248,7 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         return json_response({"success": True, "message": "Lab paused", "hash": instance_hash})
 
     @mcp.tool()
-    async def labs_resume_lab(lab: str, ctx: Context) -> str:
+    async def resume_lab(lab: str, ctx: Context) -> dict[str, Any]:
         """Resume a paused lab. Restores CPU, memory, network instantly."""
         user = await get_current_user(ctx)
         ownership = get_ownership()
@@ -280,7 +276,7 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         return json_response({"success": True, "message": "Lab resumed", "hash": instance_hash})
 
     @mcp.tool()
-    async def labs_terminate_lab(lab: str, ctx: Context, confirm: bool = False) -> str:
+    async def terminate_lab(lab: str, ctx: Context, confirm: bool = False) -> dict[str, Any]:
         """Permanently delete a lab."""
         if not confirm:
             return json_response({"error": "Confirmation required. Pass confirm=true to proceed."})
@@ -293,7 +289,7 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         return json_response(result)
 
     @mcp.tool()
-    async def labs_renew_lab(lab: str, ctx: Context, days: int = 7) -> str:
+    async def renew_lab(lab: str, ctx: Context, days: int = 7) -> dict[str, Any]:
         """Renew lab expiration (extend TTL)."""
         user = await get_current_user(ctx)
         ownership = get_ownership()
@@ -317,10 +313,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_ensure_codeserver(lab: str, ctx: Context) -> str:
+    async def ensure_codeserver(lab: str, ctx: Context) -> dict[str, Any]:
         """Start code-server on demand."""
-        user = await get_current_user(ctx)
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -329,10 +323,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         return json_response(result)
 
     @mcp.tool()
-    async def labs_code_status(lab: str, ctx: Context) -> str:
+    async def code_status(lab: str, ctx: Context) -> dict[str, Any]:
         """Check if code-server is running."""
-        user = await get_current_user(ctx)
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -341,10 +333,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         return json_response(result)
 
     @mcp.tool()
-    async def labs_run_startup_script(lab: str, ctx: Context) -> str:
+    async def run_startup_script(lab: str, ctx: Context) -> dict[str, Any]:
         """Run the lab's init.sh startup script."""
-        user = await get_current_user(ctx)
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -353,10 +343,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         return json_response(result)
 
     @mcp.tool()
-    async def labs_apply_preferences(lab: str, ctx: Context) -> str:
+    async def apply_preferences(lab: str, ctx: Context) -> dict[str, Any]:
         """Hot-reload Traefik + run init.sh."""
-        user = await get_current_user(ctx)
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -365,7 +353,7 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         return json_response(result)
 
     @mcp.tool()
-    async def labs_wait_for_deploy(lab: str, ctx: Context, timeout: int = 300) -> str:
+    async def wait_for_deploy(lab: str, ctx: Context, timeout: int = 300) -> dict[str, Any]:
         """Wait for lab deployment to complete."""
         import asyncio
         user = await get_current_user(ctx)
@@ -395,10 +383,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
             await asyncio.sleep(5)
 
     @mcp.tool()
-    async def labs_test_autologin(lab: str, ctx: Context) -> str:
+    async def test_autologin(lab: str, ctx: Context) -> dict[str, Any]:
         """Test SSH auto-login to lab."""
-        user = await get_current_user(ctx)
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -434,10 +420,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_verify_restart(lab: str, ctx: Context) -> str:
+    async def verify_restart(lab: str, ctx: Context) -> dict[str, Any]:
         """Verify lab restarts correctly."""
-        user = await get_current_user(ctx)
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)

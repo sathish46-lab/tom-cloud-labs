@@ -16,7 +16,7 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
     """Register SSH key management tools."""
 
     @mcp.tool()
-    async def labs_ssh_keys(user: Dict[str, Any], ctx: Context) -> str:
+    async def ssh_keys(ctx: Context) -> dict[str, Any]:
         """List SSH keys for the current user."""
         user = await get_current_user(ctx)
         from src.mcp.server import get_db
@@ -44,9 +44,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_add_ssh_key(title: str, public_key: str, ctx: Context, expiration_date: str = None) -> str:
+    async def add_ssh_key(title: str, public_key: str, ctx: Context, expiration_date: str = None) -> dict[str, Any]:
         """Add an SSH key."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         from src.mcp.server import get_db
         db = get_db()
@@ -92,9 +91,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_delete_ssh_key(fingerprint: str, ctx: Context) -> str:
+    async def delete_ssh_key(fingerprint: str, ctx: Context) -> dict[str, Any]:
         """Delete an SSH key by fingerprint."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         from src.mcp.server import get_db
         db = get_db()
@@ -114,9 +112,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_enable_ssh_key(fingerprint: str, enabled: bool, ctx: Context) -> str:
+    async def enable_ssh_key(fingerprint: str, enabled: bool, ctx: Context) -> dict[str, Any]:
         """Enable/disable an SSH key."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         from src.mcp.server import get_db
         db = get_db()

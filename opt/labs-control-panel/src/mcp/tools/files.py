@@ -14,9 +14,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
     """Register file operation tools."""
 
     @mcp.tool()
-    async def labs_list_lab_files(lab: str, ctx: Context, path: str = "/") -> str:
+    async def list_lab_files(lab: str, ctx: Context, path: str = "/") -> dict[str, Any]:
         """List files in a directory."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -58,9 +57,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_glob_lab_files(lab: str, pattern: str, ctx: Context) -> str:
+    async def glob_lab_files(lab: str, pattern: str, ctx: Context) -> dict[str, Any]:
         """Find files matching a glob pattern."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -87,9 +85,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_grep_lab_files(lab: str, pattern: str, ctx: Context, path: str = "/") -> str:
+    async def grep_lab_files(lab: str, pattern: str, ctx: Context, path: str = "/") -> dict[str, Any]:
         """Search file contents with grep."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -127,9 +124,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_lab_file_tree(lab: str, ctx: Context, path: str = "/", depth: int = 3) -> str:
+    async def lab_file_tree(lab: str, ctx: Context, path: str = "/", depth: int = 3) -> dict[str, Any]:
         """Get directory tree structure."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -156,9 +152,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_download_lab_file(lab: str, path: str, ctx: Context) -> str:
+    async def download_lab_file(lab: str, path: str, ctx: Context) -> dict[str, Any]:
         """Download a file from the lab (returns base64 encoded content)."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -186,9 +181,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_upload_lab_file(lab: str, path: str, content_base64: str, ctx: Context) -> str:
+    async def upload_lab_file(lab: str, path: str, content_base64: str, ctx: Context) -> dict[str, Any]:
         """Upload a file to the lab (base64 encoded content)."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -213,9 +207,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_move_lab_file(lab: str, source: str, destination: str, ctx: Context) -> str:
+    async def move_lab_file(lab: str, source: str, destination: str, ctx: Context) -> dict[str, Any]:
         """Move/rename a file in the lab filesystem."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -240,9 +233,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_delete_lab_file(lab: str, path: str, ctx: Context) -> str:
+    async def delete_lab_file(lab: str, path: str, ctx: Context) -> dict[str, Any]:
         """Delete a file or directory in the lab filesystem."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -267,9 +259,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_create_lab_directory(lab: str, path: str, ctx: Context) -> str:
+    async def create_lab_directory(lab: str, path: str, ctx: Context) -> dict[str, Any]:
         """Create a directory in the lab filesystem."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)

@@ -12,9 +12,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
     """Register service management tools."""
 
     @mcp.tool()
-    async def labs_databases(lab: str, ctx: Context) -> str:
+    async def databases(lab: str, ctx: Context) -> dict[str, Any]:
         """List databases for a lab."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -45,9 +44,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_create_database(lab: str, db_type: str, name: str, ctx: Context) -> str:
+    async def create_database(lab: str, db_type: str, name: str, ctx: Context) -> dict[str, Any]:
         """Create a database."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -87,9 +85,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_delete_database(lab: str, db_type: str, name: str, ctx: Context) -> str:
+    async def delete_database(lab: str, db_type: str, name: str, ctx: Context) -> dict[str, Any]:
         """Delete a database."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -125,9 +122,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_service_credentials(lab: str, ctx: Context) -> str:
+    async def service_credentials(lab: str, ctx: Context) -> dict[str, Any]:
         """List service credentials for a lab."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -153,9 +149,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_create_service_credential(lab: str, name: str, value: str, ctx: Context) -> str:
+    async def create_service_credential(lab: str, name: str, value: str, ctx: Context) -> dict[str, Any]:
         """Create a service credential."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -179,9 +174,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_delete_service_credential(lab: str, name: str, ctx: Context) -> str:
+    async def delete_service_credential(lab: str, name: str, ctx: Context) -> dict[str, Any]:
         """Delete a service credential."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -201,9 +195,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_service_users(lab: str, ctx: Context) -> str:
+    async def service_users(lab: str, ctx: Context) -> dict[str, Any]:
         """List service users for a lab."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -233,9 +226,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_add_service_user(lab: str, username: str, ctx: Context, password: str = None) -> str:
+    async def add_service_user(lab: str, username: str, ctx: Context, password: str = None) -> dict[str, Any]:
         """Add a service user."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
@@ -265,9 +257,8 @@ def register_tools(mcp, get_current_user, get_ownership, run_labsctl, run_docker
         })
 
     @mcp.tool()
-    async def labs_remove_service_user(lab: str, username: str, ctx: Context) -> str:
+    async def remove_service_user(lab: str, username: str, ctx: Context) -> dict[str, Any]:
         """Remove a service user."""
-        user = await get_current_user(ctx)
         user = await get_current_user(ctx)
         ownership = get_ownership()
         instance_hash = ownership.resolve_lab(user, lab_name=lab)
