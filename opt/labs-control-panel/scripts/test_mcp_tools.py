@@ -134,9 +134,15 @@ def main() -> int:
                     headers=sess)
     _, _, res, _ = parse_result(r)
     if res and not res.get("isError") and isinstance(res.get("structuredContent"), dict):
-        labs = res["structuredContent"].get("labs") or []
+        labs_payload = res["structuredContent"].get("labs") or []
+        # SNA shape: {"labs": {"result": "success", "instances": [...]}}
+        if isinstance(labs_payload, dict):
+            labs = labs_payload.get("instances") or []
+        else:
+            labs = labs_payload
         if labs:
-            real_lab = labs[0].get("instance_hash")
+            first = labs[0]
+            real_lab = first.get("instance_id") or first.get("instance_hash")
     print(f"Real lab for read paths: {real_lab or 'NONE (lab reads will be skipped)'}")
     print("-" * 100)
 

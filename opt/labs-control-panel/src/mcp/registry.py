@@ -30,6 +30,8 @@ VALID_CLASSES = ("read", "write", "destructive")
 
 CATEGORY_BY_MODULE = {
     "account": "Account",
+    "guides": "Guides",
+    "discovery": "Discovery",
     "lifecycle": "Lifecycle",
     "workspace": "Workspace",
     "files": "Files",
@@ -80,6 +82,23 @@ TOOLS: Dict[str, ToolSpec] = {spec.name: spec for spec in [
     _t("my_history",        "account",  "read"),
     _t("help",              "account",  "read"),
     _t("lookup",            "account",  "read"),
+
+    # ── guides ── (parity set)
+    _t("currency_guide",      "guides", "read"),
+    _t("evaluate_guide",      "guides", "read"),
+    _t("competitions_guide",  "guides", "read"),
+    _t("learning_paths_guide","guides", "read"),
+    _t("community_guide",     "guides", "read"),
+    _t("explain_my_credits",  "guides", "read"),
+    _t("my_mcp_settings",     "guides", "read"),
+    _t("set_my_mcp_setting",  "guides", "write"),
+
+    # ── discovery ── (parity set)
+    _t("get_service_info",  "discovery", "read"),
+    _t("get_type_info",     "discovery", "read"),
+    _t("execute_request",   "discovery", "write"),
+    _t("plan_my_build",     "plan", "read"),
+    _t("connect_guide",     "plan", "read"),
 
     # ── lifecycle ──
     _t("lab_status",        "lifecycle", "read"),

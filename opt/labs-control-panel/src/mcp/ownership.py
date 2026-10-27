@@ -92,19 +92,50 @@ class OwnershipResolver:
             f"Available labs: {available} — pass instance_hash or exact lab name"
         )
 
+    def _user_identifiers(self, user: Dict[str, Any]) -> list:
+        """Every value machine_labs may store as user_id for this user.
+
+        Historic docs store numeric ids, ObjectId strings (PHP deploy)
+        or usernames; $or across all of them so no lab is skipped.
+        """
+        ids: list = []
+        for key in ("user_id", "_id", "email", "username"):
+            if user.get(key) is None:
+                continue
+            value = user[key]
+            ids.append(value)
+            if not isinstance(value, str):
+                ids.append(str(value))
+            try:
+                ids.append(int(value))
+            except (TypeError, ValueError):
+                pass
+        # deduplicate, keep order
+        seen = set()
+        return [v for v in ids if v is not None and not (v in seen or seen.add(v))]
+
     def list_user_labs(self, user: Dict[str, Any]) -> list:
-        """List all labs owned by the user."""
-        cursor = self.db.machine_labs.find(
-            {"user_id": user["user_id"]},
-            {"instance_hash": 1, "lab_name": 1, "lab_type": 1, "status": 1, "created_at": 1}
-        )
-        return list(cursor)
+        """List all labs owned by the user, stopped ones included.
+
+        Full projection on purpose: tools build rich dashboard-style output
+        (dashboard parity) from the control-plane record, never from a live
+        container scan.
+        """
+        return list(self.db.machine_labs.find(
+            {"user_id": {"$in": self._user_identifiers(user)}},
+            {
+                "instance_hash": 1, "lab_type": 1, "status": 1, "created_at": 1,
+                "internal_ip": 1, "docker_ip": 1, "tunnel_ip": 1,
+                "domains": 1, "http_proxies": 1, "expose_web": 1,
+                "code_domain": 1, "gui_domain": 1, "email": 1, "username": 1,
+            }
+        ))
 
     def get_lab_info(self, user: Dict[str, Any], instance_hash: str) -> Optional[dict]:
         """Get full lab info for a verified instance."""
         doc = self.db.machine_labs.find_one({
             "instance_hash": instance_hash,
-            "user_id": user["user_id"]
+            "user_id": {"$in": self._user_identifiers(user)}
         })
         return doc
 

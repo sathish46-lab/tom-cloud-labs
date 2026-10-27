@@ -37,23 +37,105 @@ async def whoami(ctx: Context) -> dict[str, Any]:
 
 # Registry: src/mcp/registry.py (entry "list_labs") — enabled/tier/cls controlled there (enabled=False or comment out the entry to disable).
 
+_TEMPLATE_META_CACHE: Dict[str, dict] = {}
+SCALE_GROUPS_UNAVAILABLE = (
+    "This platform's lab list does not report scale groups, so they cannot be shown here. "
+    "That means 'unknown', not 'none'. The web dashboard's Deployments page shows them."
+)
+
+
+def _template_meta(slug) -> dict:
+    """Template metadata from lab-templates/<slug>/config.json (cached)."""
+    if not slug:
+        return {}
+    if slug in _TEMPLATE_META_CACHE:
+        return _TEMPLATE_META_CACHE[slug]
+    import json as _json
+    import os
+    meta = {}
+    try:
+        base = "/opt/labs-control-panel/lab-templates"
+        path = os.path.join(base, str(slug), "config.json")
+        if os.path.exists(path):
+            with open(path) as fh:
+                cfg = _json.load(fh)
+            meta = {
+                "lab_name": cfg.get("lab_name"),
+                "stability": cfg.get("stability", "beta"),
+                "codeserver": bool(cfg.get("scripts", {}).get("code_server")) or
+                              os.path.isdir(os.path.join(base, str(slug), "code-extensions")),
+            }
+    except Exception:
+        meta = {}
+    _TEMPLATE_META_CACHE[str(slug)] = meta
+    return meta
+
+
+def _lab_instance_row(lab: dict) -> dict:
+    """One lab in the dashboard instances[] shape."""
+    from src.mcp.tools.account import _template_meta
+    slug = lab.get("lab_type")
+    meta = _template_meta(slug)
+    status_raw = lab.get("status")
+    running = status_raw in ("running", "deployed", "healthy")
+    if status_raw in ("running", "deployed"):
+        status = "deployed"
+    elif status_raw in ("stopped", "exited", "paused"):
+        status = status_raw if status_raw == "stopped" else ("paused" if status_raw == "paused" else "stopped")
+    elif status_raw == "failed":
+        status = "failed"
+    elif status_raw == "deploying":
+        status = "deploying"
+    else:
+        status = ""
+    display = lab.get("display_name") or meta.get("lab_name") or (str(slug).replace("_", " ").title() if slug else "")
+    public = bool(lab.get("domains") or lab.get("http_proxies") or lab.get("expose_web"))
+    codeserver = bool(meta.get("codeserver"))
+    return {
+        "instance_id": lab.get("instance_hash"),
+        "lab": slug,
+        "lab_name": f"[[untrusted]]{display}[[/untrusted]]",
+        "display_name": "",
+        "status": status,
+        "active": running,
+        "running": running,
+        "health": "",
+        "is_copy": False,
+        "slot": None,
+        "owner_type": "user",
+        "type": "machine",
+        "dashboard_url": f"/labs/dashboard/{lab.get('instance_hash')}",
+        "public": public,
+        "ip": lab.get("internal_ip") or lab.get("docker_ip") or "",
+        "stability": meta.get("stability", "beta"),
+        "free": False,
+        "avatar_url": None,
+        "icon_url": None,
+        "icon": {"kind": "glyph", "url": None, "glyph": (display[:1].upper() if display else None), "colour": None},
+        "launch": {"has_launch": not codeserver, "codeserver": codeserver, "action": "code" if codeserver else "launch"},
+        "health_state": {"state": "none", "declared": False, "raw": ""},
+    }
+
+
 async def list_labs(ctx: Context) -> dict[str, Any]:
-    """List all labs owned by the current user."""
+    """List the user's deployed labs and copies. Use it first: it is the only source of instance ids.
+
+    Covers every lab of the account — running, stopped or failed — with the
+    slug, name, type, live status, VPN address and launch flags of each.
+    """
     user = await get_current_user(ctx)
     ownership = get_ownership()
     labs = ownership.list_user_labs(user)
+    instances = [_lab_instance_row(lab) for lab in labs]
     return json_response({
-        "labs": [
-            {
-                "instance_hash": lab["instance_hash"],
-                "lab_name": lab.get("lab_name"),
-                "lab_type": lab.get("lab_type"),
-                "status": lab.get("status"),
-                "created_at": str(lab.get("created_at", ""))
-            }
-            for lab in labs
-        ],
-        "count": len(labs)
+        "labs": {
+            "result": "success",
+            "count": len(instances),
+            "instances": instances,
+        },
+        "scale_groups_unavailable": SCALE_GROUPS_UNAVAILABLE,
+        "total": len(instances),
+        "truncated": False,
     })
 
 # Registry: src/mcp/registry.py (entry "my_mcp_clients") — enabled/tier/cls controlled there (enabled=False or comment out the entry to disable).

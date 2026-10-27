@@ -129,6 +129,7 @@
 
     // ─── Activity Feed ───
     let activityFilterClient = '';
+    let activityFilterTool = '';
     let activityPage = 0;
     let activityHasMore = false;
 
@@ -205,13 +206,18 @@
 
         if (!append) list.innerHTML = '';
 
-        if (items.length === 0 && !append) {
+        // Filter by tool name
+        const itemsFiltered = activityFilterTool
+            ? items.filter(a => (a.tool || '').toLowerCase().includes(activityFilterTool))
+            : items;
+
+        if (itemsFiltered.length === 0 && !append) {
             if (blank) blank.classList.remove('d-none');
         } else if (blank) {
             blank.classList.add('d-none');
         }
 
-        items.forEach(a => list.appendChild(activityCard(a)));
+        itemsFiltered.forEach(a => list.appendChild(activityCard(a)));
 
         if (moreBtn) {
             if (activityHasMore) {
@@ -465,15 +471,37 @@
             });
         }
 
-        const filterTag = document.getElementById('mcp-filter-tag');
-        if (filterTag) {
-            filterTag.addEventListener('click', function() {
-                this.classList.add('d-none');
-                activityFilterClient = '';
-                activityPage = 0;
-                refreshAll();
-            });
-        }
+    const filterTag = document.getElementById('mcp-filter-tag');
+    if (filterTag) {
+        filterTag.addEventListener('click', function() {
+            this.classList.add('d-none');
+            activityFilterClient = '';
+            activityPage = 0;
+            refreshAll();
+        });
+    }
+
+    const toolFilter = document.getElementById('mcp-filter-tool');
+    const toolReset = document.getElementById('mcp-filter-tool-reset');
+    if (toolFilter) {
+        toolFilter.addEventListener('input', function() {
+            activityFilterTool = this.value.trim().toLowerCase();
+            if (activityFilterTool) {
+                if (toolReset) toolReset.style.display = 'inline-block';
+            } else {
+                if (toolReset) toolReset.style.display = 'none';
+            }
+            activityPage = 0;
+            loadActivity();
+        });
+        toolReset.addEventListener('click', function() {
+            toolFilter.value = '';
+            toolReset.style.display = 'none';
+            activityFilterTool = '';
+            activityPage = 0;
+            loadActivity();
+        });
+    }
     }
 
     // ─── Connected Clients init ───

@@ -1131,3 +1131,69 @@ body:has(.mcp-page--activity) .footer {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }
 }
+
+// ── Activity tool filter ──
+.mcp-view__head-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.mcp-filter-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: 320px;
+}
+
+.mcp-filter-tool {
+    font-size: 0.85rem;
+    padding: 0.45rem 0.75rem;
+    border: 1px solid rgba(var(--cui-border-color-rgb), 0.3);
+    border-radius: 6px;
+    background: rgba(var(--cui-body-bg-rgb), 0.4);
+    color: var(--cui-body-color);
+    width: 100%;
+    max-width: 260px;
+}
+
+.mcp-filter-tool:focus {
+    border-color: var(--cui-primary);
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(var(--cui-primary-rgb), 0.2);
+}
+
+.mcp-filter-reset {
+    padding: 0.45rem;
+    border: none;
+    background: transparent;
+    color: var(--cui-body-color);
+    opacity: 0.6;
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    border-radius: 4px;
+}
+
+.mcp-filter-reset:hover {
+    opacity: 1;
+    background: rgba(0,0,0,0.05);
+}
+
+.mcp-filter-reset:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+// Highlight matched tool name in card
+.mcp-log__tool {
+    position: relative;
+}
+
+.mcp-log__tool.hl-match {
+    background: rgba(var(--cui-info-rgb), 0.15);
+    padding: 0.15rem 0.25rem;
+    border-radius: 3px;
+    border: 1px solid rgba(var(--cui-info-rgb), 0.3);
+}

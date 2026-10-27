@@ -6,6 +6,9 @@ After=network.target
 Type=simple
 ExecStart=/usr/bin/python3 -u /opt/labs-control-panel/src/mcp/server.py
 EnvironmentFile=/opt/labs-control-panel/systemd/labs-worker-env.sh
+Environment=MCP_PUBLIC_URL=https://labs.tomweb.in
+Environment=MCP_SERVER_PORT=8099
+Environment=PYTHONPATH=/opt/labs-control-panel
 Restart=always
 RestartSec=3
 WorkingDirectory=/opt/labs-control-panel

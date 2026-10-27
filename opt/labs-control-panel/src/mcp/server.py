@@ -28,11 +28,12 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 from mcp.server.fastmcp import FastMCP
 from mcp.server.auth.settings import AuthSettings
 from mcp.server.auth.provider import TokenVerifier, AccessToken
+from mcp.server.transport_security import TransportSecuritySettings
 
 from src.mcp.auth import get_auth, AuthError
 from src.mcp.db import get_config, get_db, get_mongo_client, init_mcp_dependencies
 from src.mcp.help_content import SERVER_INSTRUCTIONS
-from src.mcp.settings import MCP_PUBLIC_URL, MCP_SERVER_PORT
+from src.mcp.settings import MCP_ALLOWED_HOSTS, MCP_PUBLIC_URL, MCP_SERVER_PORT
 from src.mcp.loader import load_tools
 from src.mcp.resources import setup_resources
 from src.mcp.routes import mount as mount_routes
@@ -77,6 +78,23 @@ class LabsTokenVerifier(TokenVerifier):
 
 # ─── FastMCP server ───
 
+# DNS-rebinding guard (mcp>=1.27 enables it silently for localhost): the
+# public vhosts have to be allow-listed or every remote request dies with
+# 421 "Invalid Host header". localhost stays allowed for in-container tests.
+# Host list is env-driven via settings.py (MCP_ALLOWED_HOSTS); origins get an
+# automatic scheme expansion below.
+_HOST_ORIGINS = []
+for _h in MCP_ALLOWED_HOSTS:
+    _b = _h[:-2] if _h.endswith(":*") else _h
+    _HOST_ORIGINS += [f"https://{_b}", f"http://{_b}"]
+_HOST_ORIGINS += [f"http://127.0.0.1:*", f"http://localhost:*", f"http://[::1]:*"]
+
+_TRANSPORT_TLS = TransportSecuritySettings(
+    enable_dns_rebinding_protection=True,
+    allowed_hosts=list(MCP_ALLOWED_HOSTS),
+    allowed_origins=_HOST_ORIGINS,
+)
+
 mcp = FastMCP(
     "Tom Labs MCP Server",
     instructions=SERVER_INSTRUCTIONS,
@@ -87,6 +105,7 @@ mcp = FastMCP(
         required_scopes=["labs:*"],
     ),
     token_verifier=LabsTokenVerifier(),
+    transport_security=_TRANSPORT_TLS,
 )
 
 
