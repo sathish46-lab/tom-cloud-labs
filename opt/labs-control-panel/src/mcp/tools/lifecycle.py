@@ -586,3 +586,357 @@ async def list_tasks(ctx: Context, limit: int = 20) -> dict[str, Any]:
         "counts": {"queued_jobs": len(queue), "in_flight_deploys": len(deploys)},
         "count": len(queue) + len(deploys),
     })
+
+
+# ── Tom Labs-parity names (aliases) ───────────────────────────────────────────
+
+async def run_lab_startup_script(lab: str, ctx: Context) -> dict[str, Any]:
+    """Run the lab's startup script now."""
+    return await run_startup_script(lab, ctx)
+
+
+async def test_auto_login(lab: str, ctx: Context) -> dict[str, Any]:
+    """Test SSH auto-login to a lab."""
+    return await test_autologin(lab, ctx)
+
+
+# ── Tom Labs parity: routing, runtime, passwords, startup script, error page ──
+
+import re as _re
+import shlex as _shlex
+
+
+def _lab_doc(db, user, lab, instance_id=None):
+    ownership = get_ownership()
+    if instance_id and isinstance(instance_id, str) and _re.match(r"^[0-9a-f]{32}$", instance_id):
+        doc = db.machine_labs.find_one({"instance_hash": instance_id})
+        if doc and str(doc.get("user_id")) in [str(x) for x in ownership._user_identifiers(user)]:
+            return doc, instance_id
+        return None, instance_id
+    instance_hash = ownership.resolve_lab(user, lab_name=lab)
+    return db.machine_labs.find_one({"instance_hash": instance_hash}), instance_hash
+
+
+_PASSWORD_BAD = "at most 128 characters, no control characters, no `=`, no spaces at the start or end"
+
+
+def _password_valid(pw):
+    if pw is None:
+        return True
+    if not isinstance(pw, str) or not pw or len(pw) > 128:
+        return False
+    if any(ord(c) < 32 or ord(c) == 127 for c in pw):
+        return False
+    if "=" in pw or pw != pw.strip():
+        return False
+    if _re.search(r"<[A-Za-z]", pw):
+        return False
+    return True
+
+
+async def set_lab_password(lab: str, ctx: Context, instance_id: str = None,
+                           sudo: str = None, code_server: str = None, vnc: str = None) -> dict[str, Any]:
+    """Set the sudo, code-server or VNC password for a lab (applies on next deploy)."""
+    user = await get_current_user(ctx)
+    db = get_db()
+    doc, ih = _lab_doc(db, user, lab, instance_id)
+    if not doc:
+        return json_response({"error": f"Unknown lab '{lab}'."})
+    for name, pw in (("sudo", sudo), ("code_server", code_server), ("vnc", vnc)):
+        if not _password_valid(pw):
+            return json_response({"error": f"{name}: {_PASSWORD_BAD}"})
+    settings = doc.get("lab_settings") or {}
+    if sudo is not None:
+        settings["sudo"] = sudo
+    if code_server is not None:
+        settings["code_server"] = code_server
+    if vnc is not None:
+        settings["vnc"] = vnc
+    db.machine_labs.update_one({"_id": doc["_id"]}, {"$set": {"lab_settings": settings}})
+    return json_response({
+        "lab": lab,
+        "instance_id": ih,
+        "saved": {k: ("<set>" if settings.get(k) else "<empty>") for k in ("sudo", "code_server", "vnc") if k in settings},
+        "note": "The password is saved, not applied. The running lab keeps its old password until the next deploy.",
+    })
+
+
+async def configure_lab_runtime(lab: str, ctx: Context, instance_id: str = None,
+                                ssh_keys: list = None, vpn_networks: list = None,
+                                always_on: bool = None, preferred_ip: str = None) -> dict[str, Any]:
+    """Set a lab's SSH keys, VPN networks, always-on flag or preferred IP (applies on next deploy)."""
+    user = await get_current_user(ctx)
+    db = get_db()
+    doc, ih = _lab_doc(db, user, lab, instance_id)
+    if not doc:
+        return json_response({"error": f"Unknown lab '{lab}'."})
+    updates = {}
+    saved = []
+    if ssh_keys is not None:
+        if not isinstance(ssh_keys, list) or len(ssh_keys) > 32:
+            return json_response({"error": "ssh_keys: pass a list of at most 32 key fingerprints."})
+        updates.setdefault("runtime", {})["ssh_keys"] = ssh_keys
+        saved.append("ssh_keys")
+    if vpn_networks is not None:
+        if not isinstance(vpn_networks, list) or len(vpn_networks) > 4:
+            return json_response({"error": "vpn_networks: pass a list of at most 4 interface names."})
+        updates.setdefault("runtime", {})["vpn_networks"] = vpn_networks
+        saved.append("vpn_networks")
+    if always_on is not None:
+        updates.setdefault("runtime", {})["always_on"] = bool(always_on)
+        saved.append("always_on")
+    if preferred_ip is not None:
+        updates.setdefault("runtime", {})["preferred_ip"] = str(preferred_ip)
+        saved.append("preferred_ip")
+    if updates:
+        db.machine_labs.update_one({"_id": doc["_id"]}, {"$set": updates})
+    return json_response({
+        "lab": lab,
+        "instance_id": ih,
+        "saved": saved or [],
+        "note": "Saved, not applied: call deploy_lab afterwards. This does not change routing.",
+    })
+
+
+async def configure_lab_routing(lab: str, ctx: Context, instance_id: str = None,
+                                domains: list = None, public: bool = None,
+                                http_proxies: list = None, expose_proxies: list = None,
+                                tcp_ports: list = None, remove_ports: list = None,
+                                code_server_domain: str = None, replace: bool = False,
+                                confirm_replace: bool = False, apply: bool = False) -> dict[str, Any]:
+    """Attach registered domains to a lab's public exposure and apply them."""
+    user = await get_current_user(ctx)
+    db = get_db()
+    doc, ih = _lab_doc(db, user, lab, instance_id)
+    if not doc:
+        return json_response({"error": f"Unknown lab '{lab}'."})
+    if (http_proxies or expose_proxies or tcp_ports or remove_ports or code_server_domain):
+        return json_response({
+            "error": "This install routes domains only: public HTTPS proxies, exposed proxies and raw TCP ports are not published here.",
+        })
+    if domains is None and public is None:
+        routing = doc.get("domains") or []
+        return json_response({
+            "lab": lab,
+            "instance_id": ih,
+            "domains": routing,
+            "public": bool(routing),
+            "verified": [],
+            "note": "Send `public` together with `domains`; one without the other is refused. Removed domains are dropped at the next deploy.",
+        })
+    if not domains:
+        return json_response({"error": "Send both `public: true` and the COMPLETE `domains` list. One without the other is refused."})
+    if len(domains) != len(set(d.lower().strip() for d in domains)):
+        return json_response({"error": "Duplicate entries in `domains`: the list is the COMPLETE list, so duplicates make no sense."})
+    if not replace and not confirm_replace and (doc.get("domains") or []):
+        return json_response({
+            "error": "Calling this in a session that has not read the lab's routing needs confirm_replace=true. Read the stored routing first or pass confirm_replace=true.",
+            "stored": doc.get("domains") or [],
+        })
+    bad = [d for d in domains if not _re.match(r"^[a-z0-9][a-z0-9.-]*\.[a-z]{2,}$", d.lower().strip())]
+    if bad:
+        return json_response({"error": f"Invalid domain names: {', '.join(bad)}"})
+    unverified = []
+    for d in domains:
+        d = d.lower().strip()
+        ddoc = db.domains.find_one({"domain": d})
+        if not ddoc or ddoc.get("user_id") != user.get("user_id"):
+            return json_response({"error": f"Domain '{d}' is not in your account. Register it first (register_domain / claim_tom_domain)."})
+        if not ddoc.get("verified", False):
+            unverified.append(d)
+    if unverified:
+        return json_response({"error": f"Unverified domain(s) {', '.join(unverified)}: check them with list_domains first — an unverified domain is dropped at deploy."})
+    replaced = list(domains) if replace else sorted(set(list(doc.get("domains") or []) + list(domains)))
+    db.machine_labs.update_one({"_id": doc["_id"]}, {"$set": {"routing_saved": replaced, "domains": replaced}})
+    db.domains.update_many({"domain": {"$in": list(doc.get("domains") or [])}}, {"$set": {"in_use": False}})
+    db.domains.update_many({"domain": {"$in": replaced}, "user_id": user.get("user_id")}, {"$set": {"in_use": True}})
+    applied = False
+    if apply:
+        res = await run_labsctl("lab", "apply-preferences", f"--hash={ih}", f"--user={user['username']}", timeout=120)
+        applied = bool(res.get("success"))
+    return json_response({
+        "lab": lab,
+        "instance_id": ih,
+        "saved": {"domains": replaced},
+        "applied": applied,
+        "note": "Routing is saved. Pass apply=true to deploy in the same call, or call deploy_lab afterwards." if not applied else "Applied live.",
+    })
+
+
+async def lab_startup_script(lab: str, ctx: Context, instance_id: str = None, content: str = None) -> dict[str, Any]:
+    """Read or replace the script that runs at the start of every deploy."""
+    user = await get_current_user(ctx)
+    db = get_db()
+    doc, ih = _lab_doc(db, user, lab, instance_id)
+    if not doc:
+        return json_response({"error": f"Unknown lab '{lab}'."})
+    if content is None:
+        return json_response({
+            "lab": lab,
+            "instance_id": ih,
+            "content": doc.get("startup_script") or "",
+            "note": (
+                "The script runs as ROOT inside the lab on every deploy. Saving it does not run it; deploy the lab to run it. "
+                "A script with `<` followed by a letter is refused, so heredocs do not work; use printf, a quoted echo, or a download. "
+                "Max 64 KB."
+            ),
+        })
+    if not isinstance(content, str) or len(content) > 64 * 1024:
+        return json_response({"error": "content: at most 64 KB of text."})
+    if _re.search(r"<[A-Za-z]", content):
+        return json_response({"error": "A script with `<` followed by a letter is refused: the platform would cut it. Use printf, a quoted echo, or a download instead of heredocs."})
+    db.machine_labs.update_one({"_id": doc["_id"]}, {"$set": {"startup_script": content}})
+    return json_response({
+        "lab": lab,
+        "instance_id": ih,
+        "saved": True,
+        "bytes": len(content.encode()),
+        "note": "Saved. Call deploy_lab (or run_lab_startup_script) to run it now.",
+    })
+
+
+async def lab_error_page(lab: str, ctx: Context, instance_id: str = None, content: str = None) -> dict[str, Any]:
+    """Read or replace the page visitors see when the lab is down."""
+    user = await get_current_user(ctx)
+    db = get_db()
+    doc, ih = _lab_doc(db, user, lab, instance_id)
+    if not doc:
+        return json_response({"error": f"Unknown lab '{lab}'."})
+    if content is None:
+        return json_response({
+            "lab": lab,
+            "instance_id": ih,
+            "content": doc.get("error_page") or "",
+            "note": "Omit `content` to read the page, pass HTML to replace it, pass \"\" to reset it to the platform default. No extra routing change is needed.",
+        })
+    if not isinstance(content, str) or len(content) > 64 * 1024:
+        return json_response({"error": "content: at most 64 KB."})
+    db.machine_labs.update_one({"_id": doc["_id"]}, {"$set": {"error_page": content}})
+    return json_response({
+        "lab": lab,
+        "instance_id": ih,
+        "ok": True,
+        "note": "Applied at once for the lab's routes on this install's edge; no redeploy is needed.",
+    })
+
+
+# ── Scale groups: not enabled on this install (honest refusal surface) ───
+
+async def scale_lab(lab: str, group: str, ctx: Context, count: int = None, port: int = None,
+                    domains: list = None, mode: str = "fixed", min_replicas: int = None,
+                    max_replicas: int = None, cpu_target: float = None, mem_target: float = None,
+                    healthcheck: str = None, sticky: bool = None, dry_run: bool = False,
+                    request_id: str = None, member_instance_id: str = None) -> dict[str, Any]:
+    """Replica scale groups are not enabled on this install: refusal."""
+    return json_response({
+        "success": False,
+        "lab": lab, "group": group,
+        "error": "Replica scale groups are not enabled on this install. Run copies yourself with deploy_lab (a redeploy per copy) or ask an admin.",
+    })
+
+
+async def scale_policy(group: str, ctx: Context, mode: str = None, count: int = None,
+                       min_replicas: int = None, max_replicas: int = None, cpu_target: float = None,
+                       mem_target: float = None, enabled: bool = None, cooldown_up_s: int = None,
+                       stabilization_down_s: int = None, drain_grace_s: int = None) -> dict[str, Any]:
+    """Replica scale groups are not enabled on this install: refusal."""
+    return json_response({
+        "success": False,
+        "group": group,
+        "error": "Replica scale groups are not enabled on this install.",
+    })
+
+
+# ── Tom Labs parity: login recon ──────────────────────────────────────────────
+
+async def login_recon(lab: str, ctx: Context, port: int, path: str = None, scheme: str = "http",
+                      verify: bool = False, timeout: int = 10, try_login: bool = False) -> dict[str, Any]:
+    """Inspect a lab's login page and suggest an auto_login adapter."""
+    user = await get_current_user(ctx)
+    ownership = get_ownership()
+    instance_hash = ownership.resolve_lab(user, lab_name=lab)
+    if not path or path == "None":
+        path = "/"
+    p = path if path.startswith("/") else "/" + path
+    url = f"{scheme}://127.0.0.1:{port}{p}"
+    cmd = f"curl -s -i -m {timeout} {url!r}"
+    res = await run_docker_exec(instance_hash, "root", cmd, timeout=timeout + 5)
+    out = res.get("stdout", "")
+    if not out.strip():
+        return json_response({"error": "No response: the lab may be stopped or nothing listens on that port."})
+    head, _sep, body = out.partition("\r\n\r\n")
+    lines = head.split("\r\n")
+    status = 0
+    for ln in lines:
+        if ln.upper().startswith("HTTP/"):
+            try:
+                status = int(ln.split()[1])
+            except Exception:
+                status = 0
+    lower = body.lower()
+    has_form = "<form" in lower
+    has_passwd = 'type="password"' in lower or "type='password'" in lower or "type=password" in lower
+    js_json = ("application/json" in lower or "api/login" in lower or "token" in lower) and "<form" not in lower
+    if status == 401:
+        adapter = {"mode": "basic", "path": p, "port": port}
+        confidence = "high"
+        notes = ["The page answers 401 without credentials, so HTTP basic auth is likely."]
+    elif has_form and has_passwd:
+        import html as _html
+        fields = []
+        for m in _re.finditer(r"<input[^>]*>", body, _re.I):
+            tag = m.group(0)
+            typ = (_re.search(r"type\s*=\s*['\"]?([^'\"]\S*)", tag, _re.I) or [None, "text"])[1]
+            name = (_re.search(r"name\s*=\s*['\"]([^'\"]+)", tag, _re.I) or [None, None])[1]
+            if name:
+                fields.append({"name": name, "type": (typ or "text").lower()})
+        hidden = [{"name": f["name"], "type": f["type"]} for f in fields if f["type"] == "hidden"]
+        userpas = [f["name"] for f in fields if f["type"] == "password"]
+        likely_user = next((f["name"] for f in fields if f["name"].lower() in ("email", "username", "user", "login")), None)
+        csrf = next((h["name"] for h in hidden if "csrf" in h["name"].lower() or "token" in h["name"].lower() or "_auth" in h["name"].lower()), None)
+        adapter = {"mode": "form", "path": p, "port": port,
+                   "fields": {"username": likely_user, "password": userpas[0] if userpas else None, "csrf": csrf}}
+        confidence = "medium" if csrf else "low"
+        notes = ["Read-only reconnaissance: no login was tried.", "Hidden fields listed; paste nothing secret."]
+    elif js_json:
+        adapter = {"mode": "body_token", "port": port, "path": "/api/login"}
+        confidence = "low"
+        notes = ["Looks like a JSON or single-page-app login; only a real login attempt can confirm the endpoint shape."]
+    else:
+        adapter = None
+        confidence = "low"
+        notes = ["No login form found at this path."]
+    return json_response({
+        "port": port,
+        "path": p,
+        "status": status,
+        "suggested_adapter": adapter,
+        "evidence": {"form": has_form, "password_field": has_passwd, "json_hint": js_json},
+        "confidence": confidence,
+        "notes": notes,
+        "next": "Paste suggested_adapter into the lab's auto-login setup and check it with test_auto_login.",
+    })
+
+
+# ── Tom Labs parity: rename a lab copy ────────────────────────────────────────
+
+async def rename_lab(instance_id: str, name: str, ctx: Context) -> dict[str, Any]:
+    """Change the display name of a lab COPY."""
+    user = await get_current_user(ctx)
+    db = get_db()
+    ownership = get_ownership()
+    if not instance_id or not _re.match(r"^[0-9a-f]{32}$", instance_id):
+        return json_response({"error": "Pass the 32-hex instance id from list_labs."})
+    if not _re.match(r"^[A-Za-z0-9 _.\-]{1,60}$", name or ""):
+        return json_response({"error": "New display name: 1 to 60 characters."})
+    doc = db.machine_labs.find_one({"instance_hash": instance_id})
+    if not doc or str(doc.get("user_id")) not in [str(x) for x in ownership._user_identifiers(user)]:
+        return json_response({"error": "Unknown instance_id or a lab that is not yours."})
+    db.machine_labs.update_one(
+        {"_id": doc["_id"]}, {"$set": {"display_name": name}})
+    return json_response({
+        "instance_id": instance_id,
+        "name": name,
+        "renamed": True,
+        "note": "Copies only on the platform's lab list; on this install the display name is set at once and applies to dashboard/lab lists from the next listing.",
+    })

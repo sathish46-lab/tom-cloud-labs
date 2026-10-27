@@ -135,7 +135,7 @@ def main() -> int:
     _, _, res, _ = parse_result(r)
     if res and not res.get("isError") and isinstance(res.get("structuredContent"), dict):
         labs_payload = res["structuredContent"].get("labs") or []
-        # SNA shape: {"labs": {"result": "success", "instances": [...]}}
+        # Tom Labs shape: {"labs": {"result": "success", "instances": [...]}}
         if isinstance(labs_payload, dict):
             labs = labs_payload.get("instances") or []
         else:

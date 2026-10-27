@@ -1186,6 +1186,50 @@ body:has(.mcp-page--activity) .footer {
     box-shadow: none;
 }
 
+.mcp-filter-toggle-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.mcp-filter-toggle {
+    padding: 0.45rem 0.75rem;
+    border: 1px solid rgba(var(--cui-border-color-rgb), 0.3);
+    border-radius: 6px;
+    background: rgba(var(--cui-body-bg-rgb), 0.4);
+    color: var(--cui-body-color);
+    min-width: auto;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mcp-filter-toggle:hover {
+    border-color: var(--cui-primary);
+}
+
+.mcp-filter-toggle .mcp-filter-icon {
+    font-size: 1rem;
+}
+
+.mcp-filter-toggle .mcp-filter-text {
+    font-size: 0.85rem;
+    margin-left: 0.5rem;
+}
+
+.mcp-filter-input-wrapper {
+    flex: 1;
+    min-width: 180px;
+    max-width: 260px;
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.mcp-filter-input-wrapper .mcp-filter-tool {
+    flex: 1;
+    margin-right: 0.5rem;
+}
+
 // Highlight matched tool name in card
 .mcp-log__tool {
     position: relative;

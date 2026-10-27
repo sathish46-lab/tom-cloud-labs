@@ -29,6 +29,9 @@ const Dashboard = {
   charts: {},
   historyLimit: 20,
   isFirstLoad: true,
+  // Per-run log sequence tracking (WS drop → reconnect gap recovery)
+  logSeq: {},
+  logGap: { fetching: false, pending: [] },
 
   /* ========================================================================
    * INITIALIZATION
@@ -123,6 +126,7 @@ const Dashboard = {
             `logs.${window.SESSION_HASH}`,
             (data) => this.appendLog(data),
             ui,
+            () => Dashboard.gapFillLogs(),
           );
         } else if (dot) {
           // Already connected — just update the dot color to green
@@ -202,7 +206,7 @@ const Dashboard = {
       this.charts[id].limit = limit;
     };
 
-    // SNA Colors
+    // Tom Colors
     const colors = {
       cyan: "#00e5ff",
       green: "#00ff88",
@@ -211,7 +215,7 @@ const Dashboard = {
       blue: "#3d5afe"
     };
 
-    // Initialize all charts with SNA-style configurations
+    // Initialize all charts with Tom-style configurations
     // Net IO: Download (Purple) & Upload (Cyan)
     create("chart-net-io", "#8b91f9", "line", {
       tension: 0.4,
@@ -355,9 +359,8 @@ const Dashboard = {
    * Start polling instance stats from API
    */
   startStatsPolling: function () {
-    // 1. Only poll if we have a valid session hash (Dashboard Page)
-    if (!window.SESSION_HASH) {
-      // console.log("[Dashboard] No active session hash found. Stats polling disabled.");
+    // 1. Only poll on Dashboard page (check URL path)
+    if (!window.SESSION_HASH || !window.location.pathname.includes('/labs/dashboard/')) {
       return;
     }
 
@@ -365,12 +368,19 @@ const Dashboard = {
       if (this.statsInterval) clearInterval(this.statsInterval);
 
       const poll = () => {
-        if (document.hidden) return; // double check
+        if (document.hidden) return;
 
         fetch(`/api/labs/stats?hash=${window.SESSION_HASH}`)
           .then((res) => res.json())
           .then((data) => {
-            if (data.status === "offline" || data.status === "initializing") {
+            if (data.status === "paused") {
+              // Lab is paused — show idle state, stop polling
+              this.updateUIIdle();
+              if (this.statsInterval) {
+                clearInterval(this.statsInterval);
+                this.statsInterval = null;
+              }
+            } else if (data.status === "offline" || data.status === "initializing") {
               this.updateUIIdle();
             } else {
               this.updateUI(data);
@@ -427,6 +437,7 @@ const Dashboard = {
     safeSetText("stat-cpu-usage", data.CPUPerc);
     safeSetWidth("stat-cpu-bar", data.CPUPerc);
     safeSetText("stat-pid-count", data.PIDs);
+    safeSetText("stat-cpu-throttled", data.CPUThrottled || "0%");
     safeSetText("stat-mem-perc", data.MemPerc);
     safeSetWidth("stat-mem-bar", data.MemPerc);
     safeSetText("stat-mem-info", data.MemUsage);
@@ -494,16 +505,18 @@ const Dashboard = {
    */
   updateUIIdle: function () {
     const resets = {
-      "stat-cpu-usage": "0.00%",
-      "stat-mem-perc": "0.00%",
-      "stat-load-1": "0.0000",
-      "stat-load-5": "0.0000",
-      "stat-load-15": "0.0000",
-      "stat-peak-cpu": "0.00%",
-      "stat-net-io": "0B / 0B",
-      "stat-block-io": "0B / 0B",
-      "stat-max-pid": "0",
-      "stat-high-mem": "0.00 MB",
+      "stat-cpu-usage": "",
+      "stat-cpu-throttled": "",
+      "stat-mem-perc": "",
+      "stat-mem-info": "",
+      "stat-load-1": "0",
+      "stat-load-5": "0",
+      "stat-load-15": "0",
+      "stat-peak-cpu": "",
+      "stat-net-io": "",
+      "stat-block-io": "",
+      "stat-max-pid": "",
+      "stat-high-mem": "",
     };
 
     for (let id in resets) {
@@ -569,13 +582,49 @@ const Dashboard = {
     const container = document.getElementById("live-logs-container");
     if (!container) return;
 
+    // Handle structured progress from backend: {progress: pct, label: label}
+    if (data && typeof data.progress === 'number') {
+      if (typeof DeployProgress !== 'undefined') {
+        const status = data.progress >= 100 ? 'completed' : 'running';
+        DeployProgress.smoothUpdate(data.progress, data.label, status);
+        if (data.progress >= 100) {
+          DeployProgress.markComplete();
+        }
+      }
+      return; // Progress messages don't go into the log panel
+    }
+
+    // Per-run sequence dedupe: drop lines already rendered (gap-fill overlap,
+    // reconnect races). While a gap-fill fetch is in flight, hold live lines
+    // so fetched (older) lines render first, then flush — order stays intact.
+    if (data && typeof data.seq === 'number') {
+      const seqKey = data.run || window.SESSION_HASH || '';
+      if (typeof Dashboard.logSeq[seqKey] === 'number' && data.seq <= Dashboard.logSeq[seqKey]) {
+        return;
+      }
+      if (Dashboard.logGap.fetching) {
+        Dashboard.logGap.pending.push(data);
+        return;
+      }
+      Dashboard.logSeq[seqKey] = data.seq;
+    }
+
     // Extract message
     let msg = data.log || data.message || data;
+
+    // Parse for deploy progress (fallback: log-pattern matching)
+    if (typeof DeployProgress !== 'undefined') {
+      DeployProgress.parseLog(msg);
+    }
 
     // Clean up message formatting
     msg = msg.replace(/^\[\d{2}:\d{2}:\d{2}\]\s*/, "");
     msg = msg.replace(/^(\[\*\]\s*)+/, "[*] ");
     msg = msg.replace(/^(\[!\]\s*)+/, "[!] ");
+
+    // Duplicate detection - skip if last log is identical
+    const lastEntry = container.lastElementChild;
+    if (lastEntry && lastEntry.innerText === msg) return;
 
     // Create log entry
     const div = document.createElement("div");
@@ -600,6 +649,11 @@ const Dashboard = {
 
     // Check for completion messages
     const lower = msg.toLowerCase();
+    // Code-server launch markers ("started successfully" from labsctl, the
+    // worker's "[✓] Code-server ready.") complete the Launch flow — they must
+    // never trigger the dashboard auto-reload: the IDE opens in its own tab
+    // and reloading here wipes the live log panel the user is watching.
+    const isCodeServerLaunch = /Code-server (started successfully|is already running|ready)/i.test(msg);
     if (
       msg.includes("[*] reload") ||
       (msg.includes("[✓]") &&
@@ -617,6 +671,15 @@ const Dashboard = {
         ActivityTracker.setProcessing(false);
       }
 
+      if (isCodeServerLaunch) return;
+
+      // markComplete() already scheduled a reload (2s) — don't schedule a
+      // second, competing one here. Only the htmx fallback fires when the
+      // structured/raw-log completion path did not run (e.g. stop, offline).
+      if (typeof DeployProgress !== "undefined" && DeployProgress._completed) {
+        return;
+      }
+
       // Increased delay to 4s to ensure DB writes are fully committed/visible to PHP
       setTimeout(() => {
         if (typeof htmx !== 'undefined') {
@@ -627,29 +690,92 @@ const Dashboard = {
       }, 4000);
     }
   },
+
+  /**
+   * Recover log lines missed while the WebSocket was disconnected.
+   * Called via LogSocket's onSubscribed — fires on first subscribe AND after
+   * every auto-reconnect. STOMP topics have no replay, so we refill from the
+   * per-run file (/var/log/labsctl/runs/<run>.log) through /api/labs/logs.
+   * Seq dedupe in appendLog guarantees every line appears exactly once.
+   */
+  gapFillLogs: async function (hash) {
+    const target = hash || window.SESSION_HASH;
+    if (!target) return;
+    if (Dashboard.logGap.fetching) return;
+    Dashboard.logGap.fetching = true;
+    try {
+      const resp = await fetch(
+        `/api/labs/logs?hash=${encodeURIComponent(target)}&after=-1&ts=${Date.now()}`
+      );
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data && data.success && data.active && Array.isArray(data.lines)) {
+          for (const l of data.lines) {
+            Dashboard.appendLog({ log: l.log, seq: l.seq, run: data.run_id });
+          }
+        }
+      } else {
+        console.warn("[Dashboard] log gap-fill HTTP " + resp.status);
+      }
+    } catch (e) {
+      console.warn("[Dashboard] log gap-fill failed:", e);
+    } finally {
+      Dashboard.logGap.fetching = false;
+      const pend = Dashboard.logGap.pending.splice(0);
+      for (const p of pend) Dashboard.appendLog(p);
+    }
+  },
 };
 
 /* ============================================================================
  * ON-DEMAND DATA FETCHING (security: no credentials in page source)
  * ========================================================================== */
 const LabData = {
-  _root: null,
+  _config: null,
+  _domains: null,
+  _fetching: { config: null, domains: null },
 
-  getRoot() {
-    if (!this._root) this._root = document.getElementById('lab-data-root');
-    return this._root;
+  async fetch(type = 'all') {
+    if (!window.SESSION_HASH) return {};
+    
+    // Return cached if available
+    if (type === 'config' && this._config) return this._config;
+    if (type === 'domains' && this._domains) return this._domains;
+    
+    // Avoid duplicate fetches
+    if (this._fetching[type]) return this._fetching[type];
+    
+    this._fetching[type] = fetch(`/api/labs/lab_data?hash=${window.SESSION_HASH}&type=${type}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) throw new Error(data.error);
+        if (data.config) this._config = data.config;
+        if (data.domains) this._domains = data.domains;
+        this._fetching[type] = null;
+        return data;
+      })
+      .catch(err => {
+        console.warn('LabData fetch error:', err);
+        this._fetching[type] = null;
+        return {};
+      });
+    
+    return this._fetching[type];
   },
 
-  getDomainUsage() {
-    const el = this.getRoot();
-    if (!el) return {};
-    try { return JSON.parse(el.dataset.domainUsage || '{}'); } catch (e) { return {}; }
+  async getConfig() {
+    const data = await this.fetch('config');
+    return data.config || null;
   },
 
-  getConfig() {
-    const el = this.getRoot();
-    if (!el) return null;
-    try { return JSON.parse(el.dataset.labConfig || 'null'); } catch (e) { return null; }
+  async getDomainUsage() {
+    const data = await this.fetch('domains');
+    return data.domains || {};
+  },
+
+  clearCache() {
+    this._config = null;
+    this._domains = null;
   }
 };
 
@@ -861,21 +987,25 @@ async function executeRedeploy(labType) {
     const data = await response.json();
 
     if (data.status === 'success' && data.hash) {
-      // UPDATE GLOBAL HASH
+      const prevHash = window.SESSION_HASH;
       window.SESSION_HASH = data.hash;
 
-      // RECONNECT SOCKET to ensure we are listening to the active channel
-      console.log("[Dashboard] specific socket reconnecting to: " + data.hash);
-      LogSocket.disconnect();
-      setTimeout(() => {
-        LogSocket.connect("logs." + data.hash, (d) => Dashboard.appendLog(d));
-      }, 100);
+      // Only reconnect if the topic actually changed or the socket dropped.
+      // Tearing down a healthy socket opens a gap where early worker output
+      // is lost forever (topic exchange, no durable queue for the browser),
+      // so the bar would sit at 0%. For a same-hash redeploy the socket is
+      // already on logs.<hash> — leave it alone.
+      if (data.hash !== prevHash || !LogSocket.isConnected) {
+        console.log("[Dashboard] socket reconnecting to: " + data.hash);
+        LogSocket.disconnect();
+        LogSocket.connect("logs." + data.hash, (d) => Dashboard.appendLog(d), null, () => Dashboard.gapFillLogs());
+      }
     }
 
     Dashboard.appendLog("[*] Handshake accepted. Starting stream...");
     
-    // Start progress tracking
-    DeployProgress.start(window.SESSION_HASH);
+    // Start progress tracking (parses logs from WebSocket)
+    DeployProgress.start();
   } catch (e) {
     console.error("Redeploy Error:", e);
     Dashboard.appendLog("[!] Redeploy failed: " + e.message);
@@ -888,26 +1018,68 @@ async function executeRedeploy(labType) {
 
 /**
  * Deployment Progress Tracker
- * Polls the server for deployment progress and updates the UI
+ * Parses live WebSocket logs to calculate progress percentage
  */
 const DeployProgress = {
-  interval: null,
-  hash: null,
+  active: false,
+  progress: 0,
+  _completed: false,
+  
+  // Deploy step patterns mapped to percentage
+  steps: [
+    [/Deployment initiated/i, 5, 'Initializing'],
+    [/Fetching lab metadata/i, 8, 'Loading metadata'],
+    [/Starting deployment for user/i, 10, 'Starting'],
+    [/Instance ID:/i, 12, 'Preparing'],
+    [/Reusing existing lab IP|Assigned Docker IP/i, 15, 'Assigning IP'],
+    [/Checking for conflicting containers/i, 18, 'Checking containers'],
+    [/No existing container|Removing existing container/i, 20, 'Cleaning up'],
+    [/Storage preserved/i, 25, 'Preserving storage'],
+    [/Clearing stale VPN/i, 28, 'Clearing VPN'],
+    [/Removing stale WireGuard/i, 30, 'Removing old peer'],
+    [/Peer removed/i, 32, 'Peer removed'],
+    [/Reusing existing keys|Generating new/i, 35, 'Configuring keys'],
+    [/Peer re-registered/i, 38, 'Peer registered'],
+    [/Provisioning/i, 40, 'Provisioning'],
+    [/Waiting for container/i, 45, 'Starting container'],
+    [/Configuring network routing/i, 50, 'Configuring network'],
+    [/Routing and firewall configured/i, 55, 'Firewall ready'],
+    [/Optimizing Apache/i, 58, 'Configuring Apache'],
+    [/Configuring user environment/i, 60, 'Setting up user'],
+    [/Syncing ssh/i, 62, 'Syncing SSH'],
+    [/Starting user configuration/i, 65, 'Creating user'],
+    [/User .* created/i, 68, 'User created'],
+    [/System password set/i, 70, 'Password set'],
+    [/SSH configured/i, 72, 'SSH ready'],
+    [/Bash environment/i, 74, 'Shell ready'],
+    [/Configuring WireGuard tunnel/i, 76, 'Setting up VPN'],
+    [/WireGuard configured/i, 80, 'VPN ready'],
+    [/Configuring persistent storage/i, 82, 'Linking storage'],
+    [/Storage links configured/i, 85, 'Storage ready'],
+    [/Setting up Code-Server/i, 88, 'Starting Code-Server'],
+    [/Code-server started/i, 90, 'Code-Server ready'],
+    [/Applying firewall rules/i, 92, 'Applying firewall'],
+    [/Firewall rules applied/i, 94, 'Firewall ready'],
+    [/Finalizing Traefik/i, 96, 'Configuring proxy'],
+    [/Traefik config written/i, 98, 'Proxy configured'],
+    [/Deployment Complete|Deploy complete|Access URL:/i, 100, 'Complete'],
+  ],
   
   show() {
-    const container = document.getElementById('deploy-progress-container');
-    if (container) container.classList.remove('d-none');
+    const el = document.getElementById('deploy-progress-container');
+    if (el) el.classList.remove('d-none');
   },
   
   hide() {
-    const container = document.getElementById('deploy-progress-container');
-    if (container) container.classList.add('d-none');
+    const el = document.getElementById('deploy-progress-container');
+    if (el) el.classList.add('d-none');
   },
   
   update(progress, label, status) {
+    this.progress = progress;
     const bar = document.getElementById('deploy-progress-bar');
-    const percent = document.getElementById('deploy-progress-percent');
-    const labelEl = document.getElementById('deploy-progress-label');
+    const pct = document.getElementById('deploy-progress-percent');
+    const lbl = document.getElementById('deploy-progress-label');
     const icon = document.getElementById('deploy-progress-icon');
     
     if (bar) {
@@ -925,9 +1097,8 @@ const DeployProgress = {
         bar.style.background = '';
       }
     }
-    
-    if (percent) percent.textContent = progress + '%';
-    if (labelEl) labelEl.textContent = label || 'Deploying...';
+    if (pct) pct.textContent = progress + '%';
+    if (lbl) lbl.textContent = label || 'Deploying...';
     if (icon) {
       if (status === 'completed') icon.textContent = '✅';
       else if (status === 'failed') icon.textContent = '❌';
@@ -935,39 +1106,75 @@ const DeployProgress = {
     }
   },
   
-  start(hash) {
-    this.hash = hash;
+  // Called by Dashboard.appendLog for each new log line
+  parseLog(line) {
+    if (!this.active) return;
+    
+    for (const [pattern, pct, label] of this.steps) {
+      if (pattern.test(line) && pct > this.progress) {
+        this.update(pct, label, 'running');
+        break;
+      }
+    }
+    
+    // Check completion — route through markComplete so we only ever
+    // schedule ONE reload no matter which path detects it first.
+    if (/Deployment Complete|Deploy complete|Access URL:/i.test(line)) {
+      this.markComplete();
+    }
+    
+    // Check failure
+    if (/\[!\].*failed|Error:/i.test(line)) {
+      this.update(this.progress, 'Failed', 'failed');
+      this.active = false;
+    }
+  },
+  
+  // Smooth progress animation — interpolates between current and target
+  _animFrame: null,
+  _targetPct: 0,
+  
+  smoothUpdate(targetPct, label, status) {
+    this._targetPct = targetPct;
+    if (this._animFrame) cancelAnimationFrame(this._animFrame);
+    
+    const animate = () => {
+      const diff = this._targetPct - this.progress;
+      if (Math.abs(diff) < 0.5) {
+        this.update(this._targetPct, label, status);
+        return;
+      }
+      // Ease towards target (speed proportional to distance)
+      this.progress += diff * 0.15;
+      this.update(Math.round(this.progress), label, status);
+      this._animFrame = requestAnimationFrame(animate);
+    };
+    animate();
+  },
+  
+  // Single completion path. Both the structured {progress:100} message and
+  // the raw "Deployment Complete" log can detect the end of a deploy — this
+  // makes them idempotent so only ONE reload is ever scheduled.
+  markComplete() {
+    if (this._completed) return;
+    this._completed = true;
+    this.progress = 100;
+    this.update(100, 'Complete', 'completed');
+    this.active = false;
+    setTimeout(() => window.location.reload(), 2000);
+  },
+
+  start() {
+    this.active = true;
+    this.progress = 0;
+    this._completed = false;
     this.show();
     this.update(0, 'Starting deployment...', 'running');
-    this.interval = setInterval(() => this.poll(), 1000);
   },
   
   stop() {
-    if (this.interval) {
-      clearInterval(this.interval);
-      this.interval = null;
-    }
+    this.active = false;
     setTimeout(() => this.hide(), 3000);
-  },
-  
-  async poll() {
-    if (!this.hash) return;
-    try {
-      const response = await fetch(`/api/lab/deploy_progress.php?hash=${this.hash}`, {
-        credentials: 'same-origin'
-      });
-      if (!response.ok) throw new Error('Poll failed');
-      const data = await response.json();
-      this.update(data.progress, data.label, data.status);
-      if (data.status === 'completed' || data.status === 'failed') {
-        this.stop();
-        if (data.status === 'completed') {
-          setTimeout(() => window.location.reload(), 1500);
-        }
-      }
-    } catch (e) {
-      console.error('Progress poll error:', e);
-    }
   }
 };
 
@@ -1041,6 +1248,146 @@ async function executeStop() {
 }
 
 /**
+ * Pause Lab - Freeze processes, keep memory, zero CPU
+ */
+function handlePause() {
+  if (Dashboard.isProcessing) return;
+  const modalEl = document.getElementById("pauseModal");
+  if (!modalEl) {
+    // No modal found, execute directly
+    executePause();
+    return;
+  }
+  let modal = coreui.Modal.getInstance(modalEl);
+  if (!modal) modal = new coreui.Modal(modalEl, { backdrop: true, keyboard: true });
+  document.getElementById("pause-confirm-btn").onclick = () => executePause();
+  modal.show();
+}
+
+/**
+ * Execute the actual pause request
+ */
+async function executePause() {
+  const modalEl = document.getElementById("pauseModal");
+  const modal = modalEl ? coreui.Modal.getInstance(modalEl) : null;
+  const btn = document.getElementById("pause-confirm-btn");
+  const headerBtn = document.getElementById("btn-pause-action");
+  const type = window.LAB_TYPE || "essentials";
+
+  if (modal) modal.hide();
+  Dashboard.isProcessing = true;
+  if (typeof ActivityTracker !== "undefined") {
+    ActivityTracker.setProcessing(true);
+  }
+
+  if (headerBtn) Dashboard.toggleLoading(headerBtn, true);
+  if (btn) {
+    btn.classList.add("disabled");
+    btn.innerHTML = '<span class="spinner-grow spinner-grow-sm me-2" role="status" aria-hidden="true"></span> Pausing...';
+  }
+
+  Dashboard.resetTerminal();
+  Dashboard.appendCommand(`docker pause ${window.SESSION_HASH}`);
+  await new Promise((r) => setTimeout(r, 300));
+  Dashboard.appendLog("[*] Freezing container processes...");
+
+  try {
+    const response = await fetch("/api/labs/pause", {
+      method: "POST",
+      body: new URLSearchParams({
+        lab: type,
+      }),
+    });
+
+    const data = await response.json();
+    if (data.status === 'success') {
+      Dashboard.appendLog("[✓] Lab paused. CPU: 0%, Memory: preserved");
+      // Reload page after short delay to show paused state
+      setTimeout(() => location.reload(), 1500);
+    } else {
+      Dashboard.appendLog(`[!] Error: ${data.error || 'Pause request failed'}`);
+      Dashboard.isProcessing = false;
+      if (headerBtn) Dashboard.toggleLoading(headerBtn, false);
+    }
+  } catch (e) {
+    console.error("Pause Error:", e);
+    Dashboard.appendLog(`[!] Error: ${e.message}`);
+    if (headerBtn) Dashboard.toggleLoading(headerBtn, false);
+    Dashboard.isProcessing = false;
+  }
+}
+
+/**
+ * Resume Lab - Unfreeze processes, restore CPU
+ */
+function handleResume() {
+  if (Dashboard.isProcessing) return;
+  const modalEl = document.getElementById("resumeModal");
+  if (!modalEl) {
+    // No modal found, execute directly
+    executeResume();
+    return;
+  }
+  let modal = coreui.Modal.getInstance(modalEl);
+  if (!modal) modal = new coreui.Modal(modalEl, { backdrop: true, keyboard: true });
+  document.getElementById("resume-confirm-btn").onclick = () => executeResume();
+  modal.show();
+}
+
+/**
+ * Execute the actual resume request
+ */
+async function executeResume() {
+  const modalEl = document.getElementById("resumeModal");
+  const modal = modalEl ? coreui.Modal.getInstance(modalEl) : null;
+  const btn = document.getElementById("resume-confirm-btn");
+  const headerBtn = document.getElementById("btn-resume-action");
+  const type = window.LAB_TYPE || "essentials";
+
+  if (modal) modal.hide();
+  Dashboard.isProcessing = true;
+  if (typeof ActivityTracker !== "undefined") {
+    ActivityTracker.setProcessing(true);
+  }
+
+  if (headerBtn) Dashboard.toggleLoading(headerBtn, true);
+  if (btn) {
+    btn.classList.add("disabled");
+    btn.innerHTML = '<span class="spinner-grow spinner-grow-sm me-2" role="status" aria-hidden="true"></span> Resuming...';
+  }
+
+  Dashboard.resetTerminal();
+  Dashboard.appendCommand(`docker unpause ${window.SESSION_HASH}`);
+  await new Promise((r) => setTimeout(r, 300));
+  Dashboard.appendLog("[*] Unfreezing container processes...");
+
+  try {
+    const response = await fetch("/api/labs/resume", {
+      method: "POST",
+      body: new URLSearchParams({
+        lab: type,
+      }),
+    });
+
+    const data = await response.json();
+    if (data.status === 'success') {
+      Dashboard.appendLog("[✓] Lab resumed. All systems restored");
+      // Reload page after short delay to show running state
+      setTimeout(() => location.reload(), 1500);
+    } else {
+      Dashboard.appendLog(`[!] Error: ${data.error || 'Resume request failed'}`);
+      Dashboard.isProcessing = false;
+      if (headerBtn) Dashboard.toggleLoading(headerBtn, false);
+    }
+  } catch (e) {
+    console.error("Resume Error:", e);
+    Dashboard.appendLog(`[!] Error: ${e.message}`);
+    if (headerBtn) Dashboard.toggleLoading(headerBtn, false);
+    Dashboard.isProcessing = false;
+  }
+}
+
+/**
  * Launch Code-Server IDE
  * @param {Event} event
  */
@@ -1063,7 +1410,7 @@ async function launchCodeIDE(event, targetUrl = null) {
     // However currently MinIO doesn't have an "idle timeout" feature planned yet.
     // So we just open the URL.
     if (!targetUrl) {
-      const labConfig = LabData.getConfig();
+      const labConfig = await LabData.getConfig();
       if (labConfig && labConfig.fields) {
         const consoleField = labConfig.fields.find(f => f.label === 'MinIO Console Endpoint');
         if (consoleField) url = consoleField.value;
@@ -1075,6 +1422,10 @@ async function launchCodeIDE(event, targetUrl = null) {
 
   const btn = event.target.closest("button");
   const originalText = btn.innerHTML;
+  // True once the wake-up flow streamed worker logs into the panel — the
+  // pre-launch "Connecting..." step must then NOT reset the terminal (that
+  // would wipe the very log the user was shown during launch).
+  let wakeStreamed = false;
 
   // 3. Auto-Start Logic (Only for Code-Server currently)
   // We move this BEFORE the URL check because we might get the URL from the response.
@@ -1112,30 +1463,38 @@ async function launchCodeIDE(event, targetUrl = null) {
       Dashboard.resetTerminal();
       Dashboard.appendCommand(`labsctl ensure code-server --hash=${window.SESSION_HASH}`);
       Dashboard.appendLog(`[*] Ensuring ${actionName} is running...`);
+      wakeStreamed = true;
 
+      // finishReady(ok): ok=true only when a worker success marker was seen.
+      // The 45s timeout and every early-out resolve ok=false — the launch is
+      // judged by this value plus a final code_status re-check, never assumed.
+      let finishReady = null;
       try {
-        // Stream the worker's real logs and only open the editor once code-server is
-        // actually ready (worker success marker) — not a blind fixed delay. If the
-        // marker is missed we fall back to a safety timeout so the launch never hangs.
         const readyPromise = new Promise((resolveReady) => {
           const origAppend = Dashboard.appendLog;
           let done = false;
-          const finish = () => { if (!done) { done = true; Dashboard.appendLog = origAppend; resolveReady(); } };
-          const timer = setTimeout(finish, 45000);
+          const finish = (ok) => {
+            if (done) return;
+            done = true;
+            clearTimeout(timer);
+            Dashboard.appendLog = origAppend;
+            resolveReady(ok);
+          };
+          finishReady = finish;
+          const timer = setTimeout(() => finish(false), 45000);
 
           Dashboard.appendLog = function (d) {
             origAppend.call(Dashboard, d);
             const msg = (d && d.log) || (d && d.message) || d || "";
-            if (msg && /Code-server started successfully|Code-server is already running/i.test(msg)) {
-              clearTimeout(timer);
-              finish();
+            if (msg && /Code-server started successfully|Code-server is already running|Code-server ready/i.test(msg)) {
+              finish(true);
             }
           };
         });
 
         // Ensure we're listening on the live log channel for this lab
         if (window.LogSocket && !window.LogSocket.isConnected) {
-          window.LogSocket.connect(`logs.${window.SESSION_HASH}`, (d) => Dashboard.appendLog(d));
+          window.LogSocket.connect(`logs.${window.SESSION_HASH}`, (d) => Dashboard.appendLog(d), null, () => Dashboard.gapFillLogs());
         }
 
         let response = await fetch("/api/labs/ensure_codeserver", {
@@ -1143,7 +1502,19 @@ async function launchCodeIDE(event, targetUrl = null) {
           body: formData
         });
 
-        let data = await response.json();
+        let data = {};
+        try { data = await response.json(); } catch (_) { /* non-JSON error body */ }
+
+        if (!response.ok || data.status === "error") {
+          // Queuing failed (lab stopped, deploying, access denied, ...): show
+          // the real reason instead of waiting out the 45s timer.
+          if (finishReady) finishReady(false);
+          Dashboard.appendLog(`[!] ${data.error || `Launch failed (HTTP ${response.status}).`}`);
+          btn.classList.remove("disabled");
+          btn.innerHTML = originalText;
+          return;
+        }
+
         if (data.url) {
           url = data.url; // Use fresh URL from backend if provided
           window.CODE_SERVER_URL = url;
@@ -1151,11 +1522,41 @@ async function launchCodeIDE(event, targetUrl = null) {
         }
 
         // Wait for the worker's success marker (or the 45s safety timeout)
-        await readyPromise;
+        const gotMarker = await readyPromise;
+
+        if (!gotMarker) {
+          // Marker missed or timed out — confirm reality before deciding.
+          // (The marker may be absent even on success if the log stream was
+          // interrupted; code_status is the ground truth.)
+          let confirmed = false;
+          try {
+            const st2 = await fetch("/api/labs/code_status", { method: "POST", body: formData });
+            const st2data = await st2.json();
+            if (st2data && (st2data.running || st2data.codeserver_running)) {
+              confirmed = true;
+              if (st2data.url) {
+                url = st2data.url;
+                window.CODE_SERVER_URL = url;
+              }
+              Dashboard.appendLog("[✓] Code-server confirmed running (status re-check).");
+            }
+          } catch (_) { /* re-check failed → treat as not running */ }
+
+          if (!confirmed) {
+            Dashboard.appendLog("[!] Code-server did not start — see the errors above, then try again.");
+            btn.classList.remove("disabled");
+            btn.innerHTML = originalText;
+            return;
+          }
+        }
 
       } catch (e) {
         console.error("Auto-start failed", e);
-        Dashboard.appendLog(`[!] Warning: Auto-start trigger failed. Trying saved URL...`);
+        if (finishReady) finishReady(false);
+        Dashboard.appendLog(`[!] Auto-start trigger failed: ${e && e.message ? e.message : e}`);
+        btn.classList.remove("disabled");
+        btn.innerHTML = originalText;
+        return;
       }
     }
   }
@@ -1172,7 +1573,11 @@ async function launchCodeIDE(event, targetUrl = null) {
   btn.classList.add("disabled");
   btn.innerHTML = '<span class="spinner-grow spinner-grow-sm me-2" role="status" aria-hidden="true"></span> Launching...';
 
-  Dashboard.resetTerminal();
+  // Preserve the wake-up log stream (if one ran) — only a direct/fast-path
+  // open starts from a clean terminal.
+  if (!wakeStreamed) {
+    Dashboard.resetTerminal();
+  }
 
   // 3. Show validation logs (Visual feedback)
   Dashboard.appendLog(`[*] Connecting to ${url}...`);
@@ -1367,9 +1772,9 @@ function toggleDomainSection() {
  * Ensures a domain can only be used in ONE place at a time
  * Uses database-backed DOMAIN_USAGE_MAP for cross-lab checking
  */
-function updateDomainAvailability() {
+async function updateDomainAvailability() {
   // 1. Use the database-backed usage map (already includes ALL labs)
-  const usageMap = LabData.getDomainUsage();
+  const usageMap = await LabData.getDomainUsage();
 
   // Also check currently selected domains in THIS modal (not yet saved to DB)
   const currentSelections = {};
@@ -1503,12 +1908,12 @@ function updateDomainAvailability() {
 function launchService(btn, type) {
   Dashboard.toggleLoading(btn, true);
 
-  setTimeout(() => {
+  setTimeout(async () => {
     const action = LAB_ACTION_CONFIG[type] || LAB_ACTION_CONFIG.default;
 
     if (action.launch === 'n8n_url') {
       let url = "";
-      const labConfig = LabData.getConfig();
+      const labConfig = await LabData.getConfig();
       if (labConfig && labConfig.fields) {
         const urlField = labConfig.fields.find(f => f.label === 'Public URL');
         if (urlField) url = urlField.value;
@@ -1536,9 +1941,9 @@ function launchService(btn, type) {
  */
 function launchGui(btn) {
   Dashboard.toggleLoading(btn, true);
-  setTimeout(() => {
+  setTimeout(async () => {
     let guiUrl = "";
-    const labConfig = LabData.getConfig();
+    const labConfig = await LabData.getConfig();
     if (labConfig && labConfig.fields) {
       const urlField = labConfig.fields.find(f => f.label === 'GUI URL');
       if (urlField) guiUrl = urlField.value;
@@ -1907,6 +2312,10 @@ window.onPageLoad( function() {
     window.addDeployProxyRow = addDeployProxyRow;
     window.updateSelectedDomains = updateSelectedDomains;
     window.handleStop = handleStop;
+    window.handlePause = handlePause;
+    window.handleResume = handleResume;
+    window.executePause = executePause;
+    window.executeResume = executeResume;
     window.removeDomainChip = removeDomainChip;
     window.handleDeploy = handleDeploy;
 

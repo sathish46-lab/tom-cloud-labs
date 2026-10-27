@@ -502,6 +502,28 @@
             loadActivity();
         });
     }
+
+    const toggleBtn = document.getElementById('mcp-filter-tool-toggle');
+    const filterWrapper = document.getElementById('mcp-filter-input-wrapper');
+    const filterIcon = toggleBtn ? toggleBtn.querySelector('.mcp-filter-icon') : null;
+    const filterText = toggleBtn ? toggleBtn.querySelector('.mcp-filter-text') : null;
+    if (toggleBtn && filterWrapper && filterIcon && filterText) {
+        toggleBtn.addEventListener('click', function() {
+            const isOpen = filterWrapper.classList.contains('d-none');
+            if (!isOpen) {
+                filterWrapper.classList.remove('d-none');
+                filterIcon.classList.remove('bi-search');
+                filterIcon.classList.add('bi-x');
+                filterText.classList.remove('d-none');
+                toolFilter.focus();
+            } else {
+                filterWrapper.classList.add('d-none');
+                filterIcon.classList.remove('bi-x');
+                filterIcon.classList.add('bi-search');
+                filterText.classList.add('d-none');
+            }
+        });
+    }
     }
 
     // ─── Connected Clients init ───

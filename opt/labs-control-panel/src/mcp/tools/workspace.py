@@ -369,3 +369,74 @@ async def write_lab_files(lab: str, files: list, ctx: Context) -> dict[str, Any]
         "files": written,
         "success": len(failed) == 0,
     })
+
+
+# ── Tom Labs parity: workspace pinning ────────────────────────────────────────
+# ── Tom Labs parity: workspace pinning ────────────────────────────────────────
+
+import time as _time
+
+
+async def _get_setting(user, key):
+    db = get_db()
+    doc = db.mcp_user_settings.find_one({"user_id": user.get("user_id")})
+    return (doc or {}).get(key)
+
+
+async def _set_setting(user, key, value):
+    db = get_db()
+    db.mcp_user_settings.update_one(
+        {"user_id": user.get("user_id")},
+        {"$set": {key: value}},
+        upsert=True,
+    )
+
+
+async def open_workspace(lab: str, ctx: Context, dir: str = None) -> dict[str, Any]:
+    """Pin a lab and a working directory for this conversation's tools."""
+    user = await get_current_user(ctx)
+    ownership = get_ownership()
+    instance_hash = ownership.resolve_lab(user, lab_name=lab)
+    doc = get_db().machine_labs.find_one({"instance_hash": instance_hash}, {"home": 1}) or {}
+    home = doc.get("home") or f"/home/{user['username']}"
+    target = dir if dir else home
+    if not target.startswith("/"):
+        target = f"{home.rstrip('/')}/{target}"
+    chk = await run_docker_exec(instance_hash, user["username"], f"test -d {shlex.quote(target)} && echo OK", timeout=15)
+    if "OK" not in chk.get("stdout", ""):
+        return json_response({"error": f"Directory '{target}' does not exist in lab '{lab}'."})
+    git = await _git_info(instance_hash, user["username"], target)
+    await _set_setting(user, "workspace", {"lab": instance_hash, "lab_name": lab, "dir": target, "opened_at": int(_time.time())})
+    return json_response({"lab": instance_hash, "dir": target, "git": git})
+
+
+async def _git_info(instance_hash, username, dir):
+    res = await run_docker_exec(instance_hash, username, f"cd {shlex.quote(dir)} && git rev-parse --is-inside-work-tree 2>/dev/null", timeout=10)
+    if "true" not in res.get("stdout", ""):
+        return {"is_git": False}
+    branch = (await run_docker_exec(instance_hash, username, f"cd {shlex.quote(dir)} && git rev-parse --abbrev-ref HEAD 2>/dev/null", timeout=10)).get("stdout", "").strip()
+    dirty = (await run_docker_exec(instance_hash, username, f"cd {shlex.quote(dir)} && git status --porcelain 2>/dev/null | wc -l", timeout=10)).get("stdout", "").strip()
+    ahead = (await run_docker_exec(instance_hash, username, f"cd {shlex.quote(dir)} && git rev-list --count @{{u}}..HEAD 2>/dev/null", timeout=10)).get("stdout", "").strip()
+    return {"is_git": True, "branch": branch or "HEAD", "dirty": int(dirty or 0), "ahead": int(ahead or 0)}
+
+
+async def workspace_info(ctx: Context, refresh_git: bool = True) -> dict[str, Any]:
+    """Show the workspace pinned by open_workspace."""
+    user = await get_current_user(ctx)
+    pin = await _get_setting(user, "workspace")
+    if not pin:
+        return json_response({"pinned": False, "note": "No workspace pinned for this conversation. Use open_workspace(lab=...) first."})
+    out = {"pinned": True, "lab": pin.get("lab"), "lab_name": pin.get("lab_name"), "dir": pin.get("dir"), "opened_at": pin.get("opened_at")}
+    if refresh_git:
+        try:
+            out["git"] = await _git_info(pin.get("lab"), user["username"], pin.get("dir"))
+        except Exception:
+            out["git"] = {"is_git": False}
+    return json_response(out)
+
+
+async def close_workspace(ctx: Context) -> dict[str, Any]:
+    """Clear the workspace pin; always safe when nothing is pinned."""
+    user = await get_current_user(ctx)
+    await _set_setting(user, "workspace", None)
+    return json_response({"closed": True})

@@ -18186,7 +18186,7 @@ var TomBG = {
       if (typeof TomParallax !== "undefined") TomParallax.init();
     }
 
-    // Inject variables into a clean style tag to keep HTML tag simple like SNA
+    // Inject variables into a clean style tag to keep HTML tag simple like Tom
     var themeStyle = document.getElementById("tom-theme-vars");
     if (!themeStyle) {
       themeStyle = document.createElement("style");
@@ -18195,7 +18195,7 @@ var TomBG = {
     }
     themeStyle.innerHTML = `html[data-coreui-theme] { ${cssVars} }`;
 
-    // Remove all style attributes from root to keep it clean like SNA
+    // Remove all style attributes from root to keep it clean like Tom
     this.updateActiveSwatchUI();
     root.removeAttribute("style");
   },
@@ -20877,7 +20877,7 @@ const Dashboard = {
       this.charts[id].limit = limit;
     };
 
-    // SNA Colors
+    // Tom Colors
     const colors = {
       cyan: "#00e5ff",
       green: "#00ff88",
@@ -20886,7 +20886,7 @@ const Dashboard = {
       blue: "#3d5afe"
     };
 
-    // Initialize all charts with SNA-style configurations
+    // Initialize all charts with Tom-style configurations
     // Net IO: Download (Purple) & Upload (Cyan)
     create("chart-net-io", "#8b91f9", "line", {
       tension: 0.4,
@@ -23814,7 +23814,7 @@ try {
                         } catch(e) { pct3 = 25; }
                     }
                     const pct2 = 100 - pct1 - pct3;
-                    // SNA sanitizeSplitSizes: ensure all > 0 and sum ~ 100
+                    // Tom sanitizeSplitSizes: ensure all > 0 and sum ~ 100
                     if (pct1 > 0 && pct2 > 0 && pct3 > 0) {
                         const sum = pct1 + pct2 + pct3;
                         const normalized = [pct1 * 100 / sum, pct2 * 100 / sum, pct3 * 100 / sum];
@@ -23855,7 +23855,7 @@ try {
                         var p2El = document.getElementById('learn-panel-2');
                         var p3El = document.getElementById('learn-panel-3');
 
-                        // SNA normalizeSizes: ensure sum = 100
+                        // Tom normalizeSizes: ensure sum = 100
                         var sum = arr[0] + arr[1] + arr[2];
                         var sizes = (Math.abs(sum - 100) > 0.01 && sum > 0) ?
                             arr.map(function(v) { return v * 100 / sum; }) : arr.slice();

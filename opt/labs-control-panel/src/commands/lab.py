@@ -381,17 +381,17 @@ class LabCmd(Command):
             self.log("No existing container found.")
         self.docker_stop(instance_id)
 
-        # Phase: STORAGE — create SNA-style structure on first deploy, preserve on redeploy
+        # Phase: STORAGE — create Tom-style structure on first deploy, preserve on redeploy
         import hashlib
         storage_base = self.cfg.get("storage_base", "/var/tomlabs/storage")
         user_email = lab_data.get("email", "")
         user_hash = hashlib.md5(user_email.encode()).hexdigest() if user_email else username
-        # SNA-style: storage/{hash}/home/{username}/ + cron/ + usr/
+        # Tom-style: storage/{hash}/home/{username}/ + cron/ + usr/
         user_storage = f"{storage_base}/{user_hash}"
         user_home = f"{user_storage}/home/{username}"
         if not os.path.exists(user_home):
             os.makedirs(user_home, exist_ok=True)
-            # Create SNA-style root directories
+            # Create Tom-style root directories
             os.makedirs(f"{user_storage}/cron", exist_ok=True)
             os.makedirs(f"{user_storage}/usr", exist_ok=True)
             self.log(f"Created storage: {user_home}")

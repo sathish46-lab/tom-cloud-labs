@@ -75,8 +75,16 @@ if (Session::getAuthStatus() === Constants::STATUS_LOGGEDIN) {
                                 <div class="mcp-view__head-actions">
                                     <div class="mcp-filter-wrap">
                                         <span class="mcp-eyebrow mb-0 me-2">Filter by tool</span>
-                                        <input type="text" id="mcp-filter-tool" class="form-control mcp-filter-tool" placeholder="Filter by tool (e.g. lab_deploy, createdb)..." aria-label="Filter activity by tool name">
-                                        <button type="button" class="btn btn-sm btn-outline-secondary mcp-filter-reset" id="mcp-filter-tool-reset" style="display:none;">×</button>
+                                        <div class="mcp-filter-toggle-wrap d-flex align-items-center">
+                                            <button type="button" class="btn btn-outline-secondary mcp-filter-toggle" id="mcp-filter-tool-toggle" aria-label="Filter by tool">
+                                                <i class="mcp-filter-icon bi bi-search" aria-hidden="true"></i>
+                                                <span class="mcp-filter-text d-none">Filter by tool</span>
+                                            </button>
+                                            <div class="mcp-filter-input-wrapper d-none" id="mcp-filter-input-wrapper">
+                                                <input type="text" id="mcp-filter-tool" class="form-control mcp-filter-tool" placeholder="Filter by tool (e.g. lab_deploy, createdb)..." aria-label="Filter activity by tool name">
+                                                <button type="button" class="btn btn-sm btn-outline-secondary mcp-filter-reset" id="mcp-filter-tool-reset" style="display:none;">×</button>
+                                            </div>
+                                        </div>
                                     </div>
                                     <span class="badge badge-soft-secondary mcp-tag mcp-live" id="mcp-live-tag" title="New calls appear here as they happen">
                                         <i class="mcp-live__dot" aria-hidden="true"></i>

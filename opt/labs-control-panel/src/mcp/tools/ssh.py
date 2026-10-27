@@ -145,3 +145,15 @@ async def enable_ssh_key(fingerprint: str, enabled: bool, ctx: Context) -> dict[
         "enabled": enabled,
         "updated": result.modified_count > 0
     })
+
+
+# ── Tom Labs-parity names (aliases of the implementations above) ──────────────
+
+async def list_ssh_keys(ctx: Context) -> dict[str, Any]:
+    """List your SSH public keys."""
+    return await ssh_keys(ctx)
+
+
+async def set_ssh_key_enabled(fingerprint: str, enabled: bool, ctx: Context) -> dict[str, Any]:
+    """Turn an SSH key on or off without deleting it."""
+    return await enable_ssh_key(fingerprint, enabled, ctx)

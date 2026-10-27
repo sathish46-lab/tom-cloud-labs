@@ -473,3 +473,15 @@ async def lab_process_logs(lab: str, ctx: Context, name: str = "", lines: int = 
         "log": log.get("stdout") or "",
         "lines": lines,
     })
+
+
+# ── Tom Labs-parity names (aliases) ───────────────────────────────────────────
+
+async def storage_space(lab: str, ctx: Context) -> dict[str, Any]:
+    """Show a lab's storage usage."""
+    return await storage_usage(lab, ctx)
+
+
+async def lab_probe(lab: str, ctx: Context) -> dict[str, Any]:
+    """Probe a lab's connectivity and services."""
+    return await probe_lab(lab, ctx)

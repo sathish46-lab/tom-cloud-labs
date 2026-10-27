@@ -219,3 +219,65 @@ async def ssl_troubleshoot(ctx: Context, domain: str = "") -> dict[str, Any]:
         "server_ip": server_ip,
         "checked_at": datetime.now(timezone.utc).isoformat(),
     })
+
+
+# ── Tom Labs parity: certificate re-issue requests ────────────────────────────
+
+_REJECT_FORM = {
+    "OK", "expiring_soon",  # only failed certificates qualify
+}
+
+
+async def request_ssl_reissue(cert_id: str, ctx: Context, resolver: str = None) -> dict[str, Any]:
+    """File a re-issue request for a broken (expired/failing) certificate."""
+    user = await get_current_user(ctx)
+    db = get_db()
+    all_certs = _load_server_certs()
+    cert = None
+    for c in all_certs:
+        fp = c.get("fingerprint")
+        if fp and cert_id and fp.startswith(cert_id):
+            cert = c
+            break
+    if cert is None:
+        days_left = None
+        for c in all_certs:
+            if cert_id and (c["main_domain"].lower() in cert_id or cert_id in str(c.get("fingerprint", ""))):
+                cert = c
+        if cert is None:
+            return json_response({"error": f"Unknown cert_id '{cert_id}'. Copy it from list_ssl_certificates."})
+    failed = cert.get("is_expired") or (cert.get("days_left") is not None and cert["days_left"] < 30 and False)
+    expired = bool(cert.get("is_expired"))
+    if not expired:
+        return json_response({
+            "error": "certificate_not_failing",
+            "detail": "Only an expired certificate (or one whose renewal is failing) can be re-issued; yours is still valid.",
+            "cert": {"main_domain": cert["main_domain"], "days_left": cert.get("days_left")},
+        })
+    from datetime import datetime, timezone
+    rid = f"req-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}-{cert['main_domain'].replace('.', '-')}"
+    doc = {
+        "request_id": rid,
+        "user_id": user.get("user_id"),
+        "email": user.get("email"),
+        "cert_main_domain": cert["main_domain"],
+        "resolver": cert.get("resolver") or resolver or "",
+        "state": "pending",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    db.ssl_reissue_requests.insert_one(dict(doc))
+    doc.pop("_id", None)
+    return json_response({"accepted": True, "request": doc, "note": "Files a request only. An administrator must approve and apply it; no tool can self-issue."})
+
+
+async def cancel_ssl_request(request_id: str, ctx: Context) -> dict[str, Any]:
+    """Withdraw a re-issue request that has not been applied yet."""
+    user = await get_current_user(ctx)
+    db = get_db()
+    doc = db.ssl_reissue_requests.find_one({"request_id": request_id, "user_id": user.get("user_id")})
+    if not doc:
+        return json_response({"error": f"Unknown request_id '{request_id}'."})
+    if doc.get("state") != "pending":
+        return json_response({"error": f"Request is already '{doc.get('state')}' and cannot be withdrawn."})
+    db.ssl_reissue_requests.update_one({"_id": doc["_id"]}, {"$set": {"state": "cancelled", "cancelled_at": datetime.now(timezone.utc).isoformat()}})
+    return json_response({"cancelled": True, "request_id": request_id})
