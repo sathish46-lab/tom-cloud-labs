@@ -5,7 +5,7 @@
  * Balances live in `user_stats` (with a denormalized copy on `users.zeal_stats`).
  * Every movement — earned or spent — is also appended to the `transactions`
  * collection so the admin Transaction Monitor (/admin/transactions) can explain
- * any balance. See https://docs.selfmade.ninja/admin/economy
+ * any balance. See the Tom Labs economy documentation
  *
  * Required after load.php (needs DatabaseConnection + AuditLog).
  */

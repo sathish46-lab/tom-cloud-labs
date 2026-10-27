@@ -5,7 +5,7 @@
                         <span class="text-secondary small"><?= htmlspecialchars($lesson['level'] ?? 'Intermediate') ?></span>
                     </div>
 
-                    <!-- Modules & Chapters List matching exact SNA design -->
+                    <!-- Modules & Chapters List matching exact Tom design -->
                     <div class="modules-overview p-3 pt-3">
                         <?php $mod_index = 1; foreach ($modules as $mod_name => $mod_chapters): ?>
                             <div class="mb-4">

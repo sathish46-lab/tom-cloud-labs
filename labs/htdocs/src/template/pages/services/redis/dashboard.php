@@ -40,8 +40,8 @@ require_once __DIR__ . '/partials/redis_header.php';
                     <div class="mb-3 d-flex justify-content-between align-items-center bg-dark bg-opacity-50 p-2 px-3 rounded border border-light border-opacity-10">
                         <span class="text-secondary fw-semibold" style="font-size: 0.8rem;">Hostname</span>
                         <div class="d-flex align-items-center">
-                            <span class="text-light font-monospace me-2" style="font-size: 0.8rem;">redis.selfmade.ninja</span>
-                            <i class='bx bx-copy text-secondary cursor-pointer hover-white' data-copy="redis.selfmade.ninja"></i>
+                            <span class="text-light font-monospace me-2" style="font-size: 0.8rem;">redis.tomweb.in</span>
+                            <i class='bx bx-copy text-secondary cursor-pointer hover-white' data-copy="redis.tomweb.in"></i>
                         </div>
                     </div>
                     <div class="mb-0 d-flex justify-content-between align-items-center bg-dark bg-opacity-50 p-2 px-3 rounded border border-light border-opacity-10">

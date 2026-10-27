@@ -15,7 +15,7 @@ $isEnded      = Session::get('challenge_is_ended');
 $isRetired    = Session::get('challenge_is_retired');
 $isRunning    = ($status === 'running' || $status === 'completed');
 
-$host      = $_SERVER['HTTP_HOST'] ?? 'labs.selfmade.ninja';
+$host      = $_SERVER['HTTP_HOST'] ?? 'labs.tomweb.in';
 $shareUrl  = "https://{$host}/challenges/challenges/{$labId}"; 
 
 $dbInstance = DatabaseConnection::getDefaultDatabase();

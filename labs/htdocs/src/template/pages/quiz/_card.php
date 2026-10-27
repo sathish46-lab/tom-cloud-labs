@@ -1,6 +1,6 @@
 <?php
 /**
- * Quiz Card Partial (Flat solid badges matching SNA reference)
+ * Quiz Card Partial (Flat solid badges matching Tom reference)
  */
 
 $qTitle = $q['title'] ?? "Quiz Title";

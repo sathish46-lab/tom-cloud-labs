@@ -370,7 +370,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
     <div class="row mb-3 g-3">
         <div class="col-lg-8">
             <div class="card blur p-3 h-100 position-relative overflow-hidden">
-                <!-- Static XP growth curve (SNA style) -->
+                <!-- Static XP growth curve (Tom style) -->
                 <div class="position-absolute" style="bottom: 0; left: 0; right: 0; height: 70%; opacity: 0.3; pointer-events: none; z-index: 0;">
                     <svg viewBox="0 0 800 220" preserveAspectRatio="none" style="width: 100%; height: 100%;">
                         <defs>
@@ -715,7 +715,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                             <i class='bx bx-globe' style="color: #2e86de;"></i>
                                                         </div>
                                                         <div class="min-w-0">
-                                                            <p class="fw-bold mb-0 small">sathish46.selfmade.fun</p>
+                                                            <p class="fw-bold mb-0 small">tomweb.in</p>
                                                             <small class="text-body-secondary" style="font-size:0.7rem;">A RECORD</small>
                                                         </div>
                                                     </div>
@@ -730,7 +730,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                                             <i class='bx bx-globe' style="color: #2e86de;"></i>
                                                         </div>
                                                         <div class="min-w-0">
-                                                            <p class="fw-bold mb-0 small">photogram.selfmade.monster</p>
+                                                            <p class="fw-bold mb-0 small">tomweb.in</p>
                                                             <small class="text-body-secondary" style="font-size:0.7rem;">A RECORD</small>
                                                         </div>
                                                     </div>

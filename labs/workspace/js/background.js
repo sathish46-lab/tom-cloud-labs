@@ -957,7 +957,7 @@ var TomBG = {
       if (typeof TomParallax !== "undefined") TomParallax.init();
     }
 
-    // Inject variables into a clean style tag to keep HTML tag simple like SNA
+    // Inject variables into a clean style tag to keep HTML tag simple like Tom
     var themeStyle = document.getElementById("tom-theme-vars");
     if (!themeStyle) {
       themeStyle = document.createElement("style");
@@ -966,7 +966,7 @@ var TomBG = {
     }
     themeStyle.innerHTML = `html[data-coreui-theme] { ${cssVars} }`;
 
-    // Remove all style attributes from root to keep it clean like SNA
+    // Remove all style attributes from root to keep it clean like Tom
     this.updateActiveSwatchUI();
     root.removeAttribute("style");
   },

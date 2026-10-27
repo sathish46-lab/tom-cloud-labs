@@ -205,7 +205,7 @@ $initialQuote = $heroQuotes[array_rand($heroQuotes)];
                     <div id="multi-link" style="display: inline-flex; align-items: center; gap: 10px; background: rgba(245, 158, 11, 0.08); padding: 8px 20px; border-radius: 50px; border: 1px solid rgba(245, 158, 11, 0.2); width: fit-content; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(245, 158, 11, 0.18)'; this.style.transform='translateY(-2px)';" onmouseout="this.style.background='rgba(245, 158, 11, 0.08)'; this.style.transform='translateY(0)';">
                         <i class='bx bxs-graduation' style="color: #facc15; font-size: 1.3rem;"></i>
                         <span style="color: #cbd5e1; font-size: 0.95rem;">Credits to</span>
-                        <span style="color: #facc15; font-weight: 700; font-family: 'Inter', 'Ubuntu', sans-serif; letter-spacing: 0.5px; font-size: 1.05rem;">Selfmade Ninja Academy</span>
+                        <span style="color: #facc15; font-weight: 700; font-family: 'Inter', 'Ubuntu', sans-serif; letter-spacing: 0.5px; font-size: 1.05rem;">TomCloudLab Academy</span>
                     </div>
                 </div>
                 <div class="hero-button-group">
@@ -507,9 +507,9 @@ $initialQuote = $heroQuotes[array_rand($heroQuotes)];
                     <div class="card-icon">
                         <i class='bx bxs-graduation' style="color: #a78bfa;"></i>
                         <h3>The Forge</h3>
-                        <img src="<?= Session::cdn3('main/ticker/Sna.jpeg') ?>" alt="Selfmade Ninja Academy" class="card-img-avatar">
+                        <img src="<?= Session::cdn3('main/ticker/Sna.jpeg') ?>" alt="TomCloudLab Academy" class="card-img-avatar">
                     </div>
-                    <h4>Selfmade Ninja Academy</h4>
+                    <h4>TomCloudLab Academy</h4>
                     <p>The training ground where I learned everything. A community that transforms curiosity into elite engineering skills.</p>
                     <div class="card-stats">
                         <div class="stat">
@@ -521,10 +521,10 @@ $initialQuote = $heroQuotes[array_rand($heroQuotes)];
                             <span class="stat-label">Impact</span>
                         </div>
                         <div class="card-socials">
-                            <a href="https://selfmade.ninja" target="_blank" class="social-btn" title="Website">
+                            <a href="https://tomweb.in" target="_blank" class="social-btn" title="Website">
                                 <i class='bx bx-world'></i>
                             </a>
-                            <a href="https://www.linkedin.com/company/selfmade-ninja-academy" target="_blank" class="social-btn" title="LinkedIn">
+                            <a href="https://tomweb.in" target="_blank" class="social-btn" title="Website">
                                 <i class='bx bxl-linkedin'></i>
                             </a>
                         </div>
@@ -619,9 +619,9 @@ $initialQuote = $heroQuotes[array_rand($heroQuotes)];
                     <div class="card-icon">
                         <i class='bx bxs-graduation' style="color: #a78bfa;"></i>
                         <h3>The Forge</h3>
-                        <img src="<?= Session::cdn3('main/ticker/Sna.jpeg') ?>" alt="Selfmade Ninja Academy" class="card-img-avatar">
+                        <img src="<?= Session::cdn3('main/ticker/Sna.jpeg') ?>" alt="TomCloudLab Academy" class="card-img-avatar">
                     </div>
-                    <h4>Selfmade Ninja Academy</h4>
+                    <h4>TomCloudLab Academy</h4>
                     <p>The training ground where I learned everything. A community that transforms curiosity into elite engineering skills.</p>
                     <div class="card-stats">
                         <div class="stat">
@@ -633,10 +633,10 @@ $initialQuote = $heroQuotes[array_rand($heroQuotes)];
                             <span class="stat-label">Impact</span>
                         </div>
                         <div class="card-socials">
-                            <a href="https://selfmade.ninja" target="_blank" class="social-btn" title="Website">
+                            <a href="https://tomweb.in" target="_blank" class="social-btn" title="Website">
                                 <i class='bx bx-world'></i>
                             </a>
-                            <a href="https://www.linkedin.com/company/selfmade-ninja-academy" target="_blank" class="social-btn" title="LinkedIn">
+                            <a href="https://tomweb.in" target="_blank" class="social-btn" title="Website">
                                 <i class='bx bxl-linkedin'></i>
                             </a>
                         </div>
@@ -738,8 +738,8 @@ $initialQuote = $heroQuotes[array_rand($heroQuotes)];
     });
     document.getElementById("multi-link").addEventListener("click", function () {
     // Opens both sites in new tabs
-    window.open("https://labs.selfmade.ninja/", "_blank");
-    window.open("https://selfmade.ninja/", "_blank");
+    window.open("https://labs.tomweb.in/", "_blank");
+    window.open("https://tomweb.in/", "_blank");
   });
 
   // --- DYNAMIC HERO QUOTES VIA API ---

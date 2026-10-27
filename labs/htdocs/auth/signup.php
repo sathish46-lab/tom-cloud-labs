@@ -148,7 +148,7 @@ if ($seoCustom['keywords'] !== '')    Session::set('seo_keywords', SiteSeo::keyw
                     <p class="fs-6 fst-italic text-white mb-3" style="line-height: 1.5; text-shadow: 0 1px 2px rgba(0,0,0,0.8);">
                         "The learning environment provided here is unparalleled. It empowers true engineers to securely test, break, and build the systems of tomorrow."
                     </p>
-                    <a href="#" onclick="event.preventDefault(); window.open('https://sathish46.in', '_blank'); setTimeout(() => { window.open('https://sathish46.selfmade.fun', '_blank'); }, 800);" class="d-flex align-items-center gap-3 text-decoration-none text-light" style="transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                    <a href="#" onclick="event.preventDefault(); window.open('https://sathish46.in', '_blank'); setTimeout(() => { window.open('https://tomweb.in', '_blank'); }, 800);" class="d-flex align-items-center gap-3 text-decoration-none text-light" style="transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
                         <img src="<?= Session::cdn3('author/sathish.png') ?>" width="40" height="40" class="rounded-circle border border-2" style="border-color: #9ca3af; object-fit: cover;" alt="Avatar">
                         <div>
                             <div class="fw-bold fs-6 text-white" style="text-shadow: 0 1px 2px rgba(0,0,0,0.8);">Sathish46 🔥</div>

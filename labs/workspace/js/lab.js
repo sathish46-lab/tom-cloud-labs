@@ -206,7 +206,7 @@ const Dashboard = {
       this.charts[id].limit = limit;
     };
 
-    // SNA Colors
+    // Tom Colors
     const colors = {
       cyan: "#00e5ff",
       green: "#00ff88",
@@ -215,7 +215,7 @@ const Dashboard = {
       blue: "#3d5afe"
     };
 
-    // Initialize all charts with SNA-style configurations
+    // Initialize all charts with Tom-style configurations
     // Net IO: Download (Purple) & Upload (Cyan)
     create("chart-net-io", "#8b91f9", "line", {
       tension: 0.4,

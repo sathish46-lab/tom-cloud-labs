@@ -3,7 +3,7 @@
 //
 // The winner-card look (giant rank number, crown, rank colours, badges) and the
 // .level-name / .level-avatar helpers come from the reference stylesheet — see
-// _sna_design.scss. This file only carries the layout bits our templates add.
+// _tom_design.scss. This file only carries the layout bits our templates add.
 // -----------------------------------------------------------------------------
 
 // ── Hero (heading + copy) ────────────────────────────────────────────────────
@@ -81,7 +81,7 @@
   }
 }
 
-// ── League badge pill (SNA paints the frame; we size the contents) ──────────
+// ── League badge pill (Tom paints the frame; we size the contents) ──────────
 .league_badge {
   display: inline-flex;
   align-items: center;
@@ -115,7 +115,7 @@
 }
 
 // ── League of Ronin level card ───────────────────────────────────────────────
-// The card's art is painted by _sna_design.scss as a faint watermark
+// The card's art is painted by _tom_design.scss as a faint watermark
 // (.achievement .modal-bg-image, 20% opacity). Only state accents live here.
 .achievement {
   border: 1px solid var(--cui-card-border-color, rgba(255, 255, 255, 0.08));

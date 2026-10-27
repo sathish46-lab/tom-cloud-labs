@@ -229,7 +229,7 @@ try:
 except Exception as e:
     print(f"MongoDB connection error: {e}", flush=True)
     db = None
-# Define Gemini Tools (9 Agent Tools — SNA Architecture)
+# Define Gemini Tools (9 Agent Tools — Tom Architecture)
 TOOL_API_BASE = 'http://127.0.0.1:8081/src/api/learnAI/tools'
 AI_INTERNAL_TOKEN = config.get('ai_internal_token', '')
 API_HEADERS = {"Authorization": f"Bearer {AI_INTERNAL_TOKEN}", "Host": "dev.tomweb.in"}

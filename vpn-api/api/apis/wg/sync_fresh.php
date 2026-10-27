@@ -18,7 +18,7 @@ try {
     $count = $db->auth->countDocuments(['active' => 1]);
     if($count < 1){
         echo "Initializing default VPN auth user..." . PHP_EOL;
-        new Signup("sna_vpn_user", "09b693f6-e6b4-4cdc-a7c6-14a337fae61d", "support@selfmade.ninja", 1);
+        new Signup("tom_vpn_user", "09b693f6-e6b4-4cdc-a7c6-14a337fae61d", "support@tomweb.in", 1);
     }
 
     $wg = new Wireguard($interface);

@@ -126,7 +126,7 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
                 document.documentElement.style.setProperty('--outlineSidebar-saved-width', arr[0] + '%');
                 document.documentElement.style.setProperty('--paneAI-saved-width', arr[2] + '%');
 
-                // SNA normalizeSizes: ensure sum = 100
+                // Tom normalizeSizes: ensure sum = 100
                 var sum = arr[0] + arr[1] + arr[2];
                 if (sizes[0] + sizes[2] > 75) {
                     var excess = (sizes[0] + sizes[2]) - 75;
@@ -174,7 +174,7 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
 
     <div class="split-panel-body d-flex flex-row overflow-hidden flex-grow-1 position-relative p-2 gap-0" style="min-height: 0;">
         <?php
-        // SNA defaults: [22, 53, 25] for three-panel
+        // Tom defaults: [22, 53, 25] for three-panel
         $isPanel1Expanded = false;
         if (is_array($dbSizesArr) && count($dbSizesArr) === 3 && $dbSizesArr[0] > 10) {
             $isPanel1Expanded = true;
@@ -182,7 +182,7 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
         $panel1State = $isPanel1Expanded ? 'expanded' : 'collapsed';
         $panel1Class = $isPanel1Expanded ? '' : 'auto-compact';
 
-        // SNA normalizeSizes: use raw percentages, ensure sum = 100
+        // Tom normalizeSizes: use raw percentages, ensure sum = 100
         $p1Pct = (is_array($dbSizesArr) && count($dbSizesArr) === 3 && $dbSizesArr[0] > 3) ? round($dbSizesArr[0], 2) : 22;
         $p3Pct = (is_array($dbSizesArr) && count($dbSizesArr) === 3 && $dbSizesArr[2] > 5) ? round($dbSizesArr[2], 2) : 25;
         $p2Pct = 100 - $p1Pct - $p3Pct;
@@ -201,7 +201,7 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
                 <div class="card-body p-0 overflow-hidden d-flex flex-column">
                     <!-- Top section: pinned controls (does not scroll) -->
                     <div class="d-flex justify-content-center align-items-center p-2 lesson-controls gap-2 border-bottom border-secondary border-opacity-10" style="flex-shrink: 0;">
-                        <!-- Like button (shown in compact mode via sna.css) -->
+                        <!-- Like button (shown in compact mode via tom.css) -->
                         <button class="btn btn-link p-0 text-secondary like-lesson-btn like-lesson-btn-compact" data-lesson-id="<?= $lesson['_id'] ?>" data-tooltip="Like Lesson">
                             <i class="bx <?= !empty($likedByCurrent) ? 'bxs-heart text-danger' : 'bx-heart' ?> fs-5"></i>
                         </button>
@@ -456,7 +456,7 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
                         <i class="bx bx-down-arrow-alt fs-4"></i>
                     </button>
 
-                    <!-- Bottom Input Bar (from sna.css) -->
+                    <!-- Bottom Input Bar (from tom.css) -->
                     <div id="aiChatInputBar" class="input-container p-2 pb-3 <?= $isAiAssistUnlocked ? '' : 'd-none' ?>">
                         <div class="unified-input-box simple-blur">
                             <textarea class="user-text-input" type="text" id="aiChatInput" placeholder="Ask AI ✨" rows="1" style="height: auto; resize: none;"></textarea>

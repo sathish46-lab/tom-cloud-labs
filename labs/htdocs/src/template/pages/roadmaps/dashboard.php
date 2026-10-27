@@ -680,7 +680,7 @@ function escAttr(s) {
     return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-// Masonry layout — compact grid like SNA
+// Masonry layout — compact grid like Tom
 function rmMasonry() {
     var container = document.getElementById('roadmap-masonry');
     if (!container) return;

@@ -77,7 +77,7 @@ class LearnAIOrchestrator {
             case 'explain_architecture_tools':
                 return "Great questions! Here's an overview of how I operate and access tools:\n\n"
                      . "### Tool Access & Execution\n"
-                     . "I am integrated with the Selfmade Ninja Labs backend system via API-like functions (these are the \"tools\" you see, e.g., `read_chapter_content()`, `execute_command_in_lab()`).\n"
+                     . "I am integrated with the TomCloudLab backend system via API-like functions (these are the \"tools\" you see, e.g., `read_chapter_content()`, `execute_command_in_lab()`).\n"
                      . "When you ask a question or request an action, I invoke these tools programmatically to get live data from your lab environment or lesson database.\n"
                      . "For example, to run a command in your lab, I call `execute_command_in_lab()` with your lab's instance ID, the command string, and your username.\n"
                      . "These tools abstract away direct CLI access like `labsctl`; instead, I rely on platform APIs to fetch data, run commands, or update progress.\n\n"

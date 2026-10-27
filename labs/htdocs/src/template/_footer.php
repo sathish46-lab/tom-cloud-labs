@@ -6,7 +6,7 @@
     
     <div class="footer-left">
         Created by 🔥
-        <a href="https://sathish46.selfmade.technology" target="_blank" class="footer-link"
+        <a href="https://tomweb.in" target="_blank" class="footer-link"
             style="text-decoration: none; color: #ff9800">Sathish</a>
         © 2025 |
         <a href="https://tomweb.fun" target="_blank" class="footer-link"

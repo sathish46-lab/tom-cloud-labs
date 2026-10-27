@@ -25,7 +25,7 @@ foreach ($modules as $mod_name => $mod_chapters) {
 </div>
 
 <!-- Ensure mermaid is loaded and initialized -->
-<script src="/assets/sna_js/mermaid.min.js"></script>
+<script src="/assets/js/mermaid.min.js"></script>
 <script>
     // Sometimes HTMX loads this, so we need to run immediately if DOM is ready
     function initMermaid() {

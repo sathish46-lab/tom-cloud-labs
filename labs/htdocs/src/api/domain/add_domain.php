@@ -20,7 +20,7 @@ if (empty($domain)) {
 try {
     $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
     
-    // Enforce limits: 20 for Selfmade/Tom domains, Unlimited for Custom domains
+    // Enforce limits: 20 for Tom domains, Unlimited for Custom domains
     if (strtolower($type) !== 'custom') {
         $tomDomainCount = $db->domains->countDocuments([
             'user_id' => $user->getUserId(),

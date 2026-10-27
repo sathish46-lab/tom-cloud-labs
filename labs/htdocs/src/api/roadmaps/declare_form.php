@@ -1,7 +1,7 @@
 <?php
 /**
  * Roadmaps - Declare Form API
- * Returns raw HTML for the declaration dialog (like SNA pattern)
+ * Returns raw HTML for the declaration dialog (like the Tom pattern)
  * GET: ?roadmap_id=X&topic_id=Y&item_id=Z
  */
 require_once __DIR__ . '/../../../vendor/autoload.php';

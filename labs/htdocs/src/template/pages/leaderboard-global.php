@@ -1,6 +1,6 @@
 <?php
 /**
- * Global Leaderboard — everyone ranked by zeal (reference / SNA design).
+ * Global Leaderboard — everyone ranked by zeal (reference / Tom design).
  *
  * Ranks 1–15 render here (3 winner cards + 12 table rows); the "Load more"
  * button fetches the next 10 ranks as raw <tr> HTML from

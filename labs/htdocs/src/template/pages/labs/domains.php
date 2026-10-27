@@ -173,7 +173,7 @@
                         $svgIcon = 'cil-hdd';
                     }
                     
-                    $isCustom = (strpos($dom, 'tomweb') === false && strpos($dom, 'selfmade') === false && strpos($dom, 'zeal') === false);
+                    $isCustom = (strpos($dom, 'tomweb') === false  && strpos($dom, 'zeal') === false);
                     $domainBadgeClass = $isCustom ? 'bg-warning' : 'bg-primary';
                     $domainBadgeLabel = $isCustom ? 'custom' : 'tomlab';
                 ?>

@@ -1,8 +1,8 @@
 // -----------------------------------------------------------------------------
-// SNA reference design — leaderboard winner rows + league badges.
+// Tom reference design — leaderboard winner rows + league badges.
 //
 // Verbatim copy of the winner-card block from the reference stylesheet
-// (SNA app.css: ribbon-container … end of the winner media queries), plus
+// (Tom app.css: ribbon-container … end of the winner media queries), plus
 // the dark/light theme overrides for .modal-bg-image, .achievement and
 // .league_badge. Kept as-is so /leaderboard-global and /leagues render the
 // same UI as the reference. Do not hand-tweak — re-copy from the source.
@@ -376,7 +376,7 @@
     left: 55%; } }
 
 
-/* ── Reference theme overrides (SNA app.css) ─────────────────────────────── */
+/* ── Reference theme overrides (Tom app.css) ─────────────────────────────── */
 html[data-coreui-theme="dark"] .modal-bg-image {
   position: absolute;
   object-fit: cover;
