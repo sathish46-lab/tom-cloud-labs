@@ -11,15 +11,15 @@
             </button>
 
             <!-- Home Button -->
-            <a href="/home" hx-boost="false" data-no-boost="true" class="d-flex align-items-center justify-content-center text-secondary text-decoration-none rounded-circle" 
+            <a href="/home" hx-boost="false" data-no-boost="true" class="d-flex align-items-center justify-content-center text-secondary text-decoration-none rounded-circle"
                     style="width: 32px; height: 32px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); transition: all 0.2s; cursor: pointer;" title="Home">
-                <svg class="icon" viewBox="0 0 256 256" width="18" height="18"><use href="/assets/icons/duotone.svg#tom-house"></use></svg>
+                <svg class="icon" viewBox="0 0 256 256" width="18" height="18" style="stroke: currentColor; stroke-width: 22px;"><use href="/assets/icons/duotone.svg#tom-house"></use></svg>
             </a>
 
             <!-- Back Button -->
             <button type="button" onclick="history.back(); return false;" class="btn p-0 d-flex align-items-center justify-content-center text-secondary rounded-circle"
                     style="width: 32px; height: 32px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); transition: all 0.2s; cursor: pointer;" title="Go Back">
-                <svg class="icon" viewBox="0 0 256 256" width="18" height="18"><use href="/assets/icons/duotone.svg#tom-arrow-circle-left"></use></svg>
+                <svg class="icon" viewBox="0 0 256 256" width="18" height="18" style="stroke: currentColor; stroke-width: 22px;"><use href="/assets/icons/duotone.svg#tom-arrow-bend-up-left"></use></svg>
             </button>
 
             <!-- Page Title / Breadcrumb -->
@@ -28,19 +28,6 @@
                     <?php include __DIR__ . '/partials/_breadcrumb.php'; ?>
                 </ol>
             </nav>
-        </div>
-
-        <!-- Center: Search Trigger -->
-        <div class="d-flex align-items-center justify-content-center search-bar-wrap mx-2 mx-md-3" style="z-index: 2;">
-            <div class="search-bar-wrapper w-100" id="search-wrapper">
-                <div class="search-bar" id="searchTrigger" onclick="openSearchPalette()">
-                    <i class="bx bx-search search-icon"></i>
-                    <input type="text" class="search-input" 
-                        placeholder="Search labs, apps and pages..." 
-                        id="globalSearch" readonly autocomplete="off" style="cursor:pointer;">
-                    <span class="badge bg-secondary d-none d-sm-inline" style="font-size: 0.6rem; padding: 2px 6px; opacity: 0.7;">⌘K</span>
-                </div>
-            </div>
         </div>
 
         <!-- Right: Nav Items -->
@@ -60,6 +47,13 @@
                 </button>
             </li>
             <?php endif; ?>
+            <li class="nav-item px-3">
+                <button type="button" id="searchTrigger" onclick="openSearchPalette()"
+                        class="btn p-0 d-flex align-items-center justify-content-center text-secondary hover-text-white bg-transparent border-0 shadow-none"
+                        title="Search (⌘K)">
+                    <svg class="icon" viewBox="0 0 256 256" width="26" height="26" style="stroke: currentColor; stroke-width: 15px;"><use href="/assets/icons/duotone.svg#tom-magnifying-glass"></use></svg>
+                </button>
+            </li>
             <li class="nav-item d-none d-md-flex align-items-center me-3">
                 <div class="d-flex align-items-center gap-3 rounded-pill px-3 py-1 border border-secondary border-opacity-10 shadow-sm" style="background: rgba(var(--cui-emphasis-color-rgb, 128, 128, 128), 0.05);">
                     <div class="d-flex align-items-center gap-1" title="Total Zeal (Experience Points)">

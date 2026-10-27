@@ -42,7 +42,27 @@ try {
     // MongoDB unavailable, continue to stats file check
 }
 
-// Lab is running — get live stats from docker_stats.json
+// Lab is running — try the Redis-backed live stats store first
+$redisKeys = [$labHash, 'ctf-' . $labHash];
+try {
+    $redis = new Redis();
+    if (@$redis->connect('127.0.0.1', 6379, 0.5)) {
+        if (function_exists('get_config') ? $redis->auth(get_config('redis_admin_pass')) : false) {
+            foreach ($redisKeys as $rk) {
+                $raw = $redis->get('tomlabs:stats:' . $rk);
+                if (is_string($raw) && $raw !== '') {
+                    echo $raw;
+                    exit;
+                }
+            }
+        }
+        $redis->close();
+    }
+} catch (Throwable $redisError) {
+    // Redis unavailable — fall back to the file cache below
+}
+
+// Fallback — get live stats from docker_stats.json
 $cacheFile = '/dev/shm/docker_stats.json';
 $retryCount = 0;
 $maxRetries = 3;

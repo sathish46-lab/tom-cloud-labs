@@ -284,7 +284,7 @@
         const line = document.createElement('div');
         line.className = 'mcp-log__line';
         line.innerHTML = `
-            <code class="mcp-log__tool">${escapeHtml(a.tool)}</code>
+            <code class="mcp-log__tool">${escapeHtml(toolLabel(a.tool))}</code>
             ${target ? `<span class="mcp-log__target">${escapeHtml(target)}</span>` : ''}
             <span class="badge badge-soft-${status === 'ok' ? 'success' : (status === 'refused' ? 'warning' : 'danger')} mcp-tag">${escapeHtml(a.status)}</span>`;
 
@@ -315,7 +315,7 @@
         const clientName = a.client_name || a.username || 'MCP';
         const target = extractTarget(a);
 
-        if (toolEl) toolEl.textContent = a.tool;
+        if (toolEl) toolEl.textContent = toolLabel(a.tool);
         if (targetEl) targetEl.textContent = target;
         if (statusEl) {
             statusEl.textContent = a.status;
@@ -374,15 +374,51 @@
         return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
+    function tryParseJson(s) {
+        if (typeof s !== 'string') return null;
+        const t = s.trim();
+        if (!t.startsWith('{') && !t.startsWith('[')) return null;
+        if (t.length > 200000) return null;
+        try {
+            const v = JSON.parse(t);
+            if (typeof v === 'object' && v !== null) return v;
+        } catch (e) { /* not JSON */ }
+        return null;
+    }
+
+    function unwrapJsonStrings(value, depth) {
+        const parsed = tryParseJson(value);
+        if (parsed !== null) return unwrapJsonStrings(parsed, depth);
+        if (depth <= 0 || value === null || typeof value !== 'object') return value;
+        if (Array.isArray(value)) return value.map(v => unwrapJsonStrings(v, depth - 1));
+        const out = {};
+        for (const k of Object.keys(value)) {
+            let v = value[k];
+            const inner = tryParseJson(v);
+            if (inner !== null) {
+                out[k] = inner;
+                continue;
+            }
+            // MCP text content: unwrap content[0].text payloads
+            if (k === 'text' && typeof v === 'string') {
+                const innerText = tryParseJson(v);
+                if (innerText !== null) {
+                    out[k] = innerText;
+                    continue;
+                }
+            }
+            out[k] = unwrapJsonStrings(v, depth - 1);
+        }
+        return out;
+    }
+
+    function toolLabel(tool) {
+        return String(tool || '').replace(/^labs_/, '');
+    }
+
     function highlightJson(value) {
         // If value is a string, try to parse it as JSON first
-        if (typeof value === 'string') {
-            try {
-                value = JSON.parse(value);
-            } catch (e) {
-                // Keep as string if not valid JSON
-            }
-        }
+        value = unwrapJsonStrings(value, 4);
         const src = JSON.stringify(value, null, 2);
         let out = '';
         let i = 0;
@@ -392,16 +428,10 @@
         const NUM_RE = /^-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/;
         const LIT_RE = /^(true|false|null)/;
 
-        // Add line numbers
-        let lineNum = 1;
-        out += '<span class="tok-line-num">' + lineNum + '</span>';
-
         while (i < src.length) {
-            // Check for newline to add line number
+            // Check for newline
             if (src[i] === '\n') {
                 out += '\n';
-                lineNum++;
-                out += '<span class="tok-line-num">' + lineNum + '</span>';
                 i++;
                 continue;
             }
@@ -503,25 +533,21 @@
         });
     }
 
-    const toggleBtn = document.getElementById('mcp-filter-tool-toggle');
+    const searchIconBtn = document.getElementById('mcp-filter-toggle');
     const filterWrapper = document.getElementById('mcp-filter-input-wrapper');
-    const filterIcon = toggleBtn ? toggleBtn.querySelector('.mcp-filter-icon') : null;
-    const filterText = toggleBtn ? toggleBtn.querySelector('.mcp-filter-text') : null;
-    if (toggleBtn && filterWrapper && filterIcon && filterText) {
-        toggleBtn.addEventListener('click', function() {
-            const isOpen = filterWrapper.classList.contains('d-none');
-            if (!isOpen) {
-                filterWrapper.classList.remove('d-none');
-                filterIcon.classList.remove('bi-search');
-                filterIcon.classList.add('bi-x');
-                filterText.classList.remove('d-none');
-                toolFilter.focus();
-            } else {
-                filterWrapper.classList.add('d-none');
-                filterIcon.classList.remove('bi-x');
-                filterIcon.classList.add('bi-search');
-                filterText.classList.add('d-none');
+    if (searchIconBtn && filterWrapper) {
+        searchIconBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            filterWrapper.classList.add('is-open');
+            toolFilter.focus();
+        });
+        document.addEventListener('click', function(e) {
+            if (filterWrapper.classList.contains('is-open') && !filterWrapper.contains(e.target)) {
+                filterWrapper.classList.remove('is-open');
             }
+        });
+        filterWrapper.addEventListener('click', function(e) {
+            e.stopPropagation();
         });
     }
     }

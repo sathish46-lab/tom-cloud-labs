@@ -244,7 +244,7 @@
                         <?php if ($status === 'paused'): ?>
                             <span class="badge bg-warning rounded-pill ms-2">Paused</span>
                         <?php elseif ($isRunning): ?>
-                            <span class="badge bg-success rounded-pill ms-2 pulse">Live</span>
+                            <span id="badgelive" class="badge bg-danger-gradient rounded-pill ms-2 pulse" data-coreui-toggle="tooltip" data-coreui-placement="top" title="Last Seen: —">Live</span>
                         <?php else: ?>
                             <span class="badge bg-danger rounded-pill ms-2">Offline</span>
                         <?php endif; ?>

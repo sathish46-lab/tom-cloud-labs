@@ -14987,30 +14987,25 @@ body:has(.mcp-page--activity) .footer {
   padding: 0;
 }
 .mcp-call-modal .mcp-call__body .tok-key {
-  color: #9cdcfe;
+  color: #c26a1f;
 }
 .mcp-call-modal .mcp-call__body .tok-str {
-  color: #ce9178;
+  color: #2f9e6a;
 }
 .mcp-call-modal .mcp-call__body .tok-num {
-  color: #b5cea8;
+  color: #2f74c0;
 }
 .mcp-call-modal .mcp-call__body .tok-bool {
-  color: #569cd6;
+  color: #9a5cc6;
+  font-weight: 600;
 }
 .mcp-call-modal .mcp-call__body .tok-null {
-  color: #f44747;
+  color: #2f74c0;
+  opacity: 0.55;
+  font-style: italic;
 }
 .mcp-call-modal .mcp-call__body .tok-punct {
   color: rgba(255, 255, 255, 0.45);
-}
-.mcp-call-modal .mcp-call__body .tok-line-num {
-  display: inline-block;
-  width: 2.5em;
-  text-align: right;
-  padding-right: 1em;
-  color: rgba(255, 255, 255, 0.25);
-  user-select: none;
 }
 .mcp-call-modal .mcp-call__copy {
   font-size: 0.72rem;
@@ -15116,30 +15111,25 @@ body:has(.mcp-page--activity) .footer {
   word-break: break-word;
 }
 .mcp-detail__json .tok-key {
-  color: #9cdcfe;
+  color: #c26a1f;
 }
 .mcp-detail__json .tok-str {
-  color: #ce9178;
+  color: #2f9e6a;
 }
 .mcp-detail__json .tok-num {
-  color: #b5cea8;
+  color: #2f74c0;
 }
 .mcp-detail__json .tok-bool {
-  color: #569cd6;
+  color: #9a5cc6;
+  font-weight: 600;
 }
 .mcp-detail__json .tok-null {
-  color: #f44747;
+  color: #2f74c0;
+  opacity: 0.55;
+  font-style: italic;
 }
 .mcp-detail__json .tok-punct {
   color: rgba(255, 255, 255, 0.45);
-}
-.mcp-detail__json .tok-line-num {
-  display: inline-block;
-  width: 2.5em;
-  text-align: right;
-  padding-right: 1em;
-  color: rgba(255, 255, 255, 0.25);
-  user-select: none;
 }
 
 .mcp-live-tag {
@@ -15262,41 +15252,72 @@ body:has(.mcp-page--activity) .footer {
 }
 
 .mcp-filter-toggle {
-  padding: 0.45rem 0.75rem;
-  border: 1px solid rgba(var(--cui-border-color-rgb), 0.3);
-  border-radius: 6px;
-  background: rgba(var(--cui-body-bg-rgb), 0.4);
-  color: var(--cui-body-color);
-  min-width: auto;
+  padding: 0.25rem;
+  border: none;
+  background: transparent;
+  color: var(--cui-secondary-color);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: color 0.2s ease;
 }
 
-.mcp-filter-toggle:hover {
-  border-color: var(--cui-primary);
-}
-
-.mcp-filter-toggle .mcp-filter-icon {
-  font-size: 1rem;
-}
-
-.mcp-filter-toggle .mcp-filter-text {
-  font-size: 0.85rem;
-  margin-left: 0.5rem;
+.mcp-filter-toggle:hover,
+.mcp-filter-toggle:focus {
+  color: var(--cui-body-color);
+  background: transparent;
+  box-shadow: none;
 }
 
 .mcp-filter-input-wrapper {
   flex: 1;
-  min-width: 180px;
-  max-width: 260px;
-  display: flex;
-  align-items: center;
-  position: relative;
+  min-width: 0;
+  width: 210px;
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-width 0.6s cubic-bezier(0.35, 0, 0.25, 1), opacity 0.45s ease;
+  pointer-events: none;
+}
+
+.mcp-filter-input-wrapper.is-open {
+  max-width: 220px;
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .mcp-filter-input-wrapper .mcp-filter-tool {
   flex: 1;
-  margin-right: 0.5rem;
+  width: 100%;
+  min-width: 200px;
+  font-size: 0.85rem;
+  padding: 0.45rem 1.6rem 0.45rem 1.9rem;
+  border: 1px solid rgba(var(--cui-border-color-rgb), 0.3);
+  border-radius: 6px;
+  background: rgba(var(--cui-body-bg-rgb), 0.4);
+  color: var(--cui-body-color);
+  max-width: 220px;
+}
+
+.mcp-filter-glyph {
+  position: absolute;
+  left: 0.55rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--cui-secondary-color);
+  pointer-events: none;
+  opacity: 0.75;
+}
+
+.mcp-filter-input-wrapper .mcp-filter-reset {
+  position: absolute !important;
+  right: 0.2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0 0.35rem;
+  border: none;
+  font-weight: 700;
 }
 
 .mcp-log__tool {
@@ -15308,6 +15329,34 @@ body:has(.mcp-page--activity) .footer {
   padding: 0.15rem 0.25rem;
   border-radius: 3px;
   border: 1px solid rgba(var(--cui-info-rgb), 0.3);
+}
+
+[data-coreui-theme=dark] .mcp-call__body .tok-key,
+[data-coreui-theme=dark] .mcp-json .tok-key {
+  color: #ffab6b;
+}
+[data-coreui-theme=dark] .mcp-call__body .tok-str,
+[data-coreui-theme=dark] .mcp-json .tok-str {
+  color: #6bd39a;
+}
+[data-coreui-theme=dark] .mcp-call__body .tok-num,
+[data-coreui-theme=dark] .mcp-json .tok-num {
+  color: #74b4f0;
+}
+[data-coreui-theme=dark] .mcp-call__body .tok-bool,
+[data-coreui-theme=dark] .mcp-json .tok-bool {
+  color: #c99be8;
+  font-weight: 600;
+}
+[data-coreui-theme=dark] .mcp-call__body .tok-null,
+[data-coreui-theme=dark] .mcp-json .tok-null {
+  color: #4dd0e1;
+  opacity: 0.75;
+  font-style: italic;
+}
+[data-coreui-theme=dark] .mcp-call__body .tok-punct,
+[data-coreui-theme=dark] .mcp-json .tok-punct {
+  color: rgba(255, 255, 255, 0.45);
 }
 
 body {

@@ -924,20 +924,12 @@ body:has(.mcp-page--activity) .footer {
       padding: 0;
     }
 
-    .tok-key { color: #9cdcfe; }
-    .tok-str { color: #ce9178; }
-    .tok-num { color: #b5cea8; }
-    .tok-bool { color: #569cd6; }
-    .tok-null { color: #f44747; }
+    .tok-key { color: #c26a1f; }
+    .tok-str { color: #2f9e6a; }
+    .tok-num { color: #2f74c0; }
+    .tok-bool { color: #9a5cc6; font-weight: 600; }
+    .tok-null { color: #2f74c0; opacity: 0.55; font-style: italic; }
     .tok-punct { color: rgba(255, 255, 255, 0.45); }
-    .tok-line-num {
-      display: inline-block;
-      width: 2.5em;
-      text-align: right;
-      padding-right: 1em;
-      color: rgba(255, 255, 255, 0.25);
-      user-select: none;
-    }
   }
 
   .mcp-call__copy {
@@ -1054,20 +1046,12 @@ body:has(.mcp-page--activity) .footer {
     white-space: pre-wrap;
     word-break: break-word;
 
-    .tok-key { color: #9cdcfe; }
-    .tok-str { color: #ce9178; }
-    .tok-num { color: #b5cea8; }
-    .tok-bool { color: #569cd6; }
-    .tok-null { color: #f44747; }
+    .tok-key { color: #c26a1f; }
+    .tok-str { color: #2f9e6a; }
+    .tok-num { color: #2f74c0; }
+    .tok-bool { color: #9a5cc6; font-weight: 600; }
+    .tok-null { color: #2f74c0; opacity: 0.55; font-style: italic; }
     .tok-punct { color: rgba(255, 255, 255, 0.45); }
-    .tok-line-num {
-      display: inline-block;
-      width: 2.5em;
-      text-align: right;
-      padding-right: 1em;
-      color: rgba(255, 255, 255, 0.25);
-      user-select: none;
-    }
   }
 }
 
@@ -1193,41 +1177,72 @@ body:has(.mcp-page--activity) .footer {
 }
 
 .mcp-filter-toggle {
-    padding: 0.45rem 0.75rem;
-    border: 1px solid rgba(var(--cui-border-color-rgb), 0.3);
-    border-radius: 6px;
-    background: rgba(var(--cui-body-bg-rgb), 0.4);
-    color: var(--cui-body-color);
-    min-width: auto;
+    padding: 0.25rem;
+    border: none;
+    background: transparent;
+    color: var(--cui-secondary-color);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: color 0.2s ease;
 }
 
-.mcp-filter-toggle:hover {
-    border-color: var(--cui-primary);
-}
-
-.mcp-filter-toggle .mcp-filter-icon {
-    font-size: 1rem;
-}
-
-.mcp-filter-toggle .mcp-filter-text {
-    font-size: 0.85rem;
-    margin-left: 0.5rem;
+.mcp-filter-toggle:hover,
+.mcp-filter-toggle:focus {
+    color: var(--cui-body-color);
+    background: transparent;
+    box-shadow: none;
 }
 
 .mcp-filter-input-wrapper {
     flex: 1;
-    min-width: 180px;
-    max-width: 260px;
-    display: flex;
-    align-items: center;
-    position: relative;
+    min-width: 0;
+    width: 210px;
+    max-width: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-width 0.6s cubic-bezier(0.35, 0, 0.25, 1), opacity 0.45s ease;
+    pointer-events: none;
+}
+
+.mcp-filter-input-wrapper.is-open {
+    max-width: 220px;
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .mcp-filter-input-wrapper .mcp-filter-tool {
     flex: 1;
-    margin-right: 0.5rem;
+    width: 100%;
+    min-width: 200px;
+    font-size: 0.85rem;
+    padding: 0.45rem 1.6rem 0.45rem 1.9rem;
+    border: 1px solid rgba(var(--cui-border-color-rgb), 0.3);
+    border-radius: 6px;
+    background: rgba(var(--cui-body-bg-rgb), 0.4);
+    color: var(--cui-body-color);
+    max-width: 220px;
+}
+
+.mcp-filter-glyph {
+    position: absolute;
+    left: 0.55rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--cui-secondary-color);
+    pointer-events: none;
+    opacity: 0.75;
+}
+
+.mcp-filter-input-wrapper .mcp-filter-reset {
+    position: absolute !important;
+    right: 0.2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 0 0.35rem;
+    border: none;
+    font-weight: 700;
 }
 
 // Highlight matched tool name in card
@@ -1240,4 +1255,17 @@ body:has(.mcp-page--activity) .footer {
     padding: 0.15rem 0.25rem;
     border-radius: 3px;
     border: 1px solid rgba(var(--cui-info-rgb), 0.3);
+}
+
+// JSON token palette — dark theme overrides (light values set in context)
+[data-coreui-theme='dark'] {
+    .mcp-call__body,
+    .mcp-json {
+        .tok-key { color: #ffab6b; }
+        .tok-str { color: #6bd39a; }
+        .tok-num { color: #74b4f0; }
+        .tok-bool { color: #c99be8; font-weight: 600; }
+        .tok-null { color: #4dd0e1; opacity: 0.75; font-style: italic; }
+        .tok-punct { color: rgba(255, 255, 255, 0.45); }
+    }
 }

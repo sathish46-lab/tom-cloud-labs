@@ -382,6 +382,7 @@ const Dashboard = {
               }
             } else if (data.status === "offline" || data.status === "initializing") {
               this.updateUIIdle();
+              this.updateLiveBadge(null);
             } else {
               this.updateUI(data);
             }
@@ -393,7 +394,8 @@ const Dashboard = {
       };
 
       poll(); // Initial call
-      this.statsInterval = setInterval(poll, 5000); // Standard 5s polling to save resources
+      this.statsInterval = setInterval(poll, 10000); // Sample-site parity: 10s polling
+      this.startStatsStream(); // Live push via RabbitMQ Web-STOMP (HTTP poll stays as fallback)
     };
 
     const stop = () => {
@@ -414,12 +416,45 @@ const Dashboard = {
 
     document.addEventListener("htmx:beforeSwap", () => {
       stop();
+      if (window.LabStatsSocket) window.LabStatsSocket.disconnect();
     });
 
     // Start initially if visible
     if (!document.hidden) {
       start();
     }
+  },
+
+  /**
+   * Subscribe to live container-stats frames pushed over RabbitMQ
+   * Web-STOMP (sample-site parity: /exchange/node/<routing>/overview).
+   * The 10s HTTP poll stays as catch-up/fallback when the WS is down.
+   */
+  startStatsStream: function () {
+    if (!window.SESSION_HASH || !window.location.pathname.includes('/labs/dashboard/')) {
+      return;
+    }
+    if (typeof TomSocketClient === "undefined") {
+      return; // stomp/ws bundle unavailable
+    }
+    if (!window.LabStatsSocket) window.LabStatsSocket = new TomSocketClient();
+    const socket = window.LabStatsSocket;
+    if (socket.isActive()) return;
+
+    socket.connect(
+      "/exchange/node/node." + window.SESSION_HASH + ".overview",
+      (data) => {
+        if (!data || typeof data !== "object" || Array.isArray(data)) return;
+        if (data.status) {
+          this.updateUIIdle();
+          this.updateLiveBadge(null);
+          return;
+        }
+        this.updateUI(data);
+      },
+      null,
+      () => console.log("[Dashboard] Lab stats stream subscribed"),
+    );
   },
 
   /**
@@ -451,6 +486,9 @@ const Dashboard = {
     safeSetText("stat-high-mem", data.HighMem);
     safeSetText("stat-net-io", data.NetIO);
     safeSetText("stat-block-io", data.BlockIO);
+
+    // Live badge: staleness + "Last Seen" tooltip
+    this.updateLiveBadge(data.last_update_time);
 
     // Update charts (first load vs. incremental)
     if (this.isFirstLoad && data.cpu_h) {
@@ -498,6 +536,56 @@ const Dashboard = {
     if (badgeArea && !badgeArea.innerHTML.includes("Running")) {
       badgeArea.innerHTML = `<span class="badge text-bg-success border-0 px-2 py-1 small pulse">Running</span>`;
     }
+  },
+
+  /**
+   * Update the live badge with staleness + tooltip (sample-site parity)
+   * @param {number|null} lastUpdate - epoch seconds from stats payload
+   */
+  updateLiveBadge: function (lastUpdate) {
+    const badge = document.getElementById("badgelive");
+    if (!badge) return;
+
+    const LIVE_MAX_AGE = 20; // seconds — matches sample site behaviour
+    let seen = "unknown";
+
+    if (typeof lastUpdate === "number" && lastUpdate > 0) {
+      const ms = lastUpdate * 1000;
+      const age = (Date.now() - ms) / 1000;
+      seen = this.relativeTime(ms);
+
+      const isLive = age <= LIVE_MAX_AGE;
+      badge.classList.toggle("bg-danger-gradient", isLive);
+      badge.classList.toggle("pulse", isLive);
+      badge.classList.toggle("bg-info-gradient", !isLive);
+      badge.textContent = isLive ? "Live" : "Not Live";
+    } else {
+      badge.classList.remove("bg-danger-gradient", "pulse");
+      badge.classList.add("bg-info-gradient");
+      badge.textContent = "Not Live";
+    }
+
+    try {
+      const tip = coreui.Tooltip.getOrCreateInstance(badge);
+      tip.setContent({ ".tooltip-inner": "Last Seen: " + seen });
+    } catch (e) {
+      /* coreui tooltip unavailable */
+    }
+  },
+
+  /**
+   * Relative time like "just now" / "12s ago" / "4m ago"
+   * @param {number} ms - timestamp in milliseconds
+   */
+  relativeTime: function (ms) {
+    const s = Math.floor((Date.now() - ms) / 1000);
+    if (s < 5) return "just now";
+    if (s < 60) return s + "s ago";
+    const m = Math.floor(s / 60);
+    if (m < 60) return m + "m ago";
+    const h = Math.floor(m / 60);
+    if (h < 24) return h + "h ago";
+    return new Date(ms).toLocaleString();
   },
 
   /**

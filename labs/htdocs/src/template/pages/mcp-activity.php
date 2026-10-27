@@ -75,15 +75,12 @@ if (Session::getAuthStatus() === Constants::STATUS_LOGGEDIN) {
                                 <div class="mcp-view__head-actions">
                                     <div class="mcp-filter-wrap">
                                         <span class="mcp-eyebrow mb-0 me-2">Filter by tool</span>
-                                        <div class="mcp-filter-toggle-wrap d-flex align-items-center">
-                                            <button type="button" class="btn btn-outline-secondary mcp-filter-toggle" id="mcp-filter-tool-toggle" aria-label="Filter by tool">
-                                                <i class="mcp-filter-icon bi bi-search" aria-hidden="true"></i>
-                                                <span class="mcp-filter-text d-none">Filter by tool</span>
-                                            </button>
-                                            <div class="mcp-filter-input-wrapper d-none" id="mcp-filter-input-wrapper">
-                                                <input type="text" id="mcp-filter-tool" class="form-control mcp-filter-tool" placeholder="Filter by tool (e.g. lab_deploy, createdb)..." aria-label="Filter activity by tool name">
-                                                <button type="button" class="btn btn-sm btn-outline-secondary mcp-filter-reset" id="mcp-filter-tool-reset" style="display:none;">×</button>
-                                            </div>
+                                        <button type="button" class="btn p-0 border-0 shadow-none mcp-filter-toggle" id="mcp-filter-toggle" title="Filter by tool">
+                                            <svg class="icon" viewBox="0 0 256 256" width="20" height="20" style="stroke: currentColor; stroke-width: 15px;"><use href="/assets/icons/duotone.svg#tom-magnifying-glass"></use></svg>
+                                        </button>
+                                        <div class="mcp-filter-input-wrapper" id="mcp-filter-input-wrapper">
+                                            <input type="text" id="mcp-filter-tool" class="form-control mcp-filter-tool" placeholder="e.g. lab_deploy, createdb" aria-label="Filter activity by tool name">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary mcp-filter-reset" id="mcp-filter-tool-reset" style="display:none;">×</button>
                                         </div>
                                     </div>
                                     <span class="badge badge-soft-secondary mcp-tag mcp-live" id="mcp-live-tag" title="New calls appear here as they happen">
@@ -109,7 +106,7 @@ if (Session::getAuthStatus() === Constants::STATUS_LOGGEDIN) {
                                         ?>
                                         <div class="mcp-log" data-id="<?= htmlspecialchars($a['id']) ?>" data-tool="<?= htmlspecialchars($a['tool']) ?>" data-status="<?= htmlspecialchars($a['status']) ?>" data-client="<?= htmlspecialchars($clientName) ?>" data-target="<?= htmlspecialchars($target) ?>" data-request="<?= htmlspecialchars(json_encode($a['request'])) ?>" data-response="<?= htmlspecialchars(json_encode($a['error'] ? ['error' => $a['error']] : $a['response'])) ?>" data-created="<?= htmlspecialchars($a['created_at']) ?>" data-dur="<?= $a['duration_ms'] ?>">
                                             <div class="mcp-log__line">
-                                                <code class="mcp-log__tool"><?= htmlspecialchars($a['tool']) ?></code>
+                                                <code class="mcp-log__tool"><?= htmlspecialchars(preg_replace('/^labs_/', '', $a['tool'])) ?></code>
                                                 <?php if ($target): ?>
                                                     <span class="mcp-log__target"><?= htmlspecialchars($target) ?></span>
                                                 <?php endif; ?>

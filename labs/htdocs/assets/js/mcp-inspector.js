@@ -113,13 +113,15 @@
             const reqs = c.request_count || 0;
             const last = c.last_used_at ? timeAgo(c.last_used_at) : 'never';
             const shortId = c.client_id.replace(/^labs-mcp-/, '').slice(0, 8);
-            const connected = isConnected(c);
+            const status = c.status || (c.connected ? 'active' : 'offline');
+            const statusClass = status === 'active' ? 'mcp-status-ok' : status === 'idle' ? 'mcp-status-idle' : 'mcp-status-off';
+            const statusText = status === 'active' ? 'Connected' : status === 'idle' ? 'Idle' : 'Offline';
             return `
                 <li class="mcp-side__item d-flex align-items-center gap-2 py-2">
-                    <span class="mcp-status-dot ${connected ? 'mcp-status-ok' : 'mcp-status-off'}" aria-hidden="true"></span>
+                    <span class="mcp-status-dot ${statusClass}" aria-hidden="true"></span>
                     <span class="flex-grow-1 text-truncate">
                         <span class="fw-semibold text-body">${escapeHtml(name)}</span>
-                        <span class="d-block small text-secondary">${escapeHtml(shortId)} · ${reqs} call${reqs === 1 ? '' : 's'} · ${escapeHtml(last)} · ${connected ? 'Connected' : 'Offline'}</span>
+                        <span class="d-block small text-secondary">${escapeHtml(shortId)} · ${reqs} call${reqs === 1 ? '' : 's'} · ${escapeHtml(last)} · ${statusText}</span>
                     </span>
                 </li>`;
         }).join('');
@@ -127,21 +129,27 @@
 
     // ─── Activity Feed ───
     let activityFilterClient = '';
+    let activityFilterTool = '';
     let activityPage = 0;
     let activityHasMore = false;
-    let activityLoading = false;
 
     function buildRail(clients) {
         const rail = document.getElementById('mcp-rail');
         const activeClients = (clients || []).filter(c => c.request_count > 0 || activityFilterClient === c.client_id);
-
-        if (!activityFilterClient && activeClients.length > 0) {
-            const firstConnected = activeClients.find(c => isConnected(c));
-            if (firstConnected) activityFilterClient = firstConnected.client_id;
-        }
-
+        const total = clients ? clients.length : 0;
         if (rail) {
-            rail.innerHTML = `${activeClients.map(c => {
+            const allActive = activityFilterClient === '';
+            rail.innerHTML = `
+                <button type="button" class="mcp-rail__item ${allActive ? 'is-active' : ''}" data-client="">
+                    <span class="mcp-rail__dot mcp-rail__dot--all" aria-hidden="true"></span>
+                    <span class="mcp-rail__body">
+                        <span class="mcp-rail__row">
+                            <span class="mcp-rail__name">All clients</span>
+                            <span class="mcp-rail__count">${total}</span>
+                        </span>
+                    </span>
+                </button>
+                ${activeClients.map(c => {
                     const connected = isConnected(c);
                     const last = c.last_used_at ? timeAgo(c.last_used_at) : 'never';
                     const failed = c.failed_count || 0;
@@ -167,6 +175,16 @@
                 btn.addEventListener('click', function() {
                     activityFilterClient = this.getAttribute('data-client') || '';
                     activityPage = 0;
+                    const tag = document.getElementById('mcp-filter-tag');
+                    const tagName = document.getElementById('mcp-filter-name');
+                    if (tag) {
+                        if (activityFilterClient) {
+                            tag.classList.remove('d-none');
+                            if (tagName) tagName.textContent = this.querySelector('.mcp-rail__name').textContent.trim();
+                        } else {
+                            tag.classList.add('d-none');
+                        }
+                    }
                     buildRail(clients);
                     loadActivity();
                 });
@@ -182,30 +200,32 @@
     function renderActivityItems(items, append) {
         const list = document.getElementById('mcp-history-list');
         const blank = document.getElementById('mcp-history-blank');
-        const sentinel = document.getElementById('mcp-scroll-sentinel');
+        const moreBtn = document.getElementById('mcp-load-more');
         const countEl = document.getElementById('mcp-call-count');
         if (!list) return;
 
-        if (!append) {
-            list.innerHTML = '';
-            if (blank) list.appendChild(blank);
-            if (sentinel) list.appendChild(sentinel);
-        }
+        if (!append) list.innerHTML = '';
 
-        if (items.length === 0 && !append) {
+        // Filter by tool name
+        const itemsFiltered = activityFilterTool
+            ? items.filter(a => (a.tool || '').toLowerCase().includes(activityFilterTool))
+            : items;
+
+        if (itemsFiltered.length === 0 && !append) {
             if (blank) blank.classList.remove('d-none');
-            if (sentinel) sentinel.classList.add('d-none');
         } else if (blank) {
             blank.classList.add('d-none');
         }
 
-        items.forEach(a => list.insertBefore(activityCard(a), sentinel));
+        itemsFiltered.forEach(a => list.appendChild(activityCard(a)));
 
-        if (sentinel) {
+        if (moreBtn) {
             if (activityHasMore) {
-                sentinel.classList.remove('d-none');
+                moreBtn.classList.remove('d-none');
+                moreBtn.disabled = false;
+                moreBtn.textContent = 'Load more';
             } else {
-                sentinel.classList.add('d-none');
+                moreBtn.classList.add('d-none');
             }
         }
     }
@@ -213,12 +233,9 @@
     async function loadActivity() {
         const list = document.getElementById('mcp-history-list');
         const countEl = document.getElementById('mcp-call-count');
-        const sentinel = document.getElementById('mcp-scroll-sentinel');
-        if (!list || activityLoading) return;
+        if (!list) return;
 
-        activityLoading = true;
-        if (sentinel) sentinel.classList.remove('d-none');
-
+        // Fetch fresh data
         let url = '/mcp/activity/data?limit=20&page=' + activityPage;
         if (activityFilterClient) url += '&client_id=' + encodeURIComponent(activityFilterClient);
 
@@ -227,18 +244,20 @@
             if (!res.ok) throw new Error('HTTP ' + res.status);
             const data = await res.json();
 
-            // Always show total count in badge (not filtered)
-            if (countEl && !activityFilterClient) countEl.textContent = data.total;
+            if (countEl) countEl.textContent = data.total;
             activityHasMore = data.has_more;
 
             const items = data.activity || [];
 
+            // Re-render with fresh data (replace, don't append for page 0)
             if (activityPage === 0) {
                 renderActivityItems(items, false);
             } else {
                 renderActivityItems(items, true);
             }
         } catch (e) {
+            // If fetch fails and no data was shown, show error
+            const list = document.getElementById('mcp-history-list');
             if (activityPage === 0 && list && list.children.length === 0) {
                 const blank = document.getElementById('mcp-history-blank');
                 if (blank) {
@@ -246,25 +265,7 @@
                     blank.classList.remove('d-none');
                 }
             }
-            if (sentinel) sentinel.classList.add('d-none');
-        } finally {
-            activityLoading = false;
         }
-    }
-
-    // ─── Infinite scroll ───
-    function initInfiniteScroll() {
-        const scrollContainer = document.getElementById('mcp-history-list');
-        if (!scrollContainer) return;
-
-        scrollContainer.addEventListener('scroll', function() {
-            if (!activityHasMore || activityLoading) return;
-            const threshold = 100;
-            if (this.scrollTop + this.clientHeight >= this.scrollHeight - threshold) {
-                activityPage++;
-                loadActivity();
-            }
-        });
     }
 
     function extractTarget(a) {
@@ -283,7 +284,7 @@
         const line = document.createElement('div');
         line.className = 'mcp-log__line';
         line.innerHTML = `
-            <code class="mcp-log__tool">${escapeHtml(a.tool)}</code>
+            <code class="mcp-log__tool">${escapeHtml(toolLabel(a.tool))}</code>
             ${target ? `<span class="mcp-log__target">${escapeHtml(target)}</span>` : ''}
             <span class="badge badge-soft-${status === 'ok' ? 'success' : (status === 'refused' ? 'warning' : 'danger')} mcp-tag">${escapeHtml(a.status)}</span>`;
 
@@ -314,7 +315,7 @@
         const clientName = a.client_name || a.username || 'MCP';
         const target = extractTarget(a);
 
-        if (toolEl) toolEl.textContent = a.tool;
+        if (toolEl) toolEl.textContent = toolLabel(a.tool);
         if (targetEl) targetEl.textContent = target;
         if (statusEl) {
             statusEl.textContent = a.status;
@@ -373,7 +374,51 @@
         return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
+    function tryParseJson(s) {
+        if (typeof s !== 'string') return null;
+        const t = s.trim();
+        if (!t.startsWith('{') && !t.startsWith('[')) return null;
+        if (t.length > 200000) return null;
+        try {
+            const v = JSON.parse(t);
+            if (typeof v === 'object' && v !== null) return v;
+        } catch (e) { /* not JSON */ }
+        return null;
+    }
+
+    function unwrapJsonStrings(value, depth) {
+        const parsed = tryParseJson(value);
+        if (parsed !== null) return unwrapJsonStrings(parsed, depth);
+        if (depth <= 0 || value === null || typeof value !== 'object') return value;
+        if (Array.isArray(value)) return value.map(v => unwrapJsonStrings(v, depth - 1));
+        const out = {};
+        for (const k of Object.keys(value)) {
+            let v = value[k];
+            const inner = tryParseJson(v);
+            if (inner !== null) {
+                out[k] = inner;
+                continue;
+            }
+            // MCP text content: unwrap content[0].text payloads
+            if (k === 'text' && typeof v === 'string') {
+                const innerText = tryParseJson(v);
+                if (innerText !== null) {
+                    out[k] = innerText;
+                    continue;
+                }
+            }
+            out[k] = unwrapJsonStrings(v, depth - 1);
+        }
+        return out;
+    }
+
+    function toolLabel(tool) {
+        return String(tool || '').replace(/^labs_/, '');
+    }
+
     function highlightJson(value) {
+        // If value is a string, try to parse it as JSON first
+        value = unwrapJsonStrings(value, 4);
         const src = JSON.stringify(value, null, 2);
         let out = '';
         let i = 0;
@@ -384,6 +429,13 @@
         const LIT_RE = /^(true|false|null)/;
 
         while (i < src.length) {
+            // Check for newline
+            if (src[i] === '\n') {
+                out += '\n';
+                i++;
+                continue;
+            }
+
             const rest = src.slice(i);
             const key = rest.match(KEY_RE);
             if (key) {
@@ -426,71 +478,78 @@
     }
 
     async function refreshAll() {
-        let clients = [];
+        // Fetch fresh clients
         try {
             const data = await fetchClients();
             renderConnectedClients(data);
-            clients = data.clients || [];
-            buildRail(clients);
+            buildRail(data.clients || []);
         } catch (e) {
             // Silently fail - show empty state
         }
 
-        updateHeaderCounts(clients);
-
-        const hasConnected = clients.some(c => isConnected(c));
-        const list = document.getElementById('mcp-history-list');
-        const blank = document.getElementById('mcp-history-blank');
-        const sentinel = document.getElementById('mcp-scroll-sentinel');
-
-        if (!hasConnected) {
-            if (list) list.innerHTML = '';
-            if (blank) {
-                blank.textContent = 'No clients connected. Connect an MCP client to see activity.';
-                blank.classList.remove('d-none');
-            }
-            if (sentinel) sentinel.classList.add('d-none');
-            return;
-        }
-
-        if (phpRenderedActivity) {
-            phpRenderedActivity = false;
-            return;
-        }
-
-        if (activityFilterClient) {
-            await loadActivity();
-        } else {
-            if (list) list.innerHTML = '';
-            if (blank) {
-                blank.textContent = 'Select a connected client to view activity.';
-                blank.classList.remove('d-none');
-            }
-            if (sentinel) sentinel.classList.add('d-none');
-        }
-    }
-
-    // ─── Header counts (Setup + Activity) ───
-    function updateHeaderCounts(clients) {
-        const toolCountEl = document.getElementById('mcp-tool-count');
-        const callCountEl = document.getElementById('mcp-call-count');
-
-        // Setup: count client tabs from DOM
-        if (toolCountEl) {
-            const clientCount = document.querySelectorAll('.mcp-client').length;
-            toolCountEl.textContent = clientCount || 0;
-        }
-
-        // Activity: sum request_count from clients (no extra fetch)
-        if (callCountEl && clients) {
-            const total = clients.reduce((sum, c) => sum + (c.request_count || 0), 0);
-            callCountEl.textContent = total;
-        }
+        // Activity: fetch directly
+        await loadActivity();
     }
 
     // ─── Activity Log init ───
     function initActivity() {
-        initInfiniteScroll();
+        const loadMoreBtn = document.getElementById('mcp-load-more');
+        if (loadMoreBtn) {
+            loadMoreBtn.addEventListener('click', function() {
+                activityPage += 1;
+                loadActivity();
+            });
+        }
+
+    const filterTag = document.getElementById('mcp-filter-tag');
+    if (filterTag) {
+        filterTag.addEventListener('click', function() {
+            this.classList.add('d-none');
+            activityFilterClient = '';
+            activityPage = 0;
+            refreshAll();
+        });
+    }
+
+    const toolFilter = document.getElementById('mcp-filter-tool');
+    const toolReset = document.getElementById('mcp-filter-tool-reset');
+    if (toolFilter) {
+        toolFilter.addEventListener('input', function() {
+            activityFilterTool = this.value.trim().toLowerCase();
+            if (activityFilterTool) {
+                if (toolReset) toolReset.style.display = 'inline-block';
+            } else {
+                if (toolReset) toolReset.style.display = 'none';
+            }
+            activityPage = 0;
+            loadActivity();
+        });
+        toolReset.addEventListener('click', function() {
+            toolFilter.value = '';
+            toolReset.style.display = 'none';
+            activityFilterTool = '';
+            activityPage = 0;
+            loadActivity();
+        });
+    }
+
+    const searchIconBtn = document.getElementById('mcp-filter-toggle');
+    const filterWrapper = document.getElementById('mcp-filter-input-wrapper');
+    if (searchIconBtn && filterWrapper) {
+        searchIconBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            filterWrapper.classList.add('is-open');
+            toolFilter.focus();
+        });
+        document.addEventListener('click', function(e) {
+            if (filterWrapper.classList.contains('is-open') && !filterWrapper.contains(e.target)) {
+                filterWrapper.classList.remove('is-open');
+            }
+        });
+        filterWrapper.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    }
     }
 
     // ─── Connected Clients init ───
@@ -503,31 +562,8 @@
         }
     }
 
-    // ─── Init PHP-rendered activity items (click handlers) ───
-    function initPhpActivityItems() {
-        document.querySelectorAll('#mcp-history-list .mcp-log[data-id]').forEach(card => {
-            const a = {
-                id: card.dataset.id,
-                tool: card.dataset.tool,
-                status: card.dataset.status,
-                client_name: card.dataset.client,
-                created_at: card.dataset.created,
-                duration_ms: parseInt(card.dataset.dur) || 0,
-                request: JSON.parse(card.dataset.request || '{}'),
-                response: JSON.parse(card.dataset.response || '{}')
-            };
-            card.addEventListener('click', function() {
-                const selected = document.querySelector('#mcp-history-list .mcp-log.is-selected');
-                if (selected) selected.classList.remove('is-selected');
-                card.classList.add('is-selected');
-                showDetail(a);
-            });
-        });
-    }
-
     // ─── Init ───
     let initialized = false;
-    let phpRenderedActivity = document.querySelectorAll('#mcp-history-list .mcp-log[data-id]').length > 0;
 
     function init() {
         if (initialized) return;
@@ -535,7 +571,6 @@
         initClientTabs();
         initClipboard();
         initActivity();
-        initPhpActivityItems();
         initConnectedClients();
     }
 

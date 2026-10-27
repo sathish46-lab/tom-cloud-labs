@@ -5,10 +5,71 @@ import time
 import os
 from collections import deque
 
-# Store up to 20 samples (100 seconds of history) to match frontend charts
+# Store up to 20 samples (200 seconds of history) to match frontend charts
 HISTORY = {}
-LIMIT = 20 
+LIMIT = 20
 CACHE_FILE = '/dev/shm/docker_stats.json'
+INTERVAL = 10  # seconds — sample-site cadence (labs.selfmade.ninja)
+REDIS_PREFIX = 'tomlabs:stats:'
+REDIS_TTL = 60  # stale keys expire; frontend flags >20s as Not Live
+MQ_EXCHANGE = 'node'
+MQ_ROUTING_FMT = 'node.{name}.overview'
+
+_redis = None
+_mq_conn = None
+
+def get_redis():
+    """Lazy, self-healing Redis connection."""
+    global _redis
+    if _redis is None:
+        import redis
+        from config import Config
+        _redis = redis.Redis(
+            host='127.0.0.1', port=6379,
+            password=Config().env('redis_admin_pass'),
+            socket_connect_timeout=1, socket_timeout=1
+        )
+    return _redis
+
+def redis_mirror(name, payload):
+    """Mirror one container snapshot into the Redis cache store."""
+    try:
+        get_redis().setex(REDIS_PREFIX + name, REDIS_TTL, json.dumps(payload))
+    except Exception as e:
+        global _redis
+        _redis = None
+        print(f"Redis mirror failed for {name}: {e}")
+
+def publish_mq(name, payload):
+    """Publish one container frame to the topic exchange like the sample site."""
+    global _mq_conn
+    try:
+        if _mq_conn is None or _mq_conn.is_closed:
+            import pika
+            _mq_conn = pika.BlockingConnection(
+                pika.ConnectionParameters(
+                    host='127.0.0.1',
+                    socket_timeout=2, blocked_connection_timeout=2
+                )
+            )
+        ch = _mq_conn.channel()
+        ch.exchange_declare(exchange=MQ_EXCHANGE, exchange_type='topic', durable=True)
+        ch.basic_publish(
+            exchange=MQ_EXCHANGE,
+            routing_key=MQ_ROUTING_FMT.format(name=name),
+            body=json.dumps(payload),
+            properties=pika.BasicProperties(
+                content_type='application/json', delivery_mode=1
+            )
+        )
+    except Exception as e:
+        print(f"MQ publish failed for {name}: {e}")
+        try:
+            if _mq_conn is not None and not _mq_conn.is_closed:
+                _mq_conn.close()
+        except Exception:
+            pass
+        _mq_conn = None
 
 def get_cpu_throttle_percent(container_id):
     """Read cgroup v2 CPU throttling stats for a container."""
@@ -130,9 +191,14 @@ def collect_all_stats():
                     "PeakCPU": f"{max(HISTORY[name]['cpu']):.2f}%",
                     "HighMem": f"{max(HISTORY[name]['mem']):.1f} MB",
                     "MaxPID": max(HISTORY[name]['pids']),
-                    "CPUThrottled": f"{cpu_throttle}%"
+                    "CPUThrottled": f"{cpu_throttle}%",
+                    "last_update_time": round(time.time(), 6)
                 })
                 all_stats[name] = data
+
+                # Mirror to the Redis cache store and push to RabbitMQ
+                redis_mirror(name, data)
+                publish_mq(name, data)
 
             # Atomic write - use backup file to prevent read races
             if all_stats:
@@ -151,6 +217,6 @@ def collect_all_stats():
                     try: os.unlink(tmp_path)
                     except: pass
         except Exception as e: print(f"Error: {e}")
-        time.sleep(5)
+        time.sleep(INTERVAL)
 
 if __name__ == "__main__": collect_all_stats()
