@@ -459,52 +459,7 @@
                             }
                         ?>
                         <div class="position-relative">
-                            <!-- CodeMirror Dependencies -->
-                            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
-                            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
-                            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
-                            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/shell/shell.min.js"></script>
-
-                            <textarea id="init-script-editor" class="form-control font-monospace bg-dark text-white border-0 rounded-3 p-3 pref-script-editor" rows="10"><?= htmlspecialchars($initScript) ?></textarea>
-
-                            <script>
-                                document.addEventListener("DOMContentLoaded", function() {
-                                    // Slight delay to ensure DOM is fully ready when injected dynamically
-                                    setTimeout(function() {
-                                        var editorArea = document.getElementById("init-script-editor");
-                                        if (editorArea && typeof CodeMirror !== 'undefined') {
-                                            var isLight = document.documentElement.getAttribute('data-coreui-theme') === 'light';
-                                            var activeTheme = isLight ? "default" : "dracula";
-                                            
-                                            window.initScriptEditor = CodeMirror.fromTextArea(editorArea, {
-                                                mode: "shell",
-                                                theme: activeTheme,
-                                                lineNumbers: true,
-                                                matchBrackets: true,
-                                                viewportMargin: Infinity
-                                            });
-                                            
-                                            var wrapper = window.initScriptEditor.getWrapperElement();
-                                            wrapper.style.borderRadius = "8px";
-                                            wrapper.style.fontSize = "13.5px";
-                                            wrapper.style.padding = "10px 0";
-                                            wrapper.style.fontFamily = "var(--bs-font-monospace)";
-                                            wrapper.style.border = "1px solid var(--cui-border-color, rgba(255,255,255,0.1))";
-                                            
-                                            // Watch for light/dark mode toggles
-                                            var themeObserver = new MutationObserver(function(mutations) {
-                                                mutations.forEach(function(mutation) {
-                                                    if (mutation.attributeName === 'data-coreui-theme') {
-                                                        var nowLight = document.documentElement.getAttribute('data-coreui-theme') === 'light';
-                                                        window.initScriptEditor.setOption("theme", nowLight ? "default" : "dracula");
-                                                    }
-                                                });
-                                            });
-                                            themeObserver.observe(document.documentElement, { attributes: true });
-                                        }
-                                    }, 200);
-                                });
-                            </script>
+                            <textarea id="init-script-editor" class="form-control font-monospace bg-dark text-white border-0 p-3 pref-script-editor" rows="12" data-ace-mode="sh" data-ace-font="13pt" data-ace-height="300"><?= htmlspecialchars($initScript) ?></textarea>
                         </div>
                         <div class="d-flex justify-content-end mt-2">
                             <button type="button" class="btn btn-sm rounded-pill px-3 d-inline-flex align-items-center gap-1 btn-pref-run" onclick="runInitScript()">
@@ -537,47 +492,10 @@
                             }
                         ?>
                         <div class="position-relative">
-                            <textarea id="error-page-editor" class="form-control font-monospace bg-dark text-white border-0 rounded-3 p-3 pref-script-editor" rows="10"><?= htmlspecialchars($customErrorPage) ?></textarea>
-
-                            <script>
-                                document.addEventListener("DOMContentLoaded", function() {
-                                    setTimeout(function() {
-                                        var editorArea = document.getElementById("error-page-editor");
-                                        if (editorArea && typeof CodeMirror !== 'undefined') {
-                                            var isLight = document.documentElement.getAttribute('data-coreui-theme') === 'light';
-                                            var activeTheme = isLight ? "default" : "dracula";
-                                            
-                                            window.errorPageEditor = CodeMirror.fromTextArea(editorArea, {
-                                                mode: "htmlmixed",
-                                                theme: activeTheme,
-                                                lineNumbers: true,
-                                                matchBrackets: true,
-                                                viewportMargin: Infinity
-                                            });
-                                            
-                                            var wrapper = window.errorPageEditor.getWrapperElement();
-                                            wrapper.style.borderRadius = "8px";
-                                            wrapper.style.fontSize = "13.5px";
-                                            wrapper.style.padding = "10px 0";
-                                            wrapper.style.fontFamily = "var(--bs-font-monospace)";
-                                            wrapper.style.border = "1px solid var(--cui-border-color, rgba(255,255,255,0.1))";
-                                            
-                                            var themeObserver = new MutationObserver(function(mutations) {
-                                                mutations.forEach(function(mutation) {
-                                                    if (mutation.attributeName === 'data-coreui-theme') {
-                                                        var nowLight = document.documentElement.getAttribute('data-coreui-theme') === 'light';
-                                                        window.errorPageEditor.setOption("theme", nowLight ? "default" : "dracula");
-                                                    }
-                                                });
-                                            });
-                                            themeObserver.observe(document.documentElement, { attributes: true });
-                                        }
-                                    }, 200);
-                                });
-                            </script>
+                            <textarea id="error-page-editor" class="form-control font-monospace bg-dark text-white border-0 p-3 pref-script-editor" rows="12" data-ace-mode="html" data-ace-font="12pt" data-ace-height="300"><?= htmlspecialchars($customErrorPage) ?></textarea>
                         </div>
-                        <div class="d-flex justify-content-end mt-3">
-                            <button type="button" class="btn btn-secondary rounded-pill px-4 py-2 d-inline-flex align-items-center gap-2 fw-bold" onclick="saveErrorPage()">
+                        <div class="d-flex justify-content-end mt-2">
+                            <button type="button" class="btn btn-secondary btn-sm rounded-pill px-2 py-1 d-inline-flex align-items-center gap-1" onclick="saveErrorPage()">
                                 <i class='bx bx-save'></i> Save Error Page
                             </button>
                         </div>

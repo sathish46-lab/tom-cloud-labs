@@ -27605,9 +27605,162 @@ try {
 // Preferences — HTTP Proxies, Lifecycle, Startup Script
 // ========================================================================
 
+// ========================================================================
+// ACE code editors (Startup Script / Custom Error Page)
+// Idempotent init for BOTH full page loads and HTMX swaps — inline
+// DOMContentLoaded templates never re-fire after hx-boost navigation.
+// ========================================================================
+const PREF_ACE_IDS = ['init-script-editor', 'error-page-editor'];
+
 /**
- * Add a new proxy row dynamically
+ * Lazy-load the ACE bundle from CDN once, exactly once per page session.
  */
+function ensureAce(callback) {
+    if (window.ace && window.ace.edit) { callback(); return; }
+    if (window.__aceLoading) {
+        const poll = setInterval(function() {
+            if (window.ace && window.ace.edit) { clearInterval(poll); callback(); }
+        }, 100);
+        return;
+    }
+    window.__aceLoading = true;
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.39.0/ace.min.js';
+    s.onload = function() {
+        const s2 = document.createElement('script');
+        s2.src = 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.37.1/ext-language_tools.min.js';
+        s2.onload = function() { window.__aceLoading = false; callback(); };
+        s2.onerror = function() { window.__aceLoading = false; callback(); };
+        document.head.appendChild(s2);
+    };
+    s.onerror = function() { window.__aceLoading = false; };
+    document.head.appendChild(s);
+}
+
+/**
+ * Live editor accessor. ACE convnames the SSR textarea into a <pre> container
+ * and drops the original id, so lookups must go through the container.
+ */
+function getPrefAce(id) {
+    if (window.__prefAceFor && window.__prefAceFor[id] && window.__prefAceFor[id].isConnected) {
+        return window.__prefAceFor[id];
+    }
+    const c = document.querySelector('[data-pref-ace-for="' + id + '"]');
+    return c && c.__aceRef ? c.__aceRef : null;
+}
+
+/**
+ * Turn one SSR textarea into an ACE editor. Idempotent via the container
+ * lookup: on HTMX re-entry the swapped HTML has a fresh textarea and gets
+ * converted; an already-converted DOM is skipped.
+ */
+function createPrefAceEditor(id) {
+    if (getPrefAce(id)) return;
+    const ta = document.getElementById(id);
+    if (!ta || typeof ace === 'undefined') return;
+
+    const fallback = ta.cloneNode(true);   // restored if ACE fails below
+    fallback.dataset.aceMode = '';
+    fallback.removeAttribute('data-ace-mode');
+    let ed = null;
+    try {
+        ed = ace.edit(ta);
+    } catch (e) {
+        ta.replaceWith(fallback);
+        return;
+    }
+    if (!ed || !ed.container) { ta.replaceWith(fallback); return; }
+
+    const mode = ta.dataset.aceMode || 'text';
+    const font = ta.dataset.aceFont || '13pt';
+    const height = ta.dataset.aceHeight || '300';
+    // seed from SSR content collected BEFORE ACE converted the element
+    const seed = ta.value || '';
+
+    ed.session.setMode('ace/mode/' + mode);
+    ed.setOptions({
+        fontSize: font,
+        showGutter: true,
+        wrap: true,
+        showPrintMargin: false,
+        useWorker: false,
+        displayIndentGuides: false
+    });
+    ed.setValue(seed, -1);
+    ed.clearSelection();
+    ed.container.classList.add('pref-ace-editor');
+    ed.container.dataset.prefAceFor = id;
+    ed.container.__aceRef = ed;
+    ed.container.style.height = height + 'px';
+    ed.container.style.width = '100%';
+    ed.container.style.borderRadius = '0.5rem';
+    // theme immediately — do not wait for the observer pass, otherwise the
+    // ugly textmate fallback (pale tokens, indent guides) shows first
+    applyPrefAceTheme();
+
+    window.__prefAceFor = window.__prefAceFor || {};
+    window.__prefAceFor[id] = ed.container;
+
+    // legacy aliases used by save/apply code paths
+    if (id === 'init-script-editor') {
+        window.__startupEditor = ed;
+        window.initScriptEditor = ed;
+    }
+    if (id === 'error-page-editor') {
+        window.__errorPageEditor = ed;
+        window.errorPageEditor = ed;
+    }
+}
+
+/**
+ * Monokai (dark) / eclipse (light), re-applied on every theme toggle.
+ */
+function applyPrefAceTheme() {
+    const isLight = document.documentElement.getAttribute('data-coreui-theme') === 'light';
+    const theme = isLight ? 'ace/theme/eclipse' : 'ace/theme/monokai';
+    PREF_ACE_IDS.forEach(function(id) {
+        const ed = getPrefAce(id);
+        if (ed) {
+            try { ed.setTheme(theme); } catch (e) { /* noop */ }
+        }
+    });
+}
+
+/**
+ * Single observer for the whole page, survives navigation.
+ */
+if (!window.__prefAceThemeObserver) {
+    window.__prefAceThemeObserver = new MutationObserver(applyPrefAceTheme);
+    window.__prefAceThemeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['data-coreui-theme']
+    });
+    document.documentElement.addEventListener('ColorSchemeChange', applyPrefAceTheme);
+}
+
+/**
+ * Init all ACE editors on this page. Safe to call any number of times
+ * (DOMContentLoaded, htmx:afterSettle, htmx:load).
+ */
+function initPrefAceEditors() {
+    if (!PREF_ACE_IDS.some(function(id) { return document.getElementById(id); })) return;
+    ensureAce(function() {
+        PREF_ACE_IDS.forEach(function(id) { createPrefAceEditor(id); });
+        applyPrefAceTheme();
+    });
+}
+
+/**
+ * Editor-agnostic content reader: ACE instance first, textarea fallback
+ * (plain SSR textarea keeps the value when the CDN is unreachable).
+ */
+function getPrefEditorValue(id) {
+    const ed = getPrefAce(id);
+    if (ed) return ed.getValue();
+    const ta = document.getElementById(id);
+    return ta ? ta.value : '';
+}
+
 function addProxyRow() {
     const list = document.getElementById('http-proxies-list');
     if (!list) return;
@@ -27717,11 +27870,12 @@ function collectPreferencesData() {
     const alwaysOn = document.getElementById('always-on-toggle')?.checked || false;
 
     // Init script
-    let initScript = '#!/bin/bash\n';
-    if (window.initScriptEditor) {
-        initScript = window.initScriptEditor.getValue();
-    } else {
+    let initScript = getPrefEditorValue('init-script-editor');
+    if (!initScript) {
         initScript = document.getElementById('init-script-editor')?.value || '#!/bin/bash\n';
+    }
+    if (initScript.trim() === '') {
+        initScript = '#!/bin/bash\n';
     }
 
     // Sudo, Code-Server, and VNC passwords
@@ -27928,9 +28082,9 @@ function copyFromInput(inputId) {
 }
 
 async function saveErrorPage() {
-    const editor = window.errorPageEditor;
+    const editor = getPrefAce('error-page-editor') || window.errorPageEditor;
     if (!editor) return;
-    
+
     const content = editor.getValue();
     if (content.length > 65536) {
         CoreUI.Toast.show('Content exceeds 64 KB limit', 'error');
@@ -27973,6 +28127,15 @@ async function saveErrorPage() {
 }
 window.onPageLoad( updateProxyDomainOptions);
 
+// ACE editors: fire immediately (full load), then re-fire after every
+// HTMX swap so navigating to Preferences via the sidebar/table renders them.
+initPrefAceEditors();
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPrefAceEditors);
+}
+document.addEventListener('htmx:afterSettle', initPrefAceEditors);
+document.addEventListener('htmx:load', initPrefAceEditors);
+
 
     
 
@@ -27989,6 +28152,9 @@ window.onPageLoad( updateProxyDomainOptions);
     window.addProxyRow = addProxyRow;
     window.removeProxyRow = removeProxyRow;
     window.saveErrorPage = saveErrorPage;
+    window.initPrefAceEditors = initPrefAceEditors;
+    window.getPrefEditorValue = getPrefEditorValue;
+    window.applyPrefAceTheme = applyPrefAceTheme;
 
   })();
 } catch (e) {

@@ -29902,6 +29902,28 @@ html[data-coreui-theme=light] .league_badge {
   background: transparent;
 }
 
+.pref-ace-editor {
+  background-color: rgba(7, 24, 41, 0.95);
+}
+.pref-ace-editor .ace_gutter {
+  background-color: rgba(0, 0, 0, 0.4);
+  border-top-left-radius: 0.5rem;
+  border-bottom-left-radius: 0.5rem;
+}
+.pref-ace-editor.ace-monokai .ace_active-line, .pref-ace-editor.ace-monokai .ace_gutter-active-line {
+  background-color: rgba(247, 245, 245, 0.05);
+}
+
+html[data-coreui-theme=light] .pref-ace-editor {
+  background-color: var(--cui-tertiary-bg, #f8f9fa);
+}
+html[data-coreui-theme=light] .pref-ace-editor .ace_gutter {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+html[data-coreui-theme=light] .pref-ace-editor.ace-eclipse .ace_active-line, html[data-coreui-theme=light] .pref-ace-editor.ace-eclipse .ace_gutter-active-line {
+  background-color: rgba(0, 0, 0, 0.045);
+}
+
 /* BASICS */
 .CodeMirror {
   /* Set height, width, borders, and global font properties here */

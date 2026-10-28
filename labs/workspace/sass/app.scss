@@ -51,6 +51,7 @@
 @use "components/launchpad";
 @use "components/tom_design";
 @use "components/leaderboard";
+@use "components/lab_editor";
 // CodeMirror base + dark editor theme (file content pane is forced dark)
 @use "../grunt/node_modules/codemirror/lib/codemirror";
 @use "../grunt/node_modules/codemirror/theme/material-darker";

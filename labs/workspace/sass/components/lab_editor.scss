@@ -1,0 +1,37 @@
+// ========================================================================
+// ACE preference editors (Startup Script / Custom Error Page)
+// JS (`preferences.js`) adds `.pref-ace-editor` to each ACE container:
+// height/width/radius set per-editor there; this file matches those CSS rules
+// to the dark glass look of the code editor panes (see labs preferences cards).
+// ========================================================================
+
+.pref-ace-editor {
+    background-color: rgba(7, 24, 41, 0.95);
+
+    .ace_gutter {
+        background-color: rgba(0, 0, 0, 0.4);
+        border-top-left-radius: 0.5rem;
+        border-bottom-left-radius: 0.5rem;
+    }
+
+// ACE injects its theme stylesheet after app.css, so `.ace-monokai
+// .ace_active-line` wins ties — re-anchor on the theme class for higher
+// specificity instead of relying on load order.
+    &.ace-monokai .ace_active-line,
+    &.ace-monokai .ace_gutter-active-line {
+        background-color: rgba(247, 245, 245, 0.05);
+    }
+}
+
+html[data-coreui-theme="light"] .pref-ace-editor {
+    background-color: var(--cui-tertiary-bg, #f8f9fa);
+
+    .ace_gutter {
+        background-color: rgba(0, 0, 0, 0.06);
+    }
+
+    &.ace-eclipse .ace_active-line,
+    &.ace-eclipse .ace_gutter-active-line {
+        background-color: rgba(0, 0, 0, 0.045);
+    }
+}
