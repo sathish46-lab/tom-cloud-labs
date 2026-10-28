@@ -28,8 +28,7 @@ const Dashboard = {
   statsInterval: null,
   charts: {},
   historyLimit: 20,
-  isFirstLoad: true,
-  // Per-run log sequence tracking (WS drop → reconnect gap recovery)
+  isFirstLoad: true,  // Per-run log sequence tracking (WS drop → reconnect gap recovery)
   logSeq: {},
   logGap: { fetching: false, pending: [] },
 
@@ -161,38 +160,42 @@ const Dashboard = {
       if (!ctx) return;
 
       const isBar = type === "bar";
-      const limit = extraOptions.limit || this.historyLimit;
-
-      const datasets = extraOptions.datasets || [
-        {
-          data: new Array(limit).fill(0),
-          borderColor: color,
+      let datasets;
+      if (extraOptions.datasets) {
+        datasets = extraOptions.datasets;
+      } else {
+        datasets = [{
+          data: [],
           backgroundColor: isBar ? color : "transparent",
-          borderWidth: isBar ? 0 : 2,
+          borderColor: isBar ? "transparent" : color,
+          borderWidth: isBar ? 1 : 2,
           pointRadius: 0,
-          tension: extraOptions.tension !== undefined ? extraOptions.tension : 0.4,
-          fill: extraOptions.fill || false,
+          tension: 0.4,
           barThickness: extraOptions.barThickness || 'flex',
-          borderRadius: 2
-        },
-      ];
+        }];
+      }
+
+      // Sample-site plugin defaults: bars hide tooltips, lines show
+      // tooltip with a per-card value formatter (hover shows the time title).
+      const plugins = {
+        legend: { display: false },
+        tooltip: isBar
+          ? { enabled: false }
+          : (extraOptions.tooltipFmt
+              ? { callbacks: { label: (item) => extraOptions.tooltipFmt(item.raw) } }
+              : {}),
+      };
 
       this.charts[id] = new Chart(ctx, {
         type: type,
         data: {
-          labels: new Array(limit).fill(""),
+          labels: [],
           datasets: datasets,
         },
         options: {
           maintainAspectRatio: false,
-          animation: {
-            duration: 300,
-            easing: 'linear'
-          },
-          plugins: {
-            legend: { display: false },
-            tooltip: { enabled: false }
-          },
+          animation: { duration: 1000, easing: 'easeOutQuart' },
+          plugins: plugins,
           scales: {
             x: { display: false },
             y: {
@@ -203,60 +206,54 @@ const Dashboard = {
           ...extraOptions.options
         },
       });
-      this.charts[id].limit = limit;
+      this.charts[id].limit = extraOptions.limit || this.historyLimit;
     };
 
-    // Tom Colors
-    const colors = {
-      cyan: "#00e5ff",
-      green: "#00ff88",
-      yellow: "#ffcc00",
-      red: "#ff4444",
-      blue: "#3d5afe"
-    };
+    // Follow the app theme's CoreUI variables (fallbacks = sample palette)
+    const C = this.cuiColor;
+    const primary = C('--cui-primary') || '#8b91f9';
+    const warning = C('--cui-warning') || '#f2b90d';
+    const success = C('--cui-success') || '#55b16e';
+    const infoC   = C('--cui-info') || '#50c7f6';
+    const danger  = C('--cui-danger') || '#d87466';
 
-    // Initialize all charts with Tom-style configurations
-    // Net IO: Download (Purple) & Upload (Cyan)
-    create("chart-net-io", "#8b91f9", "line", {
-      tension: 0.4,
-      limit: 30,
+    // Initialize all charts (sample-site card parity:
+    // Net IO card = chart7 (Download primary / Upload info),
+    // Block IO card = chart8 (Read warning / Write success))
+    create("chart-net-io", primary, "line", {
+      limit: 15,
       datasets: [
-        { label: 'Download', borderColor: "#8b91f9", data: [], borderWidth: 2, pointRadius: 0, tension: 0.4 },
-        { label: 'Upload', borderColor: "#50c7f6", data: [], borderWidth: 2, pointRadius: 0, tension: 0.4 }
-      ]
+        { label: 'Download', borderColor: primary, backgroundColor: "transparent", data: [], borderWidth: 2, pointRadius: 0, tension: 0.4 },
+        { label: 'Upload', borderColor: infoC, backgroundColor: "transparent", data: [], borderWidth: 2, pointRadius: 0, tension: 0.4 },
+      ],
+      tooltipFmt: (raw) => this.humanFileSize(raw),
     });
 
-    // Block IO: Read (Yellow) & Write (Green)
-    create("chart-block-io", "#f2b90d", "line", {
-      tension: 0.4,
-      limit: 30,
+    // Block IO: Read (Warning) & Write (Success)
+    create("chart-block-io", warning, "line", {
+      limit: 15,
       datasets: [
-        { label: 'Read', borderColor: "#f2b90d", data: [], borderWidth: 2, pointRadius: 0, tension: 0.4 },
-        { label: 'Write', borderColor: "#55b16e", data: [], borderWidth: 2, pointRadius: 0, tension: 0.4 }
-      ]
+        { label: 'Read', borderColor: warning, backgroundColor: "transparent", data: [], borderWidth: 2, pointRadius: 0, tension: 0.4 },
+        { label: 'Write', borderColor: success, backgroundColor: "transparent", data: [], borderWidth: 2, pointRadius: 0, tension: 0.4 },
+      ],
+      tooltipFmt: (raw) => this.humanFileSize(raw),
     });
 
-    // Averages use varying densities and wide bars
-    create("chart-avg-1", colors.blue, "bar", { barThickness: 15, limit: 6 });
-    create("chart-avg-5", colors.yellow, "bar", { barThickness: 4, limit: 15 });
-    create("chart-avg-15", colors.green, "bar", { barThickness: 4, limit: 15 });
+    // Averages: densest bar for 1m (6 pts @10s like sample), thinner for 5m/15m
+    create("chart-avg-1", primary, "bar", { barThickness: 15, limit: 6 });
+    create("chart-avg-5", warning, "bar", { barThickness: 4, limit: 15 });
+    create("chart-avg-15", success, "bar", { barThickness: 4, limit: 15 });
 
-    // History uses jagged line charts
-    create("chart-peak-cpu", colors.cyan, "line", { tension: 0.4, limit: 30 });
-    create("chart-max-pid", colors.red, "line", {
-      tension: 0.4,
-      limit: 30,
-      options: {
-        scales: {
-          y: {
-            display: false,
-            suggestedMin: 0,
-            suggestedMax: 150 // Better context for standard PID counts (~80-100)
-          }
-        }
-      }
+    // History lines (sample: chart4 cpu=info, chart5 pids=success, chart6 mem=danger)
+    create("chart-peak-cpu", infoC, "line", {
+      limit: 15,
+      tooltipFmt: (raw) => (Number(raw) || 0).toFixed(2) + "%",
     });
-    create("chart-high-mem", colors.yellow, "line", { tension: 0.4, limit: 30 });
+    create("chart-max-pid", success, "line", { limit: 15 });
+    create("chart-high-mem", danger, "line", {
+      limit: 15,
+      tooltipFmt: (raw) => this.humanFileSize((Number(raw) || 0) * 1048576),
+    });
   },
 
   /**
@@ -285,7 +282,7 @@ const Dashboard = {
       if (d.length > limit) d.shift();
     }
 
-    chart.update("none");
+    chart.update();
   },
 
   /* ========================================================================
@@ -370,6 +367,11 @@ const Dashboard = {
       const poll = () => {
         if (document.hidden) return;
 
+        // HTTP is only a fallback: skip while live WS frames keep flowing
+        // (last stream frame within ~3 intervals). Prevents duplicate
+        // updates and steady 403 noise for non-owner views.
+        if (this.lastStreamFrameAt && Date.now() - this.lastStreamFrameAt < 35000) return;
+
         fetch(`/api/labs/stats?hash=${window.SESSION_HASH}`)
           .then((res) => res.json())
           .then((data) => {
@@ -383,7 +385,11 @@ const Dashboard = {
             } else if (data.status === "offline" || data.status === "initializing") {
               this.updateUIIdle();
               this.updateLiveBadge(null);
+            } else if (data.status === "error") {
+              // API error (e.g. ownership 403) — do not overwrite live WS data
+              console.debug("[Dashboard] stats API error:", data.error || "no data");
             } else {
+              // Payload without a status field = real stats frame
               this.updateUI(data);
             }
           })
@@ -450,6 +456,8 @@ const Dashboard = {
           this.updateLiveBadge(null);
           return;
         }
+        // Mark the stream as the live data source (HTTP poll backs off)
+        this.lastStreamFrameAt = Date.now();
         this.updateUI(data);
       },
       null,
@@ -462,6 +470,11 @@ const Dashboard = {
    * @param {object} data - Stats from API
    */
   updateUI: function (data) {
+    // Reject unusable frames outright (error booleans, wrapped objects,
+    // frames missing the docker-stats fields) instead of painting "undefined".
+    if (!data || typeof data !== "object" || Array.isArray(data)) return;
+    if (!data.CPUPerc || !Array.isArray(data.cpu_h) || data.cpu_h.length === 0) return;
+
     const safeSetText = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; };
     const safeSetWidth = (id, width) => { const el = document.getElementById(id); if (el) el.style.width = width; };
 
@@ -477,58 +490,79 @@ const Dashboard = {
     safeSetWidth("stat-mem-bar", data.MemPerc);
     safeSetText("stat-mem-info", data.MemUsage);
 
-    safeSetText("stat-load-1", parseFloat(data.Load1).toFixed(4));
-    safeSetText("stat-load-5", parseFloat(data.Load5).toFixed(4));
-    safeSetText("stat-load-15", parseFloat(data.Load15).toFixed(4));
-
-    safeSetText("stat-peak-cpu", data.PeakCPU);
-    safeSetText("stat-max-pid", data.MaxPID);
-    safeSetText("stat-high-mem", data.HighMem);
-    safeSetText("stat-net-io", data.NetIO);
-    safeSetText("stat-block-io", data.BlockIO);
-
     // Live badge: staleness + "Last Seen" tooltip
     this.updateLiveBadge(data.last_update_time);
 
-    // Update charts (first load vs. incremental)
-    if (this.isFirstLoad && data.cpu_h) {
-      const mapping = {
-        "chart-peak-cpu": data.cpu_h,
-        "chart-high-mem": data.mem_h,
-        "chart-net-io": data.net_h,
-        "chart-block-io": data.block_h,
-        "chart-max-pid": data.pids_h,
-        "chart-avg-1": data.l1_h,
-        "chart-avg-5": data.l5_h,
-        "chart-avg-15": data.l15_h,
-      };
+    const H = (arr, n) => (Array.isArray(arr) ? arr.slice(-n) : []);
+    // Exact same array-format as the sample's n-1 indexed average helper:
+    // avg = sum(v / length), i.e. arithmetic mean
+    const avg = (arr) => arr.reduce((acc, v, i, a) => acc + v / a.length, 0);
 
-      for (let id in mapping) {
-        if (this.charts[id])
-          this.charts[id].data.datasets[0].data = mapping[id];
-      }
+    // Replace arrays + regenerate newest-first time labels every frame
+    // (exact sample-site updateCharts behaviour), then update() so Chart.js
+    // animates the transition (1000ms easeOutQuart by default).
+    const setChart = (id, values, interval) => {
+      const c = this.charts[id];
+      if (!c) return;
+      const len = (values[0] || []).length;
+      c.data.labels = this.generateTime(data.last_update_time, len, interval);
+      values.forEach((arr, i) => {
+        if (c.data.datasets[i]) c.data.datasets[i].data = arr || [];
+      });
+      c.update();
+    };
 
-      Object.values(this.charts).forEach((c) => c.update());
-      this.isFirstLoad = false;
-    } else {
-      // Incremental updates
-      // Parse composite strings for IO charts (e.g., "1.46kB / 358B")
-      const parseIO = (str) => {
-        if (!str) return [0, 0];
-        const parts = str.split(' / ').map(p => parseFloat(p) || 0);
-        return parts.length === 2 ? parts : [parts[0] || 0, 0];
-      };
+    // Container Load: 1m avg (6 pts @10s), 5m (15 pts), 15m (15 pts)
+    setChart("chart-avg-1", [H(data.l1_h, 6)], 10);
+    setChart("chart-avg-5", [H(data.l5_h, 15)], 10);
+    setChart("chart-avg-15", [H(data.l15_h, 15)], 10);
 
-      this.pushChartData("chart-net-io", parseIO(data.NetIO));
-      this.pushChartData("chart-block-io", parseIO(data.BlockIO));
+    // History: CPU Peak, PID Max, Memory High (15 pts @10s)
+    setChart("chart-peak-cpu", [H(data.cpu_h, 15)], 10);
+    setChart("chart-max-pid", [H(data.pids_h, 15)], 10);
+    setChart("chart-high-mem", [H(data.mem_h, 15)], 10);
 
-      this.pushChartData("chart-peak-cpu", parseFloat(data.CPUPerc));
-      this.pushChartData("chart-high-mem", parseFloat(data.MemPerc));
-      this.pushChartData("chart-max-pid", parseInt(data.PIDs));
+    // IO cards: dual lines (Net: rx/tx, Block: read/write)
+    setChart("chart-net-io", [H(data.net_h, 15), H(data.net_tx_h, 15)], 10);
+    setChart("chart-block-io", [H(data.block_h, 15), H(data.block_w_h, 15)], 10);
 
-      this.pushChartData("chart-avg-1", data.Load1);
-      this.pushChartData("chart-avg-5", data.Load5);
-      this.pushChartData("chart-avg-15", data.Load15);
+    // Stat texts — computed from the arrays exactly like the sample site:
+    // load avgs = array mean (0.0003), maxes from the history arrays.
+    const l1 = avg(H(data.l1_h, 6)).toFixed(4);
+    const l5 = avg(data.l5_h || []).toFixed(4);
+    const l15 = avg(data.l15_h || []).toFixed(4);
+    safeSetText("stat-load-1", l1);
+    safeSetText("stat-load-5", l5);
+    safeSetText("stat-load-15", l15);
+
+    const cpu_max = Math.max(...H(data.cpu_h, 60));
+    const pid_max = Math.max(...H(data.pids_h, 60));
+    const mem_max = Math.max(...H(data.mem_h, 60));
+    safeSetText("stat-peak-cpu", (cpu_max * 1).toFixed(2) + "%");
+    safeSetText("stat-max-pid", pid_max);
+    safeSetText("stat-high-mem", this.humanFileSize(mem_max * 1048576));
+
+    safeSetText("stat-pid-count", data.PIDs);
+    safeSetText("stat-mem-info", data.MemUsage);
+
+    // Net IO text: upload ↑ &nbsp; download ↓ (exact sample-site innerHTML)
+    const caretSvg = (dir) =>
+      `<svg class="icon me-2"><use xlink:href="/assets/icons/free.svg#cil-caret-${dir}"></use></svg>`;
+    const ioParts = (str) =>
+      (str || "").split(" / ").map((p) => p.trim());
+    const [netRx, netTx] = ioParts(data.NetIO);
+    const netIoEl = document.getElementById("stat-net-io");
+    if (netIoEl) {
+      netIoEl.innerHTML =
+        (netTx || "0B") + caretSvg("top") + " &nbsp; " +
+        (netRx || "0B") + caretSvg("bottom");
+    }
+    const [blockR, blockW] = ioParts(data.BlockIO);
+    const blockIoEl = document.getElementById("stat-block-io");
+    if (blockIoEl) {
+      blockIoEl.innerHTML =
+        (blockR || "0B") + caretSvg("top") + " &nbsp; " +
+        (blockW || "0B") + caretSvg("bottom");
     }
 
     // Update status badge
@@ -586,6 +620,59 @@ const Dashboard = {
     const h = Math.floor(m / 60);
     if (h < 24) return h + "h ago";
     return new Date(ms).toLocaleString();
+  },
+
+  /**
+   * Generate time labels for sparkline charts (exact sample-site logic):
+   * labels are newest-first, stepping BACK by `interval` seconds.
+   * @param {number} lastUpdate - epoch seconds from the stats payload
+   * @param {number} length   - number of data points
+   * @param {number} interval - seconds between points (default 10)
+   * @returns {string[]} array of "H:MM:SS AM/PM" labels, newest first
+   */
+  generateTime: function (lastUpdate, length, interval = 10) {
+    var time = [];
+    var now = new Date(lastUpdate * 1000);
+    for (var i = 0; i < length; i++) {
+      time.push(now.toLocaleTimeString());
+      now.setTime(now.getTime() - interval * 1000);
+    }
+    return time;
+  },
+
+  /**
+   * SI file size formatter (sample-site humanFileSize parity)
+   * @param {number|string} size - bytes
+   */
+  humanFileSize: function (size) {
+    size = Number(size) || 0;
+    const units = ["B", "kB", "MB", "GB", "TB"];
+    let i = 0, b = size;
+    while (b >= 1000 && i < units.length - 1) { b /= 1000; i++; }
+    return (i === 0 ? Math.round(b) : b.toFixed(2)) + units[i];
+  },
+
+  /**
+   * Read a CoreUI CSS custom property (sample uses coreui.Utils.getStyle)
+   */
+  cuiColor: function (name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  },
+
+  /**
+   * Global chart options – mirrors the sample site (_chartOpts)
+   */
+  _chartOpts : {
+    plugins: { legend: { display: false } },
+    maintainAspectRatio: false,
+    scales: {
+      x: { display: false },
+      y: { display: false }
+    },
+    elements: {
+      line: { borderWidth: 2, tension: 0.4 },
+      point: { radius: 0 }
+    }
   },
 
   /**

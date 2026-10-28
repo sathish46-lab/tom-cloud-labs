@@ -126,6 +126,15 @@ def get_cpu_throttle_percent(container_id):
     
     return 0.0
 
+def to_bytes(s):
+    """Parse docker stats sizes like '1.46kB', '210MB', '358B' into SI bytes."""
+    m = re.match(r'\s*([\d\.]+)\s*(\w+)', s or '')
+    if not m:
+        return 0.0
+    val = float(m.group(1))
+    mult = {'b': 1, 'kb': 1e3, 'mb': 1e6, 'gb': 1e9, 'tb': 1e12}.get(m.group(2).lower(), 1)
+    return val * mult
+
 def collect_all_stats():
     cmd = ["docker", "stats", "--no-stream", "--format", "{{json .}}"]
     while True:
@@ -144,15 +153,13 @@ def collect_all_stats():
                 mem_val = float(re.sub(r'[^\d\.]', '', mem_raw) or 0)
                 mem = mem_val * 1024 if 'G' in mem_raw else mem_val
                 
-                net_raw = data['NetIO'].split(' / ')[0]
-                net = float(re.sub(r'[^\d\.]', '', net_raw) or 0)
-                if 'M' in net_raw: net *= 1000
-                elif 'G' in net_raw: net *= 1000000
-                
-                block_raw = data['BlockIO'].split(' / ')[0]
-                block = float(re.sub(r'[^\d\.]', '', block_raw) or 0)
-                if 'M' in block_raw: block *= 1000
-                elif 'G' in block_raw: block *= 1000000
+                net_parts = data['NetIO'].split(' / ')
+                net = to_bytes(net_parts[0])
+                net_tx = to_bytes(net_parts[1]) if len(net_parts) > 1 else 0.0
+
+                block_parts = data['BlockIO'].split(' / ')
+                block = to_bytes(block_parts[0])
+                block_w = to_bytes(block_parts[1]) if len(block_parts) > 1 else 0.0
                 
                 # Get CPU throttling percentage
                 container_id = data.get('ID', data.get('Container', ''))
@@ -160,7 +167,7 @@ def collect_all_stats():
 
                 # 2. Initialize History Deques
                 if name not in HISTORY:
-                    HISTORY[name] = {k: deque(maxlen=LIMIT) for k in ['cpu', 'mem', 'net', 'block', 'pids', 'l1', 'l5', 'l15']}
+                    HISTORY[name] = {k: deque(maxlen=LIMIT) for k in ['cpu', 'mem', 'net', 'net_tx', 'block', 'block_w', 'pids', 'l1', 'l5', 'l15']}
 
                 # 3. Calculate Simulated Load Averages
                 l1 = round(cpu / 100, 4)
@@ -171,7 +178,9 @@ def collect_all_stats():
                 HISTORY[name]['cpu'].append(cpu)
                 HISTORY[name]['mem'].append(mem)
                 HISTORY[name]['net'].append(net)
+                HISTORY[name]['net_tx'].append(net_tx)
                 HISTORY[name]['block'].append(block)
+                HISTORY[name]['block_w'].append(block_w)
                 HISTORY[name]['pids'].append(pids)
                 HISTORY[name]['l1'].append(l1)
                 HISTORY[name]['l5'].append(l5)
@@ -182,7 +191,9 @@ def collect_all_stats():
                     "cpu_h": list(HISTORY[name]['cpu']),
                     "mem_h": list(HISTORY[name]['mem']),
                     "net_h": list(HISTORY[name]['net']),
+                    "net_tx_h": list(HISTORY[name]['net_tx']),
                     "block_h": list(HISTORY[name]['block']),
+                    "block_w_h": list(HISTORY[name]['block_w']),
                     "pids_h": list(HISTORY[name]['pids']),
                     "l1_h": list(HISTORY[name]['l1']),
                     "l5_h": list(HISTORY[name]['l5']),

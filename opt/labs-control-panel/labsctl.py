@@ -86,7 +86,9 @@ def build_router():
             session_hash = args.hash
             lab = Lab(old_args, session_hash, is_instance=True)
 
-            method = getattr(lab, cmd_name, None)
+            # Dash-flag commands ("list-images", "get-workers") map to
+            # underscore method names on the Lab class.
+            method = getattr(lab, cmd_name.replace("-", "_"), None)
             if method:
                 method()
             else:
