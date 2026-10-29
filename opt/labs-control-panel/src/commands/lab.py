@@ -460,17 +460,49 @@ class LabCmd(Command):
                 except Exception:
                     pass
 
-            claimed = docker_ip_col.find_one_and_update(
-                {"status": "available"},
-                {"$set": {
-                    "status": "claimed",
-                    "instance_hash": instance_id,
-                    "user": username,
-                    "claimed_at": time.time(),
-                }},
-                sort=[("octet", 1)],
-                return_document=True,
+            # The registry may still hold rows from an older docker_ip prefix
+            # (e.g. after labs_bridge was recreated with a different subnet).
+            # Validate every claim against the CURRENT prefix and the network's
+            # live subnets; retire mismatches and retry before giving up.
+            code, ipam_out = self.run(
+                f"docker network inspect {docker_network} "
+                f"-f '{{{{range .IPAM.Config}}}}{{{{.Subnet}}}} {{{{end}}}}' 2>/dev/null",
+                capture=True
             )
+            subnets = set((ipam_out or "").split())
+
+            def _ip_ok(ip):
+                if not str(ip).startswith(self.cfg.docker_ip):
+                    return False
+                if not subnets:
+                    return True
+                import ipaddress
+                addr = ipaddress.ip_address(ip)
+                return any(addr in ipaddress.ip_network(s) for s in subnets)
+
+            claimed = None
+            for _attempt in range(5):
+                row = docker_ip_col.find_one_and_update(
+                    {"status": "available"},
+                    {"$set": {
+                        "status": "claimed",
+                        "instance_hash": instance_id,
+                        "user": username,
+                        "claimed_at": time.time(),
+                    }},
+                    sort=[("octet", 1)],
+                    return_document=True,
+                )
+                if row is None:
+                    break
+                if _ip_ok(row.get("ip")):
+                    claimed = row
+                    break
+                self.log(f"Retiring stale Docker IP {row.get('ip')} (current prefix {self.cfg.docker_ip}, subnets: {', '.join(sorted(subnets))})...")
+                docker_ip_col.update_one(
+                    {"_id": row["_id"]},
+                    {"$set": {"status": "retired", "instance_hash": "", "user": ""}},
+                )
             if claimed:
                 docker_ip = claimed["ip"]
                 self._set_deploy_field(instance_id, "docker_ip", docker_ip)
@@ -773,7 +805,7 @@ grep -q "{vpn_domain}" /etc/hosts || echo "{tunnel_gw_internal} {vpn_domain}" >>
             return out
 
         services_spec = lab_spec.get("services", {})
-        base_domain = self.cfg.instance_domain_zone
+        base_domain = self.cfg.default_code_server_domain
         db_domain = lab_data.get("code_domain")
         db_gui_domain = lab_data.get("gui_domain")
         vsc_domain = getattr(args, 'vsc_domain', None) if args else None

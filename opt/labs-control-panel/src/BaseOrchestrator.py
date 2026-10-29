@@ -165,7 +165,7 @@ class BaseOrchestrator:
     def _reload_traefik(self):
         """Pick up new/changed router files.
 
-        /etc/traefik (incl. dynamic_conf) is a host bind-mount, so Traefik's
+        /etc/traefik (incl. dynamic) is a host bind-mount, so Traefik's
         file-provider inotify watch never fires for files written from inside
         this container — a restart is the only reliable way to load changes.
         Best-effort: never fail the caller if systemctl is unavailable.
@@ -176,7 +176,7 @@ class BaseOrchestrator:
 
     def write_traefik_config(self, instance_id, config_content):
         """Writes a Traefik YAML from a string."""
-        traefik_conf_dir = self.config.get('traefik_conf_dir', '/etc/traefik/dynamic_conf')
+        traefik_conf_dir = self.config.get('traefik_conf_dir', '/etc/traefik/dynamic')
         traefik_file_path = os.path.join(traefik_conf_dir, f"{instance_id}.yml")
         try:
             previous = None
@@ -201,7 +201,7 @@ class BaseOrchestrator:
 
     def remove_traefik_config(self, instance_id):
         """Removes Traefik YAML file."""
-        traefik_conf_dir = self.config.get('traefik_conf_dir', '/etc/traefik/dynamic_conf')
+        traefik_conf_dir = self.config.get('traefik_conf_dir', '/etc/traefik/dynamic')
         traefik_file_path = os.path.join(traefik_conf_dir, f"{instance_id}.yml")
         if os.path.exists(traefik_file_path):
             try:

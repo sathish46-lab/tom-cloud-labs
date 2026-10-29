@@ -10,8 +10,8 @@ require_once __DIR__ . '/../../../src/load.php';
 header('Content-Type: text/html; charset=utf-8');
 header('X-Error-Page: true');
 
-$domain = $_SERVER['HTTP_HOST'] ?? '';
-$backendStatus = $_GET['backend_status'] ?? '502';
+$domain = $_SERVER['HTTP_X_LAB_DOMAIN'] ?? $_SERVER['HTTP_HOST'] ?? '';
+$backendStatus = $_GET['backend_status'] ?? ($_SERVER['HTTP_X_LAB_STATUS'] ?? '404');
 
 if (empty($domain)) {
     serveDefaultPage($backendStatus);
@@ -32,6 +32,7 @@ try {
     
     if ($inst && !empty($inst['custom_error_page'])) {
         // Serve user's custom error page
+        http_response_code((int)$backendStatus);
         echo $inst['custom_error_page'];
     } else {
         serveDefaultPage($backendStatus);
@@ -42,11 +43,19 @@ try {
 
 function serveDefaultPage($statusCode = '502') {
     $statusText = match($statusCode) {
+        '404' => 'Not Found',
         '502' => 'Bad Gateway',
         '503' => 'Service Unavailable',
         '504' => 'Gateway Timeout',
         default => 'Service Unavailable'
     };
+    http_response_code((int)$statusCode);
+    $badge = $statusCode === '404'
+        ? 'This domain is not associated with any lab'
+        : 'Your lab is currently starting or offline';
+    $message = $statusCode === '404'
+        ? "The domain you're trying to reach is not linked to any lab instance on Tom Labs. If you own a lab, deploy it and attach this domain from your lab's Domains page."
+        : "The service you're trying to reach is not responding. This usually means the lab instance is being deployed, restarted, or has been stopped.";
     ?>
     <!DOCTYPE html>
     <html lang="en">
@@ -72,8 +81,8 @@ function serveDefaultPage($statusCode = '502') {
         <div class="c">
             <div class="sc"><?= $statusCode ?></div>
             <h1 class="t"><?= $statusText ?></h1>
-            <div class="sb"><span class="sd"></span> Your lab is currently starting or offline</div>
-            <p class="m">The service you're trying to reach is not responding. This usually means the lab instance is being deployed, restarted, or has been stopped.</p>
+            <div class="sb"><span class="sd"></span> <?= $badge ?></div>
+            <p class="m"><?= $message ?></p>
             <p class="m">Try refreshing in a few moments. If the problem persists, check your lab status from the dashboard.</p>
             <div class="b">Powered by <a href="https://tomlabs.in">Tom Labs</a></div>
         </div>

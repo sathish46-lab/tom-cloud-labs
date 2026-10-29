@@ -25,7 +25,7 @@ def code_domain(cfg, instance_id, lab_data=None, override=None):
     chosen = (lab_data.get("code_domain") or "").strip()
     if chosen:
         return chosen
-    return f"code-{instance_id}.{cfg.instance_domain_zone}"
+    return f"code-{instance_id}.{cfg.default_code_server_domain}"
 
 
 def gui_domain(cfg, instance_id, lab_data=None, override=None):
@@ -36,12 +36,12 @@ def gui_domain(cfg, instance_id, lab_data=None, override=None):
     chosen = (lab_data.get("gui_domain") or "").strip()
     if chosen:
         return chosen
-    return f"gui-{instance_id}.{cfg.instance_domain_zone}"
+    return f"gui-{instance_id}.{cfg.default_code_server_domain}"
 
 
 def service_domain(cfg, instance_id, prefix):
     """Hostname of an auxiliary service (n8n-, s3-, api-)."""
-    return f"{prefix}{instance_id}.{cfg.instance_domain_zone}"
+    return f"{prefix}{instance_id}.{cfg.default_code_server_domain}"
 
 
 def url(cfg, host):

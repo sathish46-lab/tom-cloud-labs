@@ -125,7 +125,7 @@ class Config:
 
     @property
     def traefik_conf_dir(self):
-        return self.get('traefik_conf_dir', '/etc/traefik/dynamic_conf')
+        return self.get('traefik_conf_dir', '/etc/traefik/dynamic')
 
     @property
     def code_domain(self):
@@ -136,16 +136,19 @@ class Config:
         return os.environ.get('CODE_URL_SCHEME', self.env('code_url_scheme', 'https'))
 
     @property
-    def instance_domain_zone(self):
+    def default_code_server_domain(self):
         """Base domain the instance hostnames live under (e.g. tomweb.shop).
 
+        Legacy key name: instance_domain_zone (still honoured as fallback).
         Deliberately separate from code_domain, which names the platform's own
         Code service host (env var CODE_DOMAIN) — using that value here built
         instance hostnames under the wrong zone.
         """
         return os.environ.get(
-            'INSTANCE_DOMAIN_ZONE',
-            self.env('instance_domain_zone', self.get('code_domain', 'tomweb.fun'))
+            'DEFAULT_CODE_SERVER_DOMAIN',
+            self.env('default_code_server_domain',
+                self.env('instance_domain_zone',
+                    self.get('code_domain', 'tomweb.fun')))
         )
 
     @property

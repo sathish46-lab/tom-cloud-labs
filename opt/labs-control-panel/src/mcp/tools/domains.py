@@ -727,13 +727,13 @@ async def connect_info(ctx: Context) -> dict[str, Any]:
     return json_response({
         "ingress": {"ipv4": ip},
         "zones": {
-            "instance_domain_zone": cfg.instance_domain_zone,
+            "default_code_server_domain": cfg.default_code_server_domain,
             "code_domain": cfg.code_domain,
             "tom_domains": list(AVAILABLE_TOM_DOMAINS),
         },
         "dns": {
             "a_record_hint": f"A  @  {ip}",
-            "cname_hint": f"CNAME  <sub>  {cfg.instance_domain_zone}",
+            "cname_hint": f"CNAME  <sub>  {cfg.default_code_server_domain}",
         },
         "vpn_domain": getattr(cfg, "vpn_domain", None),
     })

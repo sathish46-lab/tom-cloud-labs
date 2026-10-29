@@ -94,7 +94,10 @@ class LabUrl
         }
 
         if (function_exists('get_config')) {
-            $zone = get_config('instance_domain_zone');
+            $zone = get_config('default_code_server_domain');
+            if (!is_string($zone) || trim($zone) === '') {
+                $zone = get_config('instance_domain_zone');
+            }
             if (is_string($zone) && trim($zone) !== '') {
                 return trim($zone);
             }

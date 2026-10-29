@@ -142,7 +142,7 @@ class Lab(BaseOrchestrator):
     def generate_traefik_config(self, instance_id, docker_ip, lab_spec, lab_data):
         """Build Traefik config from template services definition."""
         services_spec = lab_spec.get('services', {})
-        base_domain = self.cfg.instance_domain_zone
+        base_domain = self.cfg.default_code_server_domain
 
         # TLS on/off (config.json tls_enabled). Dev=false → plain-HTTP routers.
         # Prod=true → TWO routers per rule: plain `[web]` (the Cloudflare tunnel
@@ -497,7 +497,7 @@ class Lab(BaseOrchestrator):
             # Sanitize inputs
             if custom_n8n and (custom_n8n == 'default_n8n' or 'default' in custom_n8n):
                 custom_n8n = None
-            base_domain = self.cfg.instance_domain_zone
+            base_domain = self.cfg.default_code_server_domain
             selected_n8n_domain = custom_n8n if custom_n8n else f"n8n-{instance_id}.{base_domain}"
 
         # Pass email to linkuser.sh (8th argument)
@@ -549,7 +549,7 @@ class Lab(BaseOrchestrator):
         # Phase 9: METADATA
         self.log("[*] Finalizing routing metadata...", "info", "metadata")
         
-        base_domain = self.cfg.instance_domain_zone
+        base_domain = self.cfg.default_code_server_domain
         selected_code_domain = resolve_code_domain(self.cfg, instance_id, lab_data, self.args.getFlagValue('vsc_domain'))
         code_server_url = build_url(self.cfg, selected_code_domain)
         
@@ -609,6 +609,38 @@ class Lab(BaseOrchestrator):
         self.log(f"Access URL: {code_server_url}", "info", "done")
         self.log(f"VPN Access: ssh {username}@{tunnel_ip}", "info", "done")
 
+    def generate_down_traefik_config(self, instance_id, lab_data):
+        """Down-state Traefik config: route every lab hostname to the branded
+        error page instead of dropping the route, so stopped labs still answer
+        with their custom_error_page (or the platform default) instead of a
+        plain Traefik 404. Shared middlewares (lab-errors, lab-errors-host,
+        lab-errors-status) live in the main dynamic config file."""
+        domains = []
+        if lab_data.get('code_domain'):
+            domains.append(lab_data['code_domain'])
+        if lab_data.get('gui_domain'):
+            domains.append(lab_data['gui_domain'])
+        domains.extend([d for d in lab_data.get('domains', []) if d])
+        for proxy in lab_data.get('http_proxies', []):
+            if proxy.get('domain'):
+                domains.append(proxy['domain'])
+        domains = list(dict.fromkeys(domains))
+        if not domains:
+            return None
+
+        rules = " || ".join(f"Host(`{d}`)" for d in domains)
+        mw = "lab-errors@file, lab-errors-host@file, lab-errors-status@file, lab-domain-%s@file" % instance_id
+        out = "http:\n  middlewares:\n"
+        out += "    lab-domain-%s:\n      headers:\n        customRequestHeaders:\n          X-Lab-Domain: \"%s\"\n" % (
+            instance_id, domains[0])
+        out += "  routers:\n"
+        out += "    router-%s-down:\n      rule: \"%s\"\n      entryPoints: [web]\n      service: apache-service\n      priority: 100\n      middlewares: [%s]\n" % (
+            instance_id, rules, mw)
+        if bool(self.config.get('tls_enabled', True)):
+            out += "    router-%s-down-tls:\n      rule: \"%s\"\n      entryPoints: [websecure]\n      tls: {}\n      service: apache-service\n      priority: 100\n      middlewares: [%s]\n" % (
+                instance_id, rules, mw)
+        return out
+
     def stop(self):
         """Stop container and clean up runtime networking without releasing the IP pool."""
         lab_name = self.session_hash
@@ -631,7 +663,12 @@ class Lab(BaseOrchestrator):
             self._set_deploy_field(lab_name, "status", "stopped")
             self.log("Container and process-space cleared.", "success", "cleanup")
 
-        self.remove_traefik_config(lab_name)
+        down_cfg = self.generate_down_traefik_config(lab_name, lab_data)
+        if down_cfg:
+            self.log("Routing lab domains to the branded error page...", "info", "traefik")
+            self.write_traefik_config(lab_name, down_cfg)
+        else:
+            self.remove_traefik_config(lab_name)
         self.log(f"Lab {lab_name} is now offline. IP remains reserved.", "success", "done")
 
     def start(self):
@@ -687,6 +724,7 @@ class Lab(BaseOrchestrator):
     def remove(self):
         """Remove a container completely"""
         self.stop()
+        self.remove_traefik_config(self.session_hash)
 
     def shell(self):
         """Drop into a container shell"""
@@ -902,7 +940,7 @@ done
             lab_spec = json.load(f)
         
         yaml_content = self.generate_traefik_config(instance_hash, docker_ip, lab_spec, lab_data)
-        traefik_conf_path = f"/etc/traefik/dynamic_conf/{instance_hash}.yml"
+        traefik_conf_path = f"/etc/traefik/dynamic/{instance_hash}.yml"
         
         with open(traefik_conf_path, 'w') as f:
             f.write(yaml_content)

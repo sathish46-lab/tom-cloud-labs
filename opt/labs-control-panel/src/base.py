@@ -211,7 +211,7 @@ class Base:
     def _reload_traefik(self):
         """Pick up new/changed router files.
 
-        /etc/traefik (including dynamic_conf) is a host bind-mount, so
+        /etc/traefik (including dynamic) is a host bind-mount, so
         Traefik's file-provider inotify watch never fires for files written
         from inside this container — a restart is the only reliable way to
         load changes. Best-effort: on failure routing keeps whatever set was
