@@ -453,23 +453,66 @@ class LabCmd(Command):
 
         if docker_ip_col is not None:
             docker_ip_col.create_index("octet", unique=True, background=True)
-            if docker_ip_col.count_documents({}) == 0:
-                bulk = [{"octet": i, "ip": self.cfg.docker_ip + str(i), "status": "available"} for i in range(3, 255)]
+            # Top up the pool for the current prefix: rows retired from an old
+            # prefix leave holes, and an all-stale collection must not deadlock
+            # deploys. Missing octets are inserted with the live docker_ip.
+            have = {r.get("octet") for r in docker_ip_col.find({}, {"octet": 1})}
+            missing = [{"octet": i, "ip": self.cfg.docker_ip + str(i), "status": "available"}
+                       for i in range(3, 255) if i not in have]
+            if missing:
                 try:
-                    docker_ip_col.insert_many(bulk, ordered=False)
+                    docker_ip_col.insert_many(missing, ordered=False)
                 except Exception:
                     pass
 
-            # The registry may still hold rows from an older docker_ip prefix
-            # (e.g. after labs_bridge was recreated with a different subnet).
-            # Validate every claim against the CURRENT prefix and the network's
-            # live subnets; retire mismatches and retry before giving up.
+            # The registry may hold rows from an older docker_ip prefix (e.g.
+            # after the docker network was recreated with a different subnet).
+            # Rewrite stale available rows IN PLACE to the current prefix, and
+            # release stale claims from dead deploys, so the pool never dries.
+            # Each claim is still validated against the live subnets; a claim
+            # that raced or mismatched is retired and retried before failing.
+            import re
+            stale_ip = {"$not": {"$regex": "^" + re.escape(self.cfg.docker_ip)}}
+            fix_ip = [{"$set": {"ip": {"$concat": [self.cfg.docker_ip, {"$toString": "$octet"}]}}}]
+            docker_ip_col.update_many({"status": "available", "ip": stale_ip}, fix_ip)
+            docker_ip_col.update_many(
+                {"status": "claimed",
+                 "claimed_at": {"$lt": time.time() - 3600},
+                 "ip": stale_ip},
+                [{"$set": {"status": "available", "instance_hash": "", "user": "",
+                           "ip": {"$concat": [self.cfg.docker_ip, {"$toString": "$octet"}]}}}],
+            )
+            docker_ip_col.update_many({"status": "available", "ip": ""}, fix_ip)
             code, ipam_out = self.run(
                 f"docker network inspect {docker_network} "
                 f"-f '{{{{range .IPAM.Config}}}}{{{{.Subnet}}}} {{{{end}}}}' 2>/dev/null",
                 capture=True
             )
             subnets = set((ipam_out or "").split())
+
+            # Reserve octets actually used by live containers on the network
+            # (gateway, the orchestrator itself, other engines' labs -- these
+            # share the same daemon in this setup). Matches are re-released
+            # when the container is gone, so this stays self-healing.
+            code, used_out = self.run(
+                f"docker network inspect {docker_network} "
+                f"-f '{{{{range .Containers}}}}{{{{.IPv4Address}}}} {{{{end}}}}' 2>/dev/null",
+                capture=True
+            )
+            used_octets = {1, 2}
+            for addr in (used_out or "").split():
+                try:
+                    used_octets.add(int(addr.rsplit(".", 1)[1].split("/")[0]))
+                except (ValueError, IndexError):
+                    pass
+            docker_ip_col.update_many(
+                {"octet": {"$in": sorted(used_octets)}, "status": "available"},
+                {"$set": {"status": "reserved"}},
+            )
+            docker_ip_col.update_many(
+                {"octet": {"$nin": sorted(used_octets)}, "status": "reserved"},
+                {"$set": {"status": "available"}},
+            )
 
             def _ip_ok(ip):
                 if not str(ip).startswith(self.cfg.docker_ip):
