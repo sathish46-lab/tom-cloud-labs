@@ -9,6 +9,7 @@ import shlex
 from pymongo import MongoClient
 from src.BaseOrchestrator import BaseOrchestrator
 from src.laburls import code_domain as resolve_code_domain, gui_domain as resolve_gui_domain, url as build_url
+from src.base import build_down_traefik_config
 
 class Lab(BaseOrchestrator):
     def __init__(self, args, session_hash=None, is_instance=False):
@@ -610,36 +611,10 @@ class Lab(BaseOrchestrator):
         self.log(f"VPN Access: ssh {username}@{tunnel_ip}", "info", "done")
 
     def generate_down_traefik_config(self, instance_id, lab_data):
-        """Down-state Traefik config: route every lab hostname to the branded
-        error page instead of dropping the route, so stopped labs still answer
-        with their custom_error_page (or the platform default) instead of a
-        plain Traefik 404. Shared middlewares (lab-errors, lab-errors-host,
-        lab-errors-status) live in the main dynamic config file."""
-        domains = []
-        if lab_data.get('code_domain'):
-            domains.append(lab_data['code_domain'])
-        if lab_data.get('gui_domain'):
-            domains.append(lab_data['gui_domain'])
-        domains.extend([d for d in lab_data.get('domains', []) if d])
-        for proxy in lab_data.get('http_proxies', []):
-            if proxy.get('domain'):
-                domains.append(proxy['domain'])
-        domains = list(dict.fromkeys(domains))
-        if not domains:
-            return None
-
-        rules = " || ".join(f"Host(`{d}`)" for d in domains)
-        mw = "lab-errors@file, lab-errors-host@file, lab-errors-status@file, lab-domain-%s@file" % instance_id
-        out = "http:\n  middlewares:\n"
-        out += "    lab-domain-%s:\n      headers:\n        customRequestHeaders:\n          X-Lab-Domain: \"%s\"\n" % (
-            instance_id, domains[0])
-        out += "  routers:\n"
-        out += "    router-%s-down:\n      rule: \"%s\"\n      entryPoints: [web]\n      service: apache-service\n      priority: 100\n      middlewares: [%s]\n" % (
-            instance_id, rules, mw)
-        if bool(self.config.get('tls_enabled', True)):
-            out += "    router-%s-down-tls:\n      rule: \"%s\"\n      entryPoints: [websecure]\n      tls: {}\n      service: apache-service\n      priority: 100\n      middlewares: [%s]\n" % (
-                instance_id, rules, mw)
-        return out
+        """Down-state routing (branded error page) for stopped labs.
+        See src/base.py:build_down_traefik_config — single source of truth."""
+        return build_down_traefik_config(
+            instance_id, lab_data, bool(self.config.get('tls_enabled', True)))
 
     def stop(self):
         """Stop container and clean up runtime networking without releasing the IP pool."""

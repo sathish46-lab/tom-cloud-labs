@@ -1192,7 +1192,12 @@ done
         else:
             self.log("No container found, skipping stop.")
 
-        self.remove_traefik(instance_id)
+        down_cfg = self.generate_down_traefik_config(instance_id, lab_data)
+        if down_cfg:
+            self.log("Routing lab domains to the branded error page...")
+            self.write_traefik(instance_id, down_cfg)
+        else:
+            self.remove_traefik(instance_id)
         self.remove_apache_routes(instance_id)
         self.log(f"Lab {instance_id} is now offline. IP remains reserved.", "success")
 

@@ -44,7 +44,7 @@ services:
       - ./tomlabs/storage:/var/tomlabs/storage
     networks:
       tomlabs_dev_net: {}
-      labs_bridge: {}
+      labs_frontend: {}
       dev_lab_frontend:
         aliases:
           - mysql.tomweb.in
@@ -112,6 +112,9 @@ networks:
     driver: bridge
   labs_bridge:
     name: labs_bridge
+    external: true
+  labs_frontend:
+    name: labs_frontend
     external: true
   dev_lab_frontend:
     name: dev_lab_frontend
