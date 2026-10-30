@@ -38,11 +38,13 @@
                             if ($status === 'running') $badgeClass = 'bg-success';
                             elseif ($status === 'paused') $badgeClass = 'bg-warning';
                             elseif ($status === 'deploying') $badgeClass = 'bg-info';
+                            $statusLabel = strtoupper(str_replace('_', ' ', $status));
+                            if ($status === 'not_deployed') $statusLabel = 'NOT RUNNING';
                             $shareUrl = "https://" . $_SERVER['HTTP_HOST'] . "/labs/dashboard/" . $labType;
                         ?>
                         <span class="badge bg-primary rounded-pill">beta</span>
                         <span class="badge bg-warning rounded-pill">public</span>
-                        <span class="badge <?= $badgeClass ?> rounded-pill"><?= $status === 'not_deployed' ? 'NOT RUNNING' : strtoupper($status) ?></span>
+                        <span class="badge <?= $badgeClass ?> rounded-pill"><?= $statusLabel ?></span>
                         <span class="text-body-secondary mx-1">&middot;</span>
                         <span class="text-body-secondary">
                             Instance <code><?= substr($fullHash, 0, 6) ?>…</code>
@@ -109,6 +111,16 @@
                         <button id="btn-deploy-action" class="btn btn-lab-deploy"
                                 onclick="handleDeploy(this, '<?= $labType ?>')"
                                 data-tooltip="Redeploy for a fresh instance"
+                                data-coreui-toggle="loading-button" data-coreui-spinner-type="grow">
+                            <svg class="icon" viewBox="0 0 256 256" width="18" height="18"><use href="/assets/icons/duotone.svg#tom-fiber-new"></use></svg>
+                            <span class="small text-dark">Redeploy</span>
+                        </button>
+
+                    <?php elseif($status === 'need_redeploy'): ?>
+                        <!-- BROKEN (container gone in the backend): Redeploy only -->
+                        <button id="btn-deploy-action" class="btn btn-lab-deploy"
+                                onclick="handleDeploy(this, '<?= $labType ?>')"
+                                data-tooltip="Lab broke in the backend — redeploy to continue"
                                 data-coreui-toggle="loading-button" data-coreui-spinner-type="grow">
                             <svg class="icon" viewBox="0 0 256 256" width="18" height="18"><use href="/assets/icons/duotone.svg#tom-fiber-new"></use></svg>
                             <span class="small text-dark">Redeploy</span>

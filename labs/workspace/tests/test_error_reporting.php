@@ -489,6 +489,9 @@ foreach ($it as $f) {
         // Job records keep the raw text; it is sanitised when the status is read.
         if (strpos($line, 'error_message') !== false || strpos($line, "'$set'") !== false) continue;
         if (strpos($line, 'errors_report(') !== false || strpos($line, 'errors_from_exception(') !== false) continue;
+        // error_log() keeps the detail server-side only — the learner never
+        // sees it in the response body.
+        if (strpos($line, 'error_log(') !== false) continue;
         $leaks[] = basename($f->getPathname()) . ':' . ($i + 1);
     }
 }

@@ -1217,6 +1217,15 @@ done
             f"docker inspect -f '{{{{.State.Status}}}}' {instance_id}", capture=True)
         return out.strip() if code == 0 else ""
 
+    def _mark_unusable(self, instance_id, state):
+        """The DB status lied (usually still 'running'): flip it so the UI
+        shows the NEED REDEPLOY badge instead of letting the user hammer
+        pause/resume/stop on a dead container."""
+        self._set_deploy_field(instance_id, "status", "need_redeploy")
+        self.log(
+            f"[!] Lab container is not active (state: {state or 'missing'}). "
+            "Marking the lab need_redeploy.", "warn")
+
     def _pause(self, args):
         instance_id = args.hash
         if not instance_id:
@@ -1238,8 +1247,10 @@ done
                 sys.exit(1)
             self.log("Container paused.", "success")
         else:
-            self.log(f"Container is {state or 'missing'}; cannot pause. Start it instead.", "error")
-            sys.exit(1)
+            self._mark_unusable(instance_id, state)
+            # rc=3 = lab not usable (exited/missing) — API layer maps this to a
+            # clean lab_broken response instead of leaking engine internals.
+            sys.exit(3)
 
         # A paused container never answers HTTP: Traefik would emit its own
         # 502 and Cloudflare paints its own page over it. Route every lab
@@ -1276,8 +1287,10 @@ done
                 sys.exit(1)
             self.log("Container resumed.", "success")
         else:
-            self.log(f"Container is {state or 'missing'}; cannot resume. Start it instead.", "error")
-            sys.exit(1)
+            self._mark_unusable(instance_id, state)
+            # rc=3 = lab not usable (exited/missing) — API layer maps this to a
+            # clean lab_broken response instead of leaking engine internals.
+            sys.exit(3)
 
         # Restore upstream routing — swap the down-state yml (written by
         # pause) back for the real lab config, same as lab start does.
