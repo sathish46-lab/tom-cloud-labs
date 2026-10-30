@@ -88,7 +88,12 @@
         'expose_web' => $labData['expose_web'] ?? [],
         'http_proxies' => $labData['http_proxies'] ?? [],
     ];
-    $labConfig = \TomLabs\Labs\LabTemplateConfig::getTemplate($labType, $configData, $currentUsername);
+    
+    // Code-server is on-demand: show its URL only while it is actually
+    // running ("Not running" otherwise). Container down means the IDE is
+    // down for sure, so skip the engine call completely then.
+    $codeRunning = $isRunning ? \TomLabs\Labs\LabTemplateConfig::codeServerRunning($fullHash, $currentUsername) : false;
+    $labConfig = \TomLabs\Labs\LabTemplateConfig::getTemplate($labType, $configData, $currentUsername, ['code_running' => $codeRunning]);
     $dm = new DomainManager();
     $domainUsageMap = $dm->getDomainUsageMap($user->getUserId());
 

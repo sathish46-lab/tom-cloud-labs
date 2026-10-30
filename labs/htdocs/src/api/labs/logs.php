@@ -47,8 +47,11 @@ try {
         exit(json_encode(['success' => false, 'error' => 'Lab not found']));
     }
 
-    // Ownership (same pattern as code_info.php / connection_info.php)
-    if (($inst['user_id'] ?? null) !== $user->getUserId()) {
+    // Ownership (string-compare across the storage kinds in the wild:
+    // numeric user_id on legacy users/documents, ObjectId on newer ones —
+    // a strict PHP comparison 403s otherwise, breaking log gap-fill).
+    $ownerId = (string)($inst['user_id'] ?? '');
+    if ($ownerId === '' || $ownerId !== (string)$user->getUserId()) {
         http_response_code(403);
         exit(json_encode(['success' => false, 'error' => 'Access denied']));
     }

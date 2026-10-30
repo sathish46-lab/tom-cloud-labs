@@ -32,6 +32,33 @@ const Dashboard = {
   logSeq: {},
   logGap: { fetching: false, pending: [] },
 
+  /**
+   * Per-run "gap state" — the highest log seq this browser has RENDERED for
+   * this lab's run, persisted in sessionStorage so it survives reloads (but
+   * dies with the tab, unlike localStorage — closes tabs get a fresh view).
+   * Gap-fill fetches only the lines after this mark: exactly the lines
+   * missed while the socket was down, never a replay of the whole run.
+   */
+  gapStateKey: () => "tomlab.gapfill." + (window.SESSION_HASH || ""),
+
+  gapStateLoad: function () {
+    try {
+      const raw = sessionStorage.getItem(this.gapStateKey());
+      if (!raw) return null;
+      const st = JSON.parse(raw);
+      return st && typeof st.seq === "number" ? st : null;
+    } catch (_) { return null; }
+  },
+
+  gapStateSave: function (run, seq) {
+    if (typeof seq !== "number") return;
+    try {
+      const prev = this.gapStateLoad();
+      if (prev && prev.seq > seq && prev.run === run) return;
+      sessionStorage.setItem(this.gapStateKey(), JSON.stringify({ run: String(run || ""), seq: seq }));
+    } catch (_) { /* sessionStorage full/blocked — degrade to replay-all */ }
+  },
+
   /* ========================================================================
    * INITIALIZATION
    * ====================================================================== */
@@ -781,7 +808,15 @@ const Dashboard = {
         Dashboard.logGap.pending.push(data);
         return;
       }
+      // Cross-session watermark: a line ≤ the mark this browser already saw
+      // (survives reloads) is history — past page sessions rendered it.
+      const saved = Dashboard.gapStateLoad();
+      if (saved && saved.run === seqKey && data.seq <= saved.seq) {
+        Dashboard.logSeq[seqKey] = Math.max(Dashboard.logSeq[seqKey] ?? -1, saved.seq);
+        return;
+      }
       Dashboard.logSeq[seqKey] = data.seq;
+      Dashboard.gapStateSave(seqKey, Math.max(data.seq, saved && saved.run === seqKey ? saved.seq : -1));
     }
 
     // Extract message
@@ -870,7 +905,11 @@ const Dashboard = {
    * Recover log lines missed while the WebSocket was disconnected.
    * Called via LogSocket's onSubscribed — fires on first subscribe AND after
    * every auto-reconnect. STOMP topics have no replay, so we refill from the
-   * per-run file (/var/log/labsctl/runs/<run>.log) through /api/labs/logs.
+   * per-run file (/var/log/labsctl/runs/<run>.log) through /api/labs/logs —
+   * but ONLY the lines after our persisted watermark: a page that watched the
+   * run to the end reloads to an EMPTY terminal (everything was already seen;
+   * seq dedupe handles the overlap), while a viewer who missed chunks mid-run
+   * gets exactly those back.
    * Seq dedupe in appendLog guarantees every line appears exactly once.
    */
   gapFillLogs: async function (hash) {
@@ -879,15 +918,35 @@ const Dashboard = {
     if (Dashboard.logGap.fetching) return;
     Dashboard.logGap.fetching = true;
     try {
+      const saved = this.gapStateLoad();
+      const after = saved ? saved.seq : -1;
+
       const resp = await fetch(
-        `/api/labs/logs?hash=${encodeURIComponent(target)}&after=-1&ts=${Date.now()}`
+        `/api/labs/logs?hash=${encodeURIComponent(target)}&after=${after}&ts=${Date.now()}`
       );
       if (resp.ok) {
         const data = await resp.json();
-        if (data && data.success && data.active && Array.isArray(data.lines)) {
-          for (const l of data.lines) {
-            Dashboard.appendLog({ log: l.log, seq: l.seq, run: data.run_id });
+        if (data && data.success && Array.isArray(data.lines)) {
+          const runKey = String(data.run_id || "");
+          // Different run than the one we watched → the run we saved was not
+          // this file. If it is still active, show it from the top (we never
+          // saw it); if it already finished leave the terminal empty — a
+          // finished run is history, not missed lines.
+          const isSameRun = !saved || saved.run === runKey;
+          const shouldRender = isSameRun || data.active;
+
+          if (shouldRender) {
+            for (const l of data.lines) {
+              Dashboard.appendLog({ log: l.log, seq: l.seq, run: runKey });
+            }
           }
+
+          // Persist what we have now definitively seen: the waterline of the
+          // rendered live seqs for this run, and the file's own last index.
+          const liveMax =
+            (typeof Dashboard.logSeq[runKey] === "number" && Dashboard.logSeq[runKey]) ||
+            (data.last_seq ?? -1);
+          this.gapStateSave(runKey, Math.max(after, liveMax, data.last_seq ?? -1));
         }
       } else {
         console.warn("[Dashboard] log gap-fill HTTP " + resp.status);
@@ -1462,7 +1521,7 @@ async function executePause() {
   }
 
   Dashboard.resetTerminal();
-  Dashboard.appendCommand(`docker pause ${window.SESSION_HASH}`);
+  Dashboard.appendCommand(`labsctl lab pause --hash=${window.SESSION_HASH}`);
   await new Promise((r) => setTimeout(r, 300));
   Dashboard.appendLog("[*] Freezing container processes...");
 
@@ -1479,6 +1538,14 @@ async function executePause() {
       Dashboard.appendLog("[✓] Lab paused. CPU: 0%, Memory: preserved");
       // Reload page after short delay to show paused state
       setTimeout(() => location.reload(), 1500);
+    } else if (data.code === 'lab_broken') {
+      // Backend says the container is gone/exited but the UI said running:
+      // never show engine internals here, just tell the user what to do.
+      Dashboard.appendLog("[!] Lab is not active in the backend.");
+      if (window.TomNotify) {
+        TomNotify.show("Somehow the lab is broken. Redeploy it to continue learning.", "Lab", "danger");
+      }
+      setTimeout(() => location.reload(), 2500);
     } else {
       Dashboard.appendLog(`[!] Error: ${data.error || 'Pause request failed'}`);
       Dashboard.isProcessing = false;
@@ -1532,7 +1599,7 @@ async function executeResume() {
   }
 
   Dashboard.resetTerminal();
-  Dashboard.appendCommand(`docker unpause ${window.SESSION_HASH}`);
+  Dashboard.appendCommand(`labsctl lab resume --hash=${window.SESSION_HASH}`);
   await new Promise((r) => setTimeout(r, 300));
   Dashboard.appendLog("[*] Unfreezing container processes...");
 
@@ -1549,6 +1616,14 @@ async function executeResume() {
       Dashboard.appendLog("[✓] Lab resumed. All systems restored");
       // Reload page after short delay to show running state
       setTimeout(() => location.reload(), 1500);
+    } else if (data.code === 'lab_broken') {
+      // Backend says the container is gone/exited but the UI said paused:
+      // never show engine internals here, just tell the user what to do.
+      Dashboard.appendLog("[!] Lab is not active in the backend.");
+      if (window.TomNotify) {
+        TomNotify.show("Somehow the lab is broken. Redeploy it to continue learning.", "Lab", "danger");
+      }
+      setTimeout(() => location.reload(), 2500);
     } else {
       Dashboard.appendLog(`[!] Error: ${data.error || 'Resume request failed'}`);
       Dashboard.isProcessing = false;

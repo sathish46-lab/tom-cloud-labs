@@ -104,7 +104,12 @@
     if (empty($configData['instance_hash'])) {
         $configData['instance_hash'] = $fullHash;
     }
-    $labConfig = \TomLabs\Labs\LabTemplateConfig::getTemplate($labType, $configData, $currentUsername);
+    
+    // Code-server is on-demand: show its URL only while it is actually
+    // running ("Not running" otherwise). Container down means the IDE is
+    // down for sure, so skip the engine call completely then.
+    $codeRunning = $isRunning ? \TomLabs\Labs\LabTemplateConfig::codeServerRunning($fullHash, $currentUsername) : false;
+    $labConfig = \TomLabs\Labs\LabTemplateConfig::getTemplate($labType, $configData, $currentUsername, ['code_running' => $codeRunning]);
     
     // REUSABLE: Get domain usage map from DomainManager (works for ALL lab types)
     $dm = new DomainManager();
@@ -141,7 +146,10 @@
 ?>
 
 <script>
-    window.CODE_SERVER_URL = "<?= \TomLabs\Labs\LabUrl::ideUrl((array)$configData) ?>";
+    // On-demand IDE: when code-server is not running, the launch flow
+    // (lab.js launchCodeIDE) re-checks status and gets a fresh URL from the
+    // ensure worker — so the static global stays empty instead of a dead link.
+    window.CODE_SERVER_URL = "<?= $codeRunning ? \TomLabs\Labs\LabUrl::ideUrl((array)$configData) : '' ?>";
 </script>
 
 <?php 
@@ -243,6 +251,8 @@
                         Container Load
                         <?php if ($status === 'paused'): ?>
                             <span class="badge bg-warning rounded-pill ms-2">Paused</span>
+                        <?php elseif ($status === 'need_redeploy'): ?>
+                            <span class="badge bg-danger rounded-pill ms-2" data-coreui-toggle="tooltip" data-coreui-placement="top" title="The container is gone in the backend — redeploy to continue.">Lab broken</span>
                         <?php elseif ($isRunning): ?>
                             <span id="badgelive" class="badge bg-danger-gradient rounded-pill ms-2 pulse" data-coreui-toggle="tooltip" data-coreui-placement="top" title="Last Seen: —">Live</span>
                         <?php else: ?>

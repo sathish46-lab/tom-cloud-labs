@@ -8,16 +8,57 @@ namespace TomLabs\Labs;
  * This replaces hardcoded HTML in the dashboard.
  */
 class LabTemplateConfig {
-    
+
+    /**
+     * Ask the engine whether code-server is actually running for this
+     * instance right now. Code-server is on demand — the container being up
+     * says nothing about the IDE process.
+     *
+     * Callers already know when the container itself is down and can skip
+     * this exec entirely (pass code_running=false in the options).
+     */
+    public static function codeServerRunning(string $instanceHash, string $username): bool {
+        if ($instanceHash === '' || $username === '') {
+            return false;
+        }
+
+        $cmd = sprintf(
+            'timeout 15 sudo /usr/bin/python3 /opt/labs-control-panel/labsctl.py lab code-status --user=%s --hash=%s 2>&1',
+            escapeshellarg($username),
+            escapeshellarg($instanceHash)
+        );
+        $output = [];
+        exec($cmd, $output, $exitCode);
+
+        // Parse the last stdout line that looks like our JSON result.
+        foreach (array_reverse($output) as $line) {
+            $line = trim($line);
+            if (strncmp($line, '{', 1) === 0) {
+                $decoded = json_decode($line, true);
+                if (is_array($decoded) && isset($decoded['codeserver_running'])) {
+                    return (bool) $decoded['codeserver_running'];
+                }
+                return false;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Get the template configuration for a specific lab type
-     * 
-     * @param string $labType The ID of the lab (e.g., 'essentials', 'minio')
+     *
+     * @param string $labType The ID of the lab (e.g. 'essentials', 'minio')
      * @param array $labData The deploy subdocument from instances collection
      * @param string|null $currentUser The current session username
+     * @param array|null $options {
+     *     code_running: bool|null — tri-state for the on-demand Code-Server URL.
+     *     true/false = known state (false replaces the URL with "Not running"),
+     *     null (default) = unknown, keep the URL as before.
+     * }
      * @return array Configuration array with 'fields'
      */
-    public static function getTemplate(string $labType, array $labData, ?string $currentUser = null): array {
+    public static function getTemplate(string $labType, array $labData, ?string $currentUser = null, ?array $options = null): array {
         
         $creds = $labData['credentials'] ?? [];
         $internalIp = $labData['internal_ip'] ?? '0.0.0.0';
@@ -80,6 +121,9 @@ class LabTemplateConfig {
 
             case 'gui_essentials':
                 $codeServerUrl = LabUrl::ideUrl($labData);
+                if ($options !== null && array_key_exists('code_running', $options) && $options['code_running'] === false) {
+                    $codeServerUrl = 'Not running';
+                }
                 $guiUrl = LabUrl::guiUrl($labData);
                 $vncPass = $creds['vnc_pass'] ?? $password;
                 $fields = [
@@ -89,7 +133,7 @@ class LabTemplateConfig {
                     ['label' => 'su Password', 'value' => $suPassword, 'type' => 'password', 'copy' => true],
                     ['label' => 'GUI URL', 'value' => $guiUrl, 'type' => 'text', 'copy' => true],
                     ['label' => 'VNC Password', 'value' => $vncPass, 'type' => 'password', 'copy' => true],
-                    ['label' => 'Code-Server URL', 'value' => $codeServerUrl, 'type' => 'text', 'copy' => true],
+                    ['label' => 'Code-Server URL', 'value' => $codeServerUrl, 'type' => 'text', 'copy' => true, 'class' => ($codeServerUrl === 'Not running' ? 'text-body-secondary' : '')],
                     ['label' => 'Code-Server Password', 'value' => $codeServerPass, 'type' => 'password', 'copy' => true],
                 ];
                 break;
@@ -98,12 +142,15 @@ class LabTemplateConfig {
             case 'essentials':
             default:
                 $codeServerUrl = LabUrl::ideUrl($labData);
+                if ($options !== null && array_key_exists('code_running', $options) && $options['code_running'] === false) {
+                    $codeServerUrl = 'Not running';
+                }
                 $fields = [
                     ['label' => 'Device IP', 'value' => $tunnelIp, 'type' => 'text', 'copy' => true],
                     ['label' => 'SSH Command', 'value' => $sshCommand, 'type' => 'text', 'copy' => true, 'mono' => true],
                     ['label' => 'Username', 'value' => $currentUser, 'type' => 'text', 'copy' => true],
                     ['label' => 'su Password', 'value' => $suPassword, 'type' => 'password', 'copy' => true],
-                    ['label' => 'Code-Server URL', 'value' => $codeServerUrl, 'type' => 'text', 'copy' => true],
+                    ['label' => 'Code-Server URL', 'value' => $codeServerUrl, 'type' => 'text', 'copy' => true, 'class' => ($codeServerUrl === 'Not running' ? 'text-body-secondary' : '')],
                     ['label' => 'Code-Server Password', 'value' => $codeServerPass, 'type' => 'password', 'copy' => true],
                 ];
                 break;

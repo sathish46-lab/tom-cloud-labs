@@ -39,7 +39,9 @@ try {
     if (!$inst) {
         throw new Exception('Lab not found');
     }
-    if (($inst['user_id'] ?? null) !== $user->getUserId()) {
+    // String compare across numeric/ObjectId user_id storage kinds (see logs.php).
+    $ownerId = (string)($inst['user_id'] ?? '');
+    if ($ownerId === '' || $ownerId !== (string)$user->getUserId()) {
         http_response_code(403);
         exit(json_encode(['status' => 'error', 'error' => 'Access denied']));
     }

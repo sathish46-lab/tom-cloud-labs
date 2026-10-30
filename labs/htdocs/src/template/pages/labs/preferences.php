@@ -121,7 +121,12 @@
     if (empty($configData['instance_hash'])) {
         $configData['instance_hash'] = $fullHash;
     }
-    $labConfig = \TomLabs\Labs\LabTemplateConfig::getTemplate($labType, $configData, $currentUsername);
+    
+    // Code-server is on-demand: show its URL only while it is actually
+    // running ("Not running" otherwise). Container down means the IDE is
+    // down for sure, so skip the engine call completely then.
+    $codeRunning = $isRunning ? \TomLabs\Labs\LabTemplateConfig::codeServerRunning($fullHash, $currentUsername) : false;
+    $labConfig = \TomLabs\Labs\LabTemplateConfig::getTemplate($labType, $configData, $currentUsername, ['code_running' => $codeRunning]);
     
     // REUSABLE: Get domain usage map from DomainManager (works for ALL lab types)
     $dm = new DomainManager();
@@ -129,7 +134,9 @@
 ?>
 
 <script>
-    window.CODE_SERVER_URL = "<?= \TomLabs\Labs\LabUrl::ideUrl((array)$configData) ?>";
+    // On-demand IDE: gate the static global on the live code-server status
+    // (same pattern as dashboard) so page HTML never carries a dead link.
+    window.CODE_SERVER_URL = "<?= $codeRunning ? \TomLabs\Labs\LabUrl::ideUrl((array)$configData) : '' ?>";
 </script>
 
 <?php 

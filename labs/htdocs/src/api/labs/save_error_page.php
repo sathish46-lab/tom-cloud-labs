@@ -18,7 +18,9 @@ if (empty($hash)) {
 }
 
 $inst = $db->machine_labs->findOne(['instance_hash' => $hash]);
-if (!$inst || ($inst['user_id'] ?? '') !== $user->getUserId()) {
+// String compare across numeric/ObjectId user_id storage kinds (see logs.php).
+$ownerId = $inst ? (string)($inst['user_id'] ?? '') : '';
+if (!$inst || $ownerId === '' || $ownerId !== (string)$user->getUserId()) {
     http_response_code(404);
     exit(json_encode(['error' => 'Lab not found']));
 }

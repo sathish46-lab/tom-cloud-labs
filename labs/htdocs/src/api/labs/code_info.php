@@ -16,7 +16,9 @@ try {
     $inst = $db->machine_labs->findOne(['instance_hash' => $hash]);
 
     if (!$inst) throw new Exception('Lab not found');
-    if (($inst['user_id'] ?? null) !== $user->getUserId()) throw new Exception('Unauthorized');
+    // String compare across numeric/ObjectId user_id storage kinds (see logs.php).
+    $ownerId = (string)($inst['user_id'] ?? '');
+    if ($ownerId === '' || $ownerId !== (string)$user->getUserId()) throw new Exception('Unauthorized');
 
     $labType = $inst['lab_type'] ?? 'essentials';
     $creds = (array)($inst['credentials'] ?? []);
