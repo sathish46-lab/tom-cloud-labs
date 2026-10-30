@@ -143,7 +143,7 @@ RUN printf '%s\n' \
         --basedir=/opt/mariadb-labs/usr --skip-test-db
 
 # 7. Create Directories
-RUN mkdir -p /var/www/labs /var/www/vpn-api /opt/labs-control-panel /etc/traefik/dynamic_conf /etc/wireguard /var/www/adminer
+RUN mkdir -p /var/www/labs /var/www/vpn-api /opt/labs-control-panel /etc/traefik/dynamic /etc/wireguard /var/www/adminer
 
 # Install Adminer
 RUN wget -O /var/www/adminer/index.php https://github.com/vrana/adminer/releases/download/v4.8.1/adminer-4.8.1.php && \
@@ -173,7 +173,7 @@ RUN sed -i 's/MaxRequestWorkers.*/MaxRequestWorkers 400/' /etc/apache2/mods-avai
 
 # Traefik configuration
 RUN touch /etc/traefik/acme.json && chmod 600 /etc/traefik/acme.json
-RUN echo "entryPoints:\n  websecure:\n    address: \":443\"\nproviders:\n  file:\n    directory: \"/etc/traefik/dynamic_conf\"\n    watch: true" > /etc/traefik/traefik.yml
+RUN echo "entryPoints:\n  websecure:\n    address: \":443\"\nproviders:\n  file:\n    directory: \"/etc/traefik/dynamic\"\n    watch: true" > /etc/traefik/traefik.yml
 
 # Traefik Systemd Service
 RUN echo "[Unit]\nDescription=Traefik Edge Router\nAfter=network-online.target\n[Service]\nRestart=on-failure\nExecStart=/usr/local/bin/traefik --configFile=/etc/traefik/traefik.yml\nLimitNOFILE=65536\n[Install]\nWantedBy=multi-user.target" > /etc/systemd/system/traefik.service
