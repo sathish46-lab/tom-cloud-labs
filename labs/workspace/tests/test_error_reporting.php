@@ -79,6 +79,12 @@ test("rate limit maps to busy copy", errors_sanitize('429 RESOURCE_EXHAUSTED: Qu
 test("unmapped text maps to empty string", errors_sanitize('everything is fine') === '');
 test("no API key survives sanitising", strpos(errors_sanitize($rawGemini), 'AIza') === false);
 
+$rawDockerSock = 'Failed to pause container: permission denied while trying to connect '
+    . 'to the docker API at unix:///var/run/docker.sock';
+test("docker socket denial counts as technical", errors_is_technical($rawDockerSock));
+test("docker socket denial is NOT blamed on the AI service",
+    errors_sanitize($rawDockerSock) !== 'The AI service rejected our credentials.');
+
 // ── Report ──
 echo "\n--- Report ---\n";
 

@@ -851,7 +851,7 @@ done
 
         self.log("Starting code-server...", "info", "system")
         
-        user_home = f"/var/labsstorage/home/{username}"
+        user_home = f"/home/{username}"
         config_file = f"{user_home}/.config/code-server/config.yaml"
         log_file = f"{user_home}/.code-server.log"
         
@@ -957,18 +957,21 @@ done
         # 3. Write script to container using base64 (docker cp won't work from orchestrator container)
         b64_content = base64.b64encode(script_content.encode()).decode()
         
-        self.log(f"Injecting script to /var/labsstorage/home/{username}/init.sh...", "info", "system")
-        rc, _ = self.run(f"docker exec {lab_name} bash -c 'echo {b64_content} | base64 -d > /var/labsstorage/home/{username}/init.sh'", capture=True)
+        self.log(f"Injecting script to /home/{username}/init.sh...", "info", "system")
+        # /home/<user> matches the hot path (run-script / apply-preferences).
+        # The old /var/labsstorage/home/<username> target never existed inside
+        # the container, so deploy-time init scripts silently never ran.
+        rc, _ = self.run(f"docker exec {lab_name} bash -c 'mkdir -p /home/{username} && echo {b64_content} | base64 -d > /home/{username}/init.sh'", capture=True)
         if rc != 0:
             self.log("Failed to inject script into container.", "error", "system")
             return
-            
-        self.run(f"docker exec {lab_name} chmod +x /var/labsstorage/home/{username}/init.sh")
-        self.run(f"docker exec {lab_name} chown {username}:{username} /var/labsstorage/home/{username}/init.sh")
-        
+
+        self.run(f"docker exec {lab_name} chmod +x /home/{username}/init.sh")
+        self.run(f"docker exec {lab_name} chown {username}:{username} /home/{username}/init.sh")
+
         self.log("Running script (output below)...", "info", "system")
         # Run inside bash
-        rc, out = self.run(f"docker exec -u {username} {lab_name} bash /var/labsstorage/home/{username}/init.sh", capture=False)
+        rc, out = self.run(f"docker exec -u {username} {lab_name} bash /home/{username}/init.sh", capture=False)
         
         if rc == 0:
             self.log("Script executed successfully.", "success", "system")

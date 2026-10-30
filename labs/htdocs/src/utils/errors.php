@@ -58,7 +58,10 @@ function errors_sanitize(string $raw): string
 {
     $m = strtolower($raw);
 
-    if (preg_match('/api[_ ]?key|api_key_invalid|unauthenticated|permission denied|\b401\b|\b403\b/', $m)) {
+    // "permission denied" is deliberately NOT here: a docker-socket denial or
+    // a filesystem ACL has nothing to do with the AI service. It falls through
+    // to the generic "something went wrong" text below.
+    if (preg_match('/api[_ ]?key|api_key_invalid|unauthenticated|\b401\b|\b403\b/', $m)) {
         return 'The AI service rejected our credentials.';
     }
     if (preg_match('/rate.?limit|quota|too many requests|\b429\b|resource.?exhausted/', $m)) {

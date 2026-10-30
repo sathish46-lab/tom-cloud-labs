@@ -19,7 +19,7 @@ class LabCmd(Command):
 
     name = "lab"
     description = "Base template operations (system only)"
-    usage = "labsctl lab <build|deploy|stop|start|remove|info|generate-keys|sync-user|redeploy|update> [options]"
+    usage = "labsctl lab <build|deploy|stop|start|pause|resume|remove|info|generate-keys|sync-user|redeploy|update> [options]"
 
     def __init__(self, router=None):
         super().__init__()
@@ -27,6 +27,11 @@ class LabCmd(Command):
             "build":        (self._build,        "Build lab image",           "labsctl lab build <name:tag> --no-cache"),
             "deploy":       (self._deploy,       "Deploy lab",                "labsctl lab deploy --hash=HASH --user=USER"),
             "stop":         (self._stop,         "Stop lab",                  "labsctl lab stop --hash=HASH"),
+            "pause":        (self._pause,        "Pause lab (freeze processes)", "labsctl lab pause --hash=HASH"),
+            "resume":       (self._resume,       "Resume paused lab",
+                             "labsctl lab resume --hash=HASH"),
+            "unpause":      (self._resume,       "Resume paused lab",
+                             "labsctl lab resume --hash=HASH"),
             "start":        (self._start,        "Start lab",                 "labsctl lab start --hash=HASH"),
             "remove":       (self._remove,       "Remove lab",                "labsctl lab remove --hash=HASH"),
             "info":         (self._info,         "Show lab info",             "labsctl lab info --hash=HASH"),
@@ -813,6 +818,10 @@ grep -q "{vpn_domain}" /etc/hosts || echo "{tunnel_gw_internal} {vpn_domain}" >>
         # `labsctl lab ensure-codeserver` (via the "Launch Code IDE" button) and is
         # stopped by the idle monitor. Starting it at deploy would defeat on-demand.
 
+        # Phase: INIT SCRIPT — run the user's init_script on every deploy
+        # (same step the legacy Lab.deploy and "Run now" execute).
+        self._run_script_cmd(args)
+
         # Phase: DONE
         self.log("Deployment Complete. Ready for connections.", "success")
         self.log(f"Access URL: {code_domain}")
@@ -1201,6 +1210,100 @@ done
         self.remove_apache_routes(instance_id)
         self.log(f"Lab {instance_id} is now offline. IP remains reserved.", "success")
 
+    # ── Pause / Resume ──────────────────────────────────────────
+
+    def _container_state(self, instance_id):
+        code, out = self.run(
+            f"docker inspect -f '{{{{.State.Status}}}}' {instance_id}", capture=True)
+        return out.strip() if code == 0 else ""
+
+    def _pause(self, args):
+        instance_id = args.hash
+        if not instance_id:
+            self.log("Missing --hash", "error")
+            sys.exit(1)
+
+        lab_data = self._get_deploy_data(instance_id)
+        if not lab_data:
+            self.log("Lab not found in database.", "error")
+            sys.exit(1)
+
+        state = self._container_state(instance_id)
+        if state == "paused":
+            self.log("Container is already paused.", "warn")
+        elif state == "running":
+            self.log("Freezing container processes...")
+            if self.run(f"docker pause {instance_id} 2>&1", capture=True)[0] != 0:
+                self.log("docker pause failed.", "error")
+                sys.exit(1)
+            self.log("Container paused.", "success")
+        else:
+            self.log(f"Container is {state or 'missing'}; cannot pause. Start it instead.", "error")
+            sys.exit(1)
+
+        # A paused container never answers HTTP: Traefik would emit its own
+        # 502 and Cloudflare paints its own page over it. Route every lab
+        # domain to the branded error page while paused (same as stop). The
+        # container keeps its IP so resume is instant.
+        down_cfg = self.generate_down_traefik_config(instance_id, lab_data)
+        if down_cfg:
+            self.log("Routing lab domains to the branded error page...")
+            self.write_traefik(instance_id, down_cfg)
+        else:
+            self.remove_traefik(instance_id)
+
+        self._set_deploy_field(instance_id, "status", "paused")
+        self.log(f"Lab {instance_id} is paused.", "success")
+
+    def _resume(self, args):
+        instance_id = args.hash
+        if not instance_id:
+            self.log("Missing --hash", "error")
+            sys.exit(1)
+
+        lab_data = self._get_deploy_data(instance_id)
+        if not lab_data:
+            self.log("Lab not found in database.", "error")
+            sys.exit(1)
+
+        state = self._container_state(instance_id)
+        if state == "running":
+            self.log("Container is already running.", "warn")
+        elif state == "paused":
+            self.log("Unfreezing container processes...")
+            if self.run(f"docker unpause {instance_id} 2>&1", capture=True)[0] != 0:
+                self.log("docker unpause failed.", "error")
+                sys.exit(1)
+            self.log("Container resumed.", "success")
+        else:
+            self.log(f"Container is {state or 'missing'}; cannot resume. Start it instead.", "error")
+            sys.exit(1)
+
+        # Restore upstream routing — swap the down-state yml (written by
+        # pause) back for the real lab config, same as lab start does.
+        creds = lab_data.get("credentials", {})
+        if not isinstance(creds, dict):
+            creds = {}
+        code, out = self.run(
+            f"docker inspect -f '{{{{range.NetworkSettings.Networks}}}}{{{{.IPAddress}}}}{{{{end}}}}' {instance_id}",
+            capture=True,
+        )
+        docker_ip = out.strip() if code == 0 else ""
+        if docker_ip:
+            template_name = lab_data.get("template_name") or lab_data.get("lab_type")
+            tpl_path = os.path.join(self.cfg.templates_dir, template_name or "", "config.json")
+            if os.path.exists(tpl_path):
+                with open(tpl_path) as f:
+                    lab_spec = json.load(f)
+                yaml = self._gen_traefik(instance_id, docker_ip, lab_spec, lab_data)
+                self.write_traefik(instance_id, yaml)
+                self.log("Traefik configuration written.", "success")
+            else:
+                self.log(f"Missing template config for {template_name}; routing left untouched.", "warn")
+
+        self._set_deploy_field(instance_id, "status", "running")
+        self.log(f"Lab {instance_id} is resumed.", "success")
+
     # ── Start ───────────────────────────────────────────────────
 
     def _start(self, args):
@@ -1225,7 +1328,7 @@ done
             tunnel_ip = creds.get("tunnel_ip")
             docker_ip = creds.get("docker_ip")
             lab_pub_key = creds.get("wg_pubkey")
-            template_name = lab_data.get("template_name")
+            template_name = lab_data.get("template_name") or lab_data.get("lab_type")
 
             if tunnel_ip and lab_pub_key:
                 self.log("Re-applying WireGuard peer...")
@@ -1249,7 +1352,7 @@ done
                     self.log("Traefik configuration written.", "success")
 
         self._set_deploy_field(instance_id, "status", "running")
-        self.log("Lab start sequence complete.", "success")
+        self.log(f"Lab start sequence complete.", "success")
 
     # ── Remove ──────────────────────────────────────────────────
 
