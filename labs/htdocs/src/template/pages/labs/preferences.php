@@ -30,20 +30,11 @@
     $isRunning = ($status === 'running');
     
     // Determine init script path based on lab type
-    $userEmail = $user->getEmail();
-    $userHash = md5($userEmail);
-    $initScriptPath = "/var/labsstorage/home/{$userHash}/init.sh";
+    // The engine injects and runs the script at /home/<user>/init.sh INSIDE
+    // the container (Lab.run_script) — that is the only path that means
+    // anything to the lab user. Never show the host-side staging tree.
+    $initScriptPath = "/home/{$currentUsername}/init.sh";
     $initScriptName = "init.sh";
-    if ($labType === 'minio') {
-        $initScriptPath = "/var/labsstorage/home/{$userHash}/.init/minio.sh";
-        $initScriptName = "minio.sh";
-    } elseif ($labType === 'docker_lab') {
-        $initScriptPath = "/var/labsstorage/home/{$userHash}/.init/docker.sh";
-        $initScriptName = "docker.sh";
-    } elseif ($labType === 'n8n') {
-        $initScriptPath = "/var/labsstorage/home/{$userHash}/.init/n8n.sh";
-        $initScriptName = "n8n.sh";
-    }
 
     // 2. UI CONFIGS
     $uiConfigs = [
