@@ -1031,17 +1031,50 @@ done
 
         # In-container home is /home/<username> (bind-mount of the host storage dir).
         user_home = f"/home/{username}"
-        config_file = f"{user_home}/.config/code-server/config.yaml"
-        log_file = f"{user_home}/.code-server.log"
-        start_cmd = f"nohup code-server --disable-telemetry --disable-update-check --config {config_file} > {log_file} 2>&1 &"
-        docker_cmd = f"docker exec -d -u {username} {instance_id} bash -c '{start_cmd}'"
-        code, _ = self.run(docker_cmd)
+        base_config = f"{user_home}/.config/code-server/config.yaml"
+        instance_config = f"{user_home}/.config/code-server/config-{instance_id}.yaml"
+
+        # Per-instance config (our restartcs-style pattern): strip the password
+        # line out of the base config so a second copy sharing one /home can
+        # never fight over it, then append the CURRENT password, quoted.
+        lab_data = self._get_deploy_data(instance_id) or {}
+        credentials = lab_data.get("credentials") or {}
+        cs_password = (
+            credentials.get("code_server_pass")
+            or lab_data.get("password")
+            or f"{username}@098"
+        )
+        pw_b64 = base64.b64encode(f'password: "{cs_password}"\n'.encode()).decode()
+        prep_cmd = (
+            f"docker exec -u {username} {instance_id} bash -c '"
+            f"mkdir -p {user_home}/.config/code-server && "
+            f"if [ -f {base_config} ]; then "
+            f"sed \"/^password:/d\" {base_config} > {instance_config}; "
+            f"else printf \"bind-addr: 0.0.0.0:8080\\nauth: password\\ncert: false\\n\" > {instance_config}; fi && "
+            f"echo {pw_b64} | base64 -d >> {instance_config}'"
+        )
+        if self.run(prep_cmd, capture=True)[0] != 0:
+            self.log("Failed to prepare per-instance code-server config.", "error")
+            self.run(f"docker exec {instance_id} rm -f {lock_file}")
+            return False
+
+        # Screen session (same contract as our restartcs-style flow): `screen -X -S …
+        # quit` drops a stale session first; `-d -m` detaches so the session
+        # survives this docker exec, and pkill of code-server is cleanly
+        # restartable inside it. --app-name brands the browser tab.
+        start_cmd = (
+            f"screen -X -S codeserver quit >/dev/null 2>&1; "
+            f"screen -d -m -S codeserver code-server "
+            f"--config {instance_config} --bind-addr 0.0.0.0:8080 "
+            f"--app-name \"TomCloud Lab\" --disable-telemetry --disable-update-check"
+        )
+        code, _ = self.run(f"docker exec -d -u {username} {instance_id} bash -c '{start_cmd}'")
         started = False
         if code == 0:
             time.sleep(2)
             code, _ = self.run(check, capture=True)
             if code == 0:
-                self.log("Code-server started successfully.", "success")
+                self.log("Code-server started successfully (screen session).", "success")
                 started = True
             else:
                 self.log("Code-server failed to stay running.", "error")

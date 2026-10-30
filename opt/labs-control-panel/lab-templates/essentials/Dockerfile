@@ -11,8 +11,8 @@ RUN apt-get update && apt-get install -y \
     net-tools procps curl wget ca-certificates \
     apache2 openssh-server build-essential nano htop vim \
     software-properties-common python3-dev stress iputils-ping \
-    speedtest-cli sudo apt-utils \
-    wireguard-tools iproute2 mysql-client \
+    speedtest-cli sudo apt-utils screen \
+    wireguard-tools iproute2 mysql-client jq \
     php php-mysql libapache2-mod-php && \
     update-ca-certificates && \
     rm -rf /var/lib/apt/lists/*

@@ -53,6 +53,51 @@ echo "[✓] System password set"
 # ── 2. SSH Keys ───────────────────────────────────────────────
 USER_HOME="/home/$USER_NAME"
 mkdir -p "$USER_HOME/.ssh"
+
+# ── 2.1. Startup script contract (TomCloud Labs) ─────────────
+# The platform writes the user's init script to /home/<user>/init.sh and runs
+# it as the lab user on demand via Run Startup Script, same as the labs
+# README documents.
+# Give the user their own passwd entry plus a NOPASSWD rule that lets their
+# script elevate itself, and make sure the file pre-exists so the UI's
+# "Edit Startup Script" always has a real file to open.
+printf "#!/bin/bash\n# Runs on demand via Run Startup Script + after every redeploy.\n" > "$USER_HOME/init.sh"
+chmod +x "$USER_HOME/init.sh"
+chown "$USER_NAME":"$USER_NAME" "$USER_HOME/init.sh"
+grep -qE "^${USER_NAME} ALL=\(ALL\) NOPASSWD: /home/${USER_NAME}/init.sh" /etc/sudoers.d/tomlabs-init 2>/dev/null || \
+    printf "Defaults env_keep += \"PYTHONPATH\"\nDefaults env_keep += \"PYTHONUNBUFFERED\"\nDefaults env_keep += \"LD_LIBRARY_PATH\"\n%s ALL=(ALL) NOPASSWD: /home/%s/init.sh\n" "$USER_NAME" "$USER_NAME" > /etc/sudoers.d/tomlabs-init
+chmod 440 /etc/sudoers.d/tomlabs-init
+chown root:root /etc/sudoers.d/tomlabs-init
+
+# ── 2.2. Persistent /usr/local + /var/spool/cron (TomCloud Labs) ──
+# Anything the lab writes into /usr/local (pip installs, VSIX parts, binaries)
+# or in the cron spool is lost on a plain container stop/start without this:
+# only /home/<user> is a bind mount. Proven optimization: keep the data in
+# /var/labsstorage and symlink the system directory onto it. (Note: this
+# survives restarts/redeploys of the container filesystem; our /home bind
+# mount is the only host-persistent path.)
+echo "[*] Durably linking /usr/local and cron spool..."
+if [ ! -d /var/labsstorage/usr ]; then
+    mkdir -p /var/labsstorage/usr
+    cp -r /usr/local/. /var/labsstorage/usr/ 2>/dev/null || true
+fi
+rm -rf /usr/local
+ln -sfn /var/labsstorage/usr /usr/local
+
+if [ ! -d /var/labsstorage/cron ]; then
+    mkdir -p /var/labsstorage/cron
+    cp -r /var/spool/cron/. /var/labsstorage/cron/ 2>/dev/null || true
+fi
+rm -rf /var/spool/cron
+ln -sfn /var/labsstorage/cron /var/spool/cron
+# Some images have no crontab group (cron package absent) — fall back to root.
+if getent group crontab >/dev/null 2>&1; then
+    chown -R root:crontab /var/labsstorage/cron
+else
+    chown -R root:root /var/labsstorage/cron
+fi
+chmod 775 /var/labsstorage/cron
+
 printf "%b" "$PUB_KEYS" > "$USER_HOME/.ssh/authorized_keys"
 chmod 700 "$USER_HOME/.ssh"
 chmod 600 "$USER_HOME/.ssh/authorized_keys"

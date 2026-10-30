@@ -8,6 +8,7 @@ import base64
 import shlex
 from pymongo import MongoClient
 from src.BaseOrchestrator import BaseOrchestrator
+from src.config import Config
 from src.laburls import code_domain as resolve_code_domain, gui_domain as resolve_gui_domain, url as build_url
 from src.base import build_down_traefik_config
 
@@ -15,6 +16,10 @@ class Lab(BaseOrchestrator):
     def __init__(self, args, session_hash=None, is_instance=False):
         super().__init__(args, session_hash)
         self.is_instance = is_instance
+        # Legacy flat commands read attributes through self.cfg (Config: code
+        # domains, url scheme, traefik dir); self.config stays the raw panel
+        # config.json dict for network/ip keys.
+        self.cfg = Config()
         if is_instance and self.db is not None:
             self.instances_col = self.db['machine_labs']
         else:
@@ -600,7 +605,25 @@ class Lab(BaseOrchestrator):
             "status": "running",
             "credentials": credentials,
         })
-        
+
+        # Phase 9.5: LABSCONFIG
+        self.log("[*] Injecting /.labsconfig...", "info", "labsconfig")
+        self._write_labsconfig(
+            instance_id.strip("'"),
+            username.strip("'") if isinstance(username, str) else username,
+            user_email,
+            credentials.get("code_server_pass") or credentials.get("password") or dynamic_pass,
+            su_pass,
+            docker_ip,
+            tunnel_ip,
+            lab_pub_key,
+            mapping["host_name"],
+            code_server_url,
+            storage_path,
+            template_name,
+            lab_name=lab_spec.get("lab_name"),
+        )
+
         # Phase 10: INIT SCRIPT
         self.log("Running init script...", "info", "init_script")
         self.run_script(lab_data=lab_data)
@@ -781,6 +804,61 @@ class Lab(BaseOrchestrator):
         else:
              self.log(f"Storage path {storage_path} does not exist. No labs deployed?", "warn", "system")
 
+    def _write_labsconfig(self, instance_id, username, user_email, cs_pass,
+                          su_pass, docker_ip, tunnel_ip, wg_pubkey, lab_host,
+                          code_server_url, storage_path, template_name,
+                          lab_name=None):
+        """Write /.labsconfig into the container (TomCloud Labs port of the
+        platform-agnostic '/.labsconfig' contract).
+
+        The file is root-owned chmod 600 JSON that templates, labslib.sh and
+        user init scripts can read for instance identity without the platform
+        being reachable. Written AFTER linkuser.sh so the final passwords
+        (staged preferences respected) are what lands in the file.
+
+        Contract consumed by baked /var/labsdata/scripts/labslib.sh:
+          .user -> $LABS_USER, .email/.owner -> $LABS_EMAIL,
+          .cs_password -> $LABS_CSPASSWORD
+        """
+        config = {
+            "instance_id": instance_id,
+            "lab": template_name,
+            "lab_name": lab_name or template_name,
+            "lab_host": lab_host,
+            "internal_domain": lab_host,
+            "user": username,
+            "email": user_email,
+            "owner": user_email,
+            "owner_type": "user",
+            "cs_password": cs_pass,
+            "sudo_password": su_pass,
+            "password": cs_pass,
+            "device_ip": docker_ip,
+            "device_address": tunnel_ip,
+            "device_key": wg_pubkey,
+            "peer_info": {
+                "peer": wg_pubkey,
+                "allowed_ips": f"{tunnel_ip}/32",
+            },
+            "code_server_url": code_server_url,
+            "code_server_port": 8080,
+            "storage_path": storage_path,
+            "env": os.environ.get("TOMLABS_ENV", "beta"),
+            "plan": "default",
+            "created_at": time.time(),
+        }
+        payload = base64.b64encode(json.dumps(config, indent=4).encode()).decode()
+        write_cmd = (
+            f"docker exec {shlex.quote(instance_id)} bash -c "
+            f"'echo {payload} | base64 -d > /.labsconfig && "
+            f"chmod 600 /.labsconfig && chown root:root /.labsconfig'"
+        )
+        code, _ = self.run(write_cmd, capture=True)
+        if code == 0:
+            self.log("Injected /.labsconfig (instance identity).", "success", "labsconfig")
+        else:
+            self.log("WARNING: /.labsconfig injection failed — labslib.sh consumers may stall.", "warn", "labsconfig")
+
     def ensure_codeserver(self):
         """Ensure code-server is running inside the container"""
         lab_name = self.session_hash
@@ -840,7 +918,7 @@ done
         if mcode != 0:
             docker_monitor = f"docker exec -d {lab_name} bash /var/labsdata/scripts/monitor_codeserver.sh {username}"
             self.run(docker_monitor)
-            self.log("Idle monitor started (2min timeout for testing).", "success", "system")
+            self.log("Idle monitor started.", "success", "system")
 
         # 3. Check code-server
         check_cmd = f"docker exec {lab_name} pgrep -u {username} -f code-server"
@@ -850,20 +928,49 @@ done
             return
 
         self.log("Starting code-server...", "info", "system")
-        
+
         user_home = f"/home/{username}"
-        config_file = f"{user_home}/.config/code-server/config.yaml"
-        log_file = f"{user_home}/.code-server.log"
-        
-        start_cmd = f"nohup code-server --disable-telemetry --disable-update-check --config {config_file} > {log_file} 2>&1 &"
-        docker_cmd = f"docker exec -d -u {username} {lab_name} bash -c '{start_cmd}'"
-        
-        code, _ = self.run(docker_cmd)
+        base_config = f"{user_home}/.config/code-server/config.yaml"
+        instance_config = f"{user_home}/.config/code-server/config-{lab_name}.yaml"
+
+        # Per-instance config (our restartcs-style pattern): strip the password
+        # line out of the base config so a second copy sharing one /home can
+        # never fight over it, then append the CURRENT password, quoted.
+        lab_data = self._get_deploy_data(lab_name) or {}
+        credentials = lab_data.get("credentials") or {}
+        cs_password = (
+            credentials.get("code_server_pass")
+            or credentials.get("password")
+            or f"{username}@098"
+        )
+        pw_b64 = base64.b64encode(f'password: "{cs_password}"\n'.encode()).decode()
+        prep_cmd = (
+            f"docker exec -u {username} {lab_name} bash -c '"
+            f"mkdir -p {user_home}/.config/code-server && "
+            f"if [ -f {base_config} ]; then "
+            f"sed \"/^password:/d\" {base_config} > {instance_config}; "
+            f"else printf \"bind-addr: 0.0.0.0:8080\\nauth: password\\ncert: false\\n\" > {instance_config}; fi && "
+            f"echo {pw_b64} | base64 -d >> {instance_config}'"
+        )
+        if self.run(prep_cmd, capture=True)[0] != 0:
+            self.log("Failed to prepare per-instance code-server config.", "error", "system")
+            return
+
+        # Screen session (same contract as our restartcs-style flow): drop a stale
+        # session first, then start detached so it survives this docker exec.
+        # --app-name brands the browser tab (baked host_name branding stays).
+        start_cmd = (
+            f"screen -X -S codeserver quit >/dev/null 2>&1; "
+            f"screen -d -m -S codeserver code-server "
+            f"--config {instance_config} --bind-addr 0.0.0.0:8080 "
+            f"--app-name \"TomCloud Lab\" --disable-telemetry --disable-update-check"
+        )
+        code, _ = self.run(f"docker exec -d -u {username} {lab_name} bash -c '{start_cmd}'")
         if code == 0:
-            time.sleep(2) 
+            time.sleep(2)
             code, _ = self.run(check_cmd, capture=True)
             if code == 0:
-                self.log("Code-server started successfully.", "success", "done")
+                self.log("Code-server started successfully (screen session).", "success", "done")
             else:
                 self.log("Code-server failed to stay running.", "error", "system")
         else:
