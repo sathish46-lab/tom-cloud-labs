@@ -513,6 +513,16 @@ class Lab(BaseOrchestrator):
         # Pass n8n Domain (9th argument) for Webhook URL
         n8n_domain_arg = selected_n8n_domain if selected_n8n_domain else ""
         escaped_auth_content = auth_content.replace('"', '\\"')
+
+        # Refresh scripts shipped by the template Data dir into the running
+        # container before linkuser runs: the image's copy may be stale and
+        # the platform copy is the source of truth for every deploy.
+        host_scripts_dir = os.path.join(self.cfg.templates_dir, template_name, "Data", "scripts")
+        if os.path.isdir(host_scripts_dir):
+            self.run(f"docker exec {instance_id} mkdir -p /var/labsdata/scripts")
+            self.run(f"docker cp {host_scripts_dir}/. {instance_id}:/var/labsdata/scripts/")
+            self.run(f"docker exec {instance_id} find /var/labsdata/scripts -name '*.sh' -exec chmod +x {{}} +")
+
         link_cmd = (
             f'docker exec {instance_id} {link_script} '
             f'{shlex.quote(username)} {shlex.quote(escaped_auth_content)} '
