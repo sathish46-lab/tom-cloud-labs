@@ -28,7 +28,7 @@ $deployments = $db->machine_labs->countDocuments(['user_id' => $userId]);
 $deploymentsLimit = 3;
 
 // ── Storage ──
-$homePath = get_config('storage_base') . "/" . md5($user->getEmail());
+$homePath = storage_base_path() . "/" . md5($user->getEmail());
 $storageUsed = 0;
 $storageLimitGb = 25;
 if (is_dir($homePath)) {

@@ -104,7 +104,7 @@ try {
                 'status'        => 'deploying',
                 'deploy_run_id' => $runId,
                 'created_at'    => time(),
-                'storage_path'  => get_config('storage_base') . "/" . md5($user->getEmail())
+                'storage_path'  => storage_base_path() . "/" . md5($user->getEmail())
             ],
             '$push' => [
                 'activity_log'  => [
@@ -148,7 +148,7 @@ try {
                 'code_domain'  => $code_domain,
                 'gui_domain'   => $gui_domain,
                 'http_proxies' => $httpProxies,
-                'storage_path' => get_config('storage_base') . "/" . md5($user->getEmail()),
+                'storage_path' => storage_base_path() . "/" . md5($user->getEmail()),
                 'internal_ip'  => $internalIp,
                 'docker_ip'    => $dockerIp,
                 'tunnel_ip'    => $internalIp,

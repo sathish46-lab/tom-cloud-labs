@@ -8,7 +8,7 @@ $user = AuthMiddleware::requireAuth();
 
 $username = $user->getUsername();
 $userEmail = $user->getEmail();
-$storageBase = get_config('storage_base') ?: '/var/tomlabs/storage';
+$storageBase = storage_base_path();
 $userHash = md5($userEmail);
 // Scan the hash folder root (contains home/, .ubuntu/, .kali/, usr/, cron/, etc.)
 $userHome = $storageBase . '/' . $userHash;
