@@ -72,6 +72,14 @@ COPY ./Data /var/labsdata
 # TomCloud Lab status-bar stats extension (CPU / memory / net I/O)
 COPY ./code-extensions /var/labsdata/code-extensions
 
+# Storage layout: /home is a symlink onto the per-account storage bind
+# (/var/labsstorage, mounted by labsctl docker run). passwd homes like
+# /home/<user> resolve onto the persistent volume, so user data and the
+# SSH host identity in /var/labsstorage/.ssh_host survive redeploys.
+RUN rm -rf /home && \
+    mkdir -p /var/labsstorage/home /var/labsstorage/usr /var/labsstorage/cron && \
+    ln -s /var/labsstorage/home /home
+
 # Permissions and MOTD setup
 RUN chmod +x /var/labsdata/scripts/* && \
     mkdir -p /etc/update-motd.d/ && \
@@ -80,9 +88,10 @@ RUN chmod +x /var/labsdata/scripts/* && \
     chmod +x /etc/update-motd.d/00-tom-welcome && \
     chmod -R 775 /var/labsstorage
 
-# Identity setup
-RUN cp /var/labsdata/ssh_host_keys/* /etc/ssh/ 2>/dev/null || true && \
-    chmod 600 /etc/ssh/ssh_host* 2>/dev/null || true
+# SSH host identity is created per-account at runtime: entry.sh generates
+# once into /var/labsstorage/.ssh_host (persistent via the storage bind) and
+# restores it to /etc/ssh on every start. No image bake — baked keys would
+# share one fingerprint across tenants and rotate on rebuild.
 EXPOSE 22
 RUN update-rc.d dbus defaults
 

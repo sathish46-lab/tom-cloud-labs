@@ -13,7 +13,7 @@
     "exposed_ports": []
   },
   "storage": {
-    "mount_target": "/home/{user}"
+    "mount_target": "/var/labsstorage"
   },
   "scripts": {
     "linkuser": "/var/labsdata/scripts/linkuser.sh",

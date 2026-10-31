@@ -38,7 +38,8 @@ if ! id "$USER_NAME" &>/dev/null; then
         userdel -rf "$EXISTING_USER" 2>/dev/null || true
         rm -rf "/home/$EXISTING_USER" 2>/dev/null || true
     fi
-    # Ensure /home symlink target exists (Dockerfile creates /home -> /var/labsstorage/home)
+    # /home -> /var/labsstorage/home (entry.sh/Dockerfile); useradd writes
+    # land on the persistent per-account storage volume automatically.
     mkdir -p /var/labsstorage/home
     useradd -m -s /bin/bash -u 1000 "$USER_NAME" || useradd -m -s /bin/bash "$USER_NAME"
     usermod -aG sudo "$USER_NAME"
@@ -71,11 +72,10 @@ chown root:root /etc/sudoers.d/tomlabs-init
 
 # ── 2.2. Persistent /usr/local + /var/spool/cron (TomCloud Labs) ──
 # Anything the lab writes into /usr/local (pip installs, VSIX parts, binaries)
-# or in the cron spool is lost on a plain container stop/start without this:
-# only /home/<user> is a bind mount. Proven optimization: keep the data in
-# /var/labsstorage and symlink the system directory onto it. (Note: this
-# survives restarts/redeploys of the container filesystem; our /home bind
-# mount is the only host-persistent path.)
+# or in the cron spool is kept on the per-account storage volume: the volume
+# root is bound at /var/labsstorage (config.json storage.mount_target) and the
+# system directories are symlinked onto it. Data survives stop/start and
+# redeploys; /home/<user> lives on the same volume (symlinked by entry.sh).
 echo "[*] Durably linking /usr/local and cron spool..."
 if [ ! -d /var/labsstorage/usr ]; then
     mkdir -p /var/labsstorage/usr
@@ -101,7 +101,19 @@ chmod 775 /var/labsstorage/cron
 printf "%b" "$PUB_KEYS" > "$USER_HOME/.ssh/authorized_keys"
 chmod 700 "$USER_HOME/.ssh"
 chmod 600 "$USER_HOME/.ssh/authorized_keys"
+# Home ownership: explicit non-recursive chown first (some file-share backends
+# drop recursive traversal silently late in the walk), then recursive best-effort.
+chown "$USER_NAME":"$USER_NAME" "$USER_HOME" 2>/dev/null || true
 chown -R "$USER_NAME":"$USER_NAME" "$USER_HOME" 2>/dev/null || true
+
+# ── 2.A SSH host identity (single source of truth) ──
+# entry.sh generates the host keys once into /var/labsstorage/.ssh_host
+# (persistent per-account volume) and copies them to /etc/ssh at every boot,
+# restoring whatever identity the account already owns. linkuser must not
+# touch /etc/ssh host keys — two writers rotating the fingerprint is what
+# breaks client known_hosts across redeploys. Keys stay outside the user's
+# home: volume root only, root:root 700.
+echo "[✓] SSH host identity served from /var/labsstorage/.ssh_host (entry.sh)"
 
 sed -i 's/^#\?StrictModes .*/StrictModes no/' /etc/ssh/sshd_config
 # Restart SSH without systemd (service works in containers)
