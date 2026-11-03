@@ -27,32 +27,20 @@ if ($limit < 1 || $limit > 100) {
 }
 
 $fetcher = new \TomLabs\Labs\NewsFetcher();
+// When date_filter is today/yesterday, exclude GitHub Advisories (own tab) unless explicitly selected
+$excludeSource = null;
+if (($date_filter === 'today' || $date_filter === 'yesterday') && empty($source)) {
+    $excludeSource = 'github-advisories';
+}
 // $date_filter ('today'/'yesterday') is pushed into the Mongo query itself so
 // pagination starts inside the requested day — see NewsFetcher::getLatest()
-$list = $fetcher->getLatest($source, $category, $severity, $q, $limit, $skip, $date_filter);
+$list = $fetcher->getLatest($source, $category, $severity, $q, $limit, $skip, $date_filter, $excludeSource);
 
 $total = $list['total'];
 $items = $list['items'];
 
-// When no source filter is selected, group articles by source
-// (all from one source together, then next source)
-$groupBySource = empty($source);
-if ($groupBySource && !empty($items)) {
-    $groupedItems = [];
-    foreach ($items as $item) {
-        $src = $item['source'] ?? 'unknown';
-        if (!isset($groupedItems[$src])) {
-            $groupedItems[$src] = [];
-        }
-        $groupedItems[$src][] = $item;
-    }
-    $items = [];
-    foreach ($groupedItems as $src => $srcItems) {
-        foreach ($srcItems as $item) {
-            $items[] = $item;
-        }
-    }
-}
+// Source grouping removed — items display in DB order (newest first),
+// so sources interleave naturally by published date instead of clumping.
 
 $hasMore = $total > $skip + $limit;
 $nextSkip = $skip + $limit;

@@ -205,7 +205,10 @@ $initialSearch = $_GET['q'] ?? '';
 // Default news tab — per-user preference stored in users.ui_preferences.news_default_tab
 // (chosen over localStorage: it applies server-side on full reload with no JS
 // flash and follows the account across devices). Query string still overrides.
+// Preference value format: "source|date_filter" (e.g. "github-advisories|today" or "|today")
 $newsTab = 'today';
+$newsPrefSource = '';
+$newsPrefDateFilter = '';
 try {
     $sessionUser = $_SESSION['username'] ?? null;
     if ($sessionUser) {
@@ -217,14 +220,38 @@ try {
         $prefs = $userDoc && isset($userDoc['ui_preferences'])
             ? json_decode(json_encode($userDoc['ui_preferences']), true)
             : null;
-        if (is_array($prefs)
-            && in_array($prefs['news_default_tab'] ?? '', ['today', 'yesterday'], true)) {
-            $newsTab = $prefs['news_default_tab'];
+        if (is_array($prefs) && isset($prefs['news_default_tab'])) {
+            $prefVal = (string) $prefs['news_default_tab'];
+            $prefParts = explode('|', $prefVal, 2);
+            $newsPrefSource = $prefParts[0] ?? '';
+            $newsPrefDateFilter = $prefParts[1] ?? '';
+            // Validate date part
+            if (!in_array($newsPrefDateFilter, ['today', 'yesterday', ''], true)) {
+                $newsPrefDateFilter = '';
+            }
+            // Set newsTab for backward-compat (main tabs use it)
+            if ($newsPrefDateFilter === 'today' || $newsPrefDateFilter === 'yesterday') {
+                $newsTab = $newsPrefDateFilter;
+            } elseif ($newsPrefDateFilter === '' && empty($newsPrefSource)) {
+                $newsTab = 'today';
+            }
         }
     }
 } catch (\Throwable $e) { /* preference is optional — fall back to today */ }
+
+// Query string overrides preference
+$initialSource = $_GET['source'] ?? $newsPrefSource;
 $requestedTab = $_GET['date_filter'] ?? '';
-$initialDateFilter = in_array($requestedTab, ['today', 'yesterday'], true) ? $requestedTab : $newsTab;
+
+// Resolve final date_filter
+if ($initialSource === 'github-advisories') {
+    // GitHub tab: Today/Yesterday/All sub-tabs
+    // Default to 'today' when no specific date_filter set
+    $initialDateFilter = in_array($requestedTab, ['today', 'yesterday'], true) ? $requestedTab : ($newsPrefDateFilter ?: 'today');
+} else {
+    // Main tabs: Today/Yesterday only
+    $initialDateFilter = in_array($requestedTab, ['today', 'yesterday'], true) ? $requestedTab : ($newsPrefDateFilter ?: $newsTab);
+}
 ?>
 <style>
 /* Filter block: centered — date tabs on top, dropdowns+search row below */
@@ -272,6 +299,32 @@ $initialDateFilter = in_array($requestedTab, ['today', 'yesterday'], true) ? $re
     background: rgba(var(--cui-body-color-rgb, 255, 255, 255), 0.05);
     color: #fff;
 }
+.github-date-tabs {
+    display: flex;
+    gap: 0.4rem;
+    background: rgba(var(--cui-body-bg-rgb, 33, 37, 41), 0.2);
+    border-radius: 0.6rem;
+    padding: 0.4rem;
+    margin-top: 0.5rem;
+    border: 1px solid rgba(var(--cui-border-color-rgb, 200, 200, 200), 0.15);
+}
+.github-date-tabs .date-tab.btn-sm {
+    padding: 0.35rem 0.8rem;
+    font-size: 0.75rem;
+}
+.github-date-tabs .date-tab.active {
+    background: var(--cui-primary, #0d6efb);
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(13, 110, 251, 0.25);
+}
+.news-card .card-title,
+.news-card .card-title a,
+.news-card .card-title .stretched-link {
+  color: #ffffff !important;
+}
+.news-card .card-title a {
+  text-decoration: none !important;
+}
 </style>
 
 <div class="container-fluid blur px-4">
@@ -297,11 +350,27 @@ $initialDateFilter = in_array($requestedTab, ['today', 'yesterday'], true) ? $re
  <div class="news-filters px-2">
             <!-- Date Filter Tabs - centered on top -->
             <div class="date-filter-tabs">
-                <button type="button" class="date-tab<?= $initialDateFilter === 'today' ? ' active' : '' ?>" id="news-date-filter-today" data-filter="today">
+                <button type="button" class="date-tab<?= $initialDateFilter === 'today' && empty($initialSource) ? ' active' : '' ?>" id="news-date-filter-today" data-filter="today">
                     Today News
                 </button>
-                <button type="button" class="date-tab<?= $initialDateFilter === 'yesterday' ? ' active' : '' ?>" id="news-date-filter-yesterday" data-filter="yesterday">
+                <button type="button" class="date-tab<?= $initialDateFilter === 'yesterday' && empty($initialSource) ? ' active' : '' ?>" id="news-date-filter-yesterday" data-filter="yesterday">
                     Yesterday News
+                </button>
+                <button type="button" class="date-tab<?= $initialSource === 'github-advisories' ? ' active' : '' ?>" id="news-date-filter-github" data-filter="github-advisories" data-source="github-advisories">
+                    GitHub Advisories
+                </button>
+            </div>
+
+            <!-- GitHub Advisories date sub-tabs — shown only when GitHub tab is active -->
+            <div class="github-date-tabs<?= ($initialSource !== 'github-advisories') ? ' d-none' : '' ?>">
+                <button type="button" class="date-tab btn-sm<?= ($initialDateFilter === 'today' && $initialSource === 'github-advisories') ? ' active' : '' ?>" id="news-github-today" data-filter="today" data-source="github-advisories">
+                    Today
+                </button>
+                <button type="button" class="date-tab btn-sm<?= ($initialDateFilter === 'yesterday' && $initialSource === 'github-advisories') ? ' active' : '' ?>" id="news-github-yesterday" data-filter="yesterday" data-source="github-advisories">
+                    Yesterday
+                </button>
+                <button type="button" class="date-tab btn-sm<?= ($initialSource === 'github-advisories' && empty($initialDateFilter)) ? ' active' : '' ?>" id="news-github-all" data-filter="all" data-source="github-advisories">
+                    All
                 </button>
             </div>
 
@@ -342,7 +411,13 @@ $initialDateFilter = in_array($requestedTab, ['today', 'yesterday'], true) ? $re
             <?php
             $_GET['limit'] = 10;
             $_GET['group_by_date'] = 1;
-            $_GET['date_filter'] = $initialDateFilter; // SSR list must match the active tab
+            if ($initialSource === 'github-advisories') {
+                $_GET['source'] = 'github-advisories';
+                $_GET['date_filter'] = $initialDateFilter; // may be null (All) or today/yesterday
+            } else {
+                $_GET['source'] = $initialSource;
+                $_GET['date_filter'] = $initialDateFilter;
+            }
             include __DIR__ . '/../partials/_news_list.php';
             ?>
         </div>
@@ -371,13 +446,12 @@ let observer = null;
 
 function initNews() {
     const container = document.getElementById('news-list-container');
-    if (!container) return;
     // window.onPageLoad fires initNews on both DOMContentLoaded AND
     // htmx:afterSettle on the same page load — run once per DOM. After an
     // HTMX navigation onto /news the container is a fresh element, so this
     // guard naturally resets.
-    if (container.dataset.newsInit === '1') return;
-    container.dataset.newsInit = '1';
+    if (container && container.dataset.newsInit === '1') return;
+    if (container) container.dataset.newsInit = '1';
 
     // Only fetch on an explicit user scroll — never auto-fetch on page load
     // (browser scroll restoration on reload must not start a fetch).
@@ -402,10 +476,13 @@ function initNews() {
     const searchInput = document.getElementById('news-search');
 
     // Track already-loaded GUIDs to prevent duplicates on infinite scroll
-    document.querySelectorAll('#news-list-container .news-card').forEach(card => {
-        const guid = card.getAttribute('data-guid');
-        if (guid) loadedGuids.add(guid);
-    });
+    // (only if container exists yet — HTMX will re-run initNews after swap)
+    if (container) {
+        document.querySelectorAll('#news-list-container .news-card').forEach(card => {
+            const guid = card.getAttribute('data-guid');
+            if (guid) loadedGuids.add(guid);
+        });
+    }
 
     var hasMoreEl = document.getElementById('news-has-more');
     hasMore = hasMoreEl !== null && hasMoreEl.value === '1';
@@ -420,7 +497,28 @@ function initNews() {
         params.set('group_by_date', 1);
         var todayTab = document.getElementById('news-date-filter-today');
         var yesterdayTab = document.getElementById('news-date-filter-yesterday');
-        params.set('date_filter', (todayTab && todayTab.classList.contains('active')) ? 'today' : (yesterdayTab && yesterdayTab.classList.contains('active')) ? 'yesterday' : 'today');
+        var githubTab = document.getElementById('news-date-filter-github');
+        var githubTodayTab = document.getElementById('news-github-today');
+        var githubYesterdayTab = document.getElementById('news-github-yesterday');
+        var githubAllTab = document.getElementById('news-github-all');
+
+        // GitHub Advisories tab: filter by source, with optional Today/Yesterday/All sub-tabs
+        var githubAnyActive = (githubTab && githubTab.classList.contains('active')) ||
+                              (githubTodayTab && githubTodayTab.classList.contains('active')) ||
+                              (githubYesterdayTab && githubYesterdayTab.classList.contains('active')) ||
+                              (githubAllTab && githubAllTab.classList.contains('active'));
+        if (githubAnyActive) {
+            params.set('source', 'github-advisories');
+            if (githubTodayTab && githubTodayTab.classList.contains('active')) {
+                params.set('date_filter', 'today');
+            } else if (githubYesterdayTab && githubYesterdayTab.classList.contains('active')) {
+                params.set('date_filter', 'yesterday');
+            } else {
+                params.set('date_filter', ''); // All GitHub advisories
+            }
+        } else {
+            params.set('date_filter', (todayTab && todayTab.classList.contains('active')) ? 'today' : (yesterdayTab && yesterdayTab.classList.contains('active')) ? 'yesterday' : 'today');
+        }
         return params;
     }
 
@@ -464,15 +562,47 @@ function initNews() {
     document.querySelectorAll('.date-tab').forEach(tab => {
         if (!tab.dataset.newsBound) {
             tab.dataset.newsBound = '1';
-            tab.addEventListener('click', function() {
+            tab.addEventListener('click', function(e) {
                 // Remove active class from all tabs
                 document.querySelectorAll('.date-tab').forEach(t => t.classList.remove('active'));
                 // Add active class to clicked tab
                 this.classList.add('active');
 
+                // When clicking a GitHub sub-tab (Today/Yesterday/All),
+                // keep the parent "GitHub Advisories" tab active too
+                var githubTab = document.getElementById('news-date-filter-github');
+                if (this.id && this.id.startsWith('news-github-')) {
+                    if (githubTab) githubTab.classList.add('active');
+                }
+
+                // Show/hide GitHub date sub-tabs
+                var githubSubTabs = document.querySelector('.github-date-tabs');
+                if (githubSubTabs) {
+                    if (this.id === 'news-date-filter-github') {
+                        githubSubTabs.classList.remove('d-none');
+                    } else if (this.id === 'news-date-filter-today' || this.id === 'news-date-filter-yesterday') {
+                        githubSubTabs.classList.add('d-none');
+                    }
+                    // GitHub sub-tabs (news-github-today/yesterday/all): leave visible
+                }
+
                 // Persist chosen tab as the user's default (server-side pref —
                 // applied by PHP on full reload, saved per account not per browser)
-                saveNewsTabPref(this.getAttribute('data-filter') || 'today');
+                // Save as "source|date_filter" so GitHub Today/Yesterday/All context survives reload
+                var tabValue = this.getAttribute('data-filter') || 'today';
+                var srcVal = this.getAttribute('data-source') || '';
+                // Parent GitHub tab has data-filter="github-advisories" → default to Today sub-tab
+                if (tabValue === 'github-advisories') {
+                    tabValue = 'today';
+                    // Also click the Today sub-tab element to activate it
+                    var githubTodayTab = document.getElementById('news-github-today');
+                    if (githubTodayTab && !githubTodayTab.classList.contains('active')) {
+                        // Remove active from all sub-tabs first
+                        document.querySelectorAll('.github-date-tabs .date-tab').forEach(t => t.classList.remove('active'));
+                        githubTodayTab.classList.add('active');
+                    }
+                }
+                saveNewsTabPref(srcVal, tabValue);
 
                 htmxLoadList(getBaseParams(), true);
             });
@@ -508,16 +638,19 @@ function getNewsCsrf() {
 }
 
 // Save the news default-tab preference (users.ui_preferences.news_default_tab via
-// /api/user/preference_save) — best-effort, silent for signed-out visitors
-function saveNewsTabPref(tab) {
+// /api/user/preference_save) — value stored as "source|date_filter"
+// (e.g. "github-advisories|today" or "|today" or "github-advisories|" for All)
+// date_filter can be: today | yesterday | all | '' (empty = all GitHub advisories)
+function saveNewsTabPref(src, tab) {
     const token = getNewsCsrf();
-    if (!token || (tab !== 'today' && tab !== 'yesterday')) return;
+    if (!token || (tab !== 'today' && tab !== 'yesterday' && tab !== 'all' && tab !== '')) return;
+    var value = (src || '') + '|' + tab;
     try {
         fetch('/api/user/preference_save', {
             method: 'POST',
             credentials: 'same-origin',
             headers: { 'X-CSRF-Token': token },
-            body: new URLSearchParams({ preference_id: 'news_default_tab', value: tab })
+            body: new URLSearchParams({ preference_id: 'news_default_tab', value: value })
         }).catch(function() {});
     } catch (err) { /* preference save must never break tab switching */ }
 }
@@ -718,7 +851,7 @@ async function loadMore() {
     const category = newsVal('news-next-category');
     const severity = newsVal('news-next-severity');
     const q = newsVal('news-next-q');
-    const dateFilterLine = newsVal('news-next-date-filter') || 'today';
+    const dateFilterLine = newsVal('news-next-date-filter');
     const groupByDate = newsVal('news-next-group-by-date') === '1';
 
     const params = new URLSearchParams();
@@ -810,6 +943,7 @@ function htmxLoadList(params, replace = false) {
     const url = '/news/_list.php?' + params.toString();
     fetch(url, { credentials: 'same-origin' })
         .then(r => {
+            console.log('Fetch response:', r.status, r.ok);
             if (!r.ok) throw new Error('Network error');
             return r.text();
         })
@@ -818,7 +952,20 @@ function htmxLoadList(params, replace = false) {
             temp.innerHTML = html;
 
             const newCards = temp.querySelectorAll('.news-card');
-            const container = document.getElementById('news-list-container');
+            let container = document.getElementById('news-list-container');
+            // Create container if missing (e.g. initial render had no articles)
+            if (!container) {
+                const newsListDiv = document.getElementById('news-list');
+                if (newsListDiv) {
+                    container = document.createElement('div');
+                    container.id = 'news-list-container';
+                    container.className = 'news-grid';
+                    newsListDiv.appendChild(container);
+                } else {
+                    console.error('htmxLoadList: #news-list not found');
+                    return;
+                }
+            }
             const sentinelWrapper = document.getElementById('news-sentinel-wrapper');
 
             if (replace) {

@@ -558,7 +558,7 @@ class NewsFetcher {
      *        today's before reaching yesterday's, and `total` counts that day only.
      * @return array ['items' => [...], 'total' => n]
      */
-    public static function getLatest(?string $source = null, ?string $category = null, ?string $severity = null, ?string $q = null, int $limit = 50, int $skip = 0, ?string $dateFilter = null): array {
+    public static function getLatest(?string $source = null, ?string $category = null, ?string $severity = null, ?string $q = null, int $limit = 50, int $skip = 0, ?string $dateFilter = null, ?string $excludeSource = null): array {
         $db = \DatabaseConnection::getDefaultDatabase();
         $col = $db->selectCollection(self::COLLECTION);
 
@@ -570,6 +570,10 @@ class NewsFetcher {
                 '$gte' => new \MongoDB\BSON\UTCDateTime((int) $range['start']->format('Uv')),
                 '$lt'  => new \MongoDB\BSON\UTCDateTime((int) $range['end']->format('Uv')),
             ];
+            // Exclude GitHub Advisories from Today/Yesterday tabs — it has its own dedicated tab
+            if ($excludeSource) {
+                $filter['source'] = ['$ne' => $excludeSource];
+            }
         }
 
         if (!empty($source)) {
