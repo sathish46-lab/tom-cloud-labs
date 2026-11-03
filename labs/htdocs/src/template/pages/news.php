@@ -331,7 +331,7 @@ if ($initialSource === 'github-advisories') {
     <div class="row align-items-center py-3">
         <div class="col">
             <h1 class="fw-bold theme-text m-0 network-header-title">Cybersecurity News</h1>
-            <p class="text-secondary opacity-75 mt-2 mb-0 network-header-desc">
+            <p class="text-body mb-2 mb-0 network-header-desc">
                 🚨 Your daily cyber radar! Fresh CVEs 🔥, zero-days ⚡, malware waves 🦠, data breaches 💀 & live exploit alerts — aggregated hourly from 10+ trusted sources like The Hacker News, BleepingComputer, Krebs on Security, NVD & CISA KEV. Zero fluff, pure threat intel! 🛡️✨
             </p>
         </div>
