@@ -65,6 +65,9 @@ try {
 .lab-matrix-card { transition: all 0.2s; cursor: pointer; }
 .lab-matrix-card:hover { transform: translateY(-3px); box-shadow: 0 8px 22px rgba(0,0,0,0.28); }
 .news-next-run { color: #fd7e14; font-weight: 600; white-space: nowrap; }
+.news-stat-value { color: #fff; font-weight: 700; font-size: 1.1rem; }
+.news-stat-label { color: rgba(255,255,255,0.65); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; }
+.news-stat-card { background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08); }
 </style>
 
 <div class="blur banner mb-3 rounded-0 border-bottom border-secondary border-opacity-10">
@@ -266,21 +269,21 @@ try {
                     <!-- Last-fetch + today stats row -->
                     <div class="row g-2 mt-3">
                         <div class="col-6">
-                            <div class="d-flex align-items-center">
-                                <i class="bx bx-download text-info me-2 fs-5"></i>
+                            <div class="news-stat-card rounded-3 p-3 d-flex align-items-center">
+                                <i class="bx bx-download text-info me-3 fs-4"></i>
                                 <div>
-                                    <div class="small text-body-secondary">Last fetch</div>
-                                    <div class="fw-semibold text-dark"><?= number_format($newsLastInserted) ?> new, <?= number_format($newsLastUpdated) ?> updated</div>
+                                    <div class="news-stat-label">Last fetch</div>
+                                    <div class="news-stat-value"><?= number_format($newsLastInserted) ?> new, <?= number_format($newsLastUpdated) ?> updated</div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-6">
-                            <div class="d-flex align-items-center justify-content-end">
+                            <div class="news-stat-card rounded-3 p-3 d-flex align-items-center justify-content-end">
                                 <div>
-                                    <div class="small text-body-secondary">News today</div>
-                                    <div class="fw-semibold text-dark"><?= number_format($newsTodayCount) ?> articles</div>
+                                    <div class="news-stat-label">News today</div>
+                                    <div class="news-stat-value"><?= number_format($newsTodayCount) ?> articles</div>
                                 </div>
-                                <i class="bx bx-calendar text-success ms-2 fs-5"></i>
+                                <i class="bx bx-calendar text-success ms-3 fs-4"></i>
                             </div>
                         </div>
                     </div>
