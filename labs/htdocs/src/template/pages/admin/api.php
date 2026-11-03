@@ -244,6 +244,7 @@ try {
                         <div class="d-flex align-items-center gap-2">
                             <label class="form-label mb-0 small fw-semibold text-body-secondary">Fetch Interval</label>
                             <select class="form-select form-select-sm news-interval-select" id="newsIntervalSelect">
+                                <option value="1" <?= (isset($newsSettings['interval']) && $newsSettings['interval'] == 1) ? 'selected' : '' ?>>1 min</option>
                                 <option value="30" <?= (isset($newsSettings['interval']) && $newsSettings['interval'] == 30) ? 'selected' : '' ?>>30 min</option>
                                 <option value="60" <?= (isset($newsSettings['interval']) && $newsSettings['interval'] == 60) ? 'selected' : '' ?>>1 hour</option>
                                 <option value="180" <?= (isset($newsSettings['interval']) && $newsSettings['interval'] == 180) ? 'selected' : '' ?>>3 hours</option>

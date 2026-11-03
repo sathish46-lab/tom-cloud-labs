@@ -3,8 +3,8 @@ Description=Tom Labs News Fetcher Timer - Check news auto-fetch schedule
 Requires=news-fetch.service
 
 [Timer]
-# Check every 30 minutes (minimum interval granularity)
-OnCalendar=*:0/30:00
+# Check every 1 minute
+OnCalendar=*:0/1:00
 # Also run 5 minutes after boot
 OnBootSec=5min
 # Run now if the timer was missed while the system was off

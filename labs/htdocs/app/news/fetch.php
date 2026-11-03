@@ -55,8 +55,8 @@ $newsSettings = ($newsDoc && is_object($newsDoc) && method_exists($newsDoc, 'get
 
 $enabled = !empty($newsSettings['enabled']);
 $interval = (int)($newsSettings['interval'] ?? 60);
-if ($interval < 30) {
-    $interval = 30;
+if ($interval < 1) {
+    $interval = 1;
 }
 $lastFetch = isset($newsSettings['last_fetch']) ? $newsSettings['last_fetch'] : null;
 
