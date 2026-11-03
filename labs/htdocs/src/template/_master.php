@@ -529,7 +529,7 @@ $classString = implode(' ', $htmlClasses);
         foreach (array_values($assets) as $layerIndex => $layerSrc):
             $layerDepth = $layerDepths[$layerIndex] ?? 0.02;
         ?>
-        <div class="bg-cover bg-img-<?= $layerIndex + 1 ?><?= $publicBgBlur ? ' bg-blur' : '' ?>" data-depth="<?= $layerDepth ?>" style="background-image: url('<?= htmlspecialchars($layerSrc) ?>'); display: block;"></div>
+        <div class="bg-cover bg-img-<?= $layerIndex + 1 ?><?= ($isPublicPage ? ($publicBgBlur ? ' bg-blur' : '') : ($defaultBlur === 'true' ? ' bg-blur' : '')) ?>" data-depth="<?= $layerDepth ?>" style="background-image: url('<?= htmlspecialchars($layerSrc) ?>'); display: block;"></div>
         <?php endforeach; ?>
     </div>
 
