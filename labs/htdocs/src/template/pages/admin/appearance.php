@@ -335,19 +335,24 @@ function brand_tile(string $badge, bool $isCur, int $v, string $urlPath, string 
                     </div>
 
                     <label class="fw-semibold d-block mb-1" for="apPublicBg">Wallpaper for public profiles</label>
-                    <select id="apPublicBg" class="form-select bg-transparent border-secondary border-opacity-25">
-                        <option value="" <?= $publicBgMode === '' ? 'selected' : '' ?>>Same as the site default background</option>
-                        <option value="<?= Appearance::PUBLIC_OWNER ?>" <?= $publicBgMode === Appearance::PUBLIC_OWNER ? 'selected' : '' ?>>
-                            Profile owner's own background
-                        </option>
-                        <optgroup label="Always use">
-                        <?php foreach ($modes as $mode): ?>
-                        <option value="<?= htmlspecialchars($mode) ?>" <?= $publicBgMode === $mode ? 'selected' : '' ?>>
-                            <?= htmlspecialchars(Appearance::label($mode)) ?>
-                        </option>
-                        <?php endforeach; ?>
-                        </optgroup>
-                    </select>
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <select id="apPublicBg" class="form-select form-select-sm bg-transparent border-secondary border-opacity-25" style="max-width: 260px;">
+                            <option value="" <?= $publicBgMode === '' ? 'selected' : '' ?>>Same as the site default background</option>
+                            <option value="<?= Appearance::PUBLIC_OWNER ?>" <?= $publicBgMode === Appearance::PUBLIC_OWNER ? 'selected' : '' ?>>
+                                Profile owner's own background
+                            </option>
+                            <optgroup label="Always use">
+                            <?php foreach ($modes as $mode): ?>
+                            <option value="<?= htmlspecialchars($mode) ?>" <?= $publicBgMode === $mode ? 'selected' : '' ?>>
+                                <?= htmlspecialchars(Appearance::label($mode)) ?>
+                            </option>
+                            <?php endforeach; ?>
+                            </optgroup>
+                        </select>
+                        <div class="form-check form-switch mb-0 flex-shrink-0">
+                            <input class="form-check-input" type="checkbox" role="switch" id="apPublicBgBlur" <?= $appearance['public_bg_blur'] !== '0' ? 'checked' : '' ?>>
+                        </div>
+                    </div>
                     <div class="small text-body-secondary mt-2" id="apPublicBgHint"></div>
                 </div>
             </div>
@@ -514,6 +519,7 @@ function brand_tile(string $badge, bool $isCur, int $v, string $urlPath, string 
         }
         fd.append('force_color_mode', document.getElementById('apColorMode').value);
         fd.append('public_bg_mode', document.getElementById('apPublicBg').value);
+        fd.append('public_bg_blur', document.getElementById('apPublicBgBlur').checked ? '1' : '0');
         fd.append('visual_blur_default', document.getElementById('apVisualBlurDefault').checked ? '1' : '0');
         document.querySelectorAll('input[name="apDisabled"]:checked').forEach(function (cb) {
             fd.append('disabled_modes[]', cb.value);
