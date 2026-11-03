@@ -15,7 +15,7 @@ $enabled = isset($_POST['enabled']) && $_POST['enabled'] === '1';
 $interval = (int)($_POST['interval'] ?? 60);
 
 // Validate interval
-$allowedIntervals = [30, 60, 180, 360, 720, 1440];
+$allowedIntervals = [1, 30, 60, 180, 360, 720, 1440];
 if (!in_array($interval, $allowedIntervals, true)) {
     $interval = 60;
 }
