@@ -254,10 +254,12 @@ try {
                             </select>
                         </div>
                         <div class="d-flex gap-2">
-                            <button class="btn btn-outline-success btn-sm news-save-btn" id="newsSaveBtn">
+                            <button class="btn btn-outline-success btn-sm news-save-btn" id="newsSaveBtn"
+                                data-bs-toggle="tooltip" data-bs-placement="top" title="Save Automatic Fetching ON/OFF and Fetch Interval settings">
                                 <i class='bx bx-save me-1'></i>Save Settings
                             </button>
-                            <button class="btn btn-primary btn-sm news-fetch-now-btn" id="newsFetchNowBtn">
+                            <button class="btn btn-primary btn-sm news-fetch-now-btn" id="newsFetchNowBtn"
+                                data-bs-toggle="tooltip" data-bs-placement="top" title="Fetch new articles right now from all RSS feeds">
                                 <i class='bx bx-refresh me-1'></i>Fetch Now
                             </button>
                         </div>
@@ -630,4 +632,9 @@ if (newsFetchNowBtn) {
             });
     });
 }
+
+// Initialize Bootstrap tooltips for info
+document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
+    new bootstrap.Tooltip(el);
+});
 </script>
