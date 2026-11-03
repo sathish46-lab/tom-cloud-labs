@@ -350,8 +350,8 @@ function brand_tile(string $badge, bool $isCur, int $v, string $urlPath, string 
                             </optgroup>
                         </select>
                         <div class="form-check form-switch mb-0 flex-shrink-0">
-                            <input class="form-check-input" type="checkbox" role="switch" id="apPublicBgBlur" <?= $appearance['public_bg_blur'] !== '0' ? 'checked' : '' ?> data-bs-toggle="tooltip" title="Blur the public profile background image">
-                            <label class="fw-semibold small mb-0 ms-2" for="apPublicBgBlur">Blur background</label>
+                            <input class="form-check-input" type="checkbox" role="switch" id="apPublicBgBlur" <?= $appearance['public_bg_blur'] !== '0' ? 'checked' : '' ?> data-bs-toggle="tooltip" title="Frosted-glass blur on public URLs only (signed-out visitors) — the same look as Background → Visual Blur; the wallpaper image itself stays sharp">
+                            <label class="fw-semibold small mb-0 ms-2" for="apPublicBgBlur">Visual Blur</label>
                         </div>
                     </div>
                     <div class="small text-body-secondary mt-2" id="apPublicBgHint"></div>

@@ -37,20 +37,20 @@ $mode = $isPublicPage
     ? Appearance::resolvePublicMode(Session::get('profile_owner_email') ?: null)
     : Appearance::resolveMode($serverTheme['mode'] ?? null);
 
-// Visual blur: the user's own saved preference wins; otherwise the admin's
-// default (Admin → Appearance → Background), which applies from first login.
-$defaultBlur = $appearance['visual_blur_default'] !== '0' ? 'true' : 'false';
-$isGlassMode = ($uiPreferences['visual_blur'] ?? $defaultBlur) !== 'false';
+// Public URL background blur: the "Visual Blur" switch in Admin → Appearance →
+// Public URL background. It is the ONLY thing that drives blur on public pages
+// (signed-out /news, /@username): the Background card's visual_blur_default
+// must never leak into them. It turns on the frosted-glass panels — the same
+// look a signed-in user gets from Visual Blur. The wallpaper image itself is
+// deliberately NOT filtered; blurring it stacked a second blur on top.
+$publicBgBlur = ($appearance['public_bg_blur'] ?? '0') === '1';
 
-// Public profile background blur: admin's setting from Appearance settings page.
-// Applies ONLY to public profile pages viewed by signed-out visitors.
-// Logged-in users viewing any profile (including their own) use the Background
-// card's visual_blur_default setting.
-if ($isPublicPage && ($appearance['public_bg_blur'] ?? '0') === '1') {
-    $publicBgBlur = true;
-} else {
-    $publicBgBlur = ($appearance['visual_blur_default'] ?? '1') !== '0';
-}
+// Visual blur (glass panels) everywhere else: the viewer's own saved
+// preference wins, otherwise the Background card's default (first login).
+$defaultBlur = $appearance['visual_blur_default'] !== '0' ? 'true' : 'false';
+$isGlassMode = $isPublicPage
+    ? $publicBgBlur
+    : (($uiPreferences['visual_blur'] ?? $defaultBlur) !== 'false');
 $isSidebarNarrow = ($uiPreferences['sidebar_unfoldable'] ?? 'false') === 'true';
 $isSidebarHidden = ($uiPreferences['sidebar_hidden'] ?? 'false') === 'true';
 
@@ -461,10 +461,6 @@ $classString = implode(' ', $htmlClasses);
         #scene, .scenery-container { 
             display: none !important; 
         }
-        .bg-blur {
-            filter: blur(8px);
-            -webkit-filter: blur(8px);
-        }
         /* html[data-coreui-theme="dark"] .sidebar {
             border-right: none !important;
         } */
@@ -536,7 +532,7 @@ $classString = implode(' ', $htmlClasses);
         foreach (array_values($assets) as $layerIndex => $layerSrc):
             $layerDepth = $layerDepths[$layerIndex] ?? 0.02;
         ?>
-        <div class="bg-cover bg-img-<?= $layerIndex + 1 ?><?= ($isPublicPage ? ($publicBgBlur ? ' bg-blur' : '') : ($defaultBlur === 'true' ? ' bg-blur' : '')) ?>" data-depth="<?= $layerDepth ?>" style="background-image: url('<?= htmlspecialchars($layerSrc) ?>'); display: block;"></div>
+        <div class="bg-cover bg-img-<?= $layerIndex + 1 ?>" data-depth="<?= $layerDepth ?>" style="background-image: url('<?= htmlspecialchars($layerSrc) ?>'); display: block;"></div>
         <?php endforeach; ?>
     </div>
 

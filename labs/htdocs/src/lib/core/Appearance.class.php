@@ -27,6 +27,11 @@ class Appearance {
             // Default visual blur (glass effect) for users with no saved
             // preference — i.e. first login. '1' = on, '0' = off.
             'visual_blur_default' => '1',
+            // Public URL background blur (Admin → Appearance → Public URL
+            // background). MUST be present: the admin checkbox reads
+            // `!== '0'` while the renderer reads `=== '1'`, so a missing key
+            // showed the switch ON while every public page stayed unblurred.
+            'public_bg_blur'  => '0',
             'updated_at'       => 0,
             'updated_by'       => '',
         ];
@@ -46,6 +51,7 @@ class Appearance {
                 }
                 $cfg['public_bg_mode'] = (string)$cfg['public_bg_mode'];
                 $cfg['visual_blur_default'] = ((string)$cfg['visual_blur_default'] === '0') ? '0' : '1';
+                $cfg['public_bg_blur'] = ((string)$cfg['public_bg_blur'] === '1') ? '1' : '0';
                 $disabled = $doc['disabled_modes'] ?? [];
                 if ($disabled instanceof Traversable) $disabled = iterator_to_array($disabled, false);
                 if (is_array($disabled)) {

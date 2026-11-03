@@ -67,6 +67,12 @@ test("app.js blocks a locked color mode", strpos(flat($appJs), 'window.FORCED_CO
 echo "\n--- Access Control ---\n";
 
 $db = DatabaseConnection::getDefaultDatabase();
+// Snapshot the live admin settings: this suite overwrites the appearance
+// document and must put back exactly what it found. Deleting it without
+// restoring wiped every saved Appearance choice on each full test run
+// (public wallpaper, both blur switches), leaving the admin page showing
+// defaults while public pages rendered differently.
+$originalAppearance = $db->global_settings->findOne(['_id' => 'appearance']);
 $db->global_settings->deleteOne(['_id' => 'appearance']);
 
 $adminEmail = 'appearance_admin_' . time() . '@example.com';
@@ -273,8 +279,12 @@ foreach (['robotower', 'spiderman'] as $visible) {
     test("Picker still shows $visible", strpos($render['body'], 'data-mode="' . $visible . '"') !== false);
 }
 
-// leave global state clean for the rest of the suite
+// leave global state clean for the rest of the suite — i.e. exactly the
+// settings that were there before this file ran
 $db->global_settings->deleteOne(['_id' => 'appearance']);
+if ($originalAppearance !== null) {
+    $db->global_settings->insertOne((array)$originalAppearance);
+}
 cleanup_test_user($adminEmail);
 cleanup_test_user($userEmail);
 
