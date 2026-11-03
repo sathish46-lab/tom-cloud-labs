@@ -41,6 +41,9 @@ $mode = $isPublicPage
 // default (Admin → Appearance → Background), which applies from first login.
 $defaultBlur = $appearance['visual_blur_default'] !== '0' ? 'true' : 'false';
 $isGlassMode = ($uiPreferences['visual_blur'] ?? $defaultBlur) !== 'false';
+
+// Public profile background blur: admin's setting from Appearance settings page
+$publicBgBlur = ($appearance['public_bg_blur'] ?? '0') === '1';
 $isSidebarNarrow = ($uiPreferences['sidebar_unfoldable'] ?? 'false') === 'true';
 $isSidebarHidden = ($uiPreferences['sidebar_hidden'] ?? 'false') === 'true';
 
@@ -451,6 +454,10 @@ $classString = implode(' ', $htmlClasses);
         #scene, .scenery-container { 
             display: none !important; 
         }
+        .bg-blur {
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
         /* html[data-coreui-theme="dark"] .sidebar {
             border-right: none !important;
         } */
@@ -522,7 +529,7 @@ $classString = implode(' ', $htmlClasses);
         foreach (array_values($assets) as $layerIndex => $layerSrc):
             $layerDepth = $layerDepths[$layerIndex] ?? 0.02;
         ?>
-        <div class="bg-cover bg-img-<?= $layerIndex + 1 ?>" data-depth="<?= $layerDepth ?>" style="background-image: url('<?= htmlspecialchars($layerSrc) ?>'); display: block;"></div>
+        <div class="bg-cover bg-img-<?= $layerIndex + 1 ?><?= $publicBgBlur ? ' bg-blur' : '' ?>" data-depth="<?= $layerDepth ?>" style="background-image: url('<?= htmlspecialchars($layerSrc) ?>'); display: block;"></div>
         <?php endforeach; ?>
     </div>
 

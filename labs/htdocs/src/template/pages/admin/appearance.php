@@ -325,16 +325,16 @@ function brand_tile(string $badge, bool $isCur, int $v, string $urlPath, string 
             <!-- ── Public profile background ── -->
 <div class="card border-0 rounded-4 blur shadow-sm ap-curve c-plain" data-notch="none">
                 <div class="card-header bg-transparent border-bottom border-body-secondary border-opacity-10 py-3 d-flex align-items-center justify-content-between gap-2 flex-wrap">
-                    <span class="fw-bold"><i class='bx bx-globe me-2'></i>Public profile background</span>
+                    <span class="fw-bold"><i class='bx bx-globe me-2'></i>Public URL background</span>
                     <span class="badge rounded-pill text-bg-secondary" id="apPublicBgBadge"><?= htmlspecialchars($publicBgLabel) ?></span>
                 </div>
                 <div class="card-body p-4">
                     <div class="small text-body-secondary mb-3">
-                        What signed-out visitors see on public profile pages (example.com/account, /your-handle).
+                        What signed-out visitors see on public profile pages (/account, /@username).
                         Locking the background for everyone still wins over this choice.
                     </div>
 
-                    <label class="fw-semibold d-block mb-1" for="apPublicBg">Wallpaper for public profiles</label>
+                    <label class="fw-semibold d-block mb-1" for="apPublicBg">Wallpaper for public URLs</label>
                     <div class="d-flex align-items-center gap-3 mb-2">
                         <select id="apPublicBg" class="form-select form-select-sm bg-transparent border-secondary border-opacity-25" style="max-width: 260px;">
                             <option value="" <?= $publicBgMode === '' ? 'selected' : '' ?>>Same as the site default background</option>
@@ -350,7 +350,8 @@ function brand_tile(string $badge, bool $isCur, int $v, string $urlPath, string 
                             </optgroup>
                         </select>
                         <div class="form-check form-switch mb-0 flex-shrink-0">
-                            <input class="form-check-input" type="checkbox" role="switch" id="apPublicBgBlur" <?= $appearance['public_bg_blur'] !== '0' ? 'checked' : '' ?>>
+                            <input class="form-check-input" type="checkbox" role="switch" id="apPublicBgBlur" <?= $appearance['public_bg_blur'] !== '0' ? 'checked' : '' ?> data-bs-toggle="tooltip" title="Blur the public profile background image">
+                            <label class="fw-semibold small mb-0 ms-2" for="apPublicBgBlur">Blur background</label>
                         </div>
                     </div>
                     <div class="small text-body-secondary mt-2" id="apPublicBgHint"></div>
@@ -577,6 +578,13 @@ function brand_tile(string $badge, bool $isCur, int $v, string $urlPath, string 
     var publicBg = document.getElementById('apPublicBg');
     publicBg.addEventListener('change', updatePublicHint);
     updatePublicHint();
+
+    // Initialize Bootstrap tooltips (safe if Bootstrap JS not loaded)
+    try {
+      document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
+        new bootstrap.Tooltip(el);
+      });
+    } catch (e) { /* Bootstrap not loaded on this page, tooltips skipped */ }
 
     document.getElementById('apSaveBtn').addEventListener('click', function () {
         send(payload(), 'Appearance settings saved');

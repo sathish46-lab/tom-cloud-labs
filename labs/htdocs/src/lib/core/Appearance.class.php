@@ -41,7 +41,7 @@ class Appearance {
             $doc = $db->global_settings->findOne(['_id' => self::DOC_ID]);
             if ($doc) {
                 $doc = (array)$doc;
-                foreach (['default_mode', 'force_mode', 'force_color_mode', 'updated_at', 'updated_by', 'public_bg_mode', 'visual_blur_default'] as $k) {
+                foreach (['default_mode', 'force_mode', 'force_color_mode', 'updated_at', 'updated_by', 'public_bg_mode', 'public_bg_blur', 'visual_blur_default'] as $k) {
                     if (array_key_exists($k, $doc)) $cfg[$k] = $doc[$k];
                 }
                 $cfg['public_bg_mode'] = (string)$cfg['public_bg_mode'];
