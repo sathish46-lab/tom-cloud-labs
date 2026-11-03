@@ -43,11 +43,11 @@ $defaultBlur = $appearance['visual_blur_default'] !== '0' ? 'true' : 'false';
 $isGlassMode = ($uiPreferences['visual_blur'] ?? $defaultBlur) !== 'false';
 
 // Public profile background blur: admin's setting from Appearance settings page.
-// Applies to public profile pages (signed-out visitors) AND when viewing your
-// own profile while logged in. Everywhere else uses the Background card's
-// visual_blur_default setting.
-if ($isPublicPage || $isOwnProfilePage) {
-    $publicBgBlur = ($appearance['public_bg_blur'] ?? '0') === '1';
+// Applies ONLY to public profile pages viewed by signed-out visitors.
+// Logged-in users viewing any profile (including their own) use the Background
+// card's visual_blur_default setting.
+if ($isPublicPage && ($appearance['public_bg_blur'] ?? '0') === '1') {
+    $publicBgBlur = true;
 } else {
     $publicBgBlur = ($appearance['visual_blur_default'] ?? '1') !== '0';
 }

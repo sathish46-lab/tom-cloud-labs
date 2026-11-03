@@ -13,9 +13,6 @@ if (!$isViewerLoggedIn) {
 
 $target = profile_resolve($_GET['username'] ?? '');
 
-// Viewing your own profile while logged in → use public profile blur setting
-$isOwnProfilePage = $isViewerLoggedIn && $pfMe && $pfEmail === $pfMe->getEmail();
-
 if (!$target && !$isViewerLoggedIn) {
     // "/account" and unknown handles mean nothing without a viewer identity.
     header('Location: /signin');
