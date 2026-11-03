@@ -63,6 +63,7 @@ $current = Session::getCurrentFile();
                     ['label' => 'Storage Quotas', 'url' => '/admin/storage', 'icon' => 'bx-hdd',            'match' => ''],
                     ['label' => 'Transactions',   'url' => '/admin/transactions', 'icon' => 'bx-transfer', 'match' => ''],
                     ['label' => 'Errors',         'url' => '/admin/errors', 'icon' => 'bx-error-circle', 'match' => ''],
+                    ['label' => 'News Logs',      'url' => '/admin/news-logs', 'icon' => 'bx-news', 'match' => '/admin/news-logs'],
                 ],
                 'groups' => [
                     [
@@ -179,6 +180,19 @@ $current = Session::getCurrentFile();
                 <svg class="nav-icon" viewBox="0 0 256 256"><use href="/assets/icons/duotone.svg#tom-calendar-event"></use></svg> Events
             </a>
         </li>
+        <li class="nav-item">
+            <a class="nav-link <?= (str_contains($current, 'news')) ? 'active' : '' ?>" href="/news">
+                <svg class="nav-icon" viewBox="0 0 256 256"><use href="/assets/icons/duotone.svg#tom-newspaper"></use></svg> News
+                <span class="badge bg-primary rounded-pill ms-1 news-beta-badge">Beta</span>
+            </a>
+        </li>
+        <style>
+            /* Hide the Beta tag when the sidebar is collapsed/narrow — only show when expanded */
+            .sidebar-narrow .news-beta-badge,
+            .sidebar-narrow-unfoldable .news-beta-badge {
+                display: none !important;
+            }
+        </style>
         <li class="nav-group <?= (str_contains($current, 'learn') || str_contains($current, 'roadmap')) ? 'show' : '' ?>">
             <a class="nav-link nav-group-toggle" href="javascript:void(0);">
                 <svg class="nav-icon" viewBox="0 0 256 256"><use href="/assets/icons/duotone.svg#tom-book-bookmark"></use></svg> Learn
@@ -312,13 +326,6 @@ $current = Session::getCurrentFile();
                     </a>
                 </li>
             </ul>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link <?= $current == 'test' ? 'active' : '' ?>" href="/test">
-                <svg class="nav-icon">
-                    <use xlink:href="/assets/icons/sprites/free.svg#cil-bowling"></use>
-                </svg> test
-            </a>
         </li>
     </ul>
 

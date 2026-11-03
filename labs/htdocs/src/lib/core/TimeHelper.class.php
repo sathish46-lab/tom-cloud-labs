@@ -54,6 +54,24 @@ class TimeHelper
     }
 
     /**
+     * Start/end of "the day N days before today" in IST.
+     *
+     * Day boundaries must always be computed from this — a bare
+     * `new DateTimeImmutable('today')` uses the server timezone (UTC), which
+     * makes "today" slip over IST midnight (IST 00:00–05:30 is still the
+     * previous UTC date) and misfiles articles between the Today / Yesterday tabs.
+     *
+     * @return array{start:\DateTimeImmutable, end:\DateTimeImmutable} [start, end) in IST
+     */
+    public static function dayRange(int $offsetDays = 0): array
+    {
+        $start = self::toIST(time())
+            ->setTime(0, 0, 0)
+            ->modify((string) -abs($offsetDays) . ' day');
+        return ['start' => $start, 'end' => $start->modify('+1 day')];
+    }
+
+    /**
      * 12-hour IST rendering — default "19 Oct 2026, 4:45 PM".
      *
      * @param \MongoDB\BSON\UTCDateTime|\DateTimeInterface|int|string|null $value null = now

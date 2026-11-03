@@ -29924,6 +29924,126 @@ html[data-coreui-theme=light] .pref-ace-editor.ace-eclipse .ace_active-line, htm
   background-color: rgba(0, 0, 0, 0.045);
 }
 
+/* News aggregation page styles — complement CoreUI/Bootstrap utilities only */
+/* News grid - JS masonry layout (roadmap dashboard style) */
+.news-grid {
+  position: relative;
+  width: 100%;
+  visibility: hidden;
+}
+.news-grid[data-masonry-ready="1"] {
+  visibility: visible;
+}
+
+/* Card content discipline — matches roadmap card look */
+.news-card .card-title .stretched-link {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.news-card .news-desc-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.news-card .card-footer-line {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Filters bar */
+.news-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  align-items: center;
+}
+
+/* Loading state */
+.news-loading {
+  text-align: center;
+  padding: 2rem;
+}
+
+.news-loading .spinner-border {
+  width: 24px;
+  height: 24px;
+}
+
+/* Error state */
+.news-error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 0.5rem;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Empty state */
+.news-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--cui-secondary-color);
+  font-size: 1.1rem;
+}
+
+/* Severity badge variants — matches AGENTS.md semantic colors */
+.badge-text-bg-soft-danger {
+  background-color: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+  border: 1px solid rgba(220, 38, 38, 0.3);
+}
+
+.badge-text-bg-soft-warning {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #eab308;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.badge-text-bg-soft-success {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.badge-text-bg-soft-info {
+  background-color: rgba(56, 189, 248, 0.1);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.badge-text-bg-soft-secondary {
+  background-color: rgba(156, 163, 175, 0.1);
+  color: #9ca3af;
+  border: 1px solid rgba(156, 163, 175, 0.3);
+}
+
+.badge-text-bg-soft-primary {
+  background-color: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+/* Fetch button loading state */
+.news-fetch-btn.disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+/* Card hover state for delete menu */
+.news-card:hover .dropdown-toggle {
+  opacity: 0.7;
+}
+
+/* CVE tags inline */
+.news-cve-tags {
+  margin-top: 0.5rem;
+}
+
 /* BASICS */
 .CodeMirror {
   /* Set height, width, borders, and global font properties here */

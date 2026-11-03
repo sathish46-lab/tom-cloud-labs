@@ -29,12 +29,17 @@ $featuresList = [
 // MCP-specific settings
 $mcpDoc = $db->global_settings->findOne(['_id' => 'mcp_settings']);
 $mcpSettings = ($mcpDoc && is_object($mcpDoc) && method_exists($mcpDoc, 'getArrayCopy')) ? $mcpDoc->getArrayCopy() : ((array)$mcpDoc ?: []);
+
+// News automation settings
+$newsDoc = $db->global_settings->findOne(['_id' => 'news_settings']);
+$newsSettings = ($newsDoc && is_object($newsDoc) && method_exists($newsDoc, 'getArrayCopy')) ? $newsDoc->getArrayCopy() : ((array)$newsDoc ?: []);
 ?>
 <style>
 .admin-card { transition: all 0.2s; }
 .admin-card:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0,0,0,0.28); }
 .lab-matrix-card { transition: all 0.2s; cursor: pointer; }
 .lab-matrix-card:hover { transform: translateY(-3px); box-shadow: 0 8px 22px rgba(0,0,0,0.28); }
+.news-next-run { color: #fd7e14; font-weight: 600; white-space: nowrap; }
 </style>
 
 <div class="blur banner mb-3 rounded-0 border-bottom border-secondary border-opacity-10">
@@ -143,6 +148,94 @@ $mcpSettings = ($mcpDoc && is_object($mcpDoc) && method_exists($mcpDoc, 'getArra
                         <div class="form-check form-switch fs-4 mb-0 ms-3">
                             <input class="form-check-input pointer mcp-admin-only-toggle" type="checkbox" role="switch" <?= !empty($mcpSettings['admin_only']) ? 'checked' : '' ?>>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- News Automation Settings -->
+    <?php
+    // Normalize last_fetch (UTCDateTime | legacy {} BSON doc | scalar) → ms timestamp
+    $lastFetchMs = null;
+    if (isset($newsSettings['last_fetch'])) {
+        $lastFetchRaw = $newsSettings['last_fetch'];
+        if ($lastFetchRaw instanceof \MongoDB\BSON\UTCDateTime) {
+            $lastFetchMs = (int) $lastFetchRaw->toDateTime()->getTimestamp() * 1000;
+        } elseif ($lastFetchRaw instanceof \MongoDB\Model\BSONDocument) {
+            $copy = $lastFetchRaw->getArrayCopy();
+            if (isset($copy['d']) && is_numeric($copy['d'])) {
+                $lastFetchMs = (int) $copy['d'];
+            }
+        } elseif ($lastFetchRaw instanceof \DateTimeInterface) {
+            $lastFetchMs = $lastFetchRaw->getTimestamp() * 1000;
+        } elseif (is_numeric($lastFetchRaw)) {
+            $lastFetchMs = ((int) $lastFetchRaw > 1e11) ? (int) $lastFetchRaw : (int) $lastFetchRaw * 1000; // sec or ms
+        }
+    }
+
+    // Next scheduled run = last fetch + interval (the timer gates itself on this)
+    $lastFetchEcho = 'Last fetch: ' . ($lastFetchMs !== null ? \TimeHelper::formatWithZone(new \MongoDB\BSON\UTCDateTime($lastFetchMs)) : 'Never');
+    $nextRunEcho = '';
+    if (!empty($newsSettings['enabled'])) {
+        $intervalMin = (int)($newsSettings['interval'] ?? 60);
+        if ($lastFetchMs !== null) {
+            $nextDueMs = $lastFetchMs + $intervalMin * 60000;
+            $nextRunEcho = ($nextDueMs / 1000 <= time())
+                ? 'Next fetch: Due now'
+                : 'Next fetch: ' . \TimeHelper::formatWithZone(new \MongoDB\BSON\UTCDateTime((int) $nextDueMs));
+        } else {
+            $nextRunEcho = 'Next fetch: shortly';
+        }
+    }
+    ?>
+    <div class="row mb-4">
+        <div class="col-xl-6">
+            <div class="card border-0 rounded-4 blur shadow-sm admin-card h-100">
+                <div class="card-header border-bottom border-body-secondary border-opacity-10 bg-transparent py-3">
+                    <h5 class="mb-0 fw-bold text-success"><i class='bx bx-news me-2'></i>News Automation</h5>
+                    <small class="text-body-secondary">Auto-fetch cybersecurity news articles from public RSS feeds on a schedule.</small>
+                </div>
+                <div class="card-body">
+                    <!-- Toggle row — matches MCP card pattern -->
+                    <div class="d-flex justify-content-between align-items-center p-3 rounded-4 adm-stat mb-3">
+                        <div>
+                            <h6 class="mb-1 fw-semibold">Automatic Fetching</h6>
+                            <small class="text-body-secondary">When ON, the scheduler pulls new articles on your interval.</small>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="small news-next-run<?= $nextRunEcho === '' ? ' d-none' : '' ?>" id="newsNextRunText"><?= htmlspecialchars($nextRunEcho) ?></div>
+                            <div class="form-check form-switch fs-4 mb-0">
+                                <input class="form-check-input pointer news-autofetch-toggle" type="checkbox" role="switch" id="newsAutofetchToggle" data-last-fetch-ms="<?= $lastFetchMs !== null ? (int) $lastFetchMs : '' ?>" <?= !empty($newsSettings['enabled']) ? 'checked' : '' ?>>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Interval + buttons row — right-aligned like MCP card -->
+                    <div class="d-flex justify-content-between align-items-end">
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="form-label mb-0 small fw-semibold text-body-secondary">Fetch Interval</label>
+                            <select class="form-select form-select-sm news-interval-select" id="newsIntervalSelect">
+                                <option value="30" <?= (isset($newsSettings['interval']) && $newsSettings['interval'] == 30) ? 'selected' : '' ?>>30 min</option>
+                                <option value="60" <?= (isset($newsSettings['interval']) && $newsSettings['interval'] == 60) ? 'selected' : '' ?>>1 hour</option>
+                                <option value="180" <?= (isset($newsSettings['interval']) && $newsSettings['interval'] == 180) ? 'selected' : '' ?>>3 hours</option>
+                                <option value="360" <?= (isset($newsSettings['interval']) && $newsSettings['interval'] == 360) ? 'selected' : '' ?>>6 hours</option>
+                                <option value="720" <?= (isset($newsSettings['interval']) && $newsSettings['interval'] == 720) ? 'selected' : '' ?>>12 hours</option>
+                                <option value="1440" <?= (isset($newsSettings['interval']) && $newsSettings['interval'] == 1440) ? 'selected' : '' ?>>24 hours</option>
+                            </select>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-success btn-sm news-save-btn" id="newsSaveBtn">
+                                <i class='bx bx-save me-1'></i>Save Settings
+                            </button>
+                            <button class="btn btn-primary btn-sm news-fetch-now-btn" id="newsFetchNowBtn">
+                                <i class='bx bx-refresh me-1'></i>Fetch Now
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="small text-muted mt-2" id="newsStatusText" data-last-fetch-ms="<?= $lastFetchMs !== null ? (int) $lastFetchMs : '' ?>">
+                        <?= htmlspecialchars($lastFetchEcho ?? 'Last fetch: Never') ?>
                     </div>
                 </div>
             </div>
@@ -370,4 +463,118 @@ document.querySelectorAll('.mcp-admin-only-toggle').forEach(toggle => {
         toggleFeatureAPI(formData, this, `MCP Admin-Only Mode is now ${state ? 'ENABLED (superusers only)' : 'DISABLED (all users)'}`);
     });
 });
+
+// ── News Automation Settings ──
+const newsAutofetchToggle = document.getElementById('newsAutofetchToggle');
+const newsIntervalSelect = document.getElementById('newsIntervalSelect');
+const newsSaveBtn = document.getElementById('newsSaveBtn');
+const newsFetchNowBtn = document.getElementById('newsFetchNowBtn');
+const newsStatusText = document.getElementById('newsStatusText');
+const newsIntervalDisplay = document.getElementById('news-interval-display');
+
+if (newsIntervalSelect) {
+    newsIntervalSelect.addEventListener('change', function() {
+        // interval display removed; value is read on save
+    });
+}
+
+// Render "Next fetch: …" in the orange label (IST, matches server-side row)
+function updateNewsNextRunLabel(enabled, intervalMin) {
+    const el = document.getElementById('newsNextRunText');
+    if (!el) return;
+    if (!enabled) {
+        el.textContent = '';
+        el.classList.add('d-none');
+        return;
+    }
+    const lastMs = parseInt(newsAutofetchToggle ? (newsAutofetchToggle.dataset.lastFetchMs || '') : '', 10);
+    if (!lastMs) {
+        el.textContent = 'Next fetch: shortly';
+        el.classList.remove('d-none');
+        return;
+    }
+    const nextDueMs = lastMs + intervalMin * 60000;
+    if (nextDueMs <= Date.now()) {
+        el.textContent = 'Next fetch: Due now';
+    } else {
+        const fmt = new Intl.DateTimeFormat('en-IN', {
+            day: '2-digit', month: 'short', year: 'numeric',
+            hour: 'numeric', minute: '2-digit', hour12: true,
+            timeZone: 'Asia/Kolkata'
+        });
+        el.textContent = 'Next fetch: ' + fmt.format(new Date(nextDueMs)) + ' IST';
+    }
+    el.classList.remove('d-none');
+}
+
+function showNewsStatus(msg, type = 'success') {
+    if (!newsStatusText) return;
+    newsStatusText.textContent = msg;
+    newsStatusText.className = 'small ' + (type === 'success' ? 'text-success' : 'text-danger');
+    setTimeout(() => {
+        newsStatusText.className = 'small text-muted';
+    }, 4000);
+}
+
+if (newsSaveBtn) {
+    newsSaveBtn.addEventListener('click', function() {
+        const enabled = newsAutofetchToggle ? newsAutofetchToggle.checked : false;
+        const interval = newsIntervalSelect ? newsIntervalSelect.value : '60';
+
+        const formData = new FormData();
+        formData.append('enabled', enabled ? '1' : '0');
+        formData.append('interval', interval);
+
+        const origText = newsSaveBtn.innerHTML;
+        newsSaveBtn.disabled = true;
+        newsSaveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Saving...';
+
+        fetch('/api/admin/news_settings.php', {
+            method: 'POST',
+            body: formData
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showNewsStatus('News automation settings saved.', 'success');
+                    updateNewsNextRunLabel(enabled, parseInt(interval, 10) || 60);
+                } else {
+                    showNewsStatus(data.error || 'Save failed', 'danger');
+                }
+            })
+            .catch(() => showNewsStatus('Network error', 'danger'))
+            .finally(() => {
+                newsSaveBtn.disabled = false;
+                newsSaveBtn.innerHTML = origText;
+            });
+    });
+}
+
+if (newsFetchNowBtn) {
+    newsFetchNowBtn.addEventListener('click', function() {
+        const origText = newsFetchNowBtn.innerHTML;
+        newsFetchNowBtn.disabled = true;
+        newsFetchNowBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Fetching...';
+
+        fetch('/api/news/fetch.php', {
+            method: 'POST',
+            headers: { 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '' }
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const ins = data.data?.total_inserted ?? 0;
+                    const upd = data.data?.total_updated ?? 0;
+                    showNewsStatus(`Fetch complete: ${ins} inserted, ${upd} updated.`, 'success');
+                } else {
+                    showNewsStatus(data.error || 'Fetch failed', 'danger');
+                }
+            })
+            .catch(() => showNewsStatus('Network error', 'danger'))
+            .finally(() => {
+                newsFetchNowBtn.disabled = false;
+                newsFetchNowBtn.innerHTML = origText;
+            });
+    });
+}
 </script>

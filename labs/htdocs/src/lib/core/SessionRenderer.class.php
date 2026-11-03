@@ -276,7 +276,7 @@ class SessionRenderer {
             } else {
                 // Signed-out pages opt in via IS_PUBLIC_PAGE, and may only ever
                 // render their own template — never another area's.
-                if (defined('IS_PUBLIC_PAGE') && $relPath === 'profile') {
+                if (defined('IS_PUBLIC_PAGE') && in_array($relPath, ['profile', 'news'])) {
                     $file = $templateRoot . $relPath . '.php';
                     if (file_exists($file)) {
                         include $file;
