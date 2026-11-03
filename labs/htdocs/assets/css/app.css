@@ -29942,6 +29942,11 @@ html[data-coreui-theme=light] .pref-ace-editor.ace-eclipse .ace_active-line, htm
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+.news-card .card-title,
+.news-card .card-title a,
+.news-card .card-title .stretched-link {
+  color: #ffffff !important;
+}
 .news-card .news-desc-clamp {
   display: -webkit-box;
   -webkit-line-clamp: 3;
