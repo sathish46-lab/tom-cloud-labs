@@ -112,7 +112,7 @@ $categoryClass = 'bg-primary text-white';
 
         <!-- Short summary -->
         <?php if ($summary): ?>
-        <p class="card-text text-secondary mb-3 small news-desc-clamp"><?= $summary ?></p>
+        <p class="card-text text-body mb-3 small news-desc-clamp"><?= $summary ?></p>
         <?php endif; ?>
 
         <?= $cveHtml ?>
