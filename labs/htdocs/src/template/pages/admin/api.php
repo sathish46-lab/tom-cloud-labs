@@ -616,6 +616,8 @@ if (newsFetchNowBtn) {
                     const ins = data.data?.total_inserted ?? 0;
                     const upd = data.data?.total_updated ?? 0;
                     showNewsStatus(`Fetch complete: ${ins} inserted, ${upd} updated.`, 'success');
+                    // Reload so the "Next fetch" label and last-fetch time reflect the new values
+                    setTimeout(() => location.reload(), 800);
                 } else {
                     showNewsStatus(data.error || 'Fetch failed', 'danger');
                 }

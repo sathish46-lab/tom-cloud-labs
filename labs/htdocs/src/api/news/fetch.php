@@ -163,6 +163,22 @@ $db->news_fetch_logs->insertOne([
     'session_user' => $user->getUsername() ?? 'unknown',
 ]);
 
+// Update news_settings.last_fetch so the admin UI "Next fetch" label moves forward
+try {
+    $db->global_settings->updateOne(
+        ['_id' => 'news_settings'],
+        ['$set' => [
+            'last_fetch' => \TimeHelper::now(),
+            'last_fetch_by' => $user->getUsername() ?? 'admin',
+            'updated_at' => \TimeHelper::now(),
+        ]],
+        ['upsert' => true]
+    );
+} catch (\Throwable $e) {
+    // Non-fatal: fetch log already written; log and continue
+    error_log('News fetch: failed to update news_settings.last_fetch: ' . $e->getMessage());
+}
+
 header('Content-Type: application/json');
 echo json_encode([
     'status' => 'success',
