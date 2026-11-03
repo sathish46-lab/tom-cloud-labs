@@ -33,6 +33,31 @@ $mcpSettings = ($mcpDoc && is_object($mcpDoc) && method_exists($mcpDoc, 'getArra
 // News automation settings
 $newsDoc = $db->global_settings->findOne(['_id' => 'news_settings']);
 $newsSettings = ($newsDoc && is_object($newsDoc) && method_exists($newsDoc, 'getArrayCopy')) ? $newsDoc->getArrayCopy() : ((array)$newsDoc ?: []);
+
+// Latest fetch log for stats (inserted/updated counts)
+$newsLatestLog = null;
+try {
+    $newsLatestLog = $db->news_fetch_logs->findOne([], ['sort' => ['completed_at' => -1]]);
+} catch (Throwable $e) {
+    $newsLatestLog = null;
+}
+$newsLastInserted = $newsLatestLog ? (int)($newsLatestLog['total_inserted'] ?? 0) : 0;
+$newsLastUpdated  = $newsLatestLog ? (int)($newsLatestLog['total_updated'] ?? 0) : 0;
+
+// Count today's news articles (IST day boundary)
+$newsTodayCount = 0;
+try {
+    $istRange = \TimeHelper::dayRange(0);
+    $newsTodayCount = (int) $db->news_articles->countDocuments([
+        'deleted_at' => null,
+        'published_at' => [
+            '$gte' => new \MongoDB\BSON\UTCDateTime((int) $istRange['start']->format('Uv')),
+            '$lt'  => new \MongoDB\BSON\UTCDateTime((int) $istRange['end']->format('Uv')),
+        ],
+    ]);
+} catch (Throwable $e) {
+    $newsTodayCount = 0;
+}
 ?>
 <style>
 .admin-card { transition: all 0.2s; }
@@ -236,6 +261,28 @@ $newsSettings = ($newsDoc && is_object($newsDoc) && method_exists($newsDoc, 'get
 
                     <div class="small text-muted mt-2" id="newsStatusText" data-last-fetch-ms="<?= $lastFetchMs !== null ? (int) $lastFetchMs : '' ?>">
                         <?= htmlspecialchars($lastFetchEcho ?? 'Last fetch: Never') ?>
+                    </div>
+
+                    <!-- Last-fetch + today stats row -->
+                    <div class="row g-2 mt-3">
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="bx bx-download text-info me-2 fs-5"></i>
+                                <div>
+                                    <div class="small text-body-secondary">Last fetch</div>
+                                    <div class="fw-semibold text-dark"><?= number_format($newsLastInserted) ?> new, <?= number_format($newsLastUpdated) ?> updated</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center justify-content-end">
+                                <div>
+                                    <div class="small text-body-secondary">News today</div>
+                                    <div class="fw-semibold text-dark"><?= number_format($newsTodayCount) ?> articles</div>
+                                </div>
+                                <i class="bx bx-calendar text-success ms-2 fs-5"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
