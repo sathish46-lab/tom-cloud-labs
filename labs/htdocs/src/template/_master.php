@@ -455,8 +455,8 @@ $classString = implode(' ', $htmlClasses);
             display: none !important; 
         }
         .bg-blur {
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            filter: blur(8px);
+            -webkit-filter: blur(8px);
         }
         /* html[data-coreui-theme="dark"] .sidebar {
             border-right: none !important;
