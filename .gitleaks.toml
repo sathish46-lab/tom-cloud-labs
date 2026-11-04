@@ -1,0 +1,23 @@
+# gitleaks config — allowlists for known false positives / already-remediated leaks
+# Docs: https://github.com/gitleaks/gitleaks#configuration
+[extend]
+useDefault = true
+
+[allowlist]
+  description = "Known false positives and remediated history findings"
+
+  # Obfuscated JS bundle: gitleaks flags element-id/icon-name strings
+  # like ['addToken','cUBfh'], ['prevToken','bx-circle-half'] as api keys.
+  paths = [
+    '''(^|/)labs/htdocs/assets/js/app\.o\.js$''',
+    '''(^|/)labs/htdocs/js/app\.o\.js$''',
+    '''(^|/)env_sample\.json$''',   # placeholder text: REPLACE_WITH_S3_SECRET_KEY
+  ]
+
+  # Historical commits containing leaks that were since removed from HEAD:
+  # 5695311a — Wireguard.class.php dead $token default (removed from HEAD)
+  # 55bdce35 — real Cloudflare TUNNEL_TOKEN (removed; token ROTATED in CF dashboard)
+  commits = [
+    "5695311a3dec60c7c42ee8963cf6d62089651c84",
+    "55bdce35d641bb0049a245d21770e03bd9e354f4",
+  ]

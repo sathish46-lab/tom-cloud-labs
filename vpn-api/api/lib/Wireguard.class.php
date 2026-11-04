@@ -158,7 +158,7 @@ class Wireguard{
      * Initialize VPN service - no longer needs network sync.
      * IP allocation now uses ip_registry directly.
      */
-    public function initialize($token = '09b693f6-e6b4-4cdc-a7c6-14a337fae61d') {
+    public function initialize($token = null) {
         return true;
     }
     

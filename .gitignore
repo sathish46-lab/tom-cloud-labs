@@ -9,6 +9,7 @@
 !/vpn-api/
 !/opt/
 !/.gitignore
+!/.gitleaks.toml
 !/README.md
 !/.gitlab-ci.yml
 !/session.json

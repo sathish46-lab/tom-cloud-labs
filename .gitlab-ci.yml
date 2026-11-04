@@ -1,7 +1,20 @@
 stages:
+  - scan
   - test
   - build
   - deploy
+
+scan:
+  stage: scan
+  tags:
+    - production
+  only:
+    refs:
+      - master
+      - merge_requests
+  script:
+    - gitleaks detect --source . --redact --report-path /tmp/gitlab-gitleaks.json
+  allow_failure: false
 
 test:
   stage: test
