@@ -34,7 +34,7 @@ RUN apt-get update && apt-get install -y \
     php8.4 php8.4-cli php8.4-common php8.4-curl php8.4-mbstring php8.4-xml php8.4-zip php8.4-bcmath php8.4-intl php8.4-gd php8.4-mongodb php8.4-amqp php8.4-mysql php8.4-pgsql php8.4-redis \
     rabbitmq-server \
     wireguard wireguard-tools \
-    openssh-server \
+    openssh-server msmtp msmtp-mta \
     python3 python3-pip python3-pymongo python3-docker python3-redis python3-pika python3-psutil \
     docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin \
     ufw fail2ban nmap mongodb-org mysql-server postgresql redis-server \

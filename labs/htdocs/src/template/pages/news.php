@@ -330,7 +330,7 @@ if ($initialSource === 'github-advisories') {
 <div class="container-fluid blur px-4">
     <div class="row align-items-center py-3">
         <div class="col">
-            <h1 class="fw-bold theme-text m-0 network-header-title">Cybersecurity News</h1>
+            <h1 class="fw-bold theme-text m-0 mb-2 network-header-title">Cybersecurity News</h1>
             <p class="text-body mb-2 mb-0 network-header-desc">
                 🚨 Your daily cyber radar! Fresh CVEs 🔥, zero-days ⚡, malware waves 🦠, data breaches 💀 & live exploit alerts — aggregated hourly from 10+ trusted sources like The Hacker News, BleepingComputer, Krebs on Security, NVD & CISA KEV. Zero fluff, pure threat intel! 🛡️✨
             </p>
@@ -346,7 +346,7 @@ if ($initialSource === 'github-advisories') {
 </div>
 
 <div class="flex-grow-1 px-3 blur rounded-0 border-0 shadow-none">
-    <div class="container learn-section p-3 py-4 py-xl-5">
+    <div class="container learn-section p-3 py-4 py-xl-3">
  <div class="news-filters px-2">
             <!-- Date Filter Tabs - centered on top -->
             <div class="date-filter-tabs">

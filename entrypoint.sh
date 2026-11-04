@@ -7,6 +7,7 @@ export VPN_DOMAIN=${VPN_DOMAIN:-vpn.tomweb.in}
 export MQS_DOMAIN=${MQS_DOMAIN:-mq.tomweb.in}
 export CODE_DOMAIN=${CODE_DOMAIN:-tomweb.shop}
 export WORK_DOMAIN=${WORK_DOMAIN:-work.tomweb.in}
+export NEWS_DOMAIN=${NEWS_DOMAIN:-news.tomweb.in}
 export SSL_EMAIL=${SSL_EMAIL:-admin@example.com}
 
 echo "[INFO] Running Pre-boot Initialization in Entrypoint..."
@@ -252,14 +253,32 @@ EOF
 cat <<EOF > /etc/apache2/sites-available/work.conf
 <VirtualHost *:8083>
     ServerAdmin $SSL_EMAIL
-    DocumentRoot "/var/www/work"
+    DocumentRoot "/var/www/docs"
     ServerName $WORK_DOMAIN
 
     ErrorLog \${APACHE_LOG_DIR}/work_error.log
     CustomLog \${APACHE_LOG_DIR}/work_access.log combined
 
-    <Directory "/var/www/work">
+    <Directory "/var/www/docs">
             Options -Indexes +FollowSymLinks -ExecCGI +Includes
+            AllowOverride All
+            Require all granted
+    </Directory>
+</VirtualHost>
+EOF
+
+# Standalone news site — public, no session/auth, DocumentRoot news-site/public
+cat <<EOF > /etc/apache2/sites-available/news.conf
+<VirtualHost *:8083>
+    ServerAdmin $SSL_EMAIL
+    DocumentRoot "/var/www/news-site/public"
+    ServerName $NEWS_DOMAIN
+
+    ErrorLog \${APACHE_LOG_DIR}/news_error.log
+    CustomLog \${APACHE_LOG_DIR}/news_access.log combined
+
+    <Directory "/var/www/news-site/public">
+            Options -Indexes +FollowSymLinks
             AllowOverride All
             Require all granted
     </Directory>
@@ -287,12 +306,12 @@ certificatesResolvers:
 
 providers:
   file:
-    directory: "/etc/traefik/dynamic_conf"
+    directory: "/etc/traefik/dynamic"
     watch: true
 EOF
 
-mkdir -p /etc/traefik/dynamic_conf
-cat <<EOF > /etc/traefik/dynamic_conf/dynamic_conf.yml
+mkdir -p /etc/traefik/dynamic
+cat <<EOF > /etc/traefik/dynamic/dynamic_conf.yml
 http:
   middlewares:
     code-headers:
@@ -311,6 +330,7 @@ http:
       errors:
         status: ["502", "503", "504"]
         query: "/api/labs/error_service.php?backend_status={status}"
+        service: apache-service
 
   services:
     apache-service:
@@ -337,6 +357,20 @@ http:
       entryPoints:
         - web
         - websecure
+      tls:
+        certResolver: myresolver
+
+    labs-http-router:
+      rule: "Host(\`$MAIN_DOMAIN\`)"
+      service: apache-service
+      entryPoints:
+        - web
+
+    work-http-router:
+      rule: "Host(\`$WORK_DOMAIN\`)"
+      service: apache-service
+      entryPoints:
+        - web
 
     vpns-router:
       rule: "Host(\`$VPN_DOMAIN\`)"
@@ -345,12 +379,16 @@ http:
         - vpn-headers
       entryPoints:
         - websecure
+      tls:
+        certResolver: myresolver
 
     mqs-router:
       rule: "Host(\`$MQS_DOMAIN\`)"
       service: mqs-service
       entryPoints:
         - websecure
+      tls:
+        certResolver: myresolver
 
     mqs-ws-router:
       rule: "Host(\`$MQS_DOMAIN\`) && (PathPrefix(\`/ws\`) || PathPrefix(\`/stats-ws\`))"
@@ -365,13 +403,52 @@ http:
         - code-headers
       entryPoints:
         - websecure
+      tls:
+        certResolver: myresolver
 
     work-router:
       rule: "Host(\`$WORK_DOMAIN\`)"
       service: apache-service
       entryPoints:
         - websecure
+      tls:
+        certResolver: myresolver
+
+    news-http-router:
+      rule: "Host(\`$NEWS_DOMAIN\`)"
+      service: apache-service
+      entryPoints:
+        - web
+
+    news-router:
+      rule: "Host(\`$NEWS_DOMAIN\`)"
+      service: apache-service
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: myresolver
 EOF
+
+# 3b. Mail transport (msmtp) — CONTACT_ADMIN_EMAIL is the one required env;
+# SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS/SMTP_FROM optional.
+if [ -n "$SMTP_HOST" ]; then
+    mkdir -p /var/log/labs
+    cat <<EOF > /etc/msmtprc
+defaults
+auth           \${SMTP_AUTH:-on}
+tls            \${SMTP_TLS:-on}
+tls_trust_file /etc/ssl/certs/ca-certificates.crt
+logfile        /var/log/labs/msmtp.log
+account        default
+host           $SMTP_HOST
+port           \${SMTP_PORT:-587}
+from           \${SMTP_FROM:-$CONTACT_ADMIN_EMAIL}
+user           $SMTP_USER
+password       \${SMTP_PASS:-}
+EOF
+    chmod 600 /etc/msmtprc
+    echo "[INFO] msmtp transport configured for $SMTP_HOST"
+fi
 
 # 4. Configure env.json
 echo "[INFO] Configuring env.json..."
@@ -432,7 +509,7 @@ fi
 echo "[INFO] Enabling Apache Sites..."
 a2enmod rewrite proxy proxy_http proxy_wstunnel headers ssl
 a2dissite 000-default.conf
-a2ensite labs.conf mqs.conf wg-api.conf code.conf work.conf
+a2ensite labs.conf mqs.conf wg-api.conf code.conf work.conf news.conf
 
 # 6. Setup Directory Permissions & Log Rotation
 echo "[INFO] Setting Directory Permissions..."
