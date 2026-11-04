@@ -42,44 +42,71 @@ header() {
     echo -e "${BLUE}══════════════════════════════════════════════════════════════${NC}"
 }
 
+# JUnit case elements from PASS:/FAIL: lines.
+# Names carry the failure detail (everything after " — ") because GitLab's
+# unit-test view shows testcase names, not failure messages, by default.
+junit_cases() {
+    awk '
+        {
+            line = $0
+            sub(/^[[:space:]]+/, "", line)
+            if (line !~ /^(PASS|FAIL): /) next
+            is_fail = (line ~ /^FAIL: /)
+            sub(/^(PASS|FAIL):[ \t]*/, "", line)
+            gsub(/&/, "\\&amp;", line)
+            gsub(/</, "\\&lt;", line)
+            gsub(/>/, "\\&gt;", line)
+            gsub(/"/, "\\&quot;", line)
+            if (is_fail) print "      <testcase name=\"" line "\"><failure message=\"" line "\"/></testcase>"
+            else         print "      <testcase name=\"" line "\"/>"
+        }
+    '
+}
+
 run_php_test() {
     local test_file="$1"
     local test_name=$(basename "$test_file" .php)
-    
+
     echo -e "\n${YELLOW}▶ Running: $test_name${NC}"
-    
+
     # Run the test and capture output + exit code
     local output
     local exit_code=0
     output=$(php "$test_file" 2>&1) || exit_code=$?
-    
+
     # Parse results from output
     local test_passed=$(echo "$output" | grep -oP 'Results: \K\d+(?= passed)' || echo "0")
     local test_failed=$(echo "$output" | grep -oP '\d+(?= failed)' | tail -1 || echo "0")
     local test_skipped=$(echo "$output" | grep -oP '\d+(?= skipped)' || echo "0")
-    
+
     # Print output
     echo "$output" | sed 's/^/    /'
-    
+
     # Track totals
     PASSED=$((PASSED + test_passed))
     FAILED=$((FAILED + test_failed))
     SKIPPED=$((SKIPPED + test_skipped))
-    
-    # Write JUnit XML for this test
-    local junit_file="$RESULTS_DIR/${test_name}.xml"
-    local total=$((test_passed + test_failed))
-    local failures=$test_failed
-    
-    cat > "$junit_file" <<EOF
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuites>
-  <testsuite name="$test_name" tests="$total" failures="$failures" time="0">
-$(echo "$output" | grep -E "^\s+(PASS|FAIL):" | sed 's/.*PASS: /    <testcase name="/' | sed 's/.*FAIL: /    <testcase name="/' | sed 's/$/">/' | sed 's/$/    <\/testcase>/' | head -100)
-  </testsuite>
-</testsuites>
-EOF
-    
+
+    if [ $exit_code -ne 0 ] && [ -z "$(echo "$output" | grep -E '^\s+(PASS|FAIL):')" ]; then
+        # Script crashed before printing any assertion (parse error, missing
+        # dependency) — record it as one failing testcase so CI artifacts
+        # surface the crash, not just a missing suite.
+        test_failed=1
+        FAILED=$((FAILED + 1))
+        SKIPPED=$((SKIPPED - test_skipped > 0 ? SKIPPED - test_skipped : 0))
+        local cases="      <testcase name=\"suite crashed (exit=$exit_code, see console)\"><failure message=\"test script exited $exit_code before producing results\"/></testcase>"
+    else
+        local cases
+        cases=$(echo "$output" | junit_cases)
+    fi
+
+    # Per-file suite XML (kept for one-off debugging) + append to combined log
+    local suite_block
+    suite_block="  <testsuite name=\"$test_name\" tests=\"$((test_passed + test_failed))\" failures=\"$test_failed\" skipped=\"$test_skipped\" time=\"0\">
+$cases
+  </testsuite>"
+    echo "$suite_block" >> "$RESULTS_DIR/.suites.tmp"
+
     if [ $exit_code -ne 0 ]; then
         FAILURES+=("$test_name")
     fi
@@ -88,18 +115,24 @@ EOF
 run_python_test() {
     local test_file="$1"
     local test_name=$(basename "$test_file" .py)
-    
+
     echo -e "\n${YELLOW}▶ Running: $test_name${NC}"
-    
+
     local output
     local exit_code=0
     output=$(python3 "$test_file" 2>&1) || exit_code=$?
-    
+
     echo "$output" | sed 's/^/    /'
-    
+
     if [ $exit_code -eq 0 ]; then
+        echo "  <testsuite name=\"$test_name\" tests=\"1\" failures=\"0\" time=\"0\">
+      <testcase name=\"python\"/>
+    </testsuite>" >> "$RESULTS_DIR/.suites.tmp"
         PASSED=$((PASSED + 1))
     else
+        echo "  <testsuite name=\"$test_name\" tests=\"1\" failures=\"1\" time=\"0\">
+      <testcase name=\"python\"><failure message=\"script exited $exit_code\"/></testcase>
+    </testsuite>" >> "$RESULTS_DIR/.suites.tmp"
         FAILED=$((FAILED + 1))
         FAILURES+=("$test_name")
     fi
@@ -108,6 +141,7 @@ run_python_test() {
 # ── Main ──
 
 MODE="${1:-all}"
+rm -f "$RESULTS_DIR/.suites.tmp"
 
 header "Dev_lab Test Suite"
 
@@ -152,6 +186,17 @@ if [ -f "$MODE" ]; then
     elif [[ "$MODE" == *.py ]]; then
         run_python_test "$MODE"
     fi
+fi
+
+# ── Combined JUnit report (GitLab unit-test report) ──
+if [ -s "$RESULTS_DIR/.suites.tmp" ]; then
+    {
+        echo '<?xml version="1.0" encoding="UTF-8"?>'
+        echo '<testsuites name="run_tests">'
+        cat "$RESULTS_DIR/.suites.tmp"
+        echo '</testsuites>'
+    } > "$RESULTS_DIR/junit.xml"
+    rm -f "$RESULTS_DIR/.suites.tmp"
 fi
 
 # ── Summary ──

@@ -31,7 +31,17 @@ test:
       - "labs/**/*.scss"
       - "vpn-api/**/*.php"
   script:
-    - docker exec -w /var/www Dev_lab ./run_tests.sh php
+    - mkdir -p test-results
+    - docker exec -w /var/www Dev_lab ./run_tests.sh php || EXIT_CODE=$?
+    - docker exec Dev_lab cat /var/www/test-results/junit.xml > test-results/junit.xml || true
+    - exit ${EXIT_CODE:-0}
+  artifacts:
+    when: always
+    expose_as: 'Test Results'
+    paths:
+      - test-results/junit.xml
+    reports:
+      junit: test-results/junit.xml
   allow_failure: false
 
 build:
