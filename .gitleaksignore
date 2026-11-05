@@ -1,0 +1,9 @@
+# Gitleaks ignore file — exclude runtime/vendor data that contains
+# third-party or lab-instance secrets, not committed application code.
+
+labsstorage/
+vendor/
+vpn-api/vendor/
+backups/
+node_modules/
+__pycache__/

@@ -9,6 +9,7 @@
 !/vpn-api/
 !/opt/
 !/.gitignore
+!/.gitleaksignore
 !/.gitleaks.toml
 !/README.md
 !/opencode.json
