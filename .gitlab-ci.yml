@@ -14,6 +14,9 @@ scan:
       - merge_requests
   script:
     - rm -rf labsstorage/ vendor/ vpn-api/vendor/ backups/ node_modules/
+    - apt-get update -qq && apt-get install -y -qq curl gnupg2 ca-certificates lsb-release ubuntu-keyring
+    - curl -s https://packagecloud.io/install/repositories/zricethezav/gitleaks/script.deb.sh | bash
+    - apt-get install -y gitleaks
     - gitleaks detect --source . --no-git --redact --report-path /tmp/gitlab-gitleaks.json
   allow_failure: false
 
