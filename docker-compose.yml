@@ -75,9 +75,9 @@ services:
       - "${HTTPS_PORT:-9443}:443"
       - "${MQS_PORT:-9081}:8081"
       - "${MQS_MGMT_PORT:-9082}:8082"
-      - "${RABBIT_PORT:-5673}:5672"
-      - "${RABBIT_MGMT_PORT:-15673}:15672"
-      - "${RABBIT_MGMT_EXTRA_PORT:-15674}:15674"
+      - "127.0.0.1:${RABBIT_PORT:-5673}:5672"
+      - "127.0.0.1:${RABBIT_MGMT_PORT:-15673}:15672"
+      - "127.0.0.1:${RABBIT_MGMT_EXTRA_PORT:-15674}:15674"
       - "${WG_PORT:-51821}:51820/udp"
       - "${SSH_PORT:-2222}:22"
     stop_signal: SIGRTMIN+3
@@ -133,7 +133,7 @@ services:
     networks:
       - ${BACKEND_NET:-TomCloudLab_backend}
     ports:
-      - "27018:27017"
+      - "127.0.0.1:27018:27017"
     restart: always
 
 networks:

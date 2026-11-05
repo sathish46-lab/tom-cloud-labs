@@ -1,9 +1,0 @@
-# Gitleaks ignore — exclude runtime/vendor data with third-party or lab-instance secrets
-# Entries are regex patterns matched against file paths
-
-labsstorage/
-vendor/
-vpn-api/vendor/
-backups/
-node_modules/
-__pycache__/

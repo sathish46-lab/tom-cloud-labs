@@ -13,6 +13,7 @@ scan:
       - master
       - merge_requests
   script:
+    - rm -rf labsstorage/ vendor/ vpn-api/vendor/ backups/ node_modules/
     - gitleaks detect --source . --no-git --redact --report-path /tmp/gitlab-gitleaks.json
   allow_failure: false
 
