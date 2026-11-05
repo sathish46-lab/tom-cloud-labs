@@ -126,6 +126,36 @@ SSL_EMAIL=admin@example.com
 ```
 *Note: If you ever change your domains in this `.env` file, you must run `docker compose up -d` to restart the router and apply the changes.*
 
+**To set up your local environment from scratch:**
+
+1. Copy the sample environment file:
+```bash
+cp .env.sample .env
+```
+
+2. Open `.env` and fill in your own values for all `CHANGE_ME_*` placeholders (database passwords, API keys, OAuth secrets, SMTP credentials, Cloudflare tunnel token, etc.).
+
+3. Never commit real secrets — `.env` is gitignored by default. Only `.env.sample` is tracked.
+
+4. For production, create a separate `.env` (or `.env.prod`) with production domains and ports:
+```bash
+HTTP_PORT=80
+HTTPS_PORT=443
+MAIN_DOMAIN=labs.tomweb.in
+WORK_DOMAIN=
+NEWS_DOMAIN=
+...
+```
+
+5. Boot the stack:
+```bash
+# Development (uses 9xxx ports to avoid clashing with prod)
+docker compose up -d
+
+# Production (requires --env-file .env and --profile prod for sidecars)
+docker compose --env-file .env --profile prod up -d
+```
+
 ---
 
 ### <span style="color: #ff9800;">2. Application Configuration (`ip.json`)</span>

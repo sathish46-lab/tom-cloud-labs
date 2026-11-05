@@ -6,8 +6,8 @@ export MAIN_DOMAIN=${MAIN_DOMAIN:-tomweb.in}
 export VPN_DOMAIN=${VPN_DOMAIN:-vpn.tomweb.in}
 export MQS_DOMAIN=${MQS_DOMAIN:-mq.tomweb.in}
 export CODE_DOMAIN=${CODE_DOMAIN:-tomweb.shop}
-export WORK_DOMAIN=${WORK_DOMAIN:-work.tomweb.in}
-export NEWS_DOMAIN=${NEWS_DOMAIN:-news.tomweb.in}
+export WORK_DOMAIN=${WORK_DOMAIN:-}
+export NEWS_DOMAIN=${NEWS_DOMAIN:-}
 export SSL_EMAIL=${SSL_EMAIL:-admin@example.com}
 
 echo "[INFO] Running Pre-boot Initialization in Entrypoint..."
@@ -140,12 +140,33 @@ Listen 8080
 Listen 8081
 Listen 8082
 Listen 8083
+Listen 8086
 <IfModule ssl_module>
     Listen 4431
 </IfModule>
 EOF
 
 echo "[INFO] Generating Apache VirtualHosts..."
+cat <<EOF > /etc/apache2/sites-available/error-service.conf
+# Static branded error pages — deliberately decoupled from the labs app
+# (no PHP bootstrap, no database): the page must render precisely when the
+# app itself is the thing that failed.
+<VirtualHost *:8086>
+    ServerAdmin $SSL_EMAIL
+    DocumentRoot "/var/www/labs/htdocs/error-pages"
+
+    ErrorLog \${APACHE_LOG_DIR}/error_service.log
+    CustomLog \${APACHE_LOG_DIR}/error_service_access.log combined
+
+    <Directory "/var/www/labs/htdocs/error-pages">
+            Options -Indexes +FollowSymLinks
+            AllowOverride None
+            Require all granted
+            DirectoryIndex index.html
+    </Directory>
+</VirtualHost>
+EOF
+
 cat <<EOF > /etc/apache2/sites-available/labs.conf
 <VirtualHost *:8083>
     ServerAdmin $SSL_EMAIL
@@ -250,6 +271,8 @@ ProxyBadHeader Ignore
 </VirtualHost>
 EOF
 
+# Optional vhosts — generated only when the corresponding domain is set
+if [ -n "${WORK_DOMAIN:-}" ]; then
 cat <<EOF > /etc/apache2/sites-available/work.conf
 <VirtualHost *:8083>
     ServerAdmin $SSL_EMAIL
@@ -266,8 +289,9 @@ cat <<EOF > /etc/apache2/sites-available/work.conf
     </Directory>
 </VirtualHost>
 EOF
+fi
 
-# Standalone news site — public, no session/auth, DocumentRoot news-site/public
+if [ -n "${NEWS_DOMAIN:-}" ]; then
 cat <<EOF > /etc/apache2/sites-available/news.conf
 <VirtualHost *:8083>
     ServerAdmin $SSL_EMAIL
@@ -284,6 +308,7 @@ cat <<EOF > /etc/apache2/sites-available/news.conf
     </Directory>
 </VirtualHost>
 EOF
+fi
 
 # 3. Generate Traefik Dynamic config
 echo "[INFO] Generating Traefik Configuration..."
@@ -329,10 +354,23 @@ http:
     custom-errors:
       errors:
         status: ["502", "503", "504"]
-        query: "/api/labs/error_service.php?backend_status={status}"
-        service: apache-service
+        query: "/{status}.html"
+        service: error-service
+    lab-errors:
+      errors:
+        status: ["404", "500", "502", "503", "504"]
+        service: error-service
+        query: "/{status}.html"
 
   services:
+    error-service:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:8086"
+    null-service:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:65535"
     apache-service:
       loadBalancer:
         servers:
@@ -355,7 +393,6 @@ http:
       rule: "Host(\`$MAIN_DOMAIN\`)"
       service: apache-service
       entryPoints:
-        - web
         - websecure
       tls:
         certResolver: myresolver
@@ -366,11 +403,24 @@ http:
       entryPoints:
         - web
 
-    work-http-router:
-      rule: "Host(\`$WORK_DOMAIN\`)"
+    lab-catchall:
+      rule: "HostRegexp(\`{any:.+}\`)"
+      priority: 1
       service: apache-service
       entryPoints:
         - web
+      middlewares:
+        - lab-errors
+
+    lab-catchall-tls:
+      rule: "HostRegexp(\`{any:.+}\`)"
+      priority: 1
+      service: apache-service
+      entryPoints:
+        - websecure
+      tls: {}
+      middlewares:
+        - lab-errors
 
     vpns-router:
       rule: "Host(\`$VPN_DOMAIN\`)"
@@ -406,6 +456,19 @@ http:
       tls:
         certResolver: myresolver
 
+EOF
+
+# Optional Traefik routers for work/news — written as separate provider files
+# (and removed when the domains are unset).
+if [ -n "${WORK_DOMAIN:-}" ]; then
+cat <<EOF > /etc/traefik/dynamic/work.yml
+http:
+  routers:
+    work-http-router:
+      rule: "Host(\`$WORK_DOMAIN\`)"
+      service: apache-service
+      entryPoints:
+        - web
     work-router:
       rule: "Host(\`$WORK_DOMAIN\`)"
       service: apache-service
@@ -413,13 +476,20 @@ http:
         - websecure
       tls:
         certResolver: myresolver
+EOF
+else
+    rm -f /etc/traefik/dynamic/work.yml
+fi
 
+if [ -n "${NEWS_DOMAIN:-}" ]; then
+cat <<EOF > /etc/traefik/dynamic/news.yml
+http:
+  routers:
     news-http-router:
       rule: "Host(\`$NEWS_DOMAIN\`)"
       service: apache-service
       entryPoints:
         - web
-
     news-router:
       rule: "Host(\`$NEWS_DOMAIN\`)"
       service: apache-service
@@ -428,10 +498,14 @@ http:
       tls:
         certResolver: myresolver
 EOF
+else
+    rm -f /etc/traefik/dynamic/news.yml
+fi
 
 # 3b. Mail transport (msmtp) — CONTACT_ADMIN_EMAIL is the one required env;
-# SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS/SMTP_FROM optional.
-if [ -n "$SMTP_HOST" ]; then
+# SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS/SMTP_FROM optional (all safe with
+# set -u thanks to the ${VAR:-} forms).
+if [ -n "${SMTP_HOST:-}" ]; then
     mkdir -p /var/log/labs
     cat <<EOF > /etc/msmtprc
 defaults
@@ -440,14 +514,14 @@ tls            \${SMTP_TLS:-on}
 tls_trust_file /etc/ssl/certs/ca-certificates.crt
 logfile        /var/log/labs/msmtp.log
 account        default
-host           $SMTP_HOST
+host           ${SMTP_HOST:-}
 port           \${SMTP_PORT:-587}
-from           \${SMTP_FROM:-$CONTACT_ADMIN_EMAIL}
-user           $SMTP_USER
+from           \${SMTP_FROM:-${CONTACT_ADMIN_EMAIL:-contact@tomweb.in}}
+user           ${SMTP_USER:-}
 password       \${SMTP_PASS:-}
 EOF
     chmod 600 /etc/msmtprc
-    echo "[INFO] msmtp transport configured for $SMTP_HOST"
+    echo "[INFO] msmtp transport configured for ${SMTP_HOST:-no host configured}"
 fi
 
 # 4. Configure env.json
@@ -509,13 +583,19 @@ fi
 echo "[INFO] Enabling Apache Sites..."
 a2enmod rewrite proxy proxy_http proxy_wstunnel headers ssl
 a2dissite 000-default.conf
-a2ensite labs.conf mqs.conf wg-api.conf code.conf work.conf news.conf
+SITES="labs.conf mqs.conf wg-api.conf code.conf error-service.conf"
+[ -n "${WORK_DOMAIN:-}" ] && SITES="$SITES work.conf"
+[ -n "${NEWS_DOMAIN:-}" ] && SITES="$SITES news.conf"
+a2ensite $SITES
 
 # 6. Setup Directory Permissions & Log Rotation
 echo "[INFO] Setting Directory Permissions..."
 mkdir -p /var/log/labs && chown -R www-data:www-data /var/log/labs
 mkdir -p /var/cache/labs && chown -R www-data:www-data /var/cache/labs
 touch /var/log/labs_deploy.log && chown www-data:www-data /var/log/labs_deploy.log && chmod 664 /var/log/labs_deploy.log
+# Fix ownership of the colocated MongoDB data dir when bind-mounted from the host
+# (dumped/migrated WiredTiger files may carry a foreign uid; mongod runs as user 'mongodb')
+mkdir -p /var/lib/mongodb && chown -R mongodb:mongodb /var/lib/mongodb 2>/dev/null || true
 
 # 7. Setup Labs Control Panel Links & Workers
 if [ -f "/opt/labs-control-panel/labsctl.py" ]; then
@@ -663,6 +743,11 @@ RemainAfterExit=yes
 WantedBy=multi-user.target
 EOF
 systemctl enable mysql-bootstrap.service || true
+
+# Best-effort live reload when re-running this script on an already running
+# system (boot: services are down, both no-ops).
+systemctl is-active --quiet apache2 && systemctl reload apache2 || true
+systemctl is-active --quiet traefik && systemctl restart traefik || true
 
 echo "[INFO] Handing over control to systemd!"
 exec /lib/systemd/systemd

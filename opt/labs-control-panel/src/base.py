@@ -12,8 +12,9 @@ def build_down_traefik_config(instance_id, lab_data, tls_enabled=True):
     """Down-state Traefik config: route every lab hostname to the branded
     error page instead of dropping the route, so stopped labs still answer
     with their custom_error_page (or the platform default) instead of a
-    plain Traefik 404. Shared middlewares (lab-errors, lab-errors-host,
-    lab-errors-status) live in the main dynamic config file."""
+    plain Traefik 404. The shared `lab-errors` middleware lives in the main
+    dynamic config file; backing onto null-service guarantees a 502, which
+    lab-errors rewrites into the "lab is starting or offline" page."""
     lab_data = lab_data or {}
     if isinstance(lab_data, dict) and isinstance(lab_data.get('deploy'), dict):
         lab_data = {**lab_data['deploy'], **lab_data}
@@ -31,15 +32,15 @@ def build_down_traefik_config(instance_id, lab_data, tls_enabled=True):
         return None
 
     rules = " || ".join(f"Host(`{d}`)" for d in domains)
-    mw = "lab-errors@file, lab-errors-host@file, lab-errors-status@file, lab-domain-%s@file" % instance_id
+    mw = "lab-errors@file, lab-domain-%s@file" % instance_id
     out = "http:\n  middlewares:\n"
     out += "    lab-domain-%s:\n      headers:\n        customRequestHeaders:\n          X-Lab-Domain: \"%s\"\n" % (
         instance_id, domains[0])
     out += "  routers:\n"
-    out += "    router-%s-down:\n      rule: \"%s\"\n      entryPoints: [web]\n      service: apache-service\n      priority: 100\n      middlewares: [%s]\n" % (
+    out += "    router-%s-down:\n      rule: \"%s\"\n      entryPoints: [web]\n      service: null-service\n      priority: 100\n      middlewares: [%s]\n" % (
         instance_id, rules, mw)
     if tls_enabled:
-        out += "    router-%s-down-tls:\n      rule: \"%s\"\n      entryPoints: [websecure]\n      tls: {}\n      service: apache-service\n      priority: 100\n      middlewares: [%s]\n" % (
+        out += "    router-%s-down-tls:\n      rule: \"%s\"\n      entryPoints: [websecure]\n      tls: {}\n      service: null-service\n      priority: 100\n      middlewares: [%s]\n" % (
             instance_id, rules, mw)
     return out
 

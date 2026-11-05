@@ -6,7 +6,7 @@ After=network.target rabbitmq-server.service
 Type=simple
 User=root
 WorkingDirectory=/opt/labs-control-panel
-ExecStart=/usr/local/bin/labsctl stream --key=overview
+ExecStart=/bin/bash -c 'source /opt/labs-control-panel/systemd/labs-ctl-env.sh && exec /usr/local/bin/labsctl stream --key=overview'
 Restart=always
 RestartSec=3
 

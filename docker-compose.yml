@@ -1,9 +1,9 @@
 services:
-  vps_dev:
+  vps:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: Dev_lab
+    container_name: ${VPS_CONTAINER:-Dev_lab}
     cap_add:
       - NET_ADMIN
       - SYS_ADMIN
@@ -12,13 +12,13 @@ services:
     security_opt:
       - apparmor:unconfined
     environment:
-      - MAIN_DOMAIN=dev.tomweb.in
-      - VPN_DOMAIN=vpn.dev.tomweb.in
-      - MQS_DOMAIN=mq.dev.tomweb.in
-      - CODE_DOMAIN=code.dev.tomweb.in
-      - WORK_DOMAIN=work.dev.tomweb.in
-      - NEWS_DOMAIN=news.dev.tomweb.in
-      - SSL_EMAIL=admin@example.com
+      - MAIN_DOMAIN=${MAIN_DOMAIN:-dev.tomweb.in}
+      - VPN_DOMAIN=${VPN_DOMAIN:-vpn.dev.tomweb.in}
+      - MQS_DOMAIN=${MQS_DOMAIN:-mq.dev.tomweb.in}
+      - CODE_DOMAIN=${CODE_DOMAIN:-code.dev.tomweb.in}
+      - WORK_DOMAIN=${WORK_DOMAIN:-work.dev.tomweb.in}
+      - NEWS_DOMAIN=${NEWS_DOMAIN:-news.dev.tomweb.in}
+      - SSL_EMAIL=${SSL_EMAIL:-admin@example.com}
       - CONTACT_ADMIN_EMAIL=${CONTACT_ADMIN_EMAIL:-contact@tomweb.in}
       - SMTP_HOST=${SMTP_HOST:-}
       - SMTP_PORT=${SMTP_PORT:-587}
@@ -26,11 +26,16 @@ services:
       - SMTP_PASS=${SMTP_PASS:-}
       - SMTP_FROM=${SMTP_FROM:-contact@tomweb.in}
       - DOCKER_HOST=unix:///var/docker.sock
-      - WIREGUARD_MODE=docker
+      - WIREGUARD_MODE=${WIREGUARD_MODE:-docker}
       - RABBITMQ_USER=${RABBITMQ_USER:-admin}
       - RABBITMQ_PASS=${RABBITMQ_PASS:?Set RABBITMQ_PASS in .env file}
       - MONGO_USER=${MONGO_USER:-admin}
       - MONGO_PASS=${MONGO_PASS:?Set MONGO_PASS in .env file}
+      - MONGO_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD:-${MONGO_PASS}}
+      - DATABASE_FILE=${DATABASE_FILE:-mongodb://admin:tomcloud2026@127.0.0.1:27017/tom_labs_db?authSource=admin}
+      - API_SECRET=${API_SECRET:-your-super-secret-token-here}
+      - AI_INTERNAL_TOKEN=${AI_INTERNAL_TOKEN:-tclabs_ai_tool_92d3f8a1b5c7e4}
+      - AI_API_KEY=${AI_API_KEY:-}
     extra_hosts:
       - "dev.tomweb.in:127.0.0.1"
       - "vpn.dev.tomweb.in:127.0.0.1"
@@ -39,21 +44,22 @@ services:
       - "work.dev.tomweb.in:127.0.0.1"
       - "news.dev.tomweb.in:127.0.0.1"
       - "mysql.tomweb.in:127.0.0.1"
+      - "labs.tomweb.in:127.0.0.1"
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:rw
       - .:/var/www
       - /var/run/docker.sock:/var/docker.sock
       - ./opt/labs-control-panel:/opt/labs-control-panel
-      # ⬇️ NEW PERSISTENT VOLUMES ⬇️
       - ./rabbitmq-data:/var/lib/rabbitmq
       - ./wireguard-conf:/etc/wireguard
       - ./apache-logs:/var/log/apache2
       - ./traefik-conf:/etc/traefik
       - ./tomlabs/storage:/var/tomlabs/storage
+      # App-data MongoDB lives INSIDE the container (mongod, /etc/mongod.conf),
+      # same colocated layout for both dev and production
+      - ./mongo-data:/var/lib/mongodb
     networks:
-      tomlabs_dev_net: {}
-      labs_frontend: {}
-      dev_lab_frontend:
+      labs_backend:
         aliases:
           - mysql.tomweb.in
           - adminer.tomweb.in
@@ -63,21 +69,60 @@ services:
           - mq.tomweb.in
           - work.tomweb.in
           - labs.tomweb.in
+      labs_frontend: {}
     ports:
-      - "80:80"
-      - "443:443"
-      - "9080:80"
-      - "9443:443"
-      - "9081:8081"
-      - "9082:8082"
-      - "5673:5672"
-      - "15673:15672"
-      - "15674:15674"
-      - "51821:51820/udp"
-      - "2222:22"
+      - "${HTTP_PORT:-9080}:80"
+      - "${HTTPS_PORT:-9443}:443"
+      - "${MQS_PORT:-9081}:8081"
+      - "${MQS_MGMT_PORT:-9082}:8082"
+      - "${RABBIT_PORT:-5673}:5672"
+      - "${RABBIT_MGMT_PORT:-15673}:15672"
+      - "${RABBIT_MGMT_EXTRA_PORT:-15674}:15674"
+      - "${WG_PORT:-51821}:51820/udp"
+      - "${SSH_PORT:-2222}:22"
     stop_signal: SIGRTMIN+3
 
+  # Prod-only sidecars — start only with: docker compose --profile prod up -d
+  cloudflared:
+    profiles:
+      - prod
+    image: cloudflare/cloudflared:latest
+    container_name: ${CLOUDFLARED_CONTAINER:-TomCloudLab_cloudflared}
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN:-}
+    networks:
+      - ${BACKEND_NET:-TomCloudLab_backend}
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETGID
+      - SETUID
+
+  ddns-updater:
+    profiles:
+      - prod
+    image: oznu/cloudflare-ddns:latest
+    container_name: ${DDNS_CONTAINER:-TomCloudLab_ddns_updater}
+    restart: unless-stopped
+    environment:
+      - API_KEY=${CF_API_KEY:-}
+      - ZONE=${DDNS_ZONE:-tomweb.in}
+      - SUBDOMAIN=${DDNS_SUBDOMAIN:-vpn}
+      - PROXIED=${DDNS_PROXIED:-false}
+      - RRTYPE=A
+    networks:
+      - ${BACKEND_NET:-TomCloudLab_backend}
+
+  # Legacy external app-data MongoDB — disabled by default; both stacks now use
+  # the mongod inside the vps container (127.0.0.1:27017).
+  # Rollback only: docker compose --profile legacy-extmongo up -d
   mongodb:
+    profiles:
+      - legacy-extmongo
     image: mongo:8.0
     container_name: TomCloudLab_mongodb
     environment:
@@ -86,51 +131,18 @@ services:
     volumes:
       - ./mongo-data:/data/db
     networks:
-      - tomlabs_dev_net
+      - ${BACKEND_NET:-TomCloudLab_backend}
     ports:
       - "27018:27017"
     restart: always
 
-
-
-  # gitlab:
-  #   image: 'gitlab/gitlab-ce:latest'
-  #   container_name: TomCloudLab_gitlab
-  #   restart: always
-  #   hostname: 'git.tomweb.in'
-  #   environment:
-  #     GITLAB_OMNIBUS_CONFIG: |
-  #       external_url 'https://git.tomweb.in'
-  #       nginx['listen_port'] = 80
-  #       nginx['listen_https'] = false
-  #   volumes:
-  #     - './gitlab_config:/etc/gitlab'
-  #     - './gitlab_logs:/var/log/gitlab'
-  #     - './gitlab_data:/var/opt/gitlab'
-  #   networks:
-  #     - tomlabs_dev_net
-
 networks:
-  tomlabs_dev_net:
-    name: Dev_lab
-    ipam:
-      config:
-        - subnet: 10.20.144.0/20
-          gateway: 10.20.144.1
+  labs_backend:
+    name: ${BACKEND_NET:-dev_backend}
     driver: bridge
-  labs_bridge:
-    name: labs_bridge
-    external: true
   labs_frontend:
     name: labs_frontend
     external: true
-  dev_lab_frontend:
-    name: dev_lab_frontend
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 10.20.160.0/20
-          gateway: 10.20.160.1
 
 volumes:
   labsstorage:

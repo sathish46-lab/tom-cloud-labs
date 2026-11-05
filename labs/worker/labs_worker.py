@@ -109,7 +109,7 @@ def reap_expired_challenges():
     while True:
         try:
             db = _get_mongo_client('tom_labs_db')
-            if not db:
+            if db is None:
                 time.sleep(15)
                 continue
 
@@ -198,7 +198,7 @@ DEPLOY_PROGRESS_STEPS = [
 def _save_deploy_logs(instance_hash, logs, error_msg, is_build=False, action='deploy', duration=None, exit_code=None, user=None, run_id=None):
     try:
         db = _get_mongo_client('tom_labs_instances_db')
-        if not db:
+        if db is None:
             return
 
         now = time.time()
@@ -230,7 +230,7 @@ def _save_deploy_logs(instance_hash, logs, error_msg, is_build=False, action='de
 
         # Push to deploy_history array in machine_labs
         labs_db = _get_mongo_client('tom_labs_db')
-        if labs_db:
+        if labs_db is not None:
             flat_fields = {log_key: log_doc}
             if not is_ensure:
                 flat_fields['last_error'] = error_msg or ''
