@@ -7,7 +7,7 @@ stages:
 scan:
   stage: scan
   tags:
-    - production
+    - shared
   only:
     refs:
       - master
@@ -20,7 +20,7 @@ scan:
 test:
   stage: test
   tags:
-    - production
+    - shared
   only:
     refs:
       - master
@@ -48,7 +48,7 @@ test:
 build:
   stage: build
   tags:
-    - production
+    - shared
   only:
     refs:
       - master
@@ -65,7 +65,7 @@ build:
 deploy:
   stage: deploy
   tags:
-    - production
+    - shared
   only:
     refs:
       - master
