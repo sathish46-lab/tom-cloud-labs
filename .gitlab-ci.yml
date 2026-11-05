@@ -22,7 +22,6 @@ scan:
     - gitleaks detect --source . --no-git --redact --report-path /tmp/gitlab-gitleaks.json
   allow_failure: false
 
-
 test:
   stage: test
   tags:
@@ -38,6 +37,7 @@ test:
       - "labs/**/*.scss"
       - "vpn-api/**/*.php"
   script:
+    - apt-get update -qq && apt-get install -y -qq docker.io
     - mkdir -p test-results
     - docker exec -w /var/www Dev_lab ./run_tests.sh php || EXIT_CODE=$?
     - docker exec Dev_lab cat /var/www/test-results/junit.xml > test-results/junit.xml || true
@@ -58,11 +58,13 @@ build:
   only:
     refs:
       - master
+      - merge_requests
     changes:
       - ".gitlab-ci.yml"
       - "labs/workspace/**/*"
       - "labs/htdocs/assets/**/*"
   script:
+    - apt-get update -qq && apt-get install -y -qq docker.io
     - docker exec -w /var/www/labs/workspace/grunt Dev_lab bash -c "npm install && npx grunt build"
     - test -f labs/htdocs/assets/css/app.css
     - test -f labs/htdocs/assets/js/app.js
