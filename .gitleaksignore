@@ -1,5 +1,5 @@
-# Gitleaks ignore file — exclude runtime/vendor data that contains
-# third-party or lab-instance secrets, not committed application code.
+# Gitleaks ignore — exclude runtime/vendor data with third-party or lab-instance secrets
+# Entries are regex patterns matched against file paths
 
 labsstorage/
 vendor/

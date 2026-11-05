@@ -13,7 +13,7 @@ scan:
       - master
       - merge_requests
   script:
-    - gitleaks detect --source . --redact --report-path /tmp/gitlab-gitleaks.json
+    - gitleaks detect --source . --no-git --redact --report-path /tmp/gitlab-gitleaks.json
   allow_failure: false
 
 test:
