@@ -3,10 +3,14 @@ set -u
 
 # CI job containers (GitLab docker executor: image runs entrypoint + the job
 # script as one shell) must NOT boot the platform — the job script itself
-# boots a nested ci-test container for that. DEVLAB_SKIP_BOOT=1 short-circuits
-# the full boot and just hands control to the shell.
-if [ "${DEVLAB_SKIP_BOOT:-}" = "1" ]; then
-    echo "[INFO] DEVLAB_SKIP_BOOT=1 — skipping platform boot, handing control to the shell."
+# boots a nested ci-test container for that. GitLab injects job variables
+# into the shell only, NOT into the container env, so DEVLAB_SKIP_BOOT may be
+# unset here; instead detect the executor structurally: the runner always
+# passes a shell command ($@ non-empty), and sets CI=true for containers that
+# receive env. Real platform containers boot with NO command — that's how
+# docker run/compose/the nested ci-test container start.
+if [ -n "$1" ] || [ "${DEVLAB_SKIP_BOOT:-}" = "1" ] || [ "${CI:-}" = "true" ]; then
+    echo "[INFO] Skip-boot detected (CI command/flag) — handing control to the shell."
     exec "$@"
 fi
 
