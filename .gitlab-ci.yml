@@ -1,5 +1,32 @@
+# ============================================================================
+# Isolated CI — every pipeline tests THE COMMIT, never the work laptop.
+#
+#   image  → builds the Dev_lab container image once, caches it in the GitLab
+#            Container Registry. Rebuilt only when the Dockerfile / boot
+#            scripts / this file change (also manually via FORCE_IMAGE_BUILD).
+#   test   → boots a FRESH disposable container from that image with the
+#            checked-out commit mounted as its live /var/www volume. Docker
+#            socket from the DinD sidecar is injected as /var/docker.sock so
+#            labsctl can talk to the same ephemeral daemon. env.json is not in
+#            git (secrets) — it comes from the ENV_JSON file variable, with
+#            database_file rewritten to the container's own mongod
+#            (init-services.sh bootstraps that user from mongo_user/mongo_pass).
+#   build  → frontend build in the node:20 image against the commit.
+#   deploy → unchanged: still runs on the laptop runner (it can only copy to
+#            /Users/sathish/Downloads/TomCloudLab).
+#
+# One-time setup (GitLab → Settings → CI/CD → Variables):
+#   ENV_JSON (File)     — paste the local env.json contents. Only the test job
+#                         needs it; never committed, redacted from job logs.
+#   FORCE_IMAGE_BUILD   — optional "true" to trigger the image job by hand.
+# The image/test jobs need a runner whose Docker executor is configured with
+# privileged = true (gitlab.com shared runners already are; a self-hosted
+# default runner must set it in config.toml).
+# ============================================================================
+
 stages:
   - scan
+  - image
   - test
   - build
   - deploy
@@ -22,10 +49,58 @@ scan:
     - gitleaks detect --source . --no-git --redact --report-path /tmp/gitlab-gitleaks.json
   allow_failure: false
 
+image:
+  stage: image
+  image: docker:cli
+  services:
+    - docker:dind
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+    DOCKER_HOST: tcp://docker:2375
+  tags:
+    - docker
+  rules:
+    # Rebuild only when the image's inputs change...
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - "Dockerfile"
+        - "entrypoint.sh"
+        - "init-services.sh"
+        - "install.sh"
+        - "Migrate.sh"
+        - ".gitlab-ci.yml"
+    - if: '$CI_COMMIT_BRANCH == "master"'
+      changes:
+        - "Dockerfile"
+        - "entrypoint.sh"
+        - "init-services.sh"
+        - "install.sh"
+        - "Migrate.sh"
+        - ".gitlab-ci.yml"
+    # ...or by hand: FORCE_IMAGE_BUILD=true (first pipeline of this scheme also
+    # needs this once, to seed dev-lab:base in the registry).
+    - if: '$FORCE_IMAGE_BUILD == "true"'
+      when: manual
+      allow_failure: true
+  script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    - docker build -t "$CI_REGISTRY_IMAGE/dev-lab:$CI_COMMIT_SHORT_SHA" -t "$CI_REGISTRY_IMAGE/dev-lab:base" .
+    - docker push "$CI_REGISTRY_IMAGE/dev-lab:$CI_COMMIT_SHORT_SHA"
+    - docker push "$CI_REGISTRY_IMAGE/dev-lab:base"
+  timeout: 50m
+
 test:
   stage: test
+  # Runs on the DEFAULT runner (no tags) — not the laptop container.
+  image: "$CI_REGISTRY_IMAGE/dev-lab:base"
+  services:
+    - docker:dind
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+    DOCKER_HOST: tcp://docker:2375
+    GIT_DEPTH: "1"
   tags:
-    - shared
+    - docker
   only:
     refs:
       - master
@@ -36,12 +111,53 @@ test:
       - "labs/**/*.js"
       - "labs/**/*.scss"
       - "vpn-api/**/*.php"
+  timeout: 45m
   script:
-    - apt-get update -qq && apt-get install -y -qq docker.io
-    - mkdir -p test-results
-    - docker exec -w /var/www Dev_lab ./run_tests.sh php || EXIT_CODE=$?
-    - docker exec Dev_lab cat /var/www/test-results/junit.xml > test-results/junit.xml || true
+    - |
+      if [ -z "${ENV_JSON:-}" ]; then
+        echo "ENV_JSON file variable is not set — paste local env.json into it"
+        echo "(Settings → CI/CD → Variables). The app reads Mongo/mq/mysql creds"
+        echo "from it and it is deliberately not committed."
+        exit 1
+      fi
+    # Commit's env.json: keep every real key, but aim database_file at this
+    # container's own mongod — the external TomCloudLab_mongodb does not exist
+    # in CI. Same mongo_user/mongo_pass that init-services.sh bootstraps.
+    - jq '.database_file = "mongodb://\(.mongo_user):\(.mongo_pass)@127.0.0.1:27017/tom_labs_db?authSource=admin"' "$ENV_JSON" > env.json
+    # Fresh container per pipeline. Boot scripts are mounted from the commit so
+    # a run is always testing what was pushed, not the last image build.
+    - docker run -d --privileged --name ci-test
+      -v "$PWD/entrypoint.sh:/usr/local/bin/entrypoint.sh:ro"
+      -v "$PWD/init-services.sh:/usr/local/bin/init-services.sh:ro"
+      -v /var/run/docker.sock:/var/docker.sock
+      -v /sys/fs/cgroup:/sys/fs/cgroup:rw --cgroupns=host
+      -v "$PWD:/var/www"
+      "$CI_REGISTRY_IMAGE/dev-lab:base" >/dev/null
+    - echo "[CI] Waiting for init-services to finish inside ci-test…"
+    - |
+      for i in $(seq 1 120); do
+        if docker exec ci-test systemctl is-active --quiet init-services.service 2>/dev/null; then
+          echo "[CI] init-services active after ${i}x5s"
+          break
+        fi
+        sleep 5
+        [ "$i" = 120 ] && { echo "[CI] container init timed out"; docker logs --tail 100 ci-test; }
+      done
+    - echo "[CI] Waiting for the dev.tomweb.in vhost on :8083…"
+    - |
+      for i in $(seq 1 36); do
+        CODE=$(docker exec ci-test curl -s -o /dev/null -w '%{http_code}' -H 'Host: dev.tomweb.in' http://localhost:8083/ || echo 000)
+        echo "[CI] HTTP $CODE (attempt $i/36)"
+        [ "$CODE" != "000" ] && break
+        sleep 5
+      done
+    - docker exec -w /var/www ci-test ./run_tests.sh php || EXIT_CODE=$?
+    # run_tests wrote /var/www/test-results — same dir on the job side via the mount
+    - test -f test-results/junit.xml && echo "[CI] junit.xml captured"
     - exit ${EXIT_CODE:-0}
+  after_script:
+    # The disposable container NEVER outlives the job — on pass or fail.
+    - docker rm -f ci-test 2>/dev/null || true
   artifacts:
     when: always
     expose_as: 'Test Results'
@@ -53,8 +169,10 @@ test:
 
 build:
   stage: build
+  # Frontend build in stock node:20 against the commit — no container, no laptop.
+  image: node:20-bookworm
   tags:
-    - shared
+    - docker
   only:
     refs:
       - master
@@ -64,8 +182,11 @@ build:
       - "labs/workspace/**/*"
       - "labs/htdocs/assets/**/*"
   script:
-    - apt-get update -qq && apt-get install -y -qq docker.io
-    - docker exec -w /var/www/labs/workspace/grunt Dev_lab bash -c "npm install && npx grunt build"
+    - node -v
+    - cd labs/workspace/grunt
+    - npm ci --no-audit --no-fund
+    - npx grunt build
+    - cd ../../..
     - test -f labs/htdocs/assets/css/app.css
     - test -f labs/htdocs/assets/js/app.js
     - test -f labs/htdocs/assets/js/app.min.js
