@@ -57,14 +57,15 @@ docker_probe:
   when: manual
   allow_failure: true
   script:
-    - echo '--- docker env vars ---'
-    - env | grep -iE 'docker|ci_registry' || true
-    - echo '--- probe default docker socket (DOCKER_HOST unset) ---'
-    - unset DOCKER_HOST
-    - ls -l /var/run/docker.sock 2>&1 || echo 'no socket file'
-    - docker info 2>&1 | grep -E 'Server Version|Operating System|ERROR|error' || echo 'SOCKET: daemon unreachable'
-    - echo '--- probe dind service at tcp://docker:2375 ---'
-    - DOCKER_HOST=tcp://docker:2375 docker version 2>&1 | tail -3 || echo 'tcp: unreachable'
+    - |
+      echo '--- docker env vars ---'
+      env | grep -iE 'docker|ci_registry' || true
+      echo '--- probe default docker socket (DOCKER_HOST unset) ---'
+      unset DOCKER_HOST
+      ls -l /var/run/docker.sock 2>&1 || true
+      docker info 2>&1 | grep -E 'Server Version|Operating System|ERROR|error' || true
+      echo '--- probe dind service tcp://docker:2375 ---'
+      DOCKER_HOST=tcp://docker:2375 docker version 2>&1 | tail -3 || true
 
 docker_image:
   stage: image
