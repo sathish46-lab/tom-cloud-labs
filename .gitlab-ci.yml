@@ -76,7 +76,9 @@ docker_image:
     DOCKER_TLS_CERTDIR: ""
     DOCKER_HOST: tcp://docker:2375
   rules:
-    # Rebuild only when the image's inputs change...
+    # Rebuild only when the image's real inputs change — NOT on CI-file edits
+    # (this runner has no dind; rebuilds happen by hand via FORCE_IMAGE_BUILD
+    # or from a machine runner with Docker access).
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - "Dockerfile"
@@ -84,7 +86,6 @@ docker_image:
         - "init-services.sh"
         - "install.sh"
         - "Migrate.sh"
-        - ".gitlab-ci.yml"
     - if: '$CI_COMMIT_BRANCH == "master"'
       changes:
         - "Dockerfile"
@@ -92,7 +93,6 @@ docker_image:
         - "init-services.sh"
         - "install.sh"
         - "Migrate.sh"
-        - ".gitlab-ci.yml"
     # ...or by hand: FORCE_IMAGE_BUILD=true (first pipeline of this scheme also
     # needs this once, to seed dev-lab:base in the registry).
     - if: '$FORCE_IMAGE_BUILD == "true"'
