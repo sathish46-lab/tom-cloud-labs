@@ -138,7 +138,7 @@ test:
     # Preflight: what daemon (if any) does this job container see? Without a
     # privileged runner or an injected host socket CI cannot boot ci-test —
     # this makes the failure self-explanatory instead of a bare docker error.
-    - echo "[CI] docker access: DOCKER_HOST=${DOCKER_HOST:-<unset default socket>}"
+    - echo "[CI] docker access (DOCKER_HOST=${DOCKER_HOST:-<unset default socket>})"
     - ls -l /var/run/docker.sock 2>&1 || echo "[CI] no /var/run/docker.sock"
     - docker version 2>&1 | grep -E 'Server::|ERROR|error|Cannot connect' || true
     # Commit's env.json: keep every real key, but aim database_file at this
