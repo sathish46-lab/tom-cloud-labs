@@ -75,11 +75,13 @@ docker_image:
   variables:
     DOCKER_TLS_CERTDIR: ""
     DOCKER_HOST: tcp://docker:2375
+  allow_failure: true
+  # MANUAL on this runner: it has no dind (services crash at start), so the
+  # base image is built+pushed by hand from a machine with Docker (Docker Lab)
+  # whenever the inputs below change. The job stays a clickable button.
   rules:
-    # Rebuild only when the image's real inputs change — NOT on CI-file edits
-    # (this runner has no dind; rebuilds happen by hand via FORCE_IMAGE_BUILD
-    # or from a machine runner with Docker access).
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: manual
       changes:
         - "Dockerfile"
         - "entrypoint.sh"
@@ -87,17 +89,21 @@ docker_image:
         - "install.sh"
         - "Migrate.sh"
     - if: '$CI_COMMIT_BRANCH == "master"'
+      when: manual
       changes:
         - "Dockerfile"
         - "entrypoint.sh"
         - "init-services.sh"
         - "install.sh"
         - "Migrate.sh"
-    # ...or by hand: FORCE_IMAGE_BUILD=true (first pipeline of this scheme also
-    # needs this once, to seed dev-lab:base in the registry).
     - if: '$FORCE_IMAGE_BUILD == "true"'
       when: manual
-      allow_failure: true
+      changes:
+        - "**/*"
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: manual
+      changes:
+        - "**/*"
   script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
     - docker build -t "$CI_REGISTRY_IMAGE/dev-lab:$CI_COMMIT_SHORT_SHA" -t "$CI_REGISTRY_IMAGE/dev-lab:base" .
