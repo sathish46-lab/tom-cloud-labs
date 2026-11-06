@@ -49,7 +49,7 @@ scan:
     - gitleaks detect --source . --no-git --redact --report-path /tmp/gitlab-gitleaks.json
   allow_failure: false
 
-image:
+docker_image:
   stage: image
   image: docker:cli
   services:
