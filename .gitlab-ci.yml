@@ -49,6 +49,23 @@ scan:
     - gitleaks detect --source . --no-git --redact --report-path /tmp/gitlab-gitleaks.json
   allow_failure: false
 
+docker_probe:
+  # Manual diagnostic: what docker access does the instance runner really have?
+  # Run it during the pipeline if docker jobs fail to connect to a daemon.
+  stage: image
+  image: docker:cli
+  when: manual
+  allow_failure: true
+  script:
+    - echo '--- docker env vars ---'
+    - env | grep -iE 'docker|ci_registry' || true
+    - echo '--- probe default docker socket (DOCKER_HOST unset) ---'
+    - unset DOCKER_HOST
+    - ls -l /var/run/docker.sock 2>&1 || echo 'no socket file'
+    - docker info 2>&1 | grep -E 'Server Version|Operating System|ERROR|error' || echo 'SOCKET: daemon unreachable'
+    - echo '--- probe dind service at tcp://docker:2375 ---'
+    - DOCKER_HOST=tcp://docker:2375 docker version 2>&1 | tail -3 || echo 'tcp: unreachable'
+
 docker_image:
   stage: image
   image: docker:cli
