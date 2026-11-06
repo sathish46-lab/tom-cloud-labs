@@ -109,11 +109,12 @@ test:
   stage: test
   # Runs on the DEFAULT runner (no tags) — not the laptop container.
   image: "$CI_REGISTRY_IMAGE/dev-lab:base"
-  services:
-    - docker:dind
   variables:
-    DOCKER_TLS_CERTDIR: ""
-    DOCKER_HOST: tcp://docker:2375
+    # The job container must not run the image's default entrypoint boot
+    # (WireGuard/labsctl/systemd) — it only hosts the script, which boots the
+    # nested ci-test container. GitLab injects job variables into the
+    # container, so this reaches entrypoint.sh.
+    DEVLAB_SKIP_BOOT: "1"
     GIT_DEPTH: "1"
   only:
     refs:
@@ -134,6 +135,12 @@ test:
         echo "from it and it is deliberately not committed."
         exit 1
       fi
+    # Preflight: what daemon (if any) does this job container see? Without a
+    # privileged runner or an injected host socket CI cannot boot ci-test —
+    # this makes the failure self-explanatory instead of a bare docker error.
+    - echo "[CI] docker access: DOCKER_HOST=${DOCKER_HOST:-<unset default socket>}"
+    - ls -l /var/run/docker.sock 2>&1 || echo "[CI] no /var/run/docker.sock"
+    - docker version 2>&1 | grep -E 'Server::|ERROR|error|Cannot connect' || true
     # Commit's env.json: keep every real key, but aim database_file at this
     # container's own mongod — the external TomCloudLab_mongodb does not exist
     # in CI. Same mongo_user/mongo_pass that init-services.sh bootstraps.

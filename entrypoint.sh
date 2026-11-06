@@ -1,6 +1,15 @@
 #!/bin/bash
 set -u
 
+# CI job containers (GitLab docker executor: image runs entrypoint + the job
+# script as one shell) must NOT boot the platform — the job script itself
+# boots a nested ci-test container for that. DEVLAB_SKIP_BOOT=1 short-circuits
+# the full boot and just hands control to the shell.
+if [ "${DEVLAB_SKIP_BOOT:-}" = "1" ]; then
+    echo "[INFO] DEVLAB_SKIP_BOOT=1 — skipping platform boot, handing control to the shell."
+    exec "$@"
+fi
+
 # Configuration settings (Defaults or from ENV)
 export MAIN_DOMAIN=${MAIN_DOMAIN:-tomweb.in}
 export VPN_DOMAIN=${VPN_DOMAIN:-vpn.tomweb.in}
