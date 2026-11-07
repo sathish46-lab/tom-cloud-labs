@@ -261,25 +261,31 @@ window.onPageLoad( () => {
             const data = await response.json();
 
             document.querySelectorAll('.device-row').forEach(card => {
-                const live = data.find(d => d.id === card.dataset.pubkey);
-                // 3. Auto-detect Offline/Online
-                if (live) {
-                    const pill = card.querySelector('.status-pill');
-                    if (!pill) return;
-                    const icon = live.status === 'Online' ? 'bx-wifi' : (live.status === 'Unreachable' ? 'bx-time-five' : 'bx-wifi-off');
+                const live = data.find(d => d.peer === card.dataset.pubkey);
+                if (!live) return;
 
-                    pill.innerHTML = `<i class='bx ${icon} me-1'></i> ${live.status}`;
-                    pill.className = `badge rounded-pill status-pill bg-${live.color} fw-bold d-flex align-items-center`;
+                // Status pill: Online/Unreachable/Offline/No Connection auto-detected server-side
+                const pill = card.querySelector('.status-pill');
+                if (pill) {
+                    const meta = {
+                        'Online':       ['bx-wifi', 'bg-success'],
+                        'Unreachable':  ['bx-time-five', 'bg-warning'],
+                        'Offline':      ['bx-wifi-off', 'bg-danger'],
+                        'No Connection': ['bx-wifi-off', 'bg-secondary'],
+                    }[live.status] || ['bx-wifi-off', 'bg-danger'];
 
-                    // Update Stats
-                    const rxEl = card.querySelector('.rx-val');
-                    const txEl = card.querySelector('.tx-val');
-                    const originEl = card.querySelector('.origin-val');
-
-                    if (rxEl) rxEl.innerText = live.rx;
-                    if (txEl) txEl.innerText = live.tx;
-                    if (originEl) originEl.innerText = live.origin;
+                    pill.innerHTML = `<i class='bx ${meta[0]} me-1'></i> ${live.status}`;
+                    pill.className = `badge rounded-pill status-pill ${meta[1]} fw-bold d-flex align-items-center`;
                 }
+
+                // Update Stats
+                const rxEl = card.querySelector('.rx-val');
+                const txEl = card.querySelector('.tx-val');
+                const originEl = card.querySelector('.origin-val');
+
+                if (rxEl) rxEl.innerText = live.received || '0 B';
+                if (txEl) txEl.innerText = live.sent || '0 B';
+                if (originEl) originEl.innerText = live.endpoint || 'N/A';
             });
         } catch (e) {
             console.warn("VPN Stats Error:", e);

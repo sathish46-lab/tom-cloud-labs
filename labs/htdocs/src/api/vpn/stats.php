@@ -5,44 +5,77 @@ header('Content-Type: application/json');
 
 $user = AuthMiddleware::requireAuth();
 
-
 $db = DatabaseConnection::getDefaultDatabase();
 
-$myDevices = $db->devices->find(['user_id' => $user->getUserId(), 'status' => ['$ne' => 'deleted']])->toArray();
-$myKeys = array_column($myDevices, 'public_key');
-
 $apiResponse = VPN::request('wg', 'get_peers', ['device' => 'wg0']);
-$allPeers = $apiResponse['peers'] ?? [];
+$peersByPk = [];
+foreach (($apiResponse['peers'] ?? []) as $peer) {
+    if (!empty($peer['peer'])) $peersByPk[$peer['peer']] = $peer;
+}
+
+$now = time();
+$email = $user->email ?? null;
+$uid = $user->getUserId();
+
+$myDevices = $db->devices->find(['$and' => [
+    ['$or' => [
+        ['email' => $email],
+        ['user_id' => ['$in' => [$uid, (string) $uid]]],
+    ]],
+    ['status' => ['$ne' => 'deleted']],
+]])->toArray();
 
 $results = [];
-foreach ($allPeers as $peer) {
-    if (!in_array($peer['peer'], $myKeys)) continue;
+foreach ($myDevices as $device) {
+    $pk = $device['public_key'] ?? '';
+    if ($pk === '') continue;
 
-    $handshakeStr = $peer['latest handshake'] ?? '';
-    $status = "Offline"; $color = "danger";
+    $peer = $peersByPk[$pk] ?? null;
 
-    if (!empty($handshakeStr)) {
-        // Convert "X minutes, Y seconds ago" to a comparable timestamp
-        $seentime = strtotime("-" . str_replace(" ago", "", $handshakeStr));
-        $diff = time() - $seentime;
-
-        if ($diff < 120) { // Less than 2 minutes
-            $status = "Online"; $color = "success";
-        } else if ($diff < 180) { // Between 2 and 10 minutes
-            $status = "Unreachable"; $color = "warning";
-        } else {
-            $status = "Offline"; $color = "danger";
-        }
+    if (!$peer) {
+        $results[] = [
+            'peer' => $pk,
+            'allowed ips' => (!empty($device['assigned_ip'])) ? $device['assigned_ip'] . '/32' : '',
+            'status' => 'No Connection',
+            'id' => (string) $device['_id'],
+        ];
+        continue;
     }
 
-    $transfer = explode(',', $peer['transfer'] ?? '0 B received, 0 B sent');
-    $results[] = [
-        "id" => $peer['peer'], 
-        "status" => $status, // Sentence case: Online/Offline
-        "color" => $color,
-        "rx" => trim(str_replace('received', '', $transfer[0])),
-        "tx" => isset($transfer[1]) ? trim(str_replace('sent', '', $transfer[1])) : '0 B',
-        "origin" => explode(':', $peer['endpoint'] ?? 'No Connection')[0]
-    ];
+    $row = ['peer' => $pk];
+
+    $row['endpoint'] = explode(':', $peer['endpoint'] ?? '')[0];
+    $row['allowed ips'] = (!empty($device['assigned_ip'])) ? $device['assigned_ip'] . '/32' : '';
+
+    $handshakeStr = $peer['latest handshake'] ?? '';
+    $row['latest handshake'] = $handshakeStr;
+    $row['transfer'] = $peer['transfer'] ?? '';
+
+    $status = 'Offline';
+    $handshakeTime = null;
+    if ($handshakeStr !== '') {
+        $parts = ['days' => 0, 'hours' => 0, 'minutes' => 0, 'seconds' => 0];
+        if (preg_match_all('/(\d+)\s+(\w+)/', $handshakeStr, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $m) $parts[$m[2]] = (int) $m[1];
+        }
+        $delta = $parts['days'] * 86400 + $parts['hours'] * 3600 + $parts['minutes'] * 60 + $parts['seconds'];
+        if ($delta < 120) $status = 'Online';
+        $handshakeTime = $now - $delta;
+    }
+
+    $row['status'] = $status;
+    $row['handshake_time'] = $handshakeTime;
+    $row['sync_time'] = $now;
+
+    $transferParts = array_map('trim', explode(',', $row['transfer']));
+    $row['sent'] = ($transferParts[0] ?? '') === '' ? '0 B' : preg_replace('/\s*received$/', '', $transferParts[0]);
+    $row['received'] = isset($transferParts[1]) ? preg_replace('/\s*sent$/', '', $transferParts[1]) : '0 B';
+    if ($row['sent'] === '') $row['sent'] = '0 B';
+    if ($row['received'] === '') $row['received'] = '0 B';
+
+    $row['id'] = (string) $device['_id'];
+
+    $results[] = $row;
 }
+
 echo json_encode($results);
