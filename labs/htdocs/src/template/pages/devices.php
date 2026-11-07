@@ -1,6 +1,8 @@
 <?php
 // Retrieve active devices and reserved resources from the session
-$devices = Session::get('devices', []); 
+$devices = array_values(array_filter(Session::get('devices', []), function($device) {
+    return !isset($device['status']) || $device['status'] !== 'deleted';
+})); 
 $resources = Session::get('network_resources', []); 
 
 // LOGIC: Automatically select the last reserved IP for default selection
