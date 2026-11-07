@@ -145,6 +145,7 @@ deploy:
       - "entrypoint.sh"
   script:
     # macOS shell: git 2.49 and openrsync are already present
+    - git fetch --tags --force 2>/dev/null || true
     - git describe --tags --always > labs/.version
     - rsync -av --delete --exclude vendor --exclude node_modules labs/ /Users/sathish/Downloads/TomCloudLab/labs/
     - rsync -av --delete --exclude vendor --exclude node_modules vpn-api/ /Users/sathish/Downloads/TomCloudLab/vpn-api/
