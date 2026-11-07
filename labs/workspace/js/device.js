@@ -127,6 +127,7 @@ document.addEventListener('submit', async function (e) {
                 const container = document.getElementById('devices-container');
                 if (container && htmlText.trim()) {
                     container.insertAdjacentHTML('beforeend', htmlText);
+                    fetchStats(); // populate new card status/pill immediately without reload
                 }
                 
                 const modalEl = document.getElementById('addDeviceModal');
