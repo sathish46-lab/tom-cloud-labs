@@ -141,6 +141,8 @@ deploy:
       - "init-services.sh"
       - "entrypoint.sh"
   script:
+    # ubuntu:latest has neither git nor rsync — deploy needs both
+    - apt-get update -qq && apt-get install -y -qq git rsync >/dev/null
     - git describe --tags --always > labs/.version
     - rsync -av --delete --exclude vendor --exclude node_modules labs/ /Users/sathish/Downloads/TomCloudLab/labs/
     - rsync -av --delete --exclude vendor --exclude node_modules vpn-api/ /Users/sathish/Downloads/TomCloudLab/vpn-api/
