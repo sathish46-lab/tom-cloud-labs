@@ -127,8 +127,11 @@ build:
 
 deploy:
   stage: deploy
+  # Shell executor on THIS Mac (local.local, id 547) — the remote
+  # common-runner (docker executor) cannot see the deploy target path.
   tags:
-    - shared
+    - local
+    - production
   only:
     refs:
       - master
@@ -141,8 +144,7 @@ deploy:
       - "init-services.sh"
       - "entrypoint.sh"
   script:
-    # ubuntu:latest has neither git nor rsync — deploy needs both
-    - apt-get update -qq && apt-get install -y -qq git rsync >/dev/null
+    # macOS shell: git 2.49 and openrsync are already present
     - git describe --tags --always > labs/.version
     - rsync -av --delete --exclude vendor --exclude node_modules labs/ /Users/sathish/Downloads/TomCloudLab/labs/
     - rsync -av --delete --exclude vendor --exclude node_modules vpn-api/ /Users/sathish/Downloads/TomCloudLab/vpn-api/
