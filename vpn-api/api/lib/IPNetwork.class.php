@@ -28,11 +28,14 @@ class IPNetwork {
             $protected_ips[] = $prefix . $i;
         }
 
+        // Get WireGuard peer IPs to avoid assigning them to labs
+        $wg_peer_ips = $this->getWireGuardPeerIPs();
+
         $base_match = [
             "status" => "available",
             "ip_addr" => [
                 '$regex' => '^' . str_replace('.', '\.', $prefix),
-                '$nin' => $protected_ips
+                '$nin' => array_merge($protected_ips, $wg_peer_ips)
             ]
         ];
 
@@ -76,10 +79,53 @@ class IPNetwork {
     }
 
     /**
-     * Confirm the IP allocation (called after getNextIP + successful wg set).
-     * The IP is already atomically reserved by getNextIP(); this re-confirms
-     * the fields and is safe to call on an already-reserved document.
+     * Get WireGuard peer IPs from /etc/wireguard/wg0.conf to avoid assigning them to labs.
+     * WireGuard peers and lab containers share the same IP range, so we must skip
+     * any IP that is already assigned to a WireGuard peer.
      */
+    public function getWireGuardPeerIPs() {
+        $wgConfig = '/etc/wireguard/wg0.conf';
+        if (!file_exists($wgConfig)) {
+            return [];
+        }
+
+        $content = file_get_contents($wgConfig);
+        if (!$content) {
+            return [];
+        }
+
+        $peerIPs = [];
+        $inPeerSection = false;
+
+        foreach (explode("\n", $content) as $line) {
+            $line = trim($line);
+
+            if ($line === '[Peer]') {
+                $inPeerSection = true;
+                continue;
+            }
+
+            if ($line === '[Interface]') {
+                $inPeerSection = false;
+                continue;
+            }
+
+            if ($inPeerSection && strpos($line, 'AllowedIPs =') === 0) {
+                $value = trim(substr($line, strlen('AllowedIPs')));
+                $value = trim(ltrim($value, '='));
+                $ips = explode(',', $value);
+                foreach ($ips as $ip) {
+                    $ip = trim($ip);
+                    // Only take /32 IPs (single host IPs)
+                    if (preg_match('/^(\d+\.\d+\.\d+\.\d+)\/32$/', $ip, $matches)) {
+                        $peerIPs[] = $matches[1];
+                    }
+                }
+            }
+        }
+
+        return $peerIPs;
+    }
     public function allocateIP($ip, $email, $public_key, $reserved){
         try {
             $result = $this->collection->updateOne([
