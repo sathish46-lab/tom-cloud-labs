@@ -196,6 +196,11 @@ cat <<EOF > /etc/apache2/sites-available/labs.conf
     ProxyPreserveHost Off
     ProxyPass /mcp !
 
+    # Cloudflare terminates HTTPS; Apache receives HTTP from Traefik.
+    # Tell PHP the original request was HTTPS so Secure cookies,
+    # HSTS, and wss:// connect-src are set correctly.
+    RequestHeader set X-Forwarded-Proto "https"
+
     # OAuth discovery metadata
     ProxyPass /.well-known/oauth-authorization-server http://127.0.0.1:8099/.well-known/oauth-authorization-server
     ProxyPassReverse /.well-known/oauth-authorization-server http://127.0.0.1:8099/.well-known/oauth-authorization-server
