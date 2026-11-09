@@ -27,13 +27,9 @@ class DatabaseConnection {
             
         } catch (Exception $e) {
             error_log("DB CONNECTION ERROR: " . $e->getMessage());
-            // T3: Return graceful error instead of die()
-            if (php_sapi_name() !== 'cli') {
-                http_response_code(503);
-                header('Content-Type: application/json');
-                echo json_encode(['status' => 'error', 'error' => 'Database connection failed. Please try again later.']);
-            }
-            exit;
+            // Throw so the global exception handler in load.php can render
+            // the proper error page (HTML for page routes, JSON for APIs).
+            throw new \RuntimeException('Database connection failed. Please try again later.');
         }
     }
     return self::$client;

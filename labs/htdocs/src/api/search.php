@@ -28,7 +28,8 @@ try {
     $mongoClient = DatabaseConnection::getClient();
     $db = $mongoClient->selectDatabase('tom_labs_db');
 } catch (\Throwable $e) {
-    echo json_encode(['result' => 'error', 'message' => 'Database connection failed']);
+    http_response_code(503);
+    echo json_encode(['result' => 'error', 'message' => 'Database connection failed. Please try again later.']);
     exit;
 }
 

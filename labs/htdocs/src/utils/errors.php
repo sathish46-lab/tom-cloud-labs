@@ -214,7 +214,8 @@ function errors_report(array $ctx): string
 
         error_log('[error ' . $ref . '] ' . $context . ': ' . $message);
     } catch (Throwable $e) {
-        // Reporting must never be the reason a request fails.
+        // Reporting must never be the reason a request fails — especially
+        // when the database itself is down. Log locally and return empty ref.
         error_log('errors_report: ' . $e->getMessage());
     }
 

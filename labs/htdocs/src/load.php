@@ -97,6 +97,98 @@ require_once __DIR__ . '/utils/common.php';
 require_once __DIR__ . '/utils/currency.php';
 require_once __DIR__ . '/utils/storage.php';
 require_once __DIR__ . '/utils/errors.php';
+
+// Define the global exception handler BEFORE any DB-dependent code can throw.
+if (!function_exists('global_exception_handler')) {
+    function global_exception_handler($e) {
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
+        // Detect API routes: URL path starts with /api/ or Content-Type is JSON
+        $isApi = false;
+        $uri = $_SERVER['REQUEST_URI'] ?? '';
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+        if (strpos($uri, '/api/') === 0 || strpos($contentType, 'application/json') !== false) {
+            $isApi = true;
+        }
+
+        // Audit first: the raw failure goes to the admin queue, never to the user.
+        // Wrapped in try/catch so a down database can never break the error page itself.
+        $ref = '';
+        if (function_exists('errors_report')) {
+            try {
+                $email = '';
+                try {
+                    if (class_exists('Session')) {
+                        $u = Session::getUser();
+                        if ($u && method_exists($u, 'getEmail')) $email = (string)$u->getEmail();
+                    }
+                } catch (Throwable $ignored) { /* session may be half-built */ }
+
+                $ref = errors_report([
+                    'context'    => $isApi ? 'exception.api' : 'exception.page',
+                    'message'    => $e->getMessage(),
+                    'user_email' => $email,
+                    'extra'      => [
+                        'class' => get_class($e),
+                        'file'  => $e->getFile(),
+                        'line'  => $e->getLine(),
+                        'trace' => function_exists('errors_excerpt') ? errors_excerpt($e->getTraceAsString(), 2000) : '',
+                    ],
+                ]);
+            } catch (Throwable $ignored) {
+                // Reporting failed (probably DB down) — continue to show the error page.
+            }
+        }
+
+        $public = function_exists('errors_public')
+            ? errors_public($ref)
+            : 'Something went wrong on our side. Please try again.';
+
+        if ($isApi) {
+            // API routes: always return JSON — never HTML, never internals
+            header('Content-Type: application/json');
+            // Database connection failures are service outages → 503, not 500
+            $statusCode = strpos($e->getMessage(), 'Database connection failed') !== false ? 503 : 500;
+            http_response_code($statusCode);
+            echo json_encode(['status' => 'error', 'error' => $public, 'ref' => $ref]);
+            exit;
+        }
+
+        // Non-API routes: render the error page
+        if (class_exists('Session')) {
+            Session::set('error_exception', $e);
+            Session::set('error_ref', $ref);
+
+            // Database connection failure: the error-page template chain itself
+            // needs DB (Appearance::get() in _master.php), so serve the static
+            // error-pages/503.html instead to avoid a second throw → blank screen.
+            $isDbFailure = strpos($e->getMessage(), 'Database connection failed') !== false;
+            if ($isDbFailure) {
+                http_response_code(503);
+                $staticPage = $_SERVER['DOCUMENT_ROOT'] . '/error-pages/503.html';
+                if (is_file($staticPage)) {
+                    header('Content-Type: text/html; charset=utf-8');
+                    readfile($staticPage);
+                    exit;
+                }
+                // Fall through to the normal error page if the static file is missing.
+            }
+            Session::loadErrorPage();
+            exit;
+        } else {
+            // Fallback for extremely early fatal errors
+            echo htmlspecialchars($public);
+            exit;
+        }
+    }
+}
+
+// Install the handler as early as possible — before any DB-dependent code
+// (WebAPI constructor in lib/load.php, Session below) can throw.
+set_exception_handler('global_exception_handler');
+
 require_once __DIR__ . '/lib/load.php';
 
 // 3. NOW we can use classes - refresh auth cookies (single source of truth:
@@ -125,71 +217,6 @@ if (!function_exists('require_ui_component')) {
 if (isset($_SESSION['auth_status'])) {
     Session::$authStatus = $_SESSION['auth_status'];
 }
-// 4. Global Exception and Error Handlers
-if (!function_exists('global_exception_handler')) {
-    function global_exception_handler($e) {
-        while (ob_get_level() > 0) {
-            ob_end_clean();
-        }
-
-        // Detect API routes: URL path starts with /api/ or Content-Type is JSON
-        $isApi = false;
-        $uri = $_SERVER['REQUEST_URI'] ?? '';
-        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
-        if (strpos($uri, '/api/') === 0 || strpos($contentType, 'application/json') !== false) {
-            $isApi = true;
-        }
-
-        // Audit first: the raw failure goes to the admin queue, never to the user.
-        $ref = '';
-        if (function_exists('errors_report')) {
-            $email = '';
-            try {
-                if (class_exists('Session')) {
-                    $u = Session::getUser();
-                    if ($u && method_exists($u, 'getEmail')) $email = (string)$u->getEmail();
-                }
-            } catch (Throwable $ignored) { /* session may be half-built */ }
-
-            $ref = errors_report([
-                'context'    => $isApi ? 'exception.api' : 'exception.page',
-                'message'    => $e->getMessage(),
-                'user_email' => $email,
-                'extra'      => [
-                    'class' => get_class($e),
-                    'file'  => $e->getFile(),
-                    'line'  => $e->getLine(),
-                    'trace' => function_exists('errors_excerpt') ? errors_excerpt($e->getTraceAsString(), 2000) : '',
-                ],
-            ]);
-        }
-
-        $public = function_exists('errors_public')
-            ? errors_public($ref)
-            : 'Something went wrong on our side. Please try again.';
-
-        if ($isApi) {
-            // API routes: always return JSON — never HTML, never internals
-            header('Content-Type: application/json');
-            http_response_code(500);
-            echo json_encode(['status' => 'error', 'error' => $public, 'ref' => $ref]);
-            exit;
-        }
-
-        // Non-API routes: render the beautiful error page
-        if (class_exists('Session')) {
-            Session::set('error_exception', $e);
-            Session::set('error_ref', $ref);
-            Session::loadErrorPage();
-            exit;
-        } else {
-            // Fallback for extremely early fatal errors
-            echo htmlspecialchars($public);
-            exit;
-        }
-    }
-}
-set_exception_handler('global_exception_handler');
 
 register_shutdown_function(function() {
     $error = error_get_last();
