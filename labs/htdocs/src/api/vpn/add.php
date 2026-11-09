@@ -35,9 +35,15 @@ if (isset($response['result']) && $response['result'] !== false) {
     // NOTE: ip_registry is now updated by vpn-api directly (single source of truth)
     // Only store device metadata in labs DB
     
-    // Store device metadata
+    // Store device metadata (never resurrect a soft-deleted device — match only
+    // active docs so a reused IP creates a fresh record instead of updating one
+    // that is still marked deleted)
     $db->devices->updateOne(
-        ['user_id' => $user->getUserId(), 'assigned_ip' => $assignedIp],
+        [
+            'user_id' => $user->getUserId(),
+            'assigned_ip' => $assignedIp,
+            'status' => ['$ne' => 'deleted'],
+        ],
         ['$set' => [
             'email'       => $user->getEmail(),
             'device_name' => $deviceName,
@@ -46,7 +52,12 @@ if (isset($response['result']) && $response['result'] !== false) {
             'private_key' => $privateKey,
             'assigned_ip' => $assignedIp,
             'created_at'  => time(),
-            'is_reserved' => true
+            'is_reserved' => true,
+        ],
+        '$unset' => [
+            'deleted_at' => '',
+            'deleted_by' => '',
+            'status'     => '',
         ]],
         ['upsert' => true]
     );
@@ -69,7 +80,11 @@ if (isset($response['result']) && $response['result'] !== false) {
         'rx' => '0 B',
         'tx' => '0 B'
     ];
-    $insertedDevice = $db->devices->findOne(['user_id' => $user->getUserId(), 'public_key' => $publicKey]);
+    $insertedDevice = $db->devices->findOne([
+        'user_id' => $user->getUserId(),
+        'public_key' => $publicKey,
+        'status' => ['$ne' => 'deleted'],
+    ]);
     if ($insertedDevice) {
         $device = $insertedDevice;
     }

@@ -80,6 +80,11 @@ try {
 $domains = [];
 try { $domains = iterator_to_array($db->domains->find(['email' => $email])); } catch (Throwable $e) {}
 
+// All devices ever registered by this user, newest first — soft-deleted ones
+// keep status 'deleted' plus deleted_at/deleted_by and are shown, not hidden.
+$devices = [];
+try { $devices = iterator_to_array($db->devices->find(['email' => $email], ['sort' => ['created_at' => -1]])); } catch (Throwable $e) {}
+
 $quizCount = is_array($userData['quizzes_completed'] ?? null) ? count($userData['quizzes_completed']) : 0;
 
 $lastIpV4 = $userData['ip_address_v4'] ?? null;
@@ -571,6 +576,71 @@ $csrf = htmlspecialchars(Session::csrfToken());
                             </li>
                         <?php endforeach; endif; ?>
                     </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================= Devices ========================= -->
+    <div class="row g-4 mt-0 mb-4">
+        <div class="col-12">
+            <div class="card border-0 rounded-4 blur shadow-sm h-100">
+                <div class="card-header border-bottom border-body-secondary border-opacity-10 bg-transparent py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold"><i class='bx bx-mobile me-2 text-warning'></i>Registered Devices <span class="small text-body-secondary fw-normal">(including deleted)</span></h5>
+                    <span class="badge bg-warning text-dark rounded-pill"><?= count($devices) ?></span>
+                </div>
+                <div class="card-body p-0" style="max-height:420px;overflow-y:auto;">
+                    <?php if (!$devices): ?>
+                        <div class="text-body-secondary py-4 text-center">No devices registered.</div>
+                    <?php else: ?>
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0 small">
+                            <thead class="table-dark opacity-75">
+                                <tr>
+                                    <th class="ps-4">Device</th>
+                                    <th>Type</th>
+                                    <th>Assigned IP</th>
+                                    <th>Created</th>
+                                    <th>Status</th>
+                                    <th class="pe-4">Deleted</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($devices as $device):
+                                    $devDeleted = (string)($device['status'] ?? '') === 'deleted';
+                                    $devCreatedTs = $toTs($device['created_at'] ?? null);
+                                    $devDeletedTs = $device['deleted_at'] instanceof DateTimeInterface ? $device['deleted_at']->getTimestamp() : $toTs($device['deleted_at'] ?? null);
+                                    $devType = strtolower((string)($device['device_type'] ?? ''));
+                                    $devIcon = in_array($devType, ['laptop', 'desktop'], true) ? 'bx-laptop'
+                                             : ($devType === 'mobile' ? 'bx-mobile' : 'bx-devices');
+                                ?>
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class='bx <?= $devIcon ?>'></i>
+                                            <span class="fw-semibold"><?= htmlspecialchars((string)($device['device_name'] ?? 'Unnamed')) ?></span>
+                                            <?php if (!empty($device['is_reserved'])): ?><span class="badge rounded-pill bg-body-secondary" title="IP reserved while allocated">Reserved</span><?php endif; ?>
+                                        </div>
+                                    </td>
+                                    <td><?= htmlspecialchars((string)($device['device_type'] ?? '—')) ?></td>
+                                    <td class="font-monospace"><?= htmlspecialchars((string)($device['assigned_ip'] ?? '—')) ?></td>
+                                    <td class="text-body-secondary"><?= htmlspecialchars($ago($devCreatedTs)) ?></td>
+                                    <td>
+                                        <span class="badge rounded-pill <?= $devDeleted ? 'bg-danger' : 'bg-success' ?>">
+                                            <?= $devDeleted ? 'Deleted' : 'Active' ?>
+                                        </span>
+                                    </td>
+                                    <td class="pe-4 text-body-secondary">
+                                        <?php if ($devDeleted): ?>
+                                            <?= htmlspecialchars($fmtWhen($devDeletedTs ?: null)) ?><?= !empty($device['deleted_by']) ? ' by ' . htmlspecialchars((string)$device['deleted_by']) : '' ?>
+                                        <?php else: ?>—<?php endif; ?>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

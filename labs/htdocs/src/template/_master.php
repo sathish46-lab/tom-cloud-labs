@@ -224,8 +224,8 @@ $classString = implode(' ', $htmlClasses);
     $seoDesc = Session::get('seo_description', SiteSeo::description());
     $seoKeywords = Session::get('seo_keywords', SiteSeo::keywords());
     $seoAuthor = Session::get('seo_author', SiteSeo::author());
-    $seoUrl = "https://" . ($_SERVER['HTTP_HOST'] ?? 'labs.tomweb.in') . ($_SERVER['REQUEST_URI'] ?? '/');
-    $seoImage = Session::get('seo_image', "https://" . ($_SERVER['HTTP_HOST'] ?? 'labs.tomweb.in') . "/assets/images/og-image.jpg");
+    $seoUrl = (get_config('app_url') ?: ("https://" . ($_SERVER['HTTP_HOST'] ?? 'localhost')) . ($_SERVER['REQUEST_URI'] ?? '/'));
+    $seoImage = Session::get('seo_image', (get_config('app_url') ?: ("https://" . ($_SERVER['HTTP_HOST'] ?? 'localhost'))) . "/assets/images/og-image.jpg");
     ?>
     <meta name="description" content="<?= htmlspecialchars($seoDesc) ?>">
     <meta name="keywords" content="<?= htmlspecialchars($seoKeywords) ?>">

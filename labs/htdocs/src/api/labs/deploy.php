@@ -197,9 +197,12 @@ try {
     ];
 
     $rabbit->sendToQueue('labs_jobs', $work);
-    
+
+    // Stamp last_usage so admins can tell used IPs from assigned-but-never-deployed ones
+    $ipManager->touchUsage($internalIp, 'Deployed ' . $labName, $labName);
+
     echo json_encode([
-        'status' => 'success', 
+        'status' => 'success',
         'message' => 'Deployment queued',
         'hash' => $instanceHash,
         'run_id' => $runId,

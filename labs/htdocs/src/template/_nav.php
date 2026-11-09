@@ -65,6 +65,7 @@ $current = Session::getCurrentFile();
                     ['label' => 'Errors',         'url' => '/admin/errors', 'icon' => 'bx-error-circle', 'match' => ''],
                     ['label' => 'News Logs',      'url' => '/admin/news-logs', 'icon' => 'bx-news', 'match' => '/admin/news-logs'],
                     ['label' => 'Sessions',       'url' => '/admin/sessions',  'icon' => 'bx-log-out',  'match' => '/admin/sessions'],
+                    ['label' => 'IP Control',     'url' => '/admin/ip-control', 'icon' => 'bx-vector',   'match' => '/admin/ip-control'],
                 ],
                 'groups' => [
                     [

@@ -127,7 +127,8 @@ document.addEventListener('submit', async function (e) {
                 const container = document.getElementById('devices-container');
                 if (container && htmlText.trim()) {
                     container.insertAdjacentHTML('beforeend', htmlText);
-                    fetchStats(); // populate new card status/pill immediately without reload
+                    if (window.fetchStats) fetchStats(); // populate new card status/pill immediately without reload
+                    if (window.startDevicePolling) window.startDevicePolling(); // keep stats/status updating every 3s even if page had 0 devices
                 }
                 
                 const modalEl = document.getElementById('addDeviceModal');
@@ -306,6 +307,9 @@ window.onPageLoad( () => {
             statsInterval = null;
         }
     }
+    window.fetchStats = fetchStats;
+    window.startDevicePolling = startPolling;
+    window.stopDevicePolling = stopPolling;
 
     // 5. Visibility & HTMX Navigation Handlers
     document.addEventListener("visibilitychange", () => {

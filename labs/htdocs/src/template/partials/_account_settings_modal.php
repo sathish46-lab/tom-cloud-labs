@@ -230,7 +230,7 @@ $currentUserRole = $currentUser?->getRole() ?? 'user';
                         </div>
                         <div class="form-text mt-2 small">
                             Configure your MCP client (Claude Desktop, OpenCode, Claude Code) with:
-                            <code class="d-block mt-1 text-primary" id="mcpServerUrl">https://dev.tomweb.in/mcp</code>
+                            <code class="d-block mt-1 text-primary" id="mcpServerUrl"><?= (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://') . ($_SERVER['HTTP_HOST'] ?? 'localhost') ?>/mcp</code>
                             <button type="button" class="btn btn-sm btn-outline-primary rounded-pill mt-2" onclick="showMcpConnectInstructions()">
                                 <i class="bx bx-link-external me-1"></i> Show Connection Instructions
                             </button>

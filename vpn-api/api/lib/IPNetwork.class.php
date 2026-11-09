@@ -28,7 +28,7 @@ class IPNetwork {
             $protected_ips[] = $prefix . $i;
         }
 
-        $base_query = [
+        $base_match = [
             "status" => "available",
             "ip_addr" => [
                 '$regex' => '^' . str_replace('.', '\.', $prefix),
@@ -37,21 +37,36 @@ class IPNetwork {
         ];
 
         if($ip && $email){
-            // Try to find if this specific user has this specific IP reserved
-            $result = $this->collection->findOne(array_merge($base_query, [
-                "status" => "reserved",
-                "ip_addr" => $ip,
-                'reserved_to' => $email,
-            ]), ["sort" => ['ip_numeric' => 1]]);
+            // Try to atomically claim the specific requested IP if it is still available.
+            // findOneAndUpdate is a single server-side operation: find + reserve together,
+            // so two concurrent requests for the same IP cannot both succeed.
+            $result = $this->collection->findOneAndUpdate(
+                array_merge($base_match, ["ip_addr" => $ip]),
+                ['$set' => [
+                    'status'     => 'reserved',
+                    'email'      => $email,
+                    'reserved_to'=> $email,
+                ]],
+                ["sort" => ['ip_numeric' => 1], 'returnDocument' => \MongoDB\Operation\FindOneAndUpdate::RETURN_DOCUMENT_AFTER]
+            );
 
-            if(!$result){
-                // If not found, find the first available IP
-                $result = $this->collection->findOne($base_query, ["sort" => ['ip_numeric' => 1]]);
+            if($result){
+                return $result['ip_addr'];
             }
-        } else {
-            // Find the first available IP
-            $result = $this->collection->findOne($base_query, ["sort" => ['ip_numeric' => 1]]);
+            // Specific IP is no longer available (taken by a concurrent request),
+            // fall through to assign the next available IP.
         }
+
+        // Atomically find and reserve the next available IP in one operation.
+        $result = $this->collection->findOneAndUpdate(
+            $base_match,
+            ['$set' => [
+                'status'     => 'reserved',
+                'email'      => $email,
+                'reserved_to'=> $email,
+            ]],
+            ["sort" => ['ip_numeric' => 1], 'returnDocument' => \MongoDB\Operation\FindOneAndUpdate::RETURN_DOCUMENT_AFTER]
+        );
 
         if (!$result) {
             throw new Exception("No available IPs found in the allowed range");
@@ -60,15 +75,20 @@ class IPNetwork {
         return $result['ip_addr'];
     }
 
+    /**
+     * Confirm the IP allocation (called after getNextIP + successful wg set).
+     * The IP is already atomically reserved by getNextIP(); this re-confirms
+     * the fields and is safe to call on an already-reserved document.
+     */
     public function allocateIP($ip, $email, $public_key, $reserved){
         try {
             $result = $this->collection->updateOne([
                 'ip_addr' => $ip
             ], [
                 '$set' => [
-                    'status' => 'reserved',
-                    'email' => $email,
-                    'reserved_to' => $email,
+                    'status'     => 'reserved',
+                    'email'      => $email,
+                    'reserved_to'=> $email,
                 ]
             ]);
             return $ip;

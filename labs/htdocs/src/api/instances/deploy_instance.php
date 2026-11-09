@@ -33,15 +33,22 @@ try {
     $existingDeploy = $instance['deploy'] ?? [];
     $existingIp = $existingDeploy['internal_ip'] ?? null;
 
+    $template = $instance['template'] ?? 'essentials';
+    $templateLabels = [
+        'essentials' => 'Essentials Lab', 'gui_essentials' => 'GUI Essentials Lab',
+        'minio' => 'MinIO Service', 'n8n' => 'n8n Automation', 'docker_lab' => 'Docker Lab',
+    ];
+    $labLabel = $templateLabels[$template] ?? (ucfirst(str_replace('_', ' ', $template)) . ' Lab');
+
     $domains = $_POST['domains'] ?? [];
     $expose_web = filter_var($_POST['expose_web'] ?? false, FILTER_VALIDATE_BOOLEAN);
     if (!empty($domains)) $expose_web = true;
     $code_domain = $_POST['code_domain'] ?? ($hash . ".tomweb.shop");
 
     if (empty($existingIp)) {
-        $internalIp = $ipManager->getNextIPForUser(
-            $user->getEmail(), $hash, $instance['template'] ?? 'essentials'
-        );
+        // First deploy — reserve the next free IP for this user and label it
+        $internalIp = $ipManager->reserve($user->getEmail(), $user->getUserId());
+        $ipManager->describe($internalIp, $labLabel, $template);
 
         $collection->updateOne(
             ['instance_hash' => $hash],
@@ -67,7 +74,7 @@ try {
         );
     } else {
         $internalIp = $existingIp;
-        $ipManager->updateServiceType($hash, $instance['template'] ?? 'essentials');
+        $ipManager->describe($internalIp, $labLabel, $template);
 
         $collection->updateOne(
             ['instance_hash' => $hash],
@@ -90,6 +97,9 @@ try {
         'user'       => $user->getUsername(),
         'vsc_domain' => $code_domain
     ]);
+
+    // Stamp last_usage so admins can tell used IPs from assigned-but-never-deployed ones
+    $ipManager->touchUsage($internalIp, 'Deployed ' . $labLabel, $template);
 
     echo json_encode([
         'status'  => 'success',

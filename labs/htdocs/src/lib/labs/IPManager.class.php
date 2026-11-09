@@ -81,10 +81,38 @@ class IPManager {
                 'user_id' => '', 'email' => '', 'reserved_to' => '', 'reserved_at' => '',
                 'service_type' => '', 'label' => '', 'last_deploy' => '', 'allocated_to' => '',
                 'resource_type' => '', 'resource_id' => '', 'device_name' => '', 'device_type' => '',
+                'last_usage' => '',
             ]]
         );
         error_log("IPManager: Released IP $ip (matched={$result->getMatchedCount()})");
         return $result;
+    }
+
+    /**
+     * Stamp what resource runs on this IP (label + service type).
+     * Replaces the old per-flow service-type writes with one place.
+     */
+    public function describe($ip, $label, $serviceType) {
+        return $this->collection->updateOne(
+            ['ip_addr' => $ip, 'status' => 'reserved'],
+            ['$set' => ['label' => $label, 'service_type' => $serviceType]]
+        );
+    }
+
+    /**
+     * Record the last time an IP was actually USED (lab deploy etc.).
+     * Assigned-but-never-deployed IPs simply stay without last_usage,
+     * so the admin IP Control page can tag and release them as dead.
+     */
+    public function touchUsage($ip, $label, $serviceType = '') {
+        $usage = ['label' => $label, 'at' => time()];
+        if ($serviceType !== '') {
+            $usage['service_type'] = $serviceType;
+        }
+        return $this->collection->updateOne(
+            ['ip_addr' => $ip],
+            ['$set' => ['last_usage' => $usage, 'last_deploy' => time()]]
+        );
     }
 
     /**

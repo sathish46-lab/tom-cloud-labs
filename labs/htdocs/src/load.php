@@ -69,22 +69,39 @@ if (!function_exists('send_security_headers')) {
         // Permissions Policy (restrict browser features)
         header('Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()');
         
+        // Generate a per-request CSP nonce for inline scripts (ready for migration
+        // away from 'unsafe-inline'; add nonce="" to inline <script> tags when ready)
+        $cspNonce = base64_encode(random_bytes(16));
+        define('CSP_NONCE', $cspNonce);
+        
+        // Determine WebSocket scheme and host for connect-src
+        $isHttps = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ||
+                   (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+        $wsScheme = $isHttps ? 'wss:' : 'ws:';
+        $httpHost = $_SERVER['HTTP_HOST'] ?? '';
+        
         // Content Security Policy (restrictive default, allow self + common CDNs)
         $csp = [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com",
+            "script-src 'self' 'unsafe-inline' 'nonce-$cspNonce' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com",
             "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com https://fonts.googleapis.com",
             "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
             "img-src 'self' data: blob: https:",
-            "connect-src 'self' ws: wss: https:",
+            "connect-src 'self' $wsScheme $httpHost https:",
             "frame-ancestors 'self'",
             "base-uri 'self'",
             "form-action 'self'",
         ];
         header('Content-Security-Policy: ' . implode('; ', $csp));
         
+        // Cross-Origin-Opener-Policy: prevent cross-origin windows from interacting with this page
+        header('Cross-Origin-Opener-Policy: same-origin');
+        
+        // Cross-Origin-Embedder-Policy: require cross-origin resources to be explicitly opt-in
+        header('Cross-Origin-Embedder-Policy: require-corp');
+        
         // HSTS (only in production HTTPS)
-        if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
+        if ($isHttps) {
             header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
         }
     }
