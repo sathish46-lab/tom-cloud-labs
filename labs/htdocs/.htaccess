@@ -94,6 +94,7 @@ RewriteRule ^admin/deleted-users/?$ app/admin/deleted_users.php [L,QSA]
 RewriteRule ^admin/deleted-users/([a-f0-9]{24})/?$ app/admin/deleted_users.php?id=$1 [L,QSA]
 RewriteRule ^admin/appearance/?$ app/admin/appearance.php [L,QSA]
 RewriteRule ^admin/news-logs/?$ app/admin/news_logs.php [L,QSA]
+RewriteRule ^admin/sessions/?$ app/admin/sessions.php [L,QSA]
 
 RewriteRule ^home$ app/home.php [L,QSA]
 
@@ -116,6 +117,7 @@ RewriteRule ^api/news/fetch\.php$ src/api/news/fetch.php [L,QSA]
 RewriteRule ^api/news/delete\.php$ src/api/news/delete.php [L,QSA]
 RewriteRule ^api/news/get\.php$ src/api/news/get.php [L,QSA]
 RewriteRule ^api/admin/news_fetch_logs\.php$ src/api/admin/news_fetch_logs.php [L,QSA]
+RewriteRule ^api/admin/clear_sessions\.php$ src/api/admin/clear_sessions.php [L,QSA]
 
 # Network Interfaces
 RewriteRule ^network/interfaces/?$ app/network/interfaces.php [L,QSA]
