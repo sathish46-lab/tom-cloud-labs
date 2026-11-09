@@ -70,8 +70,12 @@ if (!function_exists('send_security_headers')) {
         header('Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()');
         
         // Determine WebSocket scheme and host for connect-src
+        // Behind Cloudflare/reverse proxies, $_SERVER['HTTPS'] and
+        // HTTP_X_FORWARDED_PROTO may not be set; REQUEST_SCHEME is the
+        // most reliable indicator of the original client-facing scheme.
         $isHttps = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ||
-                   (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+                   (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ||
+                   (isset($_SERVER['REQUEST_SCHEME']) && $_SERVER['REQUEST_SCHEME'] === 'https');
         $wsScheme = $isHttps ? 'wss:' : 'ws:';
         $httpHost = $_SERVER['HTTP_HOST'] ?? '';
         
