@@ -26,8 +26,11 @@ foreach ($myIPs as $ip) {
     ];
 }
 
-// 3. Fetch active device metadata from tom_labs_db
-$activeMetadata = $db->devices->find(['user_id' => $user->getUserId()])->toArray();
+// 3. Fetch active device metadata from tom_labs_db (soft-deleted devices excluded)
+$activeMetadata = $db->devices->find([
+    'user_id' => $user->getUserId(),
+    'status'  => ['$ne' => 'deleted'],
+])->toArray();
 
 $activeDevices = [];
 foreach ($activeMetadata as $doc) {
