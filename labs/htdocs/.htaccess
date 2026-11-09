@@ -7,9 +7,13 @@ RewriteBase /
 # Custom 404 Error Handler - Secure against server information disclosure
 ErrorDocument 404 /app/error.php
 
-# 1. Force HTTPS — redirect all HTTP traffic to HTTPS
-RewriteCond %{HTTPS} off
-RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# 1. Force HTTPS — not needed when behind Cloudflare Flexible SSL
+# Cloudflare handles HTTPS→HTTP translation at the edge.
+# Do NOT redirect here to avoid redirect loops with Flexible SSL.
+# RewriteCond %{HTTPS} off
+# RewriteCond %{HTTP:CF-Connecting-IP} ^$
+# RewriteCond %{HTTP:X-Forwarded-Proto} !https
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
 # Block sensitive config files from web access
 RewriteRule ^env\.json$ - [F,L]
