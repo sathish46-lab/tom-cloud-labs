@@ -54,6 +54,7 @@ $isGlassMode = $isPublicPage
 $isSidebarNarrow = ($uiPreferences['sidebar_unfoldable'] ?? 'false') === 'true';
 $isSidebarHidden = ($uiPreferences['sidebar_hidden'] ?? 'false') === 'true';
 
+$uiTheme = $appearance['ui_theme'] ?? 'coreui';
 $htmlClasses = [];
 if ($mode === 'plain') $htmlClasses[] = 'mode-plain';
 if ($isSidebarNarrow) $htmlClasses[] = 'sidebar-init-narrow';
@@ -61,7 +62,7 @@ if ($isSidebarHidden) $htmlClasses[] = 'sidebar-init-hidden';
 $classString = implode(' ', $htmlClasses);
 ?>
 <!DOCTYPE html>
-<html lang="en" data-coreui-theme="<?= $coreUiTheme ?>" class="<?= $classString ?>">
+<html lang="en" data-coreui-theme="<?= $coreUiTheme ?>" data-ui-theme="<?= $uiTheme ?>" class="<?= $classString ?>">
 
 <head>
     <meta charset="utf-8">

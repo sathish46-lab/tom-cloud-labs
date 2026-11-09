@@ -228,6 +228,18 @@ function brand_tile(string $badge, bool $isCur, int $v, string $urlPath, string 
                             <input class="form-check-input" type="checkbox" role="switch" id="apVisualBlurDefault" <?= $appearance['visual_blur_default'] !== '0' ? 'checked' : '' ?>>
                         </div>
                     </div>
+
+                    <div class="d-flex align-items-center justify-content-between gap-3 mt-3 pt-3 border-top border-body-secondary border-opacity-10">
+                        <div>
+                            <label class="fw-semibold mb-0" for="apUiTheme">UI theme</label>
+                            <div class="small text-body-secondary">CoreUI = current Bootstrap look.</div>
+                        </div>
+                        <div class="flex-shrink-0" style="min-width:170px;">
+                            <select class="form-select form-select-sm" id="apUiTheme">
+                                <option value="coreui" <?= $appearance['ui_theme'] === 'coreui' ? 'selected' : '' ?>>CoreUI (current)</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
 <div class="card border-0 rounded-4 blur shadow-sm ap-curve c-tall n-tl" data-notch="tl" data-pair="cBg">
@@ -522,6 +534,7 @@ function brand_tile(string $badge, bool $isCur, int $v, string $urlPath, string 
         fd.append('public_bg_mode', document.getElementById('apPublicBg').value);
         fd.append('public_bg_blur', document.getElementById('apPublicBgBlur').checked ? '1' : '0');
         fd.append('visual_blur_default', document.getElementById('apVisualBlurDefault').checked ? '1' : '0');
+        fd.append('ui_theme', document.getElementById('apUiTheme').value);
         document.querySelectorAll('input[name="apDisabled"]:checked').forEach(function (cb) {
             fd.append('disabled_modes[]', cb.value);
         });

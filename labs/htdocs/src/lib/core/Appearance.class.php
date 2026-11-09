@@ -32,6 +32,9 @@ class Appearance {
             // `!== '0'` while the renderer reads `=== '1'`, so a missing key
             // showed the switch ON while every public page stayed unblurred.
             'public_bg_blur'  => '0',
+            // UI chrome theme: 'coreui' (current Bootstrap/CoreUI look).
+            // Neumorphism removed — only 'coreui' is supported now.
+            'ui_theme'        => 'coreui',
             'updated_at'       => 0,
             'updated_by'       => '',
         ];
@@ -46,12 +49,13 @@ class Appearance {
             $doc = $db->global_settings->findOne(['_id' => self::DOC_ID]);
             if ($doc) {
                 $doc = (array)$doc;
-                foreach (['default_mode', 'force_mode', 'force_color_mode', 'updated_at', 'updated_by', 'public_bg_mode', 'public_bg_blur', 'visual_blur_default'] as $k) {
+                foreach (['default_mode', 'force_mode', 'force_color_mode', 'updated_at', 'updated_by', 'public_bg_mode', 'public_bg_blur', 'visual_blur_default', 'ui_theme'] as $k) {
                     if (array_key_exists($k, $doc)) $cfg[$k] = $doc[$k];
                 }
                 $cfg['public_bg_mode'] = (string)$cfg['public_bg_mode'];
                 $cfg['visual_blur_default'] = ((string)$cfg['visual_blur_default'] === '0') ? '0' : '1';
                 $cfg['public_bg_blur'] = ((string)$cfg['public_bg_blur'] === '1') ? '1' : '0';
+                $cfg['ui_theme'] = in_array((string)$cfg['ui_theme'], ['coreui'], true) ? (string)$cfg['ui_theme'] : 'coreui';
                 $disabled = $doc['disabled_modes'] ?? [];
                 if ($disabled instanceof Traversable) $disabled = iterator_to_array($disabled, false);
                 if (is_array($disabled)) {

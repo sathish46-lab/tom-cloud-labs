@@ -42,6 +42,7 @@ $publicBg      = array_key_exists('public_bg_mode', $_POST)
 // Default visual blur for users with no saved preference (first login).
 $blurDefault   = isset($_POST['visual_blur_default']) && $_POST['visual_blur_default'] === '0' ? '0' : '1';
 $publicBgBlur  = isset($_POST['public_bg_blur']) && $_POST['public_bg_blur'] === '1' ? '1' : '0';
+$uiTheme       = in_array($_POST['ui_theme'] ?? '', ['coreui'], true) ? $_POST['ui_theme'] : 'coreui';
 $disabledRaw   = $_POST['disabled_modes'] ?? [];
 if (!is_array($disabledRaw)) $disabledRaw = $disabledRaw === '' ? [] : [$disabledRaw];
 
@@ -79,6 +80,7 @@ $next['force_color_mode'] = $forceColor;
 $next['public_bg_mode']   = $publicBg;
 $next['public_bg_blur']   = $publicBgBlur;
 $next['visual_blur_default'] = $blurDefault;
+$next['ui_theme']         = $uiTheme;
 $next['updated_at']       = time();
 $next['updated_by']       = (string)$admin->getEmail();
 
@@ -101,22 +103,24 @@ try {
                 'force_mode'       => $before['force_mode'],
                 'disabled_modes'   => $before['disabled_modes'],
                 'force_color_mode' => $before['force_color_mode'],
-            'public_bg_mode'   => $before['public_bg_mode'],
-            'public_bg_blur'   => $before['public_bg_blur'],
-            'visual_blur_default' => $before['visual_blur_default'],
-        ],
-        'to' => [
-            'default_mode'     => $next['default_mode'],
-            'force_mode'       => $next['force_mode'],
-            'disabled_modes'   => $next['disabled_modes'],
-            'force_color_mode' => $next['force_color_mode'],
-            'public_bg_mode'   => $next['public_bg_mode'],
-            'public_bg_blur'   => $next['public_bg_blur'],
-            'visual_blur_default' => $next['visual_blur_default'],
+                'public_bg_mode'   => $before['public_bg_mode'],
+                'public_bg_blur'   => $before['public_bg_blur'],
+                'visual_blur_default' => $before['visual_blur_default'],
+                'ui_theme'         => $before['ui_theme'],
+            ],
+            'to' => [
+                'default_mode'     => $next['default_mode'],
+                'force_mode'       => $next['force_mode'],
+                'disabled_modes'   => $next['disabled_modes'],
+                'force_color_mode' => $next['force_color_mode'],
+                'public_bg_mode'   => $next['public_bg_mode'],
+                'public_bg_blur'   => $next['public_bg_blur'],
+                'visual_blur_default' => $next['visual_blur_default'],
+                'ui_theme'         => $next['ui_theme'],
             ],
         ],
-        (string)($admin->getUserId() ?? 'unknown')
-    );
+    (string)($admin->getUserId() ?? 'unknown')
+);
 
     echo json_encode(['status' => 'success', 'appearance' => $next]);
 } catch (Throwable $e) {
