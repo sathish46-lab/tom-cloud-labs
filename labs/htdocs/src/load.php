@@ -28,9 +28,13 @@ if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.use_trans_sid', '0');
     
     // SE3+S22: Set Secure and SameSite flags before session_start()
+    // Behind Cloudflare Flexible SSL, Apache receives HTTP from Cloudflare
+    // but the browser connected via HTTPS. Detect Cloudflare via
+    // CF-Connecting-IP header to treat the request as HTTPS.
     $isHttps = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ||
                (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ||
-               (isset($_SERVER['REQUEST_SCHEME']) && $_SERVER['REQUEST_SCHEME'] === 'https');
+               (isset($_SERVER['REQUEST_SCHEME']) && $_SERVER['REQUEST_SCHEME'] === 'https') ||
+               (isset($_SERVER['HTTP_CF_CONNECTING_IP']));
     ini_set('session.cookie_secure', $isHttps ? '1' : '0');
     ini_set('session.cookie_samesite', 'Lax');
     
@@ -71,12 +75,13 @@ if (!function_exists('send_security_headers')) {
         header('Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()');
         
         // Determine WebSocket scheme and host for connect-src
-        // Behind Cloudflare/reverse proxies, $_SERVER['HTTPS'] and
-        // HTTP_X_FORWARDED_PROTO may not be set; REQUEST_SCHEME is the
-        // most reliable indicator of the original client-facing scheme.
+        // Behind Cloudflare Flexible SSL, Apache receives HTTP from Cloudflare
+        // but the browser connected via HTTPS. Detect Cloudflare via
+        // CF-Connecting-IP header.
         $isHttps = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ||
                    (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ||
-                   (isset($_SERVER['REQUEST_SCHEME']) && $_SERVER['REQUEST_SCHEME'] === 'https');
+                   (isset($_SERVER['REQUEST_SCHEME']) && $_SERVER['REQUEST_SCHEME'] === 'https') ||
+                   (isset($_SERVER['HTTP_CF_CONNECTING_IP']));
         $wsScheme = $isHttps ? 'wss:' : 'ws:';
         $httpHost = $_SERVER['HTTP_HOST'] ?? '';
         
