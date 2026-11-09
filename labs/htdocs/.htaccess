@@ -7,9 +7,9 @@ RewriteBase /
 # Custom 404 Error Handler - Secure against server information disclosure
 ErrorDocument 404 /app/error.php
 
-# 1. Force HTTPS - COMMENT THESE OUT TO AVOID REDIRECT LOOPS
-# RewriteCond %{HTTPS} off
-# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# 1. Force HTTPS — redirect all HTTP traffic to HTTPS
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
 # Block sensitive config files from web access
 RewriteRule ^env\.json$ - [F,L]
