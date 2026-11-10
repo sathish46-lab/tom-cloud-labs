@@ -1,0 +1,20 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "chrome-devtools": {
+      "type": "local",
+      "command": ["npx", "-y", "chrome-devtools-mcp@latest"],
+      "enabled": true
+    },
+    "labs": {
+      "type": "remote",
+      "url": "https://labs.selfmade.ninja/mcp",
+      "enabled": true
+    },
+    "TomCloudLab": {
+      "type": "remote",
+      "url": "https://labs.tomweb.in/mcp",
+      "enabled": true
+    }
+  }
+}
