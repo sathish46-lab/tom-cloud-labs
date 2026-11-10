@@ -73,8 +73,8 @@ services:
     ports:
       - "${HTTP_PORT:-9080}:80"
       - "${HTTPS_PORT:-9443}:443"
-      - "${MQS_PORT:-9081}:8081"
-      - "${MQS_MGMT_PORT:-9082}:8082"
+      - "127.0.0.1:${MQS_PORT:-9081}:8081"
+      - "127.0.0.1:${MQS_MGMT_PORT:-9082}:8082"
       - "127.0.0.1:${RABBIT_PORT:-5673}:5672"
       - "127.0.0.1:${RABBIT_MGMT_PORT:-15673}:15672"
       - "127.0.0.1:${RABBIT_MGMT_EXTRA_PORT:-15674}:15674"
