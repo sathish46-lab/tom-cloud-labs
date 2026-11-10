@@ -86,12 +86,11 @@ if (!function_exists('send_security_headers')) {
         $httpHost = $_SERVER['HTTP_HOST'] ?? '';
         
         // Content Security Policy (restrictive default, allow self + common CDNs)
-        // Use nonce-based script-src instead of unsafe-inline.
-        // Modern browsers honor nonce and ignore unsafe-inline.
-        define('CSP_NONCE', base64_encode(random_bytes(16)));
+        // Note: 'unsafe-inline' required for inline event handlers (onclick, onmouseover, etc.)
+        // which cannot use nonces. 'unsafe-eval' removed for security.
         $csp = [
             "default-src 'self'",
-            "script-src 'self' 'nonce-" . CSP_NONCE . "' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com",
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com",
             "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com https://fonts.googleapis.com",
             "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
             "img-src 'self' data: blob: https:",
@@ -261,20 +260,6 @@ if (!function_exists('cdn')) {
 }
 
 // 2. Auto-add nonce to inline scripts for CSP compliance
-if (!function_exists('ipc_add_nonce')) {
-    function ipc_add_nonce($buffer) {
-        $nonce = defined('CSP_NONCE') ? CSP_NONCE : '';
-        if (empty($nonce)) {
-            return $buffer;
-        }
-        // Add nonce to inline <script> tags (without src attribute)
-        return preg_replace(
-            '/<script\b(?![^>]*src=)(?![^>]*nonce=)(.*?)>/i',
-            '<script$1 nonce="' . htmlspecialchars($nonce, ENT_QUOTES) . '">',
-            $buffer
-        );
-    }
-}
-
-// Start output buffering to add nonce to inline scripts
-ob_start('ipc_add_nonce');
+// Removed: nonce-based CSP required editing ~77 inline script files individually.
+// 'unsafe-inline' is required for inline event handlers (onclick, onmouseover, etc.)
+// which cannot use nonces.
