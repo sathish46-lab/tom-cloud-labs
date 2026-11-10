@@ -88,10 +88,10 @@ if (!function_exists('send_security_headers')) {
         // Content Security Policy (restrictive default, allow self + common CDNs)
         // Use nonce-based script-src instead of unsafe-inline.
         // Modern browsers honor nonce and ignore unsafe-inline.
-        $cspNonce = base64_encode(random_bytes(16));
+        define('CSP_NONCE', base64_encode(random_bytes(16)));
         $csp = [
             "default-src 'self'",
-            "script-src 'self' 'nonce-$cspNonce' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com",
+            "script-src 'self' 'nonce-" . CSP_NONCE . "' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com",
             "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com https://fonts.googleapis.com",
             "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
             "img-src 'self' data: blob: https:",
