@@ -87,10 +87,11 @@ if (!function_exists('send_security_headers')) {
         
         // Content Security Policy (restrictive default, allow self + common CDNs)
         // Note: 'unsafe-inline' required for inline event handlers (onclick, onmouseover, etc.)
-        // which cannot use nonces. 'unsafe-eval' removed for security.
+        // which cannot use nonces. Modern browsers with nonce support will use nonce
+        // for script tags that have it; older/inline scripts still work via unsafe-inline.
         $csp = [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com",
+            "script-src 'self' 'unsafe-inline' 'nonce-$cspNonce' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com",
             "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com https://fonts.googleapis.com",
             "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
             "img-src 'self' data: blob: https:",
