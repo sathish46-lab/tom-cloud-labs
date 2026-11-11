@@ -9,7 +9,7 @@ set -u
 # passes a shell command ($@ non-empty), and sets CI=true for containers that
 # receive env. Real platform containers boot with NO command — that's how
 # docker run/compose/the nested ci-test container start.
-if [ -n "$1" ] || [ "${DEVLAB_SKIP_BOOT:-}" = "1" ] || [ "${CI:-}" = "true" ]; then
+if [ -n "${1:-}" ] || [ "${DEVLAB_SKIP_BOOT:-}" = "1" ] || [ "${CI:-}" = "true" ]; then
     echo "[INFO] Skip-boot detected (CI command/flag) — handing control to the shell."
     exec "$@"
 fi
