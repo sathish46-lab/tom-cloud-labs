@@ -422,6 +422,10 @@ def _mongo_require(result):
 def mongo_create_user(username, password):
     _require_ident(username, 'username')
     _require_password(password)
+    # Created in the admin db (authSource=admin) with NO roles. Access is
+    # granted only when the user creates a database (mongo_create_database
+    # grants dbOwner on that database). Never grant any-database roles to
+    # learner users.
     js = """
 const admin = new Mongo(process.env.MLAB_URI).getDB('admin');
 const U = {username};
@@ -434,10 +438,7 @@ try {{
     admin.runCommand({{
         createUser: U,
         pwd: P,
-        roles: [
-            {{role: 'readWriteAnyDatabase', db: 'admin'}},
-            {{role: 'dbAdminAnyDatabase', db: 'admin'}}
-        ]
+        roles: []
     }});
     return {{code: 200, message: 'User ' + U + ' created.'}};
 }} catch (e) {{
@@ -483,7 +484,7 @@ const DB = {dbname};
 const OWNER = {owner};
 try {{
     const target = new Mongo(process.env.MLAB_URI).getDB(DB);
-    const cols = target.listCollections().toArray();
+    const cols = target.getCollectionInfos();
     if (cols.length > 0) {{
         return {{code: 410, message: 'Database ' + DB + ' already exists.'}};
     }}

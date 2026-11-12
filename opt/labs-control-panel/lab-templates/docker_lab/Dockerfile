@@ -18,6 +18,14 @@ RUN apt-get update && apt-get install -y \
     update-ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
+# 1b. mongosh — MongoDB CLI for the learner service (mongo.tomweb.in)
+RUN curl -fsSL https://www.mongodb.org/static/pgp/server-8.0.asc | \
+        gpg -o /usr/share/keyrings/mongodb-server-8.0.gpg --dearmor && \
+    echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/8.0 multiverse" \
+        > /etc/apt/sources.list.d/mongodb-org-8.0.list && \
+    apt-get update && apt-get install -y mongodb-mongosh && \
+    rm -rf /var/lib/apt/lists/* /etc/apt/sources.list.d/mongodb-org-8.0.list /usr/share/keyrings/mongodb-server-8.0.gpg
+
 # 2. STABLE CODE-SERVER INSTALL (v4.95.3)
 # We hardcode the version to prevent API failures and reduce network requests
 RUN STABLE_VER="4.95.3" && \

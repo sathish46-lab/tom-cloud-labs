@@ -8,7 +8,7 @@ RUN apt-get update && \
 
 # 1. Install dependencies and ensure certificates are trusted
 RUN apt-get update && apt-get install -y \
-    net-tools procps curl wget ca-certificates \
+    net-tools procps curl wget ca-certificates gnupg \
     apache2 openssh-server build-essential nano htop vim \
     software-properties-common python3-dev stress iputils-ping \
     speedtest-cli sudo apt-utils screen \
@@ -16,6 +16,14 @@ RUN apt-get update && apt-get install -y \
     php php-mysql libapache2-mod-php && \
     update-ca-certificates && \
     rm -rf /var/lib/apt/lists/*
+
+# 1b. mongosh — MongoDB CLI for the learner service (mongo.tomweb.in)
+RUN curl -fsSL https://www.mongodb.org/static/pgp/server-8.0.asc | \
+        gpg -o /usr/share/keyrings/mongodb-server-8.0.gpg --dearmor && \
+    echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/8.0 multiverse" \
+        > /etc/apt/sources.list.d/mongodb-org-8.0.list && \
+    apt-get update && apt-get install -y mongodb-mongosh && \
+    rm -rf /var/lib/apt/lists/* /etc/apt/sources.list.d/mongodb-org-8.0.list /usr/share/keyrings/mongodb-server-8.0.gpg
 
 # 2. STABLE CODE-SERVER INSTALL (v4.95.3)
 # We hardcode the version to prevent API failures and reduce network requests
