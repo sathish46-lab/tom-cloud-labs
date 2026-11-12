@@ -137,6 +137,27 @@ services:
       - "127.0.0.1:27018:27017"
     restart: always
 
+  # ===========================================================================
+  # mongo-express — admin web UI for the service MongoDB (mongo.tomweb.in,
+  # aliased to the vps in this stack). Host-local only: 127.0.0.1:8085,
+  # basic-auth protected, no public DNS / tunnel exposure.
+  # ===========================================================================
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongoexpress.tomweb.in
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongo.tomweb.in
+      ME_CONFIG_MONGODB_PORT: "27017"
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_USER:-admin}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_PASS:?Set MONGO_PASS in .env file}
+      ME_CONFIG_BASICAUTH_USERNAME: ${ME_USER:-tomadmin}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${ME_PASS:-express@2026}
+    networks:
+      - labs_backend
+    ports:
+      - "127.0.0.1:${ME_PORT:-8085}:8081"
+    restart: unless-stopped
+
 networks:
   labs_backend:
     name: ${BACKEND_NET:-dev_backend}
