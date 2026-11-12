@@ -211,6 +211,11 @@ RUN echo "www-data ALL=(ALL) NOPASSWD: /usr/bin/python3 /opt/labs-control-panel/
 RUN systemctl mask docker.service docker.socket && \
     echo "L+ /run/docker.sock - - - - /var/docker.sock" > /etc/tmpfiles.d/docker-socket.conf
 
+# Diagnostics — own layer so image rebuilds stay fast (earlier layers stay cached)
+RUN apt-get update && \
+    apt-get install -y tcpdump && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY init-services.sh /usr/local/bin/init-services.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/init-services.sh
