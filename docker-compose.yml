@@ -114,6 +114,7 @@ services:
       - SUBDOMAIN=${DDNS_SUBDOMAIN:-vpn}
       - PROXIED=${DDNS_PROXIED:-false}
       - RRTYPE=A
+      - CHECK_INTERVAL=60
     networks:
       - ${BACKEND_NET:-TomCloudLab_backend}
 
