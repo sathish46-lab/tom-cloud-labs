@@ -351,7 +351,15 @@ def mysql_create_database(slug, dbname, owner, collation, charset='', hosts=None
         fetch=True,
     )
     if out == '1':
-        raise Fail(CODE_DB_ALREADY_EXISTS, 'Database {} already exists.'.format(dbname))
+        # Idempotent re-run (e.g. after a user was recreated on redeploy):
+        # refresh the owner's grants instead of failing.
+        grants = '; '.join(
+            "GRANT ALL PRIVILEGES ON `{}`.* TO '{}'@'{}'".format(dbname, owner, host)
+            for host in host_list
+        )
+        rc, out, err = _mysql_exec(slug, grants + '; FLUSH PRIVILEGES')
+        _mysql_ensure_ok(rc, err, 'Failed to grant {} to {}'.format(dbname, owner))
+        return 'Database {} already exists; grants refreshed for {}.'.format(dbname, owner)
     sql_create = "CREATE DATABASE `{}`".format(dbname)
     if charset:
         sql_create += " CHARACTER SET `{}`".format(charset)
@@ -495,9 +503,12 @@ try {{
     const target = new Mongo(process.env.MLAB_URI).getDB(DB);
     const cols = target.getCollectionInfos();
     if (cols.length > 0) {{
-        return {{code: 410, message: 'Database ' + DB + ' already exists.'}};
+        admin.runCommand({{grantRolesToUser: OWNER, roles: [{{role: 'dbOwner', db: DB}}]}});
+        return {{code: 200, message: 'Database ' + DB + ' already exists; access refreshed for ' + OWNER + '.'}};
     }}
     target.createCollection('_init');
+    target.createCollection('welcome');
+    target.welcome.insertOne({{message: 'Welcome to TomCloud Lab MongoDB', owner: OWNER, created_at: new Date().toISOString()}});
     admin.runCommand({{grantRolesToUser: OWNER, roles: [{{role: 'dbOwner', db: DB}}]}});
     return {{code: 200, message: 'Database ' + DB + ' created.'}};
 }} catch (e) {{

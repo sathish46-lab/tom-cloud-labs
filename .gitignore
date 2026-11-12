@@ -17,7 +17,6 @@
 !/session.json
 !/Dockerfile
 !/docker-compose.yml
-!/docker/
 !/Migrate.sh
 !/entrypoint.sh
 !/init-services.sh

@@ -543,6 +543,45 @@ class LabCmd(Command):
 
             claimed = None
             for _attempt in range(5):
+                # Sticky IP: a redeploy reuses the lab's previous docker_ip so
+                # the deterministic services IP (and therefore every MySQL
+                # host whitelist recorded against it) stays valid across
+                # redeploys. Claims from earlier deploys of the same instance
+                # are released first so they never leak pool rows.
+                prev = self.db.machine_labs.find_one(
+                    {"instance_hash": instance_id}, {"docker_ip": 1}
+                ) if self.db is not None else None
+                prev_ip = (prev or {}).get("docker_ip")
+                stale_claim = {"status": "claimed", "instance_hash": instance_id}
+                if prev_ip:
+                    stale_claim["ip"] = {"$ne": prev_ip}
+                docker_ip_col.update_many(
+                    stale_claim,
+                    {"$set": {"status": "available", "instance_hash": "", "user": "",
+                              "claimed_at": 0}},
+                )
+                if prev_ip and str(prev_ip).startswith(self.cfg.docker_ip) and _ip_ok(prev_ip):
+                    row = docker_ip_col.find_one_and_update(
+                        {"ip": prev_ip, "status": {"$in": ["available", "reserved"]}},
+                        {"$set": {
+                            "status": "claimed",
+                            "instance_hash": instance_id,
+                            "user": username,
+                            "claimed_at": time.time(),
+                        }},
+                        return_document=True,
+                    )
+                    if row is None:
+                        # Own claim from the previous deploy — re-affirm it.
+                        row = docker_ip_col.find_one_and_update(
+                            {"ip": prev_ip, "status": "claimed",
+                             "instance_hash": instance_id},
+                            {"$set": {"user": username, "claimed_at": time.time()}},
+                            return_document=True,
+                        )
+                    if row is not None:
+                        claimed = row
+                        break
                 row = docker_ip_col.find_one_and_update(
                     {"status": "available"},
                     {"$set": {
