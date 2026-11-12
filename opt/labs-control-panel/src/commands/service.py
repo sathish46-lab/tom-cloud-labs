@@ -285,6 +285,15 @@ def mysql_create_user(slug, username, password, hosts=None):
         )
         rc, out, err = _mysql_exec(slug, sql)
         _mysql_ensure_ok(rc, err, 'Failed to create MySQL user {}@{}'.format(username, host))
+        # Per-user namespace: the user may create/manage their own databases
+        # from Adminer/CLI (names starting with <username>_). Databases are
+        # still created per-user via the dashboard (quota-tracked) with exact
+        # names. The _ is escaped (\_) so it is not a GRANT wildcard.
+        grant_sql = "GRANT ALL PRIVILEGES ON `{u}\\_%`.* TO '{u}'@'{h}'; FLUSH PRIVILEGES".format(
+            u=username, h=host
+        )
+        rc, out, err = _mysql_exec(slug, grant_sql)
+        _mysql_ensure_ok(rc, err, 'Failed to grant namespace to {}@{}'.format(username, host))
     return "User {} created for {}.".format(username, ', '.join(host_list))
 
 
