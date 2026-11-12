@@ -1,9 +1,12 @@
 services:
+  # ===========================================================================
+  # vps — app + SSH + WireGuard (ONLY container with WG port open)
+  # ===========================================================================
   vps:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: ${VPS_CONTAINER:-Dev_lab}
+    container_name: ${VPS_CONTAINER:-vps}
     cap_add:
       - NET_ADMIN
       - SYS_ADMIN
@@ -12,12 +15,12 @@ services:
     security_opt:
       - apparmor:unconfined
     environment:
-      - MAIN_DOMAIN=${MAIN_DOMAIN:-dev.tomweb.in}
+      - MAIN_DOMAIN=${MAIN_DOMAIN:-labs.tomweb.in}
       - VPN_DOMAIN=${VPN_DOMAIN:-vpn.dev.tomweb.in}
       - MQS_DOMAIN=${MQS_DOMAIN:-mq.dev.tomweb.in}
       - CODE_DOMAIN=${CODE_DOMAIN:-code.dev.tomweb.in}
-      - WORK_DOMAIN=${WORK_DOMAIN:-work.dev.tomweb.in}
-      - NEWS_DOMAIN=${NEWS_DOMAIN:-news.dev.tomweb.in}
+      - WORK_DOMAIN=${WORK_DOMAIN:-work.tomweb.in}
+      - NEWS_DOMAIN=${NEWS_DOMAIN:-news.tomweb.in}
       - SSL_EMAIL=${SSL_EMAIL:-admin@example.com}
       - CONTACT_ADMIN_EMAIL=${CONTACT_ADMIN_EMAIL:-contact@tomweb.in}
       - SMTP_HOST=${SMTP_HOST:-}
@@ -32,33 +35,46 @@ services:
       - MONGO_USER=${MONGO_USER:-admin}
       - MONGO_PASS=${MONGO_PASS:?Set MONGO_PASS in .env file}
       - MONGO_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD:-${MONGO_PASS}}
-      - DATABASE_FILE=${DATABASE_FILE:-mongodb://admin:tomcloud2026@127.0.0.1:27017/tom_labs_db?authSource=admin}
+      # Point app at split service containers (NOT localhost anymore)
+      # Point app at split service containers (NOT localhost anymore)
+      - DATABASE_FILE=mongodb://admin:Tombootroot@127.0.0.1:27017/tom_labs_db?authSource=admin
+      - MYSQL_HOST=mysql.tomweb.in
+      - MYSQL_PORT=3306
+      - POSTGRES_HOST=postgres.tomweb.in
+      - POSTGRES_PORT=5432
+      - REDIS_HOST=redis.tomweb.in
+      - REDIS_PORT=6379
       - API_SECRET=${API_SECRET:-your-super-secret-token-here}
       - AI_INTERNAL_TOKEN=${AI_INTERNAL_TOKEN:-tclabs_ai_tool_92d3f8a1b5c7e4}
       - AI_API_KEY=${AI_API_KEY:-}
     extra_hosts:
+      # Internal .tomweb.in DNS → fixed service IPs
+      - "mysql.tomweb.in:10.20.208.16"
+      - "postgres.tomweb.in:10.20.208.17"
+      - "redis.tomweb.in:10.20.208.18"
+      - "adminer.tomweb.in:10.20.208.19"
+      - "mongo.tomweb.in:10.20.208.20"
       - "dev.tomweb.in:127.0.0.1"
       - "vpn.dev.tomweb.in:127.0.0.1"
       - "mq.dev.tomweb.in:127.0.0.1"
       - "code.dev.tomweb.in:127.0.0.1"
       - "work.dev.tomweb.in:127.0.0.1"
       - "news.dev.tomweb.in:127.0.0.1"
-      - "mysql.tomweb.in:127.0.0.1"
       - "labs.tomweb.in:127.0.0.1"
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:rw
       - .:/var/www
       - /var/run/docker.sock:/var/docker.sock
       - ./opt/labs-control-panel:/opt/labs-control-panel
-      - ./rabbitmq-data:/var/lib/rabbitmq
       - ./wireguard-conf:/etc/wireguard
       - ./apache-logs:/var/log/apache2
       - ./traefik-conf:/etc/traefik
       - ./tomlabs/storage:/var/tomlabs/storage
-      # App-data MongoDB lives INSIDE the container (mongod, /etc/mongod.conf),
-      # same colocated layout for both dev and production
+      # App-data MongoDB lives INSIDE the container (mongod, /etc/mongod.conf)
       - ./mongo-data:/var/lib/mongodb
     networks:
+      tomweb_services:
+        ipv4_address: 10.20.208.10
       labs_backend:
         aliases:
           - mysql.tomweb.in
@@ -79,10 +95,118 @@ services:
       - "127.0.0.1:${RABBIT_MGMT_PORT:-15673}:15672"
       - "127.0.0.1:${RABBIT_MGMT_EXTRA_PORT:-15674}:15674"
       - "${WG_PORT:-51821}:51820/udp"
+      - "51822:51820/udp"
       - "${SSH_PORT:-2222}:22"
     stop_signal: SIGRTMIN+3
 
-  # Prod-only sidecars — start only with: docker compose --profile prod up -d
+  # ===========================================================================
+  # mysql.tomweb.in — 10.20.208.16 (internal only, not published to host)
+  # ===========================================================================
+  mysql:
+    image: mysql:8.0
+    container_name: mysql.tomweb.in
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpass}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-tomcloud}
+      MYSQL_USER: ${MYSQL_USER:-tomcloud}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-tomcloud}
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+    networks:
+      tomweb_services:
+        ipv4_address: 10.20.208.16
+    restart: unless-stopped
+
+  # ===========================================================================
+  # postgres.tomweb.in — 10.20.208.17
+  # ===========================================================================
+  postgres:
+    image: postgres:15
+    container_name: postgres.tomweb.in
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-tomcloud}
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    networks:
+      tomweb_services:
+        ipv4_address: 10.20.208.17
+    restart: unless-stopped
+
+  # ===========================================================================
+  # redis.tomweb.in — 10.20.208.18
+  # ===========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: redis.tomweb.in
+    command: redis-server --save "" --appendonly no
+    volumes:
+      - ./redis-data:/data
+    networks:
+      tomweb_services:
+        ipv4_address: 10.20.208.18
+    restart: unless-stopped
+
+  # ===========================================================================
+  # adminer.tomweb.in — 10.20.208.19
+  # ===========================================================================
+  adminer:
+    image: adminer:latest
+    container_name: adminer.tomweb.in
+    environment:
+      ADMINER_DEFAULT_SERVER: mysql.tomweb.in
+    networks:
+      tomweb_services:
+        ipv4_address: 10.20.208.19
+    ports:
+      - "127.0.0.1:${ADMINER_PORT:-8080}:8080"
+    restart: unless-stopped
+
+  # ===========================================================================
+  # mongo.tomweb.in — 10.20.208.20 (separate app-data MongoDB service)
+  # ===========================================================================
+  mongo:
+    image: mongo:8.0
+    container_name: mongo.tomweb.in
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-Tombootroot}
+    volumes:
+      - ./mongo-service-data:/data/db
+    networks:
+      tomweb_services:
+        ipv4_address: 10.20.208.20
+    ports:
+      - "127.0.0.1:27017:27017"
+    restart: unless-stopped
+
+  # ===========================================================================
+  # mongo-express — web UI for mongo.tomweb.in (host-local only, no public DNS)
+  # ===========================================================================
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongoexpress.tomweb.in
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongo.tomweb.in
+      ME_CONFIG_MONGODB_PORT: "27017"
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_USER:-admin}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_ROOT_PASSWORD:-Tombootroot}
+      ME_CONFIG_BASICAUTH_USERNAME: ${ME_USER:-tomadmin}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${ME_PASS:-express@2026}
+      ME_CONFIG_OPTIONS_EDITORTHEME: default
+    networks:
+      tomweb_services:
+        ipv4_address: 10.20.208.21
+    ports:
+      - "127.0.0.1:${ME_PORT:-8085}:8081"
+    depends_on:
+      - mongo
+    restart: unless-stopped
+
+  # ===========================================================================
+  # cloudflared / ddns-updater (prod only) — keep on existing backend net
+  # ===========================================================================
   cloudflared:
     profiles:
       - prod
@@ -118,9 +242,7 @@ services:
     networks:
       - ${BACKEND_NET:-TomCloudLab_backend}
 
-  # Legacy external app-data MongoDB — disabled by default; both stacks now use
-  # the mongod inside the vps container (127.0.0.1:27017).
-  # Rollback only: docker compose --profile legacy-extmongo up -d
+  # Legacy external app-data MongoDB — disabled by default
   mongodb:
     profiles:
       - legacy-extmongo
@@ -138,9 +260,17 @@ services:
     restart: always
 
 networks:
+  tomweb_services:
+    name: tomweb_services
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.20.208.0/24
+
   labs_backend:
     name: ${BACKEND_NET:-dev_backend}
     driver: bridge
+
   labs_frontend:
     name: labs_frontend
     external: true
