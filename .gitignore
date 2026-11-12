@@ -110,3 +110,4 @@ opt/labs-control-panel/mcp_env.json
 __pycache__/
 **/ssh_host_keys/*
 !**/ssh_host_keys/.gitkeep
+opt/labs-control-panel/service-credentials.json

@@ -106,6 +106,37 @@ abstract class BaseServicePermission
         return $this->config['label'];
     }
 
+    /**
+     * Client hosts allowed to authenticate as service users (mysql/mariadb).
+     *
+     * Returns the caller's machine-lab services IPs (stable, registry-octet
+     * derived) plus the Adminer container, so credentials only work from the
+     * owner's lab(s) and the platform's DB web client. Empty array = no host
+     * restriction (slugs without a host concept override with []).
+     */
+    protected function hostRestriction(): array
+    {
+        return [];
+    }
+
+    protected function allowedHosts(): array
+    {
+        $hosts = [];
+        $labs = $this->db()->machine_labs->find(
+            ['email' => $this->email],
+            ['projection' => ['docker_ip' => 1, 'services_ip' => 1]]
+        )->toArray();
+        foreach ($labs as $lab) {
+            $ip = (string) ($lab['services_ip'] ?? $lab['docker_ip'] ?? '');
+            if (preg_match('/^\d{1,3}(\.\d{1,3}){3}$/', $ip)) {
+                $hosts[] = $ip;
+            }
+        }
+        // Adminer (fixed IP from docker-compose static assignment)
+        $hosts[] = '10.20.208.19';
+        return array_values(array_unique($hosts));
+    }
+
     protected function userId()
     {
         return $this->user->getUserId();
@@ -206,15 +237,19 @@ abstract class BaseServicePermission
         }
 
         try {
+            $hosts = $this->hostRestriction();
+            $hostArg = $hosts ? ' --hosts=' . implode(',', $hosts) : '';
             $command = "labsctl service {$this->service} --email={$this->email} createuser"
-                . " --username={$username} --password=" . escapeshellarg($password);
+                . " --username={$username} --password=" . escapeshellarg($password) . $hostArg;
             $response = $this->executeLabsctl($command, "Cannot create {$this->label()} user");
 
             if ($response->isSuccess()) {
                 $dto = new DatabaseUserDTO($this->userId(), $this->email, $username, $password);
-                $this->db()->{$this->config['users_collection']}->insertOne(
-                    $dto->toMongoRecord($this->config['username_field'])
-                );
+                $record = $dto->toMongoRecord($this->config['username_field']);
+                if ($hosts) {
+                    $record['hosts'] = $hosts;
+                }
+                $this->db()->{$this->config['users_collection']}->insertOne($record);
                 \Cache::clear("{$this->service}_user_list_{$this->email}");
 
                 return ServiceResponse::success($this->label() . ' user created successfully.');
@@ -269,8 +304,12 @@ abstract class BaseServicePermission
                 }
             }
 
+            $hosts = isset($userRecord['hosts']) && is_array($userRecord['hosts'])
+                ? implode(',', $userRecord['hosts'])
+                : '';
+            $hostArg = $hosts !== '' ? ' --hosts=' . $hosts : '';
             $userResult = $this->executeLabsctl(
-                "labsctl service {$this->service} --email={$this->email} deleteuser --username={$username}",
+                "labsctl service {$this->service} --email={$this->email} deleteuser --username={$username}{$hostArg}",
                 "Cannot delete {$this->label()} user"
             );
             if ($userResult->isError()) {

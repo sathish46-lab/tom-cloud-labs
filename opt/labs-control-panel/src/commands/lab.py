@@ -103,8 +103,21 @@ class LabCmd(Command):
 
     # ── Detect VPS Docker IP ────────────────────────────────────
 
+    def _services_ip_for(self, docker_ip):
+        """Deterministic IP for the lab on the services network.
+
+        Uses the same last octet as the lab's registry IP; octets 16-20 are
+        shifted +200 to avoid the fixed service containers (.16-.20).
+        """
+        try:
+            octet = int(str(docker_ip).rsplit(".", 1)[1])
+        except (ValueError, IndexError):
+            octet = 0
+        if 16 <= octet <= 20:
+            octet += 200
+        return f"10.20.208.{octet}"
+
     def _detect_vps_docker_ip(self, docker_network):
-        """Detect the orchestrator container's Docker IP on the shared network."""
         orchestrator = self.cfg.orchestrator_container
         if not orchestrator:
             fallback = f"{self.cfg.docker_ip}2"
@@ -645,8 +658,27 @@ class LabCmd(Command):
         # Attach lab to the services network so *.tomweb.in service hostnames
         # (mysql/postgres/redis/adminer/mongo) resolve via Docker DNS and are
         # reachable — Docker 28+ drops cross-bridge traffic to unpublished ports.
+        # The services IP is deterministic (same octet as the lab's registry
+        # octet) so service-side host whitelists stay stable across redeploys.
         services_net = self.cfg.get("services_network", "tomweb_services")
-        self.run(f"docker network connect {services_net} {instance_id} 2>/dev/null || true")
+        services_ip = self._services_ip_for(docker_ip)
+        self.run(
+            f"docker network connect --ip {services_ip} {services_net} {instance_id} 2>/dev/null "
+            f"|| docker network connect {services_net} {instance_id} 2>/dev/null || true"
+        )
+        code, actual_services_ip = self.run(
+            f'docker inspect -f \'{{{{index .NetworkSettings.Networks "{services_net}" "IPAddress"}}}}\' {instance_id}',
+            capture=True,
+        )
+        actual_services_ip = (actual_services_ip or "").strip()
+        if actual_services_ip:
+            services_ip = actual_services_ip
+            if self.db is not None:
+                self.db["machine_labs"].update_one(
+                    {"instance_hash": instance_id},
+                    {"$set": {"services_ip": services_ip}},
+                )
+        self.log(f"Services network: {services_net} @ {services_ip}")
 
         # Add tunnel IP to container's eth0
         self.run(f"docker exec {instance_id} ip addr add {tunnel_ip}/32 dev eth0 2>/dev/null || true")

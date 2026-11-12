@@ -22,6 +22,15 @@ class Permission extends BaseServicePermission
         parent::__construct($user, 'mariadb');
     }
 
+    /**
+     * MySQL-family users are host-restricted: only the owner's machine labs
+     * and the Adminer container may authenticate.
+     */
+    protected function hostRestriction(): array
+    {
+        return $this->allowedHosts();
+    }
+
     private const MAX_USERS = 5;
     private const MAX_DATABASES_PER_USER = 10;
     private const DEFAULT_CHARSET = 'utf8mb4';

@@ -33,6 +33,7 @@ IDENT_RE = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
 VHOST_RE = re.compile(r'^[a-zA-Z0-9_.\-]+$')
 COLLATION_RE = re.compile(r'^[a-zA-Z0-9_]+$')
 EMAIL_FLAG_RE = re.compile(r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$')
+HOST_RE = re.compile(r'^[a-zA-Z0-9._:\-]{1,64}$')
 
 AUDIT_LOG_PATH = '/var/log/labs/labsctl_service_audit.log'
 MUTATION_ACTIONS = frozenset({
@@ -135,6 +136,40 @@ def _cfg(key, default=''):
     return _load_env().get(key) or default
 
 
+def _svc(slug, key, default=None):
+    """Per-slug connection settings from the dedicated credentials file.
+
+    Reads /opt/labs-control-panel/service-credentials.json (chmod 600, git-
+    ignored) so secrets stay out of env.json. Falls back to env.json
+    service_endpoints (legacy) and then to `default` (legacy 127.0.0.1
+    all-in-one behaviour) when absent.
+    """
+    candidates = [
+        '/opt/labs-control-panel/service-credentials.json',
+        '/var/www/service-credentials.json',
+    ]
+    for path in candidates:
+        try:
+            with open(path, 'r') as fh:
+                data = json.load(fh)
+            break
+        except Exception:
+            continue
+    else:
+        data = {}
+    if not isinstance(data, dict):
+        data = {}
+    endpoint = data.get(slug)
+    if not isinstance(endpoint, dict):
+        # Legacy fallback: service_endpoints inside env.json
+        endpoints = _load_env().get('service_endpoints')
+        endpoint = endpoints.get(slug) if isinstance(endpoints, dict) else None
+    if not isinstance(endpoint, dict):
+        return default
+    value = endpoint.get(key)
+    return default if value is None else value
+
+
 def _run(cmd, env_extra=None, timeout=30):
     """Run a command. On the host, wrap with docker exec into the Dev_lab container.
 
@@ -192,12 +227,17 @@ def _pg_dollar_quote(value):
 
 # ── MySQL / MariaDB ──────────────────────────────────────────────────────────
 
-def _mysql_exec(port, sql, fetch=False):
-    env = {'MYSQL_PWD': _cfg('mysql_root_pass')}
-    if not env['MYSQL_PWD']:
-        raise Fail(CODE_OPERATION_FAILED, 'mysql_root_pass missing in env.json')
-    user = _cfg('mysql_root_user', 'root')
-    cmd = ['mysql', '-h', '127.0.0.1', '-P', str(port), '-u', user, '-N', '-B', '-e', sql]
+def _mysql_exec(slug, sql, fetch=False):
+    password = _svc(slug, 'password', _cfg('mysql_root_pass'))
+    if password is None or password == '':
+        password = _cfg('mysql_root_pass')
+    if not password:
+        raise Fail(CODE_OPERATION_FAILED, 'MySQL root password missing in env.json')
+    user = _svc(slug, 'user', _cfg('mysql_root_user', 'root'))
+    host = _svc(slug, 'host', '127.0.0.1')
+    port = _svc(slug, 'port', MYSQL_PORT.get(slug, 3306))
+    env = {'MYSQL_PWD': password}
+    cmd = ['mysql', '-h', str(host), '-P', str(port), '-u', user, '-N', '-B', '-e', sql]
     rc, out, err = _run(cmd, env)
     if fetch:
         return rc, out.strip(), (out + err).strip()
@@ -209,32 +249,68 @@ def _mysql_ensure_ok(rc, err, context):
         raise Fail(CODE_OPERATION_FAILED, '{}: {}'.format(context, err[:300]))
 
 
-def mysql_create_user(port, username, password):
+def _valid_hosts(hosts_flag):
+    """Parse and validate a comma-separated MySQL host whitelist."""
+    if not hosts_flag:
+        return []
+    if not isinstance(hosts_flag, str):
+        raise Fail(CODE_VALIDATION, 'Invalid --hosts value.')
+    hosts = []
+    for part in hosts_flag.split(','):
+        host = part.strip()
+        if not host or not HOST_RE.match(host):
+            raise Fail(CODE_VALIDATION, 'Invalid host pattern in --hosts: {}'.format(host[:64]))
+        hosts.append(host)
+    return list(dict.fromkeys(hosts))
+
+
+def mysql_create_user(slug, username, password, hosts=None):
     _require_ident(username, 'username')
     _require_password(password)
-    rc, out, err = _mysql_exec(port, "SELECT 1 FROM mysql.user WHERE user = '{}' AND host = '%'".format(username), fetch=True)
-    if out == '1':
-        raise Fail(CODE_USER_ALREADY_EXISTS, "User {}@'%' already exists.".format(username))
-    sql = "CREATE USER '{}'@'%' IDENTIFIED BY '{}'; FLUSH PRIVILEGES".format(username, _sql_quote(password))
-    rc, out, err = _mysql_exec(port, sql)
-    _mysql_ensure_ok(rc, err, 'Failed to create MySQL user {}'.format(username))
-    return 'User {} created.'.format(username)
+    host_list = _valid_hosts(hosts) or ['%']
+    for host in host_list:
+        rc, out, err = _mysql_exec(
+            slug,
+            "SELECT 1 FROM mysql.user WHERE user = '{}' AND host = '{}'".format(username, host),
+            fetch=True,
+        )
+        if out == '1':
+            raise Fail(
+                CODE_USER_ALREADY_EXISTS,
+                "User {}@'{}' already exists.".format(username, host),
+            )
+    for host in host_list:
+        sql = "CREATE USER '{}'@'{}' IDENTIFIED BY '{}'; FLUSH PRIVILEGES".format(
+            username, host, _sql_quote(password)
+        )
+        rc, out, err = _mysql_exec(slug, sql)
+        _mysql_ensure_ok(rc, err, 'Failed to create MySQL user {}@{}'.format(username, host))
+    return "User {} created for {}.".format(username, ', '.join(host_list))
 
 
-def mysql_delete_user(port, username):
+def mysql_delete_user(slug, username, hosts=None):
     _require_ident(username, 'username')
-    rc, out, err = _mysql_exec(port, "DROP USER IF EXISTS '{}'@'%'; FLUSH PRIVILEGES".format(username))
-    _mysql_ensure_ok(rc, err, 'Failed to drop MySQL user {}'.format(username))
+    host_list = _valid_hosts(hosts) or ['%']
+    for host in host_list:
+        rc, out, err = _mysql_exec(
+            slug,
+            "DROP USER IF EXISTS '{}'@'{}'; FLUSH PRIVILEGES".format(username, host),
+        )
+        _mysql_ensure_ok(rc, err, "Failed to drop MySQL user {}@'{}'".format(username, host))
     return 'User {} dropped.'.format(username)
 
 
-def mysql_list_users(port):
-    rc, out, err = _mysql_exec(port, "SELECT user FROM mysql.user WHERE host = '%' ORDER BY user", fetch=True)
+def mysql_list_users(slug):
+    rc, out, err = _mysql_exec(
+        slug,
+        "SELECT user, host FROM mysql.user WHERE host IN ('%') OR host LIKE '10.20.%' ORDER BY user, host",
+        fetch=True,
+    )
     _mysql_ensure_ok(rc, err, 'Failed to list MySQL users')
     return [line for line in out.splitlines() if line]
 
 
-def mysql_create_database(port, dbname, owner, collation, charset=''):
+def mysql_create_database(slug, dbname, owner, collation, charset='', hosts=None):
     _require_ident(dbname, 'database name')
     _require_ident(owner, 'owner username')
     if not COLLATION_RE.match(collation or ''):
@@ -242,47 +318,59 @@ def mysql_create_database(port, dbname, owner, collation, charset=''):
     if charset and not COLLATION_RE.match(charset):
         raise Fail(CODE_DB_NAME_INVALID, 'Invalid charset.')
     rc, out, err = _mysql_exec(
-        port,
+        slug,
+        "SELECT host FROM mysql.user WHERE user = '{}'".format(owner),
+        fetch=True,
+    )
+    _mysql_ensure_ok(rc, err, 'Failed to query owner user {}'.format(owner))
+    owner_hosts = [line.strip() for line in out.splitlines() if line.strip()]
+    provided = _valid_hosts(hosts)
+    if provided:
+        host_list = [h for h in provided if h in owner_hosts]
+    else:
+        host_list = owner_hosts
+    if not host_list:
+        raise Fail(
+            CODE_USER_NOT_FOUND,
+            "Owner user {} does not exist for {}.".format(
+                owner, ', '.join("'{}'@'{}'".format(owner, h) for h in (provided or ['%']))
+            ),
+        )
+    rc, out, err = _mysql_exec(
+        slug,
         "SELECT 1 FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '{}'".format(dbname),
         fetch=True,
     )
     if out == '1':
         raise Fail(CODE_DB_ALREADY_EXISTS, 'Database {} already exists.'.format(dbname))
-    rc, out, err = _mysql_exec(
-        port,
-        "SELECT 1 FROM mysql.user WHERE user = '{}' AND host = '%'".format(owner),
-        fetch=True,
-    )
-    if out != '1':
-        raise Fail(CODE_USER_NOT_FOUND, "Owner user {}@'%' does not exist.".format(owner))
     sql_create = "CREATE DATABASE `{}`".format(dbname)
     if charset:
         sql_create += " CHARACTER SET `{}`".format(charset)
-    sql = (
-        "{} COLLATE `{}`; "
-        "GRANT ALL PRIVILEGES ON `{}`.* TO '{}'@'%'; "
-        "FLUSH PRIVILEGES"
-    ).format(sql_create, collation, dbname, owner)
-    rc, out, err = _mysql_exec(port, sql)
+    grants = '; '.join(
+        "GRANT ALL PRIVILEGES ON `{}`.* TO '{}'@'{}'".format(dbname, owner, host)
+        for host in host_list
+    )
+    sql = "{} COLLATE `{}`; {}; FLUSH PRIVILEGES".format(sql_create, collation, grants)
+    rc, out, err = _mysql_exec(slug, sql)
     _mysql_ensure_ok(rc, err, 'Failed to create database {}'.format(dbname))
     return 'Database {} created and granted to {}.'.format(dbname, owner)
 
 
-def mysql_delete_database(port, dbname):
+def mysql_delete_database(slug, dbname):
     _require_ident(dbname, 'database name')
-    rc, out, err = _mysql_exec(port, 'DROP DATABASE IF EXISTS `{}`'.format(dbname))
+    rc, out, err = _mysql_exec(slug, 'DROP DATABASE IF EXISTS `{}`'.format(dbname))
     _mysql_ensure_ok(rc, err, 'Failed to drop database {}'.format(dbname))
     return 'Database {} dropped.'.format(dbname)
 
 
-def mysql_list_databases(port):
-    rc, out, err = _mysql_exec(port, 'SHOW DATABASES', fetch=True)
+def mysql_list_databases(slug):
+    rc, out, err = _mysql_exec(slug, 'SHOW DATABASES', fetch=True)
     _mysql_ensure_ok(rc, err, 'Failed to list databases')
     return [line for line in out.splitlines() if line and line.lower() not in SYSTEM_MYSQL_DBS]
 
 
-def mysql_get_collations(port):
-    rc, out, err = _mysql_exec(port, 'SHOW COLLATION', fetch=True)
+def mysql_get_collations(slug):
+    rc, out, err = _mysql_exec(slug, 'SHOW COLLATION', fetch=True)
     _mysql_ensure_ok(rc, err, 'Failed to list collations')
     collations = {}
     for line in out.splitlines():
@@ -299,11 +387,13 @@ def mysql_get_collations(port):
 # ── MongoDB ──────────────────────────────────────────────────────────────────
 
 def _mongo_eval(js):
-    user = _cfg('mongo_user', 'admin')
-    password = _cfg('mongo_pass')
+    host = _svc('mongodb', 'host', '127.0.0.1')
+    port = _svc('mongodb', 'port', 27017)
+    user = _svc('mongodb', 'user', _cfg('mongo_user', 'admin'))
+    password = _svc('mongodb', 'password', _cfg('mongo_pass'))
     if not password:
         raise Fail(CODE_OPERATION_FAILED, 'mongo_pass missing in env.json')
-    uri = 'mongodb://{}:{}@127.0.0.1:27017/?authSource=admin'.format(user, password)
+    uri = 'mongodb://{}:{}@{}:{}/?authSource=admin'.format(user, password, host, port)
     env = {'MLAB_URI': uri}
     wrapped = 'print(JSON.stringify((function () {{\n{}\n}})()));'.format(js)
     rc, out, err = _run(['mongosh', '--quiet', '--eval', wrapped], env)
@@ -443,11 +533,13 @@ return {{code: 200, message: 'ok', data: names}};
 # ── PostgreSQL ───────────────────────────────────────────────────────────────
 
 def _psql(sql, fetch=False):
-    env = {'PGPASSWORD': _cfg('mysql_root_pass')}
+    host = _svc('postgresql', 'host', '127.0.0.1')
+    port = _svc('postgresql', 'port', 5432)
+    admin = _svc('postgresql', 'user', _cfg('postgres_admin_user', 'tomlabs_admin'))
+    env = {'PGPASSWORD': _svc('postgresql', 'password', _cfg('mysql_root_pass'))}
     if not env['PGPASSWORD']:
-        raise Fail(CODE_OPERATION_FAILED, 'mysql_root_pass missing in env.json')
-    admin = _cfg('postgres_admin_user', 'tomlabs_admin')
-    cmd = ['psql', '-h', '127.0.0.1', '-p', '5432', '-U', admin, '-d', 'postgres', '-v', 'ON_ERROR_STOP=1']
+        raise Fail(CODE_OPERATION_FAILED, 'PostgreSQL admin password missing in env.json')
+    cmd = ['psql', '-h', str(host), '-p', str(port), '-U', admin, '-d', 'postgres', '-v', 'ON_ERROR_STOP=1']
     if fetch:
         cmd += ['-tA']
     cmd += ['-c', sql]
@@ -550,11 +642,11 @@ def pg_get_encodings():
 # ── Redis ────────────────────────────────────────────────────────────────────
 
 def _redis(*argv):
-    password = _cfg('redis_admin_pass')
-    if not password:
-        raise Fail(CODE_OPERATION_FAILED, 'redis_admin_pass missing in env.json')
-    env = {'REDISCLI_AUTH': password}
-    cmd = ['redis-cli', '-h', '127.0.0.1', '-p', '6379', '--no-auth-warning'] + list(argv)
+    host = _svc('redis', 'host', '127.0.0.1')
+    port = _svc('redis', 'port', 6379)
+    password = _svc('redis', 'password', _cfg('redis_admin_pass'))
+    env = {'REDISCLI_AUTH': password} if password else {}
+    cmd = ['redis-cli', '-h', str(host), '-p', str(port), '--no-auth-warning'] + list(argv)
     rc, out, err = _run(cmd, env)
     return rc, out.strip(), (out + err).strip()
 
@@ -787,6 +879,7 @@ class ServiceCmd(Command):
             'Actions:  ' + ', '.join(sorted({a for acts in ACTIONS_BY_SLUG.values() for a in acts})),
             'Options:  --email=EMAIL --username=NAME --password=PASS',
             '          --database=NAME (alias: --dbname) --charset=NAME --collation=NAME --vhost=NAME',
+            '          --hosts=H1,H2 (mysql/mariadb: client-host whitelist)',
         ]
         if message:
             text.insert(0, 'Error: ' + message)
@@ -799,6 +892,7 @@ class ServiceCmd(Command):
         dbname = args.flag('dbname') or args.flag('database')
         collation = args.flag('collation')
         vhost = args.flag('vhost')
+        hosts = args.flag('hosts')
 
         if action == 'ping':
             self._ping(slug)
@@ -806,7 +900,7 @@ class ServiceCmd(Command):
 
         if action == 'createuser':
             if slug in MYSQL_PORT:
-                message = mysql_create_user(MYSQL_PORT[slug], username, password)
+                message = mysql_create_user(slug, username, password, hosts)
             elif slug == 'mongodb':
                 message = mongo_create_user(username, password)
             elif slug == 'postgresql':
@@ -820,7 +914,7 @@ class ServiceCmd(Command):
 
         if action == 'deleteuser':
             if slug in MYSQL_PORT:
-                message = mysql_delete_user(MYSQL_PORT[slug], username)
+                message = mysql_delete_user(slug, username, hosts)
             elif slug == 'mongodb':
                 message = mongo_delete_user(username)
             elif slug == 'postgresql':
@@ -834,7 +928,7 @@ class ServiceCmd(Command):
 
         if action == 'listuser':
             if slug in MYSQL_PORT:
-                users = mysql_list_users(MYSQL_PORT[slug])
+                users = mysql_list_users(slug)
             elif slug == 'mongodb':
                 users = mongo_list_users()
             elif slug == 'postgresql':
@@ -861,8 +955,8 @@ class ServiceCmd(Command):
                 message = pg_create_database(dbname, username)
             else:
                 message = mysql_create_database(
-                    MYSQL_PORT[slug], dbname, username,
-                    collation or default_collation, charset,
+                    slug, dbname, username,
+                    collation or default_collation, charset, hosts,
                 )
             _ok(message)
             return
@@ -873,7 +967,7 @@ class ServiceCmd(Command):
             elif slug == 'postgresql':
                 message = pg_delete_database(dbname)
             else:
-                message = mysql_delete_database(MYSQL_PORT[slug], dbname)
+                message = mysql_delete_database(slug, dbname)
             _ok(message)
             return
 
@@ -883,12 +977,12 @@ class ServiceCmd(Command):
             elif slug == 'postgresql':
                 databases = pg_list_databases()
             else:
-                databases = mysql_list_databases(MYSQL_PORT[slug])
+                databases = mysql_list_databases(slug)
             _ok('Databases retrieved.', databases)
             return
 
         if action == 'getcollation':
-            _ok('Collations retrieved.', mysql_get_collations(MYSQL_PORT[slug]))
+            _ok('Collations retrieved.', mysql_get_collations(slug))
             return
 
         if action == 'getencoding':
