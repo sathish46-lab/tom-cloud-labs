@@ -642,6 +642,12 @@ class LabCmd(Command):
         self.configure_routing(tunnel_ip, docker_ip, bridge)
         self.log("Routing and firewall configured.", "success")
 
+        # Attach lab to the services network so *.tomweb.in service hostnames
+        # (mysql/postgres/redis/adminer/mongo) resolve via Docker DNS and are
+        # reachable — Docker 28+ drops cross-bridge traffic to unpublished ports.
+        services_net = self.cfg.get("services_network", "tomweb_services")
+        self.run(f"docker network connect {services_net} {instance_id} 2>/dev/null || true")
+
         # Add tunnel IP to container's eth0
         self.run(f"docker exec {instance_id} ip addr add {tunnel_ip}/32 dev eth0 2>/dev/null || true")
 
