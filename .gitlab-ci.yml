@@ -152,7 +152,7 @@ deploy:
     - git describe --tags --always > labs/.version
     - rsync -av --delete --exclude vendor --exclude node_modules labs/ /Users/sathish/Downloads/TomCloudLab/labs/
     - rsync -av --delete --exclude vendor --exclude node_modules vpn-api/ /Users/sathish/Downloads/TomCloudLab/vpn-api/
-    - rsync -av --delete --exclude labs-control-panel/config.json opt/ /Users/sathish/Downloads/TomCloudLab/opt/
+    - rsync -av --delete --exclude labs-control-panel/config.json --exclude labs-control-panel/service-credentials.json opt/ /Users/sathish/Downloads/TomCloudLab/opt/
     - cp session.json /Users/sathish/Downloads/TomCloudLab/session.json
     - cp init-services.sh /Users/sathish/Downloads/TomCloudLab/init-services.sh
     - cp entrypoint.sh /Users/sathish/Downloads/TomCloudLab/entrypoint.sh
