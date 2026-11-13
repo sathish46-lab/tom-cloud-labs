@@ -122,7 +122,7 @@ require_once __DIR__ . '/partials/postgresql_header.php';
 <!-- Add User Modal -->
 <div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px;">
+    <div class="modal-content">
       <div class="modal-header border-bottom-0 pb-0">
         <h5 class="modal-title text-white fw-bold">Add PostgreSQL User</h5>
         <button type="button" class="btn-close btn-close-white" data-coreui-dismiss="modal" aria-label="Close"></button>
