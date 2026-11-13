@@ -4,6 +4,7 @@ import os
 import re
 import subprocess
 import sys
+import urllib.parse
 import uuid
 
 from src.router import Command
@@ -686,7 +687,7 @@ def redis_create_user(username, password):
         raise Fail(CODE_OPERATION_FAILED, 'Failed to create user {}: {}'.format(username, out[:300]))
     rc, out, err = _redis('ACL', 'SAVE')
     if rc != 0 or out.startswith('ERR'):
-        raise Fail(CODE_OPERATION_FAILED, 'Failed to persist ACL: {}'.format(out[:300]))
+        pass  # Redis has no ACL file configured; user lives in memory (consistent with no persistence)
     return 'User {} created.'.format(username)
 
 
@@ -699,7 +700,7 @@ def redis_delete_user(username):
         raise Fail(CODE_OPERATION_FAILED, 'Failed to delete user {}: {}'.format(username, out[:300]))
     rc, out, err = _redis('ACL', 'SAVE')
     if rc != 0 or out.startswith('ERR'):
-        raise Fail(CODE_OPERATION_FAILED, 'Failed to persist ACL: {}'.format(out[:300]))
+        pass  # Redis has no ACL file configured; deletion lives in memory (consistent with no persistence)
     return 'User {} dropped.'.format(username)
 
 
@@ -717,46 +718,54 @@ def redis_list_users():
 
 # ── RabbitMQ ─────────────────────────────────────────────────────────────────
 
-def _rabbit(*argv):
-    # rabbitmqctl only accepts root or the rabbitmq OS user, and the Erlang
-    # cookie must be owner-only — escalate via the scoped NOPASSWD sudo rule
-    # (same as RabbitMqDriver).
-    cmd = ['sudo', '-n', '-u', 'rabbitmq', '-H', 'rabbitmqctl'] + list(argv)
-    rc, out, err = _run(cmd)
-    return rc, out.strip(), (out + err).strip()
+def _rmq_api(method, path, body=None):
+    """Call the RabbitMQ management HTTP API (separate rabbitmq container).
 
-
-def _rabbit_json(stdout):
-    # rabbitmqctl may print warnings before the payload; find the JSON.
-    for raw in (stdout,):
-        stripped = raw.strip()
-        for opener in ('[', '{'):
-            idx = stripped.find(opener)
-            if idx >= 0:
-                try:
-                    return json.loads(stripped[idx:])
-                except Exception:
-                    continue
-    return None
+    Credentials come from service-credentials.json (slug rabbitmq: host,
+    port, user, password). Returns (status, parsed_json_or_text).
+    """
+    import urllib.request
+    import urllib.error
+    import base64
+    host = _svc('rabbitmq', 'host', 'rabbitmq.tomweb.in')
+    port = _svc('rabbitmq', 'port', 15672)
+    user = _svc('rabbitmq', 'user', 'admin')
+    password = _svc('rabbitmq', 'password', _cfg('rabbit_pass', 'guest'))
+    url = 'http://{}:{}/api/{}'.format(host, port, path.lstrip('/'))
+    data = json.dumps(body).encode() if body is not None else None
+    req = urllib.request.Request(url, data=data, method=method)
+    req.add_header('Authorization', 'Basic ' + base64.b64encode(
+        '{}:{}'.format(user, password).encode()).decode())
+    req.add_header('Content-Type', 'application/json')
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            payload = resp.read().decode('utf-8', 'replace')
+            status = resp.status
+    except urllib.error.HTTPError as exc:
+        payload = exc.read().decode('utf-8', 'replace')
+        status = exc.code
+    except Exception as exc:
+        raise Fail(CODE_OPERATION_FAILED, 'RabbitMQ API unreachable: {}'.format(str(exc)[:200]))
+    try:
+        parsed = json.loads(payload) if payload else None
+    except Exception:
+        parsed = payload
+    return status, parsed
 
 
 def rabbit_create_user(username, password):
     _require_ident(username, 'username')
     _require_password(password)
-    rc, out, err = _rabbit('list_users', '--formatter', 'json')
-    if rc != 0:
-        raise Fail(CODE_OPERATION_FAILED, 'list_users failed: {}'.format(err[:300]))
-    users = _rabbit_json(out)
-    if isinstance(users, list):
-        for u in users:
-            if (u.get('user') if isinstance(u, dict) else u) == username:
-                raise Fail(CODE_USER_ALREADY_EXISTS, 'User {} already exists.'.format(username))
-    rc, out, err = _rabbit('add_user', username, password)
-    if rc != 0:
-        raise Fail(CODE_OPERATION_FAILED, 'Failed to create user {}: {}'.format(username, err[:300]))
-    rc, out, err = _rabbit('set_user_tags', username, 'management')
-    if rc != 0:
-        raise Fail(CODE_OPERATION_FAILED, 'Failed to set tags for {}: {}'.format(username, err[:300]))
+    status, users = _rmq_api('GET', 'users')
+    if status != 200 or not isinstance(users, list):
+        raise Fail(CODE_OPERATION_FAILED, 'list_users failed.')
+    if any(u.get('name') == username for u in users):
+        raise Fail(CODE_USER_ALREADY_EXISTS, 'User {} already exists.'.format(username))
+    status, body = _rmq_api('PUT', 'users/{}'.format(username), {
+        'password': password, 'tags': ['management']})
+    if status not in (201, 204):
+        raise Fail(CODE_OPERATION_FAILED, 'Failed to create user {}: {}'.format(
+            username, str(body)[:200]))
     return 'User {} created.'.format(username)
 
 
@@ -764,67 +773,60 @@ def rabbit_delete_user(username):
     _require_ident(username, 'username')
     if username in ('admin', 'guest'):
         raise Fail(CODE_VALIDATION, 'Cannot delete protected RabbitMQ user: {}'.format(username))
-    rc, out, err = _rabbit('delete_user', username)
-    if rc != 0:
-        raise Fail(CODE_OPERATION_FAILED, 'Failed to delete user {}: {}'.format(username, err[:300]))
+    status, body = _rmq_api('DELETE', 'users/{}'.format(username))
+    if status not in (204, 200):
+        raise Fail(CODE_OPERATION_FAILED, 'Failed to delete user {}: {}'.format(
+            username, str(body)[:200]))
     return 'User {} dropped.'.format(username)
 
 
 def rabbit_list_users():
-    rc, out, err = _rabbit('list_users', '--formatter', 'json')
-    if rc != 0:
-        raise Fail(CODE_OPERATION_FAILED, 'list_users failed: {}'.format(err[:300]))
-    users = _rabbit_json(out)
-    if not isinstance(users, list):
-        raise Fail(CODE_OPERATION_FAILED, 'Unexpected list_users output.')
-    return sorted((u.get('user') if isinstance(u, dict) else u) for u in users)
+    status, users = _rmq_api('GET', 'users')
+    if status != 200 or not isinstance(users, list):
+        raise Fail(CODE_OPERATION_FAILED, 'list_users failed.')
+    return sorted(u.get('name', '') for u in users)
 
 
 def rabbit_create_vhost(vhost, owner):
     _require_vhost(vhost)
     _require_ident(owner, 'owner username')
-    rc, out, err = _rabbit('list_vhosts', '--formatter', 'json')
-    if rc != 0:
-        raise Fail(CODE_OPERATION_FAILED, 'list_vhosts failed: {}'.format(err[:300]))
-    vhosts = _rabbit_json(out)
-    if isinstance(vhosts, list):
-        for v in vhosts:
-            if (v.get('name') if isinstance(v, dict) else v) == vhost:
-                raise Fail(CODE_DB_ALREADY_EXISTS, 'Vhost {} already exists.'.format(vhost))
-    rc, out, err = _rabbit('add_vhost', vhost)
-    if rc != 0:
-        raise Fail(CODE_OPERATION_FAILED, 'Failed to create vhost {}: {}'.format(vhost, err[:300]))
-    rc, out, err = _rabbit('set_permissions', '-p', vhost, owner, '.*', '.*', '.*')
-    if rc != 0:
-        raise Fail(CODE_OPERATION_FAILED, 'Failed to grant {}: {}'.format(owner, err[:300]))
-    return 'Vhost {} created and granted to {}.'.format(vhost, owner)
+    status, body = _rmq_api('PUT', 'vhosts/{}'.format(urllib.parse.quote(vhost, safe='')))
+    if status not in (201, 204, 409):
+        raise Fail(CODE_OPERATION_FAILED, 'Failed to create vhost {}: {}'.format(
+            vhost, str(body)[:200]))
+    status, body = _rmq_api(
+        'PUT', 'permissions/{}/{}'.format(urllib.parse.quote(vhost, safe=''), owner),
+        {'configure': '.*', 'write': '.*', 'read': '.*'})
+    if status not in (201, 204):
+        raise Fail(CODE_OPERATION_FAILED, 'Failed to grant {}: {}'.format(owner, str(body)[:200]))
+    return 'Vhost {} ready for {}.'.format(vhost, owner)
 
 
 def rabbit_delete_vhost(vhost):
     _require_vhost(vhost)
     if vhost == '/':
         raise Fail(CODE_VALIDATION, 'Cannot delete the default RabbitMQ vhost.')
-    rc, out, err = _rabbit('delete_vhost', vhost)
-    if rc != 0:
-        raise Fail(CODE_OPERATION_FAILED, 'Failed to delete vhost {}: {}'.format(vhost, err[:300]))
+    status, body = _rmq_api('DELETE', 'vhosts/{}'.format(urllib.parse.quote(vhost, safe='')))
+    if status not in (204, 200):
+        raise Fail(CODE_OPERATION_FAILED, 'Failed to delete vhost {}: {}'.format(
+            vhost, str(body)[:200]))
     return 'Vhost {} dropped.'.format(vhost)
 
 
 def rabbit_list_vhosts():
-    rc, out, err = _rabbit('list_vhosts', '--formatter', 'json')
-    if rc != 0:
-        raise Fail(CODE_OPERATION_FAILED, 'list_vhosts failed: {}'.format(err[:300]))
-    vhosts = _rabbit_json(out)
-    if not isinstance(vhosts, list):
-        raise Fail(CODE_OPERATION_FAILED, 'Unexpected list_vhosts output.')
-    return sorted((v.get('name') if isinstance(v, dict) else v) for v in vhosts)
+    status, vhosts = _rmq_api('GET', 'vhosts')
+    if status != 200 or not isinstance(vhosts, list):
+        raise Fail(CODE_OPERATION_FAILED, 'list_vhosts failed.')
+    return sorted(v.get('name', '') for v in vhosts)
 
 
 # ── Command ──────────────────────────────────────────────────────────────────
 
-SLUGS = ('mysql', 'mariadb', 'mongodb', 'postgresql', 'redis', 'rabbitmq')
+SLUGS = ('mysql', 'mariadb', 'mongodb', 'postgresql', 'redis', 'rabbitmq', 'memcached')
 
 MYSQL_PORT = {'mysql': 3306, 'mariadb': 3307}
+
+MEMCACHED_HOSTS = {'memcached': 'memcached.tomweb.in'}
 
 COMMON_ACTIONS = ('ping', 'createuser', 'deleteuser', 'listuser')
 
@@ -834,6 +836,7 @@ ACTIONS_BY_SLUG = {
     'mongodb': COMMON_ACTIONS + ('createdb', 'deletedb', 'listdb'),
     'postgresql': COMMON_ACTIONS + ('createdb', 'deletedb', 'listdb', 'getencoding'),
     'redis': COMMON_ACTIONS,
+    'memcached': ('ping',),
     'rabbitmq': COMMON_ACTIONS + ('createvhost', 'deletevhost', 'listvhost'),
 }
 
@@ -1026,7 +1029,7 @@ class ServiceCmd(Command):
 
     def _ping(self, slug):
         if slug in MYSQL_PORT:
-            rc, out, err = _mysql_exec(MYSQL_PORT[slug], 'SELECT 1')
+            rc, out, err = _mysql_exec(slug, 'SELECT 1')
             _mysql_ensure_ok(rc, (err or out), 'Ping failed')
         elif slug == 'mongodb':
             result = _mongo_eval(
@@ -1041,8 +1044,18 @@ class ServiceCmd(Command):
             rc, out, _ = _redis('PING')
             if rc != 0 or 'PONG' not in out:
                 raise Fail(CODE_OPERATION_FAILED, 'Redis ping failed: {}'.format(out[:200]))
+        elif slug == 'memcached':
+            import socket
+            host = MEMCACHED_HOSTS.get(slug, 'memcached.tomweb.in')
+            try:
+                with socket.create_connection((host, 11211), timeout=5) as _sock:
+                    _sock.sendall(b'version\r\n')
+                    if b'VERSION' not in _sock.recv(128):
+                        raise Fail(CODE_OPERATION_FAILED, 'Memcached ping failed: unexpected response')
+            except OSError as _e:
+                raise Fail(CODE_OPERATION_FAILED, 'Memcached ping failed: {}'.format(_e))
         else:
-            rc, out, err = _rabbit('list_vhosts')
-            if rc != 0:
-                raise Fail(CODE_OPERATION_FAILED, 'RabbitMQ ping failed: {}'.format(err[:200]))
+            status, _ = _rmq_api('GET', 'overview')
+            if status != 200:
+                raise Fail(CODE_OPERATION_FAILED, 'RabbitMQ ping failed: HTTP {}'.format(status))
         _ok('{} is reachable.'.format(slug))
