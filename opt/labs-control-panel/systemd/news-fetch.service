@@ -1,16 +1,12 @@
-[Unit]
-Description=Tom Labs News Fetcher - Auto-fetch cybersecurity news
-After=network.target
-
-[Service]
-Type=oneshot
-WorkingDirectory=/var/www/labs/htdocs
-ExecStart=/usr/bin/php /var/www/labs/htdocs/app/news/fetch.php
-Environment=PHP_VALUE="auto_prepend_file=/var/www/labs/htdocs/src/load.php"
-
-# Security hardening
-NoNewPrivileges=true
-PrivateTmp=true
-
-[Install]
-WantedBy=multi-user.target
+# /etc/systemd/system/news-fetch.service
+# REPLACED BY CRON: /labs/cron/tomlabs-news-fetch
+#
+# This systemd service unit has been DEACTIVATED in favor of cron,
+# which is lighter weight and more reliable in containerized deployments.
+#
+# The news fetch logic is unchanged:
+#   - Trigger: cron runs every minute (* * * * *) via /labs/cron/tomlabs-news-fetch
+#   - Admin control: global_settings.news_settings (enabled, interval, last_fetch)
+#   - Script: /var/www/labs/htdocs/app/news/fetch.php
+#
+# Do not re-enable this unit while cron is active — it would cause duplicate runs.

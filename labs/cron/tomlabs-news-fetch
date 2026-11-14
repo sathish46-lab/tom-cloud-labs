@@ -1,0 +1,15 @@
+# /labs/cron/tomlabs-news-fetch
+# Tom Labs News Fetcher - Auto-fetch cybersecurity news
+#
+# Runs every minute. The PHP script itself gates on admin panel settings:
+#   - global_settings.news_settings.enabled  (boolean)
+#   - global_settings.news_settings.interval (minutes)
+#   - global_settings.news_settings.last_fetch (timestamp)
+#
+# So cron can fire freely; fetch.php skips if disabled or interval not elapsed.
+#
+# Replaces systemd news-fetch.service + news-fetch.timer.
+#
+# MIT License - Tom Cloud Labs
+
+* * * * * root /usr/bin/php /var/www/labs/htdocs/app/news/fetch.php >> /var/log/tomlabs/news-fetch.log 2>&1

@@ -1,14 +1,10 @@
-[Unit]
-Description=Tom Labs News Fetcher Timer - Check news auto-fetch schedule
-Requires=news-fetch.service
-
-[Timer]
-# Check every 1 minute
-OnCalendar=*:0/1:00
-# Also run 5 minutes after boot
-OnBootSec=5min
-# Run now if the timer was missed while the system was off
-Persistent=true
-
-[Install]
-WantedBy=timers.target
+# /etc/systemd/system/news-fetch.timer
+# REPLACED BY CRON: /labs/cron/tomlabs-news-fetch
+#
+# This systemd timer unit has been DEACTIVATED in favor of cron,
+# which is lighter weight and more reliable in containerized deployments.
+#
+# Cron schedule: every minute (* * * * *) via /labs/cron/tomlabs-news-fetch
+# Admin control is unchanged — fetch.php reads global_settings.news_settings.
+#
+# Do not re-enable this timer while cron is active — duplicate runs would occur.
