@@ -120,9 +120,11 @@ services:
 
   # ===========================================================================
   # postgres.tomweb.in — 10.20.208.17
+  # Built from service-templates/postgresql (latest PostgreSQL image + lab tuning)
   # ===========================================================================
   postgres:
-    image: postgres:15
+    build: ./opt/labs-control-panel/service-templates/postgresql
+    image: tomcloud/postgresql:latest
     container_name: postgres.tomweb.in
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
