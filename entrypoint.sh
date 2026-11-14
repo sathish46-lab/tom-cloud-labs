@@ -117,6 +117,14 @@ sed -i '/^$/{ N; /^\n$/d }' /etc/wireguard/wg0.conf
 chmod 600 /etc/wireguard/wg0.conf
 echo "[INFO] WireGuard config regenerated (peers preserved)."
 
+# Bring up the WireGuard interface
+if command -v wg-quick > /dev/null 2>&1; then
+    wg-quick up wg0 2>/dev/null || echo "[WARN] wg-quick up wg0 failed (may already be up or missing NET_ADMIN)"
+    echo "[INFO] WireGuard interface activated."
+else
+    echo "[WARN] wg-quick not found — WireGuard interface not activated."
+fi
+
 # WireGuard Endpoint Resolution (Docker vs VPS mode)
 WG_MODE="${WIREGUARD_MODE:-docker}"
 WG_PORT=$(jq -r '.wireguard_endpoint_port // 51820' /var/www/env.json 2>/dev/null || echo "51820")
