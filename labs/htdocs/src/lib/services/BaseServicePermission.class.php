@@ -304,10 +304,9 @@ abstract class BaseServicePermission
                 }
             }
 
-            $hosts = isset($userRecord['hosts']) && is_array($userRecord['hosts'])
-                ? implode(',', $userRecord['hosts'])
-                : '';
-            $hostArg = $hosts !== '' ? ' --hosts=' . $hosts : '';
+            $hostsRaw = (array) ($userRecord['hosts'] ?? []);
+            $hosts = array_values(array_filter($hostsRaw, 'is_string'));
+            $hostArg = $hosts !== [] ? ' --hosts=' . implode(',', $hosts) : '';
             $userResult = $this->executeLabsctl(
                 "labsctl service {$this->service} --email={$this->email} deleteuser --username={$username}{$hostArg}",
                 "Cannot delete {$this->label()} user"

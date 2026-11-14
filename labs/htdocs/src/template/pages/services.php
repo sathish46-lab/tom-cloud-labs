@@ -23,7 +23,6 @@ $services = [
         "img" => "https://upload.wikimedia.org/wikipedia/commons/4/41/Adminer_logo.png",
         "host" => "adminer.tomweb.in",
         "desc" => "Adminer (formerly phpMinAdmin) is a full-featured database management tool written in PHP. Supports MySQL, PostgreSQL, SQLite, MS SQL, Oracle and more.",
-        "manage" => "/services/adminer",
         "learn" => "https://www.adminer.org/",
         "ports" => [
             "Database Adminer (HTTP)" => "8080"
@@ -144,7 +143,7 @@ $services = [
 
     <?php foreach ($services as $i => $svc): ?>
     <?php
-        $svcSlug = preg_replace('#^/services/#', '', $svc['manage']);
+        $svcSlug = preg_replace('#^/services/#', '', $svc['manage'] ?? '');
         $svcDisabled = $svcSlug !== ''
             && class_exists('TomLabs\Services\ServiceFlags')
             && !\TomLabs\Services\ServiceFlags::isEnabled($svcSlug);
@@ -224,9 +223,11 @@ $services = [
                         <i class='bx bx-ban'></i> Disabled
                     </span>
                     <?php else: ?>
+                    <?php if (!empty($svc['manage'])): ?>
                     <a href="<?= htmlspecialchars($svc['manage']) ?>" class="glass-btn glass-btn-primary flex-grow-1">
                         <i class='bx bx-cog'></i> Manage
                     </a>
+                    <?php endif; ?>
                     <?php endif; ?>
                     <a href="<?= htmlspecialchars($svc['learn']) ?>" target="_blank" class="glass-btn glass-btn-success flex-grow-1">
                         <i class='bx bx-book-open'></i> Learn More

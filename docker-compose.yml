@@ -53,6 +53,7 @@ services:
       - "redis.tomweb.in:10.20.208.18"
       - "adminer.tomweb.in:10.20.208.19"
       - "mongo.tomweb.in:10.20.208.20"
+      - "mariadb.tomweb.in:10.20.208.26"
       - "dev.tomweb.in:127.0.0.1"
       - "vpn.dev.tomweb.in:127.0.0.1"
       - "mq.dev.tomweb.in:127.0.0.1"
@@ -250,6 +251,24 @@ services:
         ipv4_address: 10.20.208.25
         aliases:
           - memcached.tomweb.in
+    restart: unless-stopped
+
+  # ===========================================================================
+  # mariadb.tomweb.in — 10.20.208.26 (split out of the vps; port 3307 to match UI)
+  # ===========================================================================
+  mariadb:
+    image: mariadb:10.11
+    container_name: mariadb.tomweb.in
+    command: ["--port=3307"]
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:?Set MARIADB_ROOT_PASSWORD in .env file}
+    volumes:
+      - ./mariadb-service-data:/var/lib/mysql
+    networks:
+      tomweb_services:
+        ipv4_address: 10.20.208.26
+        aliases:
+          - mariadb.tomweb.in
     restart: unless-stopped
 
   # ===========================================================================
