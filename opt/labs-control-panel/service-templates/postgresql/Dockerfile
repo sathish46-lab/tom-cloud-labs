@@ -4,7 +4,7 @@
 # Do NOT pull postgres:XX directly — always build from this template so we can
 # apply consistent configuration, extensions, and security hardening.
 
-FROM postgres:latest
+FROM postgres:17
 
 # Lab-specific environment defaults (overridable via compose env)
 ENV POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres} \
@@ -25,7 +25,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/cache/apt/archives/*
 
 # Copy lab-optimized postgresql.conf
-COPY postgresql.conf /etc/postgresql/postgresql.conf.lab
+COPY postgresql.conf.lab /etc/postgresql/postgresql.conf.lab
 
 # Enable lab-optimized config on first init (appended to postgresql.conf)
 RUN echo "" >> /usr/share/postgresql/${PG_MAJOR}/postgresql.conf.sample \

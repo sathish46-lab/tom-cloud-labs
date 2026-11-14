@@ -124,7 +124,7 @@ services:
   # ===========================================================================
   postgres:
     build: ./opt/labs-control-panel/service-templates/postgresql
-    image: tomcloud/postgresql:latest
+    image: tomcloud/postgresql:17
     container_name: postgres.tomweb.in
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
