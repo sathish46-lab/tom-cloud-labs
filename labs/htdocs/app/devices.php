@@ -42,7 +42,10 @@ foreach ($activeMetadata as $doc) {
     foreach ($livePeers as $p) {
         if ($p['peer'] === $device['public_key']) {
             $handshake = $p['latest handshake'] ?? '';
-            if (!empty($handshake) && (str_contains($handshake, 'second') || str_contains($handshake, 'minute'))) {
+            // Any handshake time other than 'never' means the peer has connected.
+            // WireGuard reports: "5 seconds ago", "1 minute ago", "1 hour ago", etc.
+            $isConnected = !empty($handshake) && $handshake !== 'never';
+            if ($isConnected) {
                 $device['status'] = 'online';
             }
             $device['origin_ip'] = explode(':', $p['endpoint'] ?? 'No Connection')[0];
