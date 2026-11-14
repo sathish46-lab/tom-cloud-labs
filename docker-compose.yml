@@ -51,7 +51,6 @@ services:
       # Internal .tomweb.in DNS → fixed service IPs
       - "mysql.tomweb.in:10.20.208.16"
       - "postgres.tomweb.in:10.20.208.17"
-      - "postgresTest.tomweb.in:10.20.208.98"
       - "redis.tomweb.in:10.20.208.18"
       - "adminer.tomweb.in:10.20.208.19"
       - "mongo.tomweb.in:10.20.208.20"
@@ -142,32 +141,6 @@ services:
         aliases:
           - postgres.tomweb.in
           - postgresql.tomweb.in
-    restart: unless-stopped
-
-  # ===========================================================================
-  # postgresTest.tomweb.in — 10.20.208.98 (test instance for CVE-2026-6460 testing)
-  # Built from service-templates/postgresql (latest PostgreSQL image + lab tuning)
-  # ===========================================================================
-  postgresTest:
-    build:
-      context: ./opt/labs-control-panel/service-templates/postgresql
-      args:
-        POSTGRES_VERSION: 16.10
-    image: tomcloud/postgresql:16
-    container_name: postgresTest.tomweb.in
-    environment:
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-tomcloudTest}
-    ports:
-      - "127.0.0.1:5438:5432"
-    volumes:
-      - ./postgresTest-data:/var/lib/postgresql/data
-    networks:
-      tomweb_services:
-        ipv4_address: 10.20.208.98
-        aliases:
-          - postgresTest.tomweb.in
     restart: unless-stopped
 
   # ===========================================================================
