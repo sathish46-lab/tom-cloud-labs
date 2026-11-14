@@ -125,6 +125,14 @@ else
     echo "[WARN] wg-quick not found — WireGuard interface not activated."
 fi
 
+# Fix Docker socket permissions so www-data can run docker stop/start
+# Compose mounts /var/run/docker.sock at /var/docker.sock inside the container,
+# but the socket is owned by root:docker with mode 660 — www-data needs access.
+if [ -S /var/docker.sock ]; then
+    chmod 666 /var/docker.sock 2>/dev/null || true
+    echo "[INFO] Docker socket permissions fixed for www-data."
+fi
+
 # WireGuard Endpoint Resolution (Docker vs VPS mode)
 WG_MODE="${WIREGUARD_MODE:-docker}"
 WG_PORT=$(jq -r '.wireguard_endpoint_port // 51820' /var/www/env.json 2>/dev/null || echo "51820")

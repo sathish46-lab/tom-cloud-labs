@@ -39,6 +39,7 @@ HOST_RE = re.compile(r'^[a-zA-Z0-9._:\-]{1,64}$')
 AUDIT_LOG_PATH = '/var/log/labs/labsctl_service_audit.log'
 MUTATION_ACTIONS = frozenset({
     'createuser', 'deleteuser', 'createdb', 'deletedb', 'createvhost', 'deletevhost',
+    'stop', 'start',
 })
 
 # ServiceStatusCodes parity with labs/htdocs/src/lib/services/ServiceStatusCodes.class.php
@@ -179,6 +180,15 @@ def _run(cmd, env_extra=None, timeout=30):
     env = dict(os.environ)
     if env_extra:
         env.update(env_extra)
+
+    # Ensure DOCKER_HOST is set for docker commands if socket is mounted
+    # at a non-default path inside the container (e.g. /var/docker.sock).
+    if cmd and cmd[0] == 'docker' and 'DOCKER_HOST' not in env:
+        for sock_path in ('/var/docker.sock', '/var/run/docker.sock'):
+            if os.path.exists(sock_path):
+                env['DOCKER_HOST'] = 'unix://{}'.format(sock_path)
+                break
+
     run_cmd = list(cmd)
     if not IN_CONTAINER:
         docker_cmd = ['docker', 'exec']
@@ -820,6 +830,23 @@ def rabbit_list_vhosts():
     return sorted(v.get('name', '') for v in vhosts)
 
 
+def _docker_container_action(slug, action):
+    """Start or stop a service container via docker stop/start.
+    Returns a status message string."""
+    _require_ident(slug, 'service slug')
+    if slug not in SLUGS:
+        raise Fail(CODE_VALIDATION, 'Unknown service: {}'.format(slug))
+    container = CONTAINER_NAME.get(slug)
+    if not container:
+        raise Fail(CODE_VALIDATION, 'No container mapped for service: {}'.format(slug))
+    cmd = ['docker', action, container]
+    rc, out, err = _run(cmd)
+    if rc != 0:
+        raise Fail(CODE_OPERATION_FAILED,
+            'Failed to {} service {}: {}'.format(action, slug, (err or out).strip() or 'docker exited non-zero'))
+    return 'Service {} {}.'.format(slug, action)
+
+
 # ── Command ──────────────────────────────────────────────────────────────────
 
 SLUGS = ('mysql', 'mariadb', 'mongodb', 'postgresql', 'redis', 'rabbitmq', 'memcached')
@@ -828,16 +855,28 @@ MYSQL_PORT = {'mysql': 3306, 'mariadb': 3307}
 
 MEMCACHED_HOSTS = {'memcached': 'memcached.tomweb.in'}
 
+# Container name mapping: service slug -> docker container name
+# Some slugs differ from their container name (postgresql→postgres, mongodb→mongo).
+CONTAINER_NAME = {
+    'mysql': 'mysql.tomweb.in',
+    'mariadb': 'mariadb.tomweb.in',
+    'mongodb': 'mongo.tomweb.in',
+    'postgresql': 'postgres.tomweb.in',
+    'redis': 'redis.tomweb.in',
+    'rabbitmq': 'rabbitmq.tomweb.in',
+    'memcached': 'memcached.tomweb.in',
+}
+
 COMMON_ACTIONS = ('ping', 'createuser', 'deleteuser', 'listuser')
 
 ACTIONS_BY_SLUG = {
-    'mysql': COMMON_ACTIONS + ('createdb', 'deletedb', 'listdb', 'getcollation'),
-    'mariadb': COMMON_ACTIONS + ('createdb', 'deletedb', 'listdb', 'getcollation'),
-    'mongodb': COMMON_ACTIONS + ('createdb', 'deletedb', 'listdb'),
-    'postgresql': COMMON_ACTIONS + ('createdb', 'deletedb', 'listdb', 'getencoding'),
-    'redis': COMMON_ACTIONS,
-    'memcached': ('ping',),
-    'rabbitmq': COMMON_ACTIONS + ('createvhost', 'deletevhost', 'listvhost'),
+    'mysql': COMMON_ACTIONS + ('createdb', 'deletedb', 'listdb', 'getcollation', 'stop', 'start'),
+    'mariadb': COMMON_ACTIONS + ('createdb', 'deletedb', 'listdb', 'getcollation', 'stop', 'start'),
+    'mongodb': COMMON_ACTIONS + ('createdb', 'deletedb', 'listdb', 'stop', 'start'),
+    'postgresql': COMMON_ACTIONS + ('createdb', 'deletedb', 'listdb', 'getencoding', 'stop', 'start'),
+    'redis': COMMON_ACTIONS + ('stop', 'start'),
+    'memcached': ('ping', 'stop', 'start'),
+    'rabbitmq': COMMON_ACTIONS + ('createvhost', 'deletevhost', 'listvhost', 'stop', 'start'),
 }
 
 
@@ -947,6 +986,16 @@ class ServiceCmd(Command):
                 message = redis_delete_user(username)
             else:
                 message = rabbit_delete_user(username)
+            _ok(message)
+            return
+
+        if action == 'stop':
+            message = _docker_container_action(slug, 'stop')
+            _ok(message)
+            return
+
+        if action == 'start':
+            message = _docker_container_action(slug, 'start')
             _ok(message)
             return
 
