@@ -124,7 +124,10 @@ services:
   # Built from service-templates/postgresql (latest PostgreSQL image + lab tuning)
   # ===========================================================================
   postgres:
-    build: ./opt/labs-control-panel/service-templates/postgresql
+    build:
+      context: ./opt/labs-control-panel/service-templates/postgresql
+      args:
+        POSTGRES_VERSION: 17
     image: tomcloud/postgresql:17
     container_name: postgres.tomweb.in
     environment:
@@ -146,8 +149,11 @@ services:
   # Built from service-templates/postgresql (latest PostgreSQL image + lab tuning)
   # ===========================================================================
   postgresTest:
-    build: ./opt/labs-control-panel/service-templates/postgresql
-    image: tomcloud/postgresql:17
+    build:
+      context: ./opt/labs-control-panel/service-templates/postgresql
+      args:
+        POSTGRES_VERSION: 16.10
+    image: tomcloud/postgresql:16
     container_name: postgresTest.tomweb.in
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}

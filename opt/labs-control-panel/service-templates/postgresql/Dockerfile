@@ -1,10 +1,12 @@
 # /opt/labs-control-panel/service-templates/postgresql/Dockerfile
 # Tom Labs PostgreSQL Service Template
-# Built from the official latest PostgreSQL image with lab-optimized settings.
+# Built from the official PostgreSQL image with lab-optimized settings.
+# Supports per-image version via --build-arg POSTGRES_VERSION.
 # Do NOT pull postgres:XX directly — always build from this template so we can
 # apply consistent configuration, extensions, and security hardening.
 
-FROM postgres:17
+ARG POSTGRES_VERSION=17
+FROM postgres:${POSTGRES_VERSION}
 
 # Lab-specific environment defaults (overridable via compose env)
 ENV POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres} \
