@@ -6,7 +6,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: ${VPS_CONTAINER:-Dev_lab}
+    container_name: ${VPS_CONTAINER:-vps}
     cap_add:
       - NET_ADMIN
       - SYS_ADMIN
@@ -15,7 +15,7 @@ services:
     security_opt:
       - apparmor:unconfined
     environment:
-      - MAIN_DOMAIN=${MAIN_DOMAIN:-dev.tomweb.in}
+      - MAIN_DOMAIN=${MAIN_DOMAIN:-labs.tomweb.in}
       - VPN_DOMAIN=${VPN_DOMAIN:-vpn.dev.tomweb.in}
       - MQS_DOMAIN=${MQS_DOMAIN:-mq.dev.tomweb.in}
       - CODE_DOMAIN=${CODE_DOMAIN:-code.dev.tomweb.in}
@@ -35,7 +35,8 @@ services:
       - MONGO_USER=${MONGO_USER:-admin}
       - MONGO_PASS=${MONGO_PASS:?Set MONGO_PASS in .env file}
       - MONGO_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD:-${MONGO_PASS}}
-      - DATABASE_FILE=${DATABASE_FILE:-mongodb://admin:tomcloud2026@127.0.0.1:27017/tom_labs_db?authSource=admin}
+      # Point app at split service containers (NOT localhost anymore)
+      # Point app at split service containers (NOT localhost anymore)
       - DATABASE_FILE=mongodb://admin:Tombootroot@127.0.0.1:27017/tom_labs_db?authSource=admin
       - MYSQL_HOST=mysql.tomweb.in
       - MYSQL_PORT=3306
@@ -50,6 +51,7 @@ services:
       # Internal .tomweb.in DNS → fixed service IPs
       - "mysql.tomweb.in:10.20.208.16"
       - "postgres.tomweb.in:10.20.208.17"
+      - "postgresTest.tomweb.in:10.20.208.98"
       - "redis.tomweb.in:10.20.208.18"
       - "adminer.tomweb.in:10.20.208.19"
       - "mongo.tomweb.in:10.20.208.20"
@@ -58,8 +60,8 @@ services:
       - "vpn.dev.tomweb.in:127.0.0.1"
       - "mq.dev.tomweb.in:127.0.0.1"
       - "code.dev.tomweb.in:127.0.0.1"
-      - "work.tomweb.in:127.0.0.1"
-      - "news.tomweb.in:127.0.0.1"
+      - "work.dev.tomweb.in:127.0.0.1"
+      - "news.dev.tomweb.in:127.0.0.1"
       - "labs.tomweb.in:127.0.0.1"
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:rw
@@ -73,8 +75,7 @@ services:
       - ./apache-logs:/var/log/apache2
       - ./traefik-conf:/etc/traefik
       - ./tomlabs/storage:/var/tomlabs/storage
-      # App-data MongoDB lives INSIDE the container (mongod, /etc/mongod.conf),
-      # same colocated layout for both dev and production
+      # App-data MongoDB lives INSIDE the container (mongod, /etc/mongod.conf)
       - ./mongo-data:/var/lib/mongodb
     networks:
       tomweb_services:
@@ -138,6 +139,29 @@ services:
         aliases:
           - postgres.tomweb.in
           - postgresql.tomweb.in
+    restart: unless-stopped
+
+  # ===========================================================================
+  # postgresTest.tomweb.in — 10.20.208.98 (test instance for CVE-2026-6460 testing)
+  # Built from service-templates/postgresql (latest PostgreSQL image + lab tuning)
+  # ===========================================================================
+  postgresTest:
+    build: ./opt/labs-control-panel/service-templates/postgresql
+    image: tomcloud/postgresql:17
+    container_name: postgresTest.tomweb.in
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-tomcloudTest}
+    ports:
+      - "127.0.0.1:5438:5432"
+    volumes:
+      - ./postgresTest-data:/var/lib/postgresql/data
+    networks:
+      tomweb_services:
+        ipv4_address: 10.20.208.98
+        aliases:
+          - postgresTest.tomweb.in
     restart: unless-stopped
 
   # ===========================================================================
@@ -241,7 +265,7 @@ services:
     restart: unless-stopped
 
   # ===========================================================================
-  # memcached — 10.20.208.25 (separate user service container)
+  # memcached — 10.20.208.23 (separate user service container)
   # Native wire protocol; browsers get the friendly page via svcguard:11221.
   # ===========================================================================
   memcached:
@@ -292,8 +316,8 @@ services:
         aliases:
           - rabbitmq.tomweb.in
     ports:
-      - "127.0.0.1:${RABBIT_PORT:-5673}:5672"
-      - "127.0.0.1:${RABBIT_MGMT_PORT:-15673}:15672"
+      - "127.0.0.1:${RABBIT_PORT:-5672}:5672"
+      - "127.0.0.1:${RABBIT_MGMT_PORT:-15672}:15672"
       - "127.0.0.1:${RABBIT_MGMT_EXTRA_PORT:-15674}:15674"
     restart: unless-stopped
 
