@@ -176,6 +176,21 @@ Listen 8086
 EOF
 
 echo "[INFO] Generating Apache VirtualHosts..."
+
+# X-Forwarded-Proto policy (per-environment via .env, default = force https).
+# Prod (Cloudflare TLS -> tunnel -> Traefik -> Apache): Apache must tell PHP
+# the original request was HTTPS so Secure cookies, HSTS, and wss://
+# connect-src are set correctly. Dev serves plain HTTP — forcing "https"
+# here makes PHP mark session cookies Secure, browsers refuse to send them
+# back over HTTP, and every request loses its session (CSRF token errors).
+FORCE_XFP_HTTPS="${FORCE_XFP_HTTPS:-true}"
+if [ "$FORCE_XFP_HTTPS" = "true" ]; then
+    XFP_HTTPS_HEADER='    RequestHeader set X-Forwarded-Proto "https"'
+else
+    # Empty line is valid inside the vhost — Apache ignores blank lines.
+    XFP_HTTPS_HEADER=""
+    echo "[INFO] FORCE_XFP_HTTPS=false — preserving Traefik X-Forwarded-Proto (dev HTTP mode)"
+fi
 cat <<EOF > /etc/apache2/sites-available/error-service.conf
 # Static branded error pages — deliberately decoupled from the labs app
 # (no PHP bootstrap, no database): the page must render precisely when the
@@ -215,7 +230,8 @@ cat <<EOF > /etc/apache2/sites-available/labs.conf
     # Cloudflare terminates HTTPS; Apache receives HTTP from Traefik.
     # Tell PHP the original request was HTTPS so Secure cookies,
     # HSTS, and wss:// connect-src are set correctly.
-    RequestHeader set X-Forwarded-Proto "https"
+    # (Conditional — see FORCE_XFP_HTTPS above; dev HTTP mode omits this.)
+${XFP_HTTPS_HEADER}
 
     # OAuth discovery metadata
     ProxyPass /.well-known/oauth-authorization-server http://127.0.0.1:8099/.well-known/oauth-authorization-server
@@ -298,7 +314,7 @@ ProxyBadHeader Ignore
 
     ProxyPreserveHost On
     ProxyRequests Off
-    RequestHeader set X-Forwarded-Proto "https"
+${XFP_HTTPS_HEADER}
 
     RewriteCond %{ENV:TARGET_IP} ^$
     RewriteRule ^ - [L,R=404]

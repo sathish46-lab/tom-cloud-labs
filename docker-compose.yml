@@ -15,13 +15,18 @@ services:
     security_opt:
       - apparmor:unconfined
     environment:
-      - MAIN_DOMAIN=${MAIN_DOMAIN:-labs.tomweb.in}
-      - VPN_DOMAIN=${VPN_DOMAIN:-vpn.dev.tomweb.in}
-      - MQS_DOMAIN=${MQS_DOMAIN:-mq.dev.tomweb.in}
-      - CODE_DOMAIN=${CODE_DOMAIN:-code.dev.tomweb.in}
-      - WORK_DOMAIN=${WORK_DOMAIN:-work.tomweb.in}
-      - NEWS_DOMAIN=${NEWS_DOMAIN:-news.tomweb.in}
+      # Domains are per-environment — REQUIRED in .env (no defaults in code,
+      # so the same compose file serves dev / prod / CI without drift)
+      - MAIN_DOMAIN=${MAIN_DOMAIN:?Set MAIN_DOMAIN in .env}
+      - VPN_DOMAIN=${VPN_DOMAIN:?Set VPN_DOMAIN in .env}
+      - MQS_DOMAIN=${MQS_DOMAIN:?Set MQS_DOMAIN in .env}
+      - CODE_DOMAIN=${CODE_DOMAIN:?Set CODE_DOMAIN in .env}
+      - WORK_DOMAIN=${WORK_DOMAIN:?Set WORK_DOMAIN in .env}
+      - NEWS_DOMAIN=${NEWS_DOMAIN:?Set NEWS_DOMAIN in .env}
       - SSL_EMAIL=${SSL_EMAIL:-admin@example.com}
+      # Force X-Forwarded-Proto=https at Apache (prod: behind Cloudflare TLS).
+      # Dev HTTP mode sets false in .env so session cookies stay non-Secure.
+      - FORCE_XFP_HTTPS=${FORCE_XFP_HTTPS:-true}
       - CONTACT_ADMIN_EMAIL=${CONTACT_ADMIN_EMAIL:-contact@tomweb.in}
       - SMTP_HOST=${SMTP_HOST:-}
       - SMTP_PORT=${SMTP_PORT:-587}
@@ -285,6 +290,8 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-admin}
     volumes:
       - ./rabbitmq-service-data:/var/lib/rabbitmq
+      # Persist enabled plugins (web_stomp = chat WebSocket transport)
+      - ./rabbitmq-conf/enabled_plugins:/etc/rabbitmq/enabled_plugins
     networks:
       tomweb_services:
         ipv4_address: 10.20.208.24

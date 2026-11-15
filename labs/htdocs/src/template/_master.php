@@ -750,11 +750,18 @@ $classString = implode(' ', $htmlClasses);
     <script>
     window.TOM_CONFIG = {
         mq_domain: <?= json_encode(get_config('mq_domain') ?: '') ?>,
+        mq_ws_port: <?= json_encode((string) (get_config('mq_ws_port') ?? '')) ?>,
         ui_preferences: <?= json_encode($uiPreferences ?? []) ?>
+    };
+    // Global chat widget context — identity is resolved server-side by the
+    // chat API; the client only needs to know whether a session exists.
+    window.CHAT_CONTEXT = {
+        loggedIn: <?= Session::getAuthStatus() === Constants::STATUS_LOGGEDIN ? 'true' : 'false' ?>
     };
     </script>
     <script src="<?= Session::cacheCDN('/assets/js/clipboard.js') ?>"></script>
     <script src="<?= Session::cacheCDN('/assets/js/app.js') ?>&t=<?= time() ?>"></script>
+    <script src="<?= Session::cacheCDN('/assets/js/chat.js') ?>&t=<?= time() ?>"></script>
     <script src="<?= Session::cacheCDN('/assets/js/ui-init.js') ?>"></script>
     <script src="<?= Session::cacheCDN('/assets/js/htmx-bridge.js') ?>"></script>
 

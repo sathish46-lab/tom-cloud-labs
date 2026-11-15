@@ -40,6 +40,7 @@ module.exports = function (grunt) {
           "!../js/clipboard.js",
           "!../js/mcp-inspector.js",
           "!../js/roadmaps.js",
+          "!../js/chat.js",
         ],
         dest: "../../htdocs/assets/js/app.js",
       },
@@ -122,7 +123,7 @@ module.exports = function (grunt) {
           {
             expand: true,
             flatten: true,
-            src: ["../js/ui-init.js", "../js/htmx-bridge.js", "../js/clipboard.js", "../js/roadmaps.js"],
+            src: ["../js/ui-init.js", "../js/htmx-bridge.js", "../js/clipboard.js", "../js/roadmaps.js", "../js/chat.js"],
             dest: "../../htdocs/assets/js/",
           },
         ],
@@ -145,6 +146,10 @@ module.exports = function (grunt) {
       },
       roadmaps: {
         files: ["../js/roadmaps.js"],
+        tasks: ["copy"],
+      },
+      chat: {
+        files: ["../js/chat.js"],
         tasks: ["copy"],
       },
       css: {
