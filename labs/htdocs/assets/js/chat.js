@@ -218,23 +218,33 @@ function renderMessage(msg) {
 
   const bubble = el("div", "chat-bubble");
 
-  const head = el("div", "chat-msg-head");
-  const nameWrap = el("span", "chat-msg-name");
-  nameWrap.appendChild(el("i", "bx bxs-flame chat-flame"));
-  nameWrap.appendChild(document.createTextNode(msg.username || "unknown"));
-  if (msg.role === "owner") {
-    const badge = roleBadge(msg.role);
-    if (badge) nameWrap.appendChild(badge);
+  if (!mine) {
+    // Incoming: name + role header, then text, then time.
+    const head = el("div", "chat-msg-head");
+    const nameWrap = el("span", "chat-msg-name");
+    nameWrap.appendChild(el("i", "bx bxs-flame chat-flame"));
+    nameWrap.appendChild(document.createTextNode(msg.username || "unknown"));
+    if (msg.role === "owner") {
+      const badge = roleBadge(msg.role);
+      if (badge) nameWrap.appendChild(badge);
+    }
+    head.appendChild(nameWrap);
+    // Tag the owner for typing-name resolution ("SIVA is typing...").
+    nameWrap.dataset.uid = String(msg.user_id ?? "");
+
+    const time = el("span", "chat-msg-time", chatFormatTs(msg.ts));
+    head.appendChild(time);
+    bubble.appendChild(head);
+  } else {
+    // Outgoing: text then a meta row with time + read checkmarks.
+    bubble.appendChild(el("div", "chat-msg-text", msg.text || ""));
+    const meta = el("div", "chat-msg-meta");
+    const time = el("span", "chat-msg-time", chatFormatTs(msg.ts));
+    meta.appendChild(time);
+    const checks = el("span", "chat-msg-checks", "✓✓");
+    meta.appendChild(checks);
+    bubble.appendChild(meta);
   }
-  head.appendChild(nameWrap);
-  // Tag the owner for typing-name resolution ("SIVA is typing...").
-  nameWrap.dataset.uid = String(msg.user_id ?? "");
-
-  const time = el("span", "chat-msg-time", chatFormatTs(msg.ts));
-  head.appendChild(time);
-  bubble.appendChild(head);
-
-  bubble.appendChild(el("div", "chat-msg-text", msg.text || ""));
 
   // Delete control: own messages for everyone; any message for admins.
   const canDelete = CHAT.me && (mine || CHAT.isAdmin);
