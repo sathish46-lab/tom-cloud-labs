@@ -123,11 +123,7 @@ services:
   # Built from service-templates/postgresql (latest PostgreSQL image + lab tuning)
   # ===========================================================================
   postgres:
-    build:
-      context: ./opt/labs-control-panel/service-templates/postgresql
-      args:
-        POSTGRES_VERSION: 17
-    image: tomcloud/postgresql:17
+    image: postgres:17
     container_name: postgres.tomweb.in
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
