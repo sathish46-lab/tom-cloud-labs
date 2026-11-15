@@ -106,6 +106,41 @@ function avatarNode(avatarUrl, name, cls) {
   return wrap;
 }
 
+// Stable per-sender hue (0-359) so each person gets a consistent avatar/name colour.
+// Numeric ids use the golden angle so neighbouring ids land far apart on the
+// colour wheel; anything else goes through an FNV-1a hash with an avalanche step.
+function chatHue(key) {
+  const s = String(key ?? "");
+  if (/^\d+$/.test(s)) return Math.round((Number(s) * 137.508) % 360);
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  h ^= h >>> 15;
+  h = Math.imul(h, 2246822519);
+  h ^= h >>> 13;
+  return (h >>> 0) % 360;
+}
+
+function chatDayKey(ts) {
+  const d = new Date(ts);
+  return isNaN(d) ? "" : `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+
+function chatDayLabel(ts) {
+  const d = new Date(ts);
+  if (isNaN(d)) return "";
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+  if (d.toDateString() === today.toDateString()) return "Today";
+  if (d.toDateString() === yesterday.toDateString()) return "Yesterday";
+  const opts = { month: "short", day: "numeric" };
+  if (d.getFullYear() !== today.getFullYear()) opts.year = "numeric";
+  return d.toLocaleDateString([], opts);
+}
+
 function buildWidget() {
   if (document.getElementById("chat-widget")) {
     return document.getElementById("chat-widget");
@@ -120,6 +155,13 @@ function buildWidget() {
   panel.hidden = true;
   panel.setAttribute("role", "dialog");
   panel.setAttribute("aria-label", "Global chat");
+
+  // Thunderstorm background layer behind messages.
+  const storm = el("div", "chat-storm");
+  for (let i = 1; i <= 4; i++) storm.appendChild(el("div", "chat-cloud"));
+  storm.appendChild(el("div", "chat-lightning"));
+  storm.appendChild(el("div", "chat-rain"));
+  panel.appendChild(storm);
 
   // Header
   const header = el("div", "chat-header");
@@ -176,9 +218,14 @@ function buildWidget() {
   composer.appendChild(input);
   composer.appendChild(send);
 
+  // Body wraps the transcript and the typing pill so the pill can float over
+  // the bottom edge without shifting the layout when it appears/disappears.
+  const body = el("div", "chat-body");
+  body.appendChild(listEl);
+  body.appendChild(typingEl);
+
   panel.appendChild(header);
-  panel.appendChild(listEl);
-  panel.appendChild(typingEl);
+  panel.appendChild(body);
   panel.appendChild(composer);
 
   // --- Floating circle button ---
@@ -206,45 +253,43 @@ function buildWidget() {
  */
 
 function roleBadge(role) {
-  if (role !== "owner") return null;
-  const b = el("span", "chat-role-badge", "Owner");
+  if (role !== "admin") return null;
+  const b = el("span", "chat-role-badge", "Admin");
   return b;
 }
 
 function renderMessage(msg) {
   const mine = CHAT.me && msg.user_id === CHAT.me.user_id;
-  const row = el("div", "chat-msg-row" + (mine ? " mine" : ""));
+  const row = el("div", "chat-msg-row" + (mine ? " mine" : " other"));
   row.dataset.id = msg.id;
+  row.dataset.uid = String(msg.user_id ?? "");
+  row._ts = msg.ts; // raw value kept as-is (ISO string or epoch) for grouping
+  row.style.setProperty("--chat-hue", String(chatHue(msg.user_id ?? msg.username)));
+
+  // Incoming: avatar (real image if the payload has avatar_url, else initial).
+  if (!mine) {
+    row.appendChild(avatarNode(msg.avatar, msg.username, "chat-avatar"));
+  }
 
   const bubble = el("div", "chat-bubble");
 
   if (!mine) {
-    // Incoming: name + role header, then text, then time.
+    // Incoming: sender name (+ admin badge) above the text.
     const head = el("div", "chat-msg-head");
-    const nameWrap = el("span", "chat-msg-name");
-    nameWrap.appendChild(el("i", "bx bxs-flame chat-flame"));
-    nameWrap.appendChild(document.createTextNode(msg.username || "unknown"));
-    if (msg.role === "owner") {
-      const badge = roleBadge(msg.role);
-      if (badge) nameWrap.appendChild(badge);
-    }
-    head.appendChild(nameWrap);
-    // Tag the owner for typing-name resolution ("SIVA is typing...").
+    const nameWrap = el("span", "chat-msg-name", msg.username || "unknown");
+    // Tag the admin for typing-name resolution ("SIVA is typing...").
     nameWrap.dataset.uid = String(msg.user_id ?? "");
-
-    const time = el("span", "chat-msg-time", chatFormatTs(msg.ts));
-    head.appendChild(time);
+    head.appendChild(nameWrap);
+    const badge = roleBadge(msg.role);
+    if (badge) head.appendChild(badge);
     bubble.appendChild(head);
-  } else {
-    // Outgoing: text then a meta row with time + read checkmarks.
-    bubble.appendChild(el("div", "chat-msg-text", msg.text || ""));
-    const meta = el("div", "chat-msg-meta");
-    const time = el("span", "chat-msg-time", chatFormatTs(msg.ts));
-    meta.appendChild(time);
-    const checks = el("span", "chat-msg-checks", "✓✓");
-    meta.appendChild(checks);
-    bubble.appendChild(meta);
   }
+
+  // Text + time share one row for both incoming and outgoing bubbles.
+  const meta = el("div", "chat-msg-meta");
+  meta.appendChild(el("div", "chat-msg-text", msg.text || ""));
+  meta.appendChild(el("span", "chat-msg-time", chatFormatTs(msg.ts)));
+  bubble.appendChild(meta);
 
   // Delete control: own messages for everyone; any message for admins.
   const canDelete = CHAT.me && (mine || CHAT.isAdmin);
@@ -260,15 +305,39 @@ function renderMessage(msg) {
   return row;
 }
 
+// Time of day only — the date comes from the day divider above the message.
 function chatFormatTs(ts) {
   if (!ts) return "";
   const d = new Date(ts);
-  const today = new Date();
-  const opts = { month: "short", day: "numeric" };
-  if (d.toDateString() === today.toDateString()) {
-    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  }
-  return d.toLocaleDateString([], opts);
+  if (isNaN(d)) return "";
+  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+// Rebuilds day dividers and group classes (.is-first / .is-cont) for the whole
+// transcript. A group = consecutive messages from one sender within 5 minutes.
+// Cheap (≤ a few hundred rows) and keeps grouping correct after deletes.
+function regroup() {
+  if (!CHAT.listEl) return;
+  CHAT.listEl.querySelectorAll(".chat-day").forEach((n) => n.remove());
+
+  let prev = null;
+  let prevDay = "";
+  CHAT.listEl.querySelectorAll(".chat-msg-row:not(.chat-msg-removed)").forEach((row) => {
+    const day = chatDayKey(row._ts);
+    if (day && day !== prevDay) {
+      const sep = el("div", "chat-day");
+      sep.appendChild(el("span", null, chatDayLabel(row._ts)));
+      CHAT.listEl.insertBefore(sep, row);
+      prev = null; // a new day always starts a new group
+      prevDay = day;
+    }
+    const cont = !!prev
+      && prev.dataset.uid === row.dataset.uid
+      && Math.abs(new Date(row._ts) - new Date(prev._ts)) < 5 * 60 * 1000;
+    row.classList.toggle("is-cont", cont);
+    row.classList.toggle("is-first", !cont);
+    prev = row;
+  });
 }
 
 function appendMessage(msg, { scroll = true } = {}) {
@@ -277,6 +346,7 @@ function appendMessage(msg, { scroll = true } = {}) {
   if (CHAT.listEl.querySelector(`[data-id="${chatEscapeAttr(msg.id)}"]`)) return;
   const node = renderMessage(msg);
   CHAT.listEl.appendChild(node);
+  regroup();
   if (scroll) scrollList(true);
 }
 
@@ -286,6 +356,7 @@ function renderHistory(messages) {
   for (const msg of messages) {
     CHAT.listEl.appendChild(renderMessage(msg));
   }
+  regroup();
   scrollList(false);
 }
 
@@ -367,6 +438,7 @@ function removeMessageNode(id) {
   const node = CHAT.listEl.querySelector(`[data-id="${chatEscapeAttr(id)}"]`);
   if (node) {
     node.classList.add("chat-msg-removed");
+    regroup(); // neighbours re-group immediately while the node fades out
     setTimeout(() => node.remove(), 250);
   }
 }
@@ -425,7 +497,7 @@ async function loadHistory(refresh = false) {
     if (!data.success) throw new Error(data.error || "History failed");
 
     CHAT.me = data.me || null;
-    CHAT.isAdmin = CHAT.me?.role === "owner";
+    CHAT.isAdmin = CHAT.me?.role === "admin";
 
     if (refresh) {
       // Gap-fill on reconnect: replace list, keep scroll at bottom.
@@ -814,7 +886,6 @@ if (document.readyState === "loading") {
 } else {
   wire();
 }
-
 
   })();
 } catch (e) {

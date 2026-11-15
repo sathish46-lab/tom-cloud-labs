@@ -101,8 +101,8 @@ function chat_publish(array $event): bool {
 }
 
 /**
- * Role label used for the badge in the UI. Only 'owner' gets a badge.
+ * Role label used for the badge in the UI. Only 'admin' gets a badge.
  */
 function chat_role_label(UserSession $session): string {
-    return AuthMiddleware::isAdmin() ? 'owner' : 'member';
+    return AuthMiddleware::isAdmin() ? 'admin' : 'member';
 }
