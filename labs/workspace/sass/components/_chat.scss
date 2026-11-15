@@ -122,7 +122,7 @@ $chat-tail: 0.35rem;     // tight corner on the sender's side
   flex-direction: column;
   overflow: hidden;
   border-radius: 1.25rem;
-  background: color-mix(in srgb, var(--chat-surface) 96%, transparent);
+  background: color-mix(in srgb, var(--chat-surface) 40%, transparent);
   border: 1px solid var(--chat-line);
   box-shadow: 0 28px 70px rgba(0, 0, 0, 0.4),
               0 2px 10px rgba(0, 0, 0, 0.2);
@@ -148,94 +148,6 @@ $chat-tail: 0.35rem;     // tight corner on the sender's side
     box-shadow: 0 24px 56px rgba(16, 24, 40, 0.18),
                 0 2px 8px rgba(16, 24, 40, 0.08);
   }
-}
-
-// ---------------------------------------------------------------------------
-// Thunderstorm background — animated clouds + random lightning + rain.
-// Sits behind the messages inside the panel; glass blur keeps it subtle.
-// ---------------------------------------------------------------------------
-.chat-storm {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  z-index: 0;
-  pointer-events: none;
-}
-
-// Clouds drift slowly across.
-.chat-cloud {
-  position: absolute;
-  bottom: -10%;
-  height: 16%;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-  filter: blur(12px);
-  opacity: 0.55;
-  animation: chat-cloud-drift linear infinite;
-}
-.chat-cloud:nth-child(1) { left: -12%; width: 30%; animation-duration: 22s; animation-delay: 0s; }
-.chat-cloud:nth-child(2) { left: 18%; width: 26%; animation-duration: 26s; animation-delay: -5s; }
-.chat-cloud:nth-child(3) { left: 48%; width: 34%; animation-duration: 20s; animation-delay: -11s; }
-.chat-cloud:nth-child(4) { left: 76%; width: 28%; animation-duration: 24s; animation-delay: -17s; }
-
-// Lightning flash — random timing, brief white burst.
-.chat-lightning {
-  position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, 0);
-  pointer-events: none;
-  z-index: 1;
-  animation: chat-lightning-strike 8s infinite;
-}
-.chat-lightning::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, 0.35);
-  opacity: 0;
-  pointer-events: none;
-  animation: chat-lightning-flash 8s infinite;
-}
-
-// Rain — faint vertical streaks.
-.chat-rain {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.03) 40%,
-    rgba(255, 255, 255, 0) 100%
-  );
-  background-size: 100% 400px;
-  pointer-events: none;
-  z-index: 0;
-  animation: chat-rain-fall 1.2s linear infinite;
-  opacity: 0.35;
-}
-
-@keyframes chat-cloud-drift {
-  0%   { transform: translateX(-14%); }
-  100% { transform: translateX(110vw); }
-}
-
-@keyframes chat-lightning-strike {
-  0%, 90%, 100% { opacity: 0; }
-  92% { opacity: 1; }
-  94% { opacity: 0; }
-  96% { opacity: 1; }
-  98% { opacity: 0; }
-}
-
-@keyframes chat-lightning-flash {
-  0%, 90%, 100% { opacity: 0; }
-  91% { opacity: 1; }
-  93% { opacity: 0; }
-}
-
-@keyframes chat-rain-fall {
-  0%   { background-position: 0% 0%; }
-  100% { background-position: 0% 100%; }
 }
 
 // ---------------------------------------------------------------------------
@@ -685,19 +597,19 @@ $chat-tail: 0.35rem;     // tight corner on the sender's side
   align-items: center;
   gap: 0.4rem;
   margin: 0.65rem 0.75rem 0.75rem;
-  padding: 0.28rem 0.28rem 0.28rem 1rem;
+  padding: 0.3rem 0.3rem 0.3rem 1rem;
   border-radius: 2rem;
-  background: var(--chat-in-bg);
-  border: 1px solid var(--chat-line);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  background: linear-gradient(135deg, var(--chat-accent) 0%, var(--chat-accent-hi) 100%);
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  transition: box-shadow 0.15s ease;
 
   &:focus-within {
-    border-color: var(--chat-accent);
-    box-shadow: 0 0 0 3px #{rgba($chat-accent, 0.22)};
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   }
 
   // dim the send button while the field is empty
-  &:has(.chat-input:placeholder-shown) .chat-send-btn:not(:disabled) { opacity: 0.45; }
+  &:has(.chat-input:placeholder-shown) .chat-send-btn:not(:disabled) { opacity: 0.55; }
 }
 
 .chat-input {
@@ -711,7 +623,7 @@ $chat-tail: 0.35rem;     // tight corner on the sender's side
   color: var(--cui-body-color);
   background: transparent;
 
-  &::placeholder { color: var(--chat-muted); }
+  &::placeholder { color: rgba(255, 255, 255, 0.65); }
   &:disabled { opacity: 0.5; }
 }
 
@@ -729,13 +641,13 @@ $chat-tail: 0.35rem;     // tight corner on the sender's side
   font-size: 1.1rem;
   line-height: 1;
   color: var(--cui-white, #fff);
-  background: linear-gradient(135deg, var(--chat-accent), var(--chat-accent-hi));
-  box-shadow: 0 3px 10px #{rgba($chat-accent, 0.4)};
-  transition: transform 0.12s ease, opacity 0.15s ease, filter 0.12s ease;
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+  transition: transform 0.12s ease, opacity 0.15s ease, background 0.12s ease;
 
   i { transform: translateX(1px); }
 
-  &:hover { transform: translateY(-1px); filter: brightness(1.1); }
+  &:hover { background: rgba(255, 255, 255, 0.3); transform: translateY(-1px); }
   &:active { transform: scale(0.93); }
   &:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
   &:focus-visible { outline: 2px solid var(--chat-accent-hi); outline-offset: 2px; }

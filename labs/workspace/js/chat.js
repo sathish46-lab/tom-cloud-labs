@@ -156,13 +156,6 @@ function buildWidget() {
   panel.setAttribute("role", "dialog");
   panel.setAttribute("aria-label", "Global chat");
 
-  // Thunderstorm background layer behind messages.
-  const storm = el("div", "chat-storm");
-  for (let i = 1; i <= 4; i++) storm.appendChild(el("div", "chat-cloud"));
-  storm.appendChild(el("div", "chat-lightning"));
-  storm.appendChild(el("div", "chat-rain"));
-  panel.appendChild(storm);
-
   // Header
   const header = el("div", "chat-header");
   const headLeft = el("div", "chat-header-left");
