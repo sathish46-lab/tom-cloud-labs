@@ -40,6 +40,7 @@ const CHAT = {
   inputEl: null,
   sendBtn: null,
   badgeEl: null,
+  fabEl: null,       // pulse orb when unread
   countEl: null,
   typingEl: null,
 
@@ -677,11 +678,13 @@ function bumpUnread() {
     CHAT.badgeEl.textContent = CHAT.unread > 99 ? "99+" : String(CHAT.unread);
     CHAT.badgeEl.hidden = false;
   }
+  if (CHAT.fabEl) CHAT.fabEl.classList.add("chat-fab--has-unread");
 }
 
 function clearUnread() {
   CHAT.unread = 0;
   if (CHAT.badgeEl) CHAT.badgeEl.hidden = true;
+  if (CHAT.fabEl) CHAT.fabEl.classList.remove("chat-fab--has-unread");
 }
 
 function openPanel() {
@@ -749,6 +752,7 @@ function wire() {
   CHAT.inputEl = built.input;
   CHAT.sendBtn = built.send;
   CHAT.badgeEl = built.badge;
+  CHAT.fabEl = built.fab;
   CHAT.countEl = built.countEl;
   CHAT.typingEl = built.typingEl;
 
