@@ -740,6 +740,21 @@ function clearUnread() {
   if (CHAT.fabEl) CHAT.fabEl.classList.remove("chat-fab--has-unread");
 }
 
+async function markAllRead() {
+  try {
+    const res = await fetch("/api/chat/read.php", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: csrfHeaders(),
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.success) return;
+  } catch (e) {
+    // Non-fatal: badge stays until the next open.
+  }
+}
+
 async function openPanel() {
   if (!CHAT.panel) return;
   CHAT.panel.hidden = false;
