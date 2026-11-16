@@ -65,8 +65,9 @@ try {
     ];
 
     if ($identity['type'] === 'user') {
+        $session = AuthMiddleware::getSession();
         $payload['me'] = [
-            'user_id'  => (int) $identity['id'],
+            'user_id'  => (int) $session->getUserId(),
             'username' => (string) $session->getUsername(),
             'role'     => chat_role_label($session),
         ];
