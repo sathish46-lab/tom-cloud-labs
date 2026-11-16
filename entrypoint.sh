@@ -227,6 +227,11 @@ cat <<EOF > /etc/apache2/sites-available/labs.conf
     ProxyPreserveHost Off
     ProxyPass /mcp !
 
+    # WebSocket STOMP proxy for global chat (RabbitMQ web-stomp on 15674)
+    # Host port 9080 -> container port 80 -> this vhost -> RabbitMQ 15674
+    ProxyPass /ws ws://127.0.0.1:15674/ws
+    ProxyPassReverse /ws ws://127.0.0.1:15674/ws
+
     # Cloudflare terminates HTTPS; Apache receives HTTP from Traefik.
     # Tell PHP the original request was HTTPS so Secure cookies,
     # HSTS, and wss:// connect-src are set correctly.
@@ -633,19 +638,6 @@ fi
 echo "[INFO] Enabling Apache Sites..."
 a2enmod rewrite proxy proxy_http proxy_wstunnel headers ssl
 a2dissite 000-default.conf
-
-# WebSocket STOMP proxy for global chat on host port 80 (mapped to container 80).
-# Ensures ws://<domain>:9080/ws reaches the inner RabbitMQ web-stomp on 15674.
-cat > /etc/apache2/sites-available/chat-ws.conf <<'EOF'
-<VirtualHost *:80>
-    ServerName _chat_ws_
-    ProxyRequests Off
-    ProxyPreserveHost On
-    ProxyPass /ws ws://127.0.0.1:15674/ws
-    ProxyPassReverse /ws ws://127.0.0.1:15674/ws
-</VirtualHost>
-EOF
-a2ensite chat-ws.conf
 
 SITES="labs.conf mqs.conf wg-api.conf code.conf error-service.conf"
 [ -n "${WORK_DOMAIN:-}" ] && SITES="$SITES work.conf"
