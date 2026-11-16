@@ -226,7 +226,7 @@ function buildWidget() {
   fab.id = "chat-fab";
   fab.type = "button";
   fab.setAttribute("aria-label", "Open global chat");
-  const fabIcon = el("i", "bx bx-conversation");
+  const fabIcon = el("i", "bx bxs-message-square");
   const fabBadge = el("span", "chat-fab-badge");
   fabBadge.id = "chat-fab-badge";
   fabBadge.hidden = true;
