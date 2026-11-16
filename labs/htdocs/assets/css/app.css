@@ -30045,9 +30045,9 @@ html[data-coreui-theme=light] .pref-ace-editor.ace-eclipse .ace_active-line, htm
 }
 
 .chat-widget {
-  --chat-accent: #126198;
-  --chat-accent-hi: color-mix(in srgb, #126198 78%, #fff);
-  --chat-accent-glow: rgba(18, 97, 152, 0.45);
+  --chat-accent: #0f6b6b;
+  --chat-accent-hi: color-mix(in srgb, #0f6b6b 78%, #fff);
+  --chat-accent-glow: rgba(15, 107, 107, 0.45);
   --chat-surface: var(--cui-body-bg, #212631);
   --chat-surface-2: color-mix(in srgb, var(--cui-body-color, #fff) 4%, var(--chat-surface));
   --chat-in-bg: color-mix(in srgb, var(--cui-body-color, #fff) 9%, var(--chat-surface));
@@ -30113,13 +30113,13 @@ html[data-coreui-theme=light] .pref-ace-editor.ace-eclipse .ace_active-line, htm
 
 @keyframes chat-fab-pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(18, 97, 152, 0.65), 0 8px 24px var(--chat-accent-glow);
+    box-shadow: 0 0 0 0 rgba(15, 107, 107, 0.65), 0 8px 24px var(--chat-accent-glow);
   }
   70% {
-    box-shadow: 0 0 0 16px rgba(18, 97, 152, 0), 0 8px 24px var(--chat-accent-glow);
+    box-shadow: 0 0 0 16px rgba(15, 107, 107, 0), 0 8px 24px var(--chat-accent-glow);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(18, 97, 152, 0), 0 8px 24px var(--chat-accent-glow);
+    box-shadow: 0 0 0 0 rgba(15, 107, 107, 0), 0 8px 24px var(--chat-accent-glow);
   }
 }
 .chat-panel {
@@ -30410,7 +30410,7 @@ html[data-coreui-theme=light] .chat-panel {
   color: var(--cui-white, #fff);
   background: var(--chat-accent);
   border-radius: 1.15rem 1.15rem 0.35rem 1.15rem;
-  box-shadow: 0 3px 12px rgba(18, 97, 152, 0.3);
+  box-shadow: 0 3px 12px rgba(15, 107, 107, 0.3);
 }
 
 .chat-msg-row.mine.is-cont .chat-bubble {
