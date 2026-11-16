@@ -794,6 +794,10 @@ $classString = implode(' ', $htmlClasses);
             <feDisplacementMap in="SourceGraphic" in2="noise" scale="12" xChannelSelector="R" yChannelSelector="G" />
         </filter>
     </svg>
+
+    <!-- Global Chat Widget (server-rendered DOM; JS wires up listeners only) -->
+    <?php include __DIR__ . '/pages/chat.php'; ?>
+
 </body>
 
 </html>

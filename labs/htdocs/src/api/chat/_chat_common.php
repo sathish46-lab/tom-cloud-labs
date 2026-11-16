@@ -106,3 +106,32 @@ function chat_publish(array $event): bool {
 function chat_role_label(UserSession $session): string {
     return AuthMiddleware::isAdmin() ? 'admin' : 'member';
 }
+
+/**
+ * Unread tracking (lightweight, no per-message read receipts).
+ * One doc per user in chat_read_positions: { user_id, last_read_msg_id, updated_at }.
+ * Only the latest message id the user has seen is stored; everything newer is "unread".
+ */
+function chat_read_positions(): MongoDB\Collection {
+    return chat_db()->chat_read_positions;
+}
+
+function chat_get_last_read_msg_id(int $user_id): ?string {
+    try {
+        $doc = chat_read_positions()->findOne(['user_id' => $user_id]);
+    } catch (\Throwable $e) {
+        return null;
+    }
+    return $doc ? (string)($doc['last_read_msg_id'] ?? null) : null;
+}
+
+function chat_set_last_read_msg_id(int $user_id, string $msg_id): void {
+    chat_read_positions()->updateOne(
+        ['user_id' => $user_id],
+        ['$set' => [
+            'last_read_msg_id' => $msg_id,
+            'updated_at' => new \MongoDB\BSON\UTCDateTime((int)(microtime(true) * 1000)),
+        ]],
+        ['upsert' => true]
+    );
+}

@@ -228,9 +228,9 @@ cat <<EOF > /etc/apache2/sites-available/labs.conf
     ProxyPass /mcp !
 
     # WebSocket STOMP proxy for global chat (RabbitMQ web-stomp on 15674)
-    # Host port 9080 -> container port 80 -> this vhost -> RabbitMQ 15674
-    ProxyPass /ws ws://127.0.0.1:15674/ws
-    ProxyPassReverse /ws ws://127.0.0.1:15674/ws
+    # Host port 9080 -> container port 80 -> this vhost -> RabbitMQ container 15674
+    ProxyPass /ws ws://rabbitmq.tomweb.in:15674/ws
+    ProxyPassReverse /ws ws://rabbitmq.tomweb.in:15674/ws
 
     # Cloudflare terminates HTTPS; Apache receives HTTP from Traefik.
     # Tell PHP the original request was HTTPS so Secure cookies,
