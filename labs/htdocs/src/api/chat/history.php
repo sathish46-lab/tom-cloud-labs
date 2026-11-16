@@ -65,7 +65,7 @@ try {
     ];
 
     if ($identity['type'] === 'user') {
-        $session = AuthMiddleware::getSession();
+        $session = AuthMiddleware::getUser();
         $payload['me'] = [
             'user_id'  => (int) $session->getUserId(),
             'username' => (string) $session->getUsername(),

@@ -144,10 +144,9 @@ function chat_set_last_read_msg_id(string $keyType, string $keyId, string $msg_i
  * or null when neither is available.
  */
 function chat_resolve_identity(?string $guestIdHeader = null): ?array {
-    $session = AuthMiddleware::getSession() ?? null;
-    $user = $session?->getUser() ?? null;
-    if ($user) {
-        return ['type' => 'user', 'id' => (int)$user->getUserId()];
+    $session = AuthMiddleware::getUser() ?? null;
+    if ($session) {
+        return ['type' => 'user', 'id' => (int)$session->getUserId()];
     }
     if ($guestIdHeader) {
         return ['type' => 'guest', 'id' => $guestIdHeader];
