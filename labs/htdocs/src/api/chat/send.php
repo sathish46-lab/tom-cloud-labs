@@ -82,5 +82,4 @@ chat_json([
     'success'   => true,
     'id'        => $id,
     'published' => $published,
-    'message'   => $payload, // used by sender only if publish failed
 ]);

@@ -520,11 +520,10 @@ async function sendMessage() {
       return;
     }
     CHAT.inputEl.value = "";
-    // If the fan-out publish failed, the sender renders its own message
-    // from the persisted payload (others see it on next history load).
-    if (data.published === false && data.message) {
-      hideEmptyState();
-      appendMessage(data.message);
+    // If the fan-out publish failed, the sender's message will appear on the
+    // next history load (gap-fill on reconnect).
+    if (data.published === false) {
+      chatToast("Message sent — will sync on reconnect.");
     }
     // Stop typing indicator for self — the fan-out message event clears it
     // on every client, including the sender.
