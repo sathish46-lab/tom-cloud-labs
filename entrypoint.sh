@@ -165,13 +165,13 @@ echo "[INFO] Generating Apache Configuration..."
 
 # Generate ports.conf to ensure all required ports are listening
 cat <<EOF > /etc/apache2/ports.conf
+Listen 80
 Listen 8080
 Listen 8081
 Listen 8082
-Listen 8083
 Listen 8086
 <IfModule ssl_module>
-    Listen 4431
+    Listen 443
 </IfModule>
 EOF
 
@@ -212,7 +212,7 @@ cat <<EOF > /etc/apache2/sites-available/error-service.conf
 EOF
 
 cat <<EOF > /etc/apache2/sites-available/labs.conf
-<VirtualHost *:8083>
+<VirtualHost *:80>
     ServerAdmin $SSL_EMAIL
     DocumentRoot "/var/www/labs/htdocs"
     ServerName $MAIN_DOMAIN
@@ -254,7 +254,7 @@ ${XFP_HTTPS_HEADER}
 EOF
 
 cat <<EOF > /etc/apache2/sites-available/mqs.conf
-<VirtualHost *:8083>
+<VirtualHost *:80>
     ServerName $MQS_DOMAIN
 
     ProxyRequests Off
@@ -298,7 +298,7 @@ RewriteMap code_map "txt:/etc/apache2/code_server_map.txt"
 ProxyTimeout 600
 ProxyBadHeader Ignore
 
-<VirtualHost *:8083>
+<VirtualHost *:80>
     ServerName $CODE_DOMAIN
     ServerAlias *.$CODE_DOMAIN
     
@@ -329,7 +329,7 @@ EOF
 # Optional vhosts — generated only when the corresponding domain is set
 if [ -n "${WORK_DOMAIN:-}" ]; then
 cat <<EOF > /etc/apache2/sites-available/work.conf
-<VirtualHost *:8083>
+<VirtualHost *:80>
     ServerAdmin $SSL_EMAIL
     DocumentRoot "/var/www/docs"
     ServerName $WORK_DOMAIN
@@ -348,7 +348,7 @@ fi
 
 if [ -n "${NEWS_DOMAIN:-}" ]; then
 cat <<EOF > /etc/apache2/sites-available/news.conf
-<VirtualHost *:8083>
+<VirtualHost *:80>
     ServerAdmin $SSL_EMAIL
     DocumentRoot "/var/www/news-site/public"
     ServerName $NEWS_DOMAIN
@@ -429,11 +429,11 @@ http:
     apache-service:
       loadBalancer:
         servers:
-          - url: "http://127.0.0.1:8083"
+          - url: "http://127.0.0.1:80"
     mqs-service:
       loadBalancer:
         servers:
-          - url: "http://127.0.0.1:8083"
+          - url: "http://127.0.0.1:80"
     vpn-api-service:
       loadBalancer:
         servers:
@@ -441,7 +441,7 @@ http:
     code-server-service:
       loadBalancer:
         servers:
-          - url: "http://127.0.0.1:8083"
+          - url: "http://127.0.0.1:80"
 
   routers:
     labs-router:
