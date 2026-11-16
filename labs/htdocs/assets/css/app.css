@@ -30104,8 +30104,8 @@ html[data-coreui-theme=light] .pref-ace-editor.ace-eclipse .ace_active-line, htm
   transform: translateX(-50%);
   white-space: nowrap;
   padding: 0.18rem 0.55rem;
-  background: rgba(255, 255, 255, 0.9);
-  color: #000000;
+  background: rgba(230, 81, 0, 0.9);
+  color: #fff;
   border-radius: 0.55rem;
   font-size: 0.72rem;
   font-weight: 600;
@@ -30123,7 +30123,7 @@ html[data-coreui-theme=light] .pref-ace-editor.ace-eclipse .ace_active-line, htm
   height: 0;
   border-left: 4px solid transparent;
   border-right: 4px solid transparent;
-  border-top: 6px solid rgba(255, 255, 255, 0.9);
+  border-top: 6px solid rgba(230, 81, 0, 0.9);
   margin-top: -1px;
 }
 .chat-fab .chat-fab-badge {
