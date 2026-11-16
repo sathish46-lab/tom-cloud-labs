@@ -66,6 +66,8 @@ const CHAT = {
   lastCount: null,
 
   deleting: {},      // id -> true, prevents double-delete clicks
+
+  storm: null,       // { glow, flash, bolts, timer, running } — decorative lightning
 };
 
 /* ==========================================================================
@@ -182,7 +184,6 @@ function buildWidget() {
 
   header.appendChild(headLeft);
   header.appendChild(headBtns);
-
   // Messages area
   const listEl = el("div", "chat-messages");
   listEl.id = "chat-messages";
@@ -214,19 +215,41 @@ function buildWidget() {
   // Body wraps the transcript and the typing pill so the pill can float over
   // the bottom edge without shifting the layout when it appears/disappears.
   const body = el("div", "chat-body");
+
+  // Thunderstorm (decorative; see "Thunderstorm" section below).
+  // Back layer: storm scene + sky glow + far rain, behind the messages.
+  const stormBack = el("div", "chat-storm");
+  stormBack.setAttribute("aria-hidden", "true");
+  const stormGlow = el("div", "chat-storm-glow");
+  stormBack.appendChild(stormGlow);
+  stormBack.appendChild(el("div", "chat-storm-rain"));
+  // Front layer: near rain, soft flash and the bolts, over the whole panel.
+  const stormFront = el("div", "chat-storm-fx");
+  stormFront.setAttribute("aria-hidden", "true");
+  stormFront.appendChild(el("div", "chat-storm-rain"));
+  const stormFlash = el("div", "chat-storm-flash");
+  stormFront.appendChild(stormFlash);
+  const stormBolts = document.createElementNS(SVG_NS, "svg");
+  stormBolts.setAttribute("class", "chat-storm-bolts");
+  stormBolts.setAttribute("viewBox", "0 0 400 600");
+  stormBolts.setAttribute("preserveAspectRatio", "xMidYMid slice");
+  stormFront.appendChild(stormBolts);
+
+  body.appendChild(stormBack);
   body.appendChild(listEl);
   body.appendChild(typingEl);
 
   panel.appendChild(header);
   panel.appendChild(body);
   panel.appendChild(composer);
+  panel.appendChild(stormFront);
 
   // --- Floating circle button ---
   const fab = el("button", "chat-fab");
   fab.id = "chat-fab";
   fab.type = "button";
   fab.setAttribute("aria-label", "Open global chat");
-  const fabIcon = el("i", "bx bxs-message-square");
+  const fabIcon = el("i", "bx bx-conversation");
   const fabBadge = el("span", "chat-fab-badge");
   fabBadge.id = "chat-fab-badge";
   fabBadge.hidden = true;
@@ -237,7 +260,10 @@ function buildWidget() {
   root.appendChild(fab);
   document.body.appendChild(root);
 
-  return { root, panel, listEl, input, send, fab, badge: fabBadge, countEl, typingEl, minBtn, closeBtn };
+  return {
+    root, panel, listEl, input, send, fab, badge: fabBadge, countEl, typingEl, minBtn, closeBtn,
+    stormGlow, stormFlash, stormBolts,
+  };
 }
 
 /* ==========================================================================
@@ -246,8 +272,8 @@ function buildWidget() {
  */
 
 function roleBadge(role) {
-  if (role !== "admin") return null;
-  const b = el("span", "chat-role-badge", "Admin");
+  if (role !== "owner") return null;
+  const b = el("span", "chat-role-badge", "Owner");
   return b;
 }
 
@@ -267,10 +293,10 @@ function renderMessage(msg) {
   const bubble = el("div", "chat-bubble");
 
   if (!mine) {
-    // Incoming: sender name (+ admin badge) above the text.
+    // Incoming: sender name (+ owner badge) above the text.
     const head = el("div", "chat-msg-head");
     const nameWrap = el("span", "chat-msg-name", msg.username || "unknown");
-    // Tag the admin for typing-name resolution ("SIVA is typing...").
+    // Tag the owner for typing-name resolution ("SIVA is typing...").
     nameWrap.dataset.uid = String(msg.user_id ?? "");
     head.appendChild(nameWrap);
     const badge = roleBadge(msg.role);
@@ -490,7 +516,7 @@ async function loadHistory(refresh = false) {
     if (!data.success) throw new Error(data.error || "History failed");
 
     CHAT.me = data.me || null;
-    CHAT.isAdmin = CHAT.me?.role === "admin";
+    CHAT.isAdmin = CHAT.me?.role === "owner";
 
     if (refresh) {
       // Gap-fill on reconnect: replace list, keep scroll at bottom.
@@ -768,6 +794,7 @@ function openPanel() {
   requestAnimationFrame(() => CHAT.panel.classList.add("open"));
   CHAT.open = true;
   clearUnread();
+  startStorm();
 
   if (!window.CHAT_CONTEXT?.loggedIn) {
     renderGuestState();
@@ -804,12 +831,159 @@ function closePanel(minimize) {
   if (!CHAT.panel) return;
   CHAT.panel.classList.remove("open");
   CHAT.open = false;
+  stopStorm();
   const done = () => { CHAT.panel.hidden = true; };
   CHAT.panel.addEventListener("transitionend", done, { once: true });
   setTimeout(done, 300); // fallback if transitionend never fires
   if (minimize) {
     // Keep socket + presence alive so new messages badge the button.
   }
+}
+
+/* ==========================================================================
+ * Thunderstorm — random forked lightning (decorative)
+ * ==========================================================================
+ * This code only decides WHEN to strike and WHAT SHAPE the bolts have; how they
+ * look lives in chat.scss. Rules that keep it comfortable to watch:
+ *  - one strike = a cluster of 2-4 forked bolts + one double flicker (~0.5s)
+ *  - at least 2.2s of calm between events, so never more than 2 flashes/second
+ *  - nothing runs while the panel is closed, the tab is hidden, or the visitor
+ *    prefers reduced motion
+ */
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+const stormRand = (a, b) => a + Math.random() * (b - a);
+
+// Midpoint displacement: a jagged polyline from (x0,y0) to (x1,y1).
+function boltPoints(x0, y0, x1, y1, rough, depth) {
+  let pts = [[x0, y0], [x1, y1]];
+  let disp = Math.hypot(x1 - x0, y1 - y0) * rough;
+  for (let i = 0; i < depth; i++) {
+    const next = [];
+    for (let j = 0; j < pts.length - 1; j++) {
+      const a = pts[j], b = pts[j + 1];
+      const dx = b[0] - a[0], dy = b[1] - a[1];
+      const len = Math.hypot(dx, dy) || 1;
+      const off = (Math.random() * 2 - 1) * disp;
+      next.push(a, [(a[0] + b[0]) / 2 - (dy / len) * off, (a[1] + b[1]) / 2 + (dx / len) * off]);
+    }
+    next.push(pts[pts.length - 1]);
+    pts = next;
+    disp *= 0.55;
+  }
+  return pts;
+}
+
+function pathOf(pts) {
+  return "M" + pts.map((p) => p[0].toFixed(1) + " " + p[1].toFixed(1)).join("L");
+}
+
+// Grows a trunk (level 0) with forks (level 1) and small forks of forks (level 2).
+function growBolt(x0, y0, x1, y1, level, out) {
+  const pts = boltPoints(x0, y0, x1, y1, level === 0 ? 0.17 : 0.22, level === 0 ? 6 : 4);
+  (level === 0 ? out.trunk : out.branches).push(pathOf(pts));
+  if (level >= 2) return;
+  for (let i = 3; i < pts.length - 3; i++) {
+    if (Math.random() > (level === 0 ? 0.075 : 0.05)) continue;
+    const a = pts[i], b = pts[Math.min(i + 4, pts.length - 1)];
+    const ang = Math.atan2(b[1] - a[1], b[0] - a[0]) + (Math.random() < 0.5 ? -1 : 1) * stormRand(0.4, 0.95);
+    const len = level === 0 ? stormRand(55, 140) : stormRand(22, 55);
+    // forks always head downward, like real lightning
+    growBolt(a[0], a[1], a[0] + Math.cos(ang) * len, a[1] + Math.abs(Math.sin(ang)) * len, level + 1, out);
+  }
+}
+
+function svgPath(cls, d) {
+  const p = document.createElementNS(SVG_NS, "path");
+  p.setAttribute("class", cls);
+  p.setAttribute("d", d);
+  return p;
+}
+
+// Redraws the <svg> with a fresh cluster of bolts. Returns the first bolt's x
+// as a percentage of the panel width, so the flash can light up around it.
+function drawBolts(svg) {
+  svg.textContent = "";
+  const n = 2 + (Math.random() < 0.4 ? 1 : 0) + (Math.random() < 0.2 ? 1 : 0);
+  const zones = [60, 340, 200, 130, 280].sort(() => Math.random() - 0.5);
+  let firstX = 200;
+  for (let i = 0; i < n; i++) {
+    const out = { trunk: [], branches: [] };
+    const cx = zones[i] + stormRand(-35, 35);
+    if (i === n - 1 && n >= 3 && Math.random() < 0.45) {
+      // cloud-to-cloud arc across the top of the panel
+      const xa = stormRand(-10, 110);
+      growBolt(xa, stormRand(15, 45), xa + stormRand(190, 320), stormRand(40, 95), 0, out);
+    } else {
+      growBolt(cx, -8, cx + stormRand(-80, 80), stormRand(250, 560), 0, out);
+      if (i === 0) firstX = cx;
+    }
+    const trunk = out.trunk.join(""), branches = out.branches.join("");
+    const g = document.createElementNS(SVG_NS, "g");
+    g.append(svgPath("glow br", branches), svgPath("glow", trunk), svgPath("core br", branches), svgPath("core", trunk));
+    svg.appendChild(g);
+  }
+  return Math.max(10, Math.min(90, firstX / 4));
+}
+
+// Double flicker: bright, nearly off, bright again, then a slow fade.
+function stormPulse(node, peak, ms) {
+  if (!node || typeof node.animate !== "function") return;
+  node.animate([
+    { opacity: 0, offset: 0 },
+    { opacity: peak, offset: 0.04 },
+    { opacity: peak * 0.12, offset: 0.2 },
+    { opacity: peak, offset: 0.34 },
+    { opacity: peak * 0.4, offset: 0.55 },
+    { opacity: 0, offset: 1 },
+  ], { duration: ms, easing: "linear" });
+}
+
+// One event: usually a bolt cluster, sometimes only sheet lightning in the clouds.
+// Returns how long the event lasts (ms).
+function stormEvent(force) {
+  const s = CHAT.storm;
+  if (force || Math.random() < 0.7) {
+    const x = drawBolts(s.bolts).toFixed(0) + "%";
+    s.flash.style.setProperty("--chat-flash-x", x);
+    s.glow.style.setProperty("--chat-flash-x", x);
+    stormPulse(s.bolts, 1, 520);
+    stormPulse(s.flash, 0.4, 520);
+    stormPulse(s.glow, 1, 520);
+    return 520;
+  }
+  s.glow.style.setProperty("--chat-flash-x", stormRand(15, 85).toFixed(0) + "%");
+  stormPulse(s.glow, 0.7, 760);
+  return 760;
+}
+
+function scheduleStorm(delay, force) {
+  const s = CHAT.storm;
+  s.timer = setTimeout(() => {
+    if (!s.running) return;
+    const used = document.hidden ? 0 : stormEvent(force);
+    scheduleStorm(used + stormRand(2200, 6500), false);
+  }, delay);
+}
+
+function startStorm() {
+  const s = CHAT.storm;
+  if (!s || s.running || typeof s.bolts.animate !== "function") return;
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  s.running = true;
+  scheduleStorm(900, true); // first strike ~1s after the panel opens
+}
+
+function stopStorm() {
+  const s = CHAT.storm;
+  if (!s) return;
+  s.running = false;
+  clearTimeout(s.timer);
+  s.timer = null;
+  [s.bolts, s.flash, s.glow].forEach((n) => {
+    if (typeof n.getAnimations === "function") n.getAnimations().forEach((a) => a.cancel());
+  });
+  s.bolts.textContent = "";
 }
 
 /* ==========================================================================
@@ -830,6 +1004,7 @@ function wire() {
   CHAT.fabEl = built.fab;
   CHAT.countEl = built.countEl;
   CHAT.typingEl = built.typingEl;
+  CHAT.storm = { glow: built.stormGlow, flash: built.stormFlash, bolts: built.stormBolts, timer: null, running: false };
 
   built.fab.addEventListener("click", openPanel);
   built.minBtn.addEventListener("click", () => closePanel(true));
@@ -879,6 +1054,7 @@ if (document.readyState === "loading") {
 } else {
   wire();
 }
+
 
   })();
 } catch (e) {
