@@ -653,24 +653,29 @@ function renderTypingStrip() {
     return;
   }
 
-  CHAT.typingEl.hidden = false;
-  CHAT.typingEl.textContent = "";
-
   const names = active.map(([, v]) => v.username || "Someone");
   const who = names.length === 1 ? names[0] : `${names.length} people`;
-  const dot = el("span", "chat-typing-dots");
-  for (let i = 0; i < 3; i++) dot.appendChild(el("span", "d" + i));
-  CHAT.typingEl.appendChild(document.createTextNode(`${who} ${names.length === 1 ? "is" : "are"} typing`));
-  CHAT.typingEl.appendChild(dot);
 
-  // Also show typing indicator on the floating FAB button.
-  if (CHAT.fabTyping) {
-    const who = names.length === 1 ? names[0] : `${names.length} people`;
-    CHAT.fabTyping.textContent = `${who} ${names.length === 1 ? "is" : "are"} typing `;
-    const fabDot = el("span", "chat-typing-dots");
-    for (let i = 0; i < 3; i++) fabDot.appendChild(el("span", "d" + i));
-    CHAT.fabTyping.appendChild(fabDot);
-    CHAT.fabTyping.hidden = false;
+  if (CHAT.open) {
+    // Panel is open: show typing inside the panel only, hide FAB bubble.
+    CHAT.typingEl.hidden = false;
+    CHAT.typingEl.textContent = "";
+    const dot = el("span", "chat-typing-dots");
+    for (let i = 0; i < 3; i++) dot.appendChild(el("span", "d" + i));
+    CHAT.typingEl.appendChild(document.createTextNode(`${who} ${names.length === 1 ? "is" : "are"} typing`));
+    CHAT.typingEl.appendChild(dot);
+    if (CHAT.fabTyping) { CHAT.fabTyping.hidden = true; CHAT.fabTyping.textContent = ""; }
+  } else {
+    // Panel is closed: show typing on the floating FAB button only.
+    if (CHAT.fabTyping) {
+      CHAT.fabTyping.textContent = `${who} ${names.length === 1 ? "is" : "are"} typing `;
+      const fabDot = el("span", "chat-typing-dots");
+      for (let i = 0; i < 3; i++) fabDot.appendChild(el("span", "d" + i));
+      CHAT.fabTyping.appendChild(fabDot);
+      CHAT.fabTyping.hidden = false;
+    }
+    CHAT.typingEl.hidden = true;
+    CHAT.typingEl.textContent = "";
   }
 }
 
