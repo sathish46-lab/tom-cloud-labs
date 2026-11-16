@@ -14,11 +14,11 @@ try {
  * logged-in users, powered by RabbitMQ Web-STOMP fan-out.
  *
  * Real-time:  TomSocketClient -> /topic/global-chat-messages (subscribe only)
- * Send:       POST /api/chat/send.php  (auth + CSRF + rate limit + sanitize)
- * Delete:     POST /api/chat/delete.php (self-delete, admins delete any)
- * Typing:     POST /api/chat/typing.php (throttled) -> "(name) is typing..."
- * Presence:   POST /api/chat/presence.php heartbeat -> live online count
- * History:    GET  /api/chat/history.php (last 50, gap-fill on reconnect)
+ * Send:       POST /api/chat/send  (auth + CSRF + rate limit + sanitize)
+ * Delete:     POST /api/chat/delete (self-delete, admins delete any)
+ * Typing:     POST /api/chat/typing (throttled) -> "(name) is typing..."
+ * Presence:   POST /api/chat/presence heartbeat -> live online count
+ * History:    GET  /api/chat/history (last 50, gap-fill on reconnect)
  *
  * Security notes:
  *  - Browsers never publish to RabbitMQ; only the PHP endpoints do.
@@ -431,7 +431,7 @@ async function loadHistory(refresh = false) {
     if (!window.CHAT_CONTEXT?.loggedIn) {
       headers["X-Guest-Id"] = guestId();
     }
-    const res = await fetch("/api/chat/history.php", {
+    const res = await fetch("/api/chat/history", {
       method: "GET",
       credentials: "same-origin",
       headers,
@@ -504,7 +504,7 @@ async function sendMessage() {
   const btn = CHAT.sendBtn;
   btn.disabled = true;
   try {
-    const res = await fetch("/api/chat/send.php", {
+    const res = await fetch("/api/chat/send", {
       method: "POST",
       credentials: "same-origin",
       headers: csrfHeaders(),
@@ -547,7 +547,7 @@ async function deleteMessage(id, row) {
   if (!id || CHAT.deleting[id]) return;
   CHAT.deleting[id] = true;
   try {
-    const res = await fetch("/api/chat/delete.php", {
+    const res = await fetch("/api/chat/delete", {
       method: "POST",
       credentials: "same-origin",
       headers: csrfHeaders(),
@@ -613,7 +613,7 @@ function sendTypingBeacon(stop = false) {
     CHAT.lastTypingSent = Date.now();
     CHAT.isCurrentlyTyping = true;
   }
-  fetch("/api/chat/typing.php", {
+  fetch("/api/chat/typing", {
     method: "POST",
     credentials: "same-origin",
     headers: csrfHeaders(),
@@ -698,7 +698,7 @@ function stopPresence() {
 async function sendPresence() {
   if (!window.CHAT_CONTEXT?.loggedIn) return;
   try {
-    const res = await fetch("/api/chat/presence.php", {
+    const res = await fetch("/api/chat/presence", {
       method: "POST",
       credentials: "same-origin",
       headers: csrfHeaders(),
@@ -747,7 +747,7 @@ function clearUnread() {
 
 async function markAllRead() {
   try {
-    const res = await fetch("/api/chat/read.php", {
+    const res = await fetch("/api/chat/read", {
       method: "POST",
       credentials: "same-origin",
       headers: csrfHeaders(),
@@ -891,7 +891,7 @@ function wire() {
     // browsed chat as a guest before logging in.
     const storedGuestId = localStorage.getItem("tom-chat-guest-id");
     if (storedGuestId) {
-      fetch("/api/chat/merge_guest.php", {
+      fetch("/api/chat/merge_guest", {
         method: "POST",
         credentials: "same-origin",
         headers: csrfHeaders(),
