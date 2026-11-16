@@ -109,29 +109,48 @@ function chat_role_label(UserSession $session): string {
 
 /**
  * Unread tracking (lightweight, no per-message read receipts).
- * One doc per user in chat_read_positions: { user_id, last_read_msg_id, updated_at }.
- * Only the latest message id the user has seen is stored; everything newer is "unread".
+ * One doc per identity in chat_read_positions:
+ *   { key_type: 'user'|'guest', key_id: <int|string>, last_read_msg_id, updated_at }
+ * Only the latest message id the identity has seen is stored; everything newer is "unread".
  */
 function chat_read_positions(): MongoDB\Collection {
     return chat_db()->chat_read_positions;
 }
 
-function chat_get_last_read_msg_id(int $user_id): ?string {
+function chat_get_last_read_msg_id(string $keyType, string $keyId): ?string {
     try {
-        $doc = chat_read_positions()->findOne(['user_id' => $user_id]);
+        $doc = chat_read_positions()->findOne(['key_type' => $keyType, 'key_id' => $keyId]);
     } catch (\Throwable $e) {
         return null;
     }
     return $doc ? (string)($doc['last_read_msg_id'] ?? null) : null;
 }
 
-function chat_set_last_read_msg_id(int $user_id, string $msg_id): void {
+function chat_set_last_read_msg_id(string $keyType, string $keyId, string $msg_id): void {
     chat_read_positions()->updateOne(
-        ['user_id' => $user_id],
+        ['key_type' => $keyType, 'key_id' => $keyId],
         ['$set' => [
             'last_read_msg_id' => $msg_id,
             'updated_at' => new \MongoDB\BSON\UTCDateTime((int)(microtime(true) * 1000)),
         ]],
         ['upsert' => true]
     );
+}
+
+/**
+ * Resolve the chat identity for the current request.
+ * Returns ['type' => 'user', 'id' => <int>] when logged in,
+ * ['type' => 'guest', 'id' => <string>] when a guest_id header is present,
+ * or null when neither is available.
+ */
+function chat_resolve_identity(?string $guestIdHeader = null): ?array {
+    $session = AuthMiddleware::getSession() ?? null;
+    $user = $session?->getUser() ?? null;
+    if ($user) {
+        return ['type' => 'user', 'id' => (int)$user->getUserId()];
+    }
+    if ($guestIdHeader) {
+        return ['type' => 'guest', 'id' => $guestIdHeader];
+    }
+    return null;
 }

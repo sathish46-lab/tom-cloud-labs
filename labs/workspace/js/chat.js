@@ -47,8 +47,10 @@ const CHAT = {
   socket: null,
   connected: false,
 
-  me: null,          // {user_id, username, role} from history response
+  me: null,          // {user_id, username, role} from history response (logged-in only)
   isAdmin: false,
+
+  guestId: null,     // UUID for guest tracking (stored in localStorage)
 
   open: false,
   unread: 0,
@@ -67,6 +69,23 @@ const CHAT = {
 
   deleting: {},      // id -> true, prevents double-delete clicks
 };
+
+/* ==========================================================================
+ * Guest identity — stable UUID per browser, stored in localStorage.
+ * Used to track unread count while not logged in, then merged on login.
+ * =========================================================================
+ */
+
+function guestId() {
+  if (CHAT.guestId) return CHAT.guestId;
+  let g = localStorage.getItem("tom-chat-guest-id");
+  if (!g) {
+    g = "guest_" + crypto.randomUUID?.() || ("g_" + Math.random().toString(36).slice(2));
+    localStorage.setItem("tom-chat-guest-id", g);
+  }
+  CHAT.guestId = g;
+  return g;
+}
 
 /* ==========================================================================
  * DOM construction (no innerHTML with user data — XSS-safe by design)
@@ -405,13 +424,17 @@ function disconnectSocket() {
  */
 
 async function loadHistory(refresh = false) {
-  if (!CHAT.me && !window.CHAT_CONTEXT?.loggedIn) return;
+  if (!window.CHAT_CONTEXT?.loggedIn && !guestId()) return;
   const seq = ++CHAT.loadSeq;
   try {
+    const headers = { "Accept": "application/json" };
+    if (!window.CHAT_CONTEXT?.loggedIn) {
+      headers["X-Guest-Id"] = guestId();
+    }
     const res = await fetch("/api/chat/history.php", {
       method: "GET",
       credentials: "same-origin",
-      headers: { "Accept": "application/json" },
+      headers,
     });
     if (seq !== CHAT.loadSeq) return;
     if (!res.ok) throw new Error("HTTP " + res.status);
@@ -420,6 +443,17 @@ async function loadHistory(refresh = false) {
 
     CHAT.me = data.me || null;
     CHAT.isAdmin = CHAT.me?.role === "admin";
+
+    // Apply unread count from server (works for both logged-in and guest).
+    CHAT.unread = data.unread_count ?? 0;
+    if (CHAT.badgeEl) {
+      CHAT.badgeEl.textContent = CHAT.unread > 99 ? "99+" : String(CHAT.unread);
+      CHAT.badgeEl.hidden = CHAT.unread === 0;
+    }
+    if (CHAT.fabEl) {
+      if (CHAT.unread > 0) CHAT.fabEl.classList.add("chat-fab--has-unread");
+      else CHAT.fabEl.classList.remove("chat-fab--has-unread");
+    }
 
     if (refresh) {
       // Gap-fill on reconnect: replace list, keep scroll at bottom.
@@ -452,10 +486,14 @@ function isScrolledToBottom() {
 
 function csrfHeaders(extra = {}) {
   const token = document.querySelector('meta[name="csrf-token"]')?.content || "";
-  return Object.assign({
+  const headers = {
     "Content-Type": "application/json",
     "X-CSRF-Token": token,
-  }, extra);
+  };
+  if (!window.CHAT_CONTEXT?.loggedIn) {
+    headers["X-Guest-Id"] = guestId();
+  }
+  return Object.assign(headers, extra);
 }
 
 async function sendMessage() {
@@ -710,7 +748,12 @@ function openPanel() {
   clearUnread();
 
   if (!window.CHAT_CONTEXT?.loggedIn) {
-    renderGuestState();
+    // Guest: load history to show unread count, but keep input disabled.
+    loadHistory(false).then(() => {
+      renderGuestState();
+      CHAT.inputEl.disabled = true;
+      CHAT.sendBtn.disabled = true;
+    });
     return;
   }
 
@@ -816,6 +859,18 @@ function wire() {
   // and the live online count work before the panel is ever opened.
   // onSubscribed gap-fills history and starts the presence heartbeat.
   if (window.CHAT_CONTEXT?.loggedIn) {
+    // Merge guest unread tracking into the user account if the visitor
+    // browsed chat as a guest before logging in.
+    const storedGuestId = localStorage.getItem("tom-chat-guest-id");
+    if (storedGuestId) {
+      fetch("/api/chat/merge_guest.php", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: csrfHeaders(),
+        body: JSON.stringify({ guest_id: storedGuestId }),
+      }).catch(() => {}); // non-fatal; unread may over-count slightly
+      localStorage.removeItem("tom-chat-guest-id");
+    }
     connectSocket();
   }
 
