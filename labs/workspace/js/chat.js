@@ -740,7 +740,7 @@ function clearUnread() {
   if (CHAT.fabEl) CHAT.fabEl.classList.remove("chat-fab--has-unread");
 }
 
-function openPanel() {
+async function openPanel() {
   if (!CHAT.panel) return;
   CHAT.panel.hidden = false;
   requestAnimationFrame(() => CHAT.panel.classList.add("open"));
@@ -758,11 +758,19 @@ function openPanel() {
   }
 
   if (!CHAT.historyLoaded) {
-    loadHistory(false).then(connectSocket);
+    await loadHistory(false);
   } else {
-    connectSocket();
-    loadHistory(true);
+    await loadHistory(true);
   }
+
+  // Mark previously-unread messages as read now that the panel is open,
+  // so the server stops counting them as unread and the badge clears.
+  if (CHAT.unread > 0) {
+    await markAllRead();
+    clearUnread();
+  }
+
+  connectSocket();
   scrollList(true);
   setTimeout(() => CHAT.inputEl && CHAT.inputEl.focus(), 250);
 }
