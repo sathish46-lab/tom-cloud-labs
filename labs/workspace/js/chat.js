@@ -16,6 +16,11 @@ try {
  * Real-time:  TomSocketClient -> /topic/global-chat-messages (subscribe only)
  * Send:       POST /api/chat/send  (auth + CSRF + rate limit + sanitize)
  * Delete:     POST /api/chat/delete (self-delete, admins delete any)
+ * Edit:       POST /api/chat/edit
+ * Pin:        POST /api/chat/pin (admin only)
+ * Pinned:     GET  /api/chat/pinned (panel list)
+ * Reaction:   POST /api/chat/reaction
+ * Search:     GET  /api/chat/search?q=
  * Typing:     POST /api/chat/typing (throttled) -> "(name) is typing..."
  * Presence:   POST /api/chat/presence heartbeat -> live online count
  * History:    GET  /api/chat/history (last 50, gap-fill on reconnect)
@@ -28,10 +33,12 @@ try {
  * Dependencies: stomp.js, mq.js (TomSocketClient), app.css (chat styles)
  * Used by: every page (markup self-injected, wired on DOMContentLoaded)
  *
- * @version 1.0.0
+ * @version 1.1.0
  * @author Sathish46 - Tom Labs
  * ============================================================================
  */
+
+const QUICK_REACTIONS = ["👍", "❤️", "😂", "🔥", "🎉"];
 
 const CHAT = {
   el: null,
@@ -43,6 +50,7 @@ const CHAT = {
   fabEl: null,       // pulse orb when unread
   countEl: null,
   typingEl: null,
+  fabTyping: null,
 
   socket: null,
   connected: false,
@@ -68,15 +76,19 @@ const CHAT = {
   lastCount: null,
 
   deleting: {},      // id -> true, prevents double-delete clicks
+  msgCache: {},      // id -> {username,text,user_id} so reply quotes can name the original sender
 
-  // --- New features state ---
+  // --- Feature state ---
   editingId: null,          // message id currently being edited
   editInput: null,          // edit input element
+  editOriginal: null,       // text before editing (for cancel)
   replyToId: null,          // message id being replied to
   replyEl: null,            // reply indicator element
   searchQuery: '',          // current search text
-  searchResults: [],        // search result message ids
+  searchResults: [],        // search result messages
   searchActive: false,      // whether search results are showing
+  matchIndex: 0,            // currently highlighted search match
+  _searchDebounce: null,
   pinnedList: [],           // pinned message objects
   pinnedView: false,        // whether pinned panel is open
 };
@@ -89,17 +101,20 @@ const CHAT = {
 
 function guestId() {
   if (CHAT.guestId) return CHAT.guestId;
-  let g = localStorage.getItem("tom-chat-guest-id");
+  let g = null;
+  try { g = localStorage.getItem("tom-chat-guest-id"); } catch (e) {}
   if (!g) {
-    g = "guest_" + crypto.randomUUID?.() || ("g_" + Math.random().toString(36).slice(2));
-    localStorage.setItem("tom-chat-guest-id", g);
+    g = crypto.randomUUID
+      ? "guest_" + crypto.randomUUID()
+      : "g_" + Math.random().toString(36).slice(2);
+    try { localStorage.setItem("tom-chat-guest-id", g); } catch (e) {}
   }
   CHAT.guestId = g;
   return g;
 }
 
 /* ==========================================================================
- * DOM construction (no innerHTML with user data — XSS-safe by design)
+ * DOM helpers (no innerHTML with user data — XSS-safe by design)
  * =========================================================================
  */
 
@@ -113,6 +128,11 @@ function el(tag, cls, text) {
   if (cls) node.className = cls;
   if (text !== undefined && text !== null) node.textContent = text;
   return node;
+}
+
+function rowById(id) {
+  if (!CHAT.listEl || id === undefined || id === null) return null;
+  return CHAT.listEl.querySelector(`[data-id="${chatEscapeAttr(id)}"]`);
 }
 
 function avatarNode(avatarUrl, name, cls) {
@@ -171,6 +191,14 @@ function chatDayLabel(ts) {
   return d.toLocaleDateString([], opts);
 }
 
+// Time of day only — the date comes from the day divider above the message.
+function chatFormatTs(ts) {
+  if (!ts) return "";
+  const d = new Date(ts);
+  if (isNaN(d)) return "";
+  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
 function buildWidget() {
   const root = document.getElementById("chat-widget");
   if (!root) return null;
@@ -193,53 +221,74 @@ function buildWidget() {
 
   return {
     root, panel, listEl, input, send, fab,
-    badge: badge, countEl, typingEl, fabTyping,
+    badge, countEl, typingEl, fabTyping,
     minBtn, closeBtn, scrollBtn,
     stormGlow, stormFlash, stormBolts,
   };
 }
 
 /* ==========================================================================
- * Rendering
+ * Rendering — single message
  * =========================================================================
  */
 
 function roleBadge(role) {
   if (role !== "admin") return null;
-  const b = el("span", "chat-role-badge", "Admin");
-  return b;
+  return el("span", "chat-role-badge", "Admin");
+}
+
+function pinTagNode() {
+  const t = el("div", "chat-pin-tag");
+  t.appendChild(el("i", "bx bxs-pin"));
+  t.appendChild(document.createTextNode("Pinned"));
+  return t;
+}
+
+function cacheMsg(m) {
+  if (m && m.id !== undefined) CHAT.msgCache[m.id] = { username: m.username, text: m.text, user_id: m.user_id };
+}
+
+// WhatsApp-style quote: coloured bar, bold sender name ("You" for your own
+// messages), quoted text underneath. Name/text come from the server if it
+// sends them, otherwise from the original message we already have loaded.
+function replyQuoteNode(msg) {
+  const src = CHAT.msgCache[msg.reply_to] || {};
+  const origUid = msg.reply_to_user_id ?? src.user_id;
+  const isMe = CHAT.me && origUid !== undefined && origUid !== null && String(origUid) === String(CHAT.me.user_id);
+  const name = isMe ? "You" : (msg.reply_to_username || src.username || "unknown");
+  const text = msg.reply_to_text || src.text || "Original message isn’t loaded";
+  const rq = el("div", "chat-reply-quote");
+  rq.style.setProperty("--chat-hue", String(chatHue(origUid ?? name)));
+  rq.setAttribute("role", "button");
+  rq.tabIndex = 0;
+  rq.title = "Jump to original message";
+  rq.appendChild(el("div", "chat-reply-quote-name", name));
+  rq.appendChild(el("div", "chat-reply-quote-text", text));
+  const go = () => jumpToMessage(msg.reply_to);
+  rq.addEventListener("click", (e) => { e.stopPropagation(); go(); });
+  rq.addEventListener("keydown", (e) => { if (e.key === "Enter") go(); });
+  return rq;
 }
 
 function renderMessage(msg) {
-  const mine = CHAT.me && msg.user_id === CHAT.me.user_id;
+  cacheMsg(msg);
+  const mine = !!(CHAT.me && msg.user_id === CHAT.me.user_id);
   const row = el("div", "chat-msg-row" + (mine ? " mine" : " other"));
   row.dataset.id = msg.id;
   row.dataset.uid = String(msg.user_id ?? "");
   row._ts = msg.ts;
   row.style.setProperty("--chat-hue", String(chatHue(msg.user_id ?? msg.username)));
 
-  // --- Reply quote indicator (shown above the bubble) ---
-  if (msg.reply_to) {
-    const rq = el("div", "chat-reply-quote");
-    const rqName = el("div", "chat-reply-quote-name", msg.reply_to_username || "Someone");
-    const rqText = el("div", "chat-reply-quote-text", msg.reply_to_text || "");
-    rq.appendChild(rqName);
-    rq.appendChild(rqText);
-    row.appendChild(rq);
-  }
-
-  // --- Pinned badge ---
-  if (msg.pinned && CHAT.isAdmin) {
-    const pinBadge = el("span", "chat-msg-pin-badge", "Pinned");
-    row.appendChild(pinBadge);
-  }
-
   // Incoming: avatar (real image if the payload has avatar_url, else initial).
-  if (!mine) {
-    row.appendChild(avatarNode(msg.avatar, msg.username, "chat-avatar"));
-  }
+  if (!mine) row.appendChild(avatarNode(msg.avatar, msg.username, "chat-avatar"));
 
   const bubble = el("div", "chat-bubble");
+
+  // Pinned tag (visible to everyone)
+  if (msg.pinned) bubble.appendChild(pinTagNode());
+
+  // Reply quote lives INSIDE the bubble
+  if (msg.reply_to) bubble.appendChild(replyQuoteNode(msg));
 
   if (!mine) {
     // Incoming: sender name (+ admin badge) above the text.
@@ -252,121 +301,208 @@ function renderMessage(msg) {
     bubble.appendChild(head);
   }
 
-  // Text + time share one row for both incoming and outgoing bubbles.
+  // Text + (edited) + time share one row.
   const meta = el("div", "chat-msg-meta");
   meta.appendChild(el("div", "chat-msg-text", msg.text || ""));
+  if (msg.edited) meta.appendChild(el("span", "chat-msg-edited", "edited"));
   meta.appendChild(el("span", "chat-msg-time", chatFormatTs(msg.ts)));
   bubble.appendChild(meta);
 
-  // --- Reactions (below text, above time) ---
+  // Reactions under the text
   if (msg.reactions && msg.reactions.length) {
-    const reactionsWrap = el("div", "chat-reactions");
-    for (const r of msg.reactions) {
-      reactionsWrap.appendChild(reactionNode(r.emoji, r.count, r.user_reacted));
-    }
-    meta.insertBefore(reactionsWrap, meta.firstChild);
-  }
-
-  // --- Edited indicator ---
-  if (msg.edited) {
-    const edited = el("span", "chat-msg-edited", "edited");
-    meta.appendChild(edited);
-  }
-
-  // --- Controls (edit, delete, pin) via three-dot dropdown ---
-  const canEdit = CHAT.me && mine && CHAT.editingId !== msg.id;
-  const canDelete = CHAT.me && (mine || CHAT.isAdmin);
-  const canPin = CHAT.isAdmin;
-
-  if (canEdit || canDelete || canPin) {
-    bubble.appendChild(moreOptionsNode(msg.id, mine, !!msg.pinned));
+    bubble.appendChild(reactionsWrapNode(msg.reactions));
   }
 
   row.appendChild(bubble);
+
+  // Three-dot menu is a SIBLING of the bubble (CSS places it beside it).
+  if (CHAT.me) row.appendChild(moreOptionsNode(msg.id, mine, !!msg.pinned));
+
   return row;
 }
 
-// Time of day only — the date comes from the day divider above the message.
-function chatFormatTs(ts) {
-  if (!ts) return "";
-  const d = new Date(ts);
-  if (isNaN(d)) return "";
-  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+/* ==========================================================================
+ * Three-dot menu
+ * ========================================================================= */
+
+let activeMenu = null;   // { menu, wrap }
+
+function menuItem(icon, label, cls, onClick) {
+  const b = el("button", "chat-msg-menu-item" + (cls ? " " + cls : ""));
+  b.type = "button";
+  b.setAttribute("role", "menuitem");
+  b.appendChild(el("i", "bx " + icon));
+  b.appendChild(el("span", null, label));
+  b.addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeAllMenus();
+    onClick();
+  });
+  return b;
 }
 
-/* ==========================================================================
- * More options dropdown (three-dot menu)
- * ========================================================================= */
+// The menu is ONE floating popover appended to the panel (not inside the
+// scrolling transcript), so later messages can never paint over it and the
+// transcript can never clip it.
+function buildMenu(messageId, mine, pinned) {
+  const menu = el("div", "chat-msg-menu");
+  menu.setAttribute("role", "menu");
+
+  const emojis = el("div", "chat-msg-menu-emojis");
+  for (const em of QUICK_REACTIONS) {
+    const b = el("button", "chat-msg-menu-emoji", em);
+    b.type = "button";
+    b.setAttribute("aria-label", "React with " + em);
+    b.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeAllMenus();
+      toggleReaction(em, messageId);
+    });
+    emojis.appendChild(b);
+  }
+
+  // "+" opens the full emoji picker (extended reactions)
+  const more = el("button", "chat-msg-menu-emoji chat-msg-menu-emoji--more");
+  more.type = "button";
+  more.setAttribute("aria-label", "Choose another emoji");
+  more.innerHTML = '<i class="bx bx-plus"></i>';
+  more.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const r = more.getBoundingClientRect();
+    closeAllMenus();
+    openEmojiPicker(messageId, r);
+  });
+  emojis.appendChild(more);
+  menu.appendChild(emojis);
+
+  menu.appendChild(menuItem("bx-reply", "Reply", "", () => {
+    const row = rowById(messageId);
+    if (!row) return;
+    const name = row.querySelector(".chat-msg-name")?.textContent || (mine ? "You" : "unknown");
+    const text = row.querySelector(".chat-msg-text")?.textContent || "";
+    setReplyTo(messageId, name, text);
+    CHAT.inputEl?.focus();
+  }));
+  if (mine) menu.appendChild(menuItem("bx-edit", "Edit", "", () => startEditMode(messageId)));
+  if (CHAT.isAdmin) {
+    menu.appendChild(menuItem(pinned ? "bxs-pin" : "bx-pin", pinned ? "Unpin" : "Pin", "",
+      () => pinMessage(messageId, !pinned)));
+  }
+  if (mine || CHAT.isAdmin) {
+    menu.appendChild(menuItem("bx-trash", "Delete", "chat-msg-menu-item--danger",
+      () => deleteMessage(messageId, null)));
+  }
+  menu.addEventListener("click", (e) => e.stopPropagation());
+  return menu;
+}
+
+function openMenu(wrap, btn, messageId, mine, pinned) {
+  closeAllMenus();
+  const menu = buildMenu(messageId, mine, pinned);
+  CHAT.panel.appendChild(menu);
+  wrap.classList.add("is-open");
+  activeMenu = { menu, wrap };
+
+  const pr = CHAT.panel.getBoundingClientRect();
+  const br = btn.getBoundingClientRect();
+  const mw = menu.offsetWidth, mh = menu.offsetHeight, pad = 8;
+
+  // horizontal: my messages open toward the left, others toward the right
+  let left = mine ? br.right - pr.left - mw : br.left - pr.left;
+  left = Math.max(pad, Math.min(left, pr.width - mw - pad));
+
+  // vertical: below the button, flip above if it would hit the composer area
+  const limit = pr.height - 70;
+  let top = br.bottom - pr.top + 4;
+  if (top + mh > limit) top = br.top - pr.top - mh - 4;
+  top = Math.max(pad + 50, top);
+
+  menu.style.left = left + "px";
+  menu.style.top = top + "px";
+}
 
 function moreOptionsNode(messageId, mine, pinned) {
   const wrap = el("div", "chat-msg-more-wrap");
-
   const btn = el("button", "chat-msg-more", "⋮");
   btn.type = "button";
   btn.setAttribute("aria-label", "More options");
-
-  const menu = el("div", "chat-msg-menu");
-  menu.hidden = true;
-
-  // Edit option
-  if (CHAT.me && mine && CHAT.editingId !== messageId) {
-    const editItem = el("button", "chat-msg-menu-item", "Edit");
-    editItem.type = "button";
-    editItem.addEventListener("click", (e) => {
-      e.stopPropagation();
-      closeMenu(menu);
-      startEditMode(messageId);
-    });
-    menu.appendChild(editItem);
-  }
-
-  // Pin / unpin option
-  if (CHAT.isAdmin) {
-    const pinItem = el("button", "chat-msg-menu-item", pinned ? "Unpin" : "Pin");
-    pinItem.type = "button";
-    pinItem.addEventListener("click", (e) => {
-      e.stopPropagation();
-      closeMenu(menu);
-      pinMessage(messageId, !pinned);
-    });
-    menu.appendChild(pinItem);
-  }
-
-  // Delete option
-  if (CHAT.me && (mine || CHAT.isAdmin)) {
-    const delItem = el("button", "chat-msg-menu-item chat-msg-menu-item--danger", "Delete");
-    delItem.type = "button";
-    delItem.addEventListener("click", (e) => {
-      e.stopPropagation();
-      closeMenu(menu);
-      deleteMessage(messageId, null);
-    });
-    menu.appendChild(delItem);
-  }
-
-  // Click outside to close
+  btn.setAttribute("aria-haspopup", "menu");
   btn.addEventListener("click", (e) => {
     e.stopPropagation();
-    closeAllMenus();
-    menu.hidden = !menu.hidden;
+    if (activeMenu && activeMenu.wrap === wrap) { closeAllMenus(); return; }
+    openMenu(wrap, btn, messageId, mine, pinned);
   });
-
   wrap.appendChild(btn);
-  wrap.appendChild(menu);
   return wrap;
 }
 
-function closeMenu(menu) {
-  if (menu) menu.hidden = true;
-}
-
 function closeAllMenus() {
-  document.querySelectorAll(".chat-msg-menu").forEach((m) => (m.hidden = true));
+  if (!activeMenu) return;
+  activeMenu.menu.remove();
+  activeMenu.wrap.classList.remove("is-open");
+  activeMenu = null;
 }
 
-// Close menus when clicking anywhere
-document.addEventListener("click", () => {
-  closeAllMenus();
+/* --------------------------------------------------------------------------
+ * Extended-reaction emoji picker (lazy-loaded web component)
+ * -------------------------------------------------------------------------- */
+
+let activeEmojiPicker = null;
+const EMOJI_POP_W = 340, EMOJI_POP_H = 400;
+
+function openEmojiPicker(messageId, anchorRect) {
+  if (activeEmojiPicker) { closeEmojiPicker(); return; }
+
+  const pop = el("div", "chat-emoji-popover chat-emoji-popover--loading");
+  pop.setAttribute("role", "dialog");
+  pop.setAttribute("aria-label", "Pick a reaction emoji");
+  pop.addEventListener("click", (e) => e.stopPropagation());
+  CHAT.panel.appendChild(pop);
+  activeEmojiPicker = pop;
+
+  // position relative to the "⋮" button rect captured before the menu closed
+  const pr = CHAT.panel.getBoundingClientRect();
+  const pw = pop.offsetWidth || EMOJI_POP_W, ph = pop.offsetHeight || EMOJI_POP_H, pad = 8;
+  let left = anchorRect.left - pr.left;
+  left = Math.max(pad, Math.min(left, pr.width - pw - pad));
+  let top = anchorRect.bottom - pr.top + 4;
+  const limit = pr.height - 70;
+  if (top + ph > limit) top = anchorRect.top - pr.top - ph - 4;
+  top = Math.max(pad + 50, top);
+  pop.style.left = left + "px";
+  pop.style.top = top + "px";
+
+  import("/assets/js/emoji-picker.js")
+    .then(() => {
+      const picker = document.createElement("emoji-picker");
+      picker.setAttribute("data-source", "/assets/js/emoji-data.json");
+      picker.addEventListener("emoji-click", (ev) => {
+        ev.stopPropagation();
+        const uni = ev.detail && (ev.detail.unicode || (ev.detail.emoji && ev.detail.emoji.unicode));
+        if (!uni) return;
+        closeEmojiPicker();
+        toggleReaction(uni, messageId);
+      });
+      pop.classList.remove("chat-emoji-popover--loading");
+      pop.appendChild(picker);
+    })
+    .catch((e) => {
+      console.warn("[Chat] emoji picker failed to load:", e);
+      chatToast("Could not load emoji picker.");
+      closeEmojiPicker();
+    });
+}
+
+function closeEmojiPicker() {
+  if (!activeEmojiPicker) return;
+  activeEmojiPicker.remove();
+  activeEmojiPicker = null;
+}
+
+document.addEventListener("click", closeAllMenus);
+document.addEventListener("click", closeEmojiPicker);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") { closeAllMenus(); closeEmojiPicker(); }
 });
 
 /* ==========================================================================
@@ -377,26 +513,28 @@ function reactionNode(emoji, count, userReacted) {
   const wrap = el("span", "chat-reaction");
   wrap.dataset.emoji = emoji;
   wrap.title = count + " reacted with " + emoji;
-
-  const emojiSpan = el("span", "chat-reaction-emoji", emoji);
-  const countSpan = el("span", "chat-reaction-count", String(count));
-  wrap.appendChild(emojiSpan);
-  wrap.appendChild(countSpan);
-
+  wrap.appendChild(el("span", "chat-reaction-emoji", emoji));
+  wrap.appendChild(el("span", "chat-reaction-count", String(count)));
   if (userReacted) wrap.classList.add("chat-reaction--self");
 
   wrap.addEventListener("click", (e) => {
     e.stopPropagation();
-    toggleReaction(emoji, wrap);
+    const row = wrap.closest(".chat-msg-row");
+    if (row) toggleReaction(emoji, row.dataset.id);
   });
   return wrap;
 }
 
-async function toggleReaction(emoji, node) {
-  if (!CHAT.me) return;
-  const row = node.closest(".chat-msg-row");
-  if (!row) return;
-  const messageId = row.dataset.id;
+function reactionsWrapNode(reactions) {
+  const wrap = el("div", "chat-reactions");
+  for (const r of reactions) {
+    wrap.appendChild(reactionNode(r.emoji, r.count, r.user_reacted));
+  }
+  return wrap;
+}
+
+async function toggleReaction(emoji, messageId) {
+  if (!CHAT.me || !messageId) return;
   try {
     const res = await fetch("/api/chat/reaction", {
       method: "POST",
@@ -405,11 +543,48 @@ async function toggleReaction(emoji, node) {
       body: JSON.stringify({ message_id: messageId, emoji }),
     });
     const data = await res.json().catch(() => ({}));
-    if (!data.success) return;
-    // node will be updated via socket fan-out event; no optimistic UI here
+    if (!data.success) chatToast(data.error || "Could not react.");
+    // UI updates via the socket fan-out event; no optimistic update here.
   } catch (e) {
     console.warn("[Chat] reaction failed:", e);
   }
+}
+
+// Applies a "reaction" socket event to the matching row.
+// If the server sends the full `reactions` array we re-render the whole chip
+// list (preferred). Otherwise we patch just the one chip that changed.
+function applyReactionEvent(evt) {
+  const row = rowById(evt.message_id);
+  if (!row) return;
+  const bubble = row.querySelector(".chat-bubble");
+  if (!bubble) return;
+  let wrap = bubble.querySelector(".chat-reactions");
+
+  if (Array.isArray(evt.reactions)) {
+    wrap?.remove();
+    if (evt.reactions.length) bubble.appendChild(reactionsWrapNode(evt.reactions));
+    return;
+  }
+
+  if (!evt.emoji) return;
+  if (!wrap) {
+    wrap = el("div", "chat-reactions");
+    bubble.appendChild(wrap);
+  }
+  const chip = wrap.querySelector(`[data-emoji="${chatEscapeAttr(evt.emoji)}"]`);
+
+  if (!evt.count) {                       // last reaction removed
+    chip?.remove();
+    if (!wrap.children.length) wrap.remove();
+    return;
+  }
+
+  const actedByMe = evt.user_id === CHAT.me?.user_id;
+  const wasSelf = chip ? chip.classList.contains("chat-reaction--self") : false;
+  const isSelf = actedByMe ? evt.added !== false : wasSelf;
+  const fresh = reactionNode(evt.emoji, evt.count, isSelf);
+  if (chip) chip.replaceWith(fresh);
+  else wrap.appendChild(fresh);
 }
 
 /* ==========================================================================
@@ -418,7 +593,7 @@ async function toggleReaction(emoji, node) {
 
 function startEditMode(messageId) {
   if (!CHAT.me) return;
-  const row = CHAT.listEl.querySelector(`[data-id="${chatEscapeAttr(messageId)}"]`);
+  const row = rowById(messageId);
   if (!row) return;
   if (CHAT.editingId) cancelEditMode();
 
@@ -427,18 +602,21 @@ function startEditMode(messageId) {
   const currentText = textEl.textContent;
 
   CHAT.editingId = messageId;
+  CHAT.editOriginal = currentText;
   CHAT.editInput = el("input", "chat-edit-input");
   CHAT.editInput.value = currentText;
   CHAT.editInput.maxLength = 500;
 
   const saveBtn = el("button", "chat-edit-save", "✓");
   saveBtn.type = "button";
+  saveBtn.setAttribute("aria-label", "Save edit");
   saveBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     finishEditMode(true);
   });
   const cancelBtn = el("button", "chat-edit-cancel", "✕");
   cancelBtn.type = "button";
+  cancelBtn.setAttribute("aria-label", "Cancel edit");
   cancelBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     cancelEditMode();
@@ -456,6 +634,7 @@ function startEditMode(messageId) {
       e.preventDefault();
       finishEditMode(true);
     } else if (e.key === "Escape") {
+      e.stopPropagation();
       cancelEditMode();
     }
   });
@@ -464,36 +643,30 @@ function startEditMode(messageId) {
 function cancelEditMode() {
   if (!CHAT.editInput) return;
   const textEl = CHAT.editInput.parentElement;
-  if (textEl) {
-    textEl.textContent = CHAT.editInput.value || "";
-  }
+  if (textEl) textEl.textContent = CHAT.editOriginal ?? "";
   CHAT.editInput = null;
   CHAT.editingId = null;
-  const row = document.querySelector(".chat-msg-row--editing");
-  if (row) row.classList.remove("chat-msg-row--editing");
+  CHAT.editOriginal = null;
+  document.querySelector(".chat-msg-row--editing")?.classList.remove("chat-msg-row--editing");
 }
 
 async function finishEditMode(save) {
-  if (!CHAT.editInput || !CHAT.editingId) {
-    cancelEditMode();
-    return;
-  }
+  if (!CHAT.editInput || !CHAT.editingId) { cancelEditMode(); return; }
+  const id = CHAT.editingId;                 // capture BEFORE cancel clears it
   const newText = CHAT.editInput.value.trim();
+  const changed = newText !== CHAT.editOriginal;
   cancelEditMode();
-  if (!save || newText === "") return;
+  if (!save || !newText || !changed) return;
   try {
     const res = await fetch("/api/chat/edit", {
       method: "POST",
       credentials: "same-origin",
       headers: csrfHeaders(),
-      body: JSON.stringify({ message_id: CHAT.editingId, text: newText }),
+      body: JSON.stringify({ message_id: id, text: newText }),
     });
     const data = await res.json().catch(() => ({}));
-    if (!data.success) {
-      chatToast(data.error || "Could not edit message.");
-      return;
-    }
-    // Row will be updated via socket fan-out edit event.
+    if (!data.success) chatToast(data.error || "Could not edit message.");
+    // Row updates via socket fan-out edit event.
   } catch (e) {
     console.warn("[Chat] edit failed:", e);
     chatToast("Network error — try again.");
@@ -501,39 +674,36 @@ async function finishEditMode(save) {
 }
 
 /* ==========================================================================
- * Reply / quote
+ * Reply / quote  (preview bar sits ABOVE the composer pill)
  * ========================================================================= */
 
 function replyNode(messageId, username, text) {
   const wrap = el("div", "chat-reply");
   wrap.dataset.replyTo = messageId;
 
-  const name = el("div", "chat-reply-name", username || "unknown");
-  const msg  = el("div", "chat-reply-text", text || "");
-  wrap.appendChild(name);
-  wrap.appendChild(msg);
+  const body = el("div", "chat-reply-body");
+  body.appendChild(el("div", "chat-reply-name", username || "unknown"));
+  body.appendChild(el("div", "chat-reply-text", text || ""));
+  wrap.appendChild(body);
 
   const remove = el("button", "chat-reply-remove", "✕");
   remove.type = "button";
-  remove.setAttribute("aria-label", "Remove reply");
+  remove.setAttribute("aria-label", "Cancel reply");
   remove.addEventListener("click", (e) => {
     e.stopPropagation();
     cancelReply();
   });
   wrap.appendChild(remove);
-
   return wrap;
 }
 
 function setReplyTo(messageId, username, text) {
+  cancelReply();
   CHAT.replyToId = messageId;
-  const composer = CHAT.inputEl.closest(".chat-composer");
+  const composer = CHAT.inputEl?.closest(".chat-composer");
   if (!composer) return;
-  // Remove existing reply indicator if any
-  const old = composer.querySelector(".chat-reply");
-  if (old) old.remove();
   const rep = replyNode(messageId, username, text);
-  composer.insertBefore(rep, CHAT.inputEl);
+  composer.parentNode.insertBefore(rep, composer);
   CHAT.replyEl = rep;
   CHAT.inputEl.placeholder = "Replying…";
 }
@@ -565,10 +735,102 @@ async function pinMessage(messageId, pinned) {
       chatToast(data.error || "Could not pin message.");
       return;
     }
-    // Row will be updated via socket fan-out pin event.
+    // Row + pinned list update via socket fan-out pin event.
   } catch (e) {
     console.warn("[Chat] pin failed:", e);
+    chatToast("Network error — try again.");
   }
+}
+
+/* ==========================================================================
+ * Pinned panel
+ * ========================================================================= */
+
+async function loadPinned() {
+  if (!window.CHAT_CONTEXT?.loggedIn) return;
+  try {
+    // Dedicated endpoint: search.php returns an empty list for an empty
+    // query, so the panel cannot reuse it.
+    const res = await fetch("/api/chat/pinned", {
+      credentials: "same-origin",
+      headers: { "Accept": "application/json" },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!data.success) return;
+    CHAT.pinnedList = (data.messages || []).filter((m) => m.pinned);
+    renderPinned(CHAT.pinnedList);
+  } catch (e) {
+    console.warn("[Chat] load pinned failed:", e);
+  }
+}
+
+function renderPinned(messages) {
+  const list = document.getElementById("chat-pinned-list");
+  if (!list) return;
+  list.textContent = "";
+
+  const badge = document.getElementById("chat-pinned-count");
+  if (badge) {
+    badge.textContent = String(messages.length);
+    badge.hidden = messages.length === 0;
+  }
+
+  if (!messages.length) {
+    const empty = el("div", "chat-pinned-empty");
+    empty.appendChild(el("i", "bx bx-pin"));
+    empty.appendChild(el("div", null, "No pinned messages yet."));
+    list.appendChild(empty);
+    return;
+  }
+  for (const msg of messages) list.appendChild(pinnedItemNode(msg));
+}
+
+function pinnedItemNode(msg) {
+  const item = el("div", "chat-pinned-item");
+  item.dataset.id = msg.id;
+  item.style.setProperty("--chat-hue", String(chatHue(msg.user_id ?? msg.username)));
+  item.appendChild(avatarNode(msg.avatar, msg.username, "chat-avatar"));
+
+  const body = el("div", "chat-pinned-body");
+  const head = el("div", "chat-pinned-head");
+  head.appendChild(el("span", "chat-msg-name", msg.username || "unknown"));
+  head.appendChild(el("span", "chat-msg-time", chatDayLabel(msg.ts) + " · " + chatFormatTs(msg.ts)));
+  body.appendChild(head);
+  body.appendChild(el("div", "chat-pinned-text", msg.text || ""));
+  item.appendChild(body);
+
+  if (CHAT.isAdmin) {
+    const un = el("button", "chat-pinned-unpin", "✕");
+    un.type = "button";
+    un.title = "Unpin";
+    un.setAttribute("aria-label", "Unpin message");
+    un.addEventListener("click", (e) => {
+      e.stopPropagation();
+      pinMessage(msg.id, false);
+    });
+    item.appendChild(un);
+  }
+
+  item.addEventListener("click", () => jumpToMessage(msg.id));
+  return item;
+}
+
+function closePinned() {
+  const p = document.getElementById("chat-pinned");
+  if (p) p.hidden = true;
+  CHAT.pinnedView = false;
+}
+
+function jumpToMessage(id) {
+  closePinned();
+  const row = rowById(id);
+  if (!row) {
+    chatToast("That message is older than the loaded history.");
+    return;
+  }
+  row.scrollIntoView({ behavior: "smooth", block: "center" });
+  row.classList.add("chat-msg-flash");
+  setTimeout(() => row.classList.remove("chat-msg-flash"), 1600);
 }
 
 /* ==========================================================================
@@ -578,8 +840,11 @@ async function pinMessage(messageId, pinned) {
 async function searchMessages(query) {
   if (!query) {
     CHAT.searchActive = false;
+    CHAT.searchQuery = "";
     CHAT.searchResults = [];
-    renderSearchResults([]);
+    CHAT.matchIndex = 0;
+    updateMatchNav();
+    if (CHAT.historyLoaded) loadHistory(true);   // restore the normal transcript
     return;
   }
   try {
@@ -593,14 +858,55 @@ async function searchMessages(query) {
     CHAT.searchQuery = query;
     CHAT.searchResults = data.messages || [];
     CHAT.searchActive = true;
+    CHAT.matchIndex = 0;
     renderSearchResults(CHAT.searchResults);
+    updateMatchNav();
   } catch (e) {
     console.warn("[Chat] search failed:", e);
   }
 }
 
+/* Match navigation: ↑/↓ buttons + "n of M matches" counter. Every match is
+ * rendered while search is active, so the count is always complete; if a
+ * match row disappeared live (deleted), re-render before jumping. */
+function updateMatchNav() {
+  const nav = document.getElementById("chat-match-nav");
+  if (!nav) return;
+  const total = CHAT.searchActive ? CHAT.searchResults.length : 0;
+  nav.hidden = total === 0;
+  if (!total) return;
+  if (CHAT.matchIndex < 0) CHAT.matchIndex = 0;
+  if (CHAT.matchIndex >= total) CHAT.matchIndex = total - 1;
+  const count = document.getElementById("chat-match-count");
+  if (count) count.textContent = (CHAT.matchIndex + 1) + " of " + total + " matches";
+}
+
+function flashMatch(row) {
+  if (!row) return;
+  row.scrollIntoView({ behavior: "smooth", block: "center" });
+  row.classList.add("chat-msg-flash");
+  setTimeout(() => row.classList.remove("chat-msg-flash"), 1600);
+}
+
+function gotoMatch(delta) {
+  const total = CHAT.searchActive ? CHAT.searchResults.length : 0;
+  if (!total) return;
+  CHAT.matchIndex = (CHAT.matchIndex + delta + total) % total;
+  updateMatchNav();
+  const msg = CHAT.searchResults[CHAT.matchIndex];
+  let row = msg && rowById(msg.id);
+  if (!row) {
+    // A result vanished from the DOM (live delete) — rebuild, then jump.
+    renderSearchResults(CHAT.searchResults);
+    updateMatchNav();
+    row = msg && rowById(msg.id);
+  }
+  flashMatch(row);
+}
+
 function renderSearchResults(messages) {
   if (!CHAT.listEl) return;
+  closeAllMenus();
   CHAT.listEl.textContent = "";
   if (messages.length === 0) {
     const empty = el("div", "chat-empty");
@@ -613,29 +919,12 @@ function renderSearchResults(messages) {
     CHAT.listEl.appendChild(renderMessage(msg));
   }
   regroup();
+  scrollList(false);
 }
 
 /* ==========================================================================
- * Pinned messages
+ * Transcript helpers
  * ========================================================================= */
-
-function renderPinned(messages) {
-  const list = document.getElementById("chat-pinned-list");
-  if (!list) return;
-  list.textContent = "";
-  if (messages.length === 0) {
-    list.appendChild(el("p", null, "No pinned messages."));
-    return;
-  }
-  for (const msg of messages) {
-    list.appendChild(renderMessage(msg));
-  }
-}
-
-/* ==========================================================================
- * Rendering — updated renderMessage with reactions, edit, reply, pin
- * ========================================================================= */
-
 
 // Rebuilds day dividers and group classes (.is-first / .is-cont) for the whole
 // transcript. A group = consecutive messages from one sender within 5 minutes.
@@ -667,7 +956,7 @@ function regroup() {
 function appendMessage(msg, { scroll = true } = {}) {
   if (!CHAT.listEl) return;
   // Dedupe (socket + gap-fill history can overlap).
-  if (CHAT.listEl.querySelector(`[data-id="${chatEscapeAttr(msg.id)}"]`)) return;
+  if (rowById(msg.id)) return;
   const node = renderMessage(msg);
   CHAT.listEl.appendChild(node);
   regroup();
@@ -676,6 +965,16 @@ function appendMessage(msg, { scroll = true } = {}) {
 
 function renderHistory(messages) {
   if (!CHAT.listEl) return;
+  closeAllMenus();
+  messages.forEach(cacheMsg);
+  // If a reload happened while search results were showing (reconnect
+  // gap-fill, etc.), re-run the search against the fresh cache/server so
+  // the transcript, the match count and the arrows never disagree, and
+  // matches that arrived in the gap are counted too.
+  if (CHAT.searchActive && CHAT.searchQuery) {
+    searchMessages(CHAT.searchQuery);
+    return;
+  }
   CHAT.listEl.textContent = "";
   for (const msg of messages) {
     CHAT.listEl.appendChild(renderMessage(msg));
@@ -715,8 +1014,12 @@ function handleEvent(evt) {
   if (!evt || typeof evt !== "object") return;
 
   if (evt.type === "message") {
-    hideEmptyState();
-    appendMessage(evt, { scroll: CHAT.open });
+    // While search results are on screen, don't mix live messages into them;
+    // closing search reloads the history anyway.
+    if (!CHAT.searchActive) {
+      hideEmptyState();
+      appendMessage(evt, { scroll: CHAT.open });
+    }
     if (!CHAT.open) bumpUnread();
     // A real message clears the sender's typing indicator everywhere.
     if (CHAT.typingUsers[evt.user_id]) {
@@ -728,62 +1031,44 @@ function handleEvent(evt) {
 
   if (evt.type === "delete") {
     removeMessageNode(evt.id);
+    if (CHAT.pinnedList.some((m) => m.id === evt.id)) loadPinned();
     return;
   }
 
   if (evt.type === "reaction") {
-    // Update reaction counts on the matching message row.
-    const row = CHAT.listEl.querySelector(`[data-id="${chatEscapeAttr(evt.message_id)}"]`);
-    if (row) {
-      // Re-render the row with updated reactions by fetching fresh history
-      // is too heavy; instead patch the reactions in place.
-      const meta = row.querySelector(".chat-msg-meta");
-      const existing = row.querySelector(".chat-reactions");
-      if (existing) existing.remove();
-      if (evt.added !== undefined && evt.count !== undefined) {
-        // Find or create reactions container
-        const wrap = el("div", "chat-reactions");
-        wrap.appendChild(reactionNode(evt.emoji, evt.count, evt.user_id === CHAT.me?.user_id));
-        meta.insertBefore(wrap, meta.firstChild);
-      }
-    }
+    applyReactionEvent(evt);
     return;
   }
 
   if (evt.type === "edit") {
-    const row = CHAT.listEl.querySelector(`[data-id="${chatEscapeAttr(evt.id)}"]`);
+    const row = rowById(evt.id);
     if (row) {
       const textEl = row.querySelector(".chat-msg-text");
-      if (textEl) textEl.textContent = evt.text;
-      row.querySelector(".chat-msg-edited")?.remove();
+      // don't clobber the text while the user is editing this very message
+      if (textEl && CHAT.editingId !== evt.id) textEl.textContent = evt.text;
+      if (CHAT.msgCache[evt.id]) CHAT.msgCache[evt.id].text = evt.text;
+      const meta = row.querySelector(".chat-msg-meta");
+      meta?.querySelector(".chat-msg-edited")?.remove();
       const edited = el("span", "chat-msg-edited", "edited");
-      row.querySelector(".chat-msg-meta")?.appendChild(edited);
-      row.classList.add("chat-msg-row--edited");
+      const time = meta?.querySelector(".chat-msg-time");
+      if (meta) meta.insertBefore(edited, time || null);
     }
+    if (CHAT.pinnedList.some((m) => m.id === evt.id)) loadPinned();
     return;
   }
 
   if (evt.type === "pin") {
-    const row = CHAT.listEl.querySelector(`[data-id="${chatEscapeAttr(evt.id)}"]`);
+    const row = rowById(evt.id);
     if (row) {
-      const existing = row.querySelector(".chat-msg-pin-badge");
-      if (evt.pinned && !existing) {
-        const badge = el("span", "chat-msg-pin-badge", "Pinned");
-        row.insertBefore(badge, row.firstChild);
-      } else if (!evt.pinned && existing) {
-        existing.remove();
-      }
-      const btn = row.querySelector(".chat-msg-pin");
-      if (btn) {
-        btn.textContent = evt.pinned ? "📌" : "📍";
-        btn.classList.toggle("chat-msg-pin--pinned", evt.pinned);
-        btn.setAttribute("aria-label", evt.pinned ? "Unpin message" : "Pin message");
-      }
+      const bubble = row.querySelector(".chat-bubble");
+      bubble?.querySelector(".chat-pin-tag")?.remove();
+      if (evt.pinned && bubble) bubble.insertBefore(pinTagNode(), bubble.firstChild);
+      // rebuild the menu so it says Pin / Unpin correctly
+      row.querySelector(".chat-msg-more-wrap")?.replaceWith(
+        moreOptionsNode(evt.id, row.classList.contains("mine"), !!evt.pinned)
+      );
     }
-    // Refresh pinned panel if open
-    if (CHAT.pinnedView) {
-      loadHistory(true);
-    }
+    loadPinned();
     return;
   }
 
@@ -798,15 +1083,6 @@ function handleEvent(evt) {
     return;
   }
 
-  if (evt.type === "typing_stop") {
-    if (!CHAT.typingEl || !CHAT.me) return;
-    if (evt.user_id === CHAT.me.user_id) return;
-    delete CHAT.typingUsers[evt.user_id];
-    console.log("[DBG] typing_stop", evt.user_id);
-    renderTypingStrip();
-    return;
-  }
-
   if (evt.type === "presence") {
     setOnlineCount(typeof evt.count === "number" ? evt.count : null);
     return;
@@ -814,8 +1090,7 @@ function handleEvent(evt) {
 }
 
 function removeMessageNode(id) {
-  if (!CHAT.listEl || !id) return;
-  const node = CHAT.listEl.querySelector(`[data-id="${chatEscapeAttr(id)}"]`);
+  const node = rowById(id);
   if (node) {
     node.classList.add("chat-msg-removed");
     regroup(); // neighbours re-group immediately while the node fades out
@@ -841,7 +1116,10 @@ function connectSocket() {
         // refresh history so nothing sent while disconnected is missed,
         // then start (or restart) the presence heartbeat.
         CHAT.connected = true;
-        loadHistory(true).then(startPresence);
+        loadHistory(true).then(() => {
+          startPresence();
+          loadPinned();
+        });
       }
     );
   } catch (e) {
@@ -884,14 +1162,14 @@ async function loadHistory(refresh = false) {
     CHAT.isAdmin = CHAT.me?.role === "admin";
 
     // Apply unread count from server (works for both logged-in and guest).
-    CHAT.unread = data.unread_count ?? 0;
+    // While the panel is open nothing is unread, so keep the badge clear.
+    CHAT.unread = CHAT.open ? 0 : (data.unread_count ?? 0);
     if (CHAT.badgeEl) {
       CHAT.badgeEl.textContent = CHAT.unread > 99 ? "99+" : String(CHAT.unread);
       CHAT.badgeEl.hidden = CHAT.unread === 0;
     }
     if (CHAT.fabEl) {
-      if (CHAT.unread > 0) CHAT.fabEl.classList.add("chat-fab--has-unread");
-      else CHAT.fabEl.classList.remove("chat-fab--has-unread");
+      CHAT.fabEl.classList.toggle("chat-fab--has-unread", CHAT.unread > 0);
     }
 
     if (refresh) {
@@ -1000,6 +1278,7 @@ async function deleteMessage(id, row) {
       return;
     }
     removeMessageNode(id);
+    if (CHAT.pinnedList.some((m) => m.id === id)) loadPinned();
   } catch (e) {
     console.warn("[Chat] delete failed:", e);
     chatToast("Network error — try again.");
@@ -1194,8 +1473,7 @@ async function markAllRead() {
       headers: csrfHeaders(),
     });
     if (!res.ok) return;
-    const data = await res.json();
-    if (!data.success) return;
+    await res.json().catch(() => ({}));
   } catch (e) {
     // Non-fatal: badge stays until the next open.
   }
@@ -1206,6 +1484,7 @@ async function openPanel() {
   CHAT.panel.hidden = false;
   requestAnimationFrame(() => CHAT.panel.classList.add("open"));
   CHAT.open = true;
+  const hadUnread = CHAT.unread > 0;
   clearUnread();
 
   if (!window.CHAT_CONTEXT?.loggedIn) {
@@ -1226,42 +1505,15 @@ async function openPanel() {
 
   // Mark previously-unread messages as read now that the panel is open,
   // so the server stops counting them as unread and the badge clears.
-  if (CHAT.unread > 0) {
+  if (hadUnread) {
     await markAllRead();
     clearUnread();
   }
 
-  // Load pinned messages if admin.
-  if (CHAT.isAdmin) {
-    await loadPinned();
-  }
-
+  loadPinned();            // everyone sees pinned messages; no need to await
   connectSocket();
   scrollList(true);
   setTimeout(() => CHAT.inputEl && CHAT.inputEl.focus(), 250);
-}
-
-async function loadPinned() {
-  if (!CHAT.isAdmin) return;
-  try {
-    const res = await fetch("/api/chat/search?q=", {
-      method: "GET",
-      credentials: "same-origin",
-      headers: { "Accept": "application/json" },
-    });
-    // search with empty q returns all messages; filter pinned on client
-    const data = await res.json().catch(() => ({}));
-    if (!data.success) return;
-    CHAT.pinnedList = (data.messages || []).filter((m) => m.pinned);
-    renderPinned(CHAT.pinnedList);
-    const badge = document.getElementById("chat-pinned-count");
-    if (badge) {
-      badge.textContent = CHAT.pinnedList.length;
-      badge.hidden = CHAT.pinnedList.length === 0;
-    }
-  } catch (e) {
-    console.warn("[Chat] load pinned failed:", e);
-  }
 }
 
 function renderGuestState() {
@@ -1282,9 +1534,10 @@ function renderGuestState() {
 
 function closePanel(minimize) {
   if (!CHAT.panel) return;
+  closeAllMenus();
   CHAT.panel.classList.remove("open");
   CHAT.open = false;
-  const done = () => { CHAT.panel.hidden = true; };
+  const done = () => { if (!CHAT.open) CHAT.panel.hidden = true; };
   CHAT.panel.addEventListener("transitionend", done, { once: true });
   setTimeout(done, 300); // fallback if transitionend never fires
   if (minimize) {
@@ -1329,9 +1582,10 @@ function wire() {
   });
   built.listEl.addEventListener("scroll", () => {
     built.scrollBtn.hidden = isScrolledToBottom();
+    closeAllMenus();
   });
 
-  // --- Search ---
+  // --- Search + Pinned toggles ---
   const searchToggle = document.getElementById("chat-search-toggle");
   const searchEl = document.getElementById("chat-search");
   const searchInput = document.getElementById("chat-search-input");
@@ -1340,68 +1594,58 @@ function wire() {
   const pinnedEl = document.getElementById("chat-pinned");
   const pinnedClose = document.getElementById("chat-pinned-close");
 
+  function closeSearch() {
+    if (!searchEl) return;
+    const wasActive = CHAT.searchActive;
+    searchEl.hidden = true;
+    searchInput.value = "";
+    CHAT.searchActive = false;
+    CHAT.searchQuery = "";
+    CHAT.matchIndex = 0;
+    updateMatchNav();
+    if (wasActive && CHAT.historyLoaded) loadHistory(true);   // restore normal transcript
+  }
+
   if (searchToggle && searchEl && searchInput && searchClose) {
     searchToggle.addEventListener("click", () => {
-      const hidden = searchEl.hidden;
-      searchEl.hidden = !hidden;
-      if (!hidden) {
-        pinnedEl.hidden = true;
-        CHAT.pinnedView = false;
-        searchInput.focus();
-      }
+      if (!searchEl.hidden) { closeSearch(); return; }
+      closePinned();
+      searchEl.hidden = false;
+      searchInput.focus();
     });
-    searchClose.addEventListener("click", () => {
-      searchEl.hidden = true;
-      CHAT.searchActive = false;
-      CHAT.searchQuery = "";
-      searchInput.value = "";
-      renderHistory(CHAT.listEl ? [] : []); // will be replaced by history load
-      if (CHAT.historyLoaded) loadHistory(true);
-    });
+    searchClose.addEventListener("click", closeSearch);
     searchInput.addEventListener("input", (e) => {
       clearTimeout(CHAT._searchDebounce);
-      CHAT._searchDebounce = setTimeout(() => {
-        searchMessages(e.target.value);
-      }, 300);
+      CHAT._searchDebounce = setTimeout(() => searchMessages(e.target.value.trim()), 300);
     });
     searchInput.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        searchEl.hidden = true;
-        CHAT.searchActive = false;
-        searchInput.value = "";
-        if (CHAT.historyLoaded) loadHistory(true);
-      }
+      if (e.key === "Escape") closeSearch();
+      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); gotoMatch(CHAT.matchIndex === 0 ? 0 : 1); }
+      if (e.key === "Enter" && e.shiftKey) { e.preventDefault(); gotoMatch(-1); }
     });
+    const matchPrev = document.getElementById("chat-match-prev");
+    const matchNext = document.getElementById("chat-match-next");
+    if (matchPrev) matchPrev.addEventListener("click", () => gotoMatch(-1));
+    if (matchNext) matchNext.addEventListener("click", () => gotoMatch(1));
   }
 
-  // --- Pinned ---
   if (pinnedToggle && pinnedEl && pinnedClose) {
     pinnedToggle.addEventListener("click", () => {
-      const hidden = pinnedEl.hidden;
-      pinnedEl.hidden = !hidden;
-      if (!hidden) {
-        searchEl.hidden = true;
-        CHAT.pinnedView = true;
-        if (CHAT.isAdmin) loadPinned();
-      } else {
-        CHAT.pinnedView = false;
-      }
+      if (!pinnedEl.hidden) { closePinned(); return; }
+      if (searchEl && !searchEl.hidden) closeSearch();
+      pinnedEl.hidden = false;
+      CHAT.pinnedView = true;
+      loadPinned();
     });
-    pinnedClose.addEventListener("click", () => {
-      pinnedEl.hidden = true;
-      CHAT.pinnedView = false;
-    });
+    pinnedClose.addEventListener("click", closePinned);
   }
-
-  // Cancel reply/edit when clicking elsewhere in composer area
-  CHAT.inputEl.addEventListener("focus", () => {
-    // keep reply/edit active while typing
-  });
 
   CHAT.inputEl.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
+    } else if (e.key === "Escape" && CHAT.replyToId) {
+      cancelReply();
     }
   });
 
@@ -1425,7 +1669,8 @@ function wire() {
   if (window.CHAT_CONTEXT?.loggedIn) {
     // Merge guest unread tracking into the user account if the visitor
     // browsed chat as a guest before logging in.
-    const storedGuestId = localStorage.getItem("tom-chat-guest-id");
+    let storedGuestId = null;
+    try { storedGuestId = localStorage.getItem("tom-chat-guest-id"); } catch (e) {}
     if (storedGuestId) {
       fetch("/api/chat/merge_guest", {
         method: "POST",
@@ -1433,7 +1678,7 @@ function wire() {
         headers: csrfHeaders(),
         body: JSON.stringify({ guest_id: storedGuestId }),
       }).catch(() => {}); // non-fatal; unread may over-count slightly
-      localStorage.removeItem("tom-chat-guest-id");
+      try { localStorage.removeItem("tom-chat-guest-id"); } catch (e) {}
     }
     connectSocket();
   }

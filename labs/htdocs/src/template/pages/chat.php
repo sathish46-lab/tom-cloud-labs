@@ -23,9 +23,9 @@
         <button type="button" class="chat-icon-btn" id="chat-search-toggle" aria-label="Search messages">
           <i class="bx bx-search"></i>
         </button>
-        <!-- Pinned count badge -->
+        <!-- Pinned toggle + count badge -->
         <button type="button" class="chat-icon-btn" id="chat-pinned-toggle" aria-label="Pinned messages">
-          <i class="bx bx-pin"></i>
+          <i class="bx bxs-pin"></i>
           <span id="chat-pinned-count" class="chat-pinned-count" hidden>0</span>
         </button>
         <button type="button" class="chat-icon-btn" aria-label="Minimize chat">−</button>
@@ -33,21 +33,27 @@
       </div>
     </div>
 
-    <!-- Search bar (hidden by default) -->
+    <!-- Search bar (hidden by default, sits under the header) -->
     <div class="chat-search" id="chat-search" hidden>
       <div class="chat-search-inner">
         <i class="bx bx-search"></i>
         <input type="text" id="chat-search-input" class="chat-search-input" placeholder="Search messages…" autocomplete="off">
+        <!-- Match navigation (shown when a search has results) -->
+        <div class="chat-match-nav" id="chat-match-nav" hidden>
+          <button type="button" class="chat-icon-btn" id="chat-match-prev" aria-label="Previous match"><i class="bx bx-chevron-up"></i></button>
+          <button type="button" class="chat-icon-btn" id="chat-match-next" aria-label="Next match"><i class="bx bx-chevron-down"></i></button>
+          <span id="chat-match-count" class="chat-match-count">0 of 0 matches</span>
+        </div>
         <button type="button" class="chat-icon-btn" id="chat-search-close" aria-label="Close search">×</button>
       </div>
     </div>
 
     <!-- Body -->
     <div class="chat-body">
-      <!-- Pinned messages (shown when pin toggle is active) -->
+      <!-- Pinned messages (overlay, shown when pin toggle is active) -->
       <div id="chat-pinned" class="chat-pinned" hidden>
         <div class="chat-pinned-header">
-          <span class="chat-pinned-title">Pinned</span>
+          <span class="chat-pinned-title"><i class="bx bxs-pin"></i> Pinned messages</span>
           <button type="button" class="chat-icon-btn" id="chat-pinned-close" aria-label="Close pinned">×</button>
         </div>
         <div id="chat-pinned-list" class="chat-pinned-list"></div>
@@ -68,7 +74,7 @@
       </div>
     </div>
 
-    <!-- Composer -->
+    <!-- Composer (a reply preview bar is injected right above this by chat.js) -->
     <div class="chat-composer">
       <input type="text" id="chat-input" class="chat-input" maxlength="500" placeholder="Type a message…" autocomplete="off">
       <button type="button" id="chat-send" class="chat-send-btn" aria-label="Send message">
