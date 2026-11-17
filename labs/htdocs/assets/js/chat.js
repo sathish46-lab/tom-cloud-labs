@@ -1623,6 +1623,7 @@ async function publishSignal(type, payload) {
       headers: { ...csrfHeaders(), "content-type": "application/json" },
       body: JSON.stringify({ type, ...payload }),
     });
+    console.log("[Chat] signal published:", type, "callId=", payload.call_id);
   } catch (e) {
     console.warn("[Chat] call signal failed:", e);
   }
@@ -1635,6 +1636,7 @@ function showCallModal() {
   modal.hidden = false;
   requestAnimationFrame(() => { modal.hidden = false; });
   callEls().endBtn?.addEventListener("click", endCall);
+  console.log("[Chat] call modal opened");
 }
 
 function hideCallModal() {
@@ -1645,6 +1647,7 @@ function hideCallModal() {
   if (remoteVideo) { remoteVideo.srcObject = null; }
   hideCallError();
   callEls().endBtn?.removeEventListener("click", endCall);
+  console.log("[Chat] call modal closed");
 }
 
 function stopLocalStream() {
@@ -1712,6 +1715,7 @@ function closePeerConnection() {
 }
 
 async function endCall() {
+  console.log("[Chat] endCall() callId=", CHAT.call.callId);
   closePeerConnection();
   stopLocalStream();
   hideCallModal();
@@ -1727,6 +1731,7 @@ async function endCall() {
 }
 
 function showIncomingCall(fromUserId, fromUsername, callId, offerSdp, offerType) {
+  console.log("[Chat] showIncomingCall() from=", fromUsername, "callId=", callId);
   const { incoming, fromLabel, acceptBtn, declineBtn } = callEls();
   if (!incoming) return;
   CHAT.call.incoming = true;
@@ -1741,6 +1746,7 @@ function showIncomingCall(fromUserId, fromUsername, callId, offerSdp, offerType)
 }
 
 function hideIncomingCall() {
+  console.log("[Chat] hideIncomingCall()");
   const { incoming, acceptBtn, declineBtn } = callEls();
   if (incoming) incoming.hidden = true;
   CHAT.call.incoming = false;
@@ -1749,6 +1755,7 @@ function hideIncomingCall() {
 }
 
 async function startCall() {
+  console.log("[Chat] startCall() triggered, isAdmin=", CHAT.isAdmin, "active=", CHAT.call.active);
   if (!CHAT.isAdmin) return;
   if (CHAT.call.active) return;
 
@@ -1759,10 +1766,11 @@ async function startCall() {
     CHAT.call._retry = "start";
     showCallError(
       "Camera/microphone access required",
-      "Allow camera and microphone in site settings to start the video call."
+      "Allow camera/microphone for dev.tomweb.in in site settings, then click Retry."
     );
     return;
   }
+  console.log("[Chat] getUserMedia success, tracks=", CHAT.call.localStream.getTracks().length);
 
   const pc = new RTCPeerConnection({ iceServers: CALL_STUN });
   CHAT.call.pc = pc;
@@ -1780,6 +1788,7 @@ async function startCall() {
 
   pc.onicecandidate = (e) => {
     if (e.candidate) {
+      console.log("[Chat] ICE candidate generated");
       publishSignal("ice", {
         call_id: CHAT.call.callId,
         candidate: JSON.stringify(e.candidate),
@@ -1792,21 +1801,25 @@ async function startCall() {
     if (status) {
       status.textContent = pc.connectionState === "connected" ? "Connected" : pc.connectionState || "Connecting…";
     }
+    console.log("[Chat] connection state:", pc.connectionState);
     if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
       endCall();
     }
   };
 
   CHAT.call.callId = crypto.randomUUID?.() || Math.random().toString(36).slice(2);
+  console.log("[Chat] callId=", CHAT.call.callId);
 
   try {
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
+    console.log("[Chat] offer created:", offer.type);
     await publishSignal("offer", {
       call_id: CHAT.call.callId,
       sdp: offer.sdp,
       sdp_type: offer.type,
     });
+    console.log("[Chat] offer signal published");
     const { status, localVideo } = callEls();
     if (status) status.textContent = "Waiting for someone to join…";
     if (localVideo) localVideo.srcObject = CHAT.call.localStream;
@@ -1819,6 +1832,7 @@ async function startCall() {
 }
 
 async function answerCall() {
+  console.log("[Chat] answerCall() for callId=", CHAT.call.callId);
   if (!CHAT.call.callId || !CHAT.call.offerSdp) return;
 
   try {
@@ -1884,6 +1898,7 @@ async function answerCall() {
     if (localVideo) localVideo.srcObject = CHAT.call.localStream;
     hideCallError();
     showCallModal();
+    console.log("[Chat] answer published and modal opened");
   } catch (e) {
     console.warn("[Chat] call answer failed:", e);
     endCall();
@@ -1891,6 +1906,7 @@ async function answerCall() {
 }
 
 function declineCall() {
+  console.log("[Chat] declineCall() callId=", CHAT.call.callId);
   hideIncomingCall();
   if (CHAT.call.callId) {
     publishSignal("end", { call_id: CHAT.call.callId });
@@ -1914,14 +1930,16 @@ function handleCallEvent(evt) {
   // Ignore our own signals.
   if (CHAT.me && fromId == CHAT.me.user_id) return;
 
+  console.log("[Chat] handleCallEvent:", evt.type, "callId=", callId, "from=", fromName);
+
   if (evt.type === "call-offer") {
-    if (CHAT.call.active) return; // already in a call
+    if (CHAT.call.active) { console.log("[Chat] call-offer ignored (already in call)"); return; }
     showIncomingCall(fromId, fromName, callId, evt.sdp, evt.sdp_type);
     return;
   }
 
   if (evt.type === "call-answer") {
-    if (!CHAT.call.active || CHAT.call.callId !== callId) return;
+    if (!CHAT.call.active || CHAT.call.callId !== callId) { console.log("[Chat] call-answer ignored"); return; }
     const { status } = callEls();
     if (status) status.textContent = "Connecting…";
     try {
@@ -1934,7 +1952,7 @@ function handleCallEvent(evt) {
   }
 
   if (evt.type === "call-ice") {
-    if (!CHAT.call.active || CHAT.call.callId !== callId) return;
+    if (!CHAT.call.active || CHAT.call.callId !== callId) { console.log("[Chat] call-ice ignored"); return; }
     try {
       const cand = JSON.parse(evt.candidate);
       CHAT.call.pc?.addIceCandidate(cand).catch((e) => console.warn("[Chat] add ice candidate failed:", e));
@@ -1945,6 +1963,7 @@ function handleCallEvent(evt) {
   }
 
   if (evt.type === "call-end") {
+    console.log("[Chat] call-end received for callId=", callId);
     if (!callId || CHAT.call.callId === callId) endCall();
     return;
   }
@@ -2128,7 +2147,12 @@ function wire() {
 
   // Video call toggle — rendered server-side for admins only.
   const callToggle = document.getElementById("chat-call-toggle");
-  if (callToggle) callToggle.addEventListener("click", startCall);
+  if (callToggle) {
+    callToggle.addEventListener("click", startCall);
+    console.log("[Chat] video call toggle listener attached, admin=", CHAT.isAdmin);
+  } else {
+    console.log("[Chat] video call toggle not rendered (non-admin or template missing)");
+  }
 
   // Permission-error actions inside the call modal.
   const permSettings = document.getElementById("chat-call-open-settings");
