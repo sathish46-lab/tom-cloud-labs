@@ -1688,7 +1688,8 @@ function openSiteSettings() {
 function showCallError(title, desc) {
   const { modal, error, errorTitle, errorDesc, videos, status, endBtn } = callElsWithVideos();
   if (!modal || !error) return;
-  CHAT.call.active = true;
+  // NOTE: do NOT set CHAT.call.active here — startCall()/answerCall() need
+  // it to be false so a Retry can re-run getUserMedia().
   modal.hidden = false;
   modal.classList.add("is-open");
   if (videos) videos.hidden = true;
@@ -1795,13 +1796,6 @@ function hideIncomingCall() {
 }
 
 function checkMediaDeviceSupport() {
-  if (!window.isSecureContext) {
-    return {
-      ok: false,
-      title: "Secure context required",
-      desc: "Video calls need a secure context. Open this page over HTTPS or on http://localhost.",
-    };
-  }
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     return {
       ok: false,
@@ -1815,6 +1809,16 @@ function checkMediaDeviceSupport() {
 function mapMediaError(e) {
   const name = e && e.name ? e.name : "";
   const msg = e && e.message ? e.message : "";
+
+  // Chrome throws on non-secure origins (HTTP, non-localhost):
+  // "Failed to execute 'getUserMedia' on 'NavigatorMediaDevices': Only secure origins are allowed."
+  if (msg.includes("secure origin") || msg.includes("secure context") || msg.includes("Only secure origins")) {
+    return {
+      title: "Secure context required",
+      desc: "Video calls need a secure context. Open this page over HTTPS or on http://localhost.",
+    };
+  }
+
   if (name === "NotAllowedError") {
     return {
       title: "Camera/microphone permission denied",
