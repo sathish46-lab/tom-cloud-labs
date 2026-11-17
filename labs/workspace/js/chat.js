@@ -1607,6 +1607,11 @@ function callEls() {
     acceptBtn: document.getElementById("chat-call-accept"),
     declineBtn: document.getElementById("chat-call-decline"),
     fromLabel: document.getElementById("chat-call-incoming-from"),
+    error: document.getElementById("chat-call-error"),
+    errorTitle: document.getElementById("chat-call-error-title"),
+    errorDesc: document.getElementById("chat-call-error-desc"),
+    settingsBtn: document.getElementById("chat-call-open-settings"),
+    retryBtn: document.getElementById("chat-call-retry-perm"),
   };
 }
 
@@ -1638,6 +1643,7 @@ function hideCallModal() {
   CHAT.call.active = false;
   if (localVideo) { localVideo.srcObject = null; }
   if (remoteVideo) { remoteVideo.srcObject = null; }
+  hideCallError();
   callEls().endBtn?.removeEventListener("click", endCall);
 }
 
@@ -1646,6 +1652,48 @@ function stopLocalStream() {
     CHAT.call.localStream.getTracks().forEach((t) => t.stop());
     CHAT.call.localStream = null;
   }
+}
+
+function openSiteSettings() {
+  try {
+    const ua = navigator.userAgent || "";
+    if (/Edg\//.test(ua)) location.href = "edge://settings/content/microphone";
+    else if (/Firefox\//.test(ua)) location.href = "about:permissions#section-camera";
+    else location.href = "chrome://settings/content/microphone";
+  } catch (e) {
+    console.warn("[Chat] could not open site settings:", e);
+  }
+}
+
+function showCallError(title, desc) {
+  const { modal, error, errorTitle, errorDesc, videos, status } = callElsWithVideos();
+  if (!modal || !error) return;
+  CHAT.call.active = true;
+  modal.hidden = false;
+  requestAnimationFrame(() => { modal.hidden = false; });
+  if (videos) videos.hidden = true;
+  if (status) status.hidden = true;
+  if (errorTitle) errorTitle.textContent = title || "Camera/microphone access required";
+  if (errorDesc) errorDesc.textContent = desc || "Allow camera and microphone in site settings to start the video call.";
+  error.hidden = false;
+}
+
+function hideCallError() {
+  const { error, videos, status } = callElsWithVideos();
+  if (error) error.hidden = true;
+  if (videos) videos.hidden = false;
+  if (status) status.hidden = false;
+}
+
+function callElsWithVideos() {
+  const base = callEls();
+  base.videos = document.querySelector(".chat-call-videos");
+  return base;
+}
+
+function retryCall() {
+  if (CHAT.call._retry === "answer") answerCall();
+  else startCall();
 }
 
 function closePeerConnection() {
@@ -1700,7 +1748,11 @@ async function startCall() {
     CHAT.call.localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
   } catch (e) {
     console.warn("[Chat] camera/mic access denied:", e);
-    chatToast?.("Camera/microphone access required for video call.");
+    CHAT.call._retry = "start";
+    showCallError(
+      "Camera/microphone access required",
+      "Allow camera and microphone in site settings to start the video call."
+    );
     return;
   }
 
@@ -1750,6 +1802,7 @@ async function startCall() {
     const { status, localVideo } = callEls();
     if (status) status.textContent = "Waiting for someone to join…";
     if (localVideo) localVideo.srcObject = CHAT.call.localStream;
+    hideCallError();
     showCallModal();
   } catch (e) {
     console.warn("[Chat] call offer failed:", e);
@@ -1764,7 +1817,12 @@ async function answerCall() {
     CHAT.call.localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
   } catch (e) {
     console.warn("[Chat] camera/mic access denied:", e);
+    CHAT.call._retry = "answer";
     declineCall();
+    showCallError(
+      "Camera/microphone access required",
+      "Allow camera and microphone in site settings to answer the video call."
+    );
     return;
   }
 
@@ -1816,6 +1874,7 @@ async function answerCall() {
     const { status, localVideo } = callEls();
     if (status) status.textContent = "Connected";
     if (localVideo) localVideo.srcObject = CHAT.call.localStream;
+    hideCallError();
     showCallModal();
   } catch (e) {
     console.warn("[Chat] call answer failed:", e);
@@ -2062,6 +2121,12 @@ function wire() {
   // Video call toggle — rendered server-side for admins only.
   const callToggle = document.getElementById("chat-call-toggle");
   if (callToggle) callToggle.addEventListener("click", startCall);
+
+  // Permission-error actions inside the call modal.
+  const permSettings = document.getElementById("chat-call-open-settings");
+  const permRetry = document.getElementById("chat-call-retry-perm");
+  if (permSettings) permSettings.addEventListener("click", openSiteSettings);
+  if (permRetry) permRetry.addEventListener("click", retryCall);
 
   CHAT.inputEl.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) {

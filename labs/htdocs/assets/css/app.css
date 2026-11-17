@@ -31678,6 +31678,90 @@ html[data-coreui-theme=light] .chat-panel {
   border-top: 1px solid var(--chat-line);
 }
 
+.chat-call-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 1.5rem;
+  text-align: center;
+}
+.chat-call-error[hidden] {
+  display: none;
+}
+
+.chat-call-error-inner {
+  width: min(90vw, 340px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.chat-call-error-icon {
+  font-size: 2.6rem;
+  color: var(--cui-danger, #e55353);
+}
+
+.chat-call-error-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.chat-call-error-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--cui-body-color);
+}
+
+.chat-call-error-desc {
+  font-size: 0.78rem;
+  color: color-mix(in srgb, var(--cui-body-color, #fff) 65%, transparent);
+  line-height: 1.45;
+}
+
+.chat-call-error-actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.25rem;
+}
+
+.chat-call-error-btn {
+  flex: 1;
+  padding: 0.45rem 0.9rem;
+  border-radius: 0.55rem;
+  border: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+}
+.chat-call-error-btn:focus-visible {
+  outline: 2px solid var(--cui-white, #fff);
+}
+
+.chat-call-error-btn--settings {
+  background: var(--chat-surface);
+  color: var(--chat-accent-hi);
+  border: 1px solid var(--chat-line);
+}
+.chat-call-error-btn--settings:hover {
+  background: color-mix(in srgb, var(--chat-accent-hi, #8b91f9) 8%, transparent);
+}
+
+.chat-call-error-btn--retry {
+  background: var(--cui-danger, #e55353);
+  color: #fff;
+}
+.chat-call-error-btn--retry:hover {
+  opacity: 0.9;
+}
+
 .chat-call-end-btn {
   width: 2.1rem;
   height: 2.1rem;
