@@ -28,6 +28,8 @@
         "@coreui/utils": "^2.0.2",
         "chart.js": "^4.5.1",
         "codemirror": "^5.65.21",
+        "emoji-picker-element": "^1.29.1",
+        "emoji-picker-element-data": "^1.8.0",
         "simplebar": "^6.3.3",
         "three": "^0.123.0"
     }
