@@ -36,7 +36,13 @@ if ($sdp !== '')       $event['sdp']      = $sdp;
 if ($sdpType !== '')   $event['sdp_type'] = $sdpType;
 if ($candidate !== '') $event['candidate']= $candidate;
 
-chat_publish($event);
+$published = chat_publish($event);
+if (!$published) {
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'error' => 'Failed to publish signal to message bus']);
+    exit;
+}
 
 chat_json([
     'success' => true,

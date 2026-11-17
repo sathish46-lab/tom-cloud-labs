@@ -1617,15 +1617,22 @@ function callEls() {
 
 async function publishSignal(type, payload) {
   try {
-    await fetch(CALL_SIGNAL_URL, {
+    const res = await fetch(CALL_SIGNAL_URL, {
       method: "POST",
       credentials: "same-origin",
       headers: { ...csrfHeaders(), "content-type": "application/json" },
       body: JSON.stringify({ type, ...payload }),
     });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      console.warn("[Chat] signal publish HTTP error:", res.status, body.error || res.statusText);
+      return { ok: false, status: res.status, error: body.error };
+    }
     console.log("[Chat] signal published:", type, "callId=", payload.call_id);
+    return { ok: true };
   } catch (e) {
     console.warn("[Chat] call signal failed:", e);
+    return { ok: false, error: e.message };
   }
 }
 
@@ -1814,11 +1821,19 @@ async function startCall() {
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
     console.log("[Chat] offer created:", offer.type);
-    await publishSignal("offer", {
+    const result = await publishSignal("offer", {
       call_id: CHAT.call.callId,
       sdp: offer.sdp,
       sdp_type: offer.type,
     });
+    if (!result.ok) {
+      console.warn("[Chat] offer signal publish failed:", result.error);
+      showCallError(
+        "Call could not be started",
+        "The call signal could not be sent to the server. Please try again."
+      );
+      return;
+    }
     console.log("[Chat] offer signal published");
     const { status, localVideo } = callEls();
     if (status) status.textContent = "Waiting for someone to join…";
@@ -1888,11 +1903,19 @@ async function answerCall() {
     await pc.setRemoteDescription(offer);
     const answer = await pc.createAnswer();
     await pc.setLocalDescription(answer);
-    await publishSignal("answer", {
+    const answerResult = await publishSignal("answer", {
       call_id: CHAT.call.callId,
       sdp: answer.sdp,
       sdp_type: answer.type,
     });
+    if (!answerResult.ok) {
+      console.warn("[Chat] answer signal publish failed:", answerResult.error);
+      showCallError(
+        "Call could not be answered",
+        "The call answer could not be sent to the server. Please try again."
+      );
+      return;
+    }
     const { status, localVideo } = callEls();
     if (status) status.textContent = "Connected";
     if (localVideo) localVideo.srcObject = CHAT.call.localStream;
