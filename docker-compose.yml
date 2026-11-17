@@ -62,7 +62,7 @@ services:
       - "mariadb.tomweb.in:10.20.208.26"
       - "dev.tomweb.in:127.0.0.1"
       - "vpn.dev.tomweb.in:127.0.0.1"
-      - "mq.dev.tomweb.in:127.0.0.1"
+      - "mq.dev.tomweb.in:10.20.208.24"
       - "code.dev.tomweb.in:127.0.0.1"
       - "work.dev.tomweb.in:127.0.0.1"
       - "news.dev.tomweb.in:127.0.0.1"

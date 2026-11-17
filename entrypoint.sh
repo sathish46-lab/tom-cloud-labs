@@ -733,6 +733,9 @@ systemctl enable stats-worker.service || true
 
 # 10. Ensure RabbitMQ admin user exists
 echo "[INFO] Ensuring RabbitMQ admin user exists..."
+# Idempotent: enable management + web-stomp plugins (offline = rabbit not running yet).
+# Needed because /etc/rabbitmq is not a persistent volume.
+rabbitmq-plugins enable --offline rabbitmq_management rabbitmq_web_stomp >/dev/null 2>&1 || true
 cat <<'SCRIPT' > /usr/local/bin/rabbitmq-create-user.sh
 #!/bin/bash
 until rabbitmqctl await_online_nodes 1 2>/dev/null; do sleep 1; done

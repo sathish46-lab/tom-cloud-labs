@@ -40,6 +40,10 @@ RUN apt-get update && apt-get install -y \
     ufw fail2ban nmap mongodb-org mysql-server postgresql redis-server \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Enable RabbitMQ management + web-stomp plugins at build time (baked into
+# image so they survive container recreate on down/up)
+RUN rabbitmq-plugins enable --offline rabbitmq_management rabbitmq_web_stomp
+
 # Install Python packages not available via apt
 RUN pip3 install --break-system-packages google-generativeai requests pymongo markdown
 

@@ -37,6 +37,24 @@ if (session_status() === PHP_SESSION_NONE) {
                (isset($_SERVER['HTTP_CF_CONNECTING_IP']));
     ini_set('session.cookie_secure', $isHttps ? '1' : '0');
     ini_set('session.cookie_samesite', 'Lax');
+
+    // SE3+S22 hardening: scheme-scoped session cookie names.
+    // Browsers keep a Secure (HTTPS) and a non-Secure (HTTP) cookie of the
+    // same name as TWO separate jar entries: a non-Secure write can never
+    // overwrite a Secure cookie, and Chrome REJECTS any Set-Cookie carrying
+    // the Secure attribute received over plain HTTP — so an eviction header
+    // from one scheme can never clean up the other variant. With both entries
+    // present PHP read whichever the browser sent first while the CSRF token
+    // lived in the other session, breaking logins with
+    // "Invalid security token. Please try again."
+    // Permanent fix: name the session cookie per scheme so the two can never
+    // collide. HTTPS keeps 'PHPSESSID' (Secure — prod/Cloudflare compatible,
+    // existing sessions unaffected); HTTP uses a distinct non-Secure name.
+    if ($isHttps) {
+        session_name('PHPSESSID');
+    } else {
+        session_name('LABSSESSID');
+    }
     
     // Fix Ubuntu Cron Job Session Deletion Bug
     $sessionPath = '/var/cache/labs/sessions';
@@ -51,6 +69,13 @@ if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.gc_divisor', 100);
     
     session_start();
+
+    // Evict any stale non-Secure 'PHPSESSID' left behind by earlier HTTP-only
+    // visits (non-Secure deletion is permitted on both schemes). The stale
+    // Secure PHPSESSID cannot be removed from plain HTTP (browsers reject
+    // Secure Set-Cookies over HTTP), but PHP now ignores it entirely because
+    // the HTTP session uses the 'LABSSESSID' name.
+    header('Set-Cookie: PHPSESSID=deleted; path=/; Max-Age=0; HttpOnly; SameSite=Lax', false);
 }
 
 // 1.5 Global Request Rate Limiter (Runs early to reject DDoS/flooding without database overhead)
