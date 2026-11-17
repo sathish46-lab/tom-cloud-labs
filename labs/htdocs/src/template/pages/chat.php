@@ -28,6 +28,10 @@
           <i class="bx bxs-pin"></i>
           <span id="chat-pinned-count" class="chat-pinned-count" hidden>0</span>
         </button>
+        <!-- Video call toggle (admin only; shown by chat.js) -->
+        <button type="button" class="chat-icon-btn" id="chat-call-toggle" aria-label="Start video call" hidden>
+          <i class="bx bxs-video-circle"></i>
+        </button>
         <button type="button" class="chat-icon-btn" aria-label="Minimize chat">−</button>
         <button type="button" class="chat-icon-btn" aria-label="Close chat">×</button>
       </div>
@@ -80,6 +84,39 @@
       <button type="button" id="chat-send" class="chat-send-btn" aria-label="Send message">
         <i class="bx bxs-send"></i>
       </button>
+    </div>
+
+    <!-- Video call modal -->
+    <div id="chat-call-modal" class="chat-call-modal" hidden role="dialog" aria-label="Video call" aria-modal="true">
+      <div class="chat-call-modal-inner">
+        <div class="chat-call-header">
+          <span class="chat-call-title" id="chat-call-title">Video call</span>
+          <button type="button" class="chat-icon-btn" id="chat-call-end" aria-label="End call">✕</button>
+        </div>
+        <div class="chat-call-videos">
+          <div class="chat-call-video-wrap chat-call-video--local">
+            <video id="chat-call-local-video" autoplay muted playsinline></video>
+            <span class="chat-call-video-label" id="chat-call-local-label">You</span>
+          </div>
+          <div class="chat-call-video-wrap chat-call-video--remote">
+            <video id="chat-call-remote-video" autoplay playsinline></video>
+            <span class="chat-call-video-label" id="chat-call-remote-label">Waiting…</span>
+          </div>
+        </div>
+        <div class="chat-call-status" id="chat-call-status">Starting call…</div>
+      </div>
+    </div>
+
+    <!-- Incoming video call notification -->
+    <div id="chat-call-incoming" class="chat-call-incoming" hidden role="alertdialog" aria-modal="true" aria-label="Incoming video call">
+      <div class="chat-call-incoming-inner">
+        <span class="chat-call-incoming-title">Incoming video call</span>
+        <span class="chat-call-incoming-from" id="chat-call-incoming-from">Someone</span>
+        <div class="chat-call-incoming-actions">
+          <button type="button" class="chat-icon-btn chat-call-incoming-accept" id="chat-call-accept" aria-label="Accept call">✔</button>
+          <button type="button" class="chat-icon-btn chat-call-incoming-decline" id="chat-call-decline" aria-label="Decline call">✕</button>
+        </div>
+      </div>
     </div>
 
     <!-- Storm front layer (decorative lightning) -->

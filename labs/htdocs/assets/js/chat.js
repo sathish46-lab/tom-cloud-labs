@@ -69,6 +69,18 @@ const CHAT = {
     hideTimer: null,
   },
 
+  call: {
+    active: false,
+    callId: null,
+    pc: null,
+    localStream: null,
+    remoteStream: null,
+    incoming: false,
+    offerFrom: null,
+    offerSdp: null,
+    offerType: null,
+  },
+
   historyLoaded: false,
   loadSeq: 0,        // guards history fetches against race conditions
 
@@ -1079,6 +1091,11 @@ function handleEvent(evt) {
     return;
   }
 
+  if (evt.type && evt.type.startsWith("call-")) {
+    handleCallEvent(evt);
+    return;
+  }
+
   if (evt.type === "typing") {
     showTyping(evt);
     return;
@@ -1569,6 +1586,303 @@ function maybeWelcomeTeaser() {
   showTeaser(body);
 }
 
+/* ==========================================================================
+ * Video call (admin-initiated, P2P WebRTC)
+ * Signaling rides the existing socket topic via /api/chat/call-signal.php
+ * ========================================================================= */
+
+const CALL_STUN = [{ urls: "stun:stun.l.google.com:19302" }];
+const CALL_SIGNAL_URL = "/api/chat/call-signal.php";
+
+function callEls() {
+  return {
+    modal: document.getElementById("chat-call-modal"),
+    incoming: document.getElementById("chat-call-incoming"),
+    localVideo: document.getElementById("chat-call-local-video"),
+    remoteVideo: document.getElementById("chat-call-remote-video"),
+    localLabel: document.getElementById("chat-call-local-label"),
+    remoteLabel: document.getElementById("chat-call-remote-label"),
+    status: document.getElementById("chat-call-status"),
+    endBtn: document.getElementById("chat-call-end"),
+    acceptBtn: document.getElementById("chat-call-accept"),
+    declineBtn: document.getElementById("chat-call-decline"),
+    fromLabel: document.getElementById("chat-call-incoming-from"),
+  };
+}
+
+async function publishSignal(type, payload) {
+  try {
+    await fetch(CALL_SIGNAL_URL, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { ...csrfHeaders(), "content-type": "application/json" },
+      body: JSON.stringify({ type, ...payload }),
+    });
+  } catch (e) {
+    console.warn("[Chat] call signal failed:", e);
+  }
+}
+
+function showCallModal() {
+  const { modal } = callEls();
+  if (!modal) return;
+  CHAT.call.active = true;
+  modal.hidden = false;
+  requestAnimationFrame(() => { modal.hidden = false; });
+  callEls().endBtn?.addEventListener("click", endCall);
+}
+
+function hideCallModal() {
+  const { modal, localVideo, remoteVideo } = callEls();
+  if (modal) modal.hidden = true;
+  CHAT.call.active = false;
+  if (localVideo) { localVideo.srcObject = null; }
+  if (remoteVideo) { remoteVideo.srcObject = null; }
+  callEls().endBtn?.removeEventListener("click", endCall);
+}
+
+function stopLocalStream() {
+  if (CHAT.call.localStream) {
+    CHAT.call.localStream.getTracks().forEach((t) => t.stop());
+    CHAT.call.localStream = null;
+  }
+}
+
+function closePeerConnection() {
+  if (CHAT.call.pc) {
+    try { CHAT.call.pc.close(); } catch (e) {}
+    CHAT.call.pc = null;
+  }
+}
+
+async function endCall() {
+  closePeerConnection();
+  stopLocalStream();
+  hideCallModal();
+  hideIncomingCall();
+  if (CHAT.call.callId) {
+    await publishSignal("end", { call_id: CHAT.call.callId });
+    CHAT.call.callId = null;
+  }
+  CHAT.call.incoming = false;
+  CHAT.call.offerFrom = null;
+  CHAT.call.offerSdp = null;
+  CHAT.call.offerType = null;
+}
+
+function showIncomingCall(fromUserId, fromUsername, callId, offerSdp, offerType) {
+  const { incoming, fromLabel, acceptBtn, declineBtn } = callEls();
+  if (!incoming) return;
+  CHAT.call.incoming = true;
+  CHAT.call.offerFrom = fromUserId;
+  CHAT.call.callId = callId;
+  CHAT.call.offerSdp = offerSdp;
+  CHAT.call.offerType = offerType;
+  if (fromLabel) fromLabel.textContent = fromUsername || "Someone";
+  incoming.hidden = false;
+  acceptBtn?.addEventListener("click", answerCall);
+  declineBtn?.addEventListener("click", declineCall);
+}
+
+function hideIncomingCall() {
+  const { incoming, acceptBtn, declineBtn } = callEls();
+  if (incoming) incoming.hidden = true;
+  CHAT.call.incoming = false;
+  acceptBtn?.removeEventListener("click", answerCall);
+  declineBtn?.removeEventListener("click", declineCall);
+}
+
+async function startCall() {
+  if (!CHAT.isAdmin) return;
+  if (CHAT.call.active) return;
+
+  try {
+    CHAT.call.localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+  } catch (e) {
+    console.warn("[Chat] camera/mic access denied:", e);
+    chatToast?.("Camera/microphone access required for video call.");
+    return;
+  }
+
+  const pc = new RTCPeerConnection({ iceServers: CALL_STUN });
+  CHAT.call.pc = pc;
+
+  CHAT.call.localStream.getTracks().forEach((track) => pc.addTrack(track, CHAT.call.localStream));
+
+  pc.ontrack = (e) => {
+    const { remoteVideo, remoteLabel } = callEls();
+    if (remoteVideo && e.streams[0]) {
+      remoteVideo.srcObject = e.streams[0];
+      CHAT.call.remoteStream = e.streams[0];
+      if (remoteLabel) remoteLabel.textContent = "Peer";
+    }
+  };
+
+  pc.onicecandidate = (e) => {
+    if (e.candidate) {
+      publishSignal("ice", {
+        call_id: CHAT.call.callId,
+        candidate: JSON.stringify(e.candidate),
+      });
+    }
+  };
+
+  pc.onconnectionstatechange = () => {
+    const { status } = callEls();
+    if (status) {
+      status.textContent = pc.connectionState === "connected" ? "Connected" : pc.connectionState || "Connecting…";
+    }
+    if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
+      endCall();
+    }
+  };
+
+  CHAT.call.callId = crypto.randomUUID?.() || Math.random().toString(36).slice(2);
+
+  try {
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    await publishSignal("offer", {
+      call_id: CHAT.call.callId,
+      sdp: offer.sdp,
+      sdp_type: offer.type,
+    });
+    const { status, localVideo } = callEls();
+    if (status) status.textContent = "Waiting for someone to join…";
+    if (localVideo) localVideo.srcObject = CHAT.call.localStream;
+    showCallModal();
+  } catch (e) {
+    console.warn("[Chat] call offer failed:", e);
+    endCall();
+  }
+}
+
+async function answerCall() {
+  if (!CHAT.call.callId || !CHAT.call.offerSdp) return;
+
+  try {
+    CHAT.call.localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+  } catch (e) {
+    console.warn("[Chat] camera/mic access denied:", e);
+    declineCall();
+    return;
+  }
+
+  const pc = new RTCPeerConnection({ iceServers: CALL_STUN });
+  CHAT.call.pc = pc;
+
+  CHAT.call.localStream.getTracks().forEach((track) => pc.addTrack(track, CHAT.call.localStream));
+
+  pc.ontrack = (e) => {
+    const { remoteVideo, remoteLabel } = callEls();
+    if (remoteVideo && e.streams[0]) {
+      remoteVideo.srcObject = e.streams[0];
+      CHAT.call.remoteStream = e.streams[0];
+      if (remoteLabel) remoteLabel.textContent = "Peer";
+    }
+  };
+
+  pc.onicecandidate = (e) => {
+    if (e.candidate) {
+      publishSignal("ice", {
+        call_id: CHAT.call.callId,
+        candidate: JSON.stringify(e.candidate),
+      });
+    }
+  };
+
+  pc.onconnectionstatechange = () => {
+    const { status } = callEls();
+    if (status) {
+      status.textContent = pc.connectionState === "connected" ? "Connected" : pc.connectionState || "Connecting…";
+    }
+    if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
+      endCall();
+    }
+  };
+
+  hideIncomingCall();
+
+  try {
+    const offer = new RTCSessionDescription({ sdp: CHAT.call.offerSdp, type: CHAT.call.offerType });
+    await pc.setRemoteDescription(offer);
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+    await publishSignal("answer", {
+      call_id: CHAT.call.callId,
+      sdp: answer.sdp,
+      sdp_type: answer.type,
+    });
+    const { status, localVideo } = callEls();
+    if (status) status.textContent = "Connected";
+    if (localVideo) localVideo.srcObject = CHAT.call.localStream;
+    showCallModal();
+  } catch (e) {
+    console.warn("[Chat] call answer failed:", e);
+    endCall();
+  }
+}
+
+function declineCall() {
+  hideIncomingCall();
+  if (CHAT.call.callId) {
+    publishSignal("end", { call_id: CHAT.call.callId });
+    CHAT.call.callId = null;
+  }
+  CHAT.call.incoming = false;
+  CHAT.call.offerFrom = null;
+  CHAT.call.offerSdp = null;
+  CHAT.call.offerType = null;
+}
+
+/* ==========================================================================
+ * Socket event handling — call signaling
+ * ========================================================================= */
+
+function handleCallEvent(evt) {
+  const callId = evt.call_id;
+  const fromId = evt.from_user_id;
+  const fromName = evt.from_username || "Someone";
+
+  // Ignore our own signals.
+  if (CHAT.me && fromId == CHAT.me.user_id) return;
+
+  if (evt.type === "call-offer") {
+    if (CHAT.call.active) return; // already in a call
+    showIncomingCall(fromId, fromName, callId, evt.sdp, evt.sdp_type);
+    return;
+  }
+
+  if (evt.type === "call-answer") {
+    if (!CHAT.call.active || CHAT.call.callId !== callId) return;
+    const { status } = callEls();
+    if (status) status.textContent = "Connecting…";
+    try {
+      const answer = new RTCSessionDescription({ sdp: evt.sdp, type: evt.sdp_type });
+      CHAT.call.pc?.setRemoteDescription(answer).catch((e) => console.warn("[Chat] set remote answer failed:", e));
+    } catch (e) {
+      console.warn("[Chat] invalid answer:", e);
+    }
+    return;
+  }
+
+  if (evt.type === "call-ice") {
+    if (!CHAT.call.active || CHAT.call.callId !== callId) return;
+    try {
+      const cand = JSON.parse(evt.candidate);
+      CHAT.call.pc?.addIceCandidate(cand).catch((e) => console.warn("[Chat] add ice candidate failed:", e));
+    } catch (e) {
+      console.warn("[Chat] invalid ice candidate:", e);
+    }
+    return;
+  }
+
+  if (evt.type === "call-end") {
+    if (!callId || CHAT.call.callId === callId) endCall();
+    return;
+  }
+}
+
 async function markAllRead() {
   try {
     const res = await fetch("/api/chat/read", {
@@ -1745,6 +2059,13 @@ function wire() {
     pinnedClose.addEventListener("click", closePinned);
   }
 
+  // Video call toggle — admin only.
+  const callToggle = document.getElementById("chat-call-toggle");
+  if (callToggle) {
+    callToggle.hidden = !CHAT.isAdmin;
+    if (CHAT.isAdmin) callToggle.addEventListener("click", startCall);
+  }
+
   CHAT.inputEl.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -1793,6 +2114,12 @@ function wire() {
     stopTypingBeacon();
     stopPresence();
     disconnectSocket();
+    // Drop any active call so peers are notified.
+    if (CHAT.call.pc) { try { CHAT.call.pc.close(); } catch (e) {} CHAT.call.pc = null; }
+    if (CHAT.call.localStream) { CHAT.call.localStream.getTracks().forEach((t) => t.stop()); CHAT.call.localStream = null; }
+    if (CHAT.call.callId) {
+      publishSignal("end", { call_id: CHAT.call.callId }).catch(() => {});
+    }
   });
 
   console.log("[Chat] widget ready");
