@@ -63,6 +63,12 @@ const CHAT = {
   open: false,
   unread: 0,
 
+  teaser: {
+    lastAt: 0,         // ms timestamp of last teaser shown (cooldown)
+    el: null,          // active teaser bubble
+    hideTimer: null,
+  },
+
   historyLoaded: false,
   loadSeq: 0,        // guards history fetches against race conditions
 
@@ -1021,6 +1027,7 @@ function handleEvent(evt) {
       appendMessage(evt, { scroll: CHAT.open });
     }
     if (!CHAT.open) bumpUnread();
+    if (!CHAT.open) teaserForMessage(evt);
     // A real message clears the sender's typing indicator everywhere.
     if (CHAT.typingUsers[evt.user_id]) {
       delete CHAT.typingUsers[evt.user_id];
@@ -1185,6 +1192,7 @@ async function loadHistory(refresh = false) {
     hideEmptyState();
     showEmptyState();
     CHAT.historyLoaded = true;
+    maybeWelcomeTeaser();
   } catch (e) {
     console.warn("[Chat] history failed:", e);
     if (!refresh) showEmptyState();
@@ -1465,6 +1473,102 @@ function clearUnread() {
   if (CHAT.fabEl) CHAT.fabEl.classList.remove("chat-fab--has-unread");
 }
 
+/* ==========================================================================
+ * Teaser bubbles — gentle nudges that invite the user to open the chat
+ * (message previews while the panel is closed + one-time welcome note).
+ * Anti-annoyance: 3-min cooldown between teasers, an ✕ dismiss snoozes all
+ * teasers for 24 h, and nothing is ever shown while the panel is open.
+ * ========================================================================= */
+
+const TEASER_COOLDOWN_MS = 3 * 60 * 1000; // min gap between teasers
+const TEASER_SHOW_MS     = 6000;          // auto-hide delay
+const TEASER_DISMISS_KEY = "tom-chat-teaser-dismissed"; // 24 h snooze after ✕
+const TEASER_WELCOME_KEY = "tom-chat-teaser-welcomed";  // one-time welcome flag
+
+function teaserDismissed() {
+  try {
+    const until = parseInt(localStorage.getItem(TEASER_DISMISS_KEY), 10);
+    return until && Date.now() < until;
+  } catch (e) { return false; }
+}
+
+function hideTeaser() {
+  clearTimeout(CHAT.teaser.hideTimer);
+  if (CHAT.teaser.el) {
+    const node = CHAT.teaser.el;
+    node.classList.remove("chat-fab-teaser--show");
+    setTimeout(() => node.remove(), 250);
+    CHAT.teaser.el = null;
+  }
+}
+
+function showTeaser(body) {
+  if (CHAT.open || teaserDismissed()) return;
+  if (Date.now() - CHAT.teaser.lastAt < TEASER_COOLDOWN_MS) return;
+  const fab = CHAT.fabEl;
+  if (!fab || !fab.parentElement) return;
+
+  hideTeaser();
+  CHAT.teaser.lastAt = Date.now();
+
+  const bubble = el("div", "chat-fab-teaser");
+  bubble.setAttribute("role", "status");
+  bubble.appendChild(body);
+
+  const x = el("button", "chat-fab-teaser-x", "✕");
+  x.type = "button";
+  x.setAttribute("aria-label", "Hide chat teasers for 24 hours");
+  x.addEventListener("click", (e) => {
+    e.stopPropagation();
+    try {
+      localStorage.setItem(TEASER_DISMISS_KEY, String(Date.now() + 24 * 3600 * 1000));
+    } catch (err) {}
+    hideTeaser();
+  });
+  bubble.appendChild(x);
+
+  bubble.addEventListener("click", (e) => {
+    e.stopPropagation();
+    hideTeaser();
+    openPanel();
+  });
+
+  fab.parentElement.appendChild(bubble);
+  CHAT.teaser.el = bubble;
+  requestAnimationFrame(() => bubble.classList.add("chat-fab-teaser--show"));
+  CHAT.teaser.hideTimer = setTimeout(hideTeaser, TEASER_SHOW_MS);
+}
+
+// Live message teaser: "<name>: <preview>" while the panel is closed.
+function teaserForMessage(evt) {
+  if (CHAT.me && evt.user_id == CHAT.me.user_id) return; // never tease own messages
+  if (teaserDismissed()) return;
+  if (Date.now() - CHAT.teaser.lastAt < TEASER_COOLDOWN_MS) return;
+
+  const body = el("div", "chat-fab-teaser-body");
+  body.appendChild(el("span", "chat-fab-teaser-name", (evt.username || "Someone") + ":"));
+  let text = String(evt.text || "").replace(/\s+/g, " ").trim();
+  if (!text) text = "sent a message";
+  if (text.length > 60) text = text.slice(0, 60) + "…";
+  body.appendChild(el("span", "chat-fab-teaser-text", text));
+  showTeaser(body);
+}
+
+// One-time welcome nudge for logged-in users with nothing unread.
+function maybeWelcomeTeaser() {
+  if (!window.CHAT_CONTEXT?.loggedIn) return;
+  if (CHAT.open || CHAT.unread > 0) return;
+  try {
+    if (localStorage.getItem(TEASER_WELCOME_KEY) === "1") return;
+    localStorage.setItem(TEASER_WELCOME_KEY, "1");
+  } catch (e) { return; }
+
+  const body = el("div", "chat-fab-teaser-body");
+  body.appendChild(el("span", "chat-fab-teaser-wave", "👋"));
+  body.appendChild(el("span", "chat-fab-teaser-text", "People are chatting right now — join in!"));
+  showTeaser(body);
+}
+
 async function markAllRead() {
   try {
     const res = await fetch("/api/chat/read", {
@@ -1484,6 +1588,7 @@ async function openPanel() {
   CHAT.panel.hidden = false;
   requestAnimationFrame(() => CHAT.panel.classList.add("open"));
   CHAT.open = true;
+  hideTeaser();
   const hadUnread = CHAT.unread > 0;
   clearUnread();
 
