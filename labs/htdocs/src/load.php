@@ -96,8 +96,8 @@ if (!function_exists('send_security_headers')) {
         // Referrer Policy
         header('Referrer-Policy: strict-origin-when-cross-origin');
         
-        // Permissions Policy (restrict browser features)
-        header('Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()');
+        // Permissions Policy (allow camera/mic on same origin for video chat)
+        header('Permissions-Policy: camera=(self), microphone=(self), geolocation=(), payment=()');
         
         // Determine WebSocket scheme and host for connect-src
         // Behind Cloudflare Flexible SSL, Apache receives HTTP from Cloudflare
