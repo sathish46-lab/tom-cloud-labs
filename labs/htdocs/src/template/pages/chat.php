@@ -113,7 +113,7 @@
             <i class="bx bxs-error-circle chat-call-error-icon"></i>
             <div class="chat-call-error-text">
               <span class="chat-call-error-title" id="chat-call-error-title">Camera/microphone access required</span>
-              <span class="chat-call-error-desc" id="chat-call-error-desc">Allow camera and microphone in site settings to start the video call.</span>
+              <span class="chat-call-error-desc" id="chat-call-error-desc">Allow camera/microphone for dev.tomweb.in in site settings, then click Retry.</span>
             </div>
             <div class="chat-call-error-actions">
               <button type="button" class="chat-call-error-btn chat-call-error-btn--settings" id="chat-call-open-settings" aria-label="Open site settings">Open site settings</button>

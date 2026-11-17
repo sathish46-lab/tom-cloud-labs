@@ -1656,10 +1656,18 @@ function stopLocalStream() {
 
 function openSiteSettings() {
   try {
+    const host = window.location.hostname || "";
     const ua = navigator.userAgent || "";
-    if (/Edg\//.test(ua)) location.href = "edge://settings/content/microphone";
-    else if (/Firefox\//.test(ua)) location.href = "about:permissions#section-camera";
-    else location.href = "chrome://settings/content/microphone";
+    // Try opening the per-origin site settings panel first (Chrome/Edge).
+    if (/Chrome\//.test(ua) || /Edg\//.test(ua)) {
+      location.href = `chrome://settings/content/siteDetails?site=${host}`;
+      return;
+    }
+    if (/Firefox\//.test(ua)) {
+      location.href = `about:permissions#section-camera`;
+      return;
+    }
+    location.href = "chrome://settings/content/microphone";
   } catch (e) {
     console.warn("[Chat] could not open site settings:", e);
   }
