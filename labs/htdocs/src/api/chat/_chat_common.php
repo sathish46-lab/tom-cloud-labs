@@ -112,6 +112,12 @@ function chat_public_message(MongoDB\Model\BSONDocument|array $doc, ?string $vie
         'reactions'=> $reactions,
         'pinned'   => (bool) ($doc['pinned'] ?? false),
         'reply_to' => isset($doc['reply_to']) ? (string) $doc['reply_to'] : null,
+        // Reply quote metadata — resolved server-side at send time
+        // (send.php) so the client can render the quote without needing
+        // the original message in its loaded history window.
+        'reply_to_username' => (string) ($doc['reply_to_username'] ?? ''),
+        'reply_to_text'     => (string) ($doc['reply_to_text'] ?? ''),
+        'reply_to_user_id'  => isset($doc['reply_to_user_id']) ? (int) $doc['reply_to_user_id'] : null,
     ];
 }
 

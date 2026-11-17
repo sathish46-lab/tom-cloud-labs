@@ -45,6 +45,28 @@ if (!is_string($avatar) || $avatar === '') {
 }
 $role = chat_role_label($session);
 
+// ---- Reply target (optional) ------------------------------------------------
+// Client sends only the original message id; the name/text are resolved
+// SERVER-SIDE from the stored message so the client can never fake them.
+$replyTo = null; $replyName = null; $replyText = null; $replyUid = null;
+$replyId = (string) (chat_input('reply_to') ?? '');
+if ($replyId !== '') {
+    try {
+        $orig = $db->chat_messages->findOne([
+            '_id'     => new MongoDB\BSON\ObjectId($replyId),
+            'deleted' => ['$ne' => true],
+        ]);
+        if ($orig) {
+            $replyTo   = (string) $orig['_id'];
+            $replyName = (string) ($orig['username'] ?? '');
+            $replyText = mb_substr((string) ($orig['text'] ?? ''), 0, 120);
+            $replyUid  = (int) ($orig['user_id'] ?? 0);
+        }
+    } catch (\Throwable $e) {
+        // invalid id: just send as a normal message
+    }
+}
+
 // ---- Persist ---------------------------------------------------------------
 $now = new MongoDB\BSON\UTCDateTime((int) (microtime(true) * 1000));
 $doc = [
@@ -56,6 +78,12 @@ $doc = [
     'created_at' => $now,
     'deleted'    => false,
 ];
+if ($replyTo !== null) {
+    $doc['reply_to']          = $replyTo;
+    $doc['reply_to_username'] = $replyName;
+    $doc['reply_to_text']     = $replyText;
+    $doc['reply_to_user_id']  = $replyUid;
+}
 
 try {
     $insert = $db->chat_messages->insertOne($doc);
@@ -76,6 +104,12 @@ $payload = [
     'text'     => $text,
     'ts'       => (int) (string) $now,
 ];
+if ($replyTo !== null) {
+    $payload['reply_to']          = $replyTo;
+    $payload['reply_to_username'] = $replyName;
+    $payload['reply_to_text']     = $replyText;
+    $payload['reply_to_user_id']  = $replyUid;
+}
 $published = chat_publish($payload);
 
 chat_json([
