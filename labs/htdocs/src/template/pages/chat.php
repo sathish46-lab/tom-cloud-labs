@@ -28,10 +28,12 @@
           <i class="bx bxs-pin"></i>
           <span id="chat-pinned-count" class="chat-pinned-count" hidden>0</span>
         </button>
-        <!-- Video call toggle (admin only; shown by chat.js) -->
-        <button type="button" class="chat-icon-btn" id="chat-call-toggle" aria-label="Start video call" hidden>
+        <!-- Video call toggle (admin only; rendered server-side) -->
+        <?php if ($isAdmin): ?>
+        <button type="button" class="chat-icon-btn" id="chat-call-toggle" aria-label="Start video call">
           <i class="bx bxs-video-circle"></i>
         </button>
+        <?php endif; ?>
         <button type="button" class="chat-icon-btn" aria-label="Minimize chat">−</button>
         <button type="button" class="chat-icon-btn" aria-label="Close chat">×</button>
       </div>

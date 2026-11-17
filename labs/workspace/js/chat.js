@@ -1183,7 +1183,7 @@ async function loadHistory(refresh = false) {
     if (!data.success) throw new Error(data.error || "History failed");
 
     CHAT.me = data.me || null;
-    CHAT.isAdmin = CHAT.me?.role === "admin";
+    CHAT.isAdmin = ["admin", "superuser"].includes(CHAT.me?.role);
 
     // Apply unread count from server (works for both logged-in and guest).
     // While the panel is open nothing is unread, so keep the badge clear.
@@ -2059,12 +2059,9 @@ function wire() {
     pinnedClose.addEventListener("click", closePinned);
   }
 
-  // Video call toggle — admin only.
+  // Video call toggle — rendered server-side for admins only.
   const callToggle = document.getElementById("chat-call-toggle");
-  if (callToggle) {
-    callToggle.hidden = !CHAT.isAdmin;
-    if (CHAT.isAdmin) callToggle.addEventListener("click", startCall);
-  }
+  if (callToggle) callToggle.addEventListener("click", startCall);
 
   CHAT.inputEl.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) {

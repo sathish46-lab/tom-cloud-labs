@@ -14,11 +14,13 @@ require_once __DIR__ . '/../lib/core/Appearance.class.php';
 require_once __DIR__ . '/../lib/core/SiteFont.class.php';
 $appearance = Appearance::get();
 
+$isAdmin = false;
 if (Session::getAuthStatus() == Constants::STATUS_LOGGEDIN) {
     $user = Session::getUser();
     if ($user) {
         $serverTheme = $user->getThemePreferences() ?? [];
         $uiPreferences = $user->getUiPreferences() ?? [];
+        $isAdmin = in_array($user->getRole(), [Constants::GROUP_ADMIN, Constants::GROUP_SUPERUSER]);
     }
 }
 
