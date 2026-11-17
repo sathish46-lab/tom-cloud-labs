@@ -94,48 +94,51 @@ if (in_array($type, ['answer', 'ice', 'end'], true)) {
     $isCallee   = ($myUserId === $calleeId);
     $isParticipant = $isCaller || $isCallee;
 
-    if (!$isParticipant) {
-        chat_json(['success' => false, 'error' => 'Forbidden: not a participant of this call'], 403);
-    }
-
+    // ---- answer: first responder becomes the callee (no prior participation needed) ----
     if ($type === 'answer') {
         if ($call['status'] !== 'offered') {
             chat_json(['success' => false, 'error' => 'Call not in offered state'], 409);
         }
-        // First responder becomes the callee.
-        if ($calleeId === null) {
-            try {
-                $db->chat_calls->updateOne(
-                    ['call_id' => $callId],
-                    ['$set' => [
-                        'callee_id'   => $myUserId,
-                        'callee_name' => $myUsername,
-                        'status'      => 'answered',
-                        'updated_at'  => new \MongoDB\BSON\UTCDateTime((int)(microtime(true) * 1000)),
-                    ]]
-                );
-            } catch (\Throwable $e) {
-                error_log('Call state update failed: ' . $e->getMessage());
-                chat_json(['success' => false, 'error' => 'Could not update call state'], 500);
-            }
-        } elseif ($calleeId !== $myUserId) {
+        if ($calleeId !== null && $calleeId !== $myUserId) {
             chat_json(['success' => false, 'error' => 'Call already answered by another user'], 409);
         }
-    }
-
-    if ($type === 'end') {
+        // Any logged-in user can answer; first one becomes callee.
         try {
             $db->chat_calls->updateOne(
                 ['call_id' => $callId],
                 ['$set' => [
-                    'status'   => 'ended',
-                    'ended_at' => new \MongoDB\BSON\UTCDateTime((int)(microtime(true) * 1000)),
-                    'updated_at' => new \MongoDB\BSON\UTCDateTime((int)(microtime(true) * 1000)),
+                    'callee_id'   => $myUserId,
+                    'callee_name' => $myUsername,
+                    'status'      => 'answered',
+                    'updated_at'  => new \MongoDB\BSON\UTCDateTime((int)(microtime(true) * 1000)),
                 ]]
             );
         } catch (\Throwable $e) {
-            error_log('Call end state update failed: ' . $e->getMessage());
+            error_log('Call state update failed: ' . $e->getMessage());
             chat_json(['success' => false, 'error' => 'Could not update call state'], 500);
+        }
+    }
+
+    // ---- ice / end: must be caller or callee ----
+    if (in_array($type, ['ice', 'end'], true)) {
+        if (!$isParticipant) {
+            chat_json(['success' => false, 'error' => 'Forbidden: not a participant of this call'], 403);
+        }
+
+        if ($type === 'end') {
+            try {
+                $db->chat_calls->updateOne(
+                    ['call_id' => $callId],
+                    ['$set' => [
+                        'status'   => 'ended',
+                        'ended_at' => new \MongoDB\BSON\UTCDateTime((int)(microtime(true) * 1000)),
+                        'updated_at' => new \MongoDB\BSON\UTCDateTime((int)(microtime(true) * 1000)),
+                    ]]
+                );
+            } catch (\Throwable $e) {
+                error_log('Call end state update failed: ' . $e->getMessage());
+                chat_json(['success' => false, 'error' => 'Could not update call state'], 500);
+            }
         }
     }
 }
