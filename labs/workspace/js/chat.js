@@ -79,6 +79,9 @@ const CHAT = {
     offerFrom: null,
     offerSdp: null,
     offerType: null,
+    iceBuffer: [],          // incoming ICE candidates buffered until setRemoteDescription
+    iceReady: false,        // true once setRemoteDescription has completed
+    ringTimer: null,        // 45s ringing timeout
   },
 
   historyLoaded: false,
@@ -1594,6 +1597,10 @@ function maybeWelcomeTeaser() {
 const CALL_STUN = [{ urls: "stun:stun.l.google.com:19302" }];
 const CALL_SIGNAL_URL = "/api/chat/call-signal.php";
 
+// NOTE: No TURN server is configured. Calls across strict NATs (symmetric
+// NAT, carrier-grade NAT) will fail to establish a media path. Add TURN
+// servers to CALL_STUN if you need to traverse those networks.
+
 function callEls() {
   return {
     modal: document.getElementById("chat-call-modal"),
@@ -1610,7 +1617,7 @@ function callEls() {
     error: document.getElementById("chat-call-error"),
     errorTitle: document.getElementById("chat-call-error-title"),
     errorDesc: document.getElementById("chat-call-error-desc"),
-    settingsBtn: document.getElementById("chat-call-open-settings"),
+    dismissBtn: document.getElementById("chat-call-dismiss-error"),
     retryBtn: document.getElementById("chat-call-retry-perm"),
   };
 }
@@ -1626,7 +1633,12 @@ async function publishSignal(type, payload) {
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
       console.warn("[Chat] signal publish HTTP error:", res.status, body.error || res.statusText);
-      return { ok: false, status: res.status, error: body.error };
+      return { ok: false, status: res.status, error: body.error || res.statusText };
+    }
+    const data = await res.json().catch(() => ({}));
+    if (!data.success) {
+      console.warn("[Chat] signal publish API error:", data.error);
+      return { ok: false, status: res.status, error: data.error };
     }
     console.log("[Chat] signal published:", type, "callId=", payload.call_id);
     return { ok: true };
@@ -1641,14 +1653,17 @@ function showCallModal() {
   if (!modal) return;
   CHAT.call.active = true;
   modal.hidden = false;
-  requestAnimationFrame(() => { modal.hidden = false; });
+  modal.classList.add("is-open");
   callEls().endBtn?.addEventListener("click", endCall);
   console.log("[Chat] call modal opened");
 }
 
 function hideCallModal() {
   const { modal, localVideo, remoteVideo } = callEls();
-  if (modal) modal.hidden = true;
+  if (modal) {
+    modal.hidden = true;
+    modal.classList.remove("is-open");
+  }
   CHAT.call.active = false;
   if (localVideo) { localVideo.srcObject = null; }
   if (remoteVideo) { remoteVideo.srcObject = null; }
@@ -1665,40 +1680,29 @@ function stopLocalStream() {
 }
 
 function openSiteSettings() {
-  try {
-    const host = window.location.hostname || "";
-    const ua = navigator.userAgent || "";
-    // Try opening the per-origin site settings panel first (Chrome/Edge).
-    if (/Chrome\//.test(ua) || /Edg\//.test(ua)) {
-      location.href = `chrome://settings/content/siteDetails?site=${host}`;
-      return;
-    }
-    if (/Firefox\//.test(ua)) {
-      location.href = `about:permissions#section-camera`;
-      return;
-    }
-    location.href = "chrome://settings/content/microphone";
-  } catch (e) {
-    console.warn("[Chat] could not open site settings:", e);
-  }
+  // Kept as a no-op: browsers block chrome:// navigation from web pages.
+  // Users are instructed in the error text to manage permissions themselves.
+  console.log("[Chat] openSiteSettings() is a no-op — browser blocks chrome:// navigation from pages.");
 }
 
 function showCallError(title, desc) {
-  const { modal, error, errorTitle, errorDesc, videos, status } = callElsWithVideos();
+  const { modal, error, errorTitle, errorDesc, videos, status, endBtn } = callElsWithVideos();
   if (!modal || !error) return;
   CHAT.call.active = true;
   modal.hidden = false;
-  requestAnimationFrame(() => { modal.hidden = false; });
+  modal.classList.add("is-open");
   if (videos) videos.hidden = true;
   if (status) status.hidden = true;
   if (errorTitle) errorTitle.textContent = title || "Camera/microphone access required";
-  if (errorDesc) errorDesc.textContent = desc || "Allow camera and microphone in site settings to start the video call.";
+  if (errorDesc) errorDesc.textContent = desc || "Allow camera/microphone in site settings, then click Retry.";
   error.hidden = false;
+  error.classList.add("is-open");
+  if (endBtn) endBtn.addEventListener("click", endCall);
 }
 
 function hideCallError() {
   const { error, videos, status } = callElsWithVideos();
-  if (error) error.hidden = true;
+  if (error) { error.hidden = true; error.classList.remove("is-open"); }
   if (videos) videos.hidden = false;
   if (status) status.hidden = false;
 }
@@ -1721,20 +1725,37 @@ function closePeerConnection() {
   }
 }
 
+function flushIceBuffer() {
+  if (!CHAT.call.iceReady || !CHAT.call.pc) return;
+  const buffered = CHAT.call.iceBuffer;
+  CHAT.call.iceBuffer = [];
+  for (const cand of buffered) {
+    try {
+      CHAT.call.pc.addIceCandidate(cand).catch((e) => console.warn("[Chat] add buffered ice candidate failed:", e));
+    } catch (e) {
+      console.warn("[Chat] add buffered ice candidate failed:", e);
+    }
+  }
+  console.log("[Chat] flushed", buffered.length, "buffered ICE candidates");
+}
+
 async function endCall() {
   console.log("[Chat] endCall() callId=", CHAT.call.callId);
   closePeerConnection();
   stopLocalStream();
   hideCallModal();
   hideIncomingCall();
-  if (CHAT.call.callId) {
-    await publishSignal("end", { call_id: CHAT.call.callId });
-    CHAT.call.callId = null;
-  }
+  const callId = CHAT.call.callId;
+  // Reset all call state so the call button works again without reload.
+  CHAT.call.callId = null;
   CHAT.call.incoming = false;
   CHAT.call.offerFrom = null;
   CHAT.call.offerSdp = null;
   CHAT.call.offerType = null;
+  CHAT.call._retry = null;
+  if (callId) {
+    await publishSignal("end", { call_id: callId }).catch(() => {});
+  }
 }
 
 function showIncomingCall(fromUserId, fromUsername, callId, offerSdp, offerType) {
@@ -1748,17 +1769,80 @@ function showIncomingCall(fromUserId, fromUsername, callId, offerSdp, offerType)
   CHAT.call.offerType = offerType;
   if (fromLabel) fromLabel.textContent = fromUsername || "Someone";
   incoming.hidden = false;
+  incoming.classList.add("is-open");
   acceptBtn?.addEventListener("click", answerCall);
   declineBtn?.addEventListener("click", declineCall);
+
+  // Ringing timeout: auto-end after 45 seconds if unanswered.
+  CHAT.call.ringTimer = setTimeout(() => {
+    console.log("[Chat] ringing timeout — auto-ending call", callId);
+    hideIncomingCall();
+    endCall();
+  }, 45000);
 }
 
 function hideIncomingCall() {
   console.log("[Chat] hideIncomingCall()");
+  if (CHAT.call.ringTimer) {
+    clearTimeout(CHAT.call.ringTimer);
+    CHAT.call.ringTimer = null;
+  }
   const { incoming, acceptBtn, declineBtn } = callEls();
-  if (incoming) incoming.hidden = true;
+  if (incoming) { incoming.hidden = true; incoming.classList.remove("is-open"); }
   CHAT.call.incoming = false;
   acceptBtn?.removeEventListener("click", answerCall);
   declineBtn?.removeEventListener("click", declineCall);
+}
+
+function checkMediaDeviceSupport() {
+  if (!window.isSecureContext) {
+    return {
+      ok: false,
+      title: "Secure context required",
+      desc: "Video calls need a secure context. Open this page over HTTPS or on http://localhost.",
+    };
+  }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    return {
+      ok: false,
+      title: "Camera/microphone not supported",
+      desc: "Your browser does not support getUserMedia. Video calls are not available.",
+    };
+  }
+  return { ok: true };
+}
+
+function mapMediaError(e) {
+  const name = e && e.name ? e.name : "";
+  const msg = e && e.message ? e.message : "";
+  if (name === "NotAllowedError") {
+    return {
+      title: "Camera/microphone permission denied",
+      desc: "You denied camera/microphone access. Grant it in the site settings, then click Retry.",
+    };
+  }
+  if (name === "NotFoundError") {
+    return {
+      title: "No camera/microphone found",
+      desc: "No camera or microphone device was detected on this device.",
+    };
+  }
+  if (name === "NotReadableError") {
+    return {
+      title: "Camera/microphone in use",
+      desc: "Another application is using the camera or microphone. Close it and try again.",
+    };
+  }
+  if (name === "TypeError" && msg.includes("getUserMedia")) {
+    return {
+      title: "Secure context required",
+      desc: "Video calls need a secure context. Open this page over HTTPS or on http://localhost.",
+    };
+  }
+  return {
+    title: "Camera/microphone access failed",
+    desc: msg || "Could not access the camera or microphone.",
+  };
 }
 
 async function startCall() {
@@ -1766,15 +1850,21 @@ async function startCall() {
   if (!CHAT.isAdmin) return;
   if (CHAT.call.active) return;
 
+  const support = checkMediaDeviceSupport();
+  if (!support.ok) {
+    console.warn("[Chat] media device support check failed:", support.title);
+    CHAT.call._retry = "start";
+    showCallError(support.title, support.desc);
+    return;
+  }
+
   try {
     CHAT.call.localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
   } catch (e) {
-    console.warn("[Chat] camera/mic access denied:", e);
+    console.warn("[Chat] camera/mic access denied:", e.name, e.message);
     CHAT.call._retry = "start";
-    showCallError(
-      "Camera/microphone access required",
-      "Allow camera/microphone for dev.tomweb.in in site settings, then click Retry."
-    );
+    const mapped = mapMediaError(e);
+    showCallError(mapped.title, mapped.desc);
     return;
   }
   console.log("[Chat] getUserMedia success, tracks=", CHAT.call.localStream.getTracks().length);
@@ -1796,10 +1886,15 @@ async function startCall() {
   pc.onicecandidate = (e) => {
     if (e.candidate) {
       console.log("[Chat] ICE candidate generated");
-      publishSignal("ice", {
-        call_id: CHAT.call.callId,
-        candidate: JSON.stringify(e.candidate),
-      });
+      // Buffer outgoing candidates until the offer has been published.
+      if (CHAT.call.iceReady) {
+        publishSignal("ice", {
+          call_id: CHAT.call.callId,
+          candidate: JSON.stringify(e.candidate),
+        });
+      } else {
+        CHAT.call.iceBuffer.push(e.candidate);
+      }
     }
   };
 
@@ -1820,6 +1915,7 @@ async function startCall() {
   try {
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
+    CHAT.call.iceReady = true;
     console.log("[Chat] offer created:", offer.type);
     const result = await publishSignal("offer", {
       call_id: CHAT.call.callId,
@@ -1835,6 +1931,8 @@ async function startCall() {
       return;
     }
     console.log("[Chat] offer signal published");
+    // Flush any ICE candidates gathered before the offer was published.
+    flushIceBuffer();
     const { status, localVideo } = callEls();
     if (status) status.textContent = "Waiting for someone to join…";
     if (localVideo) localVideo.srcObject = CHAT.call.localStream;
@@ -1850,16 +1948,23 @@ async function answerCall() {
   console.log("[Chat] answerCall() for callId=", CHAT.call.callId);
   if (!CHAT.call.callId || !CHAT.call.offerSdp) return;
 
+  const support = checkMediaDeviceSupport();
+  if (!support.ok) {
+    console.warn("[Chat] media device support check failed:", support.title);
+    CHAT.call._retry = "answer";
+    declineCall();
+    showCallError(support.title, support.desc);
+    return;
+  }
+
   try {
     CHAT.call.localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
   } catch (e) {
-    console.warn("[Chat] camera/mic access denied:", e);
+    console.warn("[Chat] camera/mic access denied:", e.name, e.message);
     CHAT.call._retry = "answer";
     declineCall();
-    showCallError(
-      "Camera/microphone access required",
-      "Allow camera and microphone in site settings to answer the video call."
-    );
+    const mapped = mapMediaError(e);
+    showCallError(mapped.title, mapped.desc);
     return;
   }
 
@@ -1879,10 +1984,15 @@ async function answerCall() {
 
   pc.onicecandidate = (e) => {
     if (e.candidate) {
-      publishSignal("ice", {
-        call_id: CHAT.call.callId,
-        candidate: JSON.stringify(e.candidate),
-      });
+      // Buffer outgoing candidates until the answer has been published.
+      if (CHAT.call.iceReady) {
+        publishSignal("ice", {
+          call_id: CHAT.call.callId,
+          candidate: JSON.stringify(e.candidate),
+        });
+      } else {
+        CHAT.call.iceBuffer.push(e.candidate);
+      }
     }
   };
 
@@ -1901,6 +2011,7 @@ async function answerCall() {
   try {
     const offer = new RTCSessionDescription({ sdp: CHAT.call.offerSdp, type: CHAT.call.offerType });
     await pc.setRemoteDescription(offer);
+    CHAT.call.iceReady = true;
     const answer = await pc.createAnswer();
     await pc.setLocalDescription(answer);
     const answerResult = await publishSignal("answer", {
@@ -1916,6 +2027,8 @@ async function answerCall() {
       );
       return;
     }
+    // Flush any ICE candidates gathered before the answer was published.
+    flushIceBuffer();
     const { status, localVideo } = callEls();
     if (status) status.textContent = "Connected";
     if (localVideo) localVideo.srcObject = CHAT.call.localStream;
@@ -1978,7 +2091,12 @@ function handleCallEvent(evt) {
     if (!CHAT.call.active || CHAT.call.callId !== callId) { console.log("[Chat] call-ice ignored"); return; }
     try {
       const cand = JSON.parse(evt.candidate);
-      CHAT.call.pc?.addIceCandidate(cand).catch((e) => console.warn("[Chat] add ice candidate failed:", e));
+      if (CHAT.call.iceReady && CHAT.call.pc) {
+        CHAT.call.pc.addIceCandidate(cand).catch((e) => console.warn("[Chat] add ice candidate failed:", e));
+      } else {
+        CHAT.call.iceBuffer.push(cand);
+        console.log("[Chat] buffered ICE candidate (iceReady=", CHAT.call.iceReady, ")");
+      }
     } catch (e) {
       console.warn("[Chat] invalid ice candidate:", e);
     }
@@ -2178,9 +2296,9 @@ function wire() {
   }
 
   // Permission-error actions inside the call modal.
-  const permSettings = document.getElementById("chat-call-open-settings");
+  const permDismiss = document.getElementById("chat-call-dismiss-error");
   const permRetry = document.getElementById("chat-call-retry-perm");
-  if (permSettings) permSettings.addEventListener("click", openSiteSettings);
+  if (permDismiss) permDismiss.addEventListener("click", endCall);
   if (permRetry) permRetry.addEventListener("click", retryCall);
 
   CHAT.inputEl.addEventListener("keydown", (e) => {

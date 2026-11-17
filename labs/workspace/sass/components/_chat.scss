@@ -1535,12 +1535,10 @@ $chat-tail: 0.35rem;     // tight corner on the sender's side
 
   &[hidden] { display: none; }
 
-  &[hidden="false"] {
+  &.is-open {
     opacity: 1;
     pointer-events: auto;
   }
-
-  &[hidden="true"] { opacity: 0; pointer-events: none; }
 }
 
 .chat-call-modal-inner {
@@ -1735,8 +1733,7 @@ $chat-tail: 0.35rem;     // tight corner on the sender's side
 
   &[hidden] { display: none; }
 
-  &[hidden="false"] { opacity: 1; pointer-events: auto; }
-  &[hidden="true"] { opacity: 0; pointer-events: none; }
+  &.is-open { opacity: 1; pointer-events: auto; }
 }
 
 .chat-call-incoming-inner {

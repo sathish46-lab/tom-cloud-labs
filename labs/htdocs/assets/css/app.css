@@ -31593,13 +31593,9 @@ html[data-coreui-theme=light] .chat-panel {
 .chat-call-modal[hidden] {
   display: none;
 }
-.chat-call-modal[hidden=false] {
+.chat-call-modal.is-open {
   opacity: 1;
   pointer-events: auto;
-}
-.chat-call-modal[hidden=true] {
-  opacity: 0;
-  pointer-events: none;
 }
 
 .chat-call-modal-inner {
@@ -31797,13 +31793,9 @@ html[data-coreui-theme=light] .chat-panel {
 .chat-call-incoming[hidden] {
   display: none;
 }
-.chat-call-incoming[hidden=false] {
+.chat-call-incoming.is-open {
   opacity: 1;
   pointer-events: auto;
-}
-.chat-call-incoming[hidden=true] {
-  opacity: 0;
-  pointer-events: none;
 }
 
 .chat-call-incoming-inner {

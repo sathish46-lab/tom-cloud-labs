@@ -139,10 +139,13 @@ function chat_publish(array $event): bool {
 }
 
 /**
- * Role label used for the badge in the UI. Only 'admin' gets a badge.
+ * Role label used for the badge in the UI. Returns 'admin' for both
+ * GROUP_ADMIN and GROUP_SUPERUSER so the client-side isAdmin check is
+ * consistent with the server-side start-call policy.
  */
 function chat_role_label(UserSession $session): string {
-    return AuthMiddleware::isAdmin() ? 'admin' : 'member';
+    $role = $session->getRole();
+    return in_array($role, [Constants::GROUP_ADMIN, Constants::GROUP_SUPERUSER], true) ? 'admin' : 'member';
 }
 
 /**
@@ -190,4 +193,15 @@ function chat_resolve_identity(?string $guestIdHeader = null): ?array {
         return ['type' => 'guest', 'id' => $guestIdHeader];
     }
     return null;
+}
+
+/**
+ * Decide whether the current session user is allowed to originate a call
+ * (send a call-offer). Policy: GROUP_ADMIN and GROUP_SUPERUSER.
+ */
+function chat_can_start_call(): bool {
+    $session = AuthMiddleware::getUser();
+    if (!$session) return false;
+    $role = $session->getRole();
+    return in_array($role, [Constants::GROUP_ADMIN, Constants::GROUP_SUPERUSER], true);
 }

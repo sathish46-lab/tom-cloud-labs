@@ -12,6 +12,7 @@ $uiPreferences = [];
 require_once $_SERVER['DOCUMENT_ROOT'] . '/src/config/themes.php';
 require_once __DIR__ . '/../lib/core/Appearance.class.php';
 require_once __DIR__ . '/../lib/core/SiteFont.class.php';
+require_once __DIR__ . '/../api/chat/_chat_common.php';
 $appearance = Appearance::get();
 
 $isAdmin = false;
@@ -20,7 +21,7 @@ if (Session::getAuthStatus() == Constants::STATUS_LOGGEDIN) {
     if ($user) {
         $serverTheme = $user->getThemePreferences() ?? [];
         $uiPreferences = $user->getUiPreferences() ?? [];
-        $isAdmin = in_array($user->getRole(), [Constants::GROUP_ADMIN, Constants::GROUP_SUPERUSER]);
+        $isAdmin = chat_can_start_call();
     }
 }
 

@@ -3,14 +3,28 @@
  * Chat video-call signaling — POST /api/chat/call-signal.php
  * Broadcasts WebRTC signaling events (offer/answer/ice/end) to all chat
  * subscribers so peers can establish a P2P media connection.
- * Admin-only: only admins can originate/modify call signaling.
+ *
+ * Permission matrix:
+ *   - offer : only start-capable users (admin/superuser). Creates call state.
+ *   - answer: any logged-in user who is a participant (caller or first
+ *             responder). Marks the callee.
+ *   - ice   : any participant of the call.
+ *   - end   : any participant of the call.
+ *
+ * Call state is stored in Mongo (chat_calls collection) so participants can
+ * be validated and ICE candidates can be buffered.
  */
 
 require_once __DIR__ . '/_chat_common.php';
 
+$db = chat_db();
+
 $session   = chat_require_user();
 AuthMiddleware::requireCsrf();
-AuthMiddleware::requireAdmin(); // admins only
+
+$myUserId = (int) $session->getUserId();
+$myUsername = $session->getUsername();
+$myCanStart = chat_can_start_call();
 
 $type     = chat_input('type');     // offer | answer | ice | end
 $callId   = chat_input('call_id');  // required
@@ -25,11 +39,112 @@ if ($callId === '') {
     chat_json(['success' => false, 'error' => 'Call id required'], 422);
 }
 
+// ---- Load existing call state (if any) ----
+$call = null;
+try {
+    $call = $db->chat_calls->findOne(['call_id' => $callId]);
+} catch (\Throwable $e) {
+    // Collection may not exist yet; treat as no existing call.
+}
+
+// ---- offer: only start-capable users ----
+if ($type === 'offer') {
+    if (!$myCanStart) {
+        chat_json(['success' => false, 'error' => 'Forbidden: only admins/superusers can start calls'], 403);
+    }
+    // Reject if a call with this ID already exists and is still active.
+    if ($call && !empty($call['ended_at'])) {
+        chat_json(['success' => false, 'error' => 'Call already ended'], 409);
+    }
+
+    $now = new \MongoDB\BSON\UTCDateTime((int)(microtime(true) * 1000));
+    $ttl = new \MongoDB\BSON\UTCDateTime((int)((microtime(true) + 300) * 1000)); // 5 min TTL
+
+    try {
+        $db->chat_calls->updateOne(
+            ['call_id' => $callId],
+            ['$set' => [
+                'call_id'       => $callId,
+                'caller_id'     => $myUserId,
+                'caller_name'   => $myUsername,
+                'callee_id'     => null,
+                'callee_name'   => null,
+                'status'        => 'offered',
+                'created_at'    => $now,
+                'updated_at'    => $now,
+                'ended_at'      => null,
+                'expire_at'     => $ttl,
+            ]],
+            ['upsert' => true]
+        );
+    } catch (\Throwable $e) {
+        error_log('Call state store failed: ' . $e->getMessage());
+        chat_json(['success' => false, 'error' => 'Could not store call state'], 500);
+    }
+}
+
+// ---- answer / ice / end: must be a participant ----
+if (in_array($type, ['answer', 'ice', 'end'], true)) {
+    if (!$call) {
+        chat_json(['success' => false, 'error' => 'Call not found'], 404);
+    }
+    $callerId   = (int)($call['caller_id'] ?? 0);
+    $calleeId   = (int)($call['callee_id'] ?? 0);
+    $isCaller   = ($myUserId === $callerId);
+    $isCallee   = ($myUserId === $calleeId);
+    $isParticipant = $isCaller || $isCallee;
+
+    if (!$isParticipant) {
+        chat_json(['success' => false, 'error' => 'Forbidden: not a participant of this call'], 403);
+    }
+
+    if ($type === 'answer') {
+        if ($call['status'] !== 'offered') {
+            chat_json(['success' => false, 'error' => 'Call not in offered state'], 409);
+        }
+        // First responder becomes the callee.
+        if ($calleeId === null) {
+            try {
+                $db->chat_calls->updateOne(
+                    ['call_id' => $callId],
+                    ['$set' => [
+                        'callee_id'   => $myUserId,
+                        'callee_name' => $myUsername,
+                        'status'      => 'answered',
+                        'updated_at'  => new \MongoDB\BSON\UTCDateTime((int)(microtime(true) * 1000)),
+                    ]]
+                );
+            } catch (\Throwable $e) {
+                error_log('Call state update failed: ' . $e->getMessage());
+                chat_json(['success' => false, 'error' => 'Could not update call state'], 500);
+            }
+        } elseif ($calleeId !== $myUserId) {
+            chat_json(['success' => false, 'error' => 'Call already answered by another user'], 409);
+        }
+    }
+
+    if ($type === 'end') {
+        try {
+            $db->chat_calls->updateOne(
+                ['call_id' => $callId],
+                ['$set' => [
+                    'status'   => 'ended',
+                    'ended_at' => new \MongoDB\BSON\UTCDateTime((int)(microtime(true) * 1000)),
+                    'updated_at' => new \MongoDB\BSON\UTCDateTime((int)(microtime(true) * 1000)),
+                ]]
+            );
+        } catch (\Throwable $e) {
+            error_log('Call end state update failed: ' . $e->getMessage());
+            chat_json(['success' => false, 'error' => 'Could not update call state'], 500);
+        }
+    }
+}
+
 $event = [
     'type'         => 'call-' . $type,
     'call_id'      => $callId,
-    'from_user_id' => (int) $session->getUserId(),
-    'from_username'=> $session->getUsername(),
+    'from_user_id' => $myUserId,
+    'from_username'=> $myUsername,
 ];
 
 if ($sdp !== '')       $event['sdp']      = $sdp;
@@ -38,7 +153,7 @@ if ($candidate !== '') $event['candidate']= $candidate;
 
 $published = chat_publish($event);
 if (!$published) {
-    http_response_code(500);
+    http_response_code(502);
     header('Content-Type: application/json');
     echo json_encode(['success' => false, 'error' => 'Failed to publish signal to message bus']);
     exit;
