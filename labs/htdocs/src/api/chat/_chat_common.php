@@ -69,17 +69,49 @@ function chat_json(array $payload, int $status = 200): void {
 
 /**
  * Build the public payload for a stored chat message document.
+ * Optionally includes reaction data and edit metadata.
  */
-function chat_public_message(MongoDB\Model\BSONDocument|array $doc): array {
+function chat_public_message(MongoDB\Model\BSONDocument|array $doc, ?string $viewerUserId = null): array {
+    $db   = chat_db();
+    $mid  = (string) $doc['_id'];
+
+    // ---- Reactions for this message ----
+    $reactions = [];
+    try {
+        $rcursor = $db->chat_reactions->find(
+            ['message_id' => $mid],
+            ['sort' => ['created_at' => 1]]
+        );
+        $agg = [];
+        foreach ($rcursor as $r) {
+            $emoji = (string)($r['emoji'] ?? '');
+            if (!isset($agg[$emoji])) {
+                $agg[$emoji] = ['emoji' => $emoji, 'count' => 0, 'user_reacted' => false];
+            }
+            $agg[$emoji]['count']++;
+            if ($viewerUserId !== null && (int)($r['user_id'] ?? 0) === (int)$viewerUserId) {
+                $agg[$emoji]['user_reacted'] = true;
+            }
+        }
+        $reactions = array_values($agg);
+    } catch (\Throwable $e) {
+        // non-fatal
+    }
+
     return [
         'type'     => 'message',
-        'id'       => (string) $doc['_id'],
+        'id'       => $mid,
         'user_id'  => (int) ($doc['user_id'] ?? 0),
         'username' => (string) ($doc['username'] ?? ''),
         'avatar'   => $doc['avatar'] ?? null,
         'role'     => (string) ($doc['role'] ?? 'member'),
         'text'     => (string) ($doc['text'] ?? ''),
         'ts'       => isset($doc['created_at']) ? (int) (string) $doc['created_at'] : 0,
+        'edited'   => isset($doc['edited_at']) ? true : false,
+        'edited_at'=> isset($doc['edited_at']) ? (int) (string) $doc['edited_at'] : null,
+        'reactions'=> $reactions,
+        'pinned'   => (bool) ($doc['pinned'] ?? false),
+        'reply_to' => isset($doc['reply_to']) ? (string) $doc['reply_to'] : null,
     ];
 }
 

@@ -49,8 +49,9 @@ try {
     );
 
     $messages = [];
+    $viewerUserId = $identity['type'] === 'user' ? (string)$identity['id'] : null;
     foreach ($cursor as $doc) {
-        $messages[] = chat_public_message($doc);
+        $messages[] = chat_public_message($doc, $viewerUserId);
     }
     $messages = array_reverse($messages); // oldest first
 

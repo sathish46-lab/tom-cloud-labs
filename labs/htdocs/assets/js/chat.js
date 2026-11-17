@@ -68,6 +68,17 @@ const CHAT = {
   lastCount: null,
 
   deleting: {},      // id -> true, prevents double-delete clicks
+
+  // --- New features state ---
+  editingId: null,          // message id currently being edited
+  editInput: null,          // edit input element
+  replyToId: null,          // message id being replied to
+  replyEl: null,            // reply indicator element
+  searchQuery: '',          // current search text
+  searchResults: [],        // search result message ids
+  searchActive: false,      // whether search results are showing
+  pinnedList: [],           // pinned message objects
+  pinnedView: false,        // whether pinned panel is open
 };
 
 /* ==========================================================================
@@ -204,8 +215,24 @@ function renderMessage(msg) {
   const row = el("div", "chat-msg-row" + (mine ? " mine" : " other"));
   row.dataset.id = msg.id;
   row.dataset.uid = String(msg.user_id ?? "");
-  row._ts = msg.ts; // raw value kept as-is (ISO string or epoch) for grouping
+  row._ts = msg.ts;
   row.style.setProperty("--chat-hue", String(chatHue(msg.user_id ?? msg.username)));
+
+  // --- Reply quote indicator (shown above the bubble) ---
+  if (msg.reply_to) {
+    const rq = el("div", "chat-reply-quote");
+    const rqName = el("div", "chat-reply-quote-name", msg.reply_to_username || "Someone");
+    const rqText = el("div", "chat-reply-quote-text", msg.reply_to_text || "");
+    rq.appendChild(rqName);
+    rq.appendChild(rqText);
+    row.appendChild(rq);
+  }
+
+  // --- Pinned badge ---
+  if (msg.pinned && CHAT.isAdmin) {
+    const pinBadge = el("span", "chat-msg-pin-badge", "Pinned");
+    row.appendChild(pinBadge);
+  }
 
   // Incoming: avatar (real image if the payload has avatar_url, else initial).
   if (!mine) {
@@ -218,7 +245,6 @@ function renderMessage(msg) {
     // Incoming: sender name (+ admin badge) above the text.
     const head = el("div", "chat-msg-head");
     const nameWrap = el("span", "chat-msg-name", msg.username || "unknown");
-    // Tag the admin for typing-name resolution ("SIVA is typing...").
     nameWrap.dataset.uid = String(msg.user_id ?? "");
     head.appendChild(nameWrap);
     const badge = roleBadge(msg.role);
@@ -232,14 +258,28 @@ function renderMessage(msg) {
   meta.appendChild(el("span", "chat-msg-time", chatFormatTs(msg.ts)));
   bubble.appendChild(meta);
 
-  // Delete control: own messages for everyone; any message for admins.
+  // --- Reactions (below text, above time) ---
+  if (msg.reactions && msg.reactions.length) {
+    const reactionsWrap = el("div", "chat-reactions");
+    for (const r of msg.reactions) {
+      reactionsWrap.appendChild(reactionNode(r.emoji, r.count, r.user_reacted));
+    }
+    meta.insertBefore(reactionsWrap, meta.firstChild);
+  }
+
+  // --- Edited indicator ---
+  if (msg.edited) {
+    const edited = el("span", "chat-msg-edited", "edited");
+    meta.appendChild(edited);
+  }
+
+  // --- Controls (edit, delete, pin) via three-dot dropdown ---
+  const canEdit = CHAT.me && mine && CHAT.editingId !== msg.id;
   const canDelete = CHAT.me && (mine || CHAT.isAdmin);
-  if (canDelete) {
-    const del = el("button", "chat-msg-del", "×");
-    del.type = "button";
-    del.setAttribute("aria-label", "Delete message");
-    del.addEventListener("click", () => deleteMessage(msg.id, row));
-    bubble.appendChild(del);
+  const canPin = CHAT.isAdmin;
+
+  if (canEdit || canDelete || canPin) {
+    bubble.appendChild(moreOptionsNode(msg.id, mine, !!msg.pinned));
   }
 
   row.appendChild(bubble);
@@ -253,6 +293,349 @@ function chatFormatTs(ts) {
   if (isNaN(d)) return "";
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
+
+/* ==========================================================================
+ * More options dropdown (three-dot menu)
+ * ========================================================================= */
+
+function moreOptionsNode(messageId, mine, pinned) {
+  const wrap = el("div", "chat-msg-more-wrap");
+
+  const btn = el("button", "chat-msg-more", "⋮");
+  btn.type = "button";
+  btn.setAttribute("aria-label", "More options");
+
+  const menu = el("div", "chat-msg-menu");
+  menu.hidden = true;
+
+  // Edit option
+  if (CHAT.me && mine && CHAT.editingId !== messageId) {
+    const editItem = el("button", "chat-msg-menu-item", "Edit");
+    editItem.type = "button";
+    editItem.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeMenu(menu);
+      startEditMode(messageId);
+    });
+    menu.appendChild(editItem);
+  }
+
+  // Pin / unpin option
+  if (CHAT.isAdmin) {
+    const pinItem = el("button", "chat-msg-menu-item", pinned ? "Unpin" : "Pin");
+    pinItem.type = "button";
+    pinItem.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeMenu(menu);
+      pinMessage(messageId, !pinned);
+    });
+    menu.appendChild(pinItem);
+  }
+
+  // Delete option
+  if (CHAT.me && (mine || CHAT.isAdmin)) {
+    const delItem = el("button", "chat-msg-menu-item chat-msg-menu-item--danger", "Delete");
+    delItem.type = "button";
+    delItem.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeMenu(menu);
+      deleteMessage(messageId, null);
+    });
+    menu.appendChild(delItem);
+  }
+
+  // Click outside to close
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeAllMenus();
+    menu.hidden = !menu.hidden;
+  });
+
+  wrap.appendChild(btn);
+  wrap.appendChild(menu);
+  return wrap;
+}
+
+function closeMenu(menu) {
+  if (menu) menu.hidden = true;
+}
+
+function closeAllMenus() {
+  document.querySelectorAll(".chat-msg-menu").forEach((m) => (m.hidden = true));
+}
+
+// Close menus when clicking anywhere
+document.addEventListener("click", () => {
+  closeAllMenus();
+});
+
+/* ==========================================================================
+ * Reactions
+ * ========================================================================= */
+
+function reactionNode(emoji, count, userReacted) {
+  const wrap = el("span", "chat-reaction");
+  wrap.dataset.emoji = emoji;
+  wrap.title = count + " reacted with " + emoji;
+
+  const emojiSpan = el("span", "chat-reaction-emoji", emoji);
+  const countSpan = el("span", "chat-reaction-count", String(count));
+  wrap.appendChild(emojiSpan);
+  wrap.appendChild(countSpan);
+
+  if (userReacted) wrap.classList.add("chat-reaction--self");
+
+  wrap.addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggleReaction(emoji, wrap);
+  });
+  return wrap;
+}
+
+async function toggleReaction(emoji, node) {
+  if (!CHAT.me) return;
+  const row = node.closest(".chat-msg-row");
+  if (!row) return;
+  const messageId = row.dataset.id;
+  try {
+    const res = await fetch("/api/chat/reaction", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: csrfHeaders(),
+      body: JSON.stringify({ message_id: messageId, emoji }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!data.success) return;
+    // node will be updated via socket fan-out event; no optimistic UI here
+  } catch (e) {
+    console.warn("[Chat] reaction failed:", e);
+  }
+}
+
+/* ==========================================================================
+ * Edit message
+ * ========================================================================= */
+
+function startEditMode(messageId) {
+  if (!CHAT.me) return;
+  const row = CHAT.listEl.querySelector(`[data-id="${chatEscapeAttr(messageId)}"]`);
+  if (!row) return;
+  if (CHAT.editingId) cancelEditMode();
+
+  const textEl = row.querySelector(".chat-msg-text");
+  if (!textEl) return;
+  const currentText = textEl.textContent;
+
+  CHAT.editingId = messageId;
+  CHAT.editInput = el("input", "chat-edit-input");
+  CHAT.editInput.value = currentText;
+  CHAT.editInput.maxLength = 500;
+
+  const saveBtn = el("button", "chat-edit-save", "✓");
+  saveBtn.type = "button";
+  saveBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    finishEditMode(true);
+  });
+  const cancelBtn = el("button", "chat-edit-cancel", "✕");
+  cancelBtn.type = "button";
+  cancelBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    cancelEditMode();
+  });
+
+  textEl.textContent = "";
+  textEl.appendChild(CHAT.editInput);
+  textEl.appendChild(saveBtn);
+  textEl.appendChild(cancelBtn);
+  row.classList.add("chat-msg-row--editing");
+  CHAT.editInput.focus();
+
+  CHAT.editInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      finishEditMode(true);
+    } else if (e.key === "Escape") {
+      cancelEditMode();
+    }
+  });
+}
+
+function cancelEditMode() {
+  if (!CHAT.editInput) return;
+  const textEl = CHAT.editInput.parentElement;
+  if (textEl) {
+    textEl.textContent = CHAT.editInput.value || "";
+  }
+  CHAT.editInput = null;
+  CHAT.editingId = null;
+  const row = document.querySelector(".chat-msg-row--editing");
+  if (row) row.classList.remove("chat-msg-row--editing");
+}
+
+async function finishEditMode(save) {
+  if (!CHAT.editInput || !CHAT.editingId) {
+    cancelEditMode();
+    return;
+  }
+  const newText = CHAT.editInput.value.trim();
+  cancelEditMode();
+  if (!save || newText === "") return;
+  try {
+    const res = await fetch("/api/chat/edit", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: csrfHeaders(),
+      body: JSON.stringify({ message_id: CHAT.editingId, text: newText }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!data.success) {
+      chatToast(data.error || "Could not edit message.");
+      return;
+    }
+    // Row will be updated via socket fan-out edit event.
+  } catch (e) {
+    console.warn("[Chat] edit failed:", e);
+    chatToast("Network error — try again.");
+  }
+}
+
+/* ==========================================================================
+ * Reply / quote
+ * ========================================================================= */
+
+function replyNode(messageId, username, text) {
+  const wrap = el("div", "chat-reply");
+  wrap.dataset.replyTo = messageId;
+
+  const name = el("div", "chat-reply-name", username || "unknown");
+  const msg  = el("div", "chat-reply-text", text || "");
+  wrap.appendChild(name);
+  wrap.appendChild(msg);
+
+  const remove = el("button", "chat-reply-remove", "✕");
+  remove.type = "button";
+  remove.setAttribute("aria-label", "Remove reply");
+  remove.addEventListener("click", (e) => {
+    e.stopPropagation();
+    cancelReply();
+  });
+  wrap.appendChild(remove);
+
+  return wrap;
+}
+
+function setReplyTo(messageId, username, text) {
+  CHAT.replyToId = messageId;
+  const composer = CHAT.inputEl.closest(".chat-composer");
+  if (!composer) return;
+  // Remove existing reply indicator if any
+  const old = composer.querySelector(".chat-reply");
+  if (old) old.remove();
+  const rep = replyNode(messageId, username, text);
+  composer.insertBefore(rep, CHAT.inputEl);
+  CHAT.replyEl = rep;
+  CHAT.inputEl.placeholder = "Replying…";
+}
+
+function cancelReply() {
+  CHAT.replyToId = null;
+  if (CHAT.replyEl) {
+    CHAT.replyEl.remove();
+    CHAT.replyEl = null;
+  }
+  if (CHAT.inputEl) CHAT.inputEl.placeholder = "Type a message…";
+}
+
+/* ==========================================================================
+ * Pin / unpin
+ * ========================================================================= */
+
+async function pinMessage(messageId, pinned) {
+  if (!CHAT.isAdmin) return;
+  try {
+    const res = await fetch("/api/chat/pin", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: csrfHeaders(),
+      body: JSON.stringify({ message_id: messageId, pinned }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!data.success) {
+      chatToast(data.error || "Could not pin message.");
+      return;
+    }
+    // Row will be updated via socket fan-out pin event.
+  } catch (e) {
+    console.warn("[Chat] pin failed:", e);
+  }
+}
+
+/* ==========================================================================
+ * Search
+ * ========================================================================= */
+
+async function searchMessages(query) {
+  if (!query) {
+    CHAT.searchActive = false;
+    CHAT.searchResults = [];
+    renderSearchResults([]);
+    return;
+  }
+  try {
+    const res = await fetch("/api/chat/search?q=" + encodeURIComponent(query), {
+      method: "GET",
+      credentials: "same-origin",
+      headers: { "Accept": "application/json" },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!data.success) return;
+    CHAT.searchQuery = query;
+    CHAT.searchResults = data.messages || [];
+    CHAT.searchActive = true;
+    renderSearchResults(CHAT.searchResults);
+  } catch (e) {
+    console.warn("[Chat] search failed:", e);
+  }
+}
+
+function renderSearchResults(messages) {
+  if (!CHAT.listEl) return;
+  CHAT.listEl.textContent = "";
+  if (messages.length === 0) {
+    const empty = el("div", "chat-empty");
+    empty.appendChild(el("i", "bx bx-search"));
+    empty.appendChild(el("p", null, "No results for “" + CHAT.searchQuery + "”"));
+    CHAT.listEl.appendChild(empty);
+    return;
+  }
+  for (const msg of messages) {
+    CHAT.listEl.appendChild(renderMessage(msg));
+  }
+  regroup();
+}
+
+/* ==========================================================================
+ * Pinned messages
+ * ========================================================================= */
+
+function renderPinned(messages) {
+  const list = document.getElementById("chat-pinned-list");
+  if (!list) return;
+  list.textContent = "";
+  if (messages.length === 0) {
+    list.appendChild(el("p", null, "No pinned messages."));
+    return;
+  }
+  for (const msg of messages) {
+    list.appendChild(renderMessage(msg));
+  }
+}
+
+/* ==========================================================================
+ * Rendering — updated renderMessage with reactions, edit, reply, pin
+ * ========================================================================= */
+
 
 // Rebuilds day dividers and group classes (.is-first / .is-cont) for the whole
 // transcript. A group = consecutive messages from one sender within 5 minutes.
@@ -345,6 +728,62 @@ function handleEvent(evt) {
 
   if (evt.type === "delete") {
     removeMessageNode(evt.id);
+    return;
+  }
+
+  if (evt.type === "reaction") {
+    // Update reaction counts on the matching message row.
+    const row = CHAT.listEl.querySelector(`[data-id="${chatEscapeAttr(evt.message_id)}"]`);
+    if (row) {
+      // Re-render the row with updated reactions by fetching fresh history
+      // is too heavy; instead patch the reactions in place.
+      const meta = row.querySelector(".chat-msg-meta");
+      const existing = row.querySelector(".chat-reactions");
+      if (existing) existing.remove();
+      if (evt.added !== undefined && evt.count !== undefined) {
+        // Find or create reactions container
+        const wrap = el("div", "chat-reactions");
+        wrap.appendChild(reactionNode(evt.emoji, evt.count, evt.user_id === CHAT.me?.user_id));
+        meta.insertBefore(wrap, meta.firstChild);
+      }
+    }
+    return;
+  }
+
+  if (evt.type === "edit") {
+    const row = CHAT.listEl.querySelector(`[data-id="${chatEscapeAttr(evt.id)}"]`);
+    if (row) {
+      const textEl = row.querySelector(".chat-msg-text");
+      if (textEl) textEl.textContent = evt.text;
+      row.querySelector(".chat-msg-edited")?.remove();
+      const edited = el("span", "chat-msg-edited", "edited");
+      row.querySelector(".chat-msg-meta")?.appendChild(edited);
+      row.classList.add("chat-msg-row--edited");
+    }
+    return;
+  }
+
+  if (evt.type === "pin") {
+    const row = CHAT.listEl.querySelector(`[data-id="${chatEscapeAttr(evt.id)}"]`);
+    if (row) {
+      const existing = row.querySelector(".chat-msg-pin-badge");
+      if (evt.pinned && !existing) {
+        const badge = el("span", "chat-msg-pin-badge", "Pinned");
+        row.insertBefore(badge, row.firstChild);
+      } else if (!evt.pinned && existing) {
+        existing.remove();
+      }
+      const btn = row.querySelector(".chat-msg-pin");
+      if (btn) {
+        btn.textContent = evt.pinned ? "📌" : "📍";
+        btn.classList.toggle("chat-msg-pin--pinned", evt.pinned);
+        btn.setAttribute("aria-label", evt.pinned ? "Unpin message" : "Pin message");
+      }
+    }
+    // Refresh pinned panel if open
+    if (CHAT.pinnedView) {
+      loadHistory(true);
+    }
     return;
   }
 
@@ -504,11 +943,13 @@ async function sendMessage() {
   const btn = CHAT.sendBtn;
   btn.disabled = true;
   try {
+    const body = { text };
+    if (CHAT.replyToId) body.reply_to = CHAT.replyToId;
     const res = await fetch("/api/chat/send", {
       method: "POST",
       credentials: "same-origin",
       headers: csrfHeaders(),
-      body: JSON.stringify({ text }),
+      body: JSON.stringify(body),
     });
     const data = await res.json().catch(() => ({}));
     if (res.status === 429) {
@@ -520,6 +961,7 @@ async function sendMessage() {
       return;
     }
     CHAT.inputEl.value = "";
+    cancelReply();
     // If the fan-out publish failed, the sender's message will appear on the
     // next history load (gap-fill on reconnect).
     if (data.published === false) {
@@ -789,9 +1231,37 @@ async function openPanel() {
     clearUnread();
   }
 
+  // Load pinned messages if admin.
+  if (CHAT.isAdmin) {
+    await loadPinned();
+  }
+
   connectSocket();
   scrollList(true);
   setTimeout(() => CHAT.inputEl && CHAT.inputEl.focus(), 250);
+}
+
+async function loadPinned() {
+  if (!CHAT.isAdmin) return;
+  try {
+    const res = await fetch("/api/chat/search?q=", {
+      method: "GET",
+      credentials: "same-origin",
+      headers: { "Accept": "application/json" },
+    });
+    // search with empty q returns all messages; filter pinned on client
+    const data = await res.json().catch(() => ({}));
+    if (!data.success) return;
+    CHAT.pinnedList = (data.messages || []).filter((m) => m.pinned);
+    renderPinned(CHAT.pinnedList);
+    const badge = document.getElementById("chat-pinned-count");
+    if (badge) {
+      badge.textContent = CHAT.pinnedList.length;
+      badge.hidden = CHAT.pinnedList.length === 0;
+    }
+  } catch (e) {
+    console.warn("[Chat] load pinned failed:", e);
+  }
 }
 
 function renderGuestState() {
@@ -859,6 +1329,73 @@ function wire() {
   });
   built.listEl.addEventListener("scroll", () => {
     built.scrollBtn.hidden = isScrolledToBottom();
+  });
+
+  // --- Search ---
+  const searchToggle = document.getElementById("chat-search-toggle");
+  const searchEl = document.getElementById("chat-search");
+  const searchInput = document.getElementById("chat-search-input");
+  const searchClose = document.getElementById("chat-search-close");
+  const pinnedToggle = document.getElementById("chat-pinned-toggle");
+  const pinnedEl = document.getElementById("chat-pinned");
+  const pinnedClose = document.getElementById("chat-pinned-close");
+
+  if (searchToggle && searchEl && searchInput && searchClose) {
+    searchToggle.addEventListener("click", () => {
+      const hidden = searchEl.hidden;
+      searchEl.hidden = !hidden;
+      if (!hidden) {
+        pinnedEl.hidden = true;
+        CHAT.pinnedView = false;
+        searchInput.focus();
+      }
+    });
+    searchClose.addEventListener("click", () => {
+      searchEl.hidden = true;
+      CHAT.searchActive = false;
+      CHAT.searchQuery = "";
+      searchInput.value = "";
+      renderHistory(CHAT.listEl ? [] : []); // will be replaced by history load
+      if (CHAT.historyLoaded) loadHistory(true);
+    });
+    searchInput.addEventListener("input", (e) => {
+      clearTimeout(CHAT._searchDebounce);
+      CHAT._searchDebounce = setTimeout(() => {
+        searchMessages(e.target.value);
+      }, 300);
+    });
+    searchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        searchEl.hidden = true;
+        CHAT.searchActive = false;
+        searchInput.value = "";
+        if (CHAT.historyLoaded) loadHistory(true);
+      }
+    });
+  }
+
+  // --- Pinned ---
+  if (pinnedToggle && pinnedEl && pinnedClose) {
+    pinnedToggle.addEventListener("click", () => {
+      const hidden = pinnedEl.hidden;
+      pinnedEl.hidden = !hidden;
+      if (!hidden) {
+        searchEl.hidden = true;
+        CHAT.pinnedView = true;
+        if (CHAT.isAdmin) loadPinned();
+      } else {
+        CHAT.pinnedView = false;
+      }
+    });
+    pinnedClose.addEventListener("click", () => {
+      pinnedEl.hidden = true;
+      CHAT.pinnedView = false;
+    });
+  }
+
+  // Cancel reply/edit when clicking elsewhere in composer area
+  CHAT.inputEl.addEventListener("focus", () => {
+    // keep reply/edit active while typing
   });
 
   CHAT.inputEl.addEventListener("keydown", (e) => {
