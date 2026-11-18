@@ -7,7 +7,6 @@
 require_once __DIR__ . '/_notification_common.php';
 
 $session = notif_require_user();
-AuthMiddleware::requireCsrf();
 
 $userId = (string)($session->getUserId() ?? '');
 $email  = (string)($session->getEmail() ?? '');

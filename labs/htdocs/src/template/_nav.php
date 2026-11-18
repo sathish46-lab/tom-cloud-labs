@@ -76,6 +76,7 @@ $current = Session::getCurrentFile();
                             ['label' => 'Modules',   'url' => '/admin/modules',   'icon' => 'bx-toggle-right', 'match' => ''],
                             ['label' => 'Appearance', 'url' => '/admin/appearance', 'icon' => 'bx-palette',    'match' => ''],
                             ['label' => 'Chat',      'url' => '/admin/chat',      'icon' => 'bx-conversation', 'match' => ''],
+                            ['label' => 'Notifications', 'url' => '/admin/notifications', 'icon' => 'bx-bell', 'match' => ''],
                         ],
                     ],
                 ],
