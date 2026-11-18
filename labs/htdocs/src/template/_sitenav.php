@@ -77,46 +77,59 @@
                 <button class="btn btn-link nav-link py-0 d-flex align-items-center justify-content-center position-relative"
                     type="button" id="notif-bell" data-coreui-toggle="dropdown" style="height: 40px; width: 40px;">
                     <i class="bx bx-bell fs-4 text-secondary hover-text-white"></i>
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border-0" 
-                        style="font-size: 0.6rem; padding: 2px 5px; display: none;" id="notif-badge">
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border-0 border-white border-2" 
+                        style="font-size: 0.65rem; padding: 2px 6px; min-width: 18px; height: 18px; display: none; line-height: 1;" id="notif-badge">
                         0
                     </span>
                 </button>
-                <!-- Permanent fixed-size notification card -->
-                <div class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 p-0" style="min-width: 420px; max-width: 480px; border-radius: 12px; max-height: 560px; overflow: hidden; display: flex; flex-direction: column;">
-                    <div class="px-3 py-2 border-bottom d-flex align-items-center justify-content-between flex-shrink-0">
-                        <h6 class="fw-bold mb-0 small">Notifications</h6>
-                        <button class="btn btn-link btn-sm p-0 text-secondary small" onclick="notifMarkAllRead()">Mark all read</button>
+                <!-- Notification card -->
+                <div class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 p-0" style="min-width: 440px; max-width: 520px; border-radius: 16px; max-height: 600px; overflow: hidden; display: flex; flex-direction: column; background: var(--cui-body-bg, #212631);">
+                    <!-- Header -->
+                    <div class="px-4 py-3 border-bottom border-secondary border-opacity-20 d-flex align-items-center justify-content-between flex-shrink-0" style="background: rgba(255,255,255,0.02);">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bx bx-bell text-primary fs-5"></i>
+                            <h6 class="fw-bold mb-0 small text-body">Notifications</h6>
+                        </div>
+                        <button class="btn btn-link btn-sm p-0 text-secondary small text-decoration-none" onclick="notifMarkAllRead()" style="font-size: 0.75rem;">Mark all read</button>
                     </div>
-                    <!-- Tab strip: only All, System, Report (admin only) -->
-                    <div class="px-2 py-1 flex-shrink-0" style="max-height: 44px;">
-                        <div class="d-flex gap-1" id="notif-tabs" style="scrollbar-width: none;">
-                            <button class="notif-tab active px-3 py-1.5 small fw-medium rounded-pill border border-secondary border-opacity-20 bg-dark bg-opacity-20 text-white" data-cat="all" onclick="notifSwitchTab('all', this, event)">All</button>
-                            <button class="notif-tab px-3 py-1.5 small fw-medium rounded-pill border border-secondary border-opacity-20 bg-dark bg-opacity-10 text-secondary" data-cat="system" onclick="notifSwitchTab('system', this, event)">System</button>
+                    <!-- Tab strip -->
+                    <div class="px-4 py-2 flex-shrink-0 border-bottom border-secondary border-opacity-10" style="background: rgba(255,255,255,0.02);">
+                        <div class="d-flex gap-2 overflow-auto" id="notif-tabs" style="scrollbar-width: none;">
+                            <button class="notif-tab active px-3 py-1.5 small fw-medium rounded-pill border border-primary bg-primary text-white" data-cat="all" onclick="notifSwitchTab('all', this, event)">All</button>
+                            <button class="notif-tab px-3 py-1.5 small fw-medium rounded-pill border border-secondary border-opacity-20 bg-transparent text-secondary hover-text-white hover:bg-dark hover:bg-opacity-50" data-cat="system" onclick="notifSwitchTab('system', this, event)">System</button>
                             <?php if ($isAdminUser): ?>
-                            <button class="notif-tab px-3 py-1.5 small fw-medium rounded-pill border border-secondary border-opacity-20 bg-dark bg-opacity-10 text-secondary" data-cat="report" onclick="notifSwitchTab('report', this, event)">Report</button>
+                            <button class="notif-tab px-3 py-1.5 small fw-medium rounded-pill border border-secondary border-opacity-20 bg-transparent text-secondary hover-text-white hover:bg-dark hover:bg-opacity-50" data-cat="report" onclick="notifSwitchTab('report', this, event)">Report</button>
                             <?php endif; ?>
                         </div>
                     </div>
-                    <div id="notif-list" class="px-2 py-2 overflow-y-auto flex-grow-1" style="max-height: 400px;">
-                        <div class="px-3 py-3 text-center text-secondary small">
-                            <i class="bx bx-bell-off fs-1 d-block mb-2 opacity-50"></i>
-                            No new notifications
+                    <!-- List -->
+                    <div id="notif-list" class="px-4 py-2 overflow-y-auto flex-grow-1" style="max-height: 420px;">
+                        <div class="px-3 py-4 text-center text-secondary small">
+                            <i class="bx bx-bell-off fs-2 d-block mb-3 opacity-25"></i>
+                            <div class="fw-semibold">No new notifications</div>
+                            <div class="text-xs opacity-75 mt-1">You&rsquo;re all caught up</div>
                         </div>
                     </div>
                 </div>
             </li>
 
             <style>
+            .notif-tab {
+                transition: all 0.2s ease;
+                white-space: nowrap;
+            }
             .notif-tab.active {
                 background: var(--cui-primary, #6366f1) !important;
                 color: #fff !important;
                 border-color: var(--cui-primary, #6366f1) !important;
+                box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
             }
             .notif-tab:not(.active):hover {
-                background: rgba(255,255,255,.08) !important;
+                background: rgba(255,255,255,0.05) !important;
                 color: #fff !important;
+                border-color: rgba(255,255,255,0.2) !important;
             }
+            /* Notification item styles injected by JS */
             </style>
 
             <!-- Theme & Background Mega Dropdown -->
@@ -589,7 +602,26 @@ document.body.addEventListener('htmx:afterSettle', function(e) {
             'academy':  'bx-book',
             'report':   'bx-flag',
         };
-        return '<i class="bx ' + (map[cat] || 'bx-bell') + ' me-2" style="font-size:0.9rem;"></i>';
+        var icon = map[cat] || 'bx-bell';
+        if (filled) return '<i class="bx ' + icon + '" style="font-size:1.1rem;"></i>';
+        return '<i class="bx ' + icon + ' me-2" style="font-size:0.9rem;"></i>';
+    }
+
+    function getCatColor(cat) {
+        var map = {
+            'system':   'var(--cui-primary, #6366f1)',
+            'mcp':      'var(--cui-info, #3b82f6)',
+            'report':   'var(--cui-danger, #ef4444)',
+            'clan':     'var(--cui-success, #22c55e)',
+            'clubs':    'var(--cui-warning, #f59e0b)',
+            'code_arena': 'var(--cui-purple, #a855f7)',
+            'discussions': 'var(--cui-pink, #ec4899)',
+            'quiz':     'var(--cui-indigo, #6366f1)',
+            'score':    'var(--cui-orange, #fb923c)',
+            'streak':   'var(--cui-red, #f43f5e)',
+            'academy':  'var(--cui-teal, #14b8a6)',
+        };
+        return map[cat] || 'var(--cui-primary, #6366f1)';
     }
 
     var allNotifications = [];
@@ -629,36 +661,38 @@ document.body.addEventListener('htmx:afterSettle', function(e) {
     function renderList(items) {
         if (!listEl) return;
         if (!items || items.length === 0) {
-            listEl.innerHTML = '<div class="px-3 py-3 text-center text-secondary small">' +
-                        '<i class="bx bx-bell-off fs-1 d-block mb-2 opacity-50"></i>' +
-                'No new notifications</div>';
+            listEl.innerHTML = '<div class="px-4 py-5 text-center text-secondary small">' +
+                '<i class="bx bx-bell-off fs-3 d-block mb-3 opacity-20"></i>' +
+                '<div class="fw-semibold">No new notifications</div>' +
+                '<div class="text-xs opacity-60 mt-1">You&rsquo;re all caught up</div>' +
+                '</div>';
             if (badgeEl) badgeEl.style.display = 'none';
             return;
         }
         var html = '';
         items.forEach(function(n) {
             var url = (n.data && n.data.url) ? n.data.url : '#';
-            var cls = n.read ? 'text-secondary' : 'fw-bold text-body';
-            var dot = n.read ? '' : '<span class="position-absolute top-0 start-0 bg-danger border border-white rounded-circle" style="width:6px;height:6px;"></span>';
+            var cls = n.read ? 'text-muted' : 'fw-bold text-body';
+            var unreadDot = n.read ? '' : '<span class="position-absolute top-0 start-0 bg-danger rounded-circle" style="width:8px;height:8px;"></span>';
+            var catColor = getCatColor(n.category);
             html += '<a href="' + (url === '#' ? 'javascript:void(0)' : url) + '"' +
-                ' class="dropdown-item d-flex align-items-start px-2 py-2 rounded' +
-                (n.read ? '' : ' bg-secondary bg-opacity-10') + '"' +
+                ' class="d-flex align-items-start px-4 py-3 border-bottom border-secondary border-opacity-5 text-decoration-none' +
+                (n.read ? '' : ' bg-dark bg-opacity-25') + '"' +
                 ' onclick="event.stopPropagation(); notifItemClick(\'' + n.id + '\', this.getAttribute(\'href\')); return false;">' +
-                dot +
-                '<div class="d-flex w-100 align-items-start">' +
-                categoryIcon(n.category) +
-                '<div class="flex-grow-1 ms-2">' +
-                '<div class="' + cls + ' small" style="font-size:0.8rem;">' + 
-                (n.title || 'Notification') +
+                unreadDot +
+                '<div class="d-flex w-100 align-items-start gap-3">' +
+                '<div class="flex-shrink-0" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:' + catColor + '15;color:' + catColor + ';">' +
+                categoryIcon(n.category, true) +
                 '</div>' +
-                '<div class="text-muted small" style="font-size:0.72rem;">' + (n.body || '') + '</div>' +
-                '<div class="text-muted" style="font-size:0.62rem; margin-top:2px;">' + renderTimeAgo(n.created_at) + '</div>' +
+                '<div class="flex-grow-1">' +
+                '<div class="' + cls + ' small" style="font-size:0.85rem;">' + (n.title || 'Notification') + '</div>' +
+                (n.body ? '<div class="text-muted small" style="font-size:0.78rem;line-height:1.4;margin-top:2px;">' + (n.body || '') + '</div>' : '') +
+                '<div class="text-muted" style="font-size:0.7rem; margin-top:3px;">' + renderTimeAgo(n.created_at) + '</div>' +
                 '</div>' +
                 '</div>' +
                 '</a>';
         });
-        html += '<div class="dropdown-divider my-1"></div>' +
-            '<a href="#" class="dropdown-item text-center text-secondary small px-2" onclick="notifMarkAllRead(); return false;">Mark all as read</a>';
+        html += '<div class="mt-2"><a href="#" class="d-block text-center text-secondary small px-4 py-2" onclick="notifMarkAllRead(); return false;">Mark all as read</a></div>';
         listEl.innerHTML = html;
     }
 
