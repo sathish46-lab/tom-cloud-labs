@@ -229,6 +229,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
+    <!-- ── Broadcast compose card ── -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 rounded-4 blur shadow-sm">
+                <div class="card-header bg-transparent border-bottom border-body-secondary border-opacity-10 py-3 d-flex align-items-center justify-content-between">
+                    <span class="fw-bold"><i class='bx bx-broadcast me-2'></i>Send broadcast to users</span>
+                    <span class="badge rounded-pill text-bg-info" id="ntBroadcastStatus"><?= $broadcast ? 'enabled' : 'disabled' ?></span>
+                </div>
+                <div class="card-body p-4">
+                    <?php if (!$broadcast): ?>
+                    <div class="alert alert-warning border-0 rounded-4 p-3 my-2 d-flex align-items-center gap-3 shadow-sm" style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3) !important;">
+                        <i class="bx bx-error-circle fs-3 text-warning"></i>
+                        <div>
+                            <strong class="text-warning d-block">Broadcasts are disabled</strong>
+                            <span class="small text-secondary">Enable "Admin broadcast to all users" above before sending.</span>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                    <form id="ntBroadcastForm" <?= !$broadcast ? 'disabled' : '' ?>>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="fw-semibold d-block mb-1 small" for="ntBcastTitle">Title</label>
+                                <input type="text" id="ntBcastTitle" name="title" class="form-control form-control-sm bg-transparent border-secondary border-opacity-25" placeholder="e.g. New labs feature released" required maxlength="120">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="fw-semibold d-block mb-1 small" for="ntBcastCategory">Category</label>
+                                <select id="ntBcastCategory" name="category" class="form-select form-select-sm bg-transparent border-secondary border-opacity-25">
+                                    <option value="system">System</option>
+                                    <option value="mcp">MCP</option>
+                                    <option value="report">Report (admin only)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="fw-semibold d-block mb-1 small" for="ntBcastTarget">Send to</label>
+                                <select id="ntBcastTarget" name="target" class="form-select form-select-sm bg-transparent border-secondary border-opacity-25">
+                                    <option value="all">All users</option>
+                                    <option value="role">Specific role</option>
+                                    <option value="emails">Specific emails</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 d-none" id="ntBcastRoleGroup">
+                                <label class="fw-semibold d-block mb-1 small" for="ntBcastRole">Role</label>
+                                <input type="text" id="ntBcastRole" name="role" class="form-control form-control-sm bg-transparent border-secondary border-opacity-25" placeholder="e.g. admin, superuser">
+                            </div>
+                            <div class="col-12 d-none" id="ntBcastEmailsGroup">
+                                <label class="fw-semibold d-block mb-1 small" for="ntBcastEmails">Emails (comma separated)</label>
+                                <textarea id="ntBcastEmails" name="emails" class="form-control form-control-sm bg-transparent border-secondary border-opacity-25" rows="2" placeholder="user1@example.com, user2@example.com"></textarea>
+                            </div>
+                        </div>
+                        <label class="fw-semibold d-block mb-1 small" for="ntBcastBody">Message</label>
+                        <textarea id="ntBcastBody" name="body" class="form-control form-control-sm bg-transparent border-secondary border-opacity-25" rows="4" placeholder="Type your announcement here…" required maxlength="500"></textarea>
+                        <div class="d-grid gap-2 mt-3">
+                            <button type="submit" id="ntBcastBtn" class="btn btn-primary px-4" <?= !$broadcast ? 'disabled' : '' ?>>
+                                <i class='bx bx-send me-1'></i> Send broadcast
+                            </button>
+                        </div>
+                    </form>
+                    <div id="ntBcastResult" class="mt-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ── Page action bar ── -->
     <div class="row">
         <div class="col-12">
@@ -440,5 +503,74 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (e.key === 'Escape' && infoModal.classList.contains('is-open')) closeInfo();
         });
     }
+
+    // ── Broadcast compose ──
+    var bcastForm   = document.getElementById('ntBroadcastForm');
+    var bcastTarget = document.getElementById('ntBcastTarget');
+    var bcastRole   = document.getElementById('ntBcastRoleGroup');
+    var bcastEmails = document.getElementById('ntBcastEmailsGroup');
+    var bcastBtn    = document.getElementById('ntBcastBtn');
+    var bcastResult = document.getElementById('ntBcastResult');
+
+    function toggleTargetFields() {
+        var val = bcastTarget ? bcastTarget.value : 'all';
+        if (bcastRole)   bcastRole.classList.toggle('d-none', val !== 'role');
+        if (bcastEmails) bcastEmails.classList.toggle('d-none', val !== 'emails');
+    }
+    if (bcastTarget) bcastTarget.addEventListener('change', toggleTargetFields);
+    if (bcastForm)   toggleTargetFields(); // initial state
+
+    if (bcastForm) {
+        bcastForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            if (!bcastBtn) return;
+            var title = document.getElementById('ntBcastTitle').value.trim();
+            var body  = document.getElementById('ntBcastBody').value.trim();
+            var category = document.getElementById('ntBcastCategory').value;
+            var target = bcastTarget.value;
+            var payload = { title: title, body: body, category: category, target: target };
+
+            if (target === 'role') {
+                payload.role = document.getElementById('ntBcastRole').value.trim();
+            } else if (target === 'emails') {
+                payload.emails = document.getElementById('ntBcastEmails').value.split(',').map(function(e){ return e.trim(); }).filter(Boolean);
+            }
+
+            bcastBtn.disabled = true;
+            bcastBtn.textContent = 'Sending…';
+            bcastResult.innerHTML = '';
+
+            fetch('/api/admin/notifications_broadcast', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-Token': CSRF
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                bcastBtn.disabled = false;
+                bcastBtn.textContent = 'Send broadcast';
+                if (data.status === 'success') {
+                    if (window.TomNotify) TomNotify.show('Broadcast sent to ' + data.sent + ' user(s)', 'Success', 'success', 4000);
+                    bcastResult.innerHTML = '<div class="alert alert-success border-0 rounded-4 p-2"><small>Broadcast delivered to <strong>' + data.sent + '</strong> user(s).</small></div>';
+                    bcastForm.reset();
+                    toggleTargetFields();
+                } else {
+                    if (window.TomNotify) TomNotify.show(data.error || 'Broadcast failed', 'Error', 'error', 4000);
+                    bcastResult.innerHTML = '<div class="alert alert-danger border-0 rounded-4 p-2"><small>' + (data.error || 'Broadcast failed') + '</small></div>';
+                }
+            })
+            .catch(function () {
+                bcastBtn.disabled = false;
+                bcastBtn.textContent = 'Send broadcast';
+                if (window.TomNotify) TomNotify.show('Network error', 'Error', 'error', 4000);
+                bcastResult.innerHTML = '<div class="alert alert-danger border-0 rounded-4 p-2"><small>Network error sending broadcast.</small></div>';
+            });
+        });
+    }
 })();
+</script>
 </script>
