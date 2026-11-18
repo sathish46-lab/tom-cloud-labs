@@ -284,8 +284,9 @@ function get_client_ip_fields($ip = null) {
  * Silent on failure — a login must never fail because notification logic
  * threw an exception.
  */
-function notifyNewDeviceLogin(array $userDoc, array $deviceInfo, string $clientIp): void {
+function notifyNewDeviceLogin($userDoc, array $deviceInfo, string $clientIp): void {
     try {
+        $userDoc = (array) $userDoc;
         $email = (string)($userDoc['email'] ?? '');
         if ($email === '') return;
 
