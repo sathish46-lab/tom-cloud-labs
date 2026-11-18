@@ -674,13 +674,13 @@ document.body.addEventListener('htmx:afterSettle', function(e) {
         var html = '';
         items.forEach(function(n) {
             var url = (n.data && n.data.url) ? n.data.url : '#';
-            var cls = n.read ? 'text-muted' : 'fw-bold text-body';
+            var cls = n.read ? 'text-secondary' : 'fw-bold text-body';
             var unreadDot = n.read ? '' : '<span class="position-absolute top-0 start-0 bg-danger rounded-circle" style="width:8px;height:8px;"></span>';
             var catColor = getCatColor(n.category);
-            html += '<a href="' + (url === '#' ? 'javascript:void(0)' : url) + '"' +
-                ' class="d-flex align-items-start px-4 py-3 border-bottom border-secondary border-opacity-5 text-decoration-none' +
-                (n.read ? '' : ' bg-dark bg-opacity-25') + '"' +
-                ' onclick="event.stopPropagation(); notifItemClick(\'' + n.id + '\', this.getAttribute(\'href\')); return false;">' +
+            html += '<div class="d-flex align-items-start px-4 py-3 border-bottom border-secondary border-opacity-5 text-decoration-none' +
+                (n.read ? '' : ' bg-dark bg-opacity-20') + '"' +
+                ' onclick="event.stopPropagation(); notifItemClick(\'' + n.id + '\', \'' + (url || '#') + '\'); return false;"' +
+                ' style="cursor: pointer; color: inherit;">' +
                 unreadDot +
                 '<div class="d-flex w-100 align-items-start gap-3">' +
                 '<div class="flex-shrink-0" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:' + catColor + '15;color:' + catColor + ';">' +
@@ -692,9 +692,9 @@ document.body.addEventListener('htmx:afterSettle', function(e) {
                 '<div class="text-muted" style="font-size:0.7rem; margin-top:3px;">' + renderTimeAgo(n.created_at) + '</div>' +
                 '</div>' +
                 '</div>' +
-                '</a>';
+                '</div>';
         });
-        html += '<div class="mt-2"><a href="#" class="d-block text-center text-secondary small px-4 py-2" onclick="notifMarkAllRead(); return false;">Mark all as read</a></div>';
+        html += '<div class="mt-2"><div class="d-block text-center text-secondary small px-4 py-2" onclick="notifMarkAllRead(); return false;" style="cursor: pointer;">Mark all as read</div></div>';
         listEl.innerHTML = html;
     }
 
