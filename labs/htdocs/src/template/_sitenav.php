@@ -75,7 +75,7 @@
             ?>
             <li class="nav-item dropdown px-2">
                 <button class="btn btn-link nav-link py-0 d-flex align-items-center justify-content-center position-relative"
-                    type="button" id="notif-bell" data-coreui-toggle="dropdown" style="height: 40px; width: 40px;">
+                    type="button" id="notif-bell" data-coreui-toggle="dropdown" aria-expanded="false" style="height: 40px; width: 40px;">
                     <i class="bx bx-bell fs-4 text-secondary hover-text-white"></i>
                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border-0 border-white border-2" 
                         style="font-size: 0.65rem; padding: 2px 6px; min-width: 18px; height: 18px; display: none; line-height: 1;" id="notif-badge">
@@ -793,6 +793,21 @@ document.body.addEventListener('htmx:afterSettle', function(e) {
             }
         }).catch(function() {});
     };
+
+    // Ensure dropdown is CLOSED on page load — never auto-open.
+    // CoreUI or browser state can sometimes leave it open; force it shut.
+    (function() {
+        var bellBtn = document.getElementById('notif-bell');
+        var dropdown = document.querySelector('.dropdown-menu.show');
+        if (bellBtn) {
+            bellBtn.setAttribute('aria-expanded', 'false');
+            bellBtn.classList.remove('show');
+        }
+        if (dropdown) {
+            dropdown.classList.remove('show');
+            dropdown.style.display = 'none';
+        }
+    })();
 
     // Initial badge fetch on page load (panel closed — no list fetch yet).
     fetchUnreadCount();
