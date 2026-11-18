@@ -91,10 +91,10 @@
                     <!-- Tab strip: only All, System, Report (admin only) -->
                     <div class="px-2 py-1" style="max-height: 44px;">
                         <div class="d-flex gap-1" id="notif-tabs" style="scrollbar-width: none;">
-                            <button class="notif-tab active px-3 py-1.5 small fw-medium rounded-pill border border-secondary border-opacity-20 bg-dark bg-opacity-20 text-white" data-cat="all" onclick="notifSwitchTab('all', this)">All</button>
-                            <button class="notif-tab px-3 py-1.5 small fw-medium rounded-pill border border-secondary border-opacity-20 bg-dark bg-opacity-10 text-secondary" data-cat="system" onclick="notifSwitchTab('system', this)">System</button>
+                            <button class="notif-tab active px-3 py-1.5 small fw-medium rounded-pill border border-secondary border-opacity-20 bg-dark bg-opacity-20 text-white" data-cat="all" onclick="notifSwitchTab('all', this, event)">All</button>
+                            <button class="notif-tab px-3 py-1.5 small fw-medium rounded-pill border border-secondary border-opacity-20 bg-dark bg-opacity-10 text-secondary" data-cat="system" onclick="notifSwitchTab('system', this, event)">System</button>
                             <?php if ($isAdminUser): ?>
-                            <button class="notif-tab px-3 py-1.5 small fw-medium rounded-pill border border-secondary border-opacity-20 bg-dark bg-opacity-10 text-secondary" data-cat="report" onclick="notifSwitchTab('report', this)">Report</button>
+                            <button class="notif-tab px-3 py-1.5 small fw-medium rounded-pill border border-secondary border-opacity-20 bg-dark bg-opacity-10 text-secondary" data-cat="report" onclick="notifSwitchTab('report', this, event)">Report</button>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -667,7 +667,8 @@ document.body.addEventListener('htmx:afterSettle', function(e) {
         return allNotifications.filter(function(n) { return n.category === cat; });
     }
 
-    function notifSwitchTab(cat, el) {
+    function notifSwitchTab(cat, el, ev) {
+        if (ev) ev.stopPropagation();
         currentTab = cat;
         // Update active states
         var tabsEl = document.getElementById('notif-tabs');
