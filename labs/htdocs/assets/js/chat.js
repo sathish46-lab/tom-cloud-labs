@@ -1674,6 +1674,21 @@ function maybeIdleTeaser() {
   );
 }
 
+/* ---- Console triggers for manual testing ---- */
+window.chatIdleTeaser = function () {
+  maybeIdleTeaser();
+};
+window.chatIdleTeaserForce = function () {
+  const body = el("div", "chat-fab-teaser-body");
+  body.appendChild(el("span", "chat-fab-teaser-wave", "🧪"));
+  body.appendChild(
+    el("span", "chat-fab-teaser-text", "Manual idle-teaser trigger from console")
+  );
+  showTeaser(body);
+  const mounted = !!(CHAT.teaser.el && CHAT.teaser.el.isConnected);
+  console.log("[Chat] idle teaser FORCED — bubble mounted:", mounted);
+};
+
 async function markAllRead() {
   try {
     const res = await fetch("/api/chat/read", {
