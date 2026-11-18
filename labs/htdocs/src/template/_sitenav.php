@@ -688,11 +688,9 @@ document.body.addEventListener('htmx:afterSettle', function(e) {
         .then(function(data) {
             if (data && data.success) {
                 fetchUnreadCount();
-                if (listEl) {
-                    listEl.innerHTML = '<div class="px-3 py-3 text-center text-secondary small">' +
-                        '<i class="bx bx-bell-off fs-1 d-block mb-2 opacity-50"></i>' +
-                        'No new notifications</div>';
-                }
+                // Re-render the list so read messages still appear (grayed out)
+                // instead of disappearing until reload.
+                fetchNotifications();
             }
         }).catch(function() {});
     };
