@@ -76,7 +76,7 @@
             <li class="nav-item dropdown px-2">
                 <button class="btn btn-link nav-link py-0 d-flex align-items-center justify-content-center position-relative"
                     type="button" id="notif-bell" data-coreui-toggle="dropdown" style="height: 40px; width: 40px;">
-                    <i class="bx bx-bell fs-4 text-secondary hover-text-white"></i>
+                    <i class="bx bx-envelope fs-4 text-secondary hover-text-white"></i>
                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border-0" 
                         style="font-size: 0.6rem; padding: 2px 5px; display: none;" id="notif-badge">
                         0
@@ -630,7 +630,7 @@ document.body.addEventListener('htmx:afterSettle', function(e) {
         if (!listEl) return;
         if (!items || items.length === 0) {
             listEl.innerHTML = '<div class="px-3 py-3 text-center text-secondary small">' +
-                '<i class="bx bx-bell-off fs-1 d-block mb-2 opacity-50"></i>' +
+                        '<i class="bx bx-envelope fs-1 d-block mb-2 opacity-50"></i>' +
                 'No new notifications</div>';
             if (badgeEl) badgeEl.style.display = 'none';
             return;
