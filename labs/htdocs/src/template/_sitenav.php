@@ -69,6 +69,10 @@
             </li>
         
             <!-- Notifications -->
+            <?php
+                $navUser = Session::getUser();
+                $isAdminUser = ($navUser && $navUser->getRole() === 'superuser');
+            ?>
             <li class="nav-item dropdown px-2">
                 <button class="btn btn-link nav-link py-0 d-flex align-items-center justify-content-center position-relative"
                     type="button" id="notif-bell" data-coreui-toggle="dropdown" style="height: 40px; width: 40px;">
@@ -78,18 +82,23 @@
                         0
                     </span>
                 </button>
-                <div class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 p-0" style="min-width: 360px; border-radius: 12px; max-height: 480px; overflow-y: auto;">
+                <!-- Permanent fixed-size notification card -->
+                <div class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 p-0" style="min-width: 420px; max-width: 460px; border-radius: 12px; height: 520px; overflow-y: auto;">
                     <div class="px-3 py-2 border-bottom d-flex align-items-center justify-content-between">
                         <h6 class="fw-bold mb-0 small">Notifications</h6>
                         <button class="btn btn-link btn-sm p-0 text-secondary small" onclick="notifMarkAllRead()">Mark all read</button>
                     </div>
-                    <!-- Tab strip like Image 1 -->
-                    <div class="px-2 py-1 overflow-auto" style="max-height: 44px;">
+                    <!-- Tab strip: only All, System, Report (admin only) -->
+                    <div class="px-2 py-1" style="max-height: 44px;">
                         <div class="d-flex gap-1" id="notif-tabs" style="scrollbar-width: none;">
                             <button class="notif-tab active px-3 py-1.5 small fw-medium rounded-pill border border-secondary border-opacity-20 bg-dark bg-opacity-20 text-white" data-cat="all" onclick="notifSwitchTab('all', this)">All</button>
+                            <button class="notif-tab px-3 py-1.5 small fw-medium rounded-pill border border-secondary border-opacity-20 bg-dark bg-opacity-10 text-secondary" data-cat="system" onclick="notifSwitchTab('system', this)">System</button>
+                            <?php if ($isAdminUser): ?>
+                            <button class="notif-tab px-3 py-1.5 small fw-medium rounded-pill border border-secondary border-opacity-20 bg-dark bg-opacity-10 text-secondary" data-cat="report" onclick="notifSwitchTab('report', this)">Report</button>
+                            <?php endif; ?>
                         </div>
                     </div>
-                    <div id="notif-list" class="px-2 py-2 overflow-y-auto" style="max-height: 330px;">
+                    <div id="notif-list" class="px-2 py-2 overflow-y-auto" style="max-height: 390px;">
                         <div class="px-3 py-3 text-center text-secondary small">
                             <i class="bx bx-bell-off fs-1 d-block mb-2 opacity-50"></i>
                             No new notifications
@@ -586,7 +595,7 @@ document.body.addEventListener('htmx:afterSettle', function(e) {
     var allNotifications = [];
     var currentTab = 'all';
     var tabBadgeEls = {};
-    var NOTIF_CATEGORIES = ['system', 'mcp', 'report', 'clan', 'clubs', 'code_arena', 'discussions', 'quiz', 'score', 'streak', 'academy'];
+    var NOTIF_CATEGORIES = ['system', 'report'];
 
     function fetchUnreadCount() {
         fetch('/api/notifications/unread_count', {
@@ -615,30 +624,6 @@ document.body.addEventListener('htmx:afterSettle', function(e) {
             });
         })
         .catch(function() {}); // silent — badge stays hidden on failure
-    }
-
-    function buildTabs(categories) {
-        var tabsEl = document.getElementById('notif-tabs');
-        if (!tabsEl) return;
-        tabsEl.innerHTML = '';
-        tabBadgeEls = {};
-
-        function addTab(label, cat, count) {
-            var badge = count > 0 ? '<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border-0" style="font-size:0.55rem;padding:1px 5px;">' + (count > 9 ? '9+' : count) + '</span>' : '';
-            var btn = document.createElement('button');
-            btn.className = 'notif-tab px-3 py-1.5 small fw-medium rounded-pill border border-secondary border-opacity-20 bg-dark bg-opacity-10 text-secondary' + (cat === currentTab ? ' active bg-primary text-white border-primary' : '');
-            btn.setAttribute('data-cat', cat);
-            btn.innerHTML = label + badge;
-            btn.onclick = function() { notifSwitchTab(cat, btn); };
-            tabsEl.appendChild(btn);
-            tabBadgeEls[cat] = badge ? btn.querySelector('.badge') : null;
-        }
-
-        addTab('All', 'all', null);
-        categories.forEach(function(cat) {
-            var label = cat.charAt(0).toUpperCase() + cat.slice(1).replace('_', ' ');
-            addTab(label, cat, null);
-        });
     }
 
     function renderList(items) {
@@ -707,19 +692,6 @@ document.body.addEventListener('htmx:afterSettle', function(e) {
         .then(function(data) {
             if (data && data.success) {
                 allNotifications = data.items || [];
-                // Build tabs from categories present + defaults
-                var cats = {};
-                allNotifications.forEach(function(n) { cats[n.category] = true; });
-                NOTIF_CATEGORIES.forEach(function(c) { cats[c] = true; });
-                buildTabs(Object.keys(cats).sort(function(a, b) {
-                    // 'all' first, then alphabetical but put system/mcp/report last
-                    var order = ['system', 'mcp', 'report'];
-                    var ia = order.indexOf(a), ib = order.indexOf(b);
-                    if (ia !== -1 && ib !== -1) return ia - ib;
-                    if (ia !== -1) return 1;
-                    if (ib !== -1) return -1;
-                    return a.localeCompare(b);
-                }));
                 notifSwitchTab(currentTab, null);
                 fetchUnreadCount();
             } else {
