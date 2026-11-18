@@ -67,22 +67,10 @@ const CHAT = {
     lastAt: 0,         // ms timestamp of last teaser shown (cooldown)
     el: null,          // active teaser bubble
     hideTimer: null,
+    lastActivityAt: 0, // ms timestamp of last real chat activity (msg/typing)
+    idleIdx: 0,        // rotate through IDLE_TEASERS prompts
   },
 
-  call: {
-    active: false,
-    callId: null,
-    pc: null,
-    localStream: null,
-    remoteStream: null,
-    incoming: false,
-    offerFrom: null,
-    offerSdp: null,
-    offerType: null,
-    iceBuffer: [],          // incoming ICE candidates buffered until setRemoteDescription
-    iceReady: false,        // true once setRemoteDescription has completed
-    ringTimer: null,        // 45s ringing timeout
-  },
 
   historyLoaded: false,
   loadSeq: 0,        // guards history fetches against race conditions
@@ -94,6 +82,7 @@ const CHAT = {
   isCurrentlyTyping: false,
 
   presenceTimer: null,     // 30s heartbeat
+  idleTimer: null,         // 30s idle-teaser tick
   lastCount: null,
 
   deleting: {},      // id -> true, prevents double-delete clicks
@@ -1037,6 +1026,7 @@ function handleEvent(evt) {
   if (evt.type === "message") {
     // While search results are on screen, don't mix live messages into them;
     // closing search reloads the history anyway.
+    CHAT.teaser.lastActivityAt = Date.now();
     if (!CHAT.searchActive) {
       hideEmptyState();
       appendMessage(evt, { scroll: CHAT.open });
@@ -1095,11 +1085,14 @@ function handleEvent(evt) {
   }
 
   if (evt.type && evt.type.startsWith("call-")) {
-    handleCallEvent(evt);
+    // Call signaling lives in chat-call.js (loaded only when the admin
+    // enables video calls). When it is absent the feature is off.
+    if (window.ChatCall) window.ChatCall.onSignalEvent(evt);
     return;
   }
 
   if (evt.type === "typing") {
+    CHAT.teaser.lastActivityAt = Date.now();
     showTyping(evt);
     return;
   }
@@ -1112,6 +1105,8 @@ function handleEvent(evt) {
 
   if (evt.type === "presence") {
     setOnlineCount(typeof evt.count === "number" ? evt.count : null);
+    // Keep the in-call "x/y · N online" counter live while a call is active.
+    if (window.ChatCall) window.ChatCall.onPresence();
     return;
   }
 }
@@ -1139,14 +1134,22 @@ function connectSocket() {
       (evt) => handleEvent(evt),
       null,
       () => {
-        // Subscribed (first time AND after every auto-reconnect):
-        // refresh history so nothing sent while disconnected is missed,
-        // then start (or restart) the presence heartbeat.
-        CHAT.connected = true;
+      // Subscribed (first time AND after every auto-reconnect):
+      // Panel CLOSED and nothing loaded yet → fetch ONLY the unread badge
+      // (tiny endpoint, no message rendering). The full history + pinned
+      // load when the user actually opens the panel — live messages keep
+      // bumping the badge in the meantime, and openPanel() gap-fills.
+      // Panel OPEN (or history already rendered) → refresh the transcript
+      // so nothing sent while disconnected is missed, then load pinned.
+      CHAT.connected = true;
+      if (CHAT.open || CHAT.historyLoaded) {
         loadHistory(true).then(() => {
           startPresence();
           loadPinned();
         });
+      } else {
+        fetchUnreadCount().finally(() => startPresence());
+      }
       }
     );
   } catch (e) {
@@ -1166,6 +1169,47 @@ function disconnectSocket() {
  * History
  * =========================================================================
  */
+
+// Badge painter shared by the full history load and the tiny unread-only
+// fetch. While the panel is open nothing is unread, so keep it clear.
+function applyUnreadCount(count) {
+  CHAT.unread = CHAT.open ? 0 : (Number(count) || 0);
+  if (CHAT.badgeEl) {
+    CHAT.badgeEl.textContent = CHAT.unread > 99 ? "99+" : String(CHAT.unread);
+    CHAT.badgeEl.hidden = CHAT.unread === 0;
+  }
+  if (CHAT.fabEl) {
+    CHAT.fabEl.classList.toggle("chat-fab--has-unread", CHAT.unread > 0);
+  }
+}
+
+/* Unread-count-only fetch for page load (panel closed): no message
+   rendering — the badge value is the only thing the header needs. */
+async function fetchUnreadCount() {
+  if (!window.CHAT_CONTEXT?.loggedIn) return;
+  try {
+    const res = await fetch("/api/chat/unread", {
+      method: "GET",
+      credentials: "same-origin",
+      headers: { "Accept": "application/json" },
+    });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "Unread failed");
+    // Restore the identity state the typing beacon and header rely on —
+    // CHAT.me gates showTyping(), members feeds the "N members" subtitle.
+    if (data.me) {
+      CHAT.me = data.me;
+      CHAT.isAdmin = ["admin", "superuser"].includes(CHAT.me?.role);
+    }
+    if (typeof data.members === "number") setMembersCount(data.members);
+    // Never paint over the panel-open state — opening always resets to 0.
+    if (!CHAT.open) applyUnreadCount(data.unread_count ?? 0);
+  } catch (e) {
+    // Badge stays at whatever it was; the panel-open load will correct it.
+    console.warn("[Chat] unread fetch failed:", e);
+  }
+}
 
 async function loadHistory(refresh = false) {
   if (!window.CHAT_CONTEXT?.loggedIn && !guestId()) return;
@@ -1189,15 +1233,7 @@ async function loadHistory(refresh = false) {
     CHAT.isAdmin = ["admin", "superuser"].includes(CHAT.me?.role);
 
     // Apply unread count from server (works for both logged-in and guest).
-    // While the panel is open nothing is unread, so keep the badge clear.
-    CHAT.unread = CHAT.open ? 0 : (data.unread_count ?? 0);
-    if (CHAT.badgeEl) {
-      CHAT.badgeEl.textContent = CHAT.unread > 99 ? "99+" : String(CHAT.unread);
-      CHAT.badgeEl.hidden = CHAT.unread === 0;
-    }
-    if (CHAT.fabEl) {
-      CHAT.fabEl.classList.toggle("chat-fab--has-unread", CHAT.unread > 0);
-    }
+    applyUnreadCount(data.unread_count ?? 0);
 
     if (refresh) {
       // Gap-fill on reconnect: replace list, keep scroll at bottom.
@@ -1246,6 +1282,7 @@ async function sendMessage() {
   const text = CHAT.inputEl.value.trim();
   if (!text) return;
 
+  CHAT.teaser.lastActivityAt = Date.now(); // sending counts as activity
   const btn = CHAT.sendBtn;
   btn.disabled = true;
   try {
@@ -1505,6 +1542,28 @@ const TEASER_SHOW_MS     = 6000;          // auto-hide delay
 const TEASER_DISMISS_KEY = "tom-chat-teaser-dismissed"; // 24 h snooze after ✕
 const TEASER_WELCOME_KEY = "tom-chat-teaser-welcomed";  // one-time welcome flag
 
+// Idle prompts: shown when NOBODY has chatted for a while, to invite people
+// in. Same cooldown / snooze / auto-hide rules as every other teaser.
+const IDLE_TEASER_CHECK_MS = 30 * 1000;  // how often to consider a prompt
+const IDLE_TEASER_AFTER_MS = 60 * 1000;  // chat must be quiet this long
+const IDLE_TEASERS = [
+  { emoji: "💬", text: "Any doubt? Just ask in the chat!" },
+  { emoji: "🚀", text: "Start a conversation here" },
+  { emoji: "🧠", text: "Share your knowledge with friends" },
+  { emoji: "🤝", text: "Someone here is happy to help you" },
+  { emoji: "✍️", text: "Say hi — the chat is quiet right now" },
+  { emoji: "❓", text: "Stuck on a lab? Ask the community" },
+  { emoji: "💡", text: "Got a tip? Drop it in the chat" },
+  { emoji: "🎯", text: "Break the silence — someone may need you" },
+  { emoji: "☕", text: "Grab a coffee and chat with the community" },
+  { emoji: "🌱", text: "Every conversation starts with one message" },
+  { emoji: "🔥", text: "Be the first to spark the chat today" },
+  { emoji: "📣", text: "Announce your progress, inspire someone" },
+  { emoji: "🤔", text: "Have a question? Others might too" },
+  { emoji: "🎓", text: "Teach what you learned — help a beginner" },
+  { emoji: "👋", text: "New here? Introduce yourself in the chat" },
+];
+
 function teaserDismissed() {
   try {
     const until = parseInt(localStorage.getItem(TEASER_DISMISS_KEY), 10);
@@ -1589,529 +1648,30 @@ function maybeWelcomeTeaser() {
   showTeaser(body);
 }
 
-/* ==========================================================================
- * Video call (admin-initiated, P2P WebRTC)
- * Signaling rides the existing socket topic via /api/chat/call-signal.php
- * ========================================================================= */
+/* Idle prompt: no one has chatted for IDLE_TEASER_AFTER_MS, so nudge the
+   visitor with a rotating invitation. Runs on a 30s tick while the panel is
+   closed; showTeaser() enforces cooldown/snooze/auto-hide as usual. */
+function maybeIdleTeaser() {
+  if (!window.CHAT_CONTEXT?.loggedIn) return;   // guests can't type yet
+  if (CHAT.open || document.hidden) return;
+  if (teaserDismissed()) return;
+  if (Date.now() - CHAT.teaser.lastAt < TEASER_COOLDOWN_MS) return;
+  const lastActivity = CHAT.teaser.lastActivityAt || 0;
+  if (Date.now() - lastActivity < IDLE_TEASER_AFTER_MS) return;
 
-const CALL_STUN = [{ urls: "stun:stun.l.google.com:19302" }];
-const CALL_SIGNAL_URL = "/api/chat/call-signal.php";
+  const prompt = IDLE_TEASERS[CHAT.teaser.idleIdx % IDLE_TEASERS.length];
+  CHAT.teaser.idleIdx += 1;
 
-// NOTE: No TURN server is configured. Calls across strict NATs (symmetric
-// NAT, carrier-grade NAT) will fail to establish a media path. Add TURN
-// servers to CALL_STUN if you need to traverse those networks.
+  const body = el("div", "chat-fab-teaser-body");
+  body.appendChild(el("span", "chat-fab-teaser-wave", prompt.emoji));
+  body.appendChild(el("span", "chat-fab-teaser-text", prompt.text));
+  showTeaser(body);
 
-function callEls() {
-  return {
-    modal: document.getElementById("chat-call-modal"),
-    incoming: document.getElementById("chat-call-incoming"),
-    localVideo: document.getElementById("chat-call-local-video"),
-    remoteVideo: document.getElementById("chat-call-remote-video"),
-    localLabel: document.getElementById("chat-call-local-label"),
-    remoteLabel: document.getElementById("chat-call-remote-label"),
-    status: document.getElementById("chat-call-status"),
-    endBtn: document.getElementById("chat-call-end"),
-    acceptBtn: document.getElementById("chat-call-accept"),
-    declineBtn: document.getElementById("chat-call-decline"),
-    fromLabel: document.getElementById("chat-call-incoming-from"),
-    error: document.getElementById("chat-call-error"),
-    errorTitle: document.getElementById("chat-call-error-title"),
-    errorDesc: document.getElementById("chat-call-error-desc"),
-    dismissBtn: document.getElementById("chat-call-dismiss-error"),
-    retryBtn: document.getElementById("chat-call-retry-perm"),
-  };
-}
-
-async function publishSignal(type, payload) {
-  try {
-    const res = await fetch(CALL_SIGNAL_URL, {
-      method: "POST",
-      credentials: "same-origin",
-      headers: { ...csrfHeaders(), "content-type": "application/json" },
-      body: JSON.stringify({ type, ...payload }),
-    });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      console.warn("[Chat] signal publish HTTP error:", res.status, body.error || res.statusText);
-      return { ok: false, status: res.status, error: body.error || res.statusText };
-    }
-    const data = await res.json().catch(() => ({}));
-    if (!data.success) {
-      console.warn("[Chat] signal publish API error:", data.error);
-      return { ok: false, status: res.status, error: data.error };
-    }
-    console.log("[Chat] signal published:", type, "callId=", payload.call_id);
-    return { ok: true };
-  } catch (e) {
-    console.warn("[Chat] call signal failed:", e);
-    return { ok: false, error: e.message };
-  }
-}
-
-function showCallModal() {
-  const { modal } = callEls();
-  if (!modal) return;
-  CHAT.call.active = true;
-  modal.hidden = false;
-  modal.classList.add("is-open");
-  callEls().endBtn?.addEventListener("click", endCall);
-  console.log("[Chat] call modal opened");
-}
-
-function hideCallModal() {
-  const { modal, localVideo, remoteVideo } = callEls();
-  if (modal) {
-    modal.hidden = true;
-    modal.classList.remove("is-open");
-  }
-  CHAT.call.active = false;
-  if (localVideo) { localVideo.srcObject = null; }
-  if (remoteVideo) { remoteVideo.srcObject = null; }
-  hideCallError();
-  callEls().endBtn?.removeEventListener("click", endCall);
-  console.log("[Chat] call modal closed");
-}
-
-function stopLocalStream() {
-  if (CHAT.call.localStream) {
-    CHAT.call.localStream.getTracks().forEach((t) => t.stop());
-    CHAT.call.localStream = null;
-  }
-}
-
-function openSiteSettings() {
-  // Kept as a no-op: browsers block chrome:// navigation from web pages.
-  // Users are instructed in the error text to manage permissions themselves.
-  console.log("[Chat] openSiteSettings() is a no-op — browser blocks chrome:// navigation from pages.");
-}
-
-function showCallError(title, desc) {
-  const { modal, error, errorTitle, errorDesc, videos, status, endBtn } = callElsWithVideos();
-  if (!modal || !error) return;
-  // NOTE: do NOT set CHAT.call.active here — startCall()/answerCall() need
-  // it to be false so a Retry can re-run getUserMedia().
-  modal.hidden = false;
-  modal.classList.add("is-open");
-  if (videos) videos.hidden = true;
-  if (status) status.hidden = true;
-  if (errorTitle) errorTitle.textContent = title || "Camera/microphone access required";
-  if (errorDesc) errorDesc.textContent = desc || "Allow camera/microphone in site settings, then click Retry.";
-  error.hidden = false;
-  error.classList.add("is-open");
-  if (endBtn) endBtn.addEventListener("click", endCall);
-}
-
-function hideCallError() {
-  const { error, videos, status } = callElsWithVideos();
-  if (error) { error.hidden = true; error.classList.remove("is-open"); }
-  if (videos) videos.hidden = false;
-  if (status) status.hidden = false;
-}
-
-function callElsWithVideos() {
-  const base = callEls();
-  base.videos = document.querySelector(".chat-call-videos");
-  return base;
-}
-
-function retryCall() {
-  if (CHAT.call._retry === "answer") answerCall();
-  else startCall();
-}
-
-function closePeerConnection() {
-  if (CHAT.call.pc) {
-    try { CHAT.call.pc.close(); } catch (e) {}
-    CHAT.call.pc = null;
-  }
-}
-
-function flushIceBuffer() {
-  if (!CHAT.call.iceReady || !CHAT.call.pc) return;
-  const buffered = CHAT.call.iceBuffer;
-  CHAT.call.iceBuffer = [];
-  for (const cand of buffered) {
-    try {
-      CHAT.call.pc.addIceCandidate(cand).catch((e) => console.warn("[Chat] add buffered ice candidate failed:", e));
-    } catch (e) {
-      console.warn("[Chat] add buffered ice candidate failed:", e);
-    }
-  }
-  console.log("[Chat] flushed", buffered.length, "buffered ICE candidates");
-}
-
-async function endCall() {
-  console.log("[Chat] endCall() callId=", CHAT.call.callId);
-  closePeerConnection();
-  stopLocalStream();
-  hideCallModal();
-  hideIncomingCall();
-  const callId = CHAT.call.callId;
-  // Reset all call state so the call button works again without reload.
-  CHAT.call.callId = null;
-  CHAT.call.incoming = false;
-  CHAT.call.offerFrom = null;
-  CHAT.call.offerSdp = null;
-  CHAT.call.offerType = null;
-  CHAT.call._retry = null;
-  if (callId) {
-    await publishSignal("end", { call_id: callId }).catch(() => {});
-  }
-}
-
-function showIncomingCall(fromUserId, fromUsername, callId, offerSdp, offerType) {
-  console.log("[Chat] showIncomingCall() from=", fromUsername, "callId=", callId);
-  const { incoming, fromLabel, acceptBtn, declineBtn } = callEls();
-  if (!incoming) return;
-  CHAT.call.incoming = true;
-  CHAT.call.offerFrom = fromUserId;
-  CHAT.call.callId = callId;
-  CHAT.call.offerSdp = offerSdp;
-  CHAT.call.offerType = offerType;
-  if (fromLabel) fromLabel.textContent = fromUsername || "Someone";
-  incoming.hidden = false;
-  incoming.classList.add("is-open");
-  acceptBtn?.addEventListener("click", answerCall);
-  declineBtn?.addEventListener("click", declineCall);
-
-  // Ringing timeout: auto-end after 45 seconds if unanswered.
-  CHAT.call.ringTimer = setTimeout(() => {
-    console.log("[Chat] ringing timeout — auto-ending call", callId);
-    hideIncomingCall();
-    endCall();
-  }, 45000);
-}
-
-function hideIncomingCall() {
-  console.log("[Chat] hideIncomingCall()");
-  if (CHAT.call.ringTimer) {
-    clearTimeout(CHAT.call.ringTimer);
-    CHAT.call.ringTimer = null;
-  }
-  const { incoming, acceptBtn, declineBtn } = callEls();
-  if (incoming) { incoming.hidden = true; incoming.classList.remove("is-open"); }
-  CHAT.call.incoming = false;
-  acceptBtn?.removeEventListener("click", answerCall);
-  declineBtn?.removeEventListener("click", declineCall);
-}
-
-function checkMediaDeviceSupport() {
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    return {
-      ok: false,
-      title: "Camera/microphone not supported",
-      desc: "Your browser does not support getUserMedia. Video calls are not available.",
-    };
-  }
-  return { ok: true };
-}
-
-function mapMediaError(e) {
-  const name = e && e.name ? e.name : "";
-  const msg = e && e.message ? e.message : "";
-
-  // Chrome throws on non-secure origins (HTTP, non-localhost):
-  // "Failed to execute 'getUserMedia' on 'NavigatorMediaDevices': Only secure origins are allowed."
-  if (msg.includes("secure origin") || msg.includes("secure context") || msg.includes("Only secure origins")) {
-    return {
-      title: "Secure context required",
-      desc: "Video calls need a secure context. Open this page over HTTPS or on http://localhost.",
-    };
-  }
-
-  if (name === "NotAllowedError") {
-    return {
-      title: "Camera/microphone permission denied",
-      desc: "You denied camera/microphone access. Grant it in the site settings, then click Retry.",
-    };
-  }
-  if (name === "NotFoundError") {
-    return {
-      title: "No camera/microphone found",
-      desc: "No camera or microphone device was detected on this device.",
-    };
-  }
-  if (name === "NotReadableError") {
-    return {
-      title: "Camera/microphone in use",
-      desc: "Another application is using the camera or microphone. Close it and try again.",
-    };
-  }
-  if (name === "TypeError" && msg.includes("getUserMedia")) {
-    return {
-      title: "Secure context required",
-      desc: "Video calls need a secure context. Open this page over HTTPS or on http://localhost.",
-    };
-  }
-  return {
-    title: "Camera/microphone access failed",
-    desc: msg || "Could not access the camera or microphone.",
-  };
-}
-
-async function startCall() {
-  console.log("[Chat] startCall() triggered, isAdmin=", CHAT.isAdmin, "active=", CHAT.call.active);
-  if (!CHAT.isAdmin) return;
-  if (CHAT.call.active) return;
-
-  const support = checkMediaDeviceSupport();
-  if (!support.ok) {
-    console.warn("[Chat] media device support check failed:", support.title);
-    CHAT.call._retry = "start";
-    showCallError(support.title, support.desc);
-    return;
-  }
-
-  try {
-    CHAT.call.localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-  } catch (e) {
-    console.warn("[Chat] camera/mic access denied:", e.name, e.message);
-    CHAT.call._retry = "start";
-    const mapped = mapMediaError(e);
-    showCallError(mapped.title, mapped.desc);
-    return;
-  }
-  console.log("[Chat] getUserMedia success, tracks=", CHAT.call.localStream.getTracks().length);
-
-  const pc = new RTCPeerConnection({ iceServers: CALL_STUN });
-  CHAT.call.pc = pc;
-
-  CHAT.call.localStream.getTracks().forEach((track) => pc.addTrack(track, CHAT.call.localStream));
-
-  pc.ontrack = (e) => {
-    const { remoteVideo, remoteLabel } = callEls();
-    if (remoteVideo && e.streams[0]) {
-      remoteVideo.srcObject = e.streams[0];
-      CHAT.call.remoteStream = e.streams[0];
-      if (remoteLabel) remoteLabel.textContent = "Peer";
-    }
-  };
-
-  pc.onicecandidate = (e) => {
-    if (e.candidate) {
-      console.log("[Chat] ICE candidate generated");
-      // Buffer outgoing candidates until the offer has been published.
-      if (CHAT.call.iceReady) {
-        publishSignal("ice", {
-          call_id: CHAT.call.callId,
-          candidate: JSON.stringify(e.candidate),
-        });
-      } else {
-        CHAT.call.iceBuffer.push(e.candidate);
-      }
-    }
-  };
-
-  pc.onconnectionstatechange = () => {
-    const { status } = callEls();
-    if (status) {
-      status.textContent = pc.connectionState === "connected" ? "Connected" : pc.connectionState || "Connecting…";
-    }
-    console.log("[Chat] connection state:", pc.connectionState);
-    if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
-      endCall();
-    }
-  };
-
-  CHAT.call.callId = crypto.randomUUID?.() || Math.random().toString(36).slice(2);
-  console.log("[Chat] callId=", CHAT.call.callId);
-
-  try {
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-    CHAT.call.iceReady = true;
-    console.log("[Chat] offer created:", offer.type);
-    const result = await publishSignal("offer", {
-      call_id: CHAT.call.callId,
-      sdp: offer.sdp,
-      sdp_type: offer.type,
-    });
-    if (!result.ok) {
-      console.warn("[Chat] offer signal publish failed:", result.error);
-      showCallError(
-        "Call could not be started",
-        "The call signal could not be sent to the server. Please try again."
-      );
-      return;
-    }
-    console.log("[Chat] offer signal published");
-    // Flush any ICE candidates gathered before the offer was published.
-    flushIceBuffer();
-    const { status, localVideo } = callEls();
-    if (status) status.textContent = "Waiting for someone to join…";
-    if (localVideo) localVideo.srcObject = CHAT.call.localStream;
-    hideCallError();
-    showCallModal();
-  } catch (e) {
-    console.warn("[Chat] call offer failed:", e);
-    endCall();
-  }
-}
-
-async function answerCall() {
-  console.log("[Chat] answerCall() for callId=", CHAT.call.callId);
-  if (!CHAT.call.callId || !CHAT.call.offerSdp) return;
-
-  const support = checkMediaDeviceSupport();
-  if (!support.ok) {
-    console.warn("[Chat] media device support check failed:", support.title);
-    CHAT.call._retry = "answer";
-    declineCall();
-    showCallError(support.title, support.desc);
-    return;
-  }
-
-  try {
-    CHAT.call.localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-  } catch (e) {
-    console.warn("[Chat] camera/mic access denied:", e.name, e.message);
-    CHAT.call._retry = "answer";
-    declineCall();
-    const mapped = mapMediaError(e);
-    showCallError(mapped.title, mapped.desc);
-    return;
-  }
-
-  const pc = new RTCPeerConnection({ iceServers: CALL_STUN });
-  CHAT.call.pc = pc;
-
-  CHAT.call.localStream.getTracks().forEach((track) => pc.addTrack(track, CHAT.call.localStream));
-
-  pc.ontrack = (e) => {
-    const { remoteVideo, remoteLabel } = callEls();
-    if (remoteVideo && e.streams[0]) {
-      remoteVideo.srcObject = e.streams[0];
-      CHAT.call.remoteStream = e.streams[0];
-      if (remoteLabel) remoteLabel.textContent = "Peer";
-    }
-  };
-
-  pc.onicecandidate = (e) => {
-    if (e.candidate) {
-      // Buffer outgoing candidates until the answer has been published.
-      if (CHAT.call.iceReady) {
-        publishSignal("ice", {
-          call_id: CHAT.call.callId,
-          candidate: JSON.stringify(e.candidate),
-        });
-      } else {
-        CHAT.call.iceBuffer.push(e.candidate);
-      }
-    }
-  };
-
-  pc.onconnectionstatechange = () => {
-    const { status } = callEls();
-    if (status) {
-      status.textContent = pc.connectionState === "connected" ? "Connected" : pc.connectionState || "Connecting…";
-    }
-    if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
-      endCall();
-    }
-  };
-
-  hideIncomingCall();
-
-  try {
-    const offer = new RTCSessionDescription({ sdp: CHAT.call.offerSdp, type: CHAT.call.offerType });
-    await pc.setRemoteDescription(offer);
-    CHAT.call.iceReady = true;
-    const answer = await pc.createAnswer();
-    await pc.setLocalDescription(answer);
-    const answerResult = await publishSignal("answer", {
-      call_id: CHAT.call.callId,
-      sdp: answer.sdp,
-      sdp_type: answer.type,
-    });
-    if (!answerResult.ok) {
-      console.warn("[Chat] answer signal publish failed:", answerResult.error);
-      showCallError(
-        "Call could not be answered",
-        "The call answer could not be sent to the server. Please try again."
-      );
-      return;
-    }
-    // Flush any ICE candidates gathered before the answer was published.
-    flushIceBuffer();
-    const { status, localVideo } = callEls();
-    if (status) status.textContent = "Connected";
-    if (localVideo) localVideo.srcObject = CHAT.call.localStream;
-    hideCallError();
-    showCallModal();
-    console.log("[Chat] answer published and modal opened");
-  } catch (e) {
-    console.warn("[Chat] call answer failed:", e);
-    endCall();
-  }
-}
-
-function declineCall() {
-  console.log("[Chat] declineCall() callId=", CHAT.call.callId);
-  hideIncomingCall();
-  if (CHAT.call.callId) {
-    publishSignal("end", { call_id: CHAT.call.callId });
-    CHAT.call.callId = null;
-  }
-  CHAT.call.incoming = false;
-  CHAT.call.offerFrom = null;
-  CHAT.call.offerSdp = null;
-  CHAT.call.offerType = null;
-}
-
-/* ==========================================================================
- * Socket event handling — call signaling
- * ========================================================================= */
-
-function handleCallEvent(evt) {
-  const callId = evt.call_id;
-  const fromId = evt.from_user_id;
-  const fromName = evt.from_username || "Someone";
-
-  // Ignore our own signals.
-  if (CHAT.me && fromId == CHAT.me.user_id) return;
-
-  console.log("[Chat] handleCallEvent:", evt.type, "callId=", callId, "from=", fromName);
-
-  if (evt.type === "call-offer") {
-    if (CHAT.call.active) { console.log("[Chat] call-offer ignored (already in call)"); return; }
-    showIncomingCall(fromId, fromName, callId, evt.sdp, evt.sdp_type);
-    return;
-  }
-
-  if (evt.type === "call-answer") {
-    if (!CHAT.call.active || CHAT.call.callId !== callId) { console.log("[Chat] call-answer ignored"); return; }
-    const { status } = callEls();
-    if (status) status.textContent = "Connecting…";
-    try {
-      const answer = new RTCSessionDescription({ sdp: evt.sdp, type: evt.sdp_type });
-      CHAT.call.pc?.setRemoteDescription(answer).catch((e) => console.warn("[Chat] set remote answer failed:", e));
-    } catch (e) {
-      console.warn("[Chat] invalid answer:", e);
-    }
-    return;
-  }
-
-  if (evt.type === "call-ice") {
-    if (!CHAT.call.active || CHAT.call.callId !== callId) { console.log("[Chat] call-ice ignored"); return; }
-    try {
-      const cand = JSON.parse(evt.candidate);
-      if (CHAT.call.iceReady && CHAT.call.pc) {
-        CHAT.call.pc.addIceCandidate(cand).catch((e) => console.warn("[Chat] add ice candidate failed:", e));
-      } else {
-        CHAT.call.iceBuffer.push(cand);
-        console.log("[Chat] buffered ICE candidate (iceReady=", CHAT.call.iceReady, ")");
-      }
-    } catch (e) {
-      console.warn("[Chat] invalid ice candidate:", e);
-    }
-    return;
-  }
-
-  if (evt.type === "call-end") {
-    console.log("[Chat] call-end received for callId=", callId);
-    if (!callId || CHAT.call.callId === callId) endCall();
-    return;
-  }
+  // Verification notice: confirms the idle bubble actually mounted.
+  const mounted = !!(CHAT.teaser.el && CHAT.teaser.el.isConnected);
+  console.log(
+    `[Chat] idle teaser #${CHAT.teaser.idleIdx}/${IDLE_TEASERS.length} shown — "${prompt.text}" — bubble mounted: ${mounted}`
+  );
 }
 
 async function markAllRead() {
@@ -2290,20 +1850,9 @@ function wire() {
     pinnedClose.addEventListener("click", closePinned);
   }
 
-  // Video call toggle — rendered server-side for admins only.
-  const callToggle = document.getElementById("chat-call-toggle");
-  if (callToggle) {
-    callToggle.addEventListener("click", startCall);
-    console.log("[Chat] video call toggle listener attached, admin=", CHAT.isAdmin);
-  } else {
-    console.log("[Chat] video call toggle not rendered (non-admin or template missing)");
-  }
-
-  // Permission-error actions inside the call modal.
-  const permDismiss = document.getElementById("chat-call-dismiss-error");
-  const permRetry = document.getElementById("chat-call-retry-perm");
-  if (permDismiss) permDismiss.addEventListener("click", endCall);
-  if (permRetry) permRetry.addEventListener("click", retryCall);
+  // Video call wiring lives in chat-call.js — loaded only when the admin
+  // has video calls enabled. Never rendered/attached when the mode is off.
+  if (window.ChatCall) window.ChatCall.init();
 
   CHAT.inputEl.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -2346,6 +1895,8 @@ function wire() {
       try { localStorage.removeItem("tom-chat-guest-id"); } catch (e) {}
     }
     connectSocket();
+    // Idle prompts: only meaningful for signed-in users (guests can't post).
+    CHAT.idleTimer = setInterval(maybeIdleTeaser, IDLE_TEASER_CHECK_MS);
   }
 
   // Cleanup on unload.
@@ -2353,16 +1904,23 @@ function wire() {
     stopTypingBeacon();
     stopPresence();
     disconnectSocket();
+    if (CHAT.idleTimer) { clearInterval(CHAT.idleTimer); CHAT.idleTimer = null; }
     // Drop any active call so peers are notified.
-    if (CHAT.call.pc) { try { CHAT.call.pc.close(); } catch (e) {} CHAT.call.pc = null; }
-    if (CHAT.call.localStream) { CHAT.call.localStream.getTracks().forEach((t) => t.stop()); CHAT.call.localStream = null; }
-    if (CHAT.call.callId) {
-      publishSignal("end", { call_id: CHAT.call.callId }).catch(() => {});
-    }
+    if (window.ChatCall) window.ChatCall.cleanup();
   });
 
   console.log("[Chat] widget ready");
 }
+
+  // Minimal bridge for chat-call.js — a separate bundle loaded ONLY when the
+  // admin enables video calls (see _master.php + ChatSettings). Keeps chat
+  // internals closure-private while giving the call module what it needs.
+  window.ChatBridge = {
+    csrfHeaders,
+    isAdmin: () => CHAT.isAdmin,
+    myUserId: () => (CHAT.me ? CHAT.me.user_id : null),
+    onlineCount: () => CHAT.lastCount,
+  };
 
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", wire);

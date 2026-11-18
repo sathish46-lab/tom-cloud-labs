@@ -28,6 +28,7 @@ require_once __DIR__ . '/core/UserSession.class.php';
 require_once __DIR__ . '/core/WebAPI.class.php';
 require_once __DIR__ . '/core/CsrfProtection.class.php';
 require_once __DIR__ . '/core/AuthMiddleware.class.php';
+require_once __DIR__ . '/core/ChatSettings.class.php';
 require_once __DIR__ . '/labs/LabFeatures.php';
 require_once __DIR__ . '/labs/LabTemplateConfig.php';
 require_once __DIR__ . '/services/LearnAIOrchestrator.class.php';

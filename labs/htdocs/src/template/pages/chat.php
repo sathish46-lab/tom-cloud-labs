@@ -28,10 +28,12 @@
           <i class="bx bxs-pin"></i>
           <span id="chat-pinned-count" class="chat-pinned-count" hidden>0</span>
         </button>
-        <!-- Video call toggle (admin only; rendered server-side) -->
-        <?php if ($isAdmin): ?>
+        <!-- Video call toggle — rendered only when the chat settings allow
+             this viewer to start calls (mode public = logged-in, admin mode =
+             admins only, off = nobody). Variables come from _master.php. -->
+        <?php if (!empty($chatCallBtnVisible)): ?>
         <button type="button" class="chat-icon-btn" id="chat-call-toggle" aria-label="Start video call">
-          <i class="bx bxs-video-circle"></i>
+          <i class="bx bxs-video"></i>
         </button>
         <?php endif; ?>
         <button type="button" class="chat-icon-btn" aria-label="Minimize chat">−</button>
@@ -88,54 +90,6 @@
       </button>
     </div>
 
-    <!-- Video call modal -->
-    <div id="chat-call-modal" class="chat-call-modal" hidden role="dialog" aria-label="Video call" aria-modal="true">
-      <div class="chat-call-modal-inner">
-        <div class="chat-call-header">
-          <span class="chat-call-title" id="chat-call-title">Video call</span>
-          <button type="button" class="chat-icon-btn" id="chat-call-end" aria-label="End call">✕</button>
-        </div>
-        <div class="chat-call-videos">
-          <div class="chat-call-video-wrap chat-call-video--local">
-            <video id="chat-call-local-video" autoplay muted playsinline></video>
-            <span class="chat-call-video-label" id="chat-call-local-label">You</span>
-          </div>
-          <div class="chat-call-video-wrap chat-call-video--remote">
-            <video id="chat-call-remote-video" autoplay playsinline></video>
-            <span class="chat-call-video-label" id="chat-call-remote-label">Waiting…</span>
-          </div>
-        </div>
-        <div class="chat-call-status" id="chat-call-status">Starting call…</div>
-
-        <!-- Camera/microphone permission error state -->
-        <div class="chat-call-error" id="chat-call-error" hidden>
-          <div class="chat-call-error-inner">
-            <i class="bx bxs-error-circle chat-call-error-icon"></i>
-            <div class="chat-call-error-text">
-              <span class="chat-call-error-title" id="chat-call-error-title">Camera/microphone access required</span>
-              <span class="chat-call-error-desc" id="chat-call-error-desc">Allow camera/microphone for this site, then click Retry.</span>
-            </div>
-            <div class="chat-call-error-actions">
-              <button type="button" class="chat-call-error-btn chat-call-error-btn--dismiss" id="chat-call-dismiss-error" aria-label="Dismiss error">Dismiss</button>
-              <button type="button" class="chat-call-error-btn chat-call-error-btn--retry" id="chat-call-retry-perm" aria-label="Retry camera/microphone access">Retry</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Incoming video call notification -->
-    <div id="chat-call-incoming" class="chat-call-incoming" hidden role="alertdialog" aria-modal="true" aria-label="Incoming video call">
-      <div class="chat-call-incoming-inner">
-        <span class="chat-call-incoming-title">Incoming video call</span>
-        <span class="chat-call-incoming-from" id="chat-call-incoming-from">Someone</span>
-        <div class="chat-call-incoming-actions">
-          <button type="button" class="chat-icon-btn chat-call-incoming-accept" id="chat-call-accept" aria-label="Accept call">✔</button>
-          <button type="button" class="chat-icon-btn chat-call-incoming-decline" id="chat-call-decline" aria-label="Decline call">✕</button>
-        </div>
-      </div>
-    </div>
-
     <!-- Storm front layer (decorative lightning) -->
     <div class="chat-storm-fx" aria-hidden="true">
       <div class="chat-storm-rain"></div>
@@ -143,6 +97,67 @@
       <svg class="chat-storm-bolts" viewBox="0 0 400 600" preserveAspectRatio="xMidYMid slice"></svg>
     </div>
   </div>
+
+  <!--
+    Video call modal — deliberately OUTSIDE #chat-panel.
+    The panel's backdrop-filter makes it a containing block for position:fixed
+    children, which trapped the modal inside the chat card. As a direct child
+    of #chat-widget the fixed modal is viewport-anchored: the default view is
+    a centered floating card and ⛶ expands it to the whole browser window.
+    Rendered ONLY when video calls are enabled (Admin → Settings → Chat
+    Settings); when the mode is "off" none of this markup is sent.
+  -->
+  <?php if (!empty($chatCallUiEnabled)): ?>
+  <div id="chat-call-modal" class="chat-call-modal" hidden role="dialog" aria-label="Video call" aria-modal="true">
+    <div class="chat-call-modal-inner">
+      <div class="chat-call-header">
+        <span class="chat-call-title" id="chat-call-title">Video call</span>
+        <div class="chat-call-header-actions" style="display:flex; gap:0.25rem; align-items:center;">
+          <button type="button" class="chat-icon-btn" id="chat-call-fullscreen" aria-label="Toggle big screen" title="Big screen">⛶</button>
+          <button type="button" class="chat-icon-btn" id="chat-call-end" aria-label="End call">✕</button>
+        </div>
+      </div>
+      <div class="chat-call-videos">
+        <div class="chat-call-video-wrap chat-call-video--local">
+          <video id="chat-call-local-video" autoplay muted playsinline></video>
+          <span class="chat-call-video-label" id="chat-call-local-label">You</span>
+        </div>
+        <div class="chat-call-video-wrap chat-call-video--remote">
+          <video id="chat-call-remote-video" autoplay playsinline></video>
+          <span class="chat-call-video-label" id="chat-call-remote-label">Waiting…</span>
+        </div>
+      </div>
+      <div class="chat-call-status" id="chat-call-status">Starting call…</div>
+
+      <!-- Camera/microphone permission error state -->
+      <div class="chat-call-error" id="chat-call-error" hidden>
+        <div class="chat-call-error-inner">
+          <i class="bx bxs-error-circle chat-call-error-icon"></i>
+          <div class="chat-call-error-text">
+            <span class="chat-call-error-title" id="chat-call-error-title">Camera/microphone access required</span>
+            <span class="chat-call-error-desc" id="chat-call-error-desc">Allow camera/microphone for this site, then click Retry.</span>
+          </div>
+          <div class="chat-call-error-actions">
+            <button type="button" class="chat-call-error-btn chat-call-error-btn--dismiss" id="chat-call-dismiss-error" aria-label="Dismiss error">Dismiss</button>
+            <button type="button" class="chat-call-error-btn chat-call-error-btn--retry" id="chat-call-retry-perm" aria-label="Retry camera/microphone access">Retry</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Incoming video call notification (also outside #chat-panel, same fixed-position reason) -->
+  <div id="chat-call-incoming" class="chat-call-incoming" hidden role="alertdialog" aria-modal="true" aria-label="Incoming video call">
+    <div class="chat-call-incoming-inner">
+      <span class="chat-call-incoming-title">Incoming video call</span>
+      <span class="chat-call-incoming-from" id="chat-call-incoming-from">Someone</span>
+      <div class="chat-call-incoming-actions">
+        <button type="button" class="chat-icon-btn chat-call-incoming-accept" id="chat-call-accept" aria-label="Accept call">✔</button>
+        <button type="button" class="chat-icon-btn chat-call-incoming-decline" id="chat-call-decline" aria-label="Decline call">✕</button>
+      </div>
+    </div>
+  </div>
+  <?php endif; ?>
 
   <!-- Floating action button (bottom-right) -->
   <button type="button" id="chat-fab" class="chat-fab" aria-label="Open global chat">

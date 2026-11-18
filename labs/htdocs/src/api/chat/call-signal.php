@@ -24,7 +24,15 @@ AuthMiddleware::requireCsrf();
 
 $myUserId = (int) $session->getUserId();
 $myUsername = $session->getUsername();
-$myCanStart = chat_can_start_call();
+// Video-call access mode (Admin → Settings → Chat Settings). Enforced
+// server-side on every signal type — the client JS is never trusted.
+$callMode = chat_call_access();
+if ($callMode === ChatSettings::MODE_OFF) {
+    // Fully disabled: reject everything, including ICE/end of in-progress
+    // calls, so toggling off cuts live calls immediately.
+    chat_json(['success' => false, 'error' => 'Video calls are disabled'], 403);
+}
+$myCanStart = chat_can_start_call_mode();
 
 $type     = chat_input('type');     // offer | answer | ice | end
 $callId   = chat_input('call_id');  // required
@@ -52,7 +60,8 @@ if ($type === 'offer') {
     if (!$myCanStart) {
         chat_json(['success' => false, 'error' => 'Forbidden: only admins/superusers can start calls'], 403);
     }
-    // Reject if a call with this ID already exists and is still active.
+    // Reject if a call with this ID already exists and has already ended
+    // (a new offer needs a fresh call id).
     if ($call && !empty($call['ended_at'])) {
         chat_json(['success' => false, 'error' => 'Call already ended'], 409);
     }
@@ -89,7 +98,10 @@ if (in_array($type, ['answer', 'ice', 'end'], true)) {
         chat_json(['success' => false, 'error' => 'Call not found'], 404);
     }
     $callerId   = (int)($call['caller_id'] ?? 0);
-    $calleeId   = (int)($call['callee_id'] ?? 0);
+    $rawCalleeId = $call['callee_id'] ?? null;
+    // callee_id is stored as null until someone answers; do NOT int-cast null
+    // (null would become 0 and falsely look like "answered by another user").
+    $calleeId    = ($rawCalleeId === null || (string)$rawCalleeId === '') ? null : (int)$rawCalleeId;
     $isCaller   = ($myUserId === $callerId);
     $isCallee   = ($myUserId === $calleeId);
     $isParticipant = $isCaller || $isCallee;

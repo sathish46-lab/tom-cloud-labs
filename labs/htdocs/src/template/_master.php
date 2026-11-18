@@ -16,12 +16,22 @@ require_once __DIR__ . '/../api/chat/_chat_common.php';
 $appearance = Appearance::get();
 
 $isAdmin = false;
+$chatCallMode = 'off';
+$chatCallUiEnabled = false;    // modal + incoming markup shipped to the browser
+$chatCallBtnVisible = false;   // call start button in the chat header
 if (Session::getAuthStatus() == Constants::STATUS_LOGGEDIN) {
     $user = Session::getUser();
     if ($user) {
         $serverTheme = $user->getThemePreferences() ?? [];
         $uiPreferences = $user->getUiPreferences() ?? [];
         $isAdmin = chat_can_start_call();
+        // Video-call access mode (Admin → Settings → Chat Settings,
+        // src/config/chat.json). 'off' ships ZERO call code to the browser;
+        // the real enforcement lives in /api/chat/call-signal.php.
+        $chatCallMode = chat_call_access();
+        $chatCallUiEnabled = $chatCallMode !== ChatSettings::MODE_OFF;
+        $chatCallBtnVisible = $chatCallUiEnabled
+            && ($chatCallMode === ChatSettings::MODE_PUBLIC || $isAdmin);
     }
 }
 
@@ -759,12 +769,18 @@ $classString = implode(' ', $htmlClasses);
     // Global chat widget context — identity is resolved server-side by the
     // chat API; the client only needs to know whether a session exists.
     window.CHAT_CONTEXT = {
-        loggedIn: <?= Session::getAuthStatus() === Constants::STATUS_LOGGEDIN ? 'true' : 'false' ?>
+        loggedIn: <?= Session::getAuthStatus() === Constants::STATUS_LOGGEDIN ? 'true' : 'false' ?>,
+        callMode: <?= json_encode($chatCallMode) ?>
     };
     </script>
     <script src="<?= Session::cacheCDN('/assets/js/clipboard.js') ?>"></script>
     <script src="<?= Session::cacheCDN('/assets/js/app.js') ?>&t=<?= time() ?>"></script>
     <script src="<?= Session::cacheCDN('/assets/js/chat.js') ?>&t=<?= time() ?>"></script>
+    <?php if ($chatCallUiEnabled): ?>
+    <!-- Video-call bundle: shipped ONLY when the admin has calls enabled.
+         When the mode is "off" this file is never sent — no dead call code. -->
+    <script src="<?= Session::cacheCDN('/assets/js/chat-call.js') ?>&t=<?= time() ?>"></script>
+    <?php endif; ?>
     <script src="<?= Session::cacheCDN('/assets/js/ui-init.js') ?>"></script>
     <script src="<?= Session::cacheCDN('/assets/js/htmx-bridge.js') ?>"></script>
 

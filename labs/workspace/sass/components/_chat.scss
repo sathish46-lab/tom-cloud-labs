@@ -124,7 +124,7 @@ $chat-tail: 0.35rem;     // tight corner on the sender's side
   }
 
   // teaser bubble — anchored above the FAB (JS appends it to .chat-widget)
-  .chat-fab-teaser {
+  @at-root .chat-fab-teaser {
     position: fixed;
     right: 2.5rem;
     bottom: 4.5rem + 5.2rem + 0.65rem;
@@ -1605,8 +1605,26 @@ $chat-tail: 0.35rem;     // tight corner on the sender's side
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
 }
 
-.chat-call-video--local {
+// Mirror only the local video preview, NOT the label — a scaleX(-1) on the
+// wrap used to render the "You" label backwards ("uoY").
+.chat-call-video--local video {
   transform: scaleX(-1);
+}
+
+// Fullscreen ("big screen") mode — toggled by the ⛶ button in the call header
+.chat-call-modal.is-fullscreen .chat-call-modal-inner {
+  width: 100vw;
+  height: 100vh;
+  max-height: none;
+  border-radius: 0;
+  border: none;
+}
+.chat-call-modal.is-fullscreen .chat-call-videos {
+  height: auto;
+  flex: 1;
+}
+.chat-call-modal.is-fullscreen .chat-call-video-wrap {
+  height: 100%;
 }
 
 .chat-call-status {

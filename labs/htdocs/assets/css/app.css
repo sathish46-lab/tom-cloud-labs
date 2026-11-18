@@ -30129,7 +30129,7 @@ html[data-coreui-theme=light] .pref-ace-editor.ace-eclipse .ace_active-line, htm
   border-top: 6px solid rgba(230, 81, 0, 0.9);
   margin-top: -1px;
 }
-.chat-fab .chat-fab-teaser {
+.chat-fab-teaser {
   position: fixed;
   right: 2.5rem;
   bottom: 10.35rem;
@@ -30149,12 +30149,12 @@ html[data-coreui-theme=light] .pref-ace-editor.ace-eclipse .ace_active-line, htm
   transition: opacity 0.22s ease, transform 0.22s ease;
   pointer-events: none;
 }
-.chat-fab .chat-fab-teaser--show {
+.chat-fab-teaser--show {
   opacity: 1;
   transform: translateY(0) scale(1);
   pointer-events: auto;
 }
-.chat-fab .chat-fab-teaser::after {
+.chat-fab-teaser::after {
   content: "";
   position: absolute;
   top: 100%;
@@ -30165,7 +30165,7 @@ html[data-coreui-theme=light] .pref-ace-editor.ace-eclipse .ace_active-line, htm
   border-right: 5px solid transparent;
   border-top: 7px solid var(--chat-surface);
 }
-.chat-fab .chat-fab-teaser .chat-fab-teaser-body {
+.chat-fab-teaser .chat-fab-teaser-body {
   display: flex;
   align-items: baseline;
   gap: 0.3rem;
@@ -30173,21 +30173,21 @@ html[data-coreui-theme=light] .pref-ace-editor.ace-eclipse .ace_active-line, htm
   color: var(--cui-body-color);
   line-height: 1.35;
 }
-.chat-fab .chat-fab-teaser .chat-fab-teaser-name {
+.chat-fab-teaser .chat-fab-teaser-name {
   font-weight: 700;
   color: var(--chat-accent-hi);
   white-space: nowrap;
 }
-.chat-fab .chat-fab-teaser .chat-fab-teaser-text {
+.chat-fab-teaser .chat-fab-teaser-text {
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
-.chat-fab .chat-fab-teaser .chat-fab-teaser-wave {
+.chat-fab-teaser .chat-fab-teaser-wave {
   font-size: 0.95rem;
 }
-.chat-fab .chat-fab-teaser .chat-fab-teaser-x {
+.chat-fab-teaser .chat-fab-teaser-x {
   flex: none;
   width: 1.15rem;
   height: 1.15rem;
@@ -30204,10 +30204,11 @@ html[data-coreui-theme=light] .pref-ace-editor.ace-eclipse .ace_active-line, htm
   background: transparent;
   opacity: 0.55;
 }
-.chat-fab .chat-fab-teaser .chat-fab-teaser-x:hover {
+.chat-fab-teaser .chat-fab-teaser-x:hover {
   opacity: 1;
   background: color-mix(in srgb, var(--cui-body-color, #fff) 12%, transparent);
 }
+
 .chat-fab .chat-fab-badge {
   position: absolute;
   top: -3px;
@@ -31662,8 +31663,25 @@ html[data-coreui-theme=light] .chat-panel {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
 }
 
-.chat-call-video--local {
+.chat-call-video--local video {
   transform: scaleX(-1);
+}
+
+.chat-call-modal.is-fullscreen .chat-call-modal-inner {
+  width: 100vw;
+  height: 100vh;
+  max-height: none;
+  border-radius: 0;
+  border: none;
+}
+
+.chat-call-modal.is-fullscreen .chat-call-videos {
+  height: auto;
+  flex: 1;
+}
+
+.chat-call-modal.is-fullscreen .chat-call-video-wrap {
+  height: 100%;
 }
 
 .chat-call-status {

@@ -205,3 +205,26 @@ function chat_can_start_call(): bool {
     $role = $session->getRole();
     return in_array($role, [Constants::GROUP_ADMIN, Constants::GROUP_SUPERUSER], true);
 }
+
+/**
+ * Resolve the video-call access mode (Admin → Settings → Chat Settings).
+ * Returns 'off' | 'admin' | 'public' from src/config/chat.json, with the
+ * hardcoded 'admin' default when the file is missing/corrupt.
+ */
+function chat_call_access(): string {
+    return ChatSettings::callMode();
+}
+
+/**
+ * True when the current user is allowed to START a call given the current
+ * access mode: admins always can (when mode != off); every logged-in user
+ * can in 'public' mode. Guests are never allowed.
+ */
+function chat_can_start_call_mode(): bool {
+    $mode = chat_call_access();
+    if ($mode === ChatSettings::MODE_OFF) return false;
+    if ($mode === ChatSettings::MODE_PUBLIC) {
+        return AuthMiddleware::getUser() !== null;
+    }
+    return chat_can_start_call();
+}
