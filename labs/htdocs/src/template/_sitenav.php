@@ -590,7 +590,7 @@ document.body.addEventListener('htmx:afterSettle', function(e) {
         return Math.floor(diff / 86400) + ' day ago';
     }
 
-    function categoryIcon(cat) {
+    function categoryIcon(cat, filled) {
         var map = {
             'system':   'bx-bell',
             'mcp':      'bx-code-block',
