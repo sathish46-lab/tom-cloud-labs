@@ -29,6 +29,9 @@ require_once __DIR__ . '/core/WebAPI.class.php';
 require_once __DIR__ . '/core/CsrfProtection.class.php';
 require_once __DIR__ . '/core/AuthMiddleware.class.php';
 require_once __DIR__ . '/core/ChatSettings.class.php';
+require_once __DIR__ . '/core/NotificationSettings.class.php';
+require_once __DIR__ . '/core/Notification.class.php';
+require_once __DIR__ . '/core/UserNotificationSettings.class.php';
 require_once __DIR__ . '/labs/LabFeatures.php';
 require_once __DIR__ . '/labs/LabTemplateConfig.php';
 require_once __DIR__ . '/services/LearnAIOrchestrator.class.php';
@@ -267,6 +270,82 @@ function get_client_ip_fields($ip = null) {
         $fields['ip_address_v4'] = $ip;
     }
     return $fields;
+}
+
+/**
+ * New-device login detection + notification.
+ *
+ * Called from every login path (password, 2FA, Google OAuth) after computing
+ * the device fingerprint. Compares (browser, os, mobile, ip) against the
+ * user's existing session_tokens. If no match exists, it's a new device:
+ *   1. Creates a system notification (owned by the user).
+ *   2. Sends a security alert email (if user has security+email on).
+ *
+ * Silent on failure — a login must never fail because notification logic
+ * threw an exception.
+ */
+function notifyNewDeviceLogin(array $userDoc, array $deviceInfo, string $clientIp): void {
+    try {
+        $email = (string)($userDoc['email'] ?? '');
+        if ($email === '') return;
+
+        // Global gate: notifications fully suppressed.
+        if (NotificationSettings::mode() === NotificationSettings::MODE_OFF) return;
+
+        // Per-user gate: security alerts must be enabled.
+        if (!UserNotificationSettings::securityEnabled($email)) return;
+
+        // Compare fingerprint against existing session tokens.
+        $existingTokens = $userDoc['session_tokens'] ?? [];
+        if (!is_array($existingTokens)) $existingTokens = [];
+
+        $isNewDevice = true;
+        foreach ($existingTokens as $token) {
+            if (!is_array($token)) continue;
+            if (
+                (string)($token['browser'] ?? '') === $deviceInfo['browser']
+                && (string)($token['os'] ?? '') === $deviceInfo['os']
+                && (bool)($token['mobile'] ?? false) === (bool)$deviceInfo['mobile']
+                && (string)($token['ip'] ?? '') === $clientIp
+            ) {
+                $isNewDevice = false;
+                break;
+            }
+        }
+        if (!$isNewDevice) return;
+
+        // Resolve user id for notification ownership.
+        $userId = isset($userDoc['user_id']) ? (string)$userDoc['user_id']
+            : (isset($userDoc['_id']) ? (string)$userDoc['_id'] : '');
+        $username = (string)($userDoc['username'] ?? 'User');
+
+        $deviceDesc = $deviceInfo['browser'] . ' on ' . $deviceInfo['os'];
+        if ($deviceInfo['mobile']) $deviceDesc .= ' (mobile)';
+        $deviceDesc .= ' • ' . $clientIp;
+
+        // Create the notification (non-fatal if it fails).
+        if ($userId !== '') {
+            Notification::create(
+                $userId,
+                'system',
+                'new_device',
+                'New device login',
+                htmlspecialchars_decode("{$username}, you signed in from a new device: {$deviceDesc}."),
+                ['url' => '/account/settings'],
+                false,
+                null
+            );
+        }
+
+        // Send security alert email (non-fatal if it fails).
+        if (UserNotificationSettings::emailEnabled($email)) {
+            $config = get_config('smtp');
+            $appUrl = rtrim($config['app_url'] ?? 'https://labs.tomweb.fun', '/');
+            \Auth\Mailer::sendNewDeviceAlert($email, $username, $deviceDesc, $clientIp, $appUrl);
+        }
+    } catch (\Throwable $e) {
+        error_log('notifyNewDeviceLogin failed: ' . $e->getMessage());
+    }
 }
 
 // CENTRALIZED LOGOUT HANDLER (POST only — prevents CSRF logout via img tags)

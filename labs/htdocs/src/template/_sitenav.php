@@ -71,21 +71,23 @@
             <!-- Notifications -->
             <li class="nav-item dropdown px-2">
                 <button class="btn btn-link nav-link py-0 d-flex align-items-center justify-content-center position-relative"
-                    type="button" data-coreui-toggle="dropdown" style="height: 40px; width: 40px;">
+                    type="button" id="notif-bell" data-coreui-toggle="dropdown" style="height: 40px; width: 40px;">
                     <i class="bx bx-bell fs-4 text-secondary hover-text-white"></i>
                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border-0" 
                         style="font-size: 0.6rem; padding: 2px 5px; display: none;" id="notif-badge">
                         0
                     </span>
                 </button>
-                <div class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 p-0" style="min-width: 320px; border-radius: 12px; max-height: 400px; overflow-y: auto;">
+                <div class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 p-0" style="min-width: 340px; border-radius: 12px; max-height: 420px; overflow-y: auto;">
                     <div class="px-3 py-2 border-bottom d-flex align-items-center justify-content-between">
                         <h6 class="fw-bold mb-0 small">Notifications</h6>
-                        <button class="btn btn-link btn-sm p-0 text-secondary small" onclick="document.getElementById('notif-badge').style.display='none'">Mark all read</button>
+                        <button class="btn btn-link btn-sm p-0 text-secondary small" onclick="notifMarkAllRead()">Mark all read</button>
                     </div>
-                    <div class="px-3 py-3 text-center text-secondary small" id="notif-list">
-                        <i class="bx bx-bell-off fs-1 d-block mb-2 opacity-50"></i>
-                        No new notifications
+                    <div id="notif-list" class="px-2 py-2">
+                        <div class="px-3 py-3 text-center text-secondary small">
+                            <i class="bx bx-bell-off fs-1 d-block mb-2 opacity-50"></i>
+                            No new notifications
+                        </div>
                     </div>
                 </div>
             </li>
@@ -528,5 +530,175 @@ document.body.addEventListener('htmx:afterSettle', function(e) {
         document.title = data.title || data.breadcrumbs[data.breadcrumbs.length - 1].name;
     } catch(ex) {}
 });
+</script>
+
+<script>
+(function() {
+    var badgeEl   = document.getElementById('notif-badge');
+    var listEl    = document.getElementById('notif-list');
+    var bellBtn   = document.getElementById('notif-bell');
+    var loaded    = false;
+
+    function renderTimeAgo(ts) {
+        if (!ts) return 'just now';
+        var diff = Math.floor((Date.now() - ts * 1000) / 1000);
+        if (diff < 60)   return 'just now';
+        if (diff < 3600) return Math.floor(diff / 60) + ' min ago';
+        if (diff < 86400) return Math.floor(diff / 3600) + ' hr ago';
+        return Math.floor(diff / 86400) + ' day ago';
+    }
+
+    function categoryIcon(cat) {
+        var map = {
+            'system':   'bx-bell',
+            'mcp':      'bx-code-block',
+            'clan':     'bx-users',
+            'clubs':    'bx-group',
+            'code_arena': 'bx-terminal',
+            'discussions': 'bx-chat',
+            'quiz':     'bx-question-mark',
+            'score':    'bx-trophy',
+            'streak':   'bx-fire',
+            'academy':  'bx-book',
+            'report':   'bx-flag',
+        };
+        return '<i class="bx ' + (map[cat] || 'bx-bell') + ' me-2" style="font-size:0.9rem;"></i>';
+    }
+
+    function fetchUnreadCount() {
+        fetch('/api/notifications/unread_count', {
+            credentials: 'same-origin',
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data || !data.success) return;
+            var total = parseInt(data.total || 0, 10);
+            if (badgeEl) {
+                badgeEl.style.display = total > 0 ? '' : 'none';
+                badgeEl.textContent = total > 99 ? '99+' : String(total);
+            }
+        })
+        .catch(function() {}); // silent — badge stays hidden on failure
+    }
+
+    function renderList(items) {
+        if (!listEl) return;
+        if (!items || items.length === 0) {
+            listEl.innerHTML = '<div class="px-3 py-3 text-center text-secondary small">' +
+                '<i class="bx bx-bell-off fs-1 d-block mb-2 opacity-50"></i>' +
+                'No new notifications</div>';
+            if (badgeEl) badgeEl.style.display = 'none';
+            return;
+        }
+        var html = '';
+        items.forEach(function(n) {
+            var url = (n.data && n.data.url) ? n.data.url : '#';
+            var cls = n.read ? 'text-secondary' : 'fw-bold text-body';
+            var dot = n.read ? '' : '<span class="position-absolute top-0 start-0 bg-danger border border-white rounded-circle" style="width:6px;height:6px;"></span>';
+            html += '<a href="' + (url === '#' ? 'javascript:void(0)' : url) + '"' +
+                ' class="dropdown-item d-flex align-items-start px-2 py-2 rounded' +
+                (n.read ? '' : ' bg-secondary bg-opacity-10') + '"' +
+                ' onclick="event.stopPropagation(); notifItemClick(\'' + n.id + '\', this.getAttribute(\'href\')); return false;">' +
+                dot +
+                '<div class="d-flex w-100 align-items-start">' +
+                categoryIcon(n.category) +
+                '<div class="flex-grow-1 ms-2">' +
+                '<div class="' + cls + ' small" style="font-size:0.8rem;">' + 
+                (n.title || 'Notification') +
+                '</div>' +
+                '<div class="text-muted small" style="font-size:0.72rem;">' + (n.body || '') + '</div>' +
+                '<div class="text-muted" style="font-size:0.62rem; margin-top:2px;">' + renderTimeAgo(n.created_at) + '</div>' +
+                '</div>' +
+                '</div>' +
+                '</a>';
+        });
+        html += '<div class="dropdown-divider my-1"></div>' +
+            '<a href="#" class="dropdown-item text-center text-secondary small px-2" onclick="notifMarkAllRead(); return false;">Mark all as read</a>';
+        listEl.innerHTML = html;
+    }
+
+    function fetchNotifications() {
+        if (!listEl) return;
+        listEl.innerHTML = '<div class="px-3 py-3 text-center text-secondary small"><i class="bx bx-loader-alt bx-spin fs-1 d-block mb-2"></i> Loading...</div>';
+        fetch('/api/notifications/list?limit=10', {
+            credentials: 'same-origin',
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data && data.success) {
+                renderList(data.items || []);
+                fetchUnreadCount();
+            } else {
+                listEl.innerHTML = '<div class="px-3 py-3 text-center text-secondary small">Unable to load notifications.</div>';
+            }
+        })
+        .catch(function() {
+            listEl.innerHTML = '<div class="px-3 py-3 text-center text-secondary small">Unable to load notifications.</div>';
+        });
+    }
+
+    // Open handler: fetch list when the dropdown is opened.
+    if (bellBtn) {
+        bellBtn.addEventListener('click', function() {
+            if (!loaded) {
+                fetchNotifications();
+                loaded = true;
+            } else {
+                fetchUnreadCount();
+            }
+        });
+    }
+
+    window.notifItemClick = function(id, href) {
+        fetch('/api/notifications/read', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ ids: [id] })
+        }).then(function() {
+            if (href && href !== '#' && href !== 'javascript:void(0)') {
+                window.location.href = href;
+            }
+            fetchUnreadCount();
+            // Re-render list if dropdown is still open
+            var dropdown = document.querySelector('.dropdown-menu.show');
+            if (dropdown && dropdown.contains(listEl)) fetchNotifications();
+        }).catch(function() {});
+    };
+
+    window.notifMarkAllRead = function() {
+        fetch('/api/notifications/read', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ all: true })
+        }).then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data && data.success) {
+                fetchUnreadCount();
+                if (listEl) {
+                    listEl.innerHTML = '<div class="px-3 py-3 text-center text-secondary small">' +
+                        '<i class="bx bx-bell-off fs-1 d-block mb-2 opacity-50"></i>' +
+                        'No new notifications</div>';
+                }
+            }
+        }).catch(function() {});
+    };
+
+    // Initial badge fetch on page load (panel closed — no list fetch yet).
+    fetchUnreadCount();
+})();
 </script>
 

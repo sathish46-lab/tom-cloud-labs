@@ -147,7 +147,10 @@ public function __call($method, $args) {
             $tokenHash = password_hash($sessionToken, PASSWORD_DEFAULT);
             $deviceInfo = parse_user_agent();
             $clientIp = get_client_ip();
-            
+
+            // New-device detection: compare fingerprint vs existing tokens BEFORE storing.
+            notifyNewDeviceLogin($user, $deviceInfo, $clientIp);
+
             // STORE HASHED TOKEN + DEVICE INFO IN DATABASE (Supports multi-device login)
             // Single atomic pipeline update: appends this browser's new token,
             // drops the token this browser is replacing (old cookie), prunes

@@ -165,4 +165,38 @@ class Mailer {
             return false;
         }
     }
+
+    /**
+     * New-device login security alert.
+     * Sent when a user signs in from a browser/OS/IP combination never seen before.
+     */
+    public static function sendNewDeviceAlert(string $email, string $username, string $deviceDesc, string $clientIp, string $appUrl): bool {
+        try {
+            $mail = self::build();
+            $mail->Timeout = 5;
+            $mail->addAddress($email, $username);
+            $mail->isHTML(true);
+            $mail->Subject = 'New device login detected | ' . \SiteBrand::name() . ' Security';
+            $mail->Body    = "
+                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #0f172a; color: #ffffff; border-radius: 10px;'>
+                    <h2 style='color: #fb923c;'>New device sign-in</h2>
+                    <p style='color: #cbd5e1;'>Hi {$username},</p>
+                    <p style='color: #cbd5e1;'>We noticed a sign-in to your account from a device we haven't seen before.</p>
+                    <table style='width:100%; border-collapse: collapse; margin: 20px 0; background: #1e293b; border-radius: 8px; overflow: hidden;'>
+                        <tr><td style='padding: 12px; color: #94a3b8; font-size: 13px;'>Device</td><td style='padding: 12px; color: #ffffff;' style='font-weight:600;'>{$deviceDesc}</td></tr>
+                        <tr><td style='padding: 12px; color: #94a3b8; font-size: 13px;'>IP address</td><td style='padding: 12px; color: #ffffff;' style='font-weight:600;'>{$clientIp}</td></tr>
+                        <tr><td style='padding: 12px; color: #94a3b8; font-size: 13px;'>Time</td><td style='padding: 12px; color: #ffffff;' style='font-weight:600;'>" . date('M j, Y • g:i a') . "</td></tr>
+                    </table>
+                    <p style='color: #cbd5e1;'>If this was you, you can ignore this email.</p>
+                    <p style='color: #ef4444; font-size: 13px; font-weight: bold;'>If this was NOT you, please secure your account immediately — change your password and review your active sessions.</p>
+                    <p style='color: #64748b; font-size: 12px;'>If you did not request this, contact support.</p>
+                </div>
+            ";
+
+            return $mail->send();
+        } catch (Exception $e) {
+            error_log('Mailer::sendNewDeviceAlert failed: ' . $e->getMessage());
+            return false;
+        }
+    }
 }

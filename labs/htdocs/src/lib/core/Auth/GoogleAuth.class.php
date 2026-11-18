@@ -246,6 +246,10 @@ public function getAuthUrl($metadata) {
         $sessionToken = bin2hex(random_bytes(32));
         $deviceInfo = parse_user_agent();
         $clientIp = get_client_ip();
+
+        // New-device detection: compare fingerprint vs existing tokens BEFORE storing.
+        notifyNewDeviceLogin($user, $deviceInfo, $clientIp);
+
         $lifetime = get_session_lifetime();
         $domain = get_session_domain();
 

@@ -82,7 +82,10 @@ try {
     $sessionToken = bin2hex(random_bytes(32));
     $deviceInfo = parse_user_agent();
     $clientIp = get_client_ip();
-    
+
+    // New-device detection: compare fingerprint vs existing tokens BEFORE storing.
+    notifyNewDeviceLogin($userDoc, $deviceInfo, $clientIp);
+
     // Same hygiene as UserSession::authenticate: append new token, drop this
     // browser's replaced token, prune past the 30-day cap, keep newest 10.
     $now = time();
