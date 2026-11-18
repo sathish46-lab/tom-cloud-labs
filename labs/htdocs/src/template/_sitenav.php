@@ -83,13 +83,13 @@
                     </span>
                 </button>
                 <!-- Permanent fixed-size notification card -->
-                <div class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 p-0" style="min-width: 420px; max-width: 460px; border-radius: 12px; height: 520px; overflow-y: auto;">
-                    <div class="px-3 py-2 border-bottom d-flex align-items-center justify-content-between">
+                <div class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 p-0" style="min-width: 420px; max-width: 480px; border-radius: 12px; max-height: 560px; overflow: hidden; display: flex; flex-direction: column;">
+                    <div class="px-3 py-2 border-bottom d-flex align-items-center justify-content-between flex-shrink-0">
                         <h6 class="fw-bold mb-0 small">Notifications</h6>
                         <button class="btn btn-link btn-sm p-0 text-secondary small" onclick="notifMarkAllRead()">Mark all read</button>
                     </div>
                     <!-- Tab strip: only All, System, Report (admin only) -->
-                    <div class="px-2 py-1" style="max-height: 44px;">
+                    <div class="px-2 py-1 flex-shrink-0" style="max-height: 44px;">
                         <div class="d-flex gap-1" id="notif-tabs" style="scrollbar-width: none;">
                             <button class="notif-tab active px-3 py-1.5 small fw-medium rounded-pill border border-secondary border-opacity-20 bg-dark bg-opacity-20 text-white" data-cat="all" onclick="notifSwitchTab('all', this, event)">All</button>
                             <button class="notif-tab px-3 py-1.5 small fw-medium rounded-pill border border-secondary border-opacity-20 bg-dark bg-opacity-10 text-secondary" data-cat="system" onclick="notifSwitchTab('system', this, event)">System</button>
@@ -98,7 +98,7 @@
                             <?php endif; ?>
                         </div>
                     </div>
-                    <div id="notif-list" class="px-2 py-2 overflow-y-auto" style="max-height: 390px;">
+                    <div id="notif-list" class="px-2 py-2 overflow-y-auto flex-grow-1" style="max-height: 400px;">
                         <div class="px-3 py-3 text-center text-secondary small">
                             <i class="bx bx-bell-off fs-1 d-block mb-2 opacity-50"></i>
                             No new notifications
