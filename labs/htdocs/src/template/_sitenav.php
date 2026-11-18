@@ -84,8 +84,8 @@
                     </span>
                 </button>
                 <!-- Notification card -->
-                <div class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 p-0" id="notif-dropdown"
-                    style="min-width: 440px; max-width: 520px; border-radius: 16px; max-height: 600px; overflow: hidden; display: none; flex-direction: column; background: var(--cui-body-bg, #212631);">
+                <div class="dropdown-menu shadow border-0 p-0" id="notif-dropdown"
+                    style="position: fixed; top: 56px; right: 0.75rem; left: auto; min-width: 400px; max-width: calc(100vw - 3rem); border-radius: 16px; max-height: calc(100vh - 70px); overflow: hidden; display: none; flex-direction: column; background: var(--cui-body-bg, #212631); z-index: 1082;">
                     <!-- Header -->
                     <div class="px-4 py-3 border-bottom border-secondary border-opacity-20 d-flex align-items-center justify-content-between flex-shrink-0" style="background: rgba(255,255,255,0.02);">
                         <div class="d-flex align-items-center gap-2">
@@ -703,7 +703,7 @@ document.body.addEventListener('htmx:afterSettle', function(e) {
         return allNotifications.filter(function(n) { return n.category === cat; });
     }
 
-    function notifSwitchTab(cat, el, ev) {
+    window.notifSwitchTab = function(cat, el, ev) {
         if (ev) ev.stopPropagation();
         currentTab = cat;
         // Update active states
@@ -729,7 +729,7 @@ document.body.addEventListener('htmx:afterSettle', function(e) {
         .then(function(data) {
             if (data && data.success) {
                 allNotifications = data.items || [];
-                notifSwitchTab(currentTab, null);
+                window.notifSwitchTab(currentTab, null);
                 fetchUnreadCount();
             } else {
                 listEl.innerHTML = '<div class="px-3 py-3 text-center text-secondary small">Unable to load notifications.</div>';
