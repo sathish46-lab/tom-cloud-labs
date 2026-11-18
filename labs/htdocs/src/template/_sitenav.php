@@ -75,7 +75,8 @@
             ?>
             <li class="nav-item dropdown px-2">
                 <button class="btn btn-link nav-link py-0 d-flex align-items-center justify-content-center position-relative"
-                    type="button" id="notif-bell" data-coreui-toggle="dropdown" aria-expanded="false" style="height: 40px; width: 40px;">
+                    type="button" id="notif-bell" aria-expanded="false" style="height: 40px; width: 40px;"
+                    onclick="notifToggleDropdown(event)">
                     <i class="bx bx-bell fs-4 text-secondary hover-text-white"></i>
                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border-0 border-white border-2" 
                         style="font-size: 0.65rem; padding: 2px 6px; min-width: 18px; height: 18px; display: none; line-height: 1;" id="notif-badge">
@@ -83,7 +84,8 @@
                     </span>
                 </button>
                 <!-- Notification card -->
-                <div class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 p-0" style="min-width: 440px; max-width: 520px; border-radius: 16px; max-height: 600px; overflow: hidden; display: flex; flex-direction: column; background: var(--cui-body-bg, #212631);">
+                <div class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 p-0" id="notif-dropdown"
+                    style="min-width: 440px; max-width: 520px; border-radius: 16px; max-height: 600px; overflow: hidden; display: none; flex-direction: column; background: var(--cui-body-bg, #212631);">
                     <!-- Header -->
                     <div class="px-4 py-3 border-bottom border-secondary border-opacity-20 d-flex align-items-center justify-content-between flex-shrink-0" style="background: rgba(255,255,255,0.02);">
                         <div class="d-flex align-items-center gap-2">
@@ -738,18 +740,6 @@ document.body.addEventListener('htmx:afterSettle', function(e) {
         });
     }
 
-    // Open handler: fetch list when the dropdown is opened.
-    if (bellBtn) {
-        bellBtn.addEventListener('click', function() {
-            if (!loaded) {
-                fetchNotifications();
-                loaded = true;
-            } else {
-                fetchUnreadCount();
-            }
-        });
-    }
-
     window.notifItemClick = function(id, href) {
         fetch('/api/notifications/read', {
             method: 'POST',
@@ -795,19 +785,51 @@ document.body.addEventListener('htmx:afterSettle', function(e) {
     };
 
     // Ensure dropdown is CLOSED on page load — never auto-open.
-    // CoreUI or browser state can sometimes leave it open; force it shut.
     (function() {
         var bellBtn = document.getElementById('notif-bell');
-        var dropdown = document.querySelector('.dropdown-menu.show');
+        var dropdown = document.getElementById('notif-dropdown');
         if (bellBtn) {
             bellBtn.setAttribute('aria-expanded', 'false');
-            bellBtn.classList.remove('show');
         }
         if (dropdown) {
-            dropdown.classList.remove('show');
             dropdown.style.display = 'none';
         }
     })();
+
+    // Manual toggle: bell click opens/closes the notification card.
+    window.notifToggleDropdown = function(ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        var dropdown = document.getElementById('notif-dropdown');
+        var bellBtn = document.getElementById('notif-bell');
+        var isOpen = dropdown.style.display === 'block';
+
+        if (isOpen) {
+            dropdown.style.display = 'none';
+            bellBtn.setAttribute('aria-expanded', 'false');
+        } else {
+            dropdown.style.display = 'block';
+            bellBtn.setAttribute('aria-expanded', 'true');
+            // Fetch list on first open
+            if (!loaded) {
+                fetchNotifications();
+                loaded = true;
+            } else {
+                fetchUnreadCount();
+            }
+        }
+    }
+
+    // Close dropdown when clicking outside.
+    document.addEventListener('click', function(ev) {
+        var dropdown = document.getElementById('notif-dropdown');
+        var bellBtn = document.getElementById('notif-bell');
+        if (!dropdown || !bellBtn) return;
+        if (dropdown.style.display === 'block' && !dropdown.contains(ev.target) && !bellBtn.contains(ev.target)) {
+            dropdown.style.display = 'none';
+            bellBtn.setAttribute('aria-expanded', 'false');
+        }
+    });
 
     // Initial badge fetch on page load (panel closed — no list fetch yet).
     fetchUnreadCount();
