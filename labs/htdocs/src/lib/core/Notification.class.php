@@ -13,6 +13,7 @@
  *     user_id: string,          // owner of this notification
  *     category: string,         // system|mcp|clan|clubs|code_arena|discussions|quiz|score|streak|academy|report
  *     type: string,             // new_device|broadcast|mcp_connect|instance_ready|challenge_done|quiz_passed|...
+ *     broadcast_id: string,     // shared by all docs from one admin broadcast
  *     title: string,
  *     body: string,
  *     data: { url?, ... },      // click target + extra payload
@@ -36,6 +37,38 @@ class Notification {
 
     /** Report tab is admin-only. */
     public const ADMIN_ONLY_CATEGORIES = ['report'];
+
+    /**
+     * Central event catalog. Add a new notification type here once, then call
+     * Notification::trigger('event_key', $userId, $context) from any feature —
+     * no per-feature notification code needed.
+     *
+     * Each event defines:
+     *   category — one of CATEGORIES (bell tab)
+     *   type     — stored on the notification document
+     *   title    — plain text, supports {placeholders}
+     *   body     — plain text, supports {placeholders}
+     *   url      — click target (optional)
+     *   gate     — optional per-user switch: 'security' | 'mcp_live'
+     */
+    public const EVENTS = [
+        'new_device' => [
+            'category' => 'academy',
+            'type'     => 'new_device',
+            'title'    => 'New device login',
+            'body'     => '{username}, you signed in from a new device: {device} • {ip}.',
+            'url'      => '/account/settings',
+            'gate'     => 'security',
+        ],
+        'mcp_connect' => [
+            'category' => 'mcp',
+            'type'     => 'mcp_connect',
+            'title'    => 'New MCP connection established',
+            'body'     => '{client_name} connected to your account from {ip}. Client ID: {client_id}.',
+            'url'      => '/mcp/activity',
+            'gate'     => 'mcp_live',
+        ],
+    ];
 
     private static $cache = null;
 
@@ -84,6 +117,95 @@ class Notification {
     }
 
     /**
+     * Trigger a catalogued notification event.
+     *
+     * Respects the site-wide notification mode plus the user's category,
+     * security and MCP-live switches. Missing placeholders render as empty.
+     * Returns the notification id, or null when suppressed/failed.
+     */
+    public static function trigger(
+        string $event,
+        string $userId,
+        array $context = [],
+        ?string $email = null
+    ): ?string {
+        $spec = self::EVENTS[$event] ?? null;
+        if ($spec === null) {
+            error_log("Notification::trigger unknown event: $event");
+            return null;
+        }
+
+        $category = (string)($spec['category'] ?? 'system');
+        if (!in_array($category, self::CATEGORIES, true)) {
+            error_log("Notification::trigger invalid category for $event: $category");
+            return null;
+        }
+
+        if (NotificationSettings::mode() === NotificationSettings::MODE_OFF) {
+            return null;
+        }
+
+        $userId = (string)$userId;
+        if ($userId === '') return null;
+
+        $email = ($email !== null && $email !== '') ? $email : self::lookupEmail($userId);
+        if ($email !== '') {
+            if (!UserNotificationSettings::categoryEnabled($email, $category)) {
+                return null;
+            }
+            $gate = (string)($spec['gate'] ?? '');
+            if ($gate === 'security' && !UserNotificationSettings::securityEnabled($email)) {
+                return null;
+            }
+            if ($gate === 'mcp_live' && !UserNotificationSettings::mcpLiveEnabled($email)) {
+                return null;
+            }
+        }
+
+        $title = self::renderTemplate((string)($spec['title'] ?? ''), $context);
+        $body  = self::renderTemplate((string)($spec['body'] ?? ''), $context);
+
+        $data = (isset($context['data']) && is_array($context['data'])) ? $context['data'] : [];
+        $url  = (string)($spec['url'] ?? '');
+        if ($url !== '') $data['url'] = $url;
+
+        $id = self::create(
+            $userId,
+            $category,
+            (string)($spec['type'] ?? $event),
+            $title,
+            $body,
+            $data
+        );
+
+        return (is_string($id) && $id !== '') ? $id : null;
+    }
+
+    /** Resolve a user's email from their notification user_id. */
+    private static function lookupEmail(string $userId): string {
+        try {
+            $db  = DatabaseConnection::getDefaultDatabase();
+            $ors = [['user_id' => $userId]];
+            if (ctype_digit($userId)) $ors[] = ['user_id' => (int)$userId];
+            if (preg_match('/^[a-f0-9]{24}$/i', $userId)) {
+                $ors[] = ['_id' => new \MongoDB\BSON\ObjectId($userId)];
+            }
+            $doc = $db->users->findOne(['$or' => $ors], ['projection' => ['email' => 1]]);
+            return (string)($doc['email'] ?? '');
+        } catch (\Throwable $e) {
+            error_log('Notification::lookupEmail failed: ' . $e->getMessage());
+            return '';
+        }
+    }
+
+    /** Replace {placeholder} tokens with context values. */
+    private static function renderTemplate(string $template, array $context): string {
+        return preg_replace_callback('/\{([a-zA-Z0-9_]+)\}/', static function ($m) use ($context) {
+            return (string)($context[$m[1]] ?? '');
+        }, $template) ?? $template;
+    }
+
+    /**
      * Admin broadcast: create one notification per target user.
      * Returns the number of docs inserted.
      */
@@ -101,20 +223,22 @@ class Notification {
         if ($targetUserIds === []) return 0;
         try {
             $now = new \MongoDB\BSON\UTCDateTime((int)(microtime(true) * 1000));
+            $broadcastId = bin2hex(random_bytes(12));
             $docs = [];
             foreach (array_unique($targetUserIds) as $uid) {
                 $docs[] = [
-                    'user_id'    => (string) $uid,
-                    'category'   => $category,
-                    'type'       => 'broadcast',
-                    'title'      => $title,
-                    'body'       => $body,
-                    'data'       => [],
-                    'read'       => false,
-                    'created_at' => $now,
-                    'read_at'    => null,
-                    'global'     => true,
-                    'from_admin' => $fromAdmin,
+                    'user_id'      => (string) $uid,
+                    'category'     => $category,
+                    'type'         => 'broadcast',
+                    'broadcast_id' => $broadcastId,
+                    'title'        => $title,
+                    'body'         => $body,
+                    'data'         => [],
+                    'read'         => false,
+                    'created_at'   => $now,
+                    'read_at'      => null,
+                    'global'       => true,
+                    'from_admin'   => $fromAdmin,
                 ];
             }
             self::collection()->insertMany($docs);
@@ -238,7 +362,13 @@ class Notification {
 
     /** Build a JSON-safe public payload from a stored doc. */
     private static function publicPayload(MongoDB\Model\BSONDocument|array $doc): array {
-        $createdAt = isset($doc['created_at']) ? (int) (string) $doc['created_at'] : 0;
+        $createdAt = self::toTimestamp($doc['created_at'] ?? null);
+        $data = $doc['data'] ?? [];
+        if ($data instanceof MongoDB\Model\BSONDocument || $data instanceof MongoDB\Model\BSONArray) {
+            $data = $data->getArrayCopy();
+        } elseif (is_object($data)) {
+            $data = (array) $data;
+        }
         return [
             'id'         => (string) ($doc['_id'] ?? ''),
             'user_id'    => (string) ($doc['user_id'] ?? ''),
@@ -246,14 +376,29 @@ class Notification {
             'type'       => (string) ($doc['type'] ?? ''),
             'title'      => (string) ($doc['title'] ?? ''),
             'body'       => (string) ($doc['body'] ?? ''),
-            'data'       => is_array($doc['data'] ?? []) ? (array) $doc['data'] : [],
+            'data'       => is_array($data) ? $data : [],
             'read'       => (bool) ($doc['read'] ?? false),
             'created_at' => $createdAt,
-            'read_at'    => isset($doc['read_at']) ? (int) (string) $doc['read_at'] : null,
+            'read_at'    => isset($doc['read_at']) ? self::toTimestamp($doc['read_at']) : null,
             'global'     => (bool) ($doc['global'] ?? false),
             'from_admin' => (string) ($doc['from_admin'] ?? ''),
             'ago'        => self::timeAgo($createdAt),
         ];
+    }
+
+    /** Normalise a BSON/DateTime/numeric timestamp to unix seconds. */
+    private static function toTimestamp($value): int {
+        if ($value instanceof \MongoDB\BSON\UTCDateTime) {
+            return $value->toDateTime()->getTimestamp();
+        }
+        if ($value instanceof \DateTimeInterface) {
+            return $value->getTimestamp();
+        }
+        if (is_numeric($value)) {
+            $n = (int) $value;
+            return $n > 9999999999 ? (int) floor($n / 1000) : $n;
+        }
+        return 0;
     }
 
     private static function timeAgo(int $ts): string {

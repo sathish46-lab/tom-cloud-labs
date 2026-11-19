@@ -95,6 +95,23 @@ try {
             $result['scopes']
         );
 
+        // Notify the user about the new MCP connection (non-fatal).
+        try {
+            $notifUserId = (string)($result['user_id'] ?? '');
+            if ($notifUserId !== '') {
+                $clientName = trim((string)($client['client_name'] ?? ''));
+                if ($clientName === '') $clientName = 'MCP client';
+
+                Notification::trigger('mcp_connect', $notifUserId, [
+                    'client_name' => $clientName,
+                    'client_id'   => $clientId,
+                    'ip'          => get_client_ip(),
+                ], (string)($result['email'] ?? ''));
+            }
+        } catch (\Throwable $e) {
+            error_log('MCP connect notification failed: ' . $e->getMessage());
+        }
+
         echo json_encode($tokens);
         exit;
 

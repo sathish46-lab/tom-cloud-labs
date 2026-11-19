@@ -320,22 +320,17 @@ function notifyNewDeviceLogin($userDoc, array $deviceInfo, string $clientIp): vo
             : (isset($userDoc['_id']) ? (string)$userDoc['_id'] : '');
         $username = (string)($userDoc['username'] ?? 'User');
 
-        $deviceDesc = $deviceInfo['browser'] . ' on ' . $deviceInfo['os'];
-        if ($deviceInfo['mobile']) $deviceDesc .= ' (mobile)';
-        $deviceDesc .= ' • ' . $clientIp;
+        $deviceLabel = $deviceInfo['browser'] . ' on ' . $deviceInfo['os'];
+        if ($deviceInfo['mobile']) $deviceLabel .= ' (mobile)';
+        $deviceDesc = $deviceLabel . ' • ' . $clientIp;
 
         // Create the notification (non-fatal if it fails).
         if ($userId !== '') {
-            Notification::create(
-                $userId,
-                'system',
-                'new_device',
-                'New device login',
-                htmlspecialchars_decode("{$username}, you signed in from a new device: {$deviceDesc}."),
-                ['url' => '/account/settings'],
-                false,
-                null
-            );
+            Notification::trigger('new_device', $userId, [
+                'username' => $username,
+                'device'   => $deviceLabel,
+                'ip'       => $clientIp,
+            ], $email);
         }
 
         // Send security alert email (non-fatal if it fails).

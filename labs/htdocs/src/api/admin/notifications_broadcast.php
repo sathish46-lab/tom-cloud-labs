@@ -37,7 +37,7 @@ if ($title === '' || $body === '') {
     exit;
 }
 
-if ($category === '') $category = 'system';
+if ($category === '') $category = 'academy';
 if (!in_array($category, Notification::CATEGORIES, true)) {
     echo json_encode(['status' => 'error', 'error' => 'Invalid category']);
     exit;

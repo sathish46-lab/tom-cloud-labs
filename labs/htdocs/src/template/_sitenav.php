@@ -72,6 +72,27 @@
             <?php
                 $navUser = Session::getUser();
                 $isAdminUser = ($navUser && $navUser->getRole() === 'superuser');
+                $notifTabs = class_exists('Notification')
+                    ? Notification::CATEGORIES
+                    : ['system', 'mcp', 'clan', 'clubs', 'code_arena', 'discussions', 'quiz', 'score', 'streak', 'academy'];
+                if (!$isAdminUser) {
+                    $adminOnly = class_exists('Notification') ? Notification::ADMIN_ONLY_CATEGORIES : ['report'];
+                    $notifTabs = array_values(array_diff($notifTabs, $adminOnly));
+                }
+                $notifTabMeta = [
+                    'system'      => ['System', 'tom-terminal-window'],
+                    'mcp'         => ['MCP', 'tom-plug'],
+                    'clan'        => ['Clan', 'tom-users-three'],
+                    'clubs'       => ['Clubs', 'tom-books'],
+                    'code_arena'  => ['Code Arena', 'tom-code'],
+                    'discussions' => ['Discussions', 'tom-chat-circle-text'],
+                    'quiz'        => ['Quiz', 'tom-question'],
+                    'score'       => ['Score', 'tom-chart-line'],
+                    'streak'      => ['Streak', 'tom-fire'],
+                    'academy'     => ['Academy', 'tom-graduation-cap'],
+                    'report'      => ['Report', 'tom-flag'],
+                ];
+                $firstNotifTab = $notifTabs[0] ?? 'system';
             ?>
             <li class="nav-item dropdown px-2">
                 <button class="btn btn-link nav-link py-0 d-flex align-items-center justify-content-center position-relative"
@@ -84,55 +105,105 @@
                     </span>
                 </button>
                 <!-- Notification card -->
-                <div class="dropdown-menu shadow border-0 p-0" id="notif-dropdown"
-                    style="position: fixed; top: 60px; right: 0.75rem; left: auto; width: 440px; height: 560px; border-radius: 16px; overflow: hidden; display: none; flex-direction: column; background: var(--cui-body-bg, #212631); z-index: 1082;">
+                <div class="dropdown-menu dropdown-menu-end dropdown-menu-lg pt-0 simple-blur notifications" id="notif-dropdown"
+                    style="position: fixed; top: 60px; right: 7.10rem; left: auto; width: 460px; height: 620px; max-height: calc(100vh - 80px); border-radius: 16px; overflow: hidden; display: none; flex-direction: column; background: var(--cui-body-bg, #212631); z-index: 1082; padding: 0;">
                     <!-- Header -->
-                    <div class="px-4 py-3 border-bottom border-secondary border-opacity-20 d-flex align-items-center justify-content-between flex-shrink-0" style="background: rgba(255,255,255,0.02);">
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="bx bx-bell text-primary fs-5"></i>
-                            <h6 class="fw-bold mb-0 small text-body">Notifications</h6>
+                    <div class="dropdown-header d-flex align-items-center justify-content-between flex-shrink-0 px-3 py-3 border-bottom border-secondary border-opacity-20" style="white-space: normal;">
+                        <div class="me-2">
+                            <strong>You have <span class="notification-count" id="notif-unread-count">0</span> unread messages</strong>
                         </div>
-                        <button class="btn btn-link btn-sm p-0 text-secondary small text-decoration-none" onclick="notifMarkAllRead()" style="font-size: 0.75rem;">Mark all read</button>
-                    </div>
-                    <!-- Tab strip -->
-                    <div class="px-4 py-2 flex-shrink-0 border-bottom border-secondary border-opacity-10" style="background: rgba(255,255,255,0.02);">
-                        <div class="d-flex gap-2 overflow-auto" id="notif-tabs" style="scrollbar-width: none;">
-                            <button class="notif-tab active px-3 py-1.5 small fw-medium rounded-pill border border-primary bg-primary text-white" data-cat="all" onclick="notifSwitchTab('all', this, event)">All</button>
-                            <button class="notif-tab px-3 py-1.5 small fw-medium rounded-pill border border-secondary border-opacity-20 bg-transparent text-secondary hover-text-white hover:bg-dark hover:bg-opacity-50" data-cat="system" onclick="notifSwitchTab('system', this, event)">System</button>
-                            <?php if ($isAdminUser): ?>
-                            <button class="notif-tab px-3 py-1.5 small fw-medium rounded-pill border border-secondary border-opacity-20 bg-transparent text-secondary hover-text-white hover:bg-dark hover:bg-opacity-50" data-cat="report" onclick="notifSwitchTab('report', this, event)">Report</button>
-                            <?php endif; ?>
+                        <div class="d-flex align-items-center flex-shrink-0">
+                            <button class="btn btn-xs btn-link text-secondary n-mark-all-read p-0 me-2" id="notif-mark-all" onclick="notifMarkAllRead(event)" style="line-height: normal; text-decoration: none; font-size: 0.75rem;">
+                                <svg class="icon" viewBox="0 0 256 256" width="14" height="14"><use href="/assets/icons/duotone.svg#tom-check-circle"></use></svg>
+                                Mark all as read
+                            </button>
+                            <button class="btn btn-danger btn-icon btn-sm n-dismiss p-0 ms-2" aria-label="Close" onclick="notifCloseDropdown(event)" style="width: 28px; height: 28px; border-radius: 50%;">
+                                <svg class="icon" viewBox="0 0 256 256" width="16" height="16"><use href="/assets/icons/duotone.svg#tom-x-circle"></use></svg>
+                            </button>
                         </div>
                     </div>
-                    <!-- List -->
-                    <div id="notif-list" class="px-4 py-2 overflow-y-auto flex-grow-1" style="max-height: 420px;">
-                        <div class="px-3 py-4 text-center text-secondary small">
-                            <i class="bx bx-bell-off fs-2 d-block mb-3 opacity-25"></i>
-                            <div class="fw-semibold">No new notifications</div>
-                            <div class="text-xs opacity-75 mt-1">You&rsquo;re all caught up</div>
+
+                    <!-- Tab Buttons -->
+                    <div class="tab-buttons border-bottom notification-tab-btns p-1 flex-shrink-0" id="notif-tabs" onclick="event.stopPropagation();">
+                        <?php foreach ($notifTabs as $tabCat):
+                            $tabMeta  = $notifTabMeta[$tabCat] ?? [ucfirst(str_replace('_', ' ', $tabCat)), 'tom-bell'];
+                            $tabLabel = $tabMeta[0];
+                            $tabIcon  = $tabMeta[1];
+                        ?>
+                        <button class="btn blur-item tab-button p-1 <?= $tabCat === $firstNotifTab ? 'active-tab' : '' ?>"
+                            data-cat="<?= htmlspecialchars($tabCat) ?>"
+                            onclick="notifSwitchTab('<?= htmlspecialchars($tabCat) ?>', this, event)">
+                            <div>
+                                <svg class="icon icon-lg me-auto my-auto" viewBox="0 0 256 256" width="24" height="24">
+                                    <use href="/assets/icons/duotone.svg#<?= htmlspecialchars($tabIcon) ?>"></use>
+                                </svg>
+                            </div>
+                            <p class="m-0"><?= htmlspecialchars($tabLabel) ?></p>
+                            <span class="position-absolute top-0 end-0 badge rounded-pill bg-danger notification-type-indicator notification-count-<?= htmlspecialchars($tabCat) ?>" style="display: none;">0</span>
+                        </button>
+                        <?php endforeach; ?>
+                    </div>
+
+                    <!-- Tab Contents -->
+                    <div class="notif-tab-contents flex-grow-1 overflow-y-auto">
+                        <?php foreach ($notifTabs as $tabCat): ?>
+                        <div id="notif-pane-<?= htmlspecialchars($tabCat) ?>" class="tab-content tab-content-notification notifications-list notif-pane" data-cat="<?= htmlspecialchars($tabCat) ?>" style="display: <?= $tabCat === $firstNotifTab ? 'block' : 'none' ?>;">
+                            <div class="notif-items"></div>
+                            <div class="spinner-container notif-spinner justify-content-center py-4">
+                                <div class="spinner-border spinner-border-sm" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                            <div class="notif-empty text-center text-secondary small px-4 py-4" style="display: none;">
+                                <svg class="icon icon-xl d-block mx-auto mb-2 opacity-25" viewBox="0 0 256 256" width="40" height="40"><use href="/assets/icons/duotone.svg#tom-bell-slash"></use></svg>
+                                <div class="fw-semibold">You are all caught up.</div>
+                            </div>
+                            <a href="#" class="dropdown-item text-center border-top blur-item p-2 load-button" style="display: none;" onclick="event.preventDefault(); notifLoadMore('<?= htmlspecialchars($tabCat) ?>'); return false;"><strong>Load More...</strong></a>
                         </div>
+                        <?php endforeach; ?>
                     </div>
                 </div>
+                <style>
+                #notif-dropdown .tab-buttons {
+                    display: flex;
+                    gap: 4px;
+                    overflow-x: auto;
+                    scrollbar-width: none;
+                }
+                #notif-dropdown .tab-buttons::-webkit-scrollbar { display: none; }
+                #notif-dropdown .tab-button {
+                    position: relative;
+                    flex: 0 0 auto;
+                    min-width: 74px;
+                    background: transparent;
+                    border: 1px solid transparent;
+                    border-radius: 10px;
+                    color: var(--cui-secondary-color);
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 2px;
+                }
+                #notif-dropdown .tab-button p { font-size: 0.7rem; line-height: 1.1; }
+                #notif-dropdown .tab-button:hover { background: rgba(var(--cui-body-color-rgb), 0.06); color: var(--cui-body-color); }
+                #notif-dropdown .tab-button.active-tab {
+                    background: rgba(var(--cui-primary-rgb, 99, 102, 241), 0.14);
+                    border-color: rgba(var(--cui-primary-rgb, 99, 102, 241), 0.45);
+                    color: var(--cui-primary, #6366f1);
+                }
+                #notif-dropdown .tab-button .notification-type-indicator { font-size: 0.6rem; line-height: 1; padding: 3px 5px; }
+                #notif-dropdown .notification-item { display: block; padding: 10px 12px; border-radius: 10px; border-bottom: 1px solid rgba(var(--cui-body-color-rgb), 0.06); white-space: normal; }
+                #notif-dropdown .notification-item:hover { background: rgba(var(--cui-body-color-rgb), 0.05); }
+                #notif-dropdown .notification-item .message { display: flex; align-items: flex-start; gap: 10px; }
+                #notif-dropdown .notif-avatar { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 10px; }
+                #notif-dropdown .notification-title { color: var(--cui-body-color); font-size: 0.85rem; line-height: 1.3; }
+                #notif-dropdown .notification-message { line-height: 1.35; }
+                #notif-dropdown .notification-time { white-space: nowrap; font-size: 0.7rem; }
+                #notif-dropdown .notification-subtitle { font-size: 0.7rem; }
+                #notif-dropdown .notif-spinner { display: flex; justify-content: center; padding: 1rem 0; }
+                #notif-dropdown .notif-item-unread { background: rgba(var(--cui-primary-rgb, 99, 102, 241), 0.06); }
+                </style>
             </li>
-
-            <style>
-            .notif-tab {
-                transition: all 0.2s ease;
-                white-space: nowrap;
-            }
-            .notif-tab.active {
-                background: var(--cui-primary, #6366f1) !important;
-                color: #fff !important;
-                border-color: var(--cui-primary, #6366f1) !important;
-                box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
-            }
-            .notif-tab:not(.active):hover {
-                background: rgba(255,255,255,0.05) !important;
-                color: #fff !important;
-                border-color: rgba(255,255,255,0.2) !important;
-            }
-            /* Notification item styles injected by JS */
-            </style>
 
             <!-- Theme & Background Mega Dropdown -->
             <li class="nav-item dropdown px-2">
@@ -576,60 +647,233 @@ document.body.addEventListener('htmx:afterSettle', function(e) {
 
 <script>
 (function() {
-    var badgeEl   = document.getElementById('notif-badge');
-    var listEl    = document.getElementById('notif-list');
-    var bellBtn   = document.getElementById('notif-bell');
-    var loaded    = false;
+    var dropdown      = document.getElementById('notif-dropdown');
+    var badgeEl       = document.getElementById('notif-badge');
+    var unreadCountEl = document.getElementById('notif-unread-count');
+    var markAllBtn    = document.getElementById('notif-mark-all');
+    var bellBtn       = document.getElementById('notif-bell');
+    var tabsEl        = document.getElementById('notif-tabs');
+    if (!dropdown || !tabsEl) return;
+
+    var PAGE_SIZE = 20;
+    var tabButtons = Array.prototype.slice.call(tabsEl.querySelectorAll('.tab-button'));
+    var state = {};
+    tabButtons.forEach(function(btn) {
+        var cat = btn.getAttribute('data-cat');
+        if (!cat) return;
+        state[cat] = { items: [], loaded: false, loading: false, hasMore: true, error: false };
+    });
+    var currentTab = tabButtons.length ? tabButtons[0].getAttribute('data-cat') : null;
+
+    var META = {
+        system:      { icon: 'tom-terminal-window',  color: '#6366f1' },
+        mcp:         { icon: 'tom-plug',             color: '#3b82f6' },
+        clan:        { icon: 'tom-users-three',      color: '#22c55e' },
+        clubs:       { icon: 'tom-books',            color: '#f59e0b' },
+        code_arena:  { icon: 'tom-code',             color: '#a855f7' },
+        discussions: { icon: 'tom-chat-circle-text', color: '#ec4899' },
+        quiz:        { icon: 'tom-question',         color: '#6366f1' },
+        score:       { icon: 'tom-chart-line',       color: '#fb923c' },
+        streak:      { icon: 'tom-fire',             color: '#f43f5e' },
+        academy:     { icon: 'tom-graduation-cap',   color: '#14b8a6' },
+        report:      { icon: 'tom-flag',             color: '#ef4444' }
+    };
+
+    function metaFor(cat) { return META[cat] || { icon: 'tom-bell', color: '#6366f1' }; }
+
+    function esc(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function jsArg(s) {
+        return String(s == null ? '' : s)
+            .replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+            .replace(/\r/g, '\\r').replace(/\n/g, '\\n').replace(/</g, '\\x3c');
+    }
+
+    function prettyLabel(s) {
+        if (!s) return '';
+        return String(s).replace(/[_-]+/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+    }
 
     function renderTimeAgo(ts) {
         if (!ts) return 'just now';
         var diff = Math.floor((Date.now() - ts * 1000) / 1000);
-        if (diff < 60)   return 'just now';
+        if (diff < 60) return 'just now';
         if (diff < 3600) return Math.floor(diff / 60) + ' min ago';
         if (diff < 86400) return Math.floor(diff / 3600) + ' hr ago';
-        return Math.floor(diff / 86400) + ' day ago';
+        if (diff < 2592000) return Math.floor(diff / 86400) + ' day ago';
+        return Math.floor(diff / 2592000) + ' month ago';
     }
 
-    function categoryIcon(cat, filled) {
-        var map = {
-            'system':   'bx-bell',
-            'mcp':      'bx-code-block',
-            'clan':     'bx-users',
-            'clubs':    'bx-group',
-            'code_arena': 'bx-terminal',
-            'discussions': 'bx-chat',
-            'quiz':     'bx-question-mark',
-            'score':    'bx-trophy',
-            'streak':   'bx-fire',
-            'academy':  'bx-book',
-            'report':   'bx-flag',
-        };
-        var icon = map[cat] || 'bx-bell';
-        if (filled) return '<i class="bx ' + icon + '" style="font-size:1.1rem;"></i>';
-        return '<i class="bx ' + icon + ' me-2" style="font-size:0.9rem;"></i>';
+    function paneFor(cat) { return document.getElementById('notif-pane-' + cat); }
+
+    function itemHtml(n) {
+        var cat = n.category || 'system';
+        var m = metaFor(cat);
+        var url = (n.data && n.data.url) ? n.data.url : '#';
+        var subtitle = (n.data && n.data.subtitle) ? n.data.subtitle : prettyLabel(n.type || cat);
+        var title = n.title || 'Notification';
+        var body = n.body || '';
+        var idArg = jsArg(n.id);
+        var urlArg = jsArg(url);
+
+        return '<a class="dropdown-item blur-item notification-item mt-1' + (n.read ? '' : ' notif-item-unread') + '"' +
+            ' href="' + esc(url) + '"' +
+            ' data-id="' + esc(n.id) + '"' +
+            ' data-read="' + (n.read ? 'true' : 'false') + '"' +
+            ' onclick="return notifItemClick(event, \'' + idArg + '\', \'' + urlArg + '\');">' +
+            '<div class="message">' +
+                '<div class="notif-avatar flex-shrink-0" style="background:' + m.color + '1f;color:' + m.color + ';">' +
+                    '<svg class="icon" viewBox="0 0 256 256" style="width:22px;height:22px;"><use href="/assets/icons/duotone.svg#' + m.icon + '"></use></svg>' +
+                '</div>' +
+                '<div class="flex-grow-1 min-w-0">' +
+                    '<div class="d-flex align-items-center justify-content-between gap-2">' +
+                        '<small class="text-small-emphasis notification-subtitle text-truncate">' + esc(subtitle) + '</small>' +
+                        '<small class="text-small-emphasis notification-time">' + esc(renderTimeAgo(n.created_at)) + '</small>' +
+                    '</div>' +
+                    '<div class="text-truncate font-weight-bold notification-title">' + esc(title) + '</div>' +
+                    (body ? '<div class="small text-medium-emphasis text-truncate notification-message">' + esc(body) + '</div>' : '') +
+                '</div>' +
+            '</div>' +
+        '</a>';
     }
 
-    function getCatColor(cat) {
-        var map = {
-            'system':   'var(--cui-primary, #6366f1)',
-            'mcp':      'var(--cui-info, #3b82f6)',
-            'report':   'var(--cui-danger, #ef4444)',
-            'clan':     'var(--cui-success, #22c55e)',
-            'clubs':    'var(--cui-warning, #f59e0b)',
-            'code_arena': 'var(--cui-purple, #a855f7)',
-            'discussions': 'var(--cui-pink, #ec4899)',
-            'quiz':     'var(--cui-indigo, #6366f1)',
-            'score':    'var(--cui-orange, #fb923c)',
-            'streak':   'var(--cui-red, #f43f5e)',
-            'academy':  'var(--cui-teal, #14b8a6)',
-        };
-        return map[cat] || 'var(--cui-primary, #6366f1)';
+    function renderPane(cat) {
+        var pane = paneFor(cat);
+        if (!pane) return;
+        var s = state[cat];
+        if (!s) return;
+
+        var itemsEl = pane.querySelector('.notif-items');
+        var spinner = pane.querySelector('.notif-spinner');
+        var emptyEl = pane.querySelector('.notif-empty');
+        var loadBtn = pane.querySelector('.load-button');
+        if (!itemsEl) return;
+
+        itemsEl.innerHTML = s.items.map(itemHtml).join('');
+        if (spinner) spinner.style.display = s.loading ? 'flex' : 'none';
+        if (emptyEl) emptyEl.style.display = (s.loaded && !s.loading && !s.error && s.items.length === 0) ? 'block' : 'none';
+        if (loadBtn) loadBtn.style.display = (!s.loading && s.loaded && s.hasMore && s.items.length > 0) ? 'block' : 'none';
     }
 
-    var allNotifications = [];
-    var currentTab = 'all';
-    var tabBadgeEls = {};
-    var NOTIF_CATEGORIES = ['system', 'report'];
+    function loadTab(cat, more) {
+        var s = state[cat];
+        if (!s || s.loading) return;
+        if (!more && s.loaded && !s.error) return;
+
+        s.loading = true;
+        s.error = false;
+        renderPane(cat);
+
+        var offset = more ? s.items.length : 0;
+        var url = '/api/notifications/list?limit=' + PAGE_SIZE + '&offset=' + offset + '&category=' + encodeURIComponent(cat);
+
+        fetch(url, {
+            credentials: 'same-origin',
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data || !data.success) throw new Error('bad response');
+            var incoming = data.items || [];
+            s.items = more ? s.items.concat(incoming) : incoming;
+            s.hasMore = incoming.length >= PAGE_SIZE;
+            s.loaded = true;
+            s.loading = false;
+            s.error = false;
+            renderPane(cat);
+            fetchUnreadCount();
+        })
+        .catch(function() {
+            s.loading = false;
+            s.loaded = true;
+            s.error = true;
+            renderPane(cat);
+            var pane = paneFor(cat);
+            var itemsEl = pane ? pane.querySelector('.notif-items') : null;
+            if (itemsEl && s.items.length === 0) {
+                itemsEl.innerHTML = '<div class="px-3 py-3 text-center text-secondary small">Unable to load notifications.</div>';
+            }
+        });
+    }
+
+    function setActiveTab(cat) {
+        tabButtons.forEach(function(btn) {
+            btn.classList.toggle('active-tab', btn.getAttribute('data-cat') === cat);
+        });
+        Object.keys(state).forEach(function(key) {
+            var pane = paneFor(key);
+            if (pane) pane.style.display = (key === cat) ? 'block' : 'none';
+        });
+    }
+
+    window.notifSwitchTab = function(cat, el, ev) {
+        if (ev) ev.stopPropagation();
+        if (!state[cat]) return;
+        currentTab = cat;
+        setActiveTab(cat);
+        loadTab(cat, false);
+    };
+
+    window.notifLoadMore = function(cat) {
+        loadTab(cat, true);
+    };
+
+    window.notifItemClick = function(ev, id, href) {
+        if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+
+        Object.keys(state).forEach(function(cat) {
+            state[cat].items.forEach(function(n) {
+                if (n.id === id) n.read = true;
+            });
+        });
+        renderPane(currentTab);
+
+        fetch('/api/notifications/read', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-Token': (document.querySelector('meta[name="csrf-token"]') || {}).content || '',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ ids: [id] })
+        }).then(fetchUnreadCount).catch(function() {});
+
+        if (href && href !== '#' && href !== 'javascript:void(0)') {
+            window.location.href = href;
+        }
+        return false;
+    };
+
+    window.notifMarkAllRead = function(ev) {
+        if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+
+        fetch('/api/notifications/read', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-Token': (document.querySelector('meta[name="csrf-token"]') || {}).content || '',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ all: true })
+        }).then(function() {
+            Object.keys(state).forEach(function(cat) {
+                state[cat].items.forEach(function(n) { n.read = true; });
+                state[cat].loaded = false;
+                state[cat].error = false;
+                renderPane(cat);
+            });
+            loadTab(currentTab, false);
+            fetchUnreadCount();
+        }).catch(function() {});
+    };
 
     function fetchUnreadCount() {
         fetch('/api/notifications/unread_count', {
@@ -644,11 +888,15 @@ document.body.addEventListener('htmx:afterSettle', function(e) {
                 badgeEl.style.display = total > 0 ? '' : 'none';
                 badgeEl.textContent = total > 99 ? '99+' : String(total);
             }
-            // Update per-tab badges
+            if (unreadCountEl) unreadCountEl.textContent = String(total);
+            if (markAllBtn) markAllBtn.style.display = total > 0 ? '' : 'none';
+
             var byCat = data.by_category || {};
-            Object.keys(tabBadgeEls).forEach(function(cat) {
+            tabButtons.forEach(function(btn) {
+                var cat = btn.getAttribute('data-cat');
+                var el = btn.querySelector('.notification-type-indicator');
+                if (!el) return;
                 var c = parseInt(byCat[cat] || 0, 10);
-                var el = tabBadgeEls[cat];
                 if (c > 0) {
                     el.style.display = '';
                     el.textContent = c > 9 ? '9+' : String(c);
@@ -657,191 +905,44 @@ document.body.addEventListener('htmx:afterSettle', function(e) {
                 }
             });
         })
-        .catch(function() {}); // silent — badge stays hidden on failure
+        .catch(function() {});
     }
 
-    function renderList(items) {
-        if (!listEl) return;
-        if (!items || items.length === 0) {
-            listEl.innerHTML = '<div class="px-4 py-5 text-center text-secondary small">' +
-                '<i class="bx bx-bell-off fs-3 d-block mb-3 opacity-20"></i>' +
-                '<div class="fw-semibold">No new notifications</div>' +
-                '<div class="text-xs opacity-60 mt-1">You&rsquo;re all caught up</div>' +
-                '</div>';
-            if (badgeEl) badgeEl.style.display = 'none';
-            return;
-        }
-        var html = '';
-        items.forEach(function(n) {
-            var url = (n.data && n.data.url) ? n.data.url : '#';
-            var cls = n.read ? 'text-secondary' : 'fw-bold text-body';
-            var unreadDot = n.read ? '' : '<span class="position-absolute top-0 start-0 bg-danger rounded-circle" style="width:8px;height:8px;"></span>';
-            var catColor = getCatColor(n.category);
-            html += '<div class="d-flex align-items-start px-4 py-3 border-bottom border-secondary border-opacity-5 text-decoration-none' +
-                (n.read ? '' : ' bg-dark bg-opacity-20') + '"' +
-                ' onclick="event.stopPropagation(); notifItemClick(\'' + n.id + '\', \'' + (url || '#') + '\'); return false;"' +
-                ' style="cursor: pointer; color: inherit;">' +
-                unreadDot +
-                '<div class="d-flex w-100 align-items-start gap-3">' +
-                '<div class="flex-shrink-0" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:' + catColor + '15;color:' + catColor + ';">' +
-                categoryIcon(n.category, true) +
-                '</div>' +
-                '<div class="flex-grow-1">' +
-                '<div class="' + cls + ' small" style="font-size:0.85rem;">' + (n.title || 'Notification') + '</div>' +
-                (n.body ? '<div class="text-muted small" style="font-size:0.78rem;line-height:1.4;margin-top:2px;">' + (n.body || '') + '</div>' : '') +
-                '<div class="text-muted" style="font-size:0.7rem; margin-top:3px;">' + renderTimeAgo(n.created_at) + '</div>' +
-                '</div>' +
-                '</div>' +
-                '</div>';
-        });
-        html += '<div class="mt-2"><div class="d-block text-center text-secondary small px-4 py-2" onclick="notifMarkAllRead(); return false;" style="cursor: pointer;">Mark all as read</div></div>';
-        listEl.innerHTML = html;
-    }
-
-    function filterByTab(cat) {
-        if (cat === 'all') return allNotifications;
-        return allNotifications.filter(function(n) { return n.category === cat; });
-    }
-
-    window.notifSwitchTab = function(cat, el, ev) {
-        if (ev) ev.stopPropagation();
-        currentTab = cat;
-        // Update active states
-        var tabsEl = document.getElementById('notif-tabs');
-        if (tabsEl) {
-            Array.from(tabsEl.children).forEach(function(child) {
-                var isActive = child.getAttribute('data-cat') === cat;
-                child.className = 'notif-tab px-3 py-1.5 small fw-medium rounded-pill border border-secondary border-opacity-20 bg-dark bg-opacity-10 text-secondary' +
-                    (isActive ? ' active bg-primary text-white border-primary' : '');
-            });
-        }
-        renderList(filterByTab(cat));
-    }
-
-    function fetchNotifications() {
-        console.log('[Chat] fetchNotifications called');
-        if (!listEl) {
-            console.log('[Chat] fetchNotifications: listEl not found');
-            return;
-        }
-        listEl.innerHTML = '<div class="px-3 py-3 text-center text-secondary small"><i class="bx bx-loader-alt bx-spin fs-1 d-block mb-2"></i> Loading...</div>';
-        fetch('/api/notifications/list?limit=50', {
-            credentials: 'same-origin',
-            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(function(r) {
-            console.log('[Chat] fetchNotifications response status:', r.status);
-            return r.json();
-        })
-        .then(function(data) {
-            console.log('[Chat] fetchNotifications data:', data);
-            if (data && data.success) {
-                allNotifications = data.items || [];
-                console.log('[Chat] allNotifications count:', allNotifications.length);
-                window.notifSwitchTab(currentTab, null);
-                fetchUnreadCount();
-            } else {
-                listEl.innerHTML = '<div class="px-3 py-3 text-center text-secondary small">Unable to load notifications.</div>';
-            }
-        })
-        .catch(function(err) {
-            console.log('[Chat] fetchNotifications error:', err);
-            listEl.innerHTML = '<div class="px-3 py-3 text-center text-secondary small">Unable to load notifications.</div>';
-        });
-    }
-
-    window.notifItemClick = function(id, href) {
-        fetch('/api/notifications/read', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify({ ids: [id] })
-        }).then(function() {
-            if (href && href !== '#' && href !== 'javascript:void(0)') {
-                window.location.href = href;
-            }
-            fetchUnreadCount();
-            // Re-render list if dropdown is still open
-            var dropdown = document.querySelector('.dropdown-menu.show');
-            if (dropdown && dropdown.contains(listEl)) fetchNotifications();
-        }).catch(function() {});
+    window.notifCloseDropdown = function(ev) {
+        if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+        dropdown.style.display = 'none';
+        if (bellBtn) bellBtn.setAttribute('aria-expanded', 'false');
     };
 
-    window.notifMarkAllRead = function() {
-        fetch('/api/notifications/read', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify({ all: true })
-        }).then(function(r) { return r.json(); })
-        .then(function(data) {
-            if (data && data.success) {
-                fetchUnreadCount();
-                // Re-render the list so read messages still appear (grayed out)
-                // instead of disappearing until reload.
-                fetchNotifications();
-            }
-        }).catch(function() {});
-    };
-
-    // Ensure dropdown is CLOSED on page load — never auto-open.
-    (function() {
-        var bellBtn = document.getElementById('notif-bell');
-        var dropdown = document.getElementById('notif-dropdown');
-        if (bellBtn) {
-            bellBtn.setAttribute('aria-expanded', 'false');
+    function openDropdown() {
+        dropdown.style.display = 'flex';
+        if (bellBtn) bellBtn.setAttribute('aria-expanded', 'true');
+        if (currentTab && state[currentTab] && !state[currentTab].loaded) {
+            loadTab(currentTab, false);
         }
-        if (dropdown) {
-            dropdown.style.display = 'none';
-        }
-    })();
+        fetchUnreadCount();
+    }
 
-    // Manual toggle: bell click opens/closes the notification card.
+    dropdown.style.display = 'none';
+    if (bellBtn) bellBtn.setAttribute('aria-expanded', 'false');
+
     window.notifToggleDropdown = function(ev) {
-        ev.preventDefault();
-        ev.stopPropagation();
-        var dropdown = document.getElementById('notif-dropdown');
-        var bellBtn = document.getElementById('notif-bell');
-        var isOpen = dropdown.style.display === 'block';
-
-        if (isOpen) {
-            dropdown.style.display = 'none';
-            bellBtn.setAttribute('aria-expanded', 'false');
+        if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+        if (dropdown.style.display === 'flex') {
+            window.notifCloseDropdown();
         } else {
-            dropdown.style.display = 'block';
-            bellBtn.setAttribute('aria-expanded', 'true');
-            // Fetch list on first open
-            if (!loaded) {
-                fetchNotifications();
-                loaded = true;
-            } else {
-                fetchUnreadCount();
-            }
+            openDropdown();
         }
-    }
+    };
 
-    // Close dropdown when clicking outside.
     document.addEventListener('click', function(ev) {
-        var dropdown = document.getElementById('notif-dropdown');
-        var bellBtn = document.getElementById('notif-bell');
         if (!dropdown || !bellBtn) return;
-        if (dropdown.style.display === 'block' && !dropdown.contains(ev.target) && !bellBtn.contains(ev.target)) {
+        if (dropdown.style.display === 'flex' && !dropdown.contains(ev.target) && !bellBtn.contains(ev.target)) {
             dropdown.style.display = 'none';
             bellBtn.setAttribute('aria-expanded', 'false');
         }
     });
 
-    // Initial badge fetch on page load (panel closed — no list fetch yet).
     fetchUnreadCount();
 })();
 </script>

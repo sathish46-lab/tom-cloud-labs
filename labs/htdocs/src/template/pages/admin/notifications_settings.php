@@ -29,6 +29,20 @@ $modeLabels = [
     NotificationSettings::MODE_OFF   => 'Off',
     NotificationSettings::MODE_ADMIN => 'Admin controlled',
 ];
+
+$notifCatLabels = [
+    'academy'     => 'Academy',
+    'system'      => 'System (Labs)',
+    'mcp'         => 'MCP',
+    'clan'        => 'Clan',
+    'clubs'       => 'Clubs',
+    'code_arena'  => 'Code Arena',
+    'discussions' => 'Discussions',
+    'quiz'        => 'Quiz',
+    'score'       => 'Score',
+    'streak'      => 'Streak',
+    'report'      => 'Report',
+];
 ?>
 <style>
     /* ── Selected-mode readme strip ── */
@@ -229,10 +243,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
-    <!-- ── Broadcast compose card ── -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-0 rounded-4 blur shadow-sm">
+    <!-- ── Broadcasts: sent list (left) + compose (right) ── -->
+    <div class="row g-4 mb-4">
+        <!-- Left: sent broadcast messages -->
+        <div class="col-12 col-xl-7">
+            <div class="card border-0 rounded-4 blur shadow-sm" style="height:min(560px,70vh)">
+                <div class="card-header bg-transparent border-bottom border-body-secondary border-opacity-10 py-3 d-flex align-items-center justify-content-between">
+                    <span class="fw-bold"><i class='bx bx-list-ul me-2'></i>Sent broadcast messages</span>
+                    <span class="badge rounded-pill text-bg-secondary" id="ntSentCount">0</span>
+                </div>
+                <div class="card-body p-4 d-flex flex-column">
+                    <div class="d-flex flex-wrap gap-1 mb-3" id="ntSentTabs">
+                        <?php foreach ($notifCatLabels as $cat => $label): ?>
+                        <button type="button"
+                            class="btn btn-sm rounded-pill nt-sent-tab <?= $cat === 'academy' ? 'btn-primary' : 'btn-outline-secondary border-secondary border-opacity-25' ?>"
+                            data-cat="<?= htmlspecialchars($cat) ?>"
+                            data-label="<?= htmlspecialchars($label) ?>"><?= htmlspecialchars($label) ?></button>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="flex-grow-1 d-flex flex-column" style="min-height:0">
+                        <div id="ntSentList" class="d-flex flex-column gap-2 pe-1" style="flex:1 1 0;min-height:0;overflow-y:auto"></div>
+                        <div class="flex-grow-1 d-flex align-items-center justify-content-center text-center text-body-secondary small py-5" id="ntSentEmpty">
+                            <div>
+                                <i class='bx bx-inbox fs-1 d-block mb-2 opacity-50'></i>
+                                <div class="fw-semibold" id="ntSentEmptyTitle">No sent broadcasts yet</div>
+                                <div id="ntSentEmptyText">Messages you send to users will appear here.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: send broadcast -->
+        <div class="col-12 col-xl-5">
+            <div class="card border-0 rounded-4 blur shadow-sm h-100">
                 <div class="card-header bg-transparent border-bottom border-body-secondary border-opacity-10 py-3 d-flex align-items-center justify-content-between">
                     <span class="fw-bold"><i class='bx bx-broadcast me-2'></i>Send broadcast to users</span>
                     <span class="badge rounded-pill text-bg-info" id="ntBroadcastStatus"><?= $broadcast ? 'enabled' : 'disabled' ?></span>
@@ -249,19 +294,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <?php endif; ?>
                     <form id="ntBroadcastForm" <?= !$broadcast ? 'disabled' : '' ?>>
                         <div class="row g-3 mb-3">
-                            <div class="col-md-6">
+                            <div class="col-12">
                                 <label class="fw-semibold d-block mb-1 small" for="ntBcastTitle">Title</label>
                                 <input type="text" id="ntBcastTitle" name="title" class="form-control form-control-sm bg-transparent border-secondary border-opacity-25" placeholder="e.g. New labs feature released" required maxlength="120">
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12">
                                 <label class="fw-semibold d-block mb-1 small" for="ntBcastCategory">Category</label>
                                 <select id="ntBcastCategory" name="category" class="form-select form-select-sm bg-transparent border-secondary border-opacity-25">
-                                    <option value="system">System</option>
+                                    <option value="academy">Academy</option>
+                                    <option value="system">System (Labs)</option>
                                     <option value="mcp">MCP</option>
                                     <option value="report">Report (admin only)</option>
                                 </select>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12">
                                 <label class="fw-semibold d-block mb-1 small" for="ntBcastTarget">Send to</label>
                                 <select id="ntBcastTarget" name="target" class="form-select form-select-sm bg-transparent border-secondary border-opacity-25">
                                     <option value="all">All users</option>
@@ -269,7 +315,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <option value="emails">Specific emails</option>
                                 </select>
                             </div>
-                            <div class="col-md-6 d-none" id="ntBcastRoleGroup">
+                            <div class="col-12 d-none" id="ntBcastRoleGroup">
                                 <label class="fw-semibold d-block mb-1 small" for="ntBcastRole">Role</label>
                                 <input type="text" id="ntBcastRole" name="role" class="form-control form-control-sm bg-transparent border-secondary border-opacity-25" placeholder="e.g. admin, superuser">
                             </div>
@@ -382,7 +428,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     Notifications are created for: <strong>new device login</strong> (security alert,
                     emailed if the user has security + email on), <strong>admin broadcast</strong>, and
                     <strong>MCP user connect</strong> (live data). Labs features can also emit
-                    notifications via the <code>Notification::create()</code> helper.
+                    notifications via the <code>Notification::trigger()</code> event catalog helper.
                 </p>
             </div>
         </div>
@@ -397,6 +443,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     var modeLabels   = <?= json_encode($modeLabels) ?>;
     var modeDescriptions = <?= json_encode($modeDescriptions) ?>;
+    var catLabels    = <?= json_encode($notifCatLabels) ?>;
 
     var select   = document.getElementById('ntMode');
     var toggle   = document.getElementById('ntBroadcast');
@@ -558,6 +605,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     bcastResult.innerHTML = '<div class="alert alert-success border-0 rounded-4 p-2"><small>Broadcast delivered to <strong>' + data.sent + '</strong> user(s).</small></div>';
                     bcastForm.reset();
                     toggleTargetFields();
+                    if (typeof loadSent === 'function') loadSent(category);
                 } else {
                     if (window.TomNotify) TomNotify.show(data.error || 'Broadcast failed', 'Error', 'error', 4000);
                     bcastResult.innerHTML = '<div class="alert alert-danger border-0 rounded-4 p-2"><small>' + (data.error || 'Broadcast failed') + '</small></div>';
@@ -571,6 +619,154 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             });
         });
     }
+
+    // ── Sent broadcasts list ──
+    var sentTabs       = Array.prototype.slice.call(document.querySelectorAll('.nt-sent-tab'));
+    var sentList       = document.getElementById('ntSentList');
+    var sentEmpty      = document.getElementById('ntSentEmpty');
+    var sentEmptyTitle = document.getElementById('ntSentEmptyTitle');
+    var sentEmptyText  = document.getElementById('ntSentEmptyText');
+    var sentCount      = document.getElementById('ntSentCount');
+    var sentCategory   = 'academy';
+    var sentReq        = 0;
+
+    function sentEsc(value) {
+        return String(value == null ? '' : value).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+
+    function sentTime(iso) {
+        if (!iso) return 'Just now';
+        var d = new Date(iso);
+        if (isNaN(d.getTime())) return '';
+        var diff = Math.floor((Date.now() - d.getTime()) / 1000);
+        if (diff < 60) return 'Just now';
+        if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+        if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function setSentTab(cat) {
+        sentCategory = cat;
+        sentTabs.forEach(function (t) {
+            var active = t.getAttribute('data-cat') === cat;
+            t.classList.toggle('btn-primary', active);
+            t.classList.toggle('btn-outline-secondary', !active);
+            t.classList.toggle('border-secondary', !active);
+            t.classList.toggle('border-opacity-25', !active);
+        });
+    }
+
+    function showSentEmpty(title, text) {
+        if (sentEmptyTitle) sentEmptyTitle.textContent = title;
+        if (sentEmptyText)  sentEmptyText.textContent  = text;
+        if (sentEmpty) sentEmpty.classList.remove('d-none');
+        if (sentList)  sentList.classList.add('d-none');
+        if (sentCount) sentCount.textContent = '0';
+    }
+
+    function loadSent(cat) {
+        setSentTab(cat);
+        if (!sentList) return;
+        var req = ++sentReq;
+
+        sentList.innerHTML = '<div class="text-center text-body-secondary small py-4"><span class="spinner-border spinner-border-sm me-2"></span>Loading broadcasts…</div>';
+        sentList.classList.remove('d-none');
+        if (sentEmpty) sentEmpty.classList.add('d-none');
+
+        fetch('/api/admin/notifications_broadcasts?category=' + encodeURIComponent(cat), {
+            headers: { 'Accept': 'application/json' }
+        })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (req !== sentReq) return;
+                if (data.status !== 'success') throw new Error(data.error || 'Could not load broadcasts');
+                var items = data.broadcasts || [];
+                if (sentCount) sentCount.textContent = String(items.length);
+
+                if (!items.length) {
+                    var label = catLabels[cat] || cat;
+                    showSentEmpty('No sent broadcasts in ' + label + ' yet', 'Messages sent to this category will appear here.');
+                    return;
+                }
+
+                sentList.innerHTML = items.map(function (item) {
+                    var label = catLabels[item.category] || item.category || 'Broadcast';
+                    var readText = item.read_count + ' of ' + item.recipients + ' read';
+                    return '<div class="border border-secondary border-opacity-10 rounded-4 p-3" data-id="' + sentEsc(item.id) + '">' +
+                        '<div class="d-flex align-items-start justify-content-between gap-2">' +
+                            '<div class="flex-grow-1" style="min-width:0">' +
+                                '<div class="d-flex align-items-center flex-wrap gap-2 mb-1">' +
+                                    '<span class="badge rounded-pill text-bg-secondary">' + sentEsc(label) + '</span>' +
+                                    '<span class="small text-body-secondary">' + sentEsc(sentTime(item.created_at)) + '</span>' +
+                                '</div>' +
+                                '<div class="fw-semibold text-truncate">' + sentEsc(item.title) + '</div>' +
+                                '<div class="small text-body-secondary" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">' + sentEsc(item.body) + '</div>' +
+                                '<div class="small text-body-secondary mt-2 d-flex flex-wrap gap-3">' +
+                                    '<span><i class="bx bx-user me-1"></i>' + item.recipients + ' recipient' + (item.recipients === 1 ? '' : 's') + '</span>' +
+                                    '<span><i class="bx bx-check-circle me-1"></i>' + sentEsc(readText) + '</span>' +
+                                '</div>' +
+                            '</div>' +
+                            '<button type="button" class="btn btn-sm btn-outline-danger rounded-circle nt-del-bcast" data-id="' + sentEsc(item.id) + '" title="Delete for all users">' +
+                                '<i class="bx bx-trash"></i>' +
+                            '</button>' +
+                        '</div>' +
+                    '</div>';
+                }).join('');
+                sentList.classList.remove('d-none');
+                if (sentEmpty) sentEmpty.classList.add('d-none');
+            })
+            .catch(function (err) {
+                if (req !== sentReq) return;
+                showSentEmpty('Could not load broadcasts', err && err.message ? err.message : 'Please try again.');
+            });
+    }
+
+    sentTabs.forEach(function (tab) {
+        tab.addEventListener('click', function () {
+            var cat = tab.getAttribute('data-cat') || 'academy';
+            if (cat === sentCategory) return;
+            loadSent(cat);
+        });
+    });
+
+    if (sentList) {
+        sentList.addEventListener('click', function (e) {
+            var btn = e.target.closest ? e.target.closest('.nt-del-bcast') : null;
+            if (!btn) return;
+            var id = btn.getAttribute('data-id');
+            if (!id) return;
+            if (!window.confirm('Delete this broadcast for all recipients? This cannot be undone.')) return;
+
+            btn.disabled = true;
+            fetch('/api/admin/notifications_broadcasts', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-Token': CSRF
+                },
+                body: JSON.stringify({ broadcast_id: id })
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.status === 'success') {
+                        if (window.TomNotify) TomNotify.show('Broadcast deleted for ' + data.deleted + ' user(s)', 'Deleted', 'success', 4000);
+                        loadSent(sentCategory);
+                    } else {
+                        btn.disabled = false;
+                        if (window.TomNotify) TomNotify.show(data.error || 'Delete failed', 'Error', 'error', 4000);
+                    }
+                })
+                .catch(function () {
+                    btn.disabled = false;
+                    if (window.TomNotify) TomNotify.show('Network error', 'Error', 'error', 4000);
+                });
+        });
+    }
+
+    loadSent('academy');
 })();
-</script>
 </script>
