@@ -14,23 +14,27 @@
 class AuthMiddleware {
 
     /**
+     * Emit a pretty-printed JSON response and exit.
+     */
+    private static function json(array $payload, int $status = 200): void {
+        http_response_code($status);
+        header('Content-Type: application/json');
+        echo json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    /**
      * Require authenticated session. Returns UserSession or sends 401 and exits.
      *
      * @return UserSession
      */
     public static function requireAuth(): UserSession {
         if (Session::getAuthStatus() !== Constants::STATUS_LOGGEDIN) {
-            http_response_code(401);
-            header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'error' => 'Unauthorized']);
-            exit;
+            self::json(['success' => false, 'error' => 'Unauthorized'], 401);
         }
         $userSession = Session::getUserSession();
         if ($userSession === null) {
-            http_response_code(401);
-            header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'error' => 'Unauthorized']);
-            exit;
+            self::json(['success' => false, 'error' => 'Unauthorized'], 401);
         }
         return $userSession;
     }
@@ -53,10 +57,7 @@ class AuthMiddleware {
             if ($original !== null && $original->getRole() === Constants::GROUP_SUPERUSER) {
                 return $original;
             }
-            http_response_code(403);
-            header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'error' => 'Forbidden']);
-            exit;
+            self::json(['success' => false, 'error' => 'Forbidden'], 403);
         }
         return $user;
     }
@@ -114,10 +115,7 @@ class AuthMiddleware {
         $internalToken = self::getInternalToken();
 
         if (!$internalToken || $authHeader !== "Bearer $internalToken") {
-            http_response_code(401);
-            header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'error' => 'Unauthorized']);
-            exit;
+            self::json(['success' => false, 'error' => 'Unauthorized'], 401);
         }
     }
 
