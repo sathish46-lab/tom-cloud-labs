@@ -17,10 +17,7 @@ require_once __DIR__ . '/../../../src/load.php';
 function notif_require_user(): UserSession {
     $session = AuthMiddleware::requireAuth();
     if ($session->getUser() === null) {
-        http_response_code(401);
-        header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'error' => 'Unauthorized']);
-        exit;
+        notif_json(['success' => false, 'error' => 'Unauthorized'], 401);
     }
     return $session;
 }
@@ -32,10 +29,7 @@ function notif_db(): MongoDB\Database {
     try {
         return DatabaseConnection::getDefaultDatabase();
     } catch (\Throwable $e) {
-        http_response_code(503);
-        header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'error' => 'Database unavailable']);
-        exit;
+        notif_json(['success' => false, 'error' => 'Database unavailable'], 503);
     }
 }
 
