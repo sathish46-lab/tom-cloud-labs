@@ -35,4 +35,37 @@ function http($url, $params = []) {
     return json_decode($response);
 }
 
+/**
+ * Emit a pretty-printed, consistent JSON API response and exit.
+ *
+ * Every API endpoint should use this instead of echoing json_encode()
+ * directly, so all responses share:
+ *   - Content-Type: application/json; charset=utf-8
+ *   - JSON_PRETTY_PRINT (human-readable multi-line output)
+ *   - JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+ *   - An explicit HTTP status code
+ *
+ * @param array $payload   The response body (must be an array)
+ * @param int   $status    HTTP status code (default 200)
+ */
+function api_json(array $payload, int $status = 200): void {
+    http_response_code($status);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+/**
+ * Emit a standardized JSON error response and exit.
+ *
+ * Payload shape: { status: "error", error: "<message>", ...$extra }
+ *
+ * @param string $message  Human-readable error message (non-technical)
+ * @param int    $status   HTTP status code (default 400)
+ * @param array  $extra    Additional payload keys (e.g. ['ref' => 'ERR-...'])
+ */
+function api_error(string $message, int $status = 400, array $extra = []): void {
+    api_json(array_merge(['status' => 'error', 'error' => $message], $extra), $status);
+}
+
 
