@@ -168,8 +168,7 @@ if ($candidate !== '') $event['candidate']= $candidate;
 
 $published = chat_publish($event);
 if (!$published) {
-    02);
-    exit;
+    chat_json(['success' => false, 'error' => 'Failed to publish signal to message bus'], 502);
 }
 
 chat_json([

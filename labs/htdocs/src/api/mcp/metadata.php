@@ -10,9 +10,8 @@ header('Cache-Control: public, max-age=86400'); // Cache for 24 hours
 
 // Only allow GET requests
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-    http_response_code(405);
     header('Allow: GET');
-api_json(['error' => 'Method not allowed'], 400);
+api_json(['error' => 'Method not allowed'], 405);
 }
 
 require_once __DIR__ . '/../../lib/core/MCPOAuth.class.php';

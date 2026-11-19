@@ -11,9 +11,8 @@ header('Cache-Control: no-store');
 header('Pragma: no-cache');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
     header('Allow: POST');
-api_json(['error' => 'method_not_allowed', 'error_description' => 'Method not allowed'], 400);
+api_json(['error' => 'method_not_allowed', 'error_description' => 'Method not allowed'], 405);
 }
 
 // Parse request body (JSON or form-urlencoded)
