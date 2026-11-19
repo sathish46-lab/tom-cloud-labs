@@ -13,8 +13,6 @@
  */
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
 
 $hash     = trim($_GET['hash'] ?? '');
@@ -22,16 +20,13 @@ $runParam = trim($_GET['run_id'] ?? '');
 $after    = $_GET['after'] ?? '-1';
 
 if ($hash === '' || !preg_match('/^[a-f0-9]{32}$/i', $hash)) {
-    http_response_code(400);
-    exit(json_encode(['success' => false, 'error' => 'Invalid hash']));
+    api_json(['success' => false, 'error' => 'Invalid hash'], 400);
 }
 if (!is_numeric($after)) {
-    http_response_code(400);
-    exit(json_encode(['success' => false, 'error' => 'Invalid after']));
+    api_json(['success' => false, 'error' => 'Invalid after'], 400);
 }
 if ($runParam !== '' && !preg_match('/^[A-Za-z0-9._-]{1,80}$/', $runParam)) {
-    http_response_code(400);
-    exit(json_encode(['success' => false, 'error' => 'Invalid run_id']));
+    api_json(['success' => false, 'error' => 'Invalid run_id'], 400);
 }
 $after = (int)$after;
 
@@ -43,8 +38,7 @@ try {
     );
 
     if (!$inst) {
-        http_response_code(404);
-        exit(json_encode(['success' => false, 'error' => 'Lab not found']));
+        api_json(['success' => false, 'error' => 'Lab not found'], 404);
     }
 
     // Ownership (string-compare across the storage kinds in the wild:
@@ -52,8 +46,7 @@ try {
     // a strict PHP comparison 403s otherwise, breaking log gap-fill).
     $ownerId = (string)($inst['user_id'] ?? '');
     if ($ownerId === '' || $ownerId !== (string)$user->getUserId()) {
-        http_response_code(403);
-        exit(json_encode(['success' => false, 'error' => 'Access denied']));
+        api_json(['success' => false, 'error' => 'Access denied'], 403);
     }
 
     $runKey = $runParam !== '' ? $runParam : (string)($inst['deploy_run_id'] ?? '');
@@ -89,7 +82,7 @@ try {
     $fresh  = !$missing && (time() - filemtime($file)) < 180;
     $active = (($inst['status'] ?? '') === 'deploying') || $fresh;
 
-    echo json_encode([
+    api_json([
         'success'  => true,
         'run_id'   => $runKey,
         'active'   => $active,
@@ -97,9 +90,8 @@ try {
         'after'    => $after,
         'last_seq' => $lastSeq,
         'lines'    => $active ? $lines : [],
-    ]);
+    ], 200);
 } catch (Exception $e) {
     errors_report(['context' => 'labs/logs', 'message' => 'Logs API Error: ' . $e->getMessage()]);
-    http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Internal server error']);
+    api_json(['success' => false, 'error' => 'Internal server error'], 500);
 }

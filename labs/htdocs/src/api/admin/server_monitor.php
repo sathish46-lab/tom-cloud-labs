@@ -1,7 +1,6 @@
 <?php
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
 $user = AuthMiddleware::requireAdmin();
 
 $action = $_GET['action'] ?? $_POST['action'] ?? 'processes';
@@ -36,7 +35,7 @@ switch ($action) {
         $container = $_GET['container'] ?? 'Dev_lab';
         $allowed = ['Dev_lab', 'TomCloudLab_mongodb', 'TomCloudLab', 'TomCloudLab_cloudflared', 'TomCloudLab_ddns_updater'];
         if (!in_array($container, $allowed)) {
-            echo json_encode(['status' => 'error', 'error' => 'Invalid container']); exit;
+            api_json(['status' => 'error', 'error' => 'Invalid container'], 400);
         }
 
         $isCurrentContainer = ($container === 'Dev_lab');
@@ -79,7 +78,7 @@ switch ($action) {
         $uptimeLines = explode("\n", trim($uptimeResult['output']));
         $uptime = trim($uptimeLines[0] ?? '--');
 
-        echo json_encode([
+        api_json([
             'status' => 'success',
             'data' => [
                 'processes' => $processes,
@@ -88,14 +87,14 @@ switch ($action) {
                 'uptime'    => $uptime,
                 'container' => $container,
             ]
-        ]);
+        ], 200);
         break;
 
     case 'services':
         $container = $_GET['container'] ?? 'Dev_lab';
         $allowed = ['Dev_lab', 'TomCloudLab_mongodb'];
         if (!in_array($container, $allowed)) {
-            echo json_encode(['status' => 'error', 'error' => 'Invalid container']); exit;
+            api_json(['status' => 'error', 'error' => 'Invalid container'], 400);
         }
 
         $isCurrentContainer = ($container === 'Dev_lab');
@@ -141,7 +140,7 @@ switch ($action) {
             ];
         }
 
-        echo json_encode(['status' => 'success', 'data' => $results]);
+        api_json(['status' => 'success', 'data' => $results], 200);
         break;
 
     case 'toggle_service':
@@ -150,11 +149,11 @@ switch ($action) {
         $enable    = $_POST['enable'] ?? '1';
         $allowed = ['Dev_lab', 'TomCloudLab_mongodb'];
         if (!in_array($container, $allowed)) {
-            echo json_encode(['status' => 'error', 'error' => 'Invalid container']); exit;
+            api_json(['status' => 'error', 'error' => 'Invalid container'], 400);
         }
         $allowedServices = ['mysql', 'mongodb', 'rabbitmq-server', 'apache2', 'redis-server', 'fail2ban', 'docker'];
         if (!in_array($service, $allowedServices)) {
-            echo json_encode(['status' => 'error', 'error' => 'Invalid service']); exit;
+            api_json(['status' => 'error', 'error' => 'Invalid service'], 400);
         }
 
         $isCurrentContainer = ($container === 'Dev_lab');
@@ -212,16 +211,16 @@ switch ($action) {
             $isActive = !empty(trim($procCheck['output']));
         }
 
-        echo json_encode([
+        api_json([
             'status' => 'success',
             'data' => [
                 'service' => $service,
                 'active'  => $isActive,
                 'message' => $result['output'],
             ]
-        ]);
+        ], 200);
         break;
 
     default:
-        echo json_encode(['status' => 'error', 'error' => 'Unknown action']);
+        api_json(['status' => 'error', 'error' => 'Unknown action'], 400);
 }

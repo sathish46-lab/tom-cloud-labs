@@ -33,5 +33,4 @@ $fetcher = new \TomLabs\Labs\NewsFetcher();
 // DB query via NewsFetcher::getLatest() — date boundaries computed in IST
 $list = $fetcher->getLatest($source, $category, $severity, $q, $limit, $skip, $date_filter);
 
-header('Content-Type: application/json');
-echo json_encode(['status' => 'success', 'data' => $list['items'], 'total' => $list['total']]);
+api_json(['status' => 'success', 'data' => $list['items'], 'total' => $list['total']], 200);

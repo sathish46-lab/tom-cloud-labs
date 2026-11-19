@@ -1,10 +1,7 @@
 <?php
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $userId = (int)$user->getUserId();
 $username = $user->getUsername();
@@ -216,7 +213,7 @@ if ($lastLogin) {
 }
 
 // ── Response ──
-echo json_encode([
+api_json([
     'success' => true,
     'two_factor_enabled' => !empty($userDoc['two_factor_enabled']),
     'limits' => [
@@ -244,4 +241,4 @@ echo json_encode([
         'active' => $activeSessions,
         'recent_logins' => $recentLogins
     ]
-]);
+], 200);

@@ -9,8 +9,6 @@
 require_once __DIR__ . '/../../load.php';
 require_once __DIR__ . '/../../utils/currency.php';
 
-header('Content-Type: application/json');
-
 $admin = AuthMiddleware::requireAdmin();
 AuthMiddleware::requireCsrf();
 
@@ -24,4 +22,4 @@ $result = currency_adjust(
     (string)($_POST['type'] ?? 'Admin Adjustment')
 );
 
-echo json_encode($result);
+api_json($result, 200);

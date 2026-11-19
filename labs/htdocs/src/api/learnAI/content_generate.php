@@ -6,11 +6,8 @@
 require_once __DIR__ . '/../../load.php';
 require_once __DIR__ . '/../../lib/core/RabbitClient.class.php';
 
-header('Content-Type: application/json');
-
 // 1. Validate Session
 $user = AuthMiddleware::requireAuth();
-
 
 $userId = (int)$user->getUserId();
 
@@ -22,9 +19,7 @@ $sessionId = $input['session_id'] ?? uniqid('sess_');
 $messageId = $input['message_id'] ?? uniqid('msg_');
 
 if (empty($chapterId)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'chapter_id is required']);
-    exit;
+api_json(['error' => 'chapter_id is required'], 400);
 }
 
 try {
@@ -40,13 +35,12 @@ try {
 
     $rabbit->sendToQueue('ai_content_jobs', $job);
 
-    echo json_encode([
+    api_json([
         'status' => 'success',
         'message' => 'Content generation job queued',
         'session_id' => $sessionId,
         'message_id' => $messageId
-    ]);
+    ], 200);
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Failed to queue content job: ' . errors_from_exception($e, 'learnAI/content_generate')['error']]);
+    api_json(['error' => 'Failed to queue content job: ' . errors_from_exception($e, 'learnAI/content_generate')['error']], 500);
 }

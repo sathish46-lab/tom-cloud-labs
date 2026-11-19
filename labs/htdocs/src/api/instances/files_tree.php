@@ -1,17 +1,13 @@
 <?php
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $userId = (int) $user->getUserId();
 $slug = $_GET['slug'] ?? '';
 
 if (empty($slug)) {
-    echo json_encode(['status' => 'error', 'error' => 'Missing slug']);
-    exit;
+api_json(['status' => 'error', 'error' => 'Missing slug'], 400);
 }
 
 $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_instances_db');
@@ -21,21 +17,18 @@ if (!$instance) {
 }
 
 if (!$instance) {
-    echo json_encode(['status' => 'error', 'error' => 'Instance not found']);
-    exit;
+api_json(['status' => 'error', 'error' => 'Instance not found'], 400);
 }
 
 // Ownership check
 if ((int) ($instance['user_id'] ?? 0) !== $userId) {
-    echo json_encode(['status' => 'error', 'error' => 'Forbidden']);
-    exit;
+api_json(['status' => 'error', 'error' => 'Forbidden'], 403);
 }
 
 $instanceHash = $instance['instance_hash'] ?? $slug;
 $templateFolder = InstanceFileStore::resolveTemplateFolder($instance);
 if (!$templateFolder) {
-    echo json_encode(['status' => 'success', 'tree' => [], 'template' => null]);
-    exit;
+api_json(['status' => 'success', 'tree' => [], 'template' => null], 200);
 }
 
 $tree = InstanceFileStore::getTree($instanceHash, $templateFolder);
@@ -44,9 +37,9 @@ $userId = (string)$user->getUserId();
 $lastOpenedFiles = (array)($instance['last_file_opened'] ?? []);
 $lastOpened = $lastOpenedFiles[$userId] ?? null;
 
-echo json_encode([
+api_json([
     'status' => 'success',
     'tree' => $tree,
     'template' => $templateFolder,
     'last_opened' => $lastOpened,
-]);
+], 200);

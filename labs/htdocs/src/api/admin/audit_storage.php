@@ -2,8 +2,6 @@
 require_once __DIR__ . '/../../load.php';
 require_once __DIR__ . '/../../utils/storage.php';
 
-header('Content-Type: application/json');
-
 $admin = AuthMiddleware::requireAdmin();
 AuthMiddleware::requireCsrf();
 
@@ -12,8 +10,7 @@ try {
     $summary = storage_audit_run($db);
 
     if (isset($summary['error'])) {
-        echo json_encode(['status' => 'error', 'error' => $summary['error']]);
-        exit;
+api_json(['status' => 'error', 'error' => $summary['error']], 400);
     }
 
     AuditLog::log(
@@ -30,8 +27,8 @@ try {
         (string)($admin->getUserId() ?? 'unknown')
     );
 
-    echo json_encode(['status' => 'success'] + $summary);
+    api_json(['status' => 'success'] + $summary, 200);
 } catch (Throwable $e) {
     errors_report(['context' => 'admin/audit_storage', 'message' => 'audit_storage: ' . $e->getMessage()]);
-    echo json_encode(['status' => 'error', 'error' => 'Storage audit failed']);
+    api_json(['status' => 'error', 'error' => 'Storage audit failed'], 400);
 }

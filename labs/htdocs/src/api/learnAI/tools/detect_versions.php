@@ -5,8 +5,6 @@
  */
 require_once __DIR__ . '/../../../load.php';
 
-header('Content-Type: application/json');
-
 AuthMiddleware::requireInternalToken();
 
 $input = json_decode(file_get_contents('php://input'), true);
@@ -15,9 +13,7 @@ $lessonId = $input['lesson_id'] ?? null;
 $tools = $input['tools'] ?? [];
 
 if (empty($userId) || empty($tools) || !is_array($tools)) {
-    http_response_code(400);
-    echo json_encode(['status' => 'error', 'error' => 'Missing user_id or tools array']);
-    exit;
+api_json(['status' => 'error', 'error' => 'Missing user_id or tools array'], 400);
 }
 
 try {
@@ -31,15 +27,11 @@ try {
     $labDoc = $inst;
 
     if (!$labDoc || empty($labDoc['instance_hash'])) {
-        http_response_code(400);
-        echo json_encode(['status' => 'error', 'error' => 'No running lab instance found for this user']);
-        exit;
+api_json(['status' => 'error', 'error' => 'No running lab instance found for this user'], 400);
     }
     $instanceHash = $labDoc['instance_hash'];
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['status' => 'error', 'error' => 'Database error: ' . errors_from_exception($e, 'learnAI/tools/detect_versions')['error']]);
-    exit;
+api_json(['status' => 'error', 'error' => 'Database error: ' . errors_from_exception($e, 'learnAI/tools/detect_versions')['error']], 500);
 }
 
 // Only allow known safe tool names
@@ -83,13 +75,12 @@ try {
         }
     }
 
-    echo json_encode([
+    api_json([
         'status'   => 'success',
         'lab_name' => $labData['name'] ?? 'Unknown',
         'versions' => $versions
-    ]);
+    ], 200);
 
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['status' => 'error', 'error' => errors_from_exception($e, 'learnAI/tools/detect_versions')['error']]);
+    api_json(['status' => 'error', 'error' => errors_from_exception($e, 'learnAI/tools/detect_versions')['error']], 500);
 }

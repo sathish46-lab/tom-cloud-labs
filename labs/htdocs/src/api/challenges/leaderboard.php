@@ -4,7 +4,6 @@
  * GET /api/challenges/leaderboard?lab_id=shadow-partner
  * Returns sorted leaderboard entries for a given challenge lab.
  */
-header('Content-Type: application/json');
 require_once __DIR__ . '/../../load.php';
 
 $user = AuthMiddleware::requireAuth();
@@ -12,7 +11,7 @@ $user = AuthMiddleware::requireAuth();
 $labId = $_GET['lab_id'] ?? '';
 
 if (empty($labId)) {
-    echo json_encode(['status' => 'error', 'message' => 'lab_id required']); exit;
+    api_json(['status' => 'error', 'message' => 'lab_id required'], 400);
 }
 
 $db = DatabaseConnection::getDefaultDatabase();
@@ -40,9 +39,9 @@ foreach ($entries as $entry) {
     ];
 }
 
-echo json_encode([
+api_json([
     'status'      => 'ok',
     'lab_id'      => $labId,
     'total'       => count($leaderboard),
     'leaderboard' => $leaderboard,
-]);
+], 200);

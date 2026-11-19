@@ -5,11 +5,8 @@
  */
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
-
 // 1. Validate Session
 $user = AuthMiddleware::requireAuth();
-
 
 $userId = (int)$user->getUserId();
 $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
@@ -80,7 +77,7 @@ foreach ($domains as $domain) {
     ];
 }
 
-echo json_encode([
+api_json([
     'labs' => [
         'active' => $activeLabs,
         'limit' => $labsLimit,
@@ -91,4 +88,4 @@ echo json_encode([
         'limit' => $domainsLimit,
         'all_domains' => $domainsList
     ]
-]);
+], 200);

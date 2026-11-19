@@ -9,8 +9,6 @@
 require_once __DIR__ . '/../../load.php';
 require_once __DIR__ . '/../../utils/user_delete.php';
 
-header('Content-Type: application/json');
-
 $admin = AuthMiddleware::requireAdmin();
 AuthMiddleware::requireCsrf();
 
@@ -19,32 +17,26 @@ $otp     = trim($_POST['otp'] ?? '');
 $confirm = trim($_POST['confirm'] ?? '');
 
 if ($email === '') {
-    echo json_encode(['status' => 'error', 'error' => 'Target email is required']);
-    exit;
+api_json(['status' => 'error', 'error' => 'Target email is required'], 400);
 }
 if (!hash_equals('DELETE ' . $email, $confirm)) {
-    echo json_encode(['status' => 'error', 'error' => 'Type exactly: DELETE ' . $email]);
-    exit;
+api_json(['status' => 'error', 'error' => 'Type exactly: DELETE ' . $email], 400);
 }
 if (!preg_match('/^\d{6}$/', $otp)) {
-    echo json_encode(['status' => 'error', 'error' => 'Enter the 6-digit confirmation code']);
-    exit;
+api_json(['status' => 'error', 'error' => 'Enter the 6-digit confirmation code'], 400);
 }
 
 $adminEmail = (string)($admin->getEmail() ?? '');
 if ($adminEmail === '') {
-    echo json_encode(['status' => 'error', 'error' => 'Admin identity not found']);
-    exit;
+api_json(['status' => 'error', 'error' => 'Admin identity not found'], 400);
 }
 if (strtolower($adminEmail) === strtolower($email)) {
-    echo json_encode(['status' => 'error', 'error' => 'You cannot delete your own account']);
-    exit;
+api_json(['status' => 'error', 'error' => 'You cannot delete your own account'], 400);
 }
 
 $db = DatabaseConnection::getDefaultDatabase();
 if (!$db->users->findOne(['email' => $email])) {
-    echo json_encode(['status' => 'error', 'error' => 'User not found']);
-    exit;
+api_json(['status' => 'error', 'error' => 'User not found'], 400);
 }
 
 $entry = delete_otp_load($adminEmail, $email);
@@ -53,11 +45,10 @@ if (!$check['ok']) {
     if ($entry && (int)($entry['expires'] ?? 0) < time()) {
         delete_otp_clear($adminEmail, $email);
     }
-    echo json_encode(['status' => 'error', 'error' => $check['error']]);
-    exit;
+api_json(['status' => 'error', 'error' => $check['error']], 400);
 }
 
 delete_otp_clear($adminEmail, $email);
 
 $result = user_delete_run($email, $adminEmail, $admin->getUserId());
-echo json_encode($result);
+api_json($result, 200);

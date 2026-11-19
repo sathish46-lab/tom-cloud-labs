@@ -3,16 +3,13 @@ require_once __DIR__ . '/../../load.php';
 require_once __DIR__ . '/../../lib/core/jobs/Worker.class.php';
 require_once __DIR__ . '/../../lib/core/RabbitClient.class.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $challengeId = $_POST['challenge_id'] ?? null;
 $instanceHash = $_POST['hash'] ?? null;
 
 if (!$challengeId || !$instanceHash) {
-    echo json_encode(['status' => 'error', 'error' => 'Missing parameters']); exit;
+    api_json(['status' => 'error', 'error' => 'Missing parameters'], 400);
 }
 
 try {
@@ -47,14 +44,13 @@ try {
         ['$set' => ['status' => 'stopped', 'mission_started' => false, 'updated_at' => time()]]
     );
     
-    echo json_encode([
+    api_json([
         'status' => 'success',
         'message' => 'Stop task queued', 
         'hash'   => $instanceHash,
         'queued' => true
-    ]);
+    ], 200);
 
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['status' => 'error', 'error' => errors_from_exception($e, 'challenges/stop_mission')['error']]);
+    api_json(['status' => 'error', 'error' => errors_from_exception($e, 'challenges/stop_mission')['error']], 500);
 }

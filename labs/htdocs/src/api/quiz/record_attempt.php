@@ -3,8 +3,6 @@ require_once '../../load.php';
 
 use TomLabs\Labs\Quiz;
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
 
 $userEmail = $user->getEmail();
@@ -31,8 +29,7 @@ if ($quizHash && $userEmail) {
             }
         }
     } else {
-        echo json_encode(['status' => 'error', 'message' => 'Quiz not found']);
-        exit;
+        api_json(['status' => 'error', 'message' => 'Quiz not found'], 400);
     }
 
     // Check if user has ever COMPLETED this quiz before
@@ -85,7 +82,7 @@ if ($quizHash && $userEmail) {
     // Get updated stats for the header
     $newStats = Quiz::getUserStats($userEmail);
 
-    echo json_encode([
+    api_json([
         'status' => 'success', 
         'message' => 'Attempt recorded',
         'rewarded' => $rewarded,
@@ -93,7 +90,7 @@ if ($quizHash && $userEmail) {
         'jolt' => $joltEarned,
         'total_zeal' => $newStats['zeal'],
         'total_jolt' => $newStats['jolt']
-    ]);
+    ], 200);
 } else {
-    echo json_encode(['status' => 'error', 'message' => 'Missing quiz hash']);
+    api_json(['status' => 'error', 'message' => 'Missing quiz hash'], 400);
 }

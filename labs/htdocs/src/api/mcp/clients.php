@@ -6,11 +6,8 @@
 
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
-
 // Check authentication
 $user = AuthMiddleware::requireAuth();
-
 
 $userId = $user->getUserId();
 
@@ -174,13 +171,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         return strcmp($b['last_used_at'], $a['last_used_at']);
     });
 
-    echo json_encode([
+    api_json([
         'clients' => $list,
         'count' => count($list),
         'live_count' => count(array_filter($list, function($c) {
             return !empty($c['connected']);
         }))
-    ]);
+    ], 200);
     exit;
 }
 
@@ -190,23 +187,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     $clientId = $input['client_id'] ?? '';
 
     if (empty($clientId)) {
-        http_response_code(400);
-        echo json_encode(['error' => 'invalid_request', 'message' => 'client_id required']);
-        exit;
+api_json(['error' => 'invalid_request', 'message' => 'client_id required'], 400);
     }
 
     // Validate CSRF
     if (!Session::validateCsrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '')) {
-        http_response_code(403);
-        echo json_encode(['error' => 'forbidden', 'message' => 'Invalid CSRF token']);
-        exit;
+api_json(['error' => 'forbidden', 'message' => 'Invalid CSRF token'], 403);
     }
 
     $revoked = MCPOAuth::revokeClient($clientId, $userId);
 
-    echo json_encode(['revoked' => $revoked]);
-    exit;
+api_json(['revoked' => $revoked], 200);
 }
 
-http_response_code(405);
-echo json_encode(['error' => 'method_not_allowed']);
+api_json(['error' => 'method_not_allowed'], 405);

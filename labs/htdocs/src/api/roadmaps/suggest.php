@@ -17,7 +17,6 @@ if (strlen($query) < 2) {
     exit;
 }
 
-
 $userId = (int)$user->getUserId();
 
 $db = DatabaseConnection::getDefaultDatabase();

@@ -6,15 +6,13 @@
 
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
 header('Cache-Control: public, max-age=86400'); // Cache for 24 hours
 
 // Only allow GET requests
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(405);
     header('Allow: GET');
-    echo json_encode(['error' => 'Method not allowed']);
-    exit;
+api_json(['error' => 'Method not allowed'], 400);
 }
 
 require_once __DIR__ . '/../../lib/core/MCPOAuth.class.php';
@@ -26,4 +24,4 @@ $baseUrl = $scheme . '://' . $host;
 
 $metadata = MCPOAuth::getServerMetadata($baseUrl);
 
-echo json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+api_json($metadata, 200);

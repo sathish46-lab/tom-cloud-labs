@@ -1,16 +1,12 @@
 <?php
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $deviceId = $_GET['id'] ?? '';
 
 if (empty($deviceId)) {
-    echo json_encode(['status' => 'error', 'error' => 'Missing device ID']);
-    exit;
+api_json(['status' => 'error', 'error' => 'Missing device ID'], 400);
 }
 
 try {
@@ -55,16 +51,15 @@ try {
     $config .= "Endpoint = $endpoint\n";
     $config .= "PersistentKeepalive = 25";
 
-    echo json_encode([
+    api_json([
         'status' => 'success',
         'data'   => [
             'config_raw' => $config,
             'device_name' => $deviceData['device_name'],
             'assigned_ip' => $assignedIp
         ]
-    ]);
+    ], 200);
 
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['status' => 'error', 'error' => errors_from_exception($e, 'vpn/connection_info')['error']]);
+    api_json(['status' => 'error', 'error' => errors_from_exception($e, 'vpn/connection_info')['error']], 500);
 }

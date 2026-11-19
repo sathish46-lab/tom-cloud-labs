@@ -8,11 +8,8 @@ require_once __DIR__ . '/../../../src/utils/config.php';
 require_once __DIR__ . '/../../../src/lib/core/DatabaseConnection.class.php';
 require_once __DIR__ . '/../../../src/lib/core/RabbitClient.class.php';
 
-header('Content-Type: application/json');
-
 // ── AUTH CHECK ──
 $user = AuthMiddleware::requireAuth();
-
 
 $userId = (int)$user->getUserId();
 $username = $user->getUsername();
@@ -36,15 +33,11 @@ if (!in_array($visibility, $validVisibility)) $visibility = 'private';
 $prompt = htmlspecialchars($prompt, ENT_QUOTES, 'UTF-8');
 
 if (empty($prompt) || mb_strlen($prompt) < 10) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Prompt must be at least 10 characters']);
-    exit;
+api_json(['error' => 'Prompt must be at least 10 characters'], 400);
 }
 
 if (mb_strlen($prompt) > 2000) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Prompt must be under 2000 characters']);
-    exit;
+api_json(['error' => 'Prompt must be under 2000 characters'], 400);
 }
 
 $db = DatabaseConnection::getDefaultDatabase();
@@ -56,9 +49,7 @@ $inflightCount = $db->ai_roadmap_jobs->countDocuments([
 ]);
 
 if ($inflightCount >= 3) {
-    http_response_code(429);
-    echo json_encode(['error' => 'Too many roadmaps being generated. Please wait.']);
-    exit;
+api_json(['error' => 'Too many roadmaps being generated. Please wait.'], 429);
 }
 
 // ── CREATE JOB ──
@@ -101,13 +92,11 @@ try {
         ['request_id' => $jobId],
         ['$set' => ['status' => 'failed', 'error_message' => 'Failed to queue job: ' . $e->getMessage()]]
     );
-    http_response_code(500);
-    echo json_encode(['error' => 'Failed to start generation. Please try again.']);
-    exit;
+api_json(['error' => 'Failed to start generation. Please try again.'], 500);
 }
 
-echo json_encode([
+api_json([
     'status' => 'ok',
     'job_id' => $jobId,
     'message' => 'Generation started',
-]);
+], 200);

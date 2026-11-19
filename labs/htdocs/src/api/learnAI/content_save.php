@@ -5,8 +5,6 @@
  */
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
 
 $input = json_decode(file_get_contents('php://input'), true) ?? [];
@@ -15,9 +13,7 @@ $contentHtml = $input['content_html'] ?? '';
 $contentMd = $input['content_markdown'] ?? null;
 
 if (empty($chapterId) || empty($contentHtml)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'chapter_id and content_html are required']);
-    exit;
+api_json(['error' => 'chapter_id and content_html are required'], 400);
 }
 
 try {
@@ -43,8 +39,7 @@ try {
         }
     } catch (Exception $e) {}
 
-    echo json_encode(['status' => 'success']);
+    api_json(['status' => 'success'], 200);
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Failed to save content: ' . errors_from_exception($e, 'learnAI/content_save')['error']]);
+    api_json(['error' => 'Failed to save content: ' . errors_from_exception($e, 'learnAI/content_save')['error']], 500);
 }

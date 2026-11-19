@@ -2,8 +2,6 @@
 require_once __DIR__ . '/../../load.php';
 require_once __DIR__ . '/../../lib/core/AuditLog.class.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
 AuthMiddleware::requireCsrf();
 
@@ -14,13 +12,11 @@ $currentPassword = $data['current_password'] ?? '';
 $newPassword = $data['new_password'] ?? '';
 
 if (empty($currentPassword) || empty($newPassword)) {
-    echo json_encode(['status' => 'error', 'error' => 'Current and new password are required.']);
-    exit;
+api_json(['status' => 'error', 'error' => 'Current and new password are required.'], 400);
 }
 
 if (strlen($newPassword) < 8) {
-    echo json_encode(['status' => 'error', 'error' => 'New password must be at least 8 characters.']);
-    exit;
+api_json(['status' => 'error', 'error' => 'New password must be at least 8 characters.'], 400);
 }
 
 try {
@@ -28,15 +24,13 @@ try {
     $userRecord = $db->users->findOne(['email' => $user->getEmail()]);
 
     if (!$userRecord) {
-        echo json_encode(['status' => 'error', 'error' => 'User not found.']);
-        exit;
+api_json(['status' => 'error', 'error' => 'User not found.'], 400);
     }
 
     // Verify current password
     $currentHash = $userRecord['password'] ?? '';
     if (!password_verify($currentPassword, $currentHash)) {
-        echo json_encode(['status' => 'error', 'error' => 'Current password is incorrect.']);
-        exit;
+api_json(['status' => 'error', 'error' => 'Current password is incorrect.'], 400);
     }
 
     // Hash new password
@@ -92,9 +86,9 @@ try {
         'sessions_invalidated' => $currentTokenHash ? 'other_sessions' : 'all_sessions',
     ]);
 
-    echo json_encode(['status' => 'success', 'message' => 'Password changed successfully.']);
+    api_json(['status' => 'success', 'message' => 'Password changed successfully.'], 400);
 
 } catch (Exception $e) {
     errors_report(['context' => 'account/change_password', 'message' => "Password change error: " . $e->getMessage()]);
-    echo json_encode(['status' => 'error', 'error' => 'Failed to change password.']);
+    api_json(['status' => 'error', 'error' => 'Failed to change password.'], 400);
 }

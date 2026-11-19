@@ -1,8 +1,6 @@
 <?php
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
-
 $admin = AuthMiddleware::requireAdmin();
 AuthMiddleware::requireCsrf();
 
@@ -11,22 +9,22 @@ $email  = trim($_POST['email'] ?? '');
 $plan   = trim($_POST['plan'] ?? '');
 
 if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    echo json_encode(['status' => 'error', 'error' => 'Valid email required']); exit;
+    api_json(['status' => 'error', 'error' => 'Valid email required'], 400);
 }
 if (!in_array($plan, $plans, true)) {
-    echo json_encode(['status' => 'error', 'error' => 'Plan must be free, default or pro']); exit;
+    api_json(['status' => 'error', 'error' => 'Plan must be free, default or pro'], 400);
 }
 
 try {
     $db = DatabaseConnection::getDefaultDatabase();
     $target = $db->users->findOne(['email' => $email]);
     if (!$target) {
-        echo json_encode(['status' => 'error', 'error' => 'User not found']); exit;
+        api_json(['status' => 'error', 'error' => 'User not found'], 400);
     }
 
     $from = $target['plan'] ?? 'default';
     if ($from === $plan) {
-        echo json_encode(['status' => 'success', 'plan' => $plan, 'unchanged' => true]); exit;
+        api_json(['status' => 'success', 'plan' => $plan, 'unchanged' => true], 200);
     }
 
     $db->users->updateOne(['email' => $email], ['$set' => ['plan' => $plan]]);
@@ -39,8 +37,8 @@ try {
         (string)($admin->getUserId() ?? 'unknown')
     );
 
-    echo json_encode(['status' => 'success', 'plan' => $plan]);
+    api_json(['status' => 'success', 'plan' => $plan], 200);
 } catch (Throwable $e) {
     errors_report(['context' => 'admin/set_plan', 'message' => 'set_plan: ' . $e->getMessage()]);
-    echo json_encode(['status' => 'error', 'error' => 'Failed to update plan']);
+    api_json(['status' => 'error', 'error' => 'Failed to update plan'], 400);
 }

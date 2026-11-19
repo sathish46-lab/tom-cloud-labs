@@ -3,21 +3,19 @@ require_once __DIR__ . '/../../../src/load.php';
 
 use TomLabs\Services\ServiceConfig;
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAdmin();
 
 $service = $_POST['service'] ?? '';
 $state = (isset($_POST['state']) && $_POST['state'] === 'true');
 
 if ($service === '') {
-    echo json_encode(['status' => 'error', 'error' => 'Service missing']); exit;
+    api_json(['status' => 'error', 'error' => 'Service missing'], 400);
 }
 
 // Validate service slug against known services
 $allServices = ServiceConfig::all();
 if (!isset($allServices[$service])) {
-    echo json_encode(['status' => 'error', 'error' => 'Unknown service name']); exit;
+    api_json(['status' => 'error', 'error' => 'Unknown service name'], 400);
 }
 
 try {
@@ -32,19 +30,19 @@ try {
     exec($command . ' 2>&1', $labsctlLines, $labsctlExitCode);
     $labsctlOutput = trim(implode("\n", $labsctlLines));
     if ($labsctlExitCode !== 0) {
-        echo json_encode([
+        api_json([
             'status' => 'error',
             'error' => 'Failed to ' . $labsctlAction . ' service: ' . $labsctlOutput,
-        ]);
+        ], 200);
         exit;
     }
 
     // Persist the flag only after the container action succeeded
     \TomLabs\Services\ServiceFlags::set($service, $state);
-    echo json_encode(['status' => 'success', 'service' => $service, 'enabled' => $state]);
+    api_json(['status' => 'success', 'service' => $service, 'enabled' => $state], 200);
 } catch (\InvalidArgumentException $e) {
     error_log('service_toggle rejected: ' . $e);
-    echo json_encode(['status' => 'error', 'error' => 'Unknown service name']);
+    api_json(['status' => 'error', 'error' => 'Unknown service name'], 400);
 } catch (Exception $e) {
-    echo json_encode(['status' => 'error', 'error' => errors_from_exception($e, 'admin/service_toggle')['error']]);
+    api_json(['status' => 'error', 'error' => errors_from_exception($e, 'admin/service_toggle')['error']], 500);
 }

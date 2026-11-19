@@ -5,10 +5,7 @@
  */
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $currentUsername = $user ? $user->getUsername() : '';
 $currentEmail = $user ? $user->getEmail() : '';
@@ -19,18 +16,14 @@ $lessonId = trim($input['lesson_id'] ?? $_POST['lesson_id'] ?? '');
 $targetVisibility = trim($input['visibility'] ?? $_POST['visibility'] ?? '');
 
 if (empty($lessonId) || !in_array($targetVisibility, ['Public', 'Private'])) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid lesson_id or visibility']);
-    exit;
+api_json(['error' => 'Invalid lesson_id or visibility'], 400);
 }
 
 try {
     $db = DatabaseConnection::getDefaultDatabase();
     $lesson = $db->ai_lessons->findOne(['_id' => new MongoDB\BSON\ObjectId($lessonId)]);
     if (!$lesson) {
-        http_response_code(404);
-        echo json_encode(['error' => 'Lesson not found']);
-        exit;
+api_json(['error' => 'Lesson not found'], 404);
     }
 
     $isAuthor = false;
@@ -43,9 +36,7 @@ try {
     }
 
     if (!$isAuthor) {
-        http_response_code(403);
-        echo json_encode(['error' => 'Forbidden: Only the author can change lesson visibility']);
-        exit;
+api_json(['error' => 'Forbidden: Only the author can change lesson visibility'], 403);
     }
 
     $db->ai_lessons->updateOne(
@@ -53,8 +44,7 @@ try {
         ['$set' => ['visibility' => $targetVisibility]]
     );
 
-    echo json_encode(['status' => 'success', 'visibility' => $targetVisibility, 'lesson_id' => $lessonId]);
+    api_json(['status' => 'success', 'visibility' => $targetVisibility, 'lesson_id' => $lessonId], 200);
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Failed to update visibility: ' . errors_from_exception($e, 'learnAI/visibility_toggle')['error']]);
+    api_json(['error' => 'Failed to update visibility: ' . errors_from_exception($e, 'learnAI/visibility_toggle')['error']], 500);
 }

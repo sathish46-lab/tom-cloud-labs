@@ -8,16 +8,11 @@
  */
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
-
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['error' => 'Method not allowed']);
-    exit;
+api_json(['error' => 'Method not allowed'], 405);
 }
 
 $user = AuthMiddleware::requireAuth();
-
 
 $userId = (int)$user->getUserId();
 $email = $user->getEmail();
@@ -36,8 +31,7 @@ $recentHit = $db->user_activity->findOne([
 ], ['sort' => ['timestamp' => -1]]);
 
 if ($recentHit) {
-    echo json_encode(['status' => 'skipped', 'reason' => 'rate_limited']);
-    exit;
+api_json(['status' => 'skipped', 'reason' => 'rate_limited'], 200);
 }
 
 $db->user_activity->insertOne([
@@ -50,4 +44,4 @@ $db->user_activity->insertOne([
     'created_at' => new MongoDB\BSON\UTCDateTime($now * 1000)
 ]);
 
-echo json_encode(['status' => 'ok']);
+api_json(['status' => 'ok'], 200);

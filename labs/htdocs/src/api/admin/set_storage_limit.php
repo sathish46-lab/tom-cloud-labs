@@ -2,8 +2,6 @@
 require_once __DIR__ . '/../../load.php';
 require_once __DIR__ . '/../../utils/storage.php';
 
-header('Content-Type: application/json');
-
 $admin = AuthMiddleware::requireAdmin();
 AuthMiddleware::requireCsrf();
 
@@ -11,7 +9,7 @@ $email = trim($_POST['email'] ?? '');
 $reset = isset($_POST['reset']) && $_POST['reset'] !== '' && $_POST['reset'] !== '0';
 
 if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    echo json_encode(['status' => 'error', 'error' => 'Valid email required']); exit;
+    api_json(['status' => 'error', 'error' => 'Valid email required'], 400);
 }
 
 $limit = null;
@@ -20,24 +18,24 @@ if (!$reset) {
     if (isset($_POST['limit_bytes']) && $_POST['limit_bytes'] !== '') {
         $raw = $_POST['limit_bytes'];
         if (!is_numeric($raw)) {
-            echo json_encode(['status' => 'error', 'error' => 'Storage limit must be a number']); exit;
+            api_json(['status' => 'error', 'error' => 'Storage limit must be a number'], 400);
         }
         $limit = (int)$raw;
     } elseif (isset($_POST['limit_gb']) && $_POST['limit_gb'] !== '') {
         $raw = $_POST['limit_gb'];
         if (!is_numeric($raw) || (float)$raw <= 0) {
-            echo json_encode(['status' => 'error', 'error' => 'Storage limit must be greater than 0']); exit;
+            api_json(['status' => 'error', 'error' => 'Storage limit must be greater than 0'], 400);
         }
         $limit = (int)round((float)$raw * 1073741824);
     } else {
-        echo json_encode(['status' => 'error', 'error' => 'Storage limit (GB) required']); exit;
+        api_json(['status' => 'error', 'error' => 'Storage limit (GB) required'], 400);
     }
 
     if ($limit <= 0) {
-        echo json_encode(['status' => 'error', 'error' => 'Storage limit must be greater than 0']); exit;
+        api_json(['status' => 'error', 'error' => 'Storage limit must be greater than 0'], 400);
     }
     if ($limit > STORAGE_LIMIT_MAX) {
-        echo json_encode(['status' => 'error', 'error' => 'Storage limit cannot exceed ' . storage_format_bytes(STORAGE_LIMIT_MAX)]); exit;
+        api_json(['status' => 'error', 'error' => 'Storage limit cannot exceed ' . storage_format_bytes(STORAGE_LIMIT_MAX)], 400);
     }
 }
 
@@ -45,7 +43,7 @@ try {
     $db = DatabaseConnection::getDefaultDatabase();
     $target = $db->users->findOne(['email' => $email]);
     if (!$target) {
-        echo json_encode(['status' => 'error', 'error' => 'User not found']); exit;
+        api_json(['status' => 'error', 'error' => 'User not found'], 400);
     }
 
     $before = storage_limit_override_of((array)$target);
@@ -88,15 +86,15 @@ try {
         (string)($admin->getUserId() ?? 'unknown')
     );
 
-    echo json_encode([
+    api_json([
         'status'        => 'success',
         'limit_bytes'   => $after,
         'plan'          => $plan,
         'effective'     => storage_effective_limit($after, $plan),
         'label'         => $after === null ? 'Plan default' : storage_format_bytes($after),
         'unchanged'     => $before === $after,
-    ]);
+    ], 200);
 } catch (Throwable $e) {
     errors_report(['context' => 'admin/set_storage_limit', 'message' => 'set_storage_limit: ' . $e->getMessage()]);
-    echo json_encode(['status' => 'error', 'error' => 'Failed to update storage limit']);
+    api_json(['status' => 'error', 'error' => 'Failed to update storage limit'], 400);
 }

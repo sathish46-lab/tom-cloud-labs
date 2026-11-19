@@ -1,16 +1,14 @@
 <?php
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
 $user = AuthMiddleware::requireAuth();
-
 
 $db = DatabaseConnection::getDefaultDatabase();
 
 $payload = json_decode(file_get_contents('php://input'), true);
 
 if (!$payload) {
-    echo json_encode(['status' => 'error', 'error' => 'Invalid payload']); exit;
+    api_json(['status' => 'error', 'error' => 'Invalid payload'], 400);
 }
 
 $mode = $payload['mode'] ?? null;
@@ -29,7 +27,7 @@ if ($customSlots !== null) $updateData['theme_preferences.custom_slots'] = $cust
 if ($customThemes !== null) $updateData['theme_preferences.custom_themes'] = $customThemes;
 
 if (empty($updateData)) {
-    echo json_encode(['status' => 'success']); exit;
+    api_json(['status' => 'success'], 200);
 }
 
 try {
@@ -37,7 +35,7 @@ try {
         ['email' => $user->getEmail()],
         ['$set' => $updateData]
     );
-    echo json_encode(['status' => 'success']);
+    api_json(['status' => 'success'], 200);
 } catch (Exception $e) {
-    echo json_encode(['status' => 'error', 'error' => 'Database error.']);
+    api_json(['status' => 'error', 'error' => 'Database error.'], 400);
 }

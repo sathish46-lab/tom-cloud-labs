@@ -1,15 +1,13 @@
 <?php
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
-
 // Target identity has no admin rights, so resolve the original superuser.
 $admin = AuthMiddleware::requireAdmin();
 AuthMiddleware::requireCsrf();
 
 $imp = $_SESSION['impersonator'] ?? null;
 if (empty($imp['username'])) {
-    echo json_encode(['status' => 'error', 'error' => 'Not currently impersonating anyone']); exit;
+    api_json(['status' => 'error', 'error' => 'Not currently impersonating anyone'], 400);
 }
 
 try {
@@ -32,8 +30,8 @@ try {
 
     unset($_SESSION['impersonator']);
 
-    echo json_encode(['status' => 'success', 'restored' => $imp['username']]);
+    api_json(['status' => 'success', 'restored' => $imp['username']], 200);
 } catch (Throwable $e) {
     errors_report(['context' => 'admin/exit_impersonation', 'message' => 'exit_impersonation: ' . $e->getMessage()]);
-    echo json_encode(['status' => 'error', 'error' => 'Failed to exit impersonation']);
+    api_json(['status' => 'error', 'error' => 'Failed to exit impersonation'], 400);
 }

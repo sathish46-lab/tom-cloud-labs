@@ -3,7 +3,6 @@ require_once __DIR__ . '/../../load.php';
 
 $user = AuthMiddleware::requireAuth();
 
-
 $userId = (int)$user->getUserId();
 
 $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_instances_db');

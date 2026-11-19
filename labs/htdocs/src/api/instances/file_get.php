@@ -1,8 +1,6 @@
 <?php
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
 
 try {
@@ -12,8 +10,7 @@ try {
     $path = $_GET['path'] ?? '';
 
     if (empty($slug) || empty($path)) {
-        echo json_encode(['status' => 'error', 'error' => 'Missing parameters']);
-        exit;
+api_json(['status' => 'error', 'error' => 'Missing parameters'], 400);
     }
 
     $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_instances_db');
@@ -22,31 +19,28 @@ try {
         $instance = $db->instances->findOne(['slug' => $slug]);
     }
     if (!$instance || (int) ($instance['user_id'] ?? 0) !== $userId) {
-        echo json_encode(['status' => 'error', 'error' => 'Instance not found or forbidden']);
-        exit;
+api_json(['status' => 'error', 'error' => 'Instance not found or forbidden'], 400);
     }
 
     $instanceHash = $instance['instance_hash'] ?? $slug;
     $templateFolder = InstanceFileStore::resolveTemplateFolder($instance);
     if (!$templateFolder) {
-        echo json_encode(['status' => 'error', 'error' => 'No template for instance']);
-        exit;
+api_json(['status' => 'error', 'error' => 'No template for instance'], 400);
     }
 
     $file = InstanceFileStore::getFile($instanceHash, $templateFolder, $path);
     if (!$file) {
-        echo json_encode(['status' => 'error', 'error' => 'File not found: ' . $path]);
-        exit;
+api_json(['status' => 'error', 'error' => 'File not found: ' . $path], 400);
     }
 
-    echo json_encode([
+    api_json([
         'status' => 'success',
         'path' => $file['base_path'],
         'name' => $file['name'],
         'content' => $file['content'] ?? '',
         'modified' => $file['modified'],
-    ]);
+    ], 200);
 } catch (Exception $e) {
     errors_report(['context' => 'instances/file_get', 'message' => 'file_get error: ' . $e->getMessage()]);
-    echo json_encode(['status' => 'error', 'error' => 'Server error: ' . errors_from_exception($e, 'instances/file_get')['error']]);
+    api_json(['status' => 'error', 'error' => 'Server error: ' . errors_from_exception($e, 'instances/file_get')['error']], 500);
 }

@@ -1,10 +1,7 @@
 <?php
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $username = $user->getUsername();
 $userEmail = $user->getEmail();
@@ -26,7 +23,7 @@ $remaining = max(0, 3 - $rateData['count']);
 
 if (isset($_GET['action']) && $_GET['action'] === 'refresh') {
     if ($rateData['count'] >= 3) {
-        echo json_encode(['success' => false, 'error' => 'Rate limit exceeded. Try again later.', 'remaining_refreshes' => 0]); exit;
+        api_json(['success' => false, 'error' => 'Rate limit exceeded. Try again later.', 'remaining_refreshes' => 0], 400);
     }
     $rateData['count']++;
     $rateData['window'] = $now;
@@ -40,29 +37,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (($input['action'] ?? '') === 'delete') {
         $deletePath = trim($input['path'] ?? '', '/');
         if ($deletePath === '') {
-            echo json_encode(['success' => false, 'error' => 'Cannot delete root']); exit;
+            api_json(['success' => false, 'error' => 'Cannot delete root'], 400);
         }
         $deleteTarget = realpath($userHome . '/' . $deletePath);
         if ($deleteTarget === false || strpos($deleteTarget, $userHome) !== 0) {
-            echo json_encode(['success' => false, 'error' => 'Access denied']); exit;
+            api_json(['success' => false, 'error' => 'Access denied'], 400);
         }
         if (!is_dir($deleteTarget) && !is_file($deleteTarget)) {
-            echo json_encode(['success' => false, 'error' => 'Not found']); exit;
+            api_json(['success' => false, 'error' => 'Not found'], 400);
         }
         // Only allow deleting lab directories (starting with .) and specific system dirs
         $baseName = basename($deleteTarget);
         $allowed = preg_match('/^\./', $baseName) || in_array($baseName, ['cron', 'usr']);
         if (!$allowed) {
-            echo json_encode(['success' => false, 'error' => 'Cannot delete this item']); exit;
+            api_json(['success' => false, 'error' => 'Cannot delete this item'], 400);
         }
         exec('rm -rf ' . escapeshellarg($deleteTarget), $out, $ret);
         if ($ret === 0) {
-            echo json_encode(['success' => true]); exit;
+            api_json(['success' => true], 200);
         } else {
-            echo json_encode(['success' => false, 'error' => 'Delete failed']); exit;
+            api_json(['success' => false, 'error' => 'Delete failed'], 400);
         }
     }
-    echo json_encode(['success' => false, 'error' => 'Invalid action']); exit;
+    api_json(['success' => false, 'error' => 'Invalid action'], 400);
 }
 
 // Path navigation:
@@ -75,13 +72,13 @@ $scanPath = $userHome;
 if ($relPath !== '') {
     $candidate = realpath($userHome . '/' . $relPath);
     if ($candidate === false || strpos($candidate, $userHome) !== 0) {
-        echo json_encode(['success' => false, 'error' => 'Access denied']); exit;
+        api_json(['success' => false, 'error' => 'Access denied'], 400);
     }
     $scanPath = $candidate;
 }
 
 if (!is_dir($scanPath)) {
-    echo json_encode(['success' => false, 'error' => 'Directory not found']); exit;
+    api_json(['success' => false, 'error' => 'Directory not found'], 400);
 }
 
 // Get user home size
@@ -164,7 +161,7 @@ usort($entries, function($a, $b) { return $b['bytes'] - $a['bytes']; });
 $totalUsedMb = round($totalBytes / (1024 * 1024));
 $limitGb = 25;
 
-echo json_encode([
+api_json([
     'success' => true,
     'owner' => $user->getEmail(),
     'username' => $username,
@@ -202,4 +199,4 @@ echo json_encode([
         '_other' => 'Other'
     ],
     'remaining_refreshes' => $remaining
-]);
+], 200);

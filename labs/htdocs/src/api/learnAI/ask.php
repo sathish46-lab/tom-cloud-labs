@@ -6,11 +6,8 @@
 require_once __DIR__ . '/../../load.php';
 require_once __DIR__ . '/../../lib/core/RabbitClient.class.php';
 
-header('Content-Type: application/json');
-
 // 1. Validate Session
 $user = AuthMiddleware::requireAuth();
-
 
 $userId = (int)$user->getUserId(); // Always cast to int for consistent MongoDB typing
 
@@ -26,9 +23,7 @@ $sessionId = $input['session_id'] ?? uniqid('sess_');
 $messageId = $input['message_id'] ?? uniqid('msg_');
 
 if (empty($query)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Query is required']);
-    exit;
+api_json(['error' => 'Query is required'], 400);
 }
 
 // Check AI Assist unlock status for non-authors on public lessons
@@ -51,9 +46,7 @@ if (!empty($lessonId)) {
             if (!$isAuthor) {
                 $unlockCheck = $db->ai_unlocked_lessons->findOne(['user_id' => $userId, 'lesson_id' => (string)$lessonId]);
                 if (!$unlockCheck) {
-                    http_response_code(403);
-                    echo json_encode(['error' => 'AI Assist is locked for this lesson. Please unlock it first.']);
-                    exit;
+api_json(['error' => 'AI Assist is locked for this lesson. Please unlock it first.'], 403);
                 }
             }
         }
@@ -123,13 +116,13 @@ try {
             ]
         ], "ai_stream.{$sessionId}");
 
-        echo json_encode([
+        api_json([
             'status' => 'success',
             'routed' => 'deterministic',
             'message' => 'Answered deterministically via local tools',
             'session_id' => $sessionId,
             'message_id' => $messageId
-        ]);
+        ], 200);
         exit;
     }
 
@@ -150,16 +143,15 @@ try {
     // Push to ai_jobs queue
     $rabbit->sendToQueue('ai_jobs', $job);
 
-    echo json_encode([
+    api_json([
         'status' => 'success',
         'routed' => 'llm_orchestrator',
         'message' => 'AI job queued with pre-fetched Layer 5 context',
         'session_id' => $sessionId,
         'message_id' => $messageId
-    ]);
+    ], 200);
 
 } catch (Exception $e) {
-    http_response_code(500);
     $ref = errors_report(['context' => 'learnAI.ask', 'message' => $e->getMessage()]);
-    echo json_encode(['error' => errors_public($ref), 'ref' => $ref]);
+    api_json(['error' => errors_public($ref), 'ref' => $ref], 400);
 }

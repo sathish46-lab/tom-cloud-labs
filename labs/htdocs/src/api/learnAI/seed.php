@@ -1,8 +1,6 @@
 <?php
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
-
 // CRITICAL: This is a destructive seeding script — admin only
 $user = AuthMiddleware::requireAdmin();
 

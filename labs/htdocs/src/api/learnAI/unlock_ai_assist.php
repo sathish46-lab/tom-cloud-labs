@@ -5,10 +5,7 @@
  */
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $userId = (int)$user->getUserId();
 $userEmail = $user->getEmail();
@@ -18,18 +15,14 @@ $input = json_decode(file_get_contents('php://input'), true) ?? [];
 $lessonId = trim($input['lesson_id'] ?? $_POST['lesson_id'] ?? '');
 
 if (empty($lessonId)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'lesson_id is required']);
-    exit;
+api_json(['error' => 'lesson_id is required'], 400);
 }
 
 try {
     $db = DatabaseConnection::getDefaultDatabase();
     $lesson = $db->ai_lessons->findOne(['_id' => new MongoDB\BSON\ObjectId($lessonId)]);
     if (!$lesson) {
-        http_response_code(404);
-        echo json_encode(['error' => 'Lesson not found']);
-        exit;
+api_json(['error' => 'Lesson not found'], 404);
     }
 
     // Check if user is already author
@@ -43,15 +36,13 @@ try {
     }
 
     if ($isAuthor) {
-        echo json_encode(['status' => 'success', 'message' => 'Lesson owner already has free access']);
-        exit;
+api_json(['status' => 'success', 'message' => 'Lesson owner already has free access'], 200);
     }
 
     // Check if already unlocked
     $existingUnlock = $db->ai_unlocked_lessons->findOne(['user_id' => $userId, 'lesson_id' => (string)$lessonId]);
     if ($existingUnlock) {
-        echo json_encode(['status' => 'success', 'message' => 'AI Assist already unlocked for this lesson']);
-        exit;
+api_json(['status' => 'success', 'message' => 'AI Assist already unlocked for this lesson'], 200);
     }
 
     // Check Jolt fuel (needs 25 Jolt)
@@ -60,12 +51,11 @@ try {
     $requiredJolt = 25;
 
     if ($currentJolt < $requiredJolt) {
-        http_response_code(402);
-        echo json_encode([
+        api_json([
             'error' => "Insufficient Jolt fuel. You need {$requiredJolt} Jolt to unlock AI Assist, but currently have {$currentJolt} Jolt. Complete challenges or quizzes to earn more fuel!",
             'current_jolt' => $currentJolt,
             'required_jolt' => $requiredJolt
-        ]);
+        ], 402);
         exit;
     }
 
@@ -84,13 +74,12 @@ try {
     $updatedStats = \TomLabs\Labs\Quiz::getUserStats($userEmail);
     $newJolt = (int)($updatedStats['jolt'] ?? ($currentJolt - $requiredJolt));
 
-    echo json_encode([
+    api_json([
         'status' => 'success',
         'message' => 'AI Assist successfully unlocked!',
         'new_jolt' => $newJolt,
         'lesson_id' => $lessonId
-    ]);
+    ], 200);
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Failed to unlock AI Assist: ' . errors_from_exception($e, 'learnAI/unlock_ai_assist')['error']]);
+    api_json(['error' => 'Failed to unlock AI Assist: ' . errors_from_exception($e, 'learnAI/unlock_ai_assist')['error']], 500);
 }

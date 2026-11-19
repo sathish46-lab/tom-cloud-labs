@@ -8,8 +8,6 @@
 require_once __DIR__ . '/../../load.php';
 require_once __DIR__ . '/../../utils/user_delete.php';
 
-header('Content-Type: application/json');
-
 $admin = AuthMiddleware::requireAdmin();
 AuthMiddleware::requireCsrf();
 
@@ -17,20 +15,17 @@ $snapshotId = trim($_POST['id'] ?? '');
 $confirm    = trim($_POST['confirm'] ?? '');
 
 if (!preg_match('/^[a-f0-9]{24}$/', $snapshotId)) {
-    echo json_encode(['status' => 'error', 'error' => 'Invalid snapshot id']);
-    exit;
+api_json(['status' => 'error', 'error' => 'Invalid snapshot id'], 400);
 }
 
 $db = DatabaseConnection::getDefaultDatabase();
 $snap = $db->deleted_users->findOne(['_id' => new MongoDB\BSON\ObjectId($snapshotId)]);
 if (!$snap) {
-    echo json_encode(['status' => 'error', 'error' => 'Snapshot not found']);
-    exit;
+api_json(['status' => 'error', 'error' => 'Snapshot not found'], 400);
 }
 
 if (!hash_equals('RESTORE ' . (string)$snap['email'], $confirm)) {
-    echo json_encode(['status' => 'error', 'error' => 'Type exactly: RESTORE ' . $snap['email']]);
-    exit;
+api_json(['status' => 'error', 'error' => 'Type exactly: RESTORE ' . $snap['email']], 400);
 }
 
 $result = user_delete_restore(
@@ -38,4 +33,4 @@ $result = user_delete_restore(
     (string)($admin->getEmail() ?? 'unknown'),
     $admin->getUserId()
 );
-echo json_encode($result);
+api_json($result, 200);

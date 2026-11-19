@@ -9,32 +9,26 @@
 require_once __DIR__ . '/../../load.php';
 require_once __DIR__ . '/../../utils/user_delete.php';
 
-header('Content-Type: application/json');
-
 $admin = AuthMiddleware::requireAdmin();
 AuthMiddleware::requireCsrf();
 
 $targetEmail = trim($_POST['email'] ?? '');
 if ($targetEmail === '') {
-    echo json_encode(['status' => 'error', 'error' => 'Target email is required']);
-    exit;
+api_json(['status' => 'error', 'error' => 'Target email is required'], 400);
 }
 
 $adminEmail = (string)($admin->getEmail() ?? '');
 if ($adminEmail === '') {
-    echo json_encode(['status' => 'error', 'error' => 'Admin identity not found']);
-    exit;
+api_json(['status' => 'error', 'error' => 'Admin identity not found'], 400);
 }
 if (strtolower($adminEmail) === strtolower($targetEmail)) {
-    echo json_encode(['status' => 'error', 'error' => 'You cannot delete your own account']);
-    exit;
+api_json(['status' => 'error', 'error' => 'You cannot delete your own account'], 400);
 }
 
 $db = DatabaseConnection::getDefaultDatabase();
 $target = $db->users->findOne(['email' => $targetEmail]);
 if (!$target) {
-    echo json_encode(['status' => 'error', 'error' => 'User not found']);
-    exit;
+api_json(['status' => 'error', 'error' => 'User not found'], 400);
 }
 
 $otp = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
@@ -55,12 +49,11 @@ try {
 
 if (!$sent) {
     delete_otp_clear($adminEmail, $targetEmail);
-    echo json_encode(['status' => 'error', 'error' => 'Could not send the confirmation email — check SMTP settings']);
-    exit;
+api_json(['status' => 'error', 'error' => 'Could not send the confirmation email — check SMTP settings'], 400);
 }
 
-echo json_encode([
+api_json([
     'status'     => 'success',
     'sent_to'    => $adminEmail,
     'expires_in' => DELETE_OTP_TTL,
-]);
+], 200);

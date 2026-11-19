@@ -5,10 +5,7 @@
  */
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $currentUsername = $user ? $user->getUsername() : '';
 $currentEmail = $user ? $user->getEmail() : '';
@@ -18,18 +15,14 @@ $input = json_decode(file_get_contents('php://input'), true) ?? [];
 $lessonId = trim($input['lesson_id'] ?? $_POST['lesson_id'] ?? '');
 
 if (empty($lessonId)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'lesson_id is required']);
-    exit;
+api_json(['error' => 'lesson_id is required'], 400);
 }
 
 try {
     $db = DatabaseConnection::getDefaultDatabase();
     $lesson = $db->ai_lessons->findOne(['_id' => new MongoDB\BSON\ObjectId($lessonId)]);
     if (!$lesson) {
-        http_response_code(404);
-        echo json_encode(['error' => 'Lesson not found']);
-        exit;
+api_json(['error' => 'Lesson not found'], 404);
     }
 
     $isAuthor = false;
@@ -42,16 +35,13 @@ try {
     }
 
     if (!$isAuthor) {
-        http_response_code(403);
-        echo json_encode(['error' => 'Forbidden: Only the author can delete this lesson']);
-        exit;
+api_json(['error' => 'Forbidden: Only the author can delete this lesson'], 403);
     }
 
     $db->ai_lessons->deleteOne(['_id' => new MongoDB\BSON\ObjectId($lessonId)]);
     $db->ai_chapters->deleteMany(['lesson_id' => new MongoDB\BSON\ObjectId($lessonId)]);
 
-    echo json_encode(['status' => 'success', 'lesson_id' => $lessonId]);
+    api_json(['status' => 'success', 'lesson_id' => $lessonId], 200);
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Failed to delete lesson: ' . errors_from_exception($e, 'learnAI/lesson_delete')['error']]);
+    api_json(['error' => 'Failed to delete lesson: ' . errors_from_exception($e, 'learnAI/lesson_delete')['error']], 500);
 }

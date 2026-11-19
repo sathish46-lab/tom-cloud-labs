@@ -1,13 +1,11 @@
 <?php
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
 $user = AuthMiddleware::requireAuth();
-
 
 $username = $user->getUsername();
 if (!$username) {
-    echo json_encode(['status' => 'error', 'error' => 'User not found']); exit;
+    api_json(['status' => 'error', 'error' => 'User not found'], 400);
 }
 
 $data = json_decode(file_get_contents('php://input'), true);
@@ -15,7 +13,7 @@ $oldName = trim($data['old_name'] ?? '');
 $newName = trim($data['new_name'] ?? '');
 
 if (empty($oldName) || empty($newName)) {
-    echo json_encode(['status' => 'error', 'error' => 'Both old and new file names are required.']); exit;
+    api_json(['status' => 'error', 'error' => 'Both old and new file names are required.'], 400);
 }
 
 // Security: Prevent directory traversal
@@ -30,7 +28,7 @@ $newName = $safeNameWithoutExt . ($ext ? '.' . $ext : '');
 
 $userId = $user->getUserId();
 if (!$userId) {
-    echo json_encode(['status' => 'error', 'error' => 'User ID not found']); exit;
+    api_json(['status' => 'error', 'error' => 'User ID not found'], 400);
 }
 
 try {
@@ -53,8 +51,8 @@ try {
         'Key'    => $oldKey
     ]);
     
-    echo json_encode(['status' => 'success', 'new_name' => $newName]);
+    api_json(['status' => 'success', 'new_name' => $newName], 200);
 } catch (Exception $e) {
     errors_report(['context' => 'account/rename_file', 'message' => "MinIO rename_file Error: " . $e->getMessage()]);
-    echo json_encode(['status' => 'error', 'error' => 'Could not rename the file.']);
+    api_json(['status' => 'error', 'error' => 'Could not rename the file.'], 400);
 }

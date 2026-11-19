@@ -11,10 +11,8 @@ header('X-Content-Type-Options: nosniff');
 
 $user = AuthMiddleware::requireAuth();
 
-
 if (!$user) {
-    echo json_encode(['success' => false, 'error' => 'User session invalid']);
-    exit;
+api_json(['success' => false, 'error' => 'User session invalid'], 400);
 }
 
 try {
@@ -60,13 +58,13 @@ try {
         }
     }
 
-    echo json_encode([
+    api_json([
         'success' => true,
         'findings' => $findings,
         'checked_at' => time(),
         'cert_count' => count($certs),
         'high' => $highCount
-    ]);
+    ], 200);
 } catch (Exception $e) {
-    echo json_encode(['success' => false, 'error' => errors_from_exception($e, 'ssl/troubleshoot_all')['error']]);
+    api_json(['success' => false, 'error' => errors_from_exception($e, 'ssl/troubleshoot_all')['error']], 500);
 }

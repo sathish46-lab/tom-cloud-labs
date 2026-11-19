@@ -7,10 +7,7 @@ require_once __DIR__ . '/../../../vendor/autoload.php';
 require_once __DIR__ . '/../../../src/utils/config.php';
 require_once __DIR__ . '/../../../src/lib/core/DatabaseConnection.class.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $userId = (int)$user->getUserId();
 
@@ -22,19 +19,13 @@ $regenerate = !empty($input['regenerate']);
 $regenSection = trim($input['regen_section'] ?? 'all'); // 'content', 'resources', or 'all'
 
 if (empty($roadmapId) || !preg_match('/^[a-f0-9]{24}$/i', $roadmapId)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid roadmap_id']);
-    exit;
+api_json(['error' => 'Invalid roadmap_id'], 400);
 }
 if (empty($topicId) || !preg_match('/^[a-zA-Z0-9_]+$/', $topicId)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid topic_id']);
-    exit;
+api_json(['error' => 'Invalid topic_id'], 400);
 }
 if (empty($itemId) || !preg_match('/^[a-zA-Z0-9_]+$/', $itemId)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid item_id']);
-    exit;
+api_json(['error' => 'Invalid item_id'], 400);
 }
 
 $db = DatabaseConnection::getDefaultDatabase();
@@ -45,9 +36,7 @@ $roadmap = $db->ai_roadmaps->findOne([
 ]);
 
 if (!$roadmap) {
-    http_response_code(404);
-    echo json_encode(['error' => 'Roadmap not found or access denied']);
-    exit;
+api_json(['error' => 'Roadmap not found or access denied'], 404);
 }
 
 // Find topic and item indices
@@ -75,9 +64,7 @@ foreach ($roadmap['sections'] as $si => $section) {
 }
 
 if (!$foundTopic || !$foundItem) {
-    http_response_code(404);
-    echo json_encode(['error' => 'Topic or item not found']);
-    exit;
+api_json(['error' => 'Topic or item not found'], 404);
 }
 
 // Check if already generated for this item (skip if regenerating)
@@ -97,13 +84,13 @@ if (!$regenerate && !empty($foundItem['content'])) {
             if (!empty($decodedH[$key]) && is_string($decodedH[$key])) { $ch = $decodedH[$key]; break; }
         }
     }
-    echo json_encode([
+    api_json([
         'status' => 'already_generated',
         'content' => $c,
         'content_html' => $ch,
         'resources' => $foundItem['resources'] ?? [],
         'regenerate_count' => $foundItem['regenerate_count'] ?? 0,
-    ]);
+    ], 200);
     exit;
 }
 
@@ -180,4 +167,4 @@ if ($regenSection === 'resources' || $regenSection === 'all') {
     $response['resources'] = $newResources ?? $foundItem['resources'] ?? [];
 }
 
-echo json_encode($response);
+api_json($response, 200);

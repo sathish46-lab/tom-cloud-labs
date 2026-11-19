@@ -168,9 +168,7 @@ if ($candidate !== '') $event['candidate']= $candidate;
 
 $published = chat_publish($event);
 if (!$published) {
-    http_response_code(502);
-    header('Content-Type: application/json');
-    echo json_encode(['success' => false, 'error' => 'Failed to publish signal to message bus']);
+    02);
     exit;
 }
 

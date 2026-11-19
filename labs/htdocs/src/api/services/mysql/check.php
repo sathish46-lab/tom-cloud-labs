@@ -8,8 +8,6 @@ use TomLabs\Services\ServiceResponse;
 use TomLabs\Services\ServiceStatusCodes;
 use TomLabs\Services\ServiceValidator;
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
 
 try {

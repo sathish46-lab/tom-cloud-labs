@@ -3,8 +3,6 @@ require_once __DIR__ . '/../../load.php';
 
 $user = AuthMiddleware::requireAuth();
 
-header('Content-Type: application/json');
-
 $userId = (int)$user->getUserId();
 $username = $user->getUsername() ?? '';
 $email = $user->getEmail() ?? '';
@@ -14,8 +12,7 @@ $hash = $input['slug'] ?? '';
 $config = $input['config'] ?? [];
 
 if (empty($hash)) {
-    echo json_encode(['status' => 'error', 'error' => 'Instance hash is required']);
-    exit;
+api_json(['status' => 'error', 'error' => 'Instance hash is required'], 400);
 }
 
 $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_instances_db');
@@ -24,8 +21,7 @@ if (!$instance) {
     $instance = $db->instances->findOne(['slug' => $hash, 'user_id' => $userId]);
 }
 if (!$instance) {
-    echo json_encode(['status' => 'error', 'error' => 'Instance not found']);
-    exit;
+api_json(['status' => 'error', 'error' => 'Instance not found'], 400);
 }
 
 // Build the nested config object from incoming flat fields
@@ -113,4 +109,4 @@ if ($templateFolder) {
     }
 }
 
-echo json_encode(['status' => 'success']);
+api_json(['status' => 'success'], 200);

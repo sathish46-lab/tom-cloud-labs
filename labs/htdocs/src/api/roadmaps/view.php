@@ -1,6 +1,5 @@
 <?php
 require_once __DIR__ . '/../../../src/load.php';
-header('Content-Type: application/json');
 
 $user = AuthMiddleware::requireAuth();
 
@@ -8,9 +7,7 @@ $currentUserId = (int)$user->getUserId();
 $slug = $_GET['slug'] ?? '';
 
 if (empty($slug)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Missing slug parameter']);
-    exit;
+api_json(['error' => 'Missing slug parameter'], 400);
 }
 
 $db = DatabaseConnection::getDefaultDatabase();
@@ -24,9 +21,7 @@ $roadmap = $db->ai_roadmaps->findOne([
 ]);
 
 if (!$roadmap) {
-    http_response_code(404);
-    echo json_encode(['error' => 'Roadmap not found']);
-    exit;
+api_json(['error' => 'Roadmap not found'], 404);
 }
 
 $rmId = (string)$roadmap['_id'];
@@ -93,7 +88,7 @@ foreach ($sections as $section) {
 }
 $liveProgress = $totalCheckpoints > 0 ? min(100, (int)round(($completedCheckpoints / $totalCheckpoints) * 100)) : 0;
 
-echo json_encode([
+api_json([
     'success' => true,
     'roadmap' => [
         'id' => $rmId,
@@ -112,4 +107,4 @@ echo json_encode([
     'progress_data' => $allProgress,
     'evidence_data' => $evidenceData,
     'is_owner' => $isOwner
-]);
+], 200);

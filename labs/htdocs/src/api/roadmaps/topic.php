@@ -7,11 +7,8 @@ require_once __DIR__ . '/../../../vendor/autoload.php';
 require_once __DIR__ . '/../../../src/utils/config.php';
 require_once __DIR__ . '/../../../src/lib/core/DatabaseConnection.class.php';
 
-header('Content-Type: application/json');
-
 // ── AUTH CHECK ──
 $user = AuthMiddleware::requireAuth();
-
 
 $userId = (int)$user->getUserId();
 
@@ -21,15 +18,11 @@ $topicId = trim($_GET['topic_id'] ?? '');
 
 // Validate ObjectId format
 if (empty($roadmapId) || !preg_match('/^[a-f0-9]{24}$/i', $roadmapId)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid roadmap_id']);
-    exit;
+api_json(['error' => 'Invalid roadmap_id'], 400);
 }
 
 if (empty($topicId) || !preg_match('/^[a-zA-Z0-9_]+$/', $topicId)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid topic_id']);
-    exit;
+api_json(['error' => 'Invalid topic_id'], 400);
 }
 
 $db = DatabaseConnection::getDefaultDatabase();
@@ -45,9 +38,7 @@ $roadmap = $db->ai_roadmaps->findOne([
 
 // SECURITY: Private roadmaps return 404, not 403
 if (!$roadmap) {
-    http_response_code(404);
-    echo json_encode(['error' => 'Roadmap not found']);
-    exit;
+api_json(['error' => 'Roadmap not found'], 404);
 }
 
 // ── FIND TOPIC ──
@@ -65,9 +56,7 @@ foreach ($roadmap['sections'] as $section) {
 }
 
 if (!$foundTopic) {
-    http_response_code(404);
-    echo json_encode(['error' => 'Topic not found']);
-    exit;
+api_json(['error' => 'Topic not found'], 404);
 }
 
 // ── GET USER PROGRESS FOR THIS TOPIC ──
@@ -82,7 +71,7 @@ if ($progress) {
     $completedItems = $progress['completed_items'] ?? [];
 }
 
-echo json_encode([
+api_json([
     'topic' => [
         'id' => $foundTopic['id'],
         'title' => $foundTopic['title'],
@@ -98,4 +87,4 @@ echo json_encode([
         'title' => $roadmap['title'],
         'slug' => $roadmap['slug'],
     ],
-]);
+], 200);

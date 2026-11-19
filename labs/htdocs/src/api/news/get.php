@@ -10,9 +10,7 @@ require_once __DIR__ . '/../../../src/load.php';
 $id = $_GET['id'] ?? '';
 
 if (empty($id)) {
-    http_response_code(400);
-    header('Content-Type: application/json');
-    exit(json_encode(['status' => 'error', 'error' => 'Missing id parameter']));
+    api_json(['status' => 'error', 'error' => 'Missing id parameter'], 400);
 }
 
 require_once __DIR__ . '/../../../src/lib/labs/NewsFetcher.class.php';
@@ -32,13 +30,10 @@ $doc = $col->findOne(['guid' => $id, 'deleted_at' => null], [
 ]);
 
 if (!$doc) {
-    http_response_code(404);
-    header('Content-Type: application/json');
-    exit(json_encode(['status' => 'error', 'error' => 'News article not found']));
+    api_json(['status' => 'error', 'error' => 'News article not found'], 404);
 }
 
 // Ensure _id is stringified for client
 $doc['_id'] = (string) $doc['_id'];
 
-header('Content-Type: application/json');
-echo json_encode(['status' => 'success', 'data' => $doc]);
+api_json(['status' => 'success', 'data' => $doc], 200);

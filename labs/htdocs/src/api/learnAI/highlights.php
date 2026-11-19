@@ -6,10 +6,7 @@
  */
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $userId = (int)$user->getUserId();
 $userEmail = $user->getEmail();
@@ -20,8 +17,7 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $chapterId = $_GET['chapter_id'] ?? '';
         if (empty($chapterId)) {
-            echo json_encode(['status' => 'success', 'chapter_id' => $chapterId, 'highlights' => [], 'drawings' => []]);
-            exit;
+api_json(['status' => 'success', 'chapter_id' => $chapterId, 'highlights' => [], 'drawings' => []], 200);
         }
 
         $record = $db->ai_highlights->findOne([
@@ -41,8 +37,7 @@ try {
             $drawings = json_decode(json_encode($drawings), true);
         }
 
-        echo json_encode(['status' => 'success', 'chapter_id' => $chapterId, 'highlights' => $highlights, 'drawings' => $drawings]);
-        exit;
+api_json(['status' => 'success', 'chapter_id' => $chapterId, 'highlights' => $highlights, 'drawings' => $drawings], 200);
     }
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -52,9 +47,7 @@ try {
         $drawings = $input['drawings'] ?? [];
 
         if (empty($chapterId)) {
-            http_response_code(400);
-            echo json_encode(['status' => 'error', 'message' => 'chapter_id required']);
-            exit;
+api_json(['status' => 'error', 'message' => 'chapter_id required'], 400);
         }
 
         $db->ai_highlights->updateOne(
@@ -78,13 +71,10 @@ try {
             ['upsert' => true]
         );
 
-        echo json_encode(['status' => 'success', 'chapter_id' => $chapterId, 'highlights' => $highlights, 'drawings' => $drawings]);
-        exit;
+api_json(['status' => 'success', 'chapter_id' => $chapterId, 'highlights' => $highlights, 'drawings' => $drawings], 200);
     }
 
-    http_response_code(405);
-    echo json_encode(['status' => 'error', 'message' => 'Method not allowed']);
+    api_json(['status' => 'error', 'message' => 'Method not allowed'], 405);
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['status' => 'error', 'message' => errors_from_exception($e, 'learnAI/highlights')['error']]);
+    api_json(['status' => 'error', 'message' => errors_from_exception($e, 'learnAI/highlights')['error']], 500);
 }

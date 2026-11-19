@@ -5,7 +5,6 @@ require_once "../../lib/core/DomainManager.class.php";
 
 $user = AuthMiddleware::requireAuth();
 
-
 $data = json_decode(file_get_contents('php://input'), true);
 
 $domain = trim(strtolower($data['domain'] ?? ''));

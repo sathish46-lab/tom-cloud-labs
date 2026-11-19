@@ -18,9 +18,7 @@ $guestId = $_SERVER['HTTP_X_GUEST_ID'] ?? '';
 $identity = chat_resolve_identity($guestId ?: null);
 
 if (!$identity) {
-    http_response_code(401);
-    header('Content-Type: application/json');
-    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+    01);
     exit;
 }
 

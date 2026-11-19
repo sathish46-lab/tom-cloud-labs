@@ -2,8 +2,6 @@
 require_once __DIR__ . '/../../load.php';
 require_once __DIR__ . '/../../lib/core/Appearance.class.php';
 
-header('Content-Type: application/json');
-
 $admin = AuthMiddleware::requireAdmin();
 AuthMiddleware::requireCsrf();
 
@@ -23,10 +21,10 @@ if (isset($_POST['reset']) && $_POST['reset'] !== '' && $_POST['reset'] !== '0')
         );
         Appearance::forget();
         AuditLog::log('update', 'settings', Appearance::DOC_ID, ['action' => 'reset_defaults', 'from' => $before], (string)($admin->getUserId() ?? 'unknown'));
-        echo json_encode(['status' => 'success', 'appearance' => $next]);
+        api_json(['status' => 'success', 'appearance' => $next], 200);
     } catch (Throwable $e) {
         errors_report(['context' => 'admin/appearance_save', 'message' => 'appearance_save reset: ' . $e->getMessage()]);
-        echo json_encode(['status' => 'error', 'error' => 'Failed to reset appearance settings']);
+        api_json(['status' => 'error', 'error' => 'Failed to reset appearance settings'], 400);
     }
     exit;
 }
@@ -47,16 +45,16 @@ $disabledRaw   = $_POST['disabled_modes'] ?? [];
 if (!is_array($disabledRaw)) $disabledRaw = $disabledRaw === '' ? [] : [$disabledRaw];
 
 if (!in_array($defaultMode, $modes, true)) {
-    echo json_encode(['status' => 'error', 'error' => 'Unknown default background']); exit;
+    api_json(['status' => 'error', 'error' => 'Unknown default background'], 400);
 }
 if ($forceMode !== '' && !in_array($forceMode, $modes, true)) {
-    echo json_encode(['status' => 'error', 'error' => 'Unknown locked background']); exit;
+    api_json(['status' => 'error', 'error' => 'Unknown locked background'], 400);
 }
 if (!in_array($forceColor, ['', 'light', 'dark'], true)) {
-    echo json_encode(['status' => 'error', 'error' => 'Color mode must be users choice, light or dark']); exit;
+    api_json(['status' => 'error', 'error' => 'Color mode must be users choice, light or dark'], 400);
 }
 if ($publicBg !== '' && $publicBg !== Appearance::PUBLIC_OWNER && !in_array($publicBg, $modes, true)) {
-    echo json_encode(['status' => 'error', 'error' => 'Unknown public profile background']); exit;
+    api_json(['status' => 'error', 'error' => 'Unknown public profile background'], 400);
 }
 
 $disabled = [];
@@ -64,7 +62,7 @@ foreach ($disabledRaw as $mode) {
     $mode = trim((string)$mode);
     if ($mode === '' || !in_array($mode, $modes, true)) continue;
     if ($mode === $defaultMode) {
-        echo json_encode(['status' => 'error', 'error' => 'The default background cannot be hidden']); exit;
+        api_json(['status' => 'error', 'error' => 'The default background cannot be hidden'], 400);
     }
     if ($mode === $forceMode) continue; // the locked background always stays available
     $disabled[] = $mode;
@@ -122,8 +120,8 @@ try {
     (string)($admin->getUserId() ?? 'unknown')
 );
 
-    echo json_encode(['status' => 'success', 'appearance' => $next]);
+    api_json(['status' => 'success', 'appearance' => $next], 200);
 } catch (Throwable $e) {
     errors_report(['context' => 'admin/appearance_save', 'message' => 'appearance_save: ' . $e->getMessage()]);
-    echo json_encode(['status' => 'error', 'error' => 'Failed to save appearance settings']);
+    api_json(['status' => 'error', 'error' => 'Failed to save appearance settings'], 400);
 }

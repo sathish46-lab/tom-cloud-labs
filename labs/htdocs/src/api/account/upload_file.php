@@ -1,17 +1,15 @@
 <?php
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
 $user = AuthMiddleware::requireAuth();
-
 
 $username = $user->getUsername();
 if (!$username) {
-    echo json_encode(['status' => 'error', 'error' => 'User not found']); exit;
+    api_json(['status' => 'error', 'error' => 'User not found'], 400);
 }
 
 if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
-    echo json_encode(['status' => 'error', 'error' => 'No file uploaded or upload error.']); exit;
+    api_json(['status' => 'error', 'error' => 'No file uploaded or upload error.'], 400);
 }
 
 $file = $_FILES['file'];
@@ -25,23 +23,23 @@ $allowedExtensions = [
 ];
 $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 if (!in_array($ext, $allowedExtensions)) {
-    echo json_encode(['status' => 'error', 'error' => 'File type not allowed. Allowed: ' . implode(', ', $allowedExtensions)]); exit;
+    api_json(['status' => 'error', 'error' => 'File type not allowed. Allowed: ' . implode(', ', $allowedExtensions)], 400);
 }
 
 // Block double-extension attacks (e.g., shell.php.jpg)
 $parts = explode('.', $file['name']);
 if (count($parts) > 2) {
-    echo json_encode(['status' => 'error', 'error' => 'Files with multiple extensions are not allowed.']); exit;
+    api_json(['status' => 'error', 'error' => 'Files with multiple extensions are not allowed.'], 400);
 }
 
 $maxSize = 5 * 1024 * 1024; // 5 MB
 if ($file['size'] > $maxSize) {
-    echo json_encode(['status' => 'error', 'error' => 'File size exceeds 5MB.']); exit;
+    api_json(['status' => 'error', 'error' => 'File size exceeds 5MB.'], 400);
 }
 
 $userId = $user->getUserId();
 if (!$userId) {
-    echo json_encode(['status' => 'error', 'error' => 'User ID not found']); exit;
+    api_json(['status' => 'error', 'error' => 'User ID not found'], 400);
 }
 
 // Generate safe filename to prevent overwrites
@@ -50,7 +48,7 @@ $filename = time() . '_' . $originalName;
 $s3Path = "labassets/uploads/{$userId}/{$filename}";
 
 if (Storage::upload($file['tmp_name'], $s3Path)) {
-    echo json_encode(['status' => 'success']);
+    api_json(['status' => 'success'], 200);
 } else {
-    echo json_encode(['status' => 'error', 'error' => 'Failed to upload file to MinIO.']);
+    api_json(['status' => 'error', 'error' => 'Failed to upload file to MinIO.'], 400);
 }

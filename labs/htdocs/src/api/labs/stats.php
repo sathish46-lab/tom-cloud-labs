@@ -1,15 +1,13 @@
 <?php
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
 $userId = (int)$user->getUserId();
 
 $labHash = $_GET['hash'] ?? '';
 
 if (!$labHash) {
-    echo json_encode(['status' => 'error']); exit;
+    api_json(['status' => 'error'], 400);
 }
 
 // Check lab status from MongoDB first
@@ -21,21 +19,17 @@ try {
     if ($inst) {
         // Ownership check: only the lab owner can view stats
         if ((int)($inst['user_id'] ?? 0) !== $userId) {
-            http_response_code(403);
-            echo json_encode(['status' => 'error', 'error' => 'Forbidden']);
-            exit;
+api_json(['status' => 'error', 'error' => 'Forbidden'], 403);
         }
         
         $labStatus = $inst['status'] ?? 'unknown';
         
         if ($labStatus === 'paused') {
-            echo json_encode(['status' => 'paused']);
-            exit;
+api_json(['status' => 'paused'], 200);
         }
         
         if ($labStatus !== 'running') {
-            echo json_encode(['status' => 'offline']);
-            exit;
+api_json(['status' => 'offline'], 200);
         }
     }
 } catch (Exception $e) {
@@ -86,19 +80,15 @@ while ($retryCount < $maxRetries) {
         }
         
         if (isset($allStats[$labHash])) {
-            echo json_encode($allStats[$labHash]);
-            exit;
+api_json($allStats[$labHash], 200);
         } else if (isset($allStats['ctf-' . $labHash])) {
-            echo json_encode($allStats['ctf-' . $labHash]);
-            exit;
+api_json($allStats['ctf-' . $labHash], 200);
         } else {
-            echo json_encode(['status' => 'offline']);
-            exit;
+api_json(['status' => 'offline'], 200);
         }
     } else {
-        echo json_encode(['status' => 'initializing']);
-        exit;
+api_json(['status' => 'initializing'], 200);
     }
 }
 
-echo json_encode(['status' => 'offline']);
+api_json(['status' => 'offline'], 200);

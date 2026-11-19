@@ -3,7 +3,6 @@ require_once __DIR__ . '/../../load.php';
 
 $user = AuthMiddleware::requireAuth();
 
-
 $userId = (int)$user->getUserId();
 $lessonId = $_GET['lesson_id'] ?? '';
 $chapterId = $_GET['chapter_id'] ?? '';

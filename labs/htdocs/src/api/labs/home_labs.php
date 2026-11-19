@@ -5,10 +5,7 @@
  */
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $userId = (int)$user->getUserId();
 $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_db');
@@ -30,7 +27,7 @@ foreach ($labs as $lab) {
     ];
 }
 
-echo json_encode([
+api_json([
     'result' => 'success',
     'labs'   => $list,
-]);
+], 200);

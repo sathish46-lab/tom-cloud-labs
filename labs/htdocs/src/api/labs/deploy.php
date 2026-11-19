@@ -4,10 +4,7 @@ require_once __DIR__ . '/../../lib/core/RabbitClient.class.php';
 
 use TomLabs\Labs\IPManager;
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $email = $user->getEmail();
 $labName = $_POST['lab'] ?? 'essentials';
@@ -201,14 +198,14 @@ try {
     // Stamp last_usage so admins can tell used IPs from assigned-but-never-deployed ones
     $ipManager->touchUsage($internalIp, 'Deployed ' . $labName, $labName);
 
-    echo json_encode([
+    api_json([
         'status' => 'success',
         'message' => 'Deployment queued',
         'hash' => $instanceHash,
         'run_id' => $runId,
-    ]);
+    ], 200);
 
 } catch (Exception $e) {
     errors_report(['context' => 'labs/deploy', 'message' => "Deploy API Error: " . $e->getMessage()]);
-    echo json_encode(['status' => 'error', 'error' => errors_from_exception($e, 'labs/deploy')['error']]);
+    api_json(['status' => 'error', 'error' => errors_from_exception($e, 'labs/deploy')['error']], 500);
 }

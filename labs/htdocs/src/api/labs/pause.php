@@ -10,10 +10,7 @@
  */
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $labName = $_POST['lab'] ?? 'essentials';
 
@@ -78,25 +75,23 @@ try {
         ]
     );
 
-    echo json_encode([
+    api_json([
         'status' => 'success',
         'message' => 'Lab paused successfully',
         'hash' => $instanceHash,
         'lab' => $labName
-    ]);
+    ], 200);
 
 } catch (LabNotUsableException $e) {
-    http_response_code(409);
     error_log('[labs/pause] lab not usable: ' . $e->getMessage());
-    echo json_encode([
+    api_json([
         'status' => 'error',
         'code' => 'lab_broken',
         'message' => 'Somehow the lab is broken. Redeploy it to continue learning.'
-    ]);
+    ], 409);
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode([
+    api_json([
         'status' => 'error',
         'error' => errors_from_exception($e, 'labs/pause')['error']
-    ]);
+    ], 500);
 }

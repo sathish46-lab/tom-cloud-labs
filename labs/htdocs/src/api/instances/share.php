@@ -1,10 +1,7 @@
 <?php
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $hash = $_POST['hash'] ?? '';
 $shareWith = trim($_POST['username'] ?? '');
@@ -12,11 +9,11 @@ $role = $_POST['role'] ?? 'viewer';
 $canReshare = isset($_POST['can_reshare']) && $_POST['can_reshare'] === '1';
 
 if (empty($hash) || empty($shareWith)) {
-    echo json_encode(['status' => 'error', 'error' => 'Missing hash or username']); exit;
+    api_json(['status' => 'error', 'error' => 'Missing hash or username'], 400);
 }
 
 if (!in_array($role, ['viewer', 'manager', 'operator', 'owner'])) {
-    echo json_encode(['status' => 'error', 'error' => 'Invalid role']); exit;
+    api_json(['status' => 'error', 'error' => 'Invalid role'], 400);
 }
 
 try {
@@ -27,7 +24,7 @@ try {
     ]);
 
     if (!$instance) {
-        echo json_encode(['status' => 'error', 'error' => 'Instance not found or not owner']); exit;
+        api_json(['status' => 'error', 'error' => 'Instance not found or not owner'], 400);
     }
 
     $targetUser = $instDb->users->findOne(['username' => $shareWith]);
@@ -36,7 +33,7 @@ try {
         $targetUser = $labUsers->users->findOne(['username' => $shareWith]);
     }
     if (!$targetUser) {
-        echo json_encode(['status' => 'error', 'error' => 'User not found']); exit;
+        api_json(['status' => 'error', 'error' => 'User not found'], 400);
     }
 
     $isOwner = ($instance['user_id'] == $user->getUserId());
@@ -49,12 +46,12 @@ try {
         $canReshareExisting = $existingShare['can_reshare'] ?? false;
 
         if (!$canReshareExisting || !in_array($myRole, ['owner', 'operator'])) {
-            echo json_encode(['status' => 'error', 'error' => 'Insufficient permissions']); exit;
+            api_json(['status' => 'error', 'error' => 'Insufficient permissions'], 400);
         }
 
         $roleHierarchy = ['viewer' => 0, 'manager' => 1, 'operator' => 2, 'owner' => 3];
         if (($roleHierarchy[$role] ?? 0) >= ($roleHierarchy[$myRole] ?? 0)) {
-            echo json_encode(['status' => 'error', 'error' => 'Cannot share at or above your role level']); exit;
+            api_json(['status' => 'error', 'error' => 'Cannot share at or above your role level'], 400);
         }
     }
 
@@ -71,8 +68,7 @@ try {
         ['upsert' => true]
     );
 
-    echo json_encode(['status' => 'success', 'message' => "Shared with {$shareWith} as {$role}"]);
+    api_json(['status' => 'success', 'message' => "Shared with {$shareWith} as {$role}"], 200);
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['status' => 'error', 'error' => errors_from_exception($e, 'instances/share')['error']]);
+    api_json(['status' => 'error', 'error' => errors_from_exception($e, 'instances/share')['error']], 500);
 }

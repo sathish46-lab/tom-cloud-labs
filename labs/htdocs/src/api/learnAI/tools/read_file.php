@@ -5,8 +5,6 @@
  */
 require_once __DIR__ . '/../../../load.php';
 
-header('Content-Type: application/json');
-
 AuthMiddleware::requireInternalToken();
 
 $input = json_decode(file_get_contents('php://input'), true);
@@ -14,9 +12,7 @@ $userId = $input['user_id'] ?? null;
 $filePath = $input['file_path'] ?? '';
 
 if (empty($userId) || empty($filePath)) {
-    http_response_code(400);
-    echo json_encode(['status' => 'error', 'error' => 'Missing user_id or file_path']);
-    exit;
+api_json(['status' => 'error', 'error' => 'Missing user_id or file_path'], 400);
 }
 
 try {
@@ -28,24 +24,18 @@ try {
     $labDoc = $inst;
 
     if (!$labDoc || empty($labDoc['instance_hash'])) {
-        http_response_code(400);
-        echo json_encode(['status' => 'error', 'error' => 'No running lab instance found for this user']);
-        exit;
+api_json(['status' => 'error', 'error' => 'No running lab instance found for this user'], 400);
     }
     $instanceHash = $labDoc['instance_hash'];
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['status' => 'error', 'error' => 'Database error: ' . errors_from_exception($e, 'learnAI/tools/read_file')['error']]);
-    exit;
+api_json(['status' => 'error', 'error' => 'Database error: ' . errors_from_exception($e, 'learnAI/tools/read_file')['error']], 500);
 }
 
 // Block sensitive paths
 $blockedPaths = ['/etc/shadow', '/etc/gshadow', '/.labsconfig'];
 foreach ($blockedPaths as $blocked) {
     if (strpos(realpath($filePath) ?: $filePath, $blocked) !== false || $filePath === $blocked) {
-        http_response_code(403);
-        echo json_encode(['status' => 'error', 'error' => 'Access to this file is restricted']);
-        exit;
+api_json(['status' => 'error', 'error' => 'Access to this file is restricted'], 403);
     }
 }
 
@@ -78,13 +68,12 @@ try {
         throw new Exception("File read failed: {$content}");
     }
 
-    echo json_encode([
+    api_json([
         'status'  => 'success',
         'content' => $content,
         'path'    => $filePath
-    ]);
+    ], 200);
 
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['status' => 'error', 'error' => errors_from_exception($e, 'learnAI/tools/read_file')['error']]);
+    api_json(['status' => 'error', 'error' => errors_from_exception($e, 'learnAI/tools/read_file')['error']], 500);
 }

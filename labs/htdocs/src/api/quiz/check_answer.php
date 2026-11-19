@@ -3,8 +3,6 @@ require_once '../../load.php';
 
 use TomLabs\Labs\Quiz;
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
 
 $quizHash = $_POST['hash'] ?? null;
@@ -83,7 +81,7 @@ if ($quizHash && $questionIndex !== null && $selectedOption !== null) {
             $parentTopic = Session::get('parent_topic');
             $majorId = $parentTopic ? ($parentTopic['id'] ?? $parentTopic['_id'] ?? 'unknown') : 'unknown';
 
-            echo json_encode([
+            api_json([
                 'status' => 'success',
                 'correct' => $isCorrect,
                 'toast_message' => $toastMessage,
@@ -113,13 +111,13 @@ if ($quizHash && $questionIndex !== null && $selectedOption !== null) {
                 'total_answers' => $totalAnswers,
                 'correct_answers' => $correctCount, 
                 'answers' => $answersArray
-            ]);
+            ], 200);
         } else {
-            echo json_encode(['status' => 'error', 'message' => 'Invalid question index']);
+            api_json(['status' => 'error', 'message' => 'Invalid question index'], 400);
         }
     } else {
-        echo json_encode(['status' => 'error', 'message' => 'Quiz not found']);
+        api_json(['status' => 'error', 'message' => 'Quiz not found'], 400);
     }
 } else {
-    echo json_encode(['status' => 'error', 'message' => 'Missing parameters']);
+    api_json(['status' => 'error', 'message' => 'Missing parameters'], 400);
 }

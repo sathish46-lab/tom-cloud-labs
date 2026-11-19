@@ -1,8 +1,6 @@
 <?php
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAdmin();
 
 $scope = $_POST['scope'] ?? 'user'; // 'global', 'master', 'matrix', 'mcp_settings', or 'user'
@@ -12,7 +10,7 @@ $setting = $_POST['setting'] ?? '';
 $state = (isset($_POST['state']) && $_POST['state'] === 'true'); // boolean
 
 if ($scope !== 'mcp_settings' && !$feature) {
-    echo json_encode(['status' => 'error', 'error' => 'Feature missing']); exit;
+    api_json(['status' => 'error', 'error' => 'Feature missing'], 400);
 }
 
 try {
@@ -34,7 +32,7 @@ try {
     } elseif ($scope === 'matrix') {
         $lab = $_POST['lab'] ?? '';
         if (!$lab) {
-            echo json_encode(['status' => 'error', 'error' => 'Lab missing']); exit;
+            api_json(['status' => 'error', 'error' => 'Lab missing'], 400);
         }
         
         if ($state) {
@@ -71,7 +69,7 @@ try {
     } elseif ($scope === 'mcp_settings') {
         // MCP-specific settings (admin_only mode)
         if (!$setting) {
-            echo json_encode(['status' => 'error', 'error' => 'Setting name missing']); exit;
+            api_json(['status' => 'error', 'error' => 'Setting name missing'], 400);
         }
         $db->global_settings->updateOne(
             ['_id' => 'mcp_settings'],
@@ -81,7 +79,7 @@ try {
     } else {
         // Toggle feature for a specific user
         if (!$email) {
-            echo json_encode(['status' => 'error', 'error' => 'User email missing']); exit;
+            api_json(['status' => 'error', 'error' => 'User email missing'], 400);
         }
         $db->users->updateOne(
             ['email' => $email],
@@ -92,7 +90,7 @@ try {
     // Rebuild file cache so changes take effect immediately
     \TomLabs\Labs\LabFeatures::rebuildCache();
 
-    echo json_encode(['status' => 'success']);
+    api_json(['status' => 'success'], 200);
 } catch (Exception $e) {
-    echo json_encode(['status' => 'error', 'error' => errors_from_exception($e, 'admin/toggle_feature')['error']]);
+    api_json(['status' => 'error', 'error' => errors_from_exception($e, 'admin/toggle_feature')['error']], 500);
 }

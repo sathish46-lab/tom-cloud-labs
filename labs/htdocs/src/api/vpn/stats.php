@@ -1,7 +1,6 @@
 <?php
 require_once __DIR__ . '/../../../src/load.php';
 require_once __DIR__ . '/../../../src/lib/core/VPN.class.php';
-header('Content-Type: application/json');
 
 $user = AuthMiddleware::requireAuth();
 
@@ -78,4 +77,4 @@ foreach ($myDevices as $device) {
     $results[] = $row;
 }
 
-echo json_encode($results);
+api_json($results, 200);

@@ -1,15 +1,13 @@
 <?php
 require_once "../../load.php";
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
 
 $data = json_decode(file_get_contents('php://input'), true);
 $domainId = $data['domain_id'] ?? null;
 
 if (!$domainId) {
-    echo json_encode(['success' => false, 'error' => 'Invalid request']); exit;
+    api_json(['success' => false, 'error' => 'Invalid request'], 400);
 }
 
 try {
@@ -28,10 +26,10 @@ try {
     ]);
 
     if ($result->getModifiedCount() > 0) {
-        echo json_encode(['success' => true]);
+        api_json(['success' => true], 200);
     } else {
         throw new Exception("Domain not found or unauthorized access.");
     }
 } catch (Exception $e) {
-    echo json_encode(['success' => false, 'error' => errors_from_exception($e, 'domain/remove_domain')['error']]);
+    api_json(['success' => false, 'error' => errors_from_exception($e, 'domain/remove_domain')['error']], 500);
 }

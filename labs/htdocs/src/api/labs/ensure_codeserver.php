@@ -7,8 +7,6 @@
 require_once __DIR__ . '/../../../src/load.php';
 require_once __DIR__ . '/../../lib/core/RabbitClient.class.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
 
 $labName    = $_POST['lab'] ?? 'essentials';
@@ -42,26 +40,25 @@ try {
     // String compare across numeric/ObjectId user_id storage kinds (see logs.php).
     $ownerId = (string)($inst['user_id'] ?? '');
     if ($ownerId === '' || $ownerId !== (string)$user->getUserId()) {
-        http_response_code(403);
-        exit(json_encode(['status' => 'error', 'error' => 'Access denied']));
+        api_json(['status' => 'error', 'error' => 'Access denied'], 403);
     }
 
     $status = (string)($inst['status'] ?? '');
     if ($status === 'deploying') {
-        exit(json_encode([
+        api_json([
             'status' => 'error',
             'error'  => 'Lab is being deployed — try again in a moment.',
             'hash'   => $instanceHash,
             'url'    => ''
-        ]));
+        ], 409);
     }
     if ($status !== 'running') {
-        exit(json_encode([
+        api_json([
             'status' => 'error',
             'error'  => 'Lab is not running. Start it first.',
             'hash'   => $instanceHash,
             'url'    => ''
-        ]));
+        ], 409);
     }
 
     // Unique per-run ID for THIS launch. /api/labs/logs resolves the run file
@@ -92,15 +89,14 @@ try {
         $ideUrl = \TomLabs\Labs\LabUrl::withScheme((string)($inst['credentials']['code_server_url'] ?? ''));
     }
 
-    echo json_encode([
+    api_json([
         'status'  => 'success',
         'message' => 'Code-server startup queued',
         'hash'    => $instanceHash,
         'url'     => $ideUrl,
         'run_id'  => $runId,
-    ]);
+    ], 200);
 
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['status' => 'error', 'error' => errors_from_exception($e, 'labs/ensure_codeserver')['error']]);
+    api_json(['status' => 'error', 'error' => errors_from_exception($e, 'labs/ensure_codeserver')['error']], 500);
 }

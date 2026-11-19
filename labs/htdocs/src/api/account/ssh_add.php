@@ -1,9 +1,7 @@
 <?php
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
 $user = AuthMiddleware::requireAuth();
-
 
 $db = DatabaseConnection::getDefaultDatabase();
 
@@ -13,7 +11,7 @@ $expiresAt = !empty($_POST['expiration_date']) ? strtotime($_POST['expiration_da
 
 // 1. Validation for standard SSH formats
 if (!preg_match('/^(ssh-rsa|ssh-ed25519|ecdsa-sha2-nistp(256|384|521))/', $publicKey)) {
-    echo json_encode(['status' => 'error', 'error' => 'Invalid SSH key format.']); exit;
+    api_json(['status' => 'error', 'error' => 'Invalid SSH key format.'], 400);
 }
 
 // 2. Generate SHA256 Fingerprint for the table
@@ -37,7 +35,7 @@ try {
     // This calls the 'syncuser' command we added to Lab.py
     shell_exec("sudo labsctl syncuser " . escapeshellarg($user->getUsername()));
 
-    echo json_encode(['status' => 'success']);
+    api_json(['status' => 'success'], 200);
 } catch (Exception $e) {
-    echo json_encode(['status' => 'error', 'error' => 'Database error.']);
+    api_json(['status' => 'error', 'error' => 'Database error.'], 400);
 }

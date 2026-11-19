@@ -10,7 +10,6 @@ $render = trim($_GET['render'] ?? 'json');
 
 // ── JSON MODE ──
 if ($render === 'json') {
-    header('Content-Type: application/json');
 
     $user = AuthMiddleware::requireAuth();
 
@@ -78,10 +77,10 @@ if ($render === 'json') {
         ];
     }
 
-    echo json_encode([
+    api_json([
         'roadmaps' => $roadmaps, 'total' => $total, 'page' => $page,
         'limit' => $limit, 'pages' => (int)ceil($total / $limit),
-    ]);
+    ], 200);
     exit;
 }
 
@@ -89,7 +88,6 @@ if ($render === 'json') {
 header('Content-Type: text/html; charset=utf-8');
 
 $user = AuthMiddleware::requireAuth();
-
 
 $userId = (int)$user->getUserId();
 $filter = trim($_GET['filter'] ?? 'all');

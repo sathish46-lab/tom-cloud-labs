@@ -8,8 +8,6 @@
 
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
-
 $admin = AuthMiddleware::requireAdmin();
 
 function nb_date($value): ?string {
@@ -29,9 +27,7 @@ if ($method === 'GET') {
     $filter = ['type' => 'broadcast', 'global' => true];
     if ($category !== '' && $category !== 'all') {
         if (!in_array($category, Notification::CATEGORIES, true)) {
-            http_response_code(400);
-            echo json_encode(['status' => 'error', 'error' => 'Invalid category']);
-            exit;
+api_json(['status' => 'error', 'error' => 'Invalid category'], 400);
         }
         $filter['category'] = $category;
     }
@@ -71,15 +67,14 @@ if ($method === 'GET') {
             ];
         }
 
-        echo json_encode([
+        api_json([
             'status'     => 'success',
             'broadcasts' => $rows,
             'total'      => count($rows),
-        ]);
+        ], 200);
     } catch (\Throwable $e) {
         error_log('notifications_broadcasts list failed: ' . $e->getMessage());
-        http_response_code(500);
-        echo json_encode(['status' => 'error', 'error' => 'Could not load broadcasts']);
+        api_json(['status' => 'error', 'error' => 'Could not load broadcasts'], 500);
     }
     exit;
 }
@@ -111,9 +106,7 @@ if ($method === 'DELETE') {
     }
 
     if (!preg_match('/^[a-f0-9]{24}$/i', $broadcastId)) {
-        http_response_code(400);
-        echo json_encode(['status' => 'error', 'error' => 'Invalid broadcast_id']);
-        exit;
+api_json(['status' => 'error', 'error' => 'Invalid broadcast_id'], 400);
     }
 
     try {
@@ -125,9 +118,7 @@ if ($method === 'DELETE') {
         ];
         $sample = $collection->findOne($filter, ['projection' => ['title' => 1, 'category' => 1]]);
         if (!$sample) {
-            http_response_code(404);
-            echo json_encode(['status' => 'error', 'error' => 'Broadcast not found']);
-            exit;
+api_json(['status' => 'error', 'error' => 'Broadcast not found'], 404);
         }
 
         $result = $collection->deleteMany($filter);
@@ -141,17 +132,15 @@ if ($method === 'DELETE') {
             'deleted'      => $deleted,
         ], (string)($admin->getUserId() ?? 'unknown'));
 
-        echo json_encode([
+        api_json([
             'status'  => 'success',
             'deleted' => $deleted,
-        ]);
+        ], 200);
     } catch (\Throwable $e) {
         error_log('notifications_broadcasts delete failed: ' . $e->getMessage());
-        http_response_code(500);
-        echo json_encode(['status' => 'error', 'error' => 'Could not delete broadcast']);
+        api_json(['status' => 'error', 'error' => 'Could not delete broadcast'], 500);
     }
     exit;
 }
 
-http_response_code(405);
-echo json_encode(['status' => 'error', 'error' => 'Method not allowed']);
+api_json(['status' => 'error', 'error' => 'Method not allowed'], 405);

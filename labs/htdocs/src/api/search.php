@@ -1,5 +1,4 @@
 <?php
-header('Content-Type: application/json');
 
 require_once __DIR__ . '/../../src/load.php';
 require_once __DIR__ . '/../../src/lib/core/SearchMatch.class.php';
@@ -20,17 +19,14 @@ $ql = mb_strtolower($q);
 $tokens = SearchMatch::tokenize($q);
 
 if ($ql === '' || $tokens === []) {
-    echo json_encode(['result' => 'success', 'q' => '', 'groups' => (object)[]]);
-    exit;
+api_json(['result' => 'success', 'q' => '', 'groups' => (object)[]], 200);
 }
 
 try {
     $mongoClient = DatabaseConnection::getClient();
     $db = $mongoClient->selectDatabase('tom_labs_db');
 } catch (\Throwable $e) {
-    http_response_code(503);
-    echo json_encode(['result' => 'error', 'message' => 'Database connection failed. Please try again later.']);
-    exit;
+api_json(['result' => 'error', 'message' => 'Database connection failed. Please try again later.'], 503);
 }
 
 $results = [
@@ -279,8 +275,8 @@ foreach ($results as $key => $rows) {
 }
 $results = array_filter($results, function ($v) { return !empty($v); });
 
-echo json_encode([
+api_json([
     'result' => 'success',
     'q'      => $q,
     'groups' => (object)$results,
-]);
+], 200);

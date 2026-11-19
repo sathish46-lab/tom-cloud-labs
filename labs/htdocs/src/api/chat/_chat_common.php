@@ -21,10 +21,7 @@ require_once __DIR__ . '/../../../src/load.php';
 function chat_require_user(): UserSession {
     $session = AuthMiddleware::requireAuth();
     if ($session->getUser() === null) {
-        http_response_code(401);
-        header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'error' => 'Unauthorized']);
-        exit;
+        api_json(['success' => false, 'error' => 'Unauthorized'], 401);
     }
     return $session;
 }
@@ -36,10 +33,7 @@ function chat_db(): MongoDB\Database {
     try {
         return DatabaseConnection::getDefaultDatabase();
     } catch (\Throwable $e) {
-        http_response_code(503);
-        header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'error' => 'Database unavailable']);
-        exit;
+        api_json(['success' => false, 'error' => 'Database unavailable'], 503);
     }
 }
 
@@ -62,8 +56,8 @@ function chat_input(string $key): string {
  */
 function chat_json(array $payload, int $status = 200): void {
     http_response_code($status);
-    header('Content-Type: application/json');
-    echo json_encode($payload);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     exit;
 }
 

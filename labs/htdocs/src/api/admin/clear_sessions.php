@@ -11,8 +11,6 @@
  */
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
-
 $admin = AuthMiddleware::requireAdmin();
 AuthMiddleware::requireCsrf();
 
@@ -51,7 +49,7 @@ if (ini_get('session.use_cookies')) {
 }
 
 if ($failed > 0) {
-    echo json_encode(['status' => 'error', 'error' => "$failed session file(s) could not be deleted", 'removed' => $removed, 'failed' => $failed], JSON_PRETTY_PRINT);
+    api_json(['status' => 'error', 'error' => "$failed session file(s) could not be deleted", 'removed' => $removed, 'failed' => $failed], 500);
 } else {
-    echo json_encode(['status' => 'success', 'message' => 'All sessions cleared. Every user must sign in again.', 'removed' => $removed], JSON_PRETTY_PRINT);
+    api_json(['status' => 'success', 'message' => 'All sessions cleared. Every user must sign in again.', 'removed' => $removed], 200);
 }

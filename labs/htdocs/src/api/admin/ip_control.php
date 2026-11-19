@@ -10,8 +10,6 @@
  */
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
-
 $admin = AuthMiddleware::requireAdmin();
 AuthMiddleware::requireCsrf();
 
@@ -77,30 +75,21 @@ switch ($action) {
     case 'release': {
         $ip = trim((string)($data['ip'] ?? $_POST['ip'] ?? ''));
         if (!preg_match('/^172\.\d{1,3}\.\d{1,3}\.\d{1,3}$/', $ip)) {
-            http_response_code(400);
-            echo json_encode(['status' => 'error', 'error' => 'A valid pool IP is required', JSON_PRETTY_PRINT]);
-            exit;
+api_json(['status' => 'error', 'error' => 'A valid pool IP is required', JSON_PRETTY_PRINT], 400);
         }
         $doc = $db->ip_registry->findOne(['ip_addr' => $ip]);
         if (!$doc) {
-            http_response_code(404);
-            echo json_encode(['status' => 'error', 'error' => 'IP not found in the registry', JSON_PRETTY_PRINT]);
-            exit;
+api_json(['status' => 'error', 'error' => 'IP not found in the registry', JSON_PRETTY_PRINT], 404);
         }
         if (($doc['status'] ?? '') !== 'reserved') {
-            http_response_code(400);
-            echo json_encode(['status' => 'error', 'error' => 'IP is not reserved (status: ' . ($doc['status'] ?? '?') . ')', JSON_PRETTY_PRINT]);
-            exit;
+api_json(['status' => 'error', 'error' => 'IP is not reserved (status: ' . ($doc['status'] ?? '?') . ')', JSON_PRETTY_PRINT], 400);
         }
         if (($doc['reserved_to'] ?? '') === 'server' || ($doc['email'] ?? '') === 'system@tomweb.in') {
-            http_response_code(403);
-            echo json_encode(['status' => 'error', 'error' => 'System IP (server gateway) cannot be released', JSON_PRETTY_PRINT]);
-            exit;
+api_json(['status' => 'error', 'error' => 'System IP (server gateway) cannot be released', JSON_PRETTY_PRINT], 403);
         }
         $ipManager->release($ip);
         AuditLog::log('release', 'ip_registry', $ip, ['released_by' => $adminEmail]);
-        echo json_encode(['status' => 'success', 'message' => "$ip released to the pool", 'ip' => $ip, JSON_PRETTY_PRINT]);
-        exit;
+api_json(['status' => 'success', 'message' => "$ip released to the pool", 'ip' => $ip, JSON_PRETTY_PRINT], 200);
     }
 
     case 'release_dead': {
@@ -126,13 +115,13 @@ switch ($action) {
             'released' => count($released),
             'failed' => count($failed),
         ]);
-        echo json_encode([
+        api_json([
             'status' => 'success',
             'message' => count($released) . ' dead IP(s) released back to the pool',
             'released' => $released,
             'failed' => $failed,
             'remaining_dead' => count($failed),
-        ]);
+        ], 200);
         exit;
     }
 
@@ -199,22 +188,20 @@ switch ($action) {
 
         $loaded = $offset + count($rows);
         $total  = $db->ip_registry->countDocuments(['status' => 'reserved']);
-        echo json_encode([
+        api_json([
             'status' => 'success',
             'rows'   => $rows,
             'total'  => $total,
             'loaded' => $loaded,
             'hasMore'=> $loaded < $total,
-        ], JSON_PRETTY_PRINT);
+        ], JSON_PRETTY_PRINT, 200);
         exit;
     }
 
     case 'search': {
         $q = trim((string)($data['q'] ?? $_POST['q'] ?? ''));
         if ($q === '') {
-            http_response_code(400);
-            echo json_encode(['status' => 'error', 'error' => 'Search query is required'], JSON_PRETTY_PRINT);
-            exit;
+api_json(['status' => 'error', 'error' => 'Search query is required'], 400);
         }
 
         $limit = min(100, max(1, (int)($data['limit'] ?? 50)));
@@ -286,18 +273,16 @@ switch ($action) {
         ];
     }
 
-    echo json_encode([
+    api_json([
         'status' => 'success',
         'query'  => $q,
         'rows'   => $rows,
         'count'  => count($rows),
-    ], JSON_PRETTY_PRINT);
+    ], JSON_PRETTY_PRINT, 200);
     exit;
     }
 
     default:
-        http_response_code(400);
-        echo json_encode(['status' => 'error', 'error' => 'Unknown action', JSON_PRETTY_PRINT]);
-        exit;
+api_json(['status' => 'error', 'error' => 'Unknown action', JSON_PRETTY_PRINT], 400);
 }
 

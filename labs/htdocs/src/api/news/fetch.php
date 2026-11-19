@@ -179,9 +179,8 @@ try {
     error_log('News fetch: failed to update news_settings.last_fetch: ' . $e->getMessage());
 }
 
-header('Content-Type: application/json');
-echo json_encode([
+api_json([
     'status' => 'success',
     'message' => $summary,
     'data' => $result
-]);
+], 200);

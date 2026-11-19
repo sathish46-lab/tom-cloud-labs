@@ -1,31 +1,29 @@
 <?php
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
-
 $admin = AuthMiddleware::requireAdmin();
 AuthMiddleware::requireCsrf();
 
 $email = trim($_POST['email'] ?? '');
 if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    echo json_encode(['status' => 'error', 'error' => 'Valid email required']); exit;
+    api_json(['status' => 'error', 'error' => 'Valid email required'], 400);
 }
 
 if (!empty($_SESSION['impersonator']['username'])) {
-    echo json_encode(['status' => 'error', 'error' => 'Exit the current impersonation first']); exit;
+    api_json(['status' => 'error', 'error' => 'Exit the current impersonation first'], 400);
 }
 
 try {
     $db = DatabaseConnection::getDefaultDatabase();
     $target = $db->users->findOne(['email' => $email]);
     if (!$target || empty($target['username'])) {
-        echo json_encode(['status' => 'error', 'error' => 'User not found']); exit;
+        api_json(['status' => 'error', 'error' => 'User not found'], 400);
     }
 
     $targetUsername = (string) $target['username'];
     $currentUsername = (string)($_SESSION['username'] ?? '');
     if ($targetUsername === $currentUsername) {
-        echo json_encode(['status' => 'error', 'error' => 'You are already acting as this user']); exit;
+        api_json(['status' => 'error', 'error' => 'You are already acting as this user'], 400);
     }
 
     // Freeze the original identity before overwriting the session.
@@ -54,12 +52,12 @@ try {
         (string)($admin->getUserId() ?? 'unknown')
     );
 
-    echo json_encode([
+    api_json([
         'status'  => 'success',
         'as'      => $targetUsername,
         'redirect'=> '/home',
-    ]);
+    ], 200);
 } catch (Throwable $e) {
     errors_report(['context' => 'admin/impersonate', 'message' => 'impersonate: ' . $e->getMessage()]);
-    echo json_encode(['status' => 'error', 'error' => 'Failed to start impersonation']);
+    api_json(['status' => 'error', 'error' => 'Failed to start impersonation'], 400);
 }

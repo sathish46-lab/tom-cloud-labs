@@ -5,8 +5,6 @@
  */
 require_once __DIR__ . '/../../../load.php';
 
-header('Content-Type: application/json');
-
 AuthMiddleware::requireInternalToken();
 
 // Parse payload
@@ -15,9 +13,7 @@ $userId = $input['user_id'] ?? null;
 $lessonId = $input['lesson_id'] ?? null;
 
 if (!$userId) {
-    http_response_code(400);
-    echo json_encode(["error" => "user_id is required"]);
-    exit;
+api_json(["error" => "user_id is required"], 400);
 }
 
 try {
@@ -58,9 +54,8 @@ try {
         ];
     }
 
-    echo json_encode($response);
+    api_json($response, 200);
 
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(["error" => "Database error: " . errors_from_exception($e, 'learnAI/tools/connection_info')['error']]);
+    api_json(["error" => "Database error: " . errors_from_exception($e, 'learnAI/tools/connection_info')['error']], 500);
 }

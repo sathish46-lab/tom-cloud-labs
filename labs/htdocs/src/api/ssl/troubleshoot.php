@@ -11,27 +11,24 @@ header('X-Content-Type-Options: nosniff');
 
 $user = AuthMiddleware::requireAuth();
 
-
 if (!$user) {
-    echo json_encode(['success' => false, 'error' => 'User session invalid']);
-    exit;
+api_json(['success' => false, 'error' => 'User session invalid'], 400);
 }
 
 $domain = $_GET['domain'] ?? '';
 
 // Validate domain format
 if (empty($domain) || !preg_match('/^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?$/', $domain)) {
-    echo json_encode(['success' => false, 'error' => 'Invalid or missing domain parameter']);
-    exit;
+api_json(['success' => false, 'error' => 'Invalid or missing domain parameter'], 400);
 }
 
 try {
     $ssl = new SSLManager();
     $result = $ssl->troubleshootCertificate($domain, $user->getUserId());
-    echo json_encode([
+    api_json([
         'success' => true,
         'result' => $result
-    ]);
+    ], 200);
 } catch (Exception $e) {
-    echo json_encode(['success' => false, 'error' => errors_from_exception($e, 'ssl/troubleshoot')['error']]);
+    api_json(['success' => false, 'error' => errors_from_exception($e, 'ssl/troubleshoot')['error']], 500);
 }

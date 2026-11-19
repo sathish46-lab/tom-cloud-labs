@@ -5,8 +5,6 @@
  */
 require_once __DIR__ . '/../../../load.php';
 
-header('Content-Type: application/json');
-
 AuthMiddleware::requireInternalToken();
 
 // Parse payload
@@ -16,9 +14,7 @@ $chapterIds = $input['chapter_ids'] ?? [];
 $currentChapterId = $input['chapter_id'] ?? null; // Fallback context
 
 if (!$lessonId) {
-    http_response_code(400);
-    echo json_encode(["error" => "lesson_id is required"]);
-    exit;
+api_json(["error" => "lesson_id is required"], 400);
 }
 
 if (empty($chapterIds) && $currentChapterId) {
@@ -26,9 +22,7 @@ if (empty($chapterIds) && $currentChapterId) {
 }
 
 if (empty($chapterIds)) {
-    http_response_code(400);
-    echo json_encode(["error" => "No chapter IDs provided to read"]);
-    exit;
+api_json(["error" => "No chapter IDs provided to read"], 400);
 }
 
 try {
@@ -38,15 +32,12 @@ try {
     try { 
         $lidMongo = new \MongoDB\BSON\ObjectId($lessonId); 
     } catch (\Exception $e) { 
-        http_response_code(400);
-        echo json_encode(['error' => 'Invalid lesson_id format']);
-        exit;
+api_json(['error' => 'Invalid lesson_id format'], 400);
     }
 
     $lesson = $db->ai_lessons->findOne(['_id' => $lidMongo]);
     if (!$lesson) {
-        echo json_encode(['error' => 'Lesson not found']);
-        exit;
+api_json(['error' => 'Lesson not found'], 400);
     }
 
     $response = [
@@ -81,9 +72,8 @@ try {
         }
     }
 
-    echo json_encode($response);
+    api_json($response, 200);
 
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(["error" => "Database error: " . errors_from_exception($e, 'learnAI/tools/read_chapters')['error']]);
+    api_json(["error" => "Database error: " . errors_from_exception($e, 'learnAI/tools/read_chapters')['error']], 500);
 }

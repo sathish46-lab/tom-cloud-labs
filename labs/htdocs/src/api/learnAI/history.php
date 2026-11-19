@@ -10,7 +10,6 @@ header('Content-Type: text/html');
 // 1. Validate Session
 $user = AuthMiddleware::requireAuth();
 
-
 $userId = (int)$user->getUserId();
 
 // 2. Get parameters from query string

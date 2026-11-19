@@ -11,8 +11,6 @@
  */
 require_once __DIR__ . '/../../../load.php';
 
-header('Content-Type: application/json');
-
 AuthMiddleware::requireInternalToken();
 
 $input = json_decode(file_get_contents('php://input'), true);
@@ -21,9 +19,7 @@ $command = $input['command'] ?? '';
 $username = $input['username'] ?? null;
 
 if (empty($userId) || empty($command)) {
-    http_response_code(400);
-    echo json_encode(['status' => 'error', 'error' => 'Missing user_id or command']);
-    exit;
+api_json(['status' => 'error', 'error' => 'Missing user_id or command'], 400);
 }
 
 try {
@@ -35,15 +31,11 @@ try {
     $labDoc = $inst;
 
     if (!$labDoc || empty($labDoc['instance_hash'])) {
-        http_response_code(400);
-        echo json_encode(['status' => 'error', 'error' => 'No running lab instance found for this user']);
-        exit;
+api_json(['status' => 'error', 'error' => 'No running lab instance found for this user'], 400);
     }
     $instanceHash = $labDoc['instance_hash'];
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['status' => 'error', 'error' => 'Database error: ' . errors_from_exception($e, 'learnAI/tools/exec')['error']]);
-    exit;
+api_json(['status' => 'error', 'error' => 'Database error: ' . errors_from_exception($e, 'learnAI/tools/exec')['error']], 500);
 }
 
 // Block dangerous commands
@@ -56,9 +48,7 @@ $dangerousPatterns = [
 ];
 foreach ($dangerousPatterns as $pattern) {
     if (preg_match($pattern, $command)) {
-        http_response_code(400);
-        echo json_encode(['status' => 'error', 'error' => 'Command blocked: potentially destructive operation']);
-        exit;
+api_json(['status' => 'error', 'error' => 'Command blocked: potentially destructive operation'], 400);
     }
 }
 
@@ -97,13 +87,12 @@ try {
         $outputText = substr($outputText, 0, 4096) . "\n... (output truncated to 4KB)";
     }
 
-    echo json_encode([
+    api_json([
         'status'    => 'success',
         'output'    => $outputText,
         'exit_code' => $exitCode
-    ]);
+    ], 200);
 
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['status' => 'error', 'error' => errors_from_exception($e, 'learnAI/tools/exec')['error']]);
+    api_json(['status' => 'error', 'error' => errors_from_exception($e, 'learnAI/tools/exec')['error']], 500);
 }

@@ -3,7 +3,6 @@ require_once __DIR__ . '/../../load.php';
 
 $user = AuthMiddleware::requireAuth();
 
-
 $userId = (int)$user->getUserId();
 $username = $user->getUsername();
 $email = $user->getEmail();

@@ -33,8 +33,7 @@ if (empty($clientId) || empty($redirectUri) || $responseType !== 'code') {
         ]);
         header('Location: ' . $errorUri);
     } else {
-        http_response_code(400);
-        echo json_encode(['error' => 'invalid_request', 'error_description' => 'Missing or invalid required parameters']);
+        api_json(['error' => 'invalid_request', 'error_description' => 'Missing or invalid required parameters'], 400);
     }
     exit;
 }
@@ -51,8 +50,7 @@ if (!$client) {
             'state' => $state
         ]));
     } else {
-        http_response_code(400);
-        echo json_encode(['error' => 'invalid_client', 'error_description' => 'Invalid client_id']);
+        api_json(['error' => 'invalid_client', 'error_description' => 'Invalid client_id'], 400);
     }
     exit;
 }
@@ -66,8 +64,7 @@ if (!MCPOAuth::validateRedirectUri($clientId, $redirectUri)) {
             'state' => $state
         ]));
     } else {
-        http_response_code(400);
-        echo json_encode(['error' => 'invalid_redirect_uri', 'error_description' => 'Redirect URI does not match client registration']);
+        api_json(['error' => 'invalid_redirect_uri', 'error_description' => 'Redirect URI does not match client registration'], 400);
     }
     exit;
 }
@@ -81,8 +78,7 @@ if (empty($codeChallenge)) {
             'state' => $state
         ]));
     } else {
-        http_response_code(400);
-        echo json_encode(['error' => 'invalid_request', 'error_description' => 'code_challenge parameter is required']);
+        api_json(['error' => 'invalid_request', 'error_description' => 'code_challenge parameter is required'], 400);
     }
     exit;
 }
@@ -95,8 +91,7 @@ if ($codeChallengeMethod !== 'S256' && $codeChallengeMethod !== 'plain') {
             'state' => $state
         ]));
     } else {
-        http_response_code(400);
-        echo json_encode(['error' => 'invalid_request', 'error_description' => 'Unsupported code_challenge_method']);
+        api_json(['error' => 'invalid_request', 'error_description' => 'Unsupported code_challenge_method'], 400);
     }
     exit;
 }
@@ -110,8 +105,6 @@ $txnId = MCPOAuth::createTransaction(
     $codeChallenge,
     $codeChallengeMethod
 );
-
-header('Content-Type: application/json');
 
 $user = AuthMiddleware::requireAuth();
 

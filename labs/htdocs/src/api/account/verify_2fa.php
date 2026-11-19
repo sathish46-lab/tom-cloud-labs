@@ -1,9 +1,7 @@
 <?php
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
 $user = AuthMiddleware::requireAuth();
-
 
 $db = DatabaseConnection::getDefaultDatabase();
 
@@ -11,23 +9,23 @@ $email = $user->getEmail();
 $submittedOtp = trim($_POST['otp'] ?? '');
 
 if (empty($submittedOtp) || strlen($submittedOtp) !== 6) {
-    echo json_encode(['status' => 'error', 'error' => 'Invalid OTP format.']); exit;
+    api_json(['status' => 'error', 'error' => 'Invalid OTP format.'], 400);
 }
 
 $userDoc = $db->users->findOne(['email' => $email]);
 
 if (!$userDoc || !isset($userDoc['two_factor_otp']) || !isset($userDoc['two_factor_expires'])) {
-    echo json_encode(['status' => 'error', 'error' => 'No active 2FA request found.']); exit;
+    api_json(['status' => 'error', 'error' => 'No active 2FA request found.'], 400);
 }
 
 // Strictly check 1-minute expiration
 if (time() > $userDoc['two_factor_expires']) {
-    echo json_encode(['status' => 'error', 'error' => 'OTP has expired.']); exit;
+    api_json(['status' => 'error', 'error' => 'OTP has expired.'], 400);
 }
 
 // Verify OTP match
 if (!password_verify($submittedOtp, $userDoc['two_factor_otp'])) {
-    echo json_encode(['status' => 'error', 'error' => 'Incorrect OTP code.']); exit;
+    api_json(['status' => 'error', 'error' => 'Incorrect OTP code.'], 400);
 }
 
 // Success! Enable 2FA and clear OTP fields
@@ -42,7 +40,7 @@ try {
         ]]
     );
 
-    echo json_encode(['status' => 'success']);
+    api_json(['status' => 'success'], 200);
 } catch (Exception $e) {
-    echo json_encode(['status' => 'error', 'error' => 'Failed to save 2FA status.']);
+    api_json(['status' => 'error', 'error' => 'Failed to save 2FA status.'], 400);
 }

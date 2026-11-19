@@ -6,10 +6,7 @@
  */
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $currentUsername = $user ? $user->getUsername() : '';
 $currentUserId = $user ? (int) $user->getUserId() : 0;
@@ -18,9 +15,7 @@ $input = json_decode(file_get_contents('php://input'), true) ?? [];
 $slug = trim($input['slug'] ?? $_POST['slug'] ?? '');
 
 if (empty($slug)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid slug']);
-    exit;
+api_json(['error' => 'Invalid slug'], 400);
 }
 
 try {
@@ -31,9 +26,7 @@ if (!$instance) {
 }
 
     if (!$instance) {
-        http_response_code(404);
-        echo json_encode(['error' => 'Instance not found']);
-        exit;
+api_json(['error' => 'Instance not found'], 404);
     }
 
     $instanceId = $instance['_id'];
@@ -67,13 +60,13 @@ if (!$instance) {
             ['$set' => ['likes_count' => $likesCount]]
         );
 
-        echo json_encode([
+        api_json([
             'result' => 'success',
             'liked' => false,
             'action' => 'unliked',
             'like_count' => $likesCount,
             'message' => 'Template unliked!',
-        ]);
+        ], 200);
     } else {
         $db->instance_likes->insertOne([
             'instance_id' => $instanceId,
@@ -92,15 +85,14 @@ if (!$instance) {
             ['$set' => ['likes_count' => $likesCount]]
         );
 
-        echo json_encode([
+        api_json([
             'result' => 'success',
             'liked' => true,
             'action' => 'liked',
             'like_count' => $likesCount,
             'message' => 'Template liked!',
-        ]);
+        ], 200);
     }
 } catch (Throwable $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Failed to process like: ' . errors_from_exception($e, 'instances/like')['error']]);
+    api_json(['error' => 'Failed to process like: ' . errors_from_exception($e, 'instances/like')['error']], 500);
 }

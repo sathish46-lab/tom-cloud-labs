@@ -2,15 +2,12 @@
 require_once __DIR__ . '/../../../src/load.php';
 require_once __DIR__ . '/../../lib/core/RabbitClient.class.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $hash = $_POST['hash'] ?? '';
 
 if (empty($hash)) {
-    echo json_encode(['status' => 'error', 'error' => 'Missing hash']); exit;
+    api_json(['status' => 'error', 'error' => 'Missing hash'], 400);
 }
 
 try {
@@ -32,12 +29,11 @@ try {
         'user'   => $user->getUsername()
     ]);
 
-    echo json_encode([
+    api_json([
         'status'  => 'success',
         'message' => 'Stop queued',
         'hash'    => $hash
-    ]);
+    ], 200);
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['status' => 'error', 'error' => errors_from_exception($e, 'instances/stop_instance')['error']]);
+    api_json(['status' => 'error', 'error' => errors_from_exception($e, 'instances/stop_instance')['error']], 500);
 }

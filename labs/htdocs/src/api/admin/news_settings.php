@@ -7,8 +7,6 @@
 
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAdmin();
 
 $enabled = isset($_POST['enabled']) && $_POST['enabled'] === '1';
@@ -34,7 +32,7 @@ try {
         ['upsert' => true]
     );
 
-    echo json_encode(['status' => 'success']);
+    api_json(['status' => 'success'], 200);
 } catch (Exception $e) {
-    echo json_encode(['status' => 'error', 'error' => errors_from_exception($e, 'admin/news_settings')['error']]);
+    api_json(['status' => 'error', 'error' => errors_from_exception($e, 'admin/news_settings')['error']], 500);
 }

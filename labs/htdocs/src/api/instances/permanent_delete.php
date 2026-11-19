@@ -34,7 +34,7 @@ if ($result->getDeletedCount() > 0) {
     AuditLog::log('permanent_delete', 'instance', $trashed['instance_hash'] ?? (string)$trashed['_id'], [
         'name' => $trashed['name'] ?? '',
     ]);
-    echo json_encode(['status' => 'success']);
+    api_json(['status' => 'success'], 200);
 } else {
     http_response_code(500);
     echo 'Failed to delete';

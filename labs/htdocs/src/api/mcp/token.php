@@ -6,7 +6,6 @@
 
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
 header('Cache-Control: no-store');
 header('Pragma: no-cache');
 
@@ -14,8 +13,7 @@ header('Pragma: no-cache');
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     header('Allow: POST');
-    echo json_encode(['error' => 'method_not_allowed', 'error_description' => 'Method not allowed']);
-    exit;
+api_json(['error' => 'method_not_allowed', 'error_description' => 'Method not allowed'], 400);
 }
 
 // Parse request body (form-urlencoded or JSON)
@@ -54,36 +52,29 @@ try {
     if ($grantType === 'authorization_code') {
         // Authorization Code Grant (with PKCE)
         if (empty($code) || empty($clientId) || empty($redirectUri) || empty($codeVerifier)) {
-            http_response_code(400);
-            echo json_encode([
+            api_json([
                 'error' => 'invalid_request',
                 'error_description' => 'Missing required parameters: code, client_id, redirect_uri, code_verifier'
-            ]);
+            ], 400);
             exit;
         }
 
         // Validate client
         $client = MCPOAuth::getClient($clientId);
         if (!$client) {
-            http_response_code(401);
-            echo json_encode(['error' => 'invalid_client', 'error_description' => 'Invalid client_id']);
-            exit;
+api_json(['error' => 'invalid_client', 'error_description' => 'Invalid client_id'], 401);
         }
 
         // Validate redirect URI
         if (!MCPOAuth::validateRedirectUri($clientId, $redirectUri)) {
-            http_response_code(400);
-            echo json_encode(['error' => 'invalid_grant', 'error_description' => 'Redirect URI mismatch']);
-            exit;
+api_json(['error' => 'invalid_grant', 'error_description' => 'Redirect URI mismatch'], 400);
         }
 
         // Validate and consume authorization code
         $result = MCPOAuth::validateAuthCode($code, $clientId, $redirectUri, $codeVerifier);
 
         if (!$result['valid']) {
-            http_response_code(400);
-            echo json_encode(['error' => 'invalid_grant', 'error_description' => $result['error']]);
-            exit;
+api_json(['error' => 'invalid_grant', 'error_description' => $result['error']], 400);
         }
 
         // Generate tokens
@@ -112,52 +103,42 @@ try {
             error_log('MCP connect notification failed: ' . $e->getMessage());
         }
 
-        echo json_encode($tokens);
-        exit;
+api_json($tokens, 200);
 
     } elseif ($grantType === 'refresh_token') {
         // Refresh Token Grant
         if (empty($refreshToken) || empty($clientId)) {
-            http_response_code(400);
-            echo json_encode([
+            api_json([
                 'error' => 'invalid_request',
                 'error_description' => 'Missing required parameters: refresh_token, client_id'
-            ]);
+            ], 400);
             exit;
         }
 
         // Validate client
         $client = MCPOAuth::getClient($clientId);
         if (!$client) {
-            http_response_code(401);
-            echo json_encode(['error' => 'invalid_client', 'error_description' => 'Invalid client_id']);
-            exit;
+api_json(['error' => 'invalid_client', 'error_description' => 'Invalid client_id'], 401);
         }
 
         // Refresh access token
         $result = MCPOAuth::refreshAccessToken($refreshToken, $clientId);
 
         if (!$result['valid']) {
-            http_response_code(400);
-            echo json_encode(['error' => 'invalid_grant', 'error_description' => $result['error']]);
-            exit;
+api_json(['error' => 'invalid_grant', 'error_description' => $result['error']], 400);
         }
 
-        echo json_encode($result);
-        exit;
+api_json($result, 200);
 
     } else {
-        http_response_code(400);
-        echo json_encode([
+        api_json([
             'error' => 'unsupported_grant_type',
             'error_description' => "Grant type '$grantType' not supported. Supported: authorization_code, refresh_token"
-        ]);
+        ], 400);
         exit;
     }
 
 } catch (Exception $e) {
     errors_report(['context' => 'mcp/token', 'message' => "MCP Token Error: " . $e->getMessage()]);
-    http_response_code(500);
-    echo json_encode(['error' => 'server_error', 'error_description' => 'Internal server error']);
-    exit;
+api_json(['error' => 'server_error', 'error_description' => 'Internal server error'], 500);
 }

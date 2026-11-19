@@ -6,10 +6,7 @@
 require_once __DIR__ . '/../../load.php';
 require_once __DIR__ . '/../../lib/core/RabbitClient.class.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $userId = (int)$user->getUserId();
 $db = DatabaseConnection::getDefaultDatabase();
@@ -20,8 +17,7 @@ $topic = trim($input['topic'] ?? $input['query'] ?? $_POST['topic'] ?? $_GET['to
 $level = trim($input['level'] ?? $_POST['level'] ?? $_GET['level'] ?? 'Beginner');
 
 if (empty($topic)) {
-    http_response_code(400);
-    echo json_encode([
+    api_json([
         'status' => 'failed',
         'message' => 'Topic description is required',
         'lesson_id' => null,
@@ -29,7 +25,7 @@ if (empty($topic)) {
         'completed' => false,
         'failed' => true,
         'error_message' => 'Topic description is required'
-    ]);
+    ], 400);
     exit;
 }
 
@@ -77,8 +73,7 @@ try {
             'error_message' => 'Could not queue lesson generation'
         ]]
     );
-    http_response_code(500);
-    echo json_encode([
+    api_json([
         'status' => 'failed',
         'message' => 'Could not queue lesson generation',
         'lesson_id' => null,
@@ -86,11 +81,11 @@ try {
         'completed' => false,
         'failed' => true,
         'error_message' => 'Could not queue lesson generation'
-    ]);
+    ], 500);
     exit;
 }
 
-echo json_encode([
+api_json([
     'status' => 'running',
     'message' => 'running',
     'lesson_id' => null,
@@ -98,4 +93,4 @@ echo json_encode([
     'completed' => false,
     'failed' => false,
     'error_message' => null
-]);
+], 200);

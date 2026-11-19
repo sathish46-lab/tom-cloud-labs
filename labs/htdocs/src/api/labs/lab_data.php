@@ -1,17 +1,13 @@
 <?php
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $labHash = $_GET['hash'] ?? '';
 $datatype = $_GET['type'] ?? 'all';
 
 if (empty($labHash)) {
-    http_response_code(400);
-    exit(json_encode(['error' => 'Missing hash parameter']));
+    api_json(['error' => 'Missing hash parameter'], 400);
 }
 
 // Verify ownership: check if this hash belongs to the user
@@ -24,8 +20,7 @@ foreach (['essentials', 'minio', 'n8n', 'docker_lab', 'gui_essentials'] as $type
 }
 
 if (!$isOwner) {
-    http_response_code(403);
-    exit(json_encode(['error' => 'Access denied']));
+    api_json(['error' => 'Access denied'], 403);
 }
 
 try {
@@ -46,8 +41,7 @@ try {
     );
 
     if (!$inst) {
-        http_response_code(404);
-        exit(json_encode(['error' => 'Lab not found']));
+        api_json(['error' => 'Lab not found'], 404);
     }
 
     $labType = $inst['lab_type'] ?? 'essentials';
@@ -74,9 +68,8 @@ try {
         $response['domains'] = $domainUsageMap;
     }
 
-    echo json_encode($response);
+    api_json($response, 200);
 
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Internal server error']);
+    api_json(['error' => 'Internal server error'], 500);
 }

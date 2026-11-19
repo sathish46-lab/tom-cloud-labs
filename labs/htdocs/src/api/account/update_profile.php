@@ -10,8 +10,6 @@
  */
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
 AuthMiddleware::requireCsrf();
 
@@ -30,8 +28,7 @@ $lastName = mb_substr($lastName, 0, 50);
 
 // Validate: at least one field provided
 if (empty($firstName) && empty($lastName)) {
-    echo json_encode(['status' => 'error', 'error' => 'First name or last name is required.']);
-    exit;
+api_json(['status' => 'error', 'error' => 'First name or last name is required.'], 400);
 }
 
 try {
@@ -44,9 +41,9 @@ try {
         ]]
     );
 
-    echo json_encode(['status' => 'success']);
+    api_json(['status' => 'success'], 200);
 
 } catch (Exception $e) {
     errors_report(['context' => 'account/update_profile', 'message' => "Profile update error: " . $e->getMessage()]);
-    echo json_encode(['status' => 'error', 'error' => 'Database update failed.']);
+    api_json(['status' => 'error', 'error' => 'Database update failed.'], 400);
 }

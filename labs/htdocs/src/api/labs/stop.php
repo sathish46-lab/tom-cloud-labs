@@ -5,10 +5,7 @@ require_once __DIR__ . '/../../lib/core/jobs/Process.class.php';
 require_once __DIR__ . '/../../lib/core/jobs/Worker.class.php';
 require_once __DIR__ . '/../../lib/core/RabbitClient.class.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $labName = $_POST['lab'] ?? 'essentials';
 
@@ -62,17 +59,16 @@ try {
     // NOTE: We do NOT call LabIPManager::release() here. 
     // We want the user to keep their IP even when the container is off.
 
-    echo json_encode([
+    api_json([
         'status'  => 'success',
         'message' => 'Shutdown request queued',
         'hash'    => $instanceHash
-    ]);
+    ], 200);
     
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode([
+    api_json([
         'status' => 'error', 
         'error' => errors_from_exception($e, 'labs/stop')['error'],
         'trace' => $e->getTraceAsString()
-    ]);
+    ], 500);
 }

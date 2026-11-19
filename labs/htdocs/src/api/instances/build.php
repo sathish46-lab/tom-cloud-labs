@@ -2,15 +2,12 @@
 require_once __DIR__ . '/../../../src/load.php';
 require_once __DIR__ . '/../../lib/core/RabbitClient.class.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $hash = $_POST['hash'] ?? '';
 
 if (empty($hash)) {
-    echo json_encode(['status' => 'error', 'error' => 'Missing hash']); exit;
+    api_json(['status' => 'error', 'error' => 'Missing hash'], 400);
 }
 
 try {
@@ -21,7 +18,7 @@ try {
     ]);
 
     if (!$instance) {
-        echo json_encode(['status' => 'error', 'error' => 'Instance not found']); exit;
+        api_json(['status' => 'error', 'error' => 'Instance not found'], 400);
     }
 
     $db->instances->updateOne(
@@ -38,12 +35,11 @@ try {
         'vsc_domain' => $instance['code_domain'] ?? ''
     ]);
 
-    echo json_encode([
+    api_json([
         'status'  => 'success',
         'message' => 'Build queued',
         'hash'    => $hash
-    ]);
+    ], 200);
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['status' => 'error', 'error' => errors_from_exception($e, 'instances/build')['error']]);
+    api_json(['status' => 'error', 'error' => errors_from_exception($e, 'instances/build')['error']], 500);
 }

@@ -5,10 +5,7 @@
  */
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $userId = (int)$user->getUserId();
 $userEmail = $user->getEmail();
@@ -18,18 +15,14 @@ $input = json_decode(file_get_contents('php://input'), true) ?? [];
 $lessonId = trim($input['lesson_id'] ?? $_POST['lesson_id'] ?? $_GET['lesson_id'] ?? '');
 
 if (empty($lessonId)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'lesson_id is required']);
-    exit;
+api_json(['error' => 'lesson_id is required'], 400);
 }
 
 try {
     $db = DatabaseConnection::getDefaultDatabase();
     $lesson = $db->ai_lessons->findOne(['_id' => new MongoDB\BSON\ObjectId($lessonId)]);
     if (!$lesson) {
-        http_response_code(404);
-        echo json_encode(['error' => 'Lesson not found']);
-        exit;
+api_json(['error' => 'Lesson not found'], 404);
     }
 
     // Check if user is author/owner
@@ -46,20 +39,20 @@ try {
     $existingReveal = $db->ai_unlocked_prompts->findOne(['user_id' => $userId, 'lesson_id' => (string)$lessonId]);
 
     if ($isAuthor) {
-        echo json_encode([
+        api_json([
             'already_revealed' => true,
             'free_access' => true,
             'message' => 'Owner access - free'
-        ]);
+        ], 200);
         exit;
     }
 
     if ($existingReveal) {
-        echo json_encode([
+        api_json([
             'already_revealed' => true,
             'free_access' => false,
             'message' => 'Already revealed'
-        ]);
+        ], 200);
         exit;
     }
 
@@ -67,12 +60,11 @@ try {
     $currentJolt = (int)($stats['jolt'] ?? 0);
 
     if ($currentJolt < 1) {
-        http_response_code(402);
-        echo json_encode([
+        api_json([
             'error' => 'Insufficient Jolt fuel. You need 1 Jolt to reveal this prompt, but currently have ' . $currentJolt . ' Jolt. Complete challenges or quizzes to earn more fuel!',
             'current_jolt' => $currentJolt,
             'required_jolt' => 1
-        ]);
+        ], 402);
         exit;
     }
 
@@ -86,13 +78,12 @@ try {
     $updatedStats = \TomLabs\Labs\Quiz::getUserStats($userEmail);
     $newJolt = (int)($updatedStats['jolt'] ?? ($currentJolt - 1));
 
-    echo json_encode([
+    api_json([
         'already_revealed' => true,
         'free_access' => false,
         'message' => 'Prompt revealed successfully!',
         'new_jolt' => $newJolt
-    ]);
+    ], 200);
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Failed to confirm reveal: ' . errors_from_exception($e, 'learnAI/reveal_prompt_confirm')['error']]);
+    api_json(['error' => 'Failed to confirm reveal: ' . errors_from_exception($e, 'learnAI/reveal_prompt_confirm')['error']], 500);
 }

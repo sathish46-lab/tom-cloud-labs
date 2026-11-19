@@ -5,7 +5,6 @@ require_once __DIR__ . '/../../lib/core/AuditLog.class.php';
 $user = AuthMiddleware::requireAuth();
 AuthMiddleware::requireCsrf();
 
-header('Content-Type: application/json');
 $userId = (int)$user->getUserId();
 $username = $user->getUsername();
 $email = $user->getEmail();
@@ -17,8 +16,7 @@ $type = $_POST['type'] ?? 'machine';
 $template = trim($_POST['template'] ?? 'essentials');
 
 if (empty($name)) {
-    echo json_encode(['status' => 'error', 'error' => 'Name is required']);
-    exit;
+api_json(['status' => 'error', 'error' => 'Name is required'], 400);
 }
 
 // Generate slug
@@ -105,7 +103,7 @@ if ($result->getInsertedCount() > 0) {
     </div>
     <?php
     $html = ob_get_clean();
-    echo json_encode(['status' => 'success', 'html' => $html]);
+    api_json(['status' => 'success', 'html' => $html], 200);
 } else {
-    echo json_encode(['status' => 'error', 'error' => 'Database insert failed']);
+    api_json(['status' => 'error', 'error' => 'Database insert failed'], 400);
 }

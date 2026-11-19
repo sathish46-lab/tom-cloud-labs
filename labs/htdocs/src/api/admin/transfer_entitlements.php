@@ -1,8 +1,6 @@
 <?php
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
-
 $admin = AuthMiddleware::requireAdmin();
 AuthMiddleware::requireCsrf();
 
@@ -13,21 +11,21 @@ $amount    = (int)($_POST['amount'] ?? 0);
 $confirm   = trim($_POST['confirm'] ?? '');
 
 if (!in_array($type, ['zeal', 'jolt'], true)) {
-    echo json_encode(['status' => 'error', 'error' => 'Type must be zeal or jolt']); exit;
+    api_json(['status' => 'error', 'error' => 'Type must be zeal or jolt'], 400);
 }
 if ($fromEmail === '' || !filter_var($fromEmail, FILTER_VALIDATE_EMAIL)
     || $toEmail === '' || !filter_var($toEmail, FILTER_VALIDATE_EMAIL)) {
-    echo json_encode(['status' => 'error', 'error' => 'Both a valid from and to email are required']); exit;
+    api_json(['status' => 'error', 'error' => 'Both a valid from and to email are required'], 400);
 }
 if ($fromEmail === $toEmail) {
-    echo json_encode(['status' => 'error', 'error' => 'Cannot transfer to the same user']); exit;
+    api_json(['status' => 'error', 'error' => 'Cannot transfer to the same user'], 400);
 }
 if ($amount < 1) {
-    echo json_encode(['status' => 'error', 'error' => 'Amount must be at least 1']); exit;
+    api_json(['status' => 'error', 'error' => 'Amount must be at least 1'], 400);
 }
 // Typed-phrase confirmation — the operator must type the exact target email.
 if ($confirm !== 'TRANSFER ' . $toEmail) {
-    echo json_encode(['status' => 'error', 'error' => 'Type exactly: TRANSFER ' . $toEmail]); exit;
+    api_json(['status' => 'error', 'error' => 'Type exactly: TRANSFER ' . $toEmail], 400);
 }
 
 try {
@@ -36,7 +34,7 @@ try {
     $fromUser = $db->users->findOne(['email' => $fromEmail]);
     $toUser   = $db->users->findOne(['email' => $toEmail]);
     if (!$fromUser || !$toUser) {
-        echo json_encode(['status' => 'error', 'error' => 'One or both users do not exist']); exit;
+        api_json(['status' => 'error', 'error' => 'One or both users do not exist'], 400);
     }
 
     // Make sure both balance documents exist before the conditional decrement.
@@ -56,11 +54,11 @@ try {
     if ($debit->getMatchedCount() === 0) {
         $current = $db->user_stats->findOne(['email' => $fromEmail]);
         $balance = (int)($current[$type] ?? 0);
-        echo json_encode([
+        api_json([
             'status'  => 'error',
             'error'   => 'Insufficient ' . $type . ' balance (' . $balance . ' available)',
             'balance' => $balance,
-        ]);
+        ], 200);
         exit;
     }
 
@@ -88,14 +86,14 @@ try {
         (string)($admin->getUserId() ?? 'unknown')
     );
 
-    echo json_encode([
+    api_json([
         'status'  => 'success',
         'type'    => $type,
         'amount'  => $amount,
         'from'    => ['email' => $fromEmail, 'balance' => (int)($fromAfter[$type] ?? 0)],
         'to'      => ['email' => $toEmail,   'balance' => (int)($toAfter[$type] ?? 0)],
-    ]);
+    ], 200);
 } catch (Throwable $e) {
     errors_report(['context' => 'admin/transfer_entitlements', 'message' => 'transfer_entitlements: ' . $e->getMessage()]);
-    echo json_encode(['status' => 'error', 'error' => 'Transfer failed']);
+    api_json(['status' => 'error', 'error' => 'Transfer failed'], 400);
 }

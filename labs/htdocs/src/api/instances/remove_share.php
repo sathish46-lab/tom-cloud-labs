@@ -1,16 +1,13 @@
 <?php
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $hash = $_POST['hash'] ?? '';
 $shareWith = $_POST['username'] ?? '';
 
 if (empty($hash) || empty($shareWith)) {
-    echo json_encode(['status' => 'error', 'error' => 'Missing hash or username']); exit;
+    api_json(['status' => 'error', 'error' => 'Missing hash or username'], 400);
 }
 
 try {
@@ -21,7 +18,7 @@ try {
     ]);
 
     if (!$instance) {
-        echo json_encode(['status' => 'error', 'error' => 'Instance not found or not owner']); exit;
+        api_json(['status' => 'error', 'error' => 'Instance not found or not owner'], 400);
     }
 
     $result = $instDb->instance_shares->deleteOne([
@@ -30,11 +27,10 @@ try {
     ]);
 
     if ($result->getDeletedCount() === 0) {
-        echo json_encode(['status' => 'error', 'error' => 'Share not found']); exit;
+        api_json(['status' => 'error', 'error' => 'Share not found'], 400);
     }
 
-    echo json_encode(['status' => 'success', 'message' => "Access removed for {$shareWith}"]);
+    api_json(['status' => 'success', 'message' => "Access removed for {$shareWith}"], 200);
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['status' => 'error', 'error' => errors_from_exception($e, 'instances/remove_share')['error']]);
+    api_json(['status' => 'error', 'error' => errors_from_exception($e, 'instances/remove_share')['error']], 500);
 }

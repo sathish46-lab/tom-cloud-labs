@@ -1,8 +1,6 @@
 <?php
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
 
 $db = DatabaseConnection::getDefaultDatabase();
@@ -12,23 +10,17 @@ $rawId = $_GET['id'] ?? '';
 $deviceId = is_array($rawId) ? ($rawId['$oid'] ?? null) : $rawId;
 
 if (!$deviceId) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid ID format']);
-    exit;
+api_json(['error' => 'Invalid ID format'], 400);
 }
 
 try {
     $device = $db->devices->findOne(['_id' => new MongoDB\BSON\ObjectId((string)$deviceId)]);
 } catch (Exception $e) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid Device ID']);
-    exit;
+api_json(['error' => 'Invalid Device ID'], 400);
 }
 
 if (!$device || (string)$device['user_id'] !== (string)Session::getUser()->getUserId()) {
-    http_response_code(404);
-    echo json_encode(['error' => 'Device not found or access denied']);
-    exit;
+api_json(['error' => 'Device not found or access denied'], 404);
 }
 
 // Build the Professional WireGuard Config

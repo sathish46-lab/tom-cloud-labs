@@ -5,10 +5,7 @@
  */
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $currentUsername = $user ? $user->getUsername() : '';
 $currentUserId = $user ? (int)$user->getUserId() : 0;
@@ -17,9 +14,7 @@ $input = json_decode(file_get_contents('php://input'), true) ?? [];
 $roadmapId = trim($input['roadmap_id'] ?? $_POST['roadmap_id'] ?? '');
 
 if (empty($roadmapId)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid roadmap_id']);
-    exit;
+api_json(['error' => 'Invalid roadmap_id'], 400);
 }
 
 try {
@@ -28,9 +23,7 @@ try {
     $roadmap = $db->ai_roadmaps->findOne(['_id' => $objectId]);
 
     if (!$roadmap) {
-        http_response_code(404);
-        echo json_encode(['error' => 'Roadmap not found']);
-        exit;
+api_json(['error' => 'Roadmap not found'], 404);
     }
 
     $likesArray = $roadmap['likes'] ?? [];
@@ -65,10 +58,10 @@ try {
             ['$set' => ['likes_count' => $likesCount]]
         );
 
-        echo json_encode([
+        api_json([
             'result' => 'success', 'liked' => false, 'action' => 'unliked',
             'like_count' => $likesCount,
-        ]);
+        ], 200);
     } else {
         $db->ai_roadmap_likes->insertOne([
             'roadmap_id' => $roadmapId, 'username' => $currentUsername,
@@ -85,12 +78,11 @@ try {
             ['$set' => ['likes_count' => $likesCount]]
         );
 
-        echo json_encode([
+        api_json([
             'result' => 'success', 'liked' => true, 'action' => 'liked',
             'like_count' => $likesCount,
-        ]);
+        ], 200);
     }
 } catch (Throwable $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Failed to process like: ' . errors_from_exception($e, 'roadmaps/roadmap_like')['error']]);
+    api_json(['error' => 'Failed to process like: ' . errors_from_exception($e, 'roadmaps/roadmap_like')['error']], 500);
 }

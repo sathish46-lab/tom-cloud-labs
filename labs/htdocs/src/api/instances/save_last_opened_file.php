@@ -3,8 +3,6 @@ require_once __DIR__ . '/../../load.php';
 
 $user = AuthMiddleware::requireAuth();
 
-header('Content-Type: application/json');
-
 $userId = (string)$user->getUserId();
 
 $input = json_decode(file_get_contents('php://input'), true);
@@ -12,8 +10,7 @@ $hash = $input['slug'] ?? '';
 $path = $input['path'] ?? '';
 
 if (empty($hash)) {
-    echo json_encode(['status' => 'error', 'error' => 'Instance hash is required']);
-    exit;
+api_json(['status' => 'error', 'error' => 'Instance hash is required'], 400);
 }
 
 $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_instances_db');
@@ -22,8 +19,7 @@ if (!$instance) {
     $instance = $db->instances->findOne(['slug' => $hash]);
 }
 if (!$instance || (int)($instance['user_id'] ?? 0) !== (int)$user->getUserId()) {
-    echo json_encode(['status' => 'error', 'error' => 'Instance not found']);
-    exit;
+api_json(['status' => 'error', 'error' => 'Instance not found'], 400);
 }
 
 $db->instances->updateOne(
@@ -31,4 +27,4 @@ $db->instances->updateOne(
     ['$set' => ['last_file_opened.' . $userId => $path]]
 );
 
-echo json_encode(['status' => 'success']);
+api_json(['status' => 'success'], 200);

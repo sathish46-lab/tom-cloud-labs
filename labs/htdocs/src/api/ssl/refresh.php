@@ -11,22 +11,20 @@ header('X-Content-Type-Options: nosniff');
 
 $user = AuthMiddleware::requireAuth();
 
-
 if (!$user) {
-    echo json_encode(['success' => false, 'error' => 'User session invalid']);
-    exit;
+api_json(['success' => false, 'error' => 'User session invalid'], 400);
 }
 
 try {
     $ssl = new SSLManager();
     $certs = $ssl->refreshCertificates($user->getUserId());
-    echo json_encode([
+    api_json([
         'success' => true,
         'certificates' => $certs,
         'auto_managed' => $ssl->getAutoManagedCount($certs),
         'refreshed_at' => date('H:i:s'),
         'cached_until' => date('H:i:s', time() + 900)
-    ]);
+    ], 200);
 } catch (Exception $e) {
-    echo json_encode(['success' => false, 'error' => errors_from_exception($e, 'ssl/refresh')['error']]);
+    api_json(['success' => false, 'error' => errors_from_exception($e, 'ssl/refresh')['error']], 500);
 }

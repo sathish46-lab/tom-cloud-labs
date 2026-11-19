@@ -7,11 +7,8 @@ require_once __DIR__ . '/../../../vendor/autoload.php';
 require_once __DIR__ . '/../../../src/utils/config.php';
 require_once __DIR__ . '/../../../src/lib/core/DatabaseConnection.class.php';
 
-header('Content-Type: application/json');
-
 // ── AUTH CHECK ──
 $user = AuthMiddleware::requireAuth();
-
 
 $userId = (int)$user->getUserId();
 
@@ -37,15 +34,11 @@ if (!in_array($visibility, $validVisibility)) {
 $prompt = htmlspecialchars($prompt, ENT_QUOTES, 'UTF-8');
 
 if (empty($prompt) || mb_strlen($prompt) < 10) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Prompt must be at least 10 characters']);
-    exit;
+api_json(['error' => 'Prompt must be at least 10 characters'], 400);
 }
 
 if (mb_strlen($prompt) > 2000) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Prompt must be under 2000 characters']);
-    exit;
+api_json(['error' => 'Prompt must be under 2000 characters'], 400);
 }
 
 $db = DatabaseConnection::getDefaultDatabase();
@@ -57,9 +50,7 @@ $inflightCount = $db->ai_roadmap_jobs->countDocuments([
 ]);
 
 if ($inflightCount >= 3) {
-    http_response_code(429);
-    echo json_encode(['error' => 'Too many roadmaps being generated. Please wait for existing ones to complete.']);
-    exit;
+api_json(['error' => 'Too many roadmaps being generated. Please wait for existing ones to complete.'], 429);
 }
 
 // ── DEDUPE: check for same prompt in-flight ──
@@ -70,11 +61,11 @@ $existingJob = $db->ai_roadmap_jobs->findOne([
 ]);
 
 if ($existingJob) {
-    echo json_encode([
+    api_json([
         'status' => 'running',
         'request_id' => $existingJob['request_id'],
         'message' => 'A roadmap for this topic is already being generated.',
-    ]);
+    ], 200);
     exit;
 }
 
@@ -97,8 +88,8 @@ $job = [
 
 $db->ai_roadmap_jobs->insertOne($job);
 
-echo json_encode([
+api_json([
     'status' => 'running',
     'request_id' => $requestId,
     'message' => 'Roadmap generation started',
-]);
+], 200);

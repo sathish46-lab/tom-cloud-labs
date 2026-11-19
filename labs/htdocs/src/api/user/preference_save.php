@@ -1,10 +1,7 @@
 <?php
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $preference_id = $_POST['preference_id'] ?? '';
 $value = $_POST['value'] ?? '';
@@ -17,8 +14,7 @@ if (is_string($value) && !empty($value) && ($value[0] === '{' || $value[0] === '
 }
 
 if (empty($preference_id)) {
-    echo json_encode(['status' => 'error', 'message' => 'Missing preference_id']); 
-    exit;
+    api_json(['status' => 'error', 'message' => 'Missing preference_id'], 400);
 }
 
 try {
@@ -33,12 +29,12 @@ try {
     // Keep the active PHP session in sync so it applies on reload
     $user->setUiPreference($preference_id, $value);
 
-    echo json_encode([
+    api_json([
         'status' => 'success',
         'message' => 'Preference saved successfully',
         'preference_id' => $preference_id,
         'value' => $value
-    ]);
+    ], 200);
 } catch (Exception $e) {
-    echo json_encode(['status' => 'error', 'message' => errors_from_exception($e, 'user/preference_save')['error']]);
+    api_json(['status' => 'error', 'message' => errors_from_exception($e, 'user/preference_save')['error']], 500);
 }

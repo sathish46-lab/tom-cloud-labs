@@ -7,21 +7,17 @@
 
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
 header('Cache-Control: no-store');
 header('Pragma: no-cache');
 
 $user = AuthMiddleware::requireAuth();
-
 
 $userId = $user->getUserId();
 
 require_once __DIR__ . '/../../lib/core/MCPOAuth.class.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-    http_response_code(405);
-    echo json_encode(['error' => 'method_not_allowed']);
-    exit;
+api_json(['error' => 'method_not_allowed'], 405);
 }
 
 $clientId = $_GET['client_id'] ?? '';
@@ -69,11 +65,11 @@ foreach ($cursor as $a) {
     ];
 }
 
-echo json_encode([
+api_json([
     'activity' => $items,
     'total' => $total,
     'page' => $page,
     'limit' => $limit,
     'has_more' => $skip + count($items) < $total,
-]);
+], 200);
 exit;

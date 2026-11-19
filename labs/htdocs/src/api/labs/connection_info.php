@@ -3,7 +3,6 @@ require_once __DIR__ . '/../../../src/load.php';
 
 $user = AuthMiddleware::requireAuth();
 
-
 $hash = $_GET['hash'] ?? '';
 
 if (empty($hash)) {

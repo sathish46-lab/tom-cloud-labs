@@ -2,8 +2,6 @@
 require_once __DIR__ . '/../../load.php';
 require_once __DIR__ . '/../../lib/core/SiteBrand.class.php';
 
-header('Content-Type: application/json');
-
 $admin = AuthMiddleware::requireAdmin();
 AuthMiddleware::requireCsrf();
 
@@ -22,5 +20,4 @@ if (($result['status'] ?? '') === 'success') {
     errors_report(['context' => 'admin/site_name_save', 'message' => 'site_name_save: ' . ($result['error'] ?? 'unknown')]);
 }
 
-echo json_encode($result);
-exit;
+api_json($result, 200);

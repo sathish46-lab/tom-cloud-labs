@@ -58,7 +58,7 @@ if ($insertResult->getInsertedCount() > 0) {
         AuditLog::log('trash', 'instance', $instanceHash ?: (string)$instance['_id'], [
             'name' => $instance['name'] ?? '',
         ]);
-        echo json_encode(['status' => 'success']);
+        api_json(['status' => 'success'], 200);
     } else {
         // Rollback: remove from trash since delete from instances failed
         $db->instance_trash->deleteOne(['_id' => $insertResult->getInsertedId()]);

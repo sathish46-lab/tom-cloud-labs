@@ -1,17 +1,14 @@
 <?php
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $challengeId = $_POST['challenge_id'] ?? null;
 $instanceHash = $_POST['hash'] ?? null;
 $submittedFlag = isset($_POST['flag']) ? trim($_POST['flag']) : null;
 
 if (!$challengeId || !$instanceHash || !$submittedFlag) {
-    echo json_encode(['status' => 'error', 'error' => 'Missing parameters']); exit;
+    api_json(['status' => 'error', 'error' => 'Missing parameters'], 400);
 }
 
 try {
@@ -24,10 +21,10 @@ try {
     ]);
     
     if (!$instance) {
-        echo json_encode([
+        api_json([
             'status' => 'error', 
             'error' => 'Challenge instance not found.'
-        ]); 
+        ], 200);
         exit;
     }
     
@@ -35,7 +32,7 @@ try {
     $correctFlag = $instance['flag'] ?? '';
     
     if (empty($correctFlag)) {
-        echo json_encode(['status' => 'error', 'error' => 'No active flag found for this challenge.']); exit;
+        api_json(['status' => 'error', 'error' => 'No active flag found for this challenge.'], 400);
     }
     
     $challengesCompleted = $instance['challenges_completed'] ?? 0;
@@ -51,10 +48,10 @@ try {
                 ]]
             );
             
-            echo json_encode([
+            api_json([
                 'status' => 'success',
                 'message' => 'Correct flag! (Practice Mode - No extra points awarded)'
-            ]);
+            ], 200);
         } else {
             // First time completing! Award full rewards
             $failedAttempts = (int)($instance['failed_attempts'] ?? 0);
@@ -99,10 +96,10 @@ try {
                 ]]
             );
             
-            echo json_encode([
+            api_json([
                 'status' => 'success',
                 'message' => 'Congratulations! Correct flag submitted. ' . $zealEarned . ' Zeal credited!'
-            ]);
+            ], 200);
         }
     } else {
         // Increment failed attempts and stop the active challenge session (but keep lab running)
@@ -134,13 +131,12 @@ try {
             ]
         );
         
-        echo json_encode([
+        api_json([
             'status' => 'error',
             'error' => 'Incorrect flag. Attempt counted! Multiplier decreased by 25%.'
-        ]);
+        ], 200);
     }
 
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['status' => 'error', 'error' => errors_from_exception($e, 'challenges/submit_flag')['error']]);
+    api_json(['status' => 'error', 'error' => errors_from_exception($e, 'challenges/submit_flag')['error']], 500);
 }

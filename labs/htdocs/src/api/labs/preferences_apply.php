@@ -9,24 +9,19 @@ require_once __DIR__ . '/../../lib/core/jobs/Process.class.php';
 require_once __DIR__ . '/../../lib/core/jobs/Worker.class.php';
 require_once __DIR__ . '/../../lib/core/RabbitClient.class.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $input = json_decode(file_get_contents('php://input'), true);
 
 if (!$input || empty($input['hash'])) {
-    http_response_code(400);
-    echo json_encode(['status' => 'error', 'error' => 'Missing required fields']); exit;
+    api_json(['status' => 'error', 'error' => 'Missing required fields'], 400);
 }
 
 $labName = $input['lab'] ?? 'essentials';
 $instanceHash = $user->getLabHash($labName);
 
 if ($instanceHash !== $input['hash']) {
-    http_response_code(403);
-    echo json_encode(['status' => 'error', 'error' => 'Hash mismatch']); exit;
+    api_json(['status' => 'error', 'error' => 'Hash mismatch'], 403);
 }
 
 try {
@@ -161,14 +156,13 @@ try {
     $rabbit = new RabbitClient();
     $rabbit->sendToQueue('labs_jobs', $work);
 
-    echo json_encode([
+    api_json([
         'status'  => 'success',
         'message' => 'Apply job queued',
         'hash'    => $instanceHash,
         'queued'  => true
-    ]);
+    ], 200);
 
 } catch (\Throwable $e) {
-    http_response_code(500);
-    echo json_encode(['status' => 'error', 'error' => errors_from_exception($e, 'labs/preferences_apply')['error']]);
+    api_json(['status' => 'error', 'error' => errors_from_exception($e, 'labs/preferences_apply')['error']], 500);
 }

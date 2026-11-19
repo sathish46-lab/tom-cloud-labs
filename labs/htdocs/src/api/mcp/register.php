@@ -7,15 +7,13 @@
 
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
 header('Cache-Control: no-store');
 header('Pragma: no-cache');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     header('Allow: POST');
-    echo json_encode(['error' => 'method_not_allowed', 'error_description' => 'Method not allowed']);
-    exit;
+api_json(['error' => 'method_not_allowed', 'error_description' => 'Method not allowed'], 400);
 }
 
 // Parse request body (JSON or form-urlencoded)
@@ -35,11 +33,10 @@ $scope = $input['scope'] ?? 'labs:*';
 
 // Validate required fields
 if (empty($redirectUris)) {
-    http_response_code(400);
-    echo json_encode([
+    api_json([
         'error' => 'invalid_redirect_uri',
         'error_description' => 'redirect_uris is required'
-    ]);
+    ], 400);
     exit;
 }
 
@@ -50,20 +47,18 @@ if (is_string($redirectUris)) {
 // Validate redirect URIs are absolute http/https URIs
 foreach ($redirectUris as $uri) {
     if (!filter_var($uri, FILTER_VALIDATE_URL)) {
-        http_response_code(400);
-        echo json_encode([
+        api_json([
             'error' => 'invalid_redirect_uri',
             'error_description' => "Invalid redirect_uri: $uri"
-        ]);
+        ], 400);
         exit;
     }
     $parts = parse_url($uri);
     if (!in_array(strtolower($parts['scheme'] ?? ''), ['http', 'https'])) {
-        http_response_code(400);
-        echo json_encode([
+        api_json([
             'error' => 'invalid_redirect_uri',
             'error_description' => "redirect_uri must use http or https: $uri"
-        ]);
+        ], 400);
         exit;
     }
 }
@@ -77,7 +72,7 @@ try {
         is_array($scope) ? $scope : explode(' ', $scope)
     );
 
-    echo json_encode([
+    api_json([
         'client_id' => $client['client_id'],
         'client_id_issued_at' => time(),
         'client_name' => $client['client_name'],
@@ -86,12 +81,10 @@ try {
         'response_types' => $responseTypes,
         'token_endpoint_auth_method' => $tokenEndpointAuthMethod,
         'scope' => implode(' ', $client['scopes']),
-    ]);
+    ], 200);
     exit;
 
 } catch (Exception $e) {
     errors_report(['context' => 'mcp/register', 'message' => "MCP Register Error: " . $e->getMessage()]);
-    http_response_code(500);
-    echo json_encode(['error' => 'server_error', 'error_description' => 'Internal server error']);
-    exit;
+api_json(['error' => 'server_error', 'error_description' => 'Internal server error'], 500);
 }

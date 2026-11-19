@@ -8,10 +8,7 @@ require_once __DIR__ . '/../../../vendor/autoload.php';
 require_once __DIR__ . '/../../../src/utils/config.php';
 require_once __DIR__ . '/../../../src/lib/core/DatabaseConnection.class.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $userId = (int)$user->getUserId();
 $username = $user->getUsername() ?? 'User';
@@ -32,9 +29,7 @@ $completed = ($input['completed'] ?? 'true') === 'true';
 $evidenceUrls = json_decode($input['evidence_urls'] ?? '[]', true);
 
 if (empty($roadmapId) || empty($topicId) || empty($itemId)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Missing roadmap_id, topic_id, or item_id']);
-    exit;
+api_json(['error' => 'Missing roadmap_id, topic_id, or item_id'], 400);
 }
 
 $db = DatabaseConnection::getDefaultDatabase();
@@ -46,9 +41,7 @@ $roadmap = $db->ai_roadmaps->findOne([
 ]);
 
 if (!$roadmap) {
-    http_response_code(404);
-    echo json_encode(['error' => 'Roadmap not found or access denied']);
-    exit;
+api_json(['error' => 'Roadmap not found or access denied'], 404);
 }
 
 // Handle file uploads (save to temp for now - in production, upload to S3/CDN)
@@ -197,10 +190,10 @@ $db->ai_roadmaps->updateOne(
     ]]
 );
 
-echo json_encode([
+api_json([
     'result' => 'success',
     'declaration_id' => $declarationId,
     'progress_percentage' => $progressPct,
     'checkpoints_completed' => $completedCheckpoints,
     'checkpoints_total' => $totalCheckpoints,
-]);
+], 200);

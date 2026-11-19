@@ -1,18 +1,16 @@
 <?php
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
 $user = AuthMiddleware::requireAuth();
-
 
 $username = $user->getUsername();
 if (!$username) {
-    echo json_encode(['status' => 'error', 'error' => 'User not found']); exit;
+    api_json(['status' => 'error', 'error' => 'User not found'], 400);
 }
 
 $userId = $user->getUserId();
 if (!$userId) {
-    echo json_encode(['status' => 'error', 'error' => 'User ID not found']); exit;
+    api_json(['status' => 'error', 'error' => 'User ID not found'], 400);
 }
 
 $filesData = [];
@@ -103,7 +101,7 @@ $offset = isset($_GET['offset']) ? max(0, (int)$_GET['offset']) : 0;
 $pagedFiles = array_slice($filteredFiles, $offset, $limit);
 $hasMore = ($offset + count($pagedFiles)) < $filteredCount;
 
-echo json_encode([
+api_json([
     'status' => 'success', 
     'files' => $pagedFiles,
     'total_count' => $totalCount,
@@ -115,4 +113,4 @@ echo json_encode([
         'used_formatted' => $totalFormatted,
         'percent' => $percent
     ]
-]);
+], 200);

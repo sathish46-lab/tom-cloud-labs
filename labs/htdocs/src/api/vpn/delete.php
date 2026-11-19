@@ -3,8 +3,6 @@ require_once __DIR__ . '/../../../src/load.php';
 require_once __DIR__ . '/../../../src/lib/core/VPN.class.php';
 require_once __DIR__ . '/../../../src/lib/core/AuditLog.class.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
 AuthMiddleware::requireCsrf();
 
@@ -13,7 +11,7 @@ $dbId = $data['id'] ?? null;
 $pubKey = $data['public_key'] ?? null;
 
 if (!$dbId || !$pubKey) {
-    echo json_encode(['status' => 'error', 'error' => 'Missing ID or Public Key']); exit;
+    api_json(['status' => 'error', 'error' => 'Missing ID or Public Key'], 400);
 }
 
 $db = DatabaseConnection::getDefaultDatabase();
@@ -55,7 +53,7 @@ try {
         'device_name' => $device['device_name'] ?? '',
     ]);
 
-    echo json_encode(['status' => 'success']);
+    api_json(['status' => 'success'], 200);
 } catch (Exception $e) {
-    echo json_encode(['status' => 'error', 'error' => errors_from_exception($e, 'vpn/delete')['error']]);
+    api_json(['status' => 'error', 'error' => errors_from_exception($e, 'vpn/delete')['error']], 500);
 }

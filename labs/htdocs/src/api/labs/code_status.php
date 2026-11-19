@@ -5,10 +5,7 @@
 // and only trigger the (heavier) ensure-codeserver worker when it is NOT running.
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $labName = $_POST['lab'] ?? 'essentials';
 
@@ -54,14 +51,14 @@ try {
             : "";
     }
 
-    echo json_encode([
+    api_json([
         'status'  => 'success',
         'running' => $running,
         'url'     => $freshUrl,
         'hash'    => $instanceHash,
-    ]);
+    ], 200);
 
 } catch (Exception $e) {
     // Never break the launch flow — report not-running so the UI falls back to ensure.
-    echo json_encode(['status' => 'error', 'error' => errors_from_exception($e, 'labs/code_status')['error'], 'running' => false]);
+    api_json(['status' => 'error', 'error' => errors_from_exception($e, 'labs/code_status')['error'], 'running' => false], 500);
 }

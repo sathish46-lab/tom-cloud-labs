@@ -9,7 +9,6 @@ header('Content-Type: text/html');
 
 $user = AuthMiddleware::requireAuth();
 
-
 $userId = (int)$user->getUserId();
 $roadmapId = $_GET['roadmap_id'] ?? '';
 

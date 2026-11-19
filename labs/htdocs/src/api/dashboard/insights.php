@@ -8,10 +8,7 @@
  */
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $userId = (int)$user->getUserId();
 $db = DatabaseConnection::getDefaultDatabase();
@@ -84,7 +81,7 @@ $lastActivity = $db->user_activity->findOne(
 );
 $lastSeen = $lastActivity ? date('M j, g:i A', $lastActivity['timestamp']) : null;
 
-echo json_encode([
+api_json([
     'peak_start'   => formatHour($peakStart),
     'peak_end'     => formatHour($peakEnd),
     'peak_label'   => formatHour($peakStart) . ' - ' . formatHour($peakEnd),
@@ -94,4 +91,4 @@ echo json_encode([
     'active_days'  => count($activeDays),
     'last_seen'    => $lastSeen,
     'has_data'     => $totalHits > 0
-]);
+], 200);

@@ -7,11 +7,8 @@ require_once __DIR__ . '/../../../vendor/autoload.php';
 require_once __DIR__ . '/../../../src/utils/config.php';
 require_once __DIR__ . '/../../../src/lib/core/DatabaseConnection.class.php';
 
-header('Content-Type: application/json');
-
 // ── AUTH CHECK ──
 $user = AuthMiddleware::requireAuth();
-
 
 $userId = (int)$user->getUserId();
 
@@ -20,9 +17,7 @@ $requestId = trim($_GET['request_id'] ?? '');
 
 // Validate request_id format (40-char hex SHA1)
 if (empty($requestId) || !preg_match('/^[a-f0-9]{40}$/i', $requestId)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid request_id format']);
-    exit;
+api_json(['error' => 'Invalid request_id format'], 400);
 }
 
 $db = DatabaseConnection::getDefaultDatabase();
@@ -34,8 +29,7 @@ $job = $db->ai_roadmap_jobs->findOne([
 ]);
 
 if (!$job) {
-    http_response_code(404);
-    echo json_encode([
+    api_json([
         'status' => 'failed',
         'message' => 'Job not found',
         'roadmap_id' => null,
@@ -43,13 +37,13 @@ if (!$job) {
         'completed' => false,
         'failed' => true,
         'error_message' => 'Job not found or access denied',
-    ]);
+    ], 404);
     exit;
 }
 
 // ── COMPLETED JOB ──
 if ($job['status'] === 'completed') {
-    echo json_encode([
+    api_json([
         'status' => 'completed',
         'message' => 'Roadmap generated successfully!',
         'roadmap_id' => $job['roadmap_id'] ?? null,
@@ -58,7 +52,7 @@ if ($job['status'] === 'completed') {
         'completed' => true,
         'failed' => false,
         'percentage' => 100,
-    ]);
+    ], 200);
     exit;
 }
 
@@ -73,7 +67,7 @@ if ($job['status'] === 'failed') {
         'extra'      => ['request_id' => (string)$requestId],
     ]);
     $public = errors_public($ref, $friendly);
-    echo json_encode([
+    api_json([
         'status' => 'failed',
         'message' => $public,
         'roadmap_id' => null,
@@ -82,7 +76,7 @@ if ($job['status'] === 'failed') {
         'failed' => true,
         'error_message' => $public,
         'ref' => $ref,
-    ]);
+    ], 200);
     exit;
 }
 
@@ -90,24 +84,24 @@ if ($job['status'] === 'failed') {
 $elapsed = time() - (int)$job['created_at']->toDateTime()->format('U');
 
 if ($elapsed <= 1) {
-    echo json_encode([
+    api_json([
         'status' => 'running',
         'message' => 'Analyzing your topic...',
         'percentage' => 25,
         'roadmap_id' => null,
         'completed' => false,
-    ]);
+    ], 200);
     exit;
 }
 
 if ($elapsed <= 3) {
-    echo json_encode([
+    api_json([
         'status' => 'running',
         'message' => 'Designing roadmap structure...',
         'percentage' => 55,
         'roadmap_id' => null,
         'completed' => false,
-    ]);
+    ], 200);
     exit;
 }
 
@@ -172,7 +166,7 @@ $db->ai_roadmap_jobs->updateOne(
     ]]
 );
 
-echo json_encode([
+api_json([
     'status' => 'completed',
     'message' => 'Roadmap generated successfully!',
     'roadmap_id' => $roadmapIdStr,
@@ -181,4 +175,4 @@ echo json_encode([
     'completed' => true,
     'failed' => false,
     'percentage' => 100,
-]);
+], 200);

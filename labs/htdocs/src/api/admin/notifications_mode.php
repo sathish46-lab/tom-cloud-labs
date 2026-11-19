@@ -7,16 +7,14 @@
 
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
-
 $admin = AuthMiddleware::requireAdmin();
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    echo json_encode([
+    api_json([
         'status'          => 'success',
         'notification_mode' => NotificationSettings::mode(),
         'broadcast_enabled' => NotificationSettings::broadcastEnabled(),
-    ]);
+    ], 200);
     exit;
 }
 
@@ -36,16 +34,14 @@ $broadcastEnabled = isset($json['broadcast_enabled']) ? (bool)$json['broadcast_e
 
 if ($mode === '') $mode = NotificationSettings::MODE_ADMIN;
 if (!in_array($mode, NotificationSettings::MODES, true)) {
-    echo json_encode(['status' => 'error', 'error' => 'Invalid notification mode']);
-    exit;
+api_json(['status' => 'error', 'error' => 'Invalid notification mode'], 400);
 }
 
 $before = NotificationSettings::get();
 
 if (!NotificationSettings::save($mode, $broadcastEnabled, (string)($admin->getEmail() ?? ''))) {
     errors_report(['context' => 'admin/notifications_mode', 'message' => 'Failed writing notification.json']);
-    echo json_encode(['status' => 'error', 'error' => 'Failed to save notification settings (file not writable)']);
-    exit;
+api_json(['status' => 'error', 'error' => 'Failed to save notification settings (file not writable)'], 400);
 }
 
 AuditLog::log('update', 'settings', 'notification.json', [
@@ -56,8 +52,8 @@ AuditLog::log('update', 'settings', 'notification.json', [
     'to_broadcast'        => $broadcastEnabled,
 ], (string)($admin->getUserId() ?? 'unknown'));
 
-echo json_encode([
+api_json([
     'status'          => 'success',
     'notification_mode' => NotificationSettings::mode(),
     'broadcast_enabled' => NotificationSettings::broadcastEnabled(),
-]);
+], 200);

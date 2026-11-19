@@ -1,16 +1,13 @@
 <?php
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $hash = $_POST['hash'] ?? '';
 $label = $_POST['label'] ?? 'untitled';
 
 if (empty($hash)) {
-    echo json_encode(['status' => 'error', 'error' => 'Missing hash']); exit;
+    api_json(['status' => 'error', 'error' => 'Missing hash'], 400);
 }
 
 try {
@@ -21,7 +18,7 @@ try {
     ]);
 
     if (!$instance) {
-        echo json_encode(['status' => 'error', 'error' => 'Instance not found']); exit;
+        api_json(['status' => 'error', 'error' => 'Instance not found'], 400);
     }
 
     $filesDb = DatabaseConnection::getClient()->selectDatabase('tom_labs_instances_db');
@@ -47,8 +44,7 @@ try {
         'created_at'     => time()
     ]);
 
-    echo json_encode(['status' => 'success', 'message' => 'Version saved']);
+    api_json(['status' => 'success', 'message' => 'Version saved'], 400);
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['status' => 'error', 'error' => errors_from_exception($e, 'instances/save_version')['error']]);
+    api_json(['status' => 'error', 'error' => errors_from_exception($e, 'instances/save_version')['error']], 500);
 }

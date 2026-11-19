@@ -2,7 +2,6 @@
 /**
  * API: Trigger AI Quiz Generation
  */
-header('Content-Type: application/json');
 
 require_once __DIR__ . '/../../load.php';
 use TomLabs\Labs\Quiz;
@@ -17,16 +16,14 @@ $subtopicId = $_GET['subtopic'] ?? null;
 $diff = $_GET['diff'] ?? 'normal';
 
 if (!$topicId || !$subtopicId) {
-    echo json_encode(['error' => 'Missing required parameters']);
-    exit;
+api_json(['error' => 'Missing required parameters'], 400);
 }
 
 try {
     // 1. Check for Jolt
     $stats = Quiz::getUserStats($userEmail);
     if (($stats['jolt'] ?? 0) < 1) {
-        echo json_encode(['error' => 'Insufficient Jolt fuel. Earn more by completing quizzes!']);
-        exit;
+api_json(['error' => 'Insufficient Jolt fuel. Earn more by completing quizzes!'], 400);
     }
 
     // 2. Deduct 1 Jolt
@@ -39,7 +36,7 @@ try {
     // Add updated balance to response
     $response['new_jolt'] = ($stats['jolt'] ?? 1) - 1;
     
-    echo json_encode($response);
+    api_json($response, 200);
 } catch (Exception $e) {
-    echo json_encode(['error' => errors_from_exception($e, 'quiz/generate')['error']]);
+    api_json(['error' => errors_from_exception($e, 'quiz/generate')['error']], 500);
 }

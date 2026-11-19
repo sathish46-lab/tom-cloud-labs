@@ -7,11 +7,8 @@ require_once __DIR__ . '/../../../vendor/autoload.php';
 require_once __DIR__ . '/../../../src/utils/config.php';
 require_once __DIR__ . '/../../../src/lib/core/DatabaseConnection.class.php';
 
-header('Content-Type: application/json');
-
 // ── AUTH CHECK ──
 $user = AuthMiddleware::requireAuth();
-
 
 $userId = (int)$user->getUserId();
 
@@ -23,21 +20,15 @@ $itemId = trim($input['item_id'] ?? '');
 $completed = (bool)($input['completed'] ?? false);
 
 if (empty($roadmapId) || !preg_match('/^[a-f0-9]{24}$/i', $roadmapId)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid roadmap_id']);
-    exit;
+api_json(['error' => 'Invalid roadmap_id'], 400);
 }
 
 if (empty($topicId) || !preg_match('/^[a-zA-Z0-9_]+$/', $topicId)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid topic_id']);
-    exit;
+api_json(['error' => 'Invalid topic_id'], 400);
 }
 
 if (empty($itemId) || !preg_match('/^[a-zA-Z0-9_]+$/', $itemId)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid item_id']);
-    exit;
+api_json(['error' => 'Invalid item_id'], 400);
 }
 
 $db = DatabaseConnection::getDefaultDatabase();
@@ -49,9 +40,7 @@ $roadmap = $db->ai_roadmaps->findOne([
 ]);
 
 if (!$roadmap) {
-    http_response_code(404);
-    echo json_encode(['error' => 'Roadmap not found or access denied']);
-    exit;
+api_json(['error' => 'Roadmap not found or access denied'], 404);
 }
 
 // ── UPDATE PROGRESS ──
@@ -119,9 +108,9 @@ $db->ai_roadmaps->updateOne(
     ]]
 );
 
-echo json_encode([
+api_json([
     'status' => 'updated',
     'progress' => $progressPercent,
     'checkpoints_completed' => $completedItems,
     'checkpoints_total' => $totalItems,
-]);
+], 200);

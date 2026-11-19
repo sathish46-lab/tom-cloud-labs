@@ -5,10 +5,7 @@
  */
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $currentUsername = $user ? $user->getUsername() : '';
 $currentUserId = $user ? (int)$user->getUserId() : 0;
@@ -17,9 +14,7 @@ $input = json_decode(file_get_contents('php://input'), true) ?? [];
 $lessonId = trim($input['lesson_id'] ?? $_POST['lesson_id'] ?? '');
 
 if (empty($lessonId)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid lesson_id']);
-    exit;
+api_json(['error' => 'Invalid lesson_id'], 400);
 }
 
 try {
@@ -28,9 +23,7 @@ try {
     $lesson = $db->ai_lessons->findOne(['_id' => $objectId]);
 
     if (!$lesson) {
-        http_response_code(404);
-        echo json_encode(['error' => 'Lesson not found']);
-        exit;
+api_json(['error' => 'Lesson not found'], 404);
     }
 
     $likesArray = $lesson['likes'] ?? [];
@@ -66,14 +59,14 @@ try {
             ['$set' => ['likes_count' => $likesCount]]
         );
 
-        echo json_encode([
+        api_json([
             'result' => 'success',
             'liked' => false,
             'action' => 'unliked',
             'like_count' => $likesCount,
             'total_likes' => $likesCount,
             'message' => 'Lesson unliked!'
-        ]);
+        ], 200);
     } else {
         // Like action
         $db->ai_lesson_likes->insertOne([
@@ -93,16 +86,15 @@ try {
             ['$set' => ['likes_count' => $likesCount]]
         );
 
-        echo json_encode([
+        api_json([
             'result' => 'success',
             'liked' => true,
             'action' => 'liked',
             'like_count' => $likesCount,
             'total_likes' => $likesCount,
             'message' => 'Lesson liked!'
-        ]);
+        ], 200);
     }
 } catch (Throwable $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Failed to process like: ' . errors_from_exception($e, 'learnAI/lesson_like')['error']]);
+    api_json(['error' => 'Failed to process like: ' . errors_from_exception($e, 'learnAI/lesson_like')['error']], 500);
 }

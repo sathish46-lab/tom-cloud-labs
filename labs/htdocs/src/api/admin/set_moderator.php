@@ -1,8 +1,6 @@
 <?php
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
-
 $admin = AuthMiddleware::requireAdmin();
 AuthMiddleware::requireCsrf();
 
@@ -10,19 +8,19 @@ $email = trim($_POST['email'] ?? '');
 $state = isset($_POST['state']) && $_POST['state'] === 'true';
 
 if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    echo json_encode(['status' => 'error', 'error' => 'Valid email required']); exit;
+    api_json(['status' => 'error', 'error' => 'Valid email required'], 400);
 }
 
 try {
     $db = DatabaseConnection::getDefaultDatabase();
     $target = $db->users->findOne(['email' => $email]);
     if (!$target) {
-        echo json_encode(['status' => 'error', 'error' => 'User not found']); exit;
+        api_json(['status' => 'error', 'error' => 'User not found'], 400);
     }
 
     $from = !empty($target['moderator']);
     if ($from === $state) {
-        echo json_encode(['status' => 'success', 'moderator' => $state, 'unchanged' => true]); exit;
+        api_json(['status' => 'success', 'moderator' => $state, 'unchanged' => true], 200);
     }
 
     $db->users->updateOne(['email' => $email], ['$set' => ['moderator' => $state]]);
@@ -35,8 +33,8 @@ try {
         (string)($admin->getUserId() ?? 'unknown')
     );
 
-    echo json_encode(['status' => 'success', 'moderator' => $state]);
+    api_json(['status' => 'success', 'moderator' => $state], 200);
 } catch (Throwable $e) {
     errors_report(['context' => 'admin/set_moderator', 'message' => 'set_moderator: ' . $e->getMessage()]);
-    echo json_encode(['status' => 'error', 'error' => 'Failed to update moderator flag']);
+    api_json(['status' => 'error', 'error' => 'Failed to update moderator flag'], 400);
 }

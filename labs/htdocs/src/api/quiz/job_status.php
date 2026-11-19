@@ -2,7 +2,6 @@
 /**
  * API: Fetch Live Job Status for Quiz Generation
  */
-header('Content-Type: application/json');
 
 require_once __DIR__ . '/../../load.php';
 use TomLabs\Labs\Quiz;
@@ -13,23 +12,19 @@ $userId = (int)$user->getUserId();
 $jobId = $_GET['job_id'] ?? null;
 
 if (!$jobId) {
-    echo json_encode(['error' => 'Missing job_id']);
-    exit;
+api_json(['error' => 'Missing job_id'], 400);
 }
 
 try {
     $job = Quiz::getJobStatus($jobId);
     
     if (!$job) {
-        echo json_encode(['error' => 'Job not found']);
-        exit;
+api_json(['error' => 'Job not found'], 400);
     }
 
     // Ownership check: only the job owner can view status
     if ((int)($job['user_id'] ?? 0) !== $userId) {
-        http_response_code(403);
-        echo json_encode(['error' => 'Forbidden']);
-        exit;
+api_json(['error' => 'Forbidden'], 403);
     }
 
     // The worker writes the upstream provider's raw text into status_text.
@@ -50,7 +45,7 @@ try {
         $statusText = errors_to_user($statusText);
     }
 
-    echo json_encode([
+    api_json([
         'available' => $job['available'] ?? false,
         'percentage' => $job['percentage'] ?? 0,
         'status_text' => $statusText,
@@ -63,9 +58,9 @@ try {
         'generation_success_at' => $job['generation_success_at'] ?? false,
         'generation_failed_at' => $job['generation_failed_at'] ?? false,
         'result_hash' => $job['result_hash'] ?? null
-    ]);
+    ], 200);
 
 } catch (Exception $e) {
     $ref = errors_report(['context' => 'quiz.job_status', 'message' => $e->getMessage()]);
-    echo json_encode(['error' => errors_public($ref)]);
+    api_json(['error' => errors_public($ref)], 400);
 }

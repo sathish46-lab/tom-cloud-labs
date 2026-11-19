@@ -1,9 +1,7 @@
 <?php
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
 $user = AuthMiddleware::requireAuth();
-
 
 $db = DatabaseConnection::getDefaultDatabase();
 
@@ -29,12 +27,12 @@ try {
     $sent = \Auth\Mailer::send2faOtp($email, $username, $otp, $context);
     
     if ($sent) {
-        echo json_encode(['status' => 'success']);
+        api_json(['status' => 'success'], 200);
     } else {
         // Even if email fails locally due to SMTP config, we shouldn't block local dev if we just want to test logic.
         // But for security, we error out if mail fails.
-        echo json_encode(['status' => 'error', 'error' => 'Failed to send OTP email. Check SMTP settings.']);
+        api_json(['status' => 'error', 'error' => 'Failed to send OTP email. Check SMTP settings.'], 400);
     }
 } catch (Exception $e) {
-    echo json_encode(['status' => 'error', 'error' => 'Database error.']);
+    api_json(['status' => 'error', 'error' => 'Database error.'], 400);
 }

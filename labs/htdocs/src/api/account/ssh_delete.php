@@ -1,7 +1,6 @@
 <?php
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
 $user = AuthMiddleware::requireAuth();
 
 $data = json_decode(file_get_contents('php://input'), true);
@@ -25,7 +24,7 @@ if ($keyId) {
     // 2. Re-Sync Container: This wipes the deleted key from the container
     shell_exec("sudo labsctl syncuser " . escapeshellarg($user->getUsername()));
 
-    echo json_encode(['status' => 'success']);
+    api_json(['status' => 'success'], 200);
 } else {
-    echo json_encode(['status' => 'error', 'error' => 'Invalid ID']);
+    api_json(['status' => 'error', 'error' => 'Invalid ID'], 400);
 }

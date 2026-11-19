@@ -66,9 +66,8 @@ foreach ($usersCursor as $u) {
     ];
 }
 
-header('Content-Type: application/json');
-echo json_encode([
+api_json([
     'status' => 'success',
     'data' => $users,
     'has_more' => count($users) === $limit
-]);
+], 200);

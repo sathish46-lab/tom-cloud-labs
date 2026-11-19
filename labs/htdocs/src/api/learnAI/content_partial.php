@@ -12,37 +12,33 @@
  */
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
 
 $chapterId = trim($_GET['chapter_id'] ?? '');
 
 if (empty($chapterId)) {
-    http_response_code(400);
-    echo json_encode([
+    api_json([
         'status' => 'error',
         'message' => 'chapter_id is required',
         'streaming' => false,
         'session_id' => null,
         'seq' => 0,
         'partial' => '',
-    ]);
+    ], 400);
     exit;
 }
 
 try {
     $oid = new MongoDB\BSON\ObjectId($chapterId);
 } catch (Exception $e) {
-    http_response_code(400);
-    echo json_encode([
+    api_json([
         'status' => 'error',
         'message' => 'Invalid chapter_id',
         'streaming' => false,
         'session_id' => null,
         'seq' => 0,
         'partial' => '',
-    ]);
+    ], 400);
     exit;
 }
 
@@ -51,29 +47,28 @@ try {
     $chapter = $db->ai_chapters->findOne(['_id' => $oid]);
 
     if (!$chapter) {
-        http_response_code(404);
-        echo json_encode([
+        api_json([
             'status' => 'error',
             'message' => 'Chapter not found',
             'streaming' => false,
             'session_id' => null,
             'seq' => 0,
             'partial' => '',
-        ]);
+        ], 404);
         exit;
     }
 
     $partial = (string)($chapter['content_partial'] ?? '');
 
     if ($partial === '') {
-        echo json_encode([
+        api_json([
             'status' => 'none',
             'streaming' => false,
             'session_id' => null,
             'seq' => (int)($chapter['content_partial_seq'] ?? 0),
             'partial' => '',
             'updated_at' => (int)($chapter['content_partial_at'] ?? 0),
-        ]);
+        ], 200);
         exit;
     }
 
@@ -89,22 +84,21 @@ try {
         $status = $workerStatus;
     }
 
-    echo json_encode([
+    api_json([
         'status' => $status,
         'streaming' => $status === 'streaming',
         'session_id' => $chapter['content_partial_session'] ?? null,
         'seq' => (int)($chapter['content_partial_seq'] ?? 0),
         'partial' => $partial,
         'updated_at' => $updatedAt,
-    ]);
+    ], 200);
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode([
+    api_json([
         'status' => 'error',
         'message' => errors_from_exception($e, 'learnAI/content_partial')['error'],
         'streaming' => false,
         'session_id' => null,
         'seq' => 0,
         'partial' => '',
-    ]);
+    ], 500);
 }

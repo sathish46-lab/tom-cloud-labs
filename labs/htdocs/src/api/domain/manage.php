@@ -12,16 +12,13 @@ header('X-Content-Type-Options: nosniff');
 
 $user = AuthMiddleware::requireAuth();
 
-
 if (!$user) {
-    echo json_encode(['success' => false, 'error' => 'User session invalid']);
-    exit;
+api_json(['success' => false, 'error' => 'User session invalid'], 400);
 }
 
 $domainId = $_GET['domain_id'] ?? '';
 if (empty($domainId) || !preg_match('/^[0-9a-f]{24}$/i', $domainId)) {
-    echo json_encode(['success' => false, 'error' => 'Invalid domain_id format']);
-    exit;
+api_json(['success' => false, 'error' => 'Invalid domain_id format'], 400);
 }
 
 try {
@@ -35,8 +32,7 @@ try {
     ]);
 
     if (!$domain) {
-        echo json_encode(['success' => false, 'error' => 'Domain not found']);
-        exit;
+api_json(['success' => false, 'error' => 'Domain not found'], 400);
     }
 
     $dm = new DomainManager();
@@ -67,7 +63,7 @@ try {
         }
     }
 
-    echo json_encode([
+    api_json([
         'success' => true,
         'domain' => [
             'id' => (string)$domain['_id'],
@@ -86,7 +82,7 @@ try {
             'instance_hash' => $usageInfo['instance_hash'] ?? null
         ] : null,
         'ssl' => $sslInfo
-    ]);
+    ], 200);
 } catch (Exception $e) {
-    echo json_encode(['success' => false, 'error' => errors_from_exception($e, 'domain/manage')['error']]);
+    api_json(['success' => false, 'error' => errors_from_exception($e, 'domain/manage')['error']], 500);
 }

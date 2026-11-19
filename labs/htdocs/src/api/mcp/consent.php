@@ -56,7 +56,6 @@ $pageCsp = "default-src 'self'; "
     . "form-action 'self' " . $redirectOrigin;
 header('Content-Security-Policy: ' . $pageCsp);
 
-
 $userId = $user->getUserId();
 $username = $user->getUsername();
 $email = $user->getEmail();

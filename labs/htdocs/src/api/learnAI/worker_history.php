@@ -5,8 +5,6 @@
  */
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
-
 AuthMiddleware::requireInternalToken();
 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -20,9 +18,7 @@ try {
         $chapterId = $_GET['chapter_id'] ?? null;
         
         if (!$userId) {
-            http_response_code(400);
-            echo json_encode(['error' => 'user_id required']);
-            exit;
+api_json(['error' => 'user_id required'], 400);
         }
 
         $filter = ['user_id' => (int)$userId];
@@ -51,8 +47,7 @@ try {
             }
         }
         
-        echo json_encode(['history' => $history]);
-        exit;
+api_json(['history' => $history], 200);
     }
     
     if ($method === 'POST') {
@@ -67,9 +62,7 @@ try {
         $ts = time();
         
         if (!$userId || empty($query) || empty($response)) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Missing required fields']);
-            exit;
+api_json(['error' => 'Missing required fields'], 400);
         }
         
         $filter = ['user_id' => (int)$userId];
@@ -92,10 +85,8 @@ try {
             ['upsert' => true]
         );
         
-        echo json_encode(['status' => 'success']);
-        exit;
+api_json(['status' => 'success'], 200);
     }
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Database error: ' . errors_from_exception($e, 'learnAI/worker_history')['error']]);
+    api_json(['error' => 'Database error: ' . errors_from_exception($e, 'learnAI/worker_history')['error']], 500);
 }

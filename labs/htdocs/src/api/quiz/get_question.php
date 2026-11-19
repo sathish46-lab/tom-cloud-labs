@@ -3,8 +3,6 @@ require_once '../../load.php';
 
 use TomLabs\Labs\Quiz;
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
 
 $quizHash = $_POST['hash'] ?? null;
@@ -21,16 +19,16 @@ if ($quizHash && $questionIndex !== null) {
             // CRITICAL SECURE FIX: Strip the correct answer so it never hits the client!
             if (isset($q['correct'])) unset($q['correct']);
 
-            echo json_encode([
+            api_json([
                 'status' => 'success',
                 'question' => $q
-            ]);
+            ], 200);
         } else {
-            echo json_encode(['status' => 'error', 'message' => 'Invalid question index']);
+            api_json(['status' => 'error', 'message' => 'Invalid question index'], 400);
         }
     } else {
-        echo json_encode(['status' => 'error', 'message' => 'Quiz not found']);
+        api_json(['status' => 'error', 'message' => 'Quiz not found'], 400);
     }
 } else {
-    echo json_encode(['status' => 'error', 'message' => 'Missing parameters']);
+    api_json(['status' => 'error', 'message' => 'Missing parameters'], 400);
 }

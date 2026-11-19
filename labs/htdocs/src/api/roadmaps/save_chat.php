@@ -5,10 +5,7 @@
  */
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $userId = (int)$user->getUserId();
 
@@ -20,15 +17,11 @@ $tools = $input['tools'] ?? null;
 $usage = $input['usage'] ?? null;
 
 if (empty($roadmapId)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'roadmap_id required']);
-    exit;
+api_json(['error' => 'roadmap_id required'], 400);
 }
 
 if (empty($content)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'content required']);
-    exit;
+api_json(['error' => 'content required'], 400);
 }
 
 try {
@@ -48,9 +41,8 @@ try {
         ['upsert' => true]
     );
 
-    echo json_encode(['success' => true]);
+    api_json(['success' => true], 200);
 
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Failed to save: ' . errors_from_exception($e, 'roadmaps/save_chat')['error']]);
+    api_json(['error' => 'Failed to save: ' . errors_from_exception($e, 'roadmaps/save_chat')['error']], 500);
 }

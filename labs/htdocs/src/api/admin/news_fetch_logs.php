@@ -14,8 +14,6 @@
 
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAdmin();
 
 $source = $_GET['source'] ?? null;
@@ -71,7 +69,7 @@ try {
         ];
     }
 
-    echo json_encode([
+    api_json([
         'status' => 'success',
         'data' => [
             'items' => $rows,
@@ -79,7 +77,7 @@ try {
             'page'  => $page,
             'limit' => $limit,
         ],
-    ]);
+    ], 200);
 } catch (Exception $e) {
-    echo json_encode(['status' => 'error', 'error' => errors_from_exception($e, 'admin/news_fetch_logs')['error']]);
+    api_json(['status' => 'error', 'error' => errors_from_exception($e, 'admin/news_fetch_logs')['error']], 500);
 }

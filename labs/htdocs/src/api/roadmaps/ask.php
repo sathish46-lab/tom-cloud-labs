@@ -6,10 +6,7 @@
 require_once __DIR__ . '/../../load.php';
 require_once __DIR__ . '/../../lib/core/RabbitClient.class.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $userId = (int)$user->getUserId();
 
@@ -21,15 +18,11 @@ $messageId = $input['message_id'] ?? uniqid('msg_');
 $aiModel = $input['ai_model'] ?? 'gemini';
 
 if (empty($query)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Query is required']);
-    exit;
+api_json(['error' => 'Query is required'], 400);
 }
 
 if (empty($roadmapId)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Roadmap ID is required']);
-    exit;
+api_json(['error' => 'Roadmap ID is required'], 400);
 }
 
 try {
@@ -45,9 +38,7 @@ try {
     ]);
 
     if (!$roadmap) {
-        http_response_code(404);
-        echo json_encode(['error' => 'Roadmap not found']);
-        exit;
+api_json(['error' => 'Roadmap not found'], 404);
     }
 
     // Build roadmap context for AI
@@ -176,12 +167,12 @@ try {
             ]
         ], "ai_stream.{$sessionId}");
 
-        echo json_encode([
+        api_json([
             'status' => 'success',
             'routed' => 'deterministic',
             'session_id' => $sessionId,
             'message_id' => $messageId
-        ]);
+        ], 200);
         exit;
     }
 
@@ -236,12 +227,12 @@ try {
                 ]
             ], "ai_stream.{$sessionId}");
 
-            echo json_encode([
+            api_json([
                 'status' => 'success',
                 'routed' => 'deterministic',
                 'session_id' => $sessionId,
                 'message_id' => $messageId
-            ]);
+            ], 200);
             exit;
         }
     }
@@ -260,15 +251,14 @@ try {
 
     $rabbit->sendToQueue('ai_jobs', $job);
 
-    echo json_encode([
+    api_json([
         'status' => 'success',
         'routed' => 'llm_orchestrator',
         'session_id' => $sessionId,
         'message_id' => $messageId
-    ]);
+    ], 200);
 
 } catch (Exception $e) {
-    http_response_code(500);
     $ref = errors_report(['context' => 'roadmaps.ask', 'message' => $e->getMessage()]);
-    echo json_encode(['error' => errors_public($ref), 'ref' => $ref]);
+    api_json(['error' => errors_public($ref), 'ref' => $ref], 400);
 }

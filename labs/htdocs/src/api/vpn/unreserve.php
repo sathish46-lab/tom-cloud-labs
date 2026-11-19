@@ -1,19 +1,16 @@
 <?php
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
 
 $data = json_decode(file_get_contents('php://input'), true);
 $ip = $data['ip'] ?? null;
 
 if (!$ip) {
-    echo json_encode(['result' => false]); exit;
+    api_json(['result' => false], 200);
 }
 
 $db = DatabaseConnection::getDefaultDatabase();
-
 
 try {
     $db->ip_registry->updateOne(
@@ -24,7 +21,7 @@ try {
             'resource_type' => '', 'resource_id' => '', 'device_name' => '', 'device_type' => '',
         ]]
     );
-    echo json_encode(['result' => true]);
+    api_json(['result' => true], 200);
 } catch (Exception $e) {
-    echo json_encode(['result' => false]);
+    api_json(['result' => false], 200);
 }

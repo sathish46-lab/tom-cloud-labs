@@ -1,29 +1,27 @@
 <?php
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
-
 $email = $_SESSION['2fa_pending_email'] ?? null;
 if (!$email) {
-    echo json_encode(['status' => 'error', 'error' => 'No pending 2FA login session found.']); exit;
+    api_json(['status' => 'error', 'error' => 'No pending 2FA login session found.'], 400);
 }
 
 $submittedOtp = trim($_POST['otp'] ?? '');
 
 if (empty($submittedOtp) || strlen($submittedOtp) !== 6) {
-    echo json_encode(['status' => 'error', 'error' => 'Invalid OTP format.']); exit;
+    api_json(['status' => 'error', 'error' => 'Invalid OTP format.'], 400);
 }
 
 $db = DatabaseConnection::getDefaultDatabase();
 $userDoc = $db->users->findOne(['email' => $email]);
 
 if (!$userDoc || !isset($userDoc['two_factor_otp']) || !isset($userDoc['two_factor_expires'])) {
-    echo json_encode(['status' => 'error', 'error' => 'No active 2FA request found.']); exit;
+    api_json(['status' => 'error', 'error' => 'No active 2FA request found.'], 400);
 }
 
 // Strictly check 1-minute expiration
 if (time() > $userDoc['two_factor_expires']) {
-    echo json_encode(['status' => 'error', 'error' => 'OTP has expired.']); exit;
+    api_json(['status' => 'error', 'error' => 'OTP has expired.'], 400);
 }
 
 // Attempt limit: max 5 wrong OTPs per issued code (industry practice).
@@ -34,7 +32,7 @@ if ($attempts >= 5) {
         'two_factor_otp' => '', 'two_factor_expires' => '', 'two_factor_attempts' => ''
     ]]);
     unset($_SESSION['2fa_pending_email']);
-    echo json_encode(['status' => 'error', 'error' => 'Too many incorrect attempts. Please sign in again to request a new code.']); exit;
+    api_json(['status' => 'error', 'error' => 'Too many incorrect attempts. Please sign in again to request a new code.'], 400);
 }
 
 // Verify OTP match
@@ -45,10 +43,10 @@ if (!password_verify($submittedOtp, $userDoc['two_factor_otp'])) {
             'two_factor_otp' => '', 'two_factor_expires' => '', 'two_factor_attempts' => ''
         ]]);
         unset($_SESSION['2fa_pending_email']);
-        echo json_encode(['status' => 'error', 'error' => 'Too many incorrect attempts. Please sign in again to request a new code.']); exit;
+        api_json(['status' => 'error', 'error' => 'Too many incorrect attempts. Please sign in again to request a new code.'], 400);
     }
     $db->users->updateOne(['email' => $email], ['$inc' => ['two_factor_attempts' => 1]]);
-    echo json_encode(['status' => 'error', 'error' => 'Incorrect OTP code.']); exit;
+    api_json(['status' => 'error', 'error' => 'Incorrect OTP code.'], 400);
 }
 
 // Success! Complete the login
@@ -154,7 +152,7 @@ try {
     // Re-sync BOTH PHPSESSID variants to the regenerated id + echo new token.
     Session::refreshAuthCookies();
 
-    echo json_encode(['status' => 'success']);
+    api_json(['status' => 'success'], 200);
 } catch (Exception $e) {
-    echo json_encode(['status' => 'error', 'error' => 'Failed to establish session.']);
+    api_json(['status' => 'error', 'error' => 'Failed to establish session.'], 400);
 }

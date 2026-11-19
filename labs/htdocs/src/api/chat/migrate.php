@@ -12,8 +12,6 @@
 
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
-
 // CRITICAL: This is a migration script — admin only
 $user = AuthMiddleware::requireAdmin();
 
@@ -49,7 +47,7 @@ try {
 
     echo "  ✓ chat_presence TTL index ready\n\n";
 
-    echo json_encode(['success' => true]) . "\n";
+    api_json(['success' => true], 200). "\n";
 } catch (\Throwable $e) {
     http_response_code(500);
     echo 'Migration failed: ' . $e->getMessage() . "\n";

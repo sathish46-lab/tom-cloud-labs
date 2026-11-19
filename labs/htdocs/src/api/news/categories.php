@@ -42,12 +42,11 @@ $configSources = [
 // Merge configured sources with DB-observed sources
 $allSources = array_unique(array_merge(array_keys($configSources), $sources));
 
-header('Content-Type: application/json');
-echo json_encode([
+api_json([
     'status' => 'success',
     'data' => [
         'sources' => $allSources,
         'categories' => $categories,
         'severities' => $severities,
     ]
-]);
+], 200);

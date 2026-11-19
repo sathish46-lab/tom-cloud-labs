@@ -6,8 +6,6 @@
 
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
-
 // CRITICAL: This is a migration script — admin only
 $user = AuthMiddleware::requireAdmin();
 

@@ -3,16 +3,13 @@ require_once __DIR__ . '/../../../src/load.php';
 
 use MongoDB\BSON\ObjectId;
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $hash = $_POST['hash'] ?? '';
 $versionId = $_POST['version_id'] ?? '';
 
 if (empty($hash) || empty($versionId)) {
-    echo json_encode(['status' => 'error', 'error' => 'Missing hash or version_id']); exit;
+    api_json(['status' => 'error', 'error' => 'Missing hash or version_id'], 400);
 }
 
 try {
@@ -24,7 +21,7 @@ try {
     ]);
 
     if (!$version) {
-        echo json_encode(['status' => 'error', 'error' => 'Version not found']); exit;
+        api_json(['status' => 'error', 'error' => 'Version not found'], 400);
     }
 
     $filesDb = DatabaseConnection::getClient()->selectDatabase('tom_labs_instances_db');
@@ -55,8 +52,7 @@ try {
         ['$set' => array_merge($configSnap, ['updated_at' => time()])]
     );
 
-    echo json_encode(['status' => 'success', 'message' => 'Version restored']);
+    api_json(['status' => 'success', 'message' => 'Version restored'], 400);
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['status' => 'error', 'error' => errors_from_exception($e, 'instances/restore_version')['error']]);
+    api_json(['status' => 'error', 'error' => errors_from_exception($e, 'instances/restore_version')['error']], 500);
 }

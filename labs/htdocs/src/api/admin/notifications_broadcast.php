@@ -7,8 +7,6 @@
 
 require_once __DIR__ . '/../../load.php';
 
-header('Content-Type: application/json');
-
 $admin = AuthMiddleware::requireAdmin();
 AuthMiddleware::requireCsrf();
 
@@ -33,14 +31,12 @@ $target  = bp('target');
 $role    = bp('role');
 
 if ($title === '' || $body === '') {
-    echo json_encode(['status' => 'error', 'error' => 'title and body are required']);
-    exit;
+api_json(['status' => 'error', 'error' => 'title and body are required'], 400);
 }
 
 if ($category === '') $category = 'academy';
 if (!in_array($category, Notification::CATEGORIES, true)) {
-    echo json_encode(['status' => 'error', 'error' => 'Invalid category']);
-    exit;
+api_json(['status' => 'error', 'error' => 'Invalid category'], 400);
 }
 
 if ($target === '') $target = 'all';
@@ -56,8 +52,7 @@ if ($target === 'all') {
     }
 } elseif ($target === 'role') {
     if ($role === '') {
-        echo json_encode(['status' => 'error', 'error' => 'role required for target=role']);
-        exit;
+api_json(['status' => 'error', 'error' => 'role required for target=role'], 400);
     }
     $cursor = $db->users->find(['role' => $role], ['projection' => ['_id' => 1, 'user_id' => 1]]);
     foreach ($cursor as $u) {
@@ -74,13 +69,11 @@ if ($target === 'all') {
         }
     }
 } else {
-    echo json_encode(['status' => 'error', 'error' => 'Invalid target']);
-    exit;
+api_json(['status' => 'error', 'error' => 'Invalid target'], 400);
 }
 
 if ($targetUserIds === []) {
-    echo json_encode(['status' => 'error', 'error' => 'No target users found']);
-    exit;
+api_json(['status' => 'error', 'error' => 'No target users found'], 400);
 }
 
 $inserted = Notification::broadcast($title, $body, $category, $targetUserIds, (string)($admin->getEmail() ?? ''));
@@ -94,7 +87,7 @@ AuditLog::log('update', 'notifications', 'broadcast', [
     'count'   => $inserted,
 ], (string)($admin->getUserId() ?? 'unknown'));
 
-echo json_encode([
+api_json([
     'status' => 'success',
     'sent'   => $inserted,
-]);
+], 200);

@@ -5,15 +5,12 @@ require_once __DIR__ . '/../../lib/labs/IPManager.class.php';
 
 use TomLabs\Labs\IPManager;
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $hash = $_POST['hash'] ?? '';
 
 if (empty($hash)) {
-    echo json_encode(['status' => 'error', 'error' => 'Missing hash']); exit;
+    api_json(['status' => 'error', 'error' => 'Missing hash'], 400);
 }
 
 try {
@@ -25,7 +22,7 @@ try {
     ]);
 
     if (!$instance) {
-        echo json_encode(['status' => 'error', 'error' => 'Instance not found']); exit;
+        api_json(['status' => 'error', 'error' => 'Instance not found'], 400);
     }
 
     $ipManager = new IPManager();
@@ -101,14 +98,13 @@ try {
     // Stamp last_usage so admins can tell used IPs from assigned-but-never-deployed ones
     $ipManager->touchUsage($internalIp, 'Deployed ' . $labLabel, $template);
 
-    echo json_encode([
+    api_json([
         'status'  => 'success',
         'message' => 'Deployment queued',
         'hash'    => $hash,
         'ip'      => $internalIp,
         'queued'  => true
-    ]);
+    ], 200);
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['status' => 'error', 'error' => errors_from_exception($e, 'instances/deploy_instance')['error']]);
+    api_json(['status' => 'error', 'error' => errors_from_exception($e, 'instances/deploy_instance')['error']], 500);
 }

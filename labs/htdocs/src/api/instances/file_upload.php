@@ -1,10 +1,7 @@
 <?php
 require_once __DIR__ . '/../../../src/load.php';
 
-header('Content-Type: application/json');
-
 $user = AuthMiddleware::requireAuth();
-
 
 $userId = (int) $user->getUserId();
 $username = $user->getUsername();
@@ -14,13 +11,11 @@ $slug = $_POST['slug'] ?? '';
 $path = $_POST['path'] ?? '';
 
 if (empty($slug) || empty($path)) {
-    echo json_encode(['status' => 'error', 'error' => 'Missing parameters']);
-    exit;
+api_json(['status' => 'error', 'error' => 'Missing parameters'], 400);
 }
 
 if (empty($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
-    echo json_encode(['status' => 'error', 'error' => 'No file uploaded']);
-    exit;
+api_json(['status' => 'error', 'error' => 'No file uploaded'], 400);
 }
 
 // S12: File type allowlist for instance assets (code-server context)
@@ -36,15 +31,13 @@ $allowedExtensions = [
 ];
 $ext = strtolower(pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION));
 if (!in_array($ext, $allowedExtensions)) {
-    echo json_encode(['status' => 'error', 'error' => 'File type not allowed for instance assets.']);
-    exit;
+api_json(['status' => 'error', 'error' => 'File type not allowed for instance assets.'], 400);
 }
 
 // Block double-extension attacks
 $parts = explode('.', $_FILES['file']['name']);
 if (count($parts) > 2) {
-    echo json_encode(['status' => 'error', 'error' => 'Files with multiple extensions are not allowed.']);
-    exit;
+api_json(['status' => 'error', 'error' => 'Files with multiple extensions are not allowed.'], 400);
 }
 
 $db = DatabaseConnection::getClient()->selectDatabase('tom_labs_instances_db');
@@ -53,15 +46,13 @@ if (!$instance) {
     $instance = $db->instances->findOne(['slug' => $slug]);
 }
 if (!$instance || (int) ($instance['user_id'] ?? 0) !== $userId) {
-    echo json_encode(['status' => 'error', 'error' => 'Instance not found or forbidden']);
-    exit;
+api_json(['status' => 'error', 'error' => 'Instance not found or forbidden'], 400);
 }
 
 $instanceHash = $instance['instance_hash'] ?? $slug;
 $templateFolder = InstanceFileStore::resolveTemplateFolder($instance);
 if (!$templateFolder) {
-    echo json_encode(['status' => 'error', 'error' => 'No template for instance']);
-    exit;
+api_json(['status' => 'error', 'error' => 'No template for instance'], 400);
 }
 
 $tmpPath = $_FILES['file']['tmp_name'];
@@ -69,8 +60,7 @@ $s3Key = 'labassets/instances/' . $instanceHash . '/' . ltrim($path, '/');
 
 $uploaded = Storage::upload($tmpPath, $s3Key);
 if (!$uploaded) {
-    echo json_encode(['status' => 'error', 'error' => 'MinIO upload failed']);
-    exit;
+api_json(['status' => 'error', 'error' => 'MinIO upload failed'], 400);
 }
 
 // Store binary file in user layer via single-doc model
@@ -89,4 +79,4 @@ InstanceFileStore::collection()->updateOne(
     ]]
 );
 
-echo json_encode(['status' => 'success', 's3_key' => $s3Key]);
+api_json(['status' => 'success', 's3_key' => $s3Key], 200);
