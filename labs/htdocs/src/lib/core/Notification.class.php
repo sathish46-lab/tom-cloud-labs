@@ -32,7 +32,7 @@ class Notification {
     /** Categories exposed in the bell dropdown tabs. */
     public const CATEGORIES = [
         'system', 'mcp', 'clan', 'clubs', 'code_arena', 'discussions',
-        'quiz', 'score', 'streak', 'academy', 'report',
+        'quiz', 'score', 'streak', 'account', 'academy', 'report',
     ];
 
     /** Report tab is admin-only. */
@@ -53,7 +53,7 @@ class Notification {
      */
     public const EVENTS = [
         'new_device' => [
-            'category' => 'academy',
+            'category' => 'account',
             'type'     => 'new_device',
             'title'    => 'New device login',
             'body'     => '{username}, you signed in from a new device: {device} • {ip}.',

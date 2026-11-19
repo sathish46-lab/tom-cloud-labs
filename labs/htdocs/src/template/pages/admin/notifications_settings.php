@@ -31,6 +31,7 @@ $modeLabels = [
 ];
 
 $notifCatLabels = [
+    'account'     => 'Account',
     'academy'     => 'Academy',
     'system'      => 'System (Labs)',
     'mcp'         => 'MCP',
@@ -301,6 +302,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="col-12">
                                 <label class="fw-semibold d-block mb-1 small" for="ntBcastCategory">Category</label>
                                 <select id="ntBcastCategory" name="category" class="form-select form-select-sm bg-transparent border-secondary border-opacity-25">
+                                    <option value="account">Account</option>
                                     <option value="academy">Academy</option>
                                     <option value="system">System (Labs)</option>
                                     <option value="mcp">MCP</option>
