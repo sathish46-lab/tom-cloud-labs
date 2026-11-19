@@ -16,8 +16,7 @@ $identity = chat_resolve_identity($guestId ?: null);
 $db = chat_db();
 
 if (!$identity) {
-    01);
-    exit;
+    chat_json(['success' => false, 'error' => 'Unauthorized'], 401);
 }
 
 try {

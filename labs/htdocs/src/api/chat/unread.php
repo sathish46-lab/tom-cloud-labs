@@ -18,8 +18,7 @@ $guestId = $_SERVER['HTTP_X_GUEST_ID'] ?? '';
 $identity = chat_resolve_identity($guestId ?: null);
 
 if (!$identity) {
-    01);
-    exit;
+    chat_json(['success' => false, 'error' => 'Unauthorized'], 401);
 }
 
 // Cheap endpoint called on every page load — keep abuse in check.
