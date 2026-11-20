@@ -194,7 +194,7 @@ window.addEventListener('pageshow', function(e) {
                             <?php if (strpos($loginError, 'verify your email') !== false): ?>
                                 <div class="text-center mb-3">
                                     <a href="#" id="resend-verification-link" class="small text-warning text-decoration-none fw-bold">
-                                        Didn't receive the email? <span class="fw-normal">Resend verification email</span>
+                                        Didn't receive the email? <span class="fw-normal text-success">Resend verification email</span>
                                     </a>
                                 </div>
                                 <form id="resend-verification-form" class="d-none mt-3" method="POST" action="/api/auth/resend_verification">
