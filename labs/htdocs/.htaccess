@@ -4,6 +4,14 @@
 RewriteEngine On
 RewriteBase /
 
+# Hide server language — do not expose PHP
+Header unset X-Powered-By
+
+# Block direct access to .php files (404 — no redirect, no warning)
+# Uses THE_REQUEST so internal rewrites (extensionless → .php) still work
+RewriteCond %{THE_REQUEST} ^[A-Z]+\ /[^?]*\.php
+RewriteRule ^(.+)\.php$ - [R=404,L]
+
 # Custom 404 Error Handler - Secure against server information disclosure
 ErrorDocument 404 /app/error.php
 
@@ -103,6 +111,7 @@ RewriteRule ^admin/chat/?$ app/admin/chat_settings.php [L,QSA]
 RewriteRule ^admin/notifications/?$ app/admin/notifications_settings.php [L,QSA]
 RewriteRule ^admin/news-logs/?$ app/admin/news_logs.php [L,QSA]
 RewriteRule ^admin/sessions/?$ app/admin/sessions.php [L,QSA]
+RewriteRule ^admin/ratelimits/?$ app/admin/ratelimits.php [L,QSA]
 RewriteRule ^admin/ip-control/?$ app/admin/ipcontrol.php [L,QSA]
 
 RewriteRule ^home$ app/home.php [L,QSA]
@@ -127,6 +136,7 @@ RewriteRule ^api/news/delete\.php$ src/api/news/delete.php [L,QSA]
 RewriteRule ^api/news/get\.php$ src/api/news/get.php [L,QSA]
 RewriteRule ^api/admin/news_fetch_logs\.php$ src/api/admin/news_fetch_logs.php [L,QSA]
 RewriteRule ^api/admin/clear_sessions\.php$ src/api/admin/clear_sessions.php [L,QSA]
+RewriteRule ^api/admin/ratelimits\.php$ src/api/admin/ratelimits.php [L,QSA]
 
 # Network Interfaces
 RewriteRule ^network/interfaces/?$ app/network/interfaces.php [L,QSA]
@@ -187,6 +197,12 @@ RewriteRule ^instances/([^/]+)$ app/instances/manage.php?slug=$1 [L,QSA]
 RewriteRule ^roadmaps$ app/roadmaps/dashboard.php [L,QSA]
 RewriteRule ^roadmaps/new/?$ app/roadmaps/new.php [L,QSA]
 RewriteRule ^roadmaps/([a-z0-9-]+)/?$ app/roadmaps/roadmap_view.php?slug=$1 [L,QSA]
+
+# Root-level pages — extensionless URLs (e.g. /about → about.php)
+RewriteCond %{ENV:REDIRECT_STATUS} ^$
+RewriteCond %{REQUEST_URI} !\.php$
+RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI}.php -f
+RewriteRule ^([^/]+)$ $1.php [L,QSA]
 
 # 5. USER PROFILE ROUTING
 RewriteCond %{DOCUMENT_ROOT}/app/profile.php -f
