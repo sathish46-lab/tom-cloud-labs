@@ -243,6 +243,13 @@ function check_global_rate_limit() {
             'window'  => 300
         ],
         [
+            'pattern' => '#^/api/auth/resend_verification#i',
+            'methods' => ['POST'],
+            'key'     => 'auth:rl:resend_verification',
+            'limit'   => 3,
+            'window'  => 900
+        ],
+        [
             'pattern' => '#^/api/account/change_password#i',
             'methods' => ['POST'],
             'key'     => 'account:rl:change_password',
