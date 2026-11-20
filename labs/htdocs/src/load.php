@@ -27,6 +27,10 @@ if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.use_only_cookies', '1');
     ini_set('session.use_trans_sid', '0');
     
+    // SE3+S22: Set cookie domain so PHP emits exactly ONE session cookie
+    // natively (no duplicate host-only + domain variants from manual setcookie).
+    ini_set('session.cookie_domain', get_session_domain());
+    
     // SE3+S22: Set Secure and SameSite flags before session_start()
     // Behind Cloudflare Flexible SSL, Apache receives HTTP from Cloudflare
     // but the browser connected via HTTPS. Detect Cloudflare via

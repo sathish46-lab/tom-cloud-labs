@@ -162,6 +162,14 @@ class SessionAuth {
      * and a 30-day absolute lifetime for both the PHP session and the token.
      */
     public static function refreshAuthCookies(): void {
+        // Idempotent guard: can run twice per request (UserSession login +
+        // load.php bootstrap). Emit cookie headers only once.
+        static $emitted = false;
+        if ($emitted) {
+            return;
+        }
+        $emitted = true;
+
         if (session_status() !== PHP_SESSION_ACTIVE) {
             return;
         }
@@ -201,13 +209,18 @@ class SessionAuth {
             ]);
         }
 
-        // PHPSESSID — single domain-wide cookie so the session id never
-        // diverges between host-only and domain variants. Emitted once so
-        // only one PHPSESSID cookie is stored in the browser jar.
+        // PHPSESSID is emitted natively by PHP at session_write_close using
+        // the cookie_domain configured in load.php (get_session_domain()).
+        // Do NOT emit it manually here — that previously created duplicate
+        // host-only + domain cookies in the browser jar. Only session_token
+        // is managed manually below.
+        //
+        // Evict any stale host-only PHPSESSID left from before this fix
+        // (when cookie_domain was unset). Safe on every response; browsers
+        // ignore deletion of cookies they don't hold. After one request the
+        // browser holds only the single natively-emitted domain cookie.
         if ($domain !== '') {
-            setcookie(session_name(), session_id(), ['domain' => $domain] + $common);
-        } else {
-            setcookie(session_name(), session_id(), $common);
+            header(sprintf('Set-Cookie: %s=deleted; path=/; Max-Age=0; secure; HttpOnly; SameSite=Lax', session_name()), false);
         }
 
         if ($token === '') {
