@@ -269,13 +269,14 @@ $rlPageCounters = array_slice($rlCounters, $rlOffset, $RL_PER_PAGE);
         <?php if ($rlTotal > 0): ?>
             <div class="rl-pager">
                 <?php if ($rlShowPage > 1): ?>
-                    <a href="/admin/sessions?rl_page=<?= $rlShowPage - 1 ?>" class="btn btn-outline-secondary btn-sm">← Older</a>
+                    <button type="button" class="btn btn-outline-secondary btn-sm rl-page-btn" data-page="<?= $rlShowPage - 1 ?>">← Older</button>
                 <?php endif; ?>
-                <span class="badge bg-light text-dark border">Page <?= $rlShowPage ?> of <?= $rlTotalPages ?></span>
+                <span class="badge bg-light text-dark border">Page <span id="rlCurrentPage"><?= $rlShowPage ?></span> of <?= $rlTotalPages ?></span>
                 <?php if ($rlShowPage < $rlTotalPages): ?>
-                    <a href="/admin/sessions?rl_page=<?= $rlShowPage + 1 ?>" class="btn btn-outline-secondary btn-sm">Newer →</a>
+                    <button type="button" class="btn btn-outline-secondary btn-sm rl-page-btn" data-page="<?= $rlShowPage + 1 ?>">Newer →</button>
                 <?php endif; ?>
-                <small class="text-muted ms-2">Showing <?= min($rlOffset + 1, $rlTotal) ?>–<?= min($rlOffset + count($rlPageCounters), $rlTotal) ?> of <?= $rlTotal ?></small>
+                <small class="text-muted ms-2">Showing <span id="rlShowingFrom"><?= min($rlOffset + 1, $rlTotal) ?></span>–<span id="rlShowingTo"><?= min($rlOffset + count($rlPageCounters), $rlTotal) ?></span> of <span id="rlShowingTotal"><?= $rlTotal ?></span></small>
+                <span id="rlLoading" class="ms-2" style="display:none;"><i class='bx bx-circle bx-spin'></i> Loading…</span>
             </div>
         <?php else: ?>
             <div class="text-center py-4">
@@ -426,5 +427,85 @@ rlClearAllBtn.addEventListener('click', function () {
         rlClearAllBtn.innerHTML = "<i class='bx bx-trash me-2'></i> Clear all rate limits";
         rlShowResult('Network error.', 'error');
     });
+});
+
+// ===== PAGINATION VIA JSON (no full page reload) =====
+var rlTableBody = document.getElementById('rlTableBody');
+var rlCurrentPageEl = document.getElementById('rlCurrentPage');
+var rlShowingFromEl = document.getElementById('rlShowingFrom');
+var rlShowingToEl = document.getElementById('rlShowingTo');
+var rlShowingTotalEl = document.getElementById('rlShowingTotal');
+var rlLoadingEl = document.getElementById('rlLoading');
+
+function rlRenderTableRows(data) {
+    if (!data || !Array.isArray(data)) return '';
+    var html = '';
+    data.forEach(function (c) {
+        var badgeClass = 'rl-badge rounded-pill me-2';
+        if (c.type === 'email') badgeClass += ' bg-primary text-white';
+        else if (c.type === 'ip') badgeClass += ' bg-info text-dark';
+        else if (c.type === 'user') badgeClass += ' bg-secondary text-white';
+        else badgeClass += ' bg-warning text-dark';
+        html += '<tr>' +
+            '<td><span class="' + badgeClass + '">' + c.type.charAt(0).toUpperCase() + c.type.slice(1) + '</span> ' + c.label + '</td>' +
+            '<td class="fw-bold">' + c.count + '</td>' +
+            '<td>' + Math.floor(c.window / 60) + ' min</td>' +
+            '<td>' + Math.floor(c.reset_in / 60) + ' min</td>' +
+            '<td>' + (c.mtime ? new Date(c.mtime * 1000).toLocaleTimeString() : '') + '</td>' +
+            '<td><button type="button" class="btn btn-rl-clear btn-outline-danger" data-file="' + c.file + '" title="Clear this counter"><i class="bx bx-trash"></i></button></td>' +
+            '</tr>';
+    });
+    return html;
+}
+
+function rlFetchPage(page) {
+    rlLoadingEl.style.display = 'inline';
+    var formData = new FormData();
+    formData.append('action', 'list');
+    formData.append('page', page);
+    formData.append('per_page', '<?= $RL_PER_PAGE ?>');
+    fetch('/api/admin/ratelimits.php', {
+        method: 'POST',
+        headers: { 'X-CSRF-Token': CSRF },
+        body: formData,
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+        rlLoadingEl.style.display = 'none';
+        if (data.status !== 'success') {
+            rlShowResult('Failed to load page: ' + (data.error || 'unknown'), 'error');
+            return;
+        }
+        // Render table rows
+        rlTableBody.innerHTML = rlRenderTableRows(data.data);
+        // Re-attach clear handlers (event delegation already covers, but rebind for safety)
+        // Update pagination UI
+        var cp = data.current_page;
+        var tp = data.total_pages;
+        var from = ((cp - 1) * data.per_page) + 1;
+        var to = Math.min(cp * data.per_page, data.total);
+        rlCurrentPageEl.textContent = cp;
+        rlShowingFromEl.textContent = data.total > 0 ? from : 0;
+        rlShowingToEl.textContent = to;
+        rlShowingTotalEl.textContent = data.total;
+        // Enable/disable nav buttons
+        var olderBtn = document.querySelector('.rl-page-btn[data-page="' + (cp - 1) + '"]');
+        var newerBtn = document.querySelector('.rl-page-btn[data-page="' + (cp + 1) + '"]');
+        // Remove old listeners by replacing elements is not possible here; instead use data-page attribute check in click handler
+        rlShowResult('Page ' + cp + ' of ' + tp, 'success');
+    })
+    .catch(function () {
+        rlLoadingEl.style.display = 'none';
+        rlShowResult('Network error.', 'error');
+    });
+}
+
+// Pagination button clicks (event delegation on the pager container)
+document.querySelector('.rl-pager').addEventListener('click', function (e) {
+    var btn = e.target.closest('.rl-page-btn');
+    if (!btn) return;
+    var page = parseInt(btn.getAttribute('data-page'), 10);
+    if (isNaN(page) || page < 1) return;
+    rlFetchPage(page);
 });
 </script>

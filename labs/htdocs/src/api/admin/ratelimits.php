@@ -120,5 +120,20 @@ if ($action === 'clear_one') {
     }
 }
 
-// Default: list
-api_json(['status' => 'success', 'data' => $counters, 'total' => count($counters)], 200);
+// Default: list — supports page + per_page pagination
+$page     = max(1, (int)($_POST['page'] ?? 1));
+$perPage  = max(1, min(100, (int)($_POST['per_page'] ?? 10)));
+$total    = count($counters);
+$totalPages = max(1, ceil($total / $perPage));
+if ($page > $totalPages) $page = $totalPages;
+$offset   = ($page - 1) * $perPage;
+$pageData = array_slice($counters, $offset, $perPage);
+
+api_json([
+    'status'      => 'success',
+    'data'        => $pageData,
+    'total'       => $total,
+    'total_pages' => $totalPages,
+    'current_page'=> $page,
+    'per_page'    => $perPage,
+], 200);
