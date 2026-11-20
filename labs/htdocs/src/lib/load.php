@@ -296,26 +296,44 @@ function notifyNewDeviceLogin($userDoc, array $deviceInfo, string $clientIp): vo
         // Per-user gate: security alerts must be enabled.
         if (!UserNotificationSettings::securityEnabled($email)) return;
 
-        // Compare fingerprint against existing session tokens.
-        $existingTokens = $userDoc['session_tokens'] ?? [];
-        if (!is_array($existingTokens)) $existingTokens = [];
+        // Compute stable device fingerprint hash (browser|os|mobile|ip).
+        // This is checked against known_devices which persists independently
+        // of session_tokens (session tokens rotate every login and are pruned
+        // to newest 10 / 30-day cap, so they cannot be used for device dedup).
+        $fingerprint = (string)($deviceInfo['browser'] ?? '')
+            . '|' . (string)($deviceInfo['os'] ?? '')
+            . '|' . ((bool)$deviceInfo['mobile'] ?? false ? '1' : '0')
+            . '|' . $clientIp;
+        $fingerprintHash = hash('sha256', $fingerprint);
 
-        $isNewDevice = true;
-        foreach ($existingTokens as $token) {
-            if (!is_array($token)) continue;
-            if (
-                (string)($token['browser'] ?? '') === $deviceInfo['browser']
-                && (string)($token['os'] ?? '') === $deviceInfo['os']
-                && (bool)($token['mobile'] ?? false) === (bool)$deviceInfo['mobile']
-                && (string)($token['ip'] ?? '') === $clientIp
-            ) {
-                $isNewDevice = false;
+        // Check against persisted known_devices (not session_tokens).
+        $knownDevices = $userDoc['known_devices'] ?? [];
+        if (!is_array($knownDevices)) $knownDevices = [];
+
+        $isKnownDevice = false;
+        $deviceIndex = -1;
+        foreach ($knownDevices as $i => $device) {
+            if (!is_array($device)) continue;
+            if ((string)($device['fingerprint_hash'] ?? '') === $fingerprintHash) {
+                $isKnownDevice = true;
+                $deviceIndex = $i;
                 break;
             }
         }
-        if (!$isNewDevice) return;
 
-        // Resolve user id for notification ownership.
+        if ($isKnownDevice) {
+            // Update last_seen for existing known device, no notification.
+            $now = time();
+            $knownDevices[$deviceIndex]['last_seen'] = $now;
+            $db = DatabaseConnection::getDefaultDatabase();
+            $db->users->updateOne(
+                ['email' => $email],
+                ['$set' => ['known_devices' => $knownDevices]]
+            );
+            return;
+        }
+
+        // New device: trigger notification + security alert email.
         $userId = isset($userDoc['user_id']) ? (string)$userDoc['user_id']
             : (isset($userDoc['_id']) ? (string)$userDoc['_id'] : '');
         $username = (string)($userDoc['username'] ?? 'User');
@@ -339,6 +357,30 @@ function notifyNewDeviceLogin($userDoc, array $deviceInfo, string $clientIp): vo
             $appUrl = rtrim($config['app_url'] ?? 'https://labs.tomweb.fun', '/');
             \Auth\Mailer::sendNewDeviceAlert($email, $username, $deviceDesc, $clientIp, $appUrl);
         }
+
+        // Record this device as known so future logins from same device+IP
+        // do not re-trigger. Cap at 20 entries (newest first).
+        $now = time();
+        $newDeviceEntry = [
+            'fingerprint_hash' => $fingerprintHash,
+            'browser'          => $deviceInfo['browser'] ?? '',
+            'os'               => $deviceInfo['os'] ?? '',
+            'mobile'           => (bool)$deviceInfo['mobile'] ?? false,
+            'ip'               => $clientIp,
+            'first_seen'       => $now,
+            'last_seen'        => $now,
+            'label'            => $deviceLabel,
+        ];
+        array_unshift($knownDevices, $newDeviceEntry);
+        if (count($knownDevices) > 20) {
+            $knownDevices = array_slice($knownDevices, 0, 20);
+        }
+
+        $db = DatabaseConnection::getDefaultDatabase();
+        $db->users->updateOne(
+            ['email' => $email],
+            ['$set' => ['known_devices' => $knownDevices]]
+        );
     } catch (\Throwable $e) {
         error_log('notifyNewDeviceLogin failed: ' . $e->getMessage());
     }
