@@ -9,28 +9,79 @@
 
 require_once __DIR__ . '/../../../../src/load.php';
 
+$admin = AuthMiddleware::requireAdmin();
+AuthMiddleware::requireCsrf();
+
 $counters = [];
 $total = 0;
 $error = '';
 
 try {
-    $res = file_get_contents('/api/admin/ratelimits.php', false, stream_context_create([
-        'http' => [
-            'method' => 'POST',
-            'header' => [
-                'Content-Type: application/x-www-form-urlencoded',
-                'X-CSRF-Token: ' . ((isset($_SESSION['csrf_token']) ? $_SESSION['csrf_token'] : '')),
-            ],
-            'content' => http_build_query(['action' => 'list']),
-        ],
-    ]));
-    $decoded = json_decode($res, true);
-    if ($decoded && isset($decoded['data'])) {
-        $counters = $decoded['data'];
-        $total = $decoded['total'] ?? 0;
-    } else {
-        $error = $decoded['error'] ?? 'Failed to load rate limits.';
+    $storageDirs = [];
+    $globalDir = is_dir('/dev/shm') && is_writable('/dev/shm') ? '/dev/shm/ratelimit' : '/tmp/ratelimit';
+    $actionDir = is_dir('/dev/shm') && is_writable('/dev/shm') ? '/dev/shm/ratelimit_actions' : '/tmp/ratelimit_actions';
+    $storageDirs[] = $globalDir;
+    $storageDirs[] = $actionDir;
+
+    $now = time();
+
+    foreach ($storageDirs as $dir) {
+        if (!is_dir($dir)) {
+            continue;
+        }
+        foreach (glob($dir . '/*.count') as $file) {
+            $basename = basename($file);
+            // Parse: <kind>_<md5>_<window>.count  or  <actionkey>_<window>.count
+            $parts = explode('_', $basename);
+            $windowPart = array_pop($parts); // <window>.count
+            $windowNum = (int) str_replace('.count', '', $windowPart);
+            $keyName = implode('_', $parts);
+
+            $content = @file_get_contents($file);
+            $count = (int) $content;
+            $mtime = @filemtime($file);
+
+            // Determine type from key prefix
+            $type = 'action';
+            $label = 'Action: ' . $keyName;
+
+            if (str_starts_with($keyName, 'em_')) {
+                $type = 'email';
+                $label = 'Email: ' . substr($keyName, 3);
+            } elseif (str_starts_with($keyName, 'ip_')) {
+                $type = 'ip';
+                $label = 'IP: ' . substr($keyName, 3);
+            } elseif (str_starts_with($keyName, 'usr_')) {
+                $type = 'user';
+                $label = 'User: ' . substr($keyName, 4);
+            }
+
+            // Compute reset time: window is in seconds (e.g. 900 = 15 min)
+            // $windowNum is the floor(time()/window) value
+            // reset = ($windowNum + 1) * actual_window_seconds
+            // But we don't store actual_window, so estimate from mtime + reasonable window
+            // Default window: 900s (15 min) for actions, 60s for global
+            $estimatedWindow = ($type === 'action') ? 900 : 60;
+            $resetTime = ($windowNum + 1) * $estimatedWindow;
+            $remaining = max(0, $resetTime - $now);
+
+            $counters[] = [
+                'file'   => $basename,
+                'type'   => $type,
+                'label'  => $label,
+                'count'  => $count,
+                'window' => $estimatedWindow,
+                'reset_in' => $remaining,
+                'mtime'  => $mtime,
+            ];
+            $total++;
+        }
     }
+
+    // Sort: most recent first
+    usort($counters, function ($a, $b) {
+        return ($b['mtime'] ?? 0) - ($a['mtime'] ?? 0);
+    });
 } catch (Throwable $e) {
     $error = $e->getMessage();
 }
@@ -91,11 +142,11 @@ $typeBadge = function ($t) {
                 <table class="table table-hover rl-table align-middle mb-0">
                     <thead>
                         <tr>
-                            <th style="width: 22%;">Type / Label</th>
-                            <th style="width: 14%;">Count</th>
-                            <th style="width: 16%;">Window</th>
+                            <th style="width: 24%;">Type / Label</th>
+                            <th style="width: 13%;">Count</th>
+                            <th style="width: 14%;">Window</th>
                             <th style="width: 16%;">Resets in</th>
-                            <th style="width: 16%;">Last hit</th>
+                            <th style="width: 17%;">Last hit</th>
                             <th style="width: 16%;">Action</th>
                         </tr>
                     </thead>
