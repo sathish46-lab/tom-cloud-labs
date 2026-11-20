@@ -71,11 +71,13 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 
     // Evict any stale non-Secure 'PHPSESSID' left behind by earlier HTTP-only
-    // visits (non-Secure deletion is permitted on both schemes). The stale
-    // Secure PHPSESSID cannot be removed from plain HTTP (browsers reject
-    // Secure Set-Cookies over HTTP), but PHP now ignores it entirely because
-    // the HTTP session uses the 'LABSSESSID' name.
-    header('Set-Cookie: PHPSESSID=deleted; path=/; Max-Age=0; HttpOnly; SameSite=Lax', false);
+    // visits. On HTTP the active cookie is LABSSESSID, so PHPSESSID is stale
+    // and safe to delete. On HTTPS PHPSESSID is the active cookie — never
+    // evict it here, or every fresh session cookie gets deleted immediately
+    // and logins fail with "Invalid security token."
+    if (!$isHttps) {
+        header('Set-Cookie: PHPSESSID=deleted; path=/; Max-Age=0; HttpOnly; SameSite=Lax', false);
+    }
 }
 
 // 1.5 Global Request Rate Limiter (Runs early to reject DDoS/flooding without database overhead)
