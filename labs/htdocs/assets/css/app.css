@@ -21093,6 +21093,9 @@ body.hwa-enabled .card.blur.domain-card {
   font-size: 0.7rem !important;
 }
 
+#smart-insights-card, .smart-insights-card {
+  overflow: hidden !important;
+}
 #smart-insights-card .insights-title, .smart-insights-card .insights-title {
   font-size: 0.95rem !important;
   letter-spacing: 0.3px !important;
@@ -21106,12 +21109,13 @@ body.hwa-enabled .card.blur.domain-card {
 }
 #smart-insights-card .insights-chart, .smart-insights-card .insights-chart {
   height: 48px !important;
-  gap: 1.5px !important;
+  gap: 4px !important;
   padding-bottom: 0 !important;
 }
 #smart-insights-card .insights-bar, .smart-insights-card .insights-bar {
-  flex: 1 !important;
+  flex: 0 0 auto !important;
   min-width: 0 !important;
+  width: 8px !important;
   background: rgba(255, 255, 255, 0.08);
   border-radius: 2px 2px 0 0 !important;
   transition: height 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), background 0.3s ease, box-shadow 0.3s ease;
@@ -21410,8 +21414,205 @@ html[data-coreui-theme=dark] .blur [class*=stat-pill-] {
   border-color: rgba(0, 0, 0, 0.12);
 }
 [data-coreui-theme=light] .profile-pill:hover {
-  background: rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.06);
   border-color: rgba(0, 0, 0, 0.2);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Streak Card + Timeline + Recent Activity + Modal Table
+   ═══════════════════════════════════════════════════════════════ */
+#streak-card .streak-timeline {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: 1rem 0;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  scrollbar-width: none;
+}
+#streak-card .streak-timeline::-webkit-scrollbar {
+  display: none;
+}
+#streak-card .streak-dot {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  border: 2px solid rgba(var(--cui-secondary-rgb), 0.2);
+  color: rgba(var(--cui-secondary-rgb), 0.4);
+  background: rgba(var(--cui-body-bg, 33, 38, 49), 0.3);
+  position: relative;
+}
+#streak-card .streak-dot.done {
+  background: rgb(var(--cui-success-rgb));
+  color: #fff;
+  border-color: rgb(var(--cui-success-rgb));
+}
+#streak-card .streak-dot.today {
+  background: rgb(var(--cui-warning-rgb));
+  color: #fff;
+  border-color: rgb(var(--cui-warning-rgb));
+  box-shadow: 0 0 0 3px rgba(var(--cui-warning-rgb), 0.3);
+}
+#streak-card .streak-dot.upcoming {
+  background: rgba(var(--cui-body-bg, 33, 38, 49), 0.2);
+  color: rgba(var(--cui-secondary-rgb), 0.3);
+}
+#streak-card .streak-dot.milestone {
+  border-width: 3px;
+  font-size: 0.65rem;
+  position: relative;
+}
+#streak-card .streak-dot.milestone.awarded {
+  background: rgb(var(--cui-warning-rgb));
+  color: #fff;
+  border-color: rgb(var(--cui-warning-rgb));
+}
+#streak-card .streak-dot .streak-reward-label {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: rgb(var(--cui-warning-rgb));
+  background: rgba(var(--cui-warning-rgb), 0.1);
+  padding: 1px 4px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+#streak-card .streak-seg {
+  flex-shrink: 0;
+  width: 6px;
+  height: 2px;
+  background: rgba(var(--cui-secondary-rgb), 0.15);
+}
+#streak-card .streak-seg.done {
+  background: rgb(var(--cui-success-rgb));
+}
+#streak-card .streak-activity-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(var(--cui-body-color-rgb), 0.06);
+}
+#streak-card .streak-activity-item:last-child {
+  border-bottom: none;
+}
+#streak-card .streak-activity-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+#streak-card .streak-activity-desc {
+  flex-grow: 1;
+  font-size: 0.8rem;
+  color: var(--cui-body-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#streak-card .streak-activity-time {
+  font-size: 0.65rem;
+  color: rgba(var(--cui-body-color-rgb), 0.5);
+  flex-shrink: 0;
+}
+#streak-card .streak-activity-points {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: rgb(var(--cui-success-rgb));
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+#streak-card .streak-activity-penalty {
+  font-size: 0.65rem;
+  color: rgb(var(--cui-danger-rgb));
+  margin-left: 0.25rem;
+}
+
+/* Streak table in modal */
+#streakRewardsModal .streak-table-day {
+  font-size: 0.72rem;
+}
+#streakRewardsModal .streak-table-current {
+  background: rgba(var(--cui-warning-rgb), 0.1);
+}
+#streakRewardsModal .streak-table-milestone {
+  background: rgba(var(--cui-warning-rgb), 0.06);
+}
+#streakRewardsModal .streak-table-done {
+  color: rgba(var(--cui-body-color-rgb), 0.4);
+}
+#streakRewardsModal {
+  /* Fixed-height modal body */
+}
+#streakRewardsModal .modal-body {
+  height: 640px;
+  overflow: hidden;
+  display: flex;
+}
+#streakRewardsModal {
+  /* Fixed-height columns within modal body */
+}
+#streakRewardsModal .modal-body > .row {
+  height: 100%;
+  min-height: 0;
+}
+#streakRewardsModal .col-md-7,
+#streakRewardsModal .col-md-5 {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+#streakRewardsModal {
+  /* Responsive scrollable table — scrolls horizontally and vertically within fixed card */
+}
+#streakRewardsModal .streak-table-responsive {
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+#streakRewardsModal .streak-table-responsive table {
+  width: auto;
+  min-width: auto;
+  table-layout: auto;
+  max-width: 100%;
+}
+#streakRewardsModal .streak-table-responsive th, #streakRewardsModal .streak-table-responsive td {
+  white-space: nowrap;
+}
+#streakRewardsModal {
+  /* Horizontal + vertical scrollbar styling */
+}
+#streakRewardsModal .streak-table-responsive::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+#streakRewardsModal .streak-table-responsive::-webkit-scrollbar-thumb {
+  background: rgba(var(--cui-secondary-rgb), 0.3);
+  border-radius: 4px;
+}
+#streakRewardsModal .streak-table-responsive::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--cui-secondary-rgb), 0.5);
+}
+#streakRewardsModal {
+  /* Right info panel scroll */
+}
+#streakRewardsModal .col-md-5 > div:last-child {
+  overflow-y: auto;
+  min-height: 0;
+  flex: 1;
 }
 
 /* Sidebar Layout Fix: Ensure Footer and Stats stay at bottom */

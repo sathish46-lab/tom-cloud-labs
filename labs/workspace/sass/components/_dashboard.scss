@@ -686,14 +686,16 @@ body.hwa-enabled .card.blur.domain-card {
 }
 
 #smart-insights-card, .smart-insights-card {
+  overflow: hidden !important;
   .insights-title { font-size: 0.95rem !important; letter-spacing: 0.3px !important; }
   .insights-subtitle { font-size: 0.78rem !important; }
   .insights-peak { font-size: 1.5rem !important; letter-spacing: -0.5px !important; }
-  .insights-chart { height: 48px !important; gap: 1.5px !important; padding-bottom: 0 !important; }
+  .insights-chart { height: 48px !important; gap: 4px !important; padding-bottom: 0 !important; }
   
   .insights-bar {
-    flex: 1 !important;
+    flex: 0 0 auto !important;
     min-width: 0 !important;
+    width: 8px !important;
     background: rgba(255, 255, 255, 0.08);
     border-radius: 2px 2px 0 0 !important;
     transition: height 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), background 0.3s ease, box-shadow 0.3s ease;
@@ -994,7 +996,216 @@ html[data-coreui-theme="dark"] .blur [class*="stat-pill-"] {
   border-color: rgba(0, 0, 0, 0.12);
 
   &:hover {
-    background: rgba(0, 0, 0, 0.08);
+    background: rgba(0, 0, 0, 0.06);
     border-color: rgba(0, 0, 0, 0.2);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Streak Card + Timeline + Recent Activity + Modal Table
+   ═══════════════════════════════════════════════════════════════ */
+
+#streak-card {
+  .streak-timeline {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin: 1rem 0;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+  }
+
+  .streak-dot {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    border: 2px solid rgba(var(--cui-secondary-rgb), 0.2);
+    color: rgba(var(--cui-secondary-rgb), 0.4);
+    background: rgba(var(--cui-body-bg, 33, 38, 49), 0.3);
+    position: relative;
+
+    &.done {
+      background: rgb(var(--cui-success-rgb));
+      color: #fff;
+      border-color: rgb(var(--cui-success-rgb));
+    }
+
+    &.today {
+      background: rgb(var(--cui-warning-rgb));
+      color: #fff;
+      border-color: rgb(var(--cui-warning-rgb));
+      box-shadow: 0 0 0 3px rgba(var(--cui-warning-rgb), 0.3);
+    }
+
+    &.upcoming {
+      background: rgba(var(--cui-body-bg, 33, 38, 49), 0.2);
+      color: rgba(var(--cui-secondary-rgb), 0.3);
+    }
+
+    &.milestone {
+      border-width: 3px;
+      font-size: 0.65rem;
+      position: relative;
+
+      &.awarded {
+        background: rgb(var(--cui-warning-rgb));
+        color: #fff;
+        border-color: rgb(var(--cui-warning-rgb));
+      }
+    }
+
+    .streak-reward-label {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.55rem;
+      font-weight: 700;
+      color: rgb(var(--cui-warning-rgb));
+      background: rgba(var(--cui-warning-rgb), 0.1);
+      padding: 1px 4px;
+      border-radius: 8px;
+      white-space: nowrap;
+    }
+  }
+
+  .streak-seg {
+    flex-shrink: 0;
+    width: 6px;
+    height: 2px;
+    background: rgba(var(--cui-secondary-rgb), 0.15);
+
+    &.done {
+      background: rgb(var(--cui-success-rgb));
+    }
+  }
+
+  .streak-activity-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(var(--cui-body-color-rgb), 0.06);
+    &:last-child { border-bottom: none; }
+  }
+
+  .streak-activity-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .streak-activity-desc {
+    flex-grow: 1;
+    font-size: 0.8rem;
+    color: var(--cui-body-color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .streak-activity-time {
+    font-size: 0.65rem;
+    color: rgba(var(--cui-body-color-rgb), 0.5);
+    flex-shrink: 0;
+  }
+
+  .streak-activity-points {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: rgb(var(--cui-success-rgb));
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .streak-activity-penalty {
+    font-size: 0.65rem;
+    color: rgb(var(--cui-danger-rgb));
+    margin-left: 0.25rem;
+  }
+}
+
+/* Streak table in modal */
+#streakRewardsModal {
+  .streak-table-day {
+    font-size: 0.72rem;
+  }
+  .streak-table-current {
+    background: rgba(var(--cui-warning-rgb), 0.1);
+  }
+  .streak-table-milestone {
+    background: rgba(var(--cui-warning-rgb), 0.06);
+  }
+  .streak-table-done {
+    color: rgba(var(--cui-body-color-rgb), 0.4);
+  }
+
+  /* Fixed-height modal body */
+  .modal-body {
+    height: 640px;
+    overflow: hidden;
+    display: flex;
+  }
+
+  /* Fixed-height columns within modal body */
+  .modal-body > .row {
+    height: 100%;
+    min-height: 0;
+  }
+  .col-md-7,
+  .col-md-5 {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Responsive scrollable table — scrolls horizontally and vertically within fixed card */
+  .streak-table-responsive {
+    overflow: auto;
+    flex: 1;
+    min-height: 0;
+
+    table {
+      width: auto;
+      min-width: auto;
+      table-layout: auto; max-width: 100%;
+    }
+
+    th, td {
+      white-space: nowrap;
+    }
+  }
+
+  /* Horizontal + vertical scrollbar styling */
+  .streak-table-responsive::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .streak-table-responsive::-webkit-scrollbar-thumb {
+    background: rgba(var(--cui-secondary-rgb), 0.3);
+    border-radius: 4px;
+  }
+  .streak-table-responsive::-webkit-scrollbar-thumb:hover {
+    background: rgba(var(--cui-secondary-rgb), 0.5);
+  }
+
+  /* Right info panel scroll */
+  .col-md-5 > div:last-child {
+    overflow-y: auto;
+    min-height: 0;
+    flex: 1;
   }
 }

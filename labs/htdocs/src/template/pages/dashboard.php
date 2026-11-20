@@ -95,6 +95,10 @@ $userStats = $db->user_stats->findOne(['email' => $userEmail]);
 $zeal = $userStats['zeal'] ?? 0;
 $jolt = $userStats['jolt'] ?? 0;
 
+// Streak state (computed from user_activity history)
+require_once __DIR__ . '/../../lib/core/Streak.class.php';
+$streakState = Streak::get($userEmail);
+
 $finishedQuizzes = $db->quiz_attempts->countDocuments(['user_email' => $userEmail]);
 
 // 3.5 Fetch additional stats for Welcome Banner
@@ -909,24 +913,96 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
     <!-- Right Sidebar -->
     <div class="col-lg-4">
         <div class="card blur p-3">
-            <!-- Recent Activity -->
-            <div class="liquid-rim p-3 mb-3">
-                <h6 class="fw-bold mb-3">Recent Activity</h6>
-                <div class="d-flex flex-column gap-3">
+            <!-- Streak + Recent Activity (single card) -->
+            <div class="liquid-rim p-3 mb-3" id="streak-card">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <svg class="icon" style="color: rgb(var(--cui-warning-rgb));">
+                        <use xlink:href="/assets/icons/duotone.svg#cid-fire"></use>
+                    </svg>
+                    <h6 class="fw-bold mb-0">Streak</h6>
+                    <button class="btn btn-transparent btn-sm p-0" id="streak-help-btn" title="How streaks work" style="line-height:1;">
+                        <svg class="icon" style="width:16px;height:16px;opacity:0.7;">
+                            <use xlink:href="/assets/icons/duotone.svg#cid-info"></use>
+                        </svg>
+                    </button>
+                </div>
+                <div id="streak-content">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-bold">Day <?= htmlspecialchars((int)$streakState['current_day']) ?></span>
+                        <span class="badge bg-danger-gradient" style="font-size:0.55rem;">
+                            <?= htmlspecialchars((int)$streakState['misses_left']) ?> miss left
+                        </span>
+                    </div>
+                    <div class="d-flex gap-2 mb-2" style="font-size:0.7rem;">
+                        <span class="text-body-secondary">🔥 +<?= Streak::DAILY_ZEAL ?> zeal/day</span>
+                        <span class="text-danger"><?= $streakState['penalty_pct'] > 0 ? '-' . $streakState['penalty_pct'] . '% penalty' : 'No penalty' ?></span>
+                    </div>
+                    <div class="streak-timeline">
+                        <?php
+                        $days = [9, 10, 11, 12, 13, 14];
+                        $currentDay = (int)$streakState['current_day'];
+                        $milestonesReached = array_values((array)($streakState['milestones_reached'] ?? []));
+                        foreach ($days as $d):
+                            $done = $d < $currentDay;
+                            $today = $d === $currentDay;
+                            $milestone = Streak::isMilestone($d);
+                            $awarded = $milestone && in_array($d, $milestonesReached, true);
+                            $cls = 'streak-dot';
+                            $cls .= $awarded ? ' done milestone awarded' : ($done ? ' done' : ($today ? ' today' : ' upcoming'));
+                            $title = $milestone && $awarded ? "Day $d — bonus" : "Day $d";
+                        ?>
+                            <div class="<?= htmlspecialchars($cls) ?>" title="<?= htmlspecialchars($title) ?>">
+                                <?php if ($awarded): ?>
+                                    <span class="streak-reward-label">+<?= $streakState['total_zeal_today'] ?? 0 ?></span>
+                                <?php endif; ?>
+                                <?= htmlspecialchars((string)$d) ?>
+                            </div>
+                            <?php if ($d < 14): ?>
+                            <div class="streak-seg <?= $done ? 'done' : '' ?>"></div>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php
+                    $nextMilestone = null;
+                    foreach ([5, 10, 15, 21] as $m) {
+                        if ($m > $currentDay) { $nextMilestone = $m; break; }
+                    }
+                    if ($nextMilestone):
+                        $daysUntil = $nextMilestone - $currentDay;
+                        $mr = Streak::getMilestoneReward($nextMilestone);
+                    ?>
+                    <div class="d-flex align-items-center gap-1 mb-1" style="font-size:0.75rem;">
+                        <span class="text-warning fw-bold">🔥</span>
+                        <span class="text-secondary small">
+                            <?= $daysUntil ?> days until day <?= $nextMilestone ?>
+                            <span class="text-warning fw-bold">+<?= $mr['zeal'] ?? 0 ?></span>
+                            🔥
+                            <span class="text-info fw-bold">&amp; +<?= $mr['jolt'] ?? 0 ?></span>
+                            ⚡
+                        </span>
+                    </div>
+                    <?php endif; ?>
+                    <small class="text-warning d-block mt-2">Do an activity today to keep your streak!</small>
+                </div>
+                <hr class="my-3" style="border-color: rgba(var(--cui-body-color-rgb), 0.1);">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                    <h6 class="fw-bold mb-0" style="font-size:0.85rem; text-transform:uppercase; letter-spacing:0.03em;">Recent Activity</h6>
+                </div>
+                <div class="d-flex flex-column gap-2">
                     <?php if (!empty($activitiesList)): ?>
-                        <?php foreach ($activitiesList as $act): ?>
-                        <div class="d-flex align-items-center gap-3 small recent-activity-item">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: <?= $act['bg'] ?> !important; border: 1px solid <?= $act['border'] ?> !important;">
-                                <i class='<?= $act['icon'] ?>' style="color: <?= $act['color'] ?> !important;"></i>
+                        <?php foreach (array_slice($activitiesList, 0, 3) as $act): ?>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 28px; height: 28px; background: <?= $act['bg'] ?> !important; border: 1px solid <?= $act['border'] ?> !important;">
+                                <i class='<?= $act['icon'] ?>' style="color: <?= $act['color'] ?> !important; font-size: 0.75rem;"></i>
                             </div>
                             <div class="min-w-0 flex-grow-1">
-                                <span class="text-body fw-medium d-block mb-1 activity-text"><?= $act['text'] ?></span>
-                                <span class="text-body-secondary opacity-50 activity-time"><?= formatActivityTime($act['timestamp']) ?></span>
+                                <span class="activity-text d-block text-truncate" style="font-size:0.78rem; color: var(--cui-body-color);"><?= $act['text'] ?></span>
                             </div>
+                            <span class="activity-time text-body-secondary opacity-60" style="font-size:0.65rem;"><?= formatActivityTime($act['timestamp']) ?></span>
                         </div>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <div class="text-center py-4 text-body-secondary small">
+                        <div class="text-center py-3 text-body-secondary small">
                             <i class="bx bx-history d-block fs-3 mb-1 opacity-20"></i>
                             No recent activity recorded
                         </div>
@@ -943,9 +1019,9 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                         <span class="placeholder-glow"><span class="placeholder col-6 rounded"></span></span>
                     </h5>
                 </div>
-                <div id="insights-bars-container" class="d-flex align-items-end mt-2" style="height: 80px;">
+                <div id="insights-bars-container" class="d-flex align-items-end mt-2" style="height: 80px; gap: 4px;">
                     <?php for ($i = 0; $i < 24; $i++): ?>
-                    <div class="insights-bar" data-hour="<?= $i ?>" style="height: 4%; flex: 1;"></div>
+                    <div class="insights-bar" data-hour="<?= $i ?>" style="height: 4%; flex: 0 0 auto !important; width: 8px !important;"></div>
                     <?php endfor; ?>
                 </div>
                 <div class="position-relative mt-1 w-100 insights-labels">
@@ -973,7 +1049,6 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
             </div>
         </div>
     </div>
-</div>
 </div>
 
 <!-- Code Info Modal (Simplified IDE Launch) -->
@@ -1029,6 +1104,100 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
         </div>
     </div>
 </div>
+
+<!-- Streak Rewards Modal -->
+<div class="modal fade" id="streakRewardsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content blur" style="box-shadow: 0 20px 60px rgba(0,0,0,0.2); border-radius: 1rem; overflow: hidden;">
+            <div class="modal-header" style="border-bottom: 2px solid rgba(var(--cui-primary-rgb), 0.1); background: linear-gradient(135deg, rgba(var(--cui-primary-rgb), 0.03) 0%, rgba(var(--cui-info-rgb), 0.03) 100%);">
+                <div class="w-100">
+                    <h4 class="modal-title mb-1" style="font-weight: 700;" id="streakModalTitle">Streak Rewards</h4>
+                    <div class="modal-subtitle text-small" style="opacity: 0.7;"></div>
+                </div>
+                <div class="modal-header-actions d-none align-items-center" style="gap: 0.25rem;">
+                    <button type="button" class="btn btn-sm btn-ghost modal-header-maximize d-none" aria-label="Maximize" title="Maximize">
+                        <svg class="icon icon-sm"><use xlink:href="/assets/icons/duotone.svg#cid-fullscreen"></use></svg>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-ghost modal-header-minimize d-none" aria-label="Restore" title="Restore">
+                        <svg class="icon icon-sm"><use xlink:href="/assets/icons/duotone.svg#cid-fullscreen-exit"></use></svg>
+                    </button>
+                    <button type="button" class="btn-close modal-header-close d-none" data-coreui-dismiss="modal" aria-label="Close"></button>
+                </div>
+            </div>
+            <div class="modal-body streak-modal-body" style="line-height: 1.7; height: 640px; overflow: hidden; display: flex;">
+                <div class="row g-3 w-100 h-100 m-0 p-0">
+                    <div class="col-md-7 d-flex flex-column p-0">
+                        <div class="table-responsive streak-table-responsive flex-fill">
+                            <table class="table table-sm mb-0" style="font-size:0.72rem; min-width: 600px;">
+                                <thead style="position:sticky;top:0;z-index:1;">
+                                    <tr>
+                                        <th style="width:36px;">Day</th>
+                                        <th>🔥</th>
+                                        <th>Milestone</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="streak-table-body">
+                                    <!-- Days populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-5 d-flex flex-column p-0">
+                        <div class="d-flex gap-2 mb-3">
+                            <div class="liquid-rim p-2 text-center flex-fill">
+                                <div class="fw-bold" style="font-size:1.1rem;color:rgb(var(--cui-warning-rgb));"><?= htmlspecialchars((int)$streakState['max_zeal'] ?? 1500) ?></div>
+                                <small class="text-body-secondary" style="font-size:0.65rem;">🔥 Max Zeal</small>
+                            </div>
+                            <div class="liquid-rim p-2 text-center flex-fill">
+                                <div class="fw-bold" style="font-size:1.1rem;color:rgb(var(--cui-info-rgb));"><?= htmlspecialchars((int)$streakState['max_jolt'] ?? 500) ?></div>
+                                <small class="text-body-secondary" style="font-size:0.65rem;">⚡ Max Jolt</small>
+                            </div>
+                        </div>
+                        <div style="font-size:0.73rem; overflow-y: auto; flex: 1; min-height: 0;">
+                            <div class="liquid-rim p-2 mb-2">
+                                <div class="fw-semibold mb-1">🔥 Daily</div>
+                                <div class="text-body-secondary">+25 zeal for every active day. Any quiz, lab, lesson, code, discussion, or roadmap activity counts.</div>
+                            </div>
+                            <div class="liquid-rim p-2 mb-2">
+                                <div class="fw-semibold mb-1">🏆 Milestones</div>
+                                <div class="text-body-secondary">
+                                    Bonus 
+                                    <b>🔥 zeal + ⚡ jolt</b>
+                                     at Day 5, 10, 15, and 21. First time = full reward. Already reached before = 
+                                    <span class="text-danger">-15%</span>
+                                    .
+                                </div>
+                            </div>
+                            <div class="liquid-rim p-2 mb-2">
+                                <div class="fw-semibold mb-1">💔 Misses</div>
+                                <div class="text-body-secondary">
+                                    Skip up to 
+                                    <b>3 days</b>
+                                     per cycle. Each miss = 
+                                    <span class="text-danger">-10%</span>
+                                     penalty. 4th miss breaks the streak.
+                                </div>
+                            </div>
+                            <div class="liquid-rim p-2">
+                                <div class="fw-semibold mb-1">🔄 Cycles</div>
+                                <div class="text-body-secondary">
+                                    After 21 days, rewards cycle again. Consecutive cycles earn 
+                                    <span class="text-success">+10%</span>
+                                     bonus! Break your streak and restart = milestones give 
+                                    <span class="text-danger">-15%</span>
+                                     less.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top: 2px solid rgba(var(--cui-primary-rgb), 0.1);">
+                <button type="button" class="btn btn-warning" data-coreui-dismiss="modal">Okay</button>
+            </div>
+        </div>
+    </div>
+</div>
 <script>
 window.onPageLoad(function() {
     // Initialize premium lab metrics polling
@@ -1038,6 +1207,61 @@ window.onPageLoad(function() {
     // Initialize Smart Insights activity chart animation
     if (typeof window.initDashboardInsights === 'function') {
         window.initDashboardInsights();
+    }
+
+    // Streak modal: open rewards popup on info button click
+    var streakHelpBtn = document.getElementById('streak-help-btn');
+    var streakModalEl = document.getElementById('streakRewardsModal');
+    if (streakHelpBtn && streakModalEl) {
+        streakHelpBtn.addEventListener('click', function(ev) {
+            ev.preventDefault();
+            var inst = coreui.Modal.getInstance(streakModalEl) || new coreui.Modal(streakModalEl, { backdrop: true, keyboard: true });
+            inst.show();
+            // Render streak table
+            fetch('/api/dashboard/streak', {
+                credentials: 'same-origin',
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data && data.success) {
+                    renderStreakTable(data);
+                }
+            }).catch(function() {});
+        });
+    }
+
+    function renderStreakTable(data) {
+        var tbody = document.getElementById('streak-table-body');
+        if (!tbody) return;
+        var milestonesReached = data.milestones_reached || [];
+        var html = '';
+        var days = data.milestone_rewards ? Object.keys(data.milestone_rewards).map(Number) : [5, 10, 15, 21];
+        var allDays = [];
+        for (var d = 1; d <= 21; d++) allDays.push(d);
+        allDays.forEach(function(day) {
+            var isCurrent = day === data.current_day;
+            var isDone = day < data.current_day;
+            var reached = milestonesReached.includes(day);
+            var milestone = data.milestone_rewards && data.milestone_rewards[day];
+            var cls = 'streak-table-day';
+            if (milestone) cls += ' streak-table-milestone';
+            if (isCurrent) cls += ' streak-table-current';
+            else if (isDone) cls += ' streak-table-done';
+            var milestoneCell = '—';
+            if (milestone) {
+                var z = milestone.zeal || 0;
+                var j = milestone.jolt || 0;
+                var pen = reached ? '-15%' : '';
+                milestoneCell = '<b>+' + z + '</b> 🔥 <b>+' + j + '</b> ⚡' + (pen ? ' <small class="text-danger">' + pen + '</small>' : '');
+            }
+            html += '<tr>' +
+                '<td class="fw-bold">' + day + (isDone ? ' <span style="color:rgb(var(--cui-success-rgb));">✓</span>' : (isCurrent ? ' <span style="color:rgb(var(--cui-warning-rgb));">←</span>' : '')) + '</td>' +
+                '<td>+25</td>' +
+                '<td>' + milestoneCell + '</td>' +
+                '</tr>';
+        });
+        tbody.innerHTML = html;
     }
 });
 </script>

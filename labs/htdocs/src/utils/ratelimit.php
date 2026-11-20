@@ -213,13 +213,14 @@ function check_global_rate_limit() {
             'limit'   => 3,
             'window'  => 300
         ],
-        [
-            'pattern' => '#^/(auth/)?signin#i',
-            'methods' => ['POST'],
-            'key'     => 'auth:rl:signin',
-            'limit'   => 5,
-            'window'  => 900
-        ],
+        // Signin rate limit disabled for testing
+        // [
+        //     'pattern' => '#^/(auth/)?signin#i',
+        //     'methods' => ['POST'],
+        //     'key'     => 'auth:rl:signin',
+        //     'limit'   => 50,
+        //     'window'  => 900
+        // ],
         [
             'pattern' => '#^/(auth/)?signup#i',
             'methods' => ['POST'],

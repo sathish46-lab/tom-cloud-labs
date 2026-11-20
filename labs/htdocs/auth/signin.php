@@ -1,6 +1,11 @@
 <?php
 require_once '../src/load.php';
 
+// Start session so CSRF token generation/validation works across page loads
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 // Force full page reload if accessed via HTMX
 if (isset($_SERVER['HTTP_HX_REQUEST']) && $_SERVER['HTTP_HX_REQUEST'] == 'true') {
     header('HX-Redirect: /signin');
@@ -273,7 +278,10 @@ window.addEventListener('pageshow', function(e) {
                                         <span class="input-group-text bg-transparent border-end-0">
                                             <i class="bx bx-lock-alt"></i>
                                         </span>
-                                        <input type="password" name="password" class="form-control border-start-0 ps-0" required>
+                                        <input type="password" name="password" id="signin-password" class="form-control border-start-0 ps-0" required>
+                                        <button class="input-group-text bg-transparent border-start-0" type="button" onclick="togglePassword('signin-password', this)" style="cursor: pointer;">
+                                            <i class="bx bx-hide"></i>
+                                        </button>
                                     </div>
                                 </div>
 
@@ -309,5 +317,18 @@ window.addEventListener('pageshow', function(e) {
     </div>
 </div>
 
+<script>
+function togglePassword(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const icon = btn.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.replace('bx-hide', 'bx-show');
+    } else {
+        input.type = 'password';
+        icon.classList.replace('bx-show', 'bx-hide');
+    }
+}
+</script>
 </body>
 </html>

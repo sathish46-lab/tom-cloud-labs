@@ -12,16 +12,26 @@ class CsrfProtection {
      * Browser sends cookies automatically on same-origin fetch — no JS needed.
      */
     public static function validate(): bool {
-        $token = $_COOKIE['XSRF-TOKEN']
+        $headers = function_exists('getallheaders') ? getallheaders() : [];
+        $headerToken = null;
+        foreach ($headers as $name => $value) {
+            if (strcasecmp((string)$name, 'X-CSRF-Token') === 0) {
+                $headerToken = $value;
+                break;
+            }
+        }
+
+        $token = $headerToken
+            ?? $_COOKIE['XSRF-TOKEN']
             ?? $_SERVER['HTTP_X_CSRF_TOKEN']
             ?? $_POST['_csrf_token']
             ?? $_SERVER['HTTP_X_XSRF_TOKEN']
             ?? null;
-        
-        if ($token === null) {
+
+        if ($token === null || $token === '') {
             return false;
         }
-        
+
         return Session::validateCsrf($token);
     }
     
