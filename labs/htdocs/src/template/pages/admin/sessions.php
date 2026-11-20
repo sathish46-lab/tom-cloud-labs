@@ -204,7 +204,7 @@ $rlPageCounters = array_slice($rlCounters, $rlOffset, $RL_PER_PAGE);
     <div class="card-header bg-transparent border-bottom border-body-secondary border-opacity-10 py-3 d-flex align-items-center justify-content-between gap-2">
         <span class="fw-bold"><i class='bx bx-speedometer me-2'></i>Rate Limits</span>
     </div>
-    <div class="card-body p-4">
+    <div class="card-body p-4 px-4 pb-4">
         <p class="mb-3">View and clear active rate limit counters. These track login, signup, resend-verification, and other per-IP/per-email/per-user limits to prevent abuse.</p>
 
         <?php if ($rlError): ?>
