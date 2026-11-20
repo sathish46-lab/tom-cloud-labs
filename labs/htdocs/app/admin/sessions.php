@@ -9,5 +9,5 @@ if (!AuthMiddleware::isAdmin()) {
     header("Location: /home"); exit;
 }
 
-Session::$pageTitle = "Admin / Sessions";
+Session::$pageTitle = "Admin / Sessions & Rate Limits";
 Session::loadMaster();

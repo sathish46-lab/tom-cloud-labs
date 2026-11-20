@@ -111,7 +111,6 @@ RewriteRule ^admin/chat/?$ app/admin/chat_settings.php [L,QSA]
 RewriteRule ^admin/notifications/?$ app/admin/notifications_settings.php [L,QSA]
 RewriteRule ^admin/news-logs/?$ app/admin/news_logs.php [L,QSA]
 RewriteRule ^admin/sessions/?$ app/admin/sessions.php [L,QSA]
-RewriteRule ^admin/ratelimits/?$ app/admin/ratelimits.php [L,QSA]
 RewriteRule ^admin/ip-control/?$ app/admin/ipcontrol.php [L,QSA]
 
 RewriteRule ^home$ app/home.php [L,QSA]
@@ -136,7 +135,6 @@ RewriteRule ^api/news/delete\.php$ src/api/news/delete.php [L,QSA]
 RewriteRule ^api/news/get\.php$ src/api/news/get.php [L,QSA]
 RewriteRule ^api/admin/news_fetch_logs\.php$ src/api/admin/news_fetch_logs.php [L,QSA]
 RewriteRule ^api/admin/clear_sessions\.php$ src/api/admin/clear_sessions.php [L,QSA]
-RewriteRule ^api/admin/ratelimits\.php$ src/api/admin/ratelimits.php [L,QSA]
 
 # Network Interfaces
 RewriteRule ^network/interfaces/?$ app/network/interfaces.php [L,QSA]
