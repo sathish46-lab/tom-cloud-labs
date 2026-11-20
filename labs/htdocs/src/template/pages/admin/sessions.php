@@ -149,6 +149,8 @@ $rlPageCounters = array_slice($rlCounters, $rlOffset, $RL_PER_PAGE);
 .rl-pager { margin-top: 1rem; }
 </style>
 
+<div class="container-fluid px-4 py-3">
+
 <!-- ===== SESSIONS CARD ===== -->
 <div class="card rl-card shadow-sm mb-4">
     <div class="card-header bg-transparent border-bottom border-body-secondary border-opacity-10 py-3 d-flex align-items-center justify-content-between gap-2">
@@ -507,5 +509,6 @@ document.querySelector('.rl-pager').addEventListener('click', function (e) {
     var page = parseInt(btn.getAttribute('data-page'), 10);
     if (isNaN(page) || page < 1) return;
     rlFetchPage(page);
-});
+}); 
+</div>
 </script>
