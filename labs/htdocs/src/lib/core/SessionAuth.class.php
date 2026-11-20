@@ -201,13 +201,13 @@ class SessionAuth {
             ]);
         }
 
-        // PHPSESSID — identical value in both variants (host-only + Domain):
-        // whichever cookie the browser holds, they always carry the same id.
-        // The Domain variant is emitted last so it is the final Set-Cookie
-        // line in the response (kept for last-line parsers; same value).
-        setcookie(session_name(), session_id(), $common);
+        // PHPSESSID — single domain-wide cookie so the session id never
+        // diverges between host-only and domain variants. Emitted once so
+        // only one PHPSESSID cookie is stored in the browser jar.
         if ($domain !== '') {
             setcookie(session_name(), session_id(), ['domain' => $domain] + $common);
+        } else {
+            setcookie(session_name(), session_id(), $common);
         }
 
         if ($token === '') {
