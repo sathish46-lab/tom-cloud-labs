@@ -2,6 +2,16 @@
 require_once '../src/load.php';
 
 // Start session so CSRF token generation/validation works across page loads
+// Set session cookie parameters BEFORE session_start() to ensure cookie is
+// properly set even when behind reverse proxy with HTTPS termination.
+session_set_cookie_params([
+    'lifetime' => ini_get('session.gc_maxlifetime'),
+    'path'     => ini_get('session.cookie_path'),
+    'domain'   => ini_get('session.cookie_domain'),
+    'secure'   => false, // Don't require Secure flag - handles reverse proxy SSL termination
+    'httponly' => true,
+    'samesite' => 'Lax'
+]);
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -59,6 +69,7 @@ $show2faForm = false;
 if (isset($_POST['email']) && isset($_POST['password'])) {
     // CSRF validation
     if (!Session::validateCsrf($_POST['_csrf_token'] ?? '')) {
+        error_log("SIGNIN DEBUG: CSRF FAILED - post=" . ($_POST['_csrf_token'] ?? 'NOT_SET') . " session=" . ($_SESSION['csrf_token'] ?? 'NOT_SET'));
         $loginError = "Invalid security token. Please try again.";
     } else {
         $authResult = UserSession::authenticate($_POST['email'], $_POST['password'], !empty($_POST['remember']));
@@ -180,6 +191,23 @@ window.addEventListener('pageshow', function(e) {
 
                         <?php if (isset($loginError)): ?>
                             <div class="alert alert-danger small py-2"><?= htmlspecialchars($loginError) ?></div>
+                            <?php if (strpos($loginError, 'verify your email') !== false): ?>
+                                <div class="text-center mb-3">
+                                    <a href="#" id="resend-verification-link" class="small text-warning text-decoration-none fw-bold">
+                                        Didn't receive the email? <span class="fw-normal">Resend verification email</span>
+                                    </a>
+                                </div>
+                                <form id="resend-verification-form" class="d-none mt-3" method="POST" action="/api/auth/resend_verification">
+                                    <?= Session::csrfField() ?>
+                                    <input type="hidden" name="email" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
+                                    <div class="input-group mb-3">
+                                        <span class="input-group-text bg-light border-end-0"><i class='bx bx-envelope text-secondary'></i></span>
+                                        <input type="email" name="email" class="form-control border-start-0 ps-0" placeholder="Email address" required value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
+                                    </div>
+                                    <button type="submit" id="resend-verification-btn" class="btn btn-outline-warning btn-sm w-100">Resend Verification Email</button>
+                                    <div id="resend-verification-message" class="mt-2 small"></div>
+                                </form>
+                            <?php endif; ?>
                         <?php endif; ?>
 
                         <?php if ($show2faForm): ?>
@@ -329,6 +357,57 @@ function togglePassword(inputId, btn) {
         icon.classList.replace('bx-show', 'bx-hide');
     }
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const link = document.getElementById('resend-verification-link');
+    const form = document.getElementById('resend-verification-form');
+    const btn = document.getElementById('resend-verification-btn');
+    const msg = document.getElementById('resend-verification-message');
+
+    if (!link || !form) return;
+
+    link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const isHidden = form.classList.contains('d-none');
+        form.classList.toggle('d-none', !isHidden);
+        if (isHidden) {
+            msg.innerHTML = '';
+            btn.disabled = false;
+            btn.innerText = 'Resend Verification Email';
+        }
+    });
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const formData = new FormData(form);
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Sending...';
+        msg.innerHTML = '';
+
+        try {
+            const res = await fetch('/api/auth/resend_verification', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await res.json();
+            if (result.status === 'success') {
+                msg.className = 'mt-2 small text-success';
+                msg.innerHTML = 'Verification email sent (if an unverified account exists).';
+                form.reset();
+                setTimeout(() => form.classList.add('d-none'), 3000);
+            } else {
+                msg.className = 'mt-2 small text-danger';
+                msg.innerHTML = result.error || 'Failed to send.';
+            }
+        } catch (err) {
+            msg.className = 'mt-2 small text-danger';
+            msg.innerHTML = 'Server error. Please try again.';
+        } finally {
+            btn.disabled = false;
+            btn.innerText = 'Resend Verification Email';
+        }
+    });
+});
 </script>
 </body>
 </html>
