@@ -209,6 +209,10 @@ window.addEventListener('pageshow', function(e) {
                                 </form>
                             <?php endif; ?>
                         <?php endif; ?>
+                        <?php $verifyStatus = $_GET['status'] ?? null; $verifyMsg = $_GET['msg'] ?? null; ?>
+                        <?php if ($verifyStatus === 'success' && $verifyMsg): ?>
+                            <div class="alert alert-success small py-2"><?= htmlspecialchars($verifyMsg) ?></div>
+                        <?php endif; ?>
 
                         <?php if ($show2faForm): ?>
                             <!-- 2FA OTP Form -->
