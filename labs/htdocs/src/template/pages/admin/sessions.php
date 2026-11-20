@@ -90,17 +90,67 @@ $typeBadge = function ($t) {
     };
 };
 
+$RL_PER_PAGE = 10;
+$rlShowPage  = (int) ($_GET['rl_page'] ?? 1);
+if ($rlShowPage < 1) $rlShowPage = 1;
+$rlTotalPages = max(1, ceil($rlTotal / $RL_PER_PAGE));
+if ($rlShowPage > $rlTotalPages) $rlShowPage = $rlTotalPages;
+$rlOffset = ($rlShowPage - 1) * $RL_PER_PAGE;
+$rlPageCounters = array_slice($rlCounters, $rlOffset, $RL_PER_PAGE);
+
 ?>
 <style>
-.rl-table { font-size: 0.85rem; }
-.rl-table th { position: sticky; top: 0; background: rgba(var(--cui-body-bg-rgb, 255,255,255), 0.95); backdrop-filter: blur(8px); z-index: 2; font-weight: 700; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.05em; color: var(--cui-secondary-color, #6c757d); border-bottom: 1px solid rgba(var(--cui-body-color-rgb, 0,0,0), 0.08) !important; }
-.rl-table td { border-color: rgba(var(--cui-body-color-rgb, 0,0,0), 0.04) !important; padding: 8px 10px; vertical-align: middle; }
+/* Consistent outer spacing to match page UI */
+.rl-section { padding-top: 0; }
+
+.rl-card {
+    border: 0;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(var(--cui-body-color-rgb, 0,0,0), 0.075);
+}
+
+/* Compact stat cards inside */
+.rl-stat-card {
+    border: 0;
+    border-radius: 0.375rem;
+    box-shadow: none;
+}
+
+/* Table styling */
+.rl-table { font-size: 0.8rem; }
+.rl-table th {
+    position: sticky;
+    top: 0;
+    background: rgba(var(--cui-body-bg-rgb, 255,255,255), 0.9);
+    backdrop-filter: blur(6px);
+    z-index: 2;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.65rem;
+    letter-spacing: 0.05em;
+    color: var(--cui-secondary-color, #6c757d);
+    border-bottom: 1px solid rgba(var(--cui-body-color-rgb, 0,0,0), 0.08) !important;
+}
+.rl-table td {
+    border-color: rgba(var(--cui-body-color-rgb, 0,0,0), 0.04) !important;
+    padding: 6px 8px;
+    vertical-align: middle;
+    font-size: 0.8rem;
+}
 .rl-table tr:hover td { background: rgba(var(--cui-body-color-rgb, 0,0,0), 0.03); }
-.btn-rl-clear { font-size: 0.7rem; padding: 4px 10px; }
+
+.btn-rl-clear { font-size: 0.68rem; padding: 3px 8px; }
+.btn-rl-load { font-size: 0.72rem; padding: 5px 12px; }
+
+/* Small pills */
+.rl-badge { font-size: 0.68rem; }
+
+/* Pager alignment */
+.rl-pager { margin-top: 1rem; }
 </style>
 
 <!-- ===== SESSIONS CARD ===== -->
-<div class="card border-0 rounded-4 shadow-sm mb-4">
+<div class="card rl-card shadow-sm mb-4">
     <div class="card-header bg-transparent border-bottom border-body-secondary border-opacity-10 py-3 d-flex align-items-center justify-content-between gap-2">
         <span class="fw-bold"><i class='bx bx-log-out me-2'></i>Clear all sessions</span>
     </div>
@@ -109,15 +159,15 @@ $typeBadge = function ($t) {
 
         <div class="row g-3 mb-4">
             <div class="col-md-6">
-                <div class="card border-0 rounded-3 shadow-sm">
+                <div class="rl-stat-card shadow-sm">
                     <div class="card-body text-center py-4">
                         <span class="d-block small text-muted text-uppercase fw-bold letter-spacing-1 mb-1">Active PHP sessions</span>
-                        <span class="d-block fw-bold fs-4" id="scSessionCount"><?= (int)$sessionCount ?></span>
+                        <span class="d-block fw-bold fs-5" id="scSessionCount"><?= (int)$sessionCount ?></span>
                     </div>
                 </div>
             </div>
             <div class="col-md-6">
-                <div class="card border-0 rounded-3 shadow-sm">
+                <div class="rl-stat-card shadow-sm">
                     <div class="card-body text-center py-4">
                         <span class="d-block small text-muted text-uppercase fw-bold letter-spacing-1 mb-1">Session save path</span>
                         <span class="d-block text-muted small"><?= $esc($sessionPath) ?></span>
@@ -150,7 +200,7 @@ $typeBadge = function ($t) {
 </div>
 
 <!-- ===== RATE LIMITS CARD ===== -->
-<div class="card border-0 rounded-4 shadow-sm mb-4">
+<div class="card rl-card shadow-sm mb-4">
     <div class="card-header bg-transparent border-bottom border-body-secondary border-opacity-10 py-3 d-flex align-items-center justify-content-between gap-2">
         <span class="fw-bold"><i class='bx bx-speedometer me-2'></i>Rate Limits</span>
     </div>
@@ -158,21 +208,21 @@ $typeBadge = function ($t) {
         <p class="mb-3">View and clear active rate limit counters. These track login, signup, resend-verification, and other per-IP/per-email/per-user limits to prevent abuse.</p>
 
         <?php if ($rlError): ?>
-            <div class="alert alert-danger small py-2 mb-4"><?= $esc($rlError) ?></div>
+            <div class="alert alert-danger small py-2 mb-3"><?= $esc($rlError) ?></div>
         <?php endif; ?>
 
-        <div class="row g-3 mb-4">
+        <div class="row g-3 mb-3">
             <div class="col-md-6">
-                <div class="card border-0 rounded-3 shadow-sm">
-                    <div class="card-body text-center py-4">
+                <div class="rl-stat-card shadow-sm">
+                    <div class="card-body text-center py-3">
                         <span class="d-block small text-muted text-uppercase fw-bold letter-spacing-1 mb-1">Active rate limit counters</span>
-                        <span class="d-block fw-bold fs-4" id="rlCount"><?= (int)$rlTotal ?></span>
+                        <span class="d-block fw-bold fs-5" id="rlCount"><?= (int)$rlTotal ?></span>
                     </div>
                 </div>
             </div>
             <div class="col-md-6">
-                <div class="card border-0 rounded-3 shadow-sm">
-                    <div class="card-body text-center py-4">
+                <div class="rl-stat-card shadow-sm">
+                    <div class="card-body text-center py-3">
                         <span class="d-block small text-muted text-uppercase fw-bold letter-spacing-1 mb-1">Storage location</span>
                         <span class="d-block text-muted small">/dev/shm/ratelimit*</span>
                     </div>
@@ -181,23 +231,23 @@ $typeBadge = function ($t) {
         </div>
 
         <?php if ($rlTotal > 0): ?>
-            <div class="table-responsive mb-4">
+            <div class="table-responsive mb-3">
                 <table class="table table-hover rl-table align-middle mb-0">
                     <thead>
                         <tr>
-                            <th style="width: 24%;">Type / Label</th>
-                            <th style="width: 13%;">Count</th>
-                            <th style="width: 14%;">Window</th>
+                            <th style="width: 26%;">Type / Label</th>
+                            <th style="width: 12%;">Count</th>
+                            <th style="width: 12%;">Window</th>
                             <th style="width: 16%;">Resets in</th>
-                            <th style="width: 17%;">Last hit</th>
+                            <th style="width: 18%;">Last hit</th>
                             <th style="width: 16%;">Action</th>
                         </tr>
                     </thead>
-                    <tbody>
-                    <?php foreach ($rlCounters as $c): ?>
+                    <tbody id="rlTableBody">
+                    <?php foreach ($rlPageCounters as $c): ?>
                         <tr>
                             <td>
-                                <span class="badge <?= $typeBadge($c['type']) ?> rounded-pill me-2"><?= $esc(ucfirst($c['type'])) ?></span>
+                                <span class="badge rl-badge <?= $typeBadge($c['type']) ?> rounded-pill me-2"><?= $esc(ucfirst($c['type'])) ?></span>
                                 <?= $esc($c['label']) ?>
                             </td>
                             <td class="fw-bold"><?= (int)$c['count'] ?></td>
@@ -214,6 +264,19 @@ $typeBadge = function ($t) {
                     </tbody>
                 </table>
             </div>
+        <?php endif; ?>
+
+        <?php if ($rlTotal > 0): ?>
+            <div class="rl-pager">
+                <?php if ($rlShowPage > 1): ?>
+                    <a href="/admin/sessions?rl_page=<?= $rlShowPage - 1 ?>" class="btn btn-outline-secondary btn-sm">← Older</a>
+                <?php endif; ?>
+                <span class="badge bg-light text-dark border">Page <?= $rlShowPage ?> of <?= $rlTotalPages ?></span>
+                <?php if ($rlShowPage < $rlTotalPages): ?>
+                    <a href="/admin/sessions?rl_page=<?= $rlShowPage + 1 ?>" class="btn btn-outline-secondary btn-sm">Newer →</a>
+                <?php endif; ?>
+                <small class="text-muted ms-2">Showing <?= min($rlOffset + 1, $rlTotal) ?>–<?= min($rlOffset + count($rlPageCounters), $rlTotal) ?> of <?= $rlTotal ?></small>
+            </div>
         <?php else: ?>
             <div class="text-center py-4">
                 <i class='bx bx-check-circle text-success display-4 mb-3'></i>
@@ -221,18 +284,20 @@ $typeBadge = function ($t) {
             </div>
         <?php endif; ?>
 
-        <div class="alert alert-warning border-0 rounded-3 mb-4">
-            <div class="d-flex align-items-start gap-3">
-                <i class='bx bx-warning-circle text-warning flex-shrink-0 mt-1'></i>
-                <div>
-                    <strong>Clearing rate limits</strong>
-                    <p class="mb-0 mt-2">
-                        Removes all (or selected) rate limit counters so affected IPs, emails, or users
-                        can immediately retry actions that were previously limited.
-                    </p>
+        <?php if ($rlTotal > 0): ?>
+            <div class="alert alert-warning border-0 rounded-3 mb-3">
+                <div class="d-flex align-items-start gap-3">
+                    <i class='bx bx-warning-circle text-warning flex-shrink-0 mt-1'></i>
+                    <div>
+                        <strong>Clearing rate limits</strong>
+                        <p class="mb-0 mt-2">
+                            Removes all (or selected) rate limit counters so affected IPs, emails, or users
+                            can immediately retry actions that were previously limited.
+                        </p>
+                    </div>
                 </div>
             </div>
-        </div>
+        <?php endif; ?>
 
         <div class="d-flex gap-3 align-items-center">
             <button id="rlClearAllBtn" type="button" class="btn btn-danger<?= $rlTotal === 0 ? ' disabled' : '' ?>">
@@ -293,39 +358,39 @@ function rlShowResult(msg, kind) {
     rlResult.textContent = msg;
 }
 
-// Clear a single counter
-document.querySelectorAll('.btn-rl-clear').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-        var file = btn.getAttribute('data-file');
-        if (!window.confirm('Clear rate limit counter "' + file + '"?')) return;
-        btn.disabled = true;
-        var orig = btn.innerHTML;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-        fetch('/api/admin/ratelimits.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-CSRF-Token': CSRF,
-            },
-            body: 'action=clear_one&file=' + encodeURIComponent(file),
-        })
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
-            btn.disabled = false;
-            btn.innerHTML = orig;
-            if (data.status === 'success') {
-                rlShowResult('Cleared: ' + data.message, 'success');
-                if (window.TomNotify) TomNotify.show(data.message, 'Success', 'success', 3000);
-                setTimeout(function () { window.location.reload(); }, 800);
-            } else {
-                rlShowResult('Failed: ' + (data.error || 'unknown'), 'error');
-            }
-        })
-        .catch(function () {
-            btn.disabled = false;
-            btn.innerHTML = orig;
-            rlShowResult('Network error.', 'error');
-        });
+// Clear a single counter (uses event delegation so it works on all pages)
+document.getElementById('rlTableBody').addEventListener('click', function (e) {
+    var btn = e.target.closest('.btn-rl-clear');
+    if (!btn) return;
+    var file = btn.getAttribute('data-file');
+    if (!window.confirm('Clear rate limit counter "' + file + '"?')) return;
+    btn.disabled = true;
+    var orig = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    fetch('/api/admin/ratelimits.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRF-Token': CSRF,
+        },
+        body: 'action=clear_one&file=' + encodeURIComponent(file),
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+        btn.disabled = false;
+        btn.innerHTML = orig;
+        if (data.status === 'success') {
+            rlShowResult('Cleared: ' + data.message, 'success');
+            if (window.TomNotify) TomNotify.show(data.message, 'Success', 'success', 3000);
+            setTimeout(function () { window.location.reload(); }, 800);
+        } else {
+            rlShowResult('Failed: ' + (data.error || 'unknown'), 'error');
+        }
+    })
+    .catch(function () {
+        btn.disabled = false;
+        btn.innerHTML = orig;
+        rlShowResult('Network error.', 'error');
     });
 });
 
