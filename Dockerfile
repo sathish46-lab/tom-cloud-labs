@@ -169,7 +169,8 @@ RUN mkdir -p /run/sshd && \
 RUN echo "" > /etc/fail2ban/jail.d/sshd.conf 2>/dev/null || true
 
 # Apache Ports
-RUN echo "Listen 80\nListen 8080\nListen 8081\nListen 8082\n<IfModule ssl_module>\n    Listen 443\n</IfModule>" > /etc/apache2/ports.conf
+# Apache is Traefik backend only — never bind :80/:443 (Traefik owns those)
+RUN echo "Listen 8083\nListen 8080\nListen 8081\nListen 8082\nListen 8086" > /etc/apache2/ports.conf
 RUN touch /etc/apache2/code_server_map.txt
 
 # Increase Apache MaxRequestWorkers to prevent 502 Bad Gateway under load

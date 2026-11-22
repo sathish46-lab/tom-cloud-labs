@@ -1,10 +1,10 @@
 <?php
 require_once 'src/load.php';
 
-// Allow both logged-in and guest users to view the landing page.
-$isSessionExpired = (isset($_GET['session_expired']) && $_GET['session_expired'] == '1') || 
-                    !empty($_COOKIE['show_session_expired']) || 
-                    !empty($_SESSION['show_session_expired']);
+/* Allow both logged-in and guest users to view the landing page. */
+$isSessionExpired = (isset($_GET['session_expired']) && $_GET['session_expired'] == '1')
+    || !empty($_COOKIE['show_session_expired'])
+    || !empty($_SESSION['show_session_expired']);
 
 if ($isSessionExpired) {
     if (!empty($_COOKIE['show_session_expired'])) {
@@ -13,7 +13,7 @@ if ($isSessionExpired) {
     if (!empty($_SESSION['show_session_expired'])) {
         unset($_SESSION['show_session_expired']);
     }
-    Session::$pageTitle = "Authentication Required | " . Session::siteName();
+    Session::$pageTitle = 'Authentication Required | ' . Session::siteName();
     Session::set('show_session_expired', true);
     ?>
     <!DOCTYPE html>
@@ -24,7 +24,7 @@ if ($isSessionExpired) {
         <title><?= Session::$pageTitle ?></title>
         <link rel="icon" type="image/png" href="<?= Session::favicon() ?>">
     </head>
-    <body style="margin:0; padding:0; background:#0f172a;">
+    <body style="margin:0; padding:0; background:#05070d;">
     <?php
     include __DIR__ . '/src/template/_session_expired_popup.php';
     ?>
@@ -34,766 +34,564 @@ if ($isSessionExpired) {
     exit;
 }
 
-// 2. Set Page Metadata
-Session::$pageTitle = Session::siteName() . " | Virtual Innovation Hub";
+/* 2. Set Page Metadata */
+Session::$pageTitle = Session::siteName() . ' | Virtual Innovation Hub';
 Session::set('seo_description', Session::siteName() . ' is a premier virtual innovation hub offering advanced cloud environments, scalable VPS, and secure VPN workspaces for elite developers and engineers.');
 Session::set('seo_keywords', 'Virtual Innovation Hub, ' . Session::siteName() . ', Advanced Cloud Infrastructure, Digital Workspace, VPS, Developer Environment');
 define('IS_LANDING_PAGE', true);
 Session::addCustomCss('/assets/css/landing.css');
 
-// Initialize random quote for SEO rendering
+$siteName = Session::siteName();
+$favicon = Session::favicon();
+$logo = Session::logo();
+$authStatus = Session::getAuthStatus();
+$isLoggedIn = ($authStatus ?? '') === 'loggedin' || $authStatus === Constants::STATUS_LOGGEDIN;
 $heroQuotes = [
-    [ "p1" => "Innovate Fearlessly", "p2" => "Your Virtual Innovation Hub" ],
-    [ "p1" => "Code Without Limits", "p2" => "The Ultimate Cloud IDE" ],
-    [ "p1" => "Deploy in Seconds", "p2" => "Next-Gen Infrastructure" ],
-    [ "p1" => "Secure by Design", "p2" => "Isolated Lab Environments" ],
-    [ "p1" => "Master the Cloud", "p2" => "Your Technical Playground" ]
+    ['p1' => 'Innovate Fearlessly', 'p2' => 'Your Virtual Innovation Hub'],
+    ['p1' => 'Code Without Limits', 'p2' => 'The Ultimate Cloud IDE'],
+    ['p1' => 'Deploy in Seconds', 'p2' => 'Next-Gen Infrastructure'],
+    ['p1' => 'Secure by Design', 'p2' => 'Isolated Lab Environments'],
+    ['p1' => 'Master the Cloud', 'p2' => 'Your Technical Playground'],
 ];
 $initialQuote = $heroQuotes[array_rand($heroQuotes)];
 ?>
 <!DOCTYPE html>
-<html lang="en" data-coreui-theme="dark">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="theme-color" content="#05070d">
     <meta name="description" content="<?= Session::get('seo_description') ?>">
     <meta name="keywords" content="<?= Session::get('seo_keywords') ?>">
     <title><?= Session::$pageTitle ?></title>
-    <link rel="icon" type="image/png" href="<?= Session::favicon() ?>">
-    
-    <!-- Fonts and Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="<?= $favicon ?>">
+    <link rel="icon" type="image/png" sizes="32x32" href="<?= $favicon ?>">
+    <link rel="apple-touch-icon" sizes="180x180" href="<?= $favicon ?>">
+
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href='https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    
-    <!-- Landing Page CSS -->
-    <link rel="stylesheet" href="/assets/css/landing.css?v=<?= time() ?>">
+
     <style>
-        body { margin: 0; padding: 0; background-color: #0f172a; color: white; font-family: 'Ubuntu', sans-serif; overflow-x: hidden; }
-        a { text-decoration: none; }
+        :root {
+            --bg: #05070d;
+            --surface: #0b0f1a;
+            --glass: rgba(255, 255, 255, 0.04);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --primary: #0ea5e9;
+            --primary-hover: #38bdf8;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #fb923c;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        a { text-decoration: none; color: inherit; }
+        img { max-width: 100%; display: block; }
+
+        /* ---------- Header ---------- */
+        header {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            background: rgba(5, 7, 13, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .nav-wrap {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+        .logo {
+            display: flex; align-items: center; gap: 10px;
+            font-weight: 800; font-size: 1.25rem;
+            letter-spacing: -0.5px;
+        }
+        .logo img { width: 32px; height: 32px; border-radius: 6px; }
+        .logo span { color: var(--text); }
+        .logo span em { font-style: normal; color: var(--primary); }
+
+        .nav-menu {
+            display: none;
+            align-items: center;
+            gap: 2.5rem;
+            list-style: none;
+        }
+        .nav-menu a {
+            font-weight: 500; font-size: 0.9rem; color: var(--text-muted);
+            transition: color 0.2s;
+        }
+        .nav-menu a:hover, .nav-menu a.active { color: var(--text); }
+        .nav-menu a.active { color: var(--primary); }
+
+        .nav-actions {
+            display: flex; align-items: center; gap: 10px;
+        }
+        .btn-ghost {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            color: var(--text);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .btn-ghost:hover { background: rgba(255,255,255,0.08); border-color: var(--primary); color: var(--primary); }
+        .btn-primary {
+            background: var(--primary);
+            border: none; color: white;
+            padding: 9px 20px; border-radius: 8px;
+            font-weight: 700; font-size: 0.9rem;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(14,165,233,0.35); }
+
+        .menu-btn {
+            display: none; background: none; border: none;
+            color: var(--text); font-size: 1.25rem; cursor: pointer;
+        }
+
+        /* ---------- Mobile menu ---------- */
+        @media (max-width: 768px) {
+            .nav-menu {
+                position: fixed; top: 64px; left: 0; right: 0;
+                background: var(--bg); flex-direction: column;
+                padding: 2rem 1.5rem; gap: 1.5rem;
+                border-bottom: 1px solid var(--glass-border);
+                box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+                transform: translateY(-100%); opacity: 0;
+                transition: all 0.3s ease;
+            }
+            .nav-menu.open { transform: translateY(0); opacity: 1; }
+            .menu-btn { display: block; }
+        }
+
+        /* ---------- Hero ---------- */
+        .hero {
+            min-height: 100vh;
+            display: flex; align-items: center;
+            padding-top: 80px; padding-bottom: 4rem;
+            position: relative; overflow: hidden;
+        }
+        .hero .container {
+            max-width: 1100px; margin: 0 auto; padding: 0 1.5rem;
+            position: relative; z-index: 2;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem; align-items: center;
+        }
+        .hero h1 {
+            font-size: clamp(2.2rem, 5vw, 3.5rem);
+            font-weight: 800; line-height: 1.1;
+            letter-spacing: -0.02em;
+            margin-bottom: 1rem;
+        }
+        .hero h1 em { font-style: normal; color: var(--primary); }
+        .hero p {
+            font-size: 1.05rem; color: var(--text-muted);
+            max-width: 44ch; margin-bottom: 1.75rem; line-height: 1.6;
+        }
+        .hero-actions {
+            display: flex; gap: 10px; flex-wrap: wrap;
+        }
+
+        /* Hero visual */
+        .hero-visual {
+            position: relative; height: 420px; display: flex;
+            align-items: center; justify-content: center;
+        }
+        .hero-visual::before {
+            content: ''; position: absolute; inset: -20%;
+            background: radial-gradient(circle at 40% 40%, rgba(14,165,233,0.15), transparent 60%);
+            z-index: 0; animation: pulse 6s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%,100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.15); }
+        }
+        .terminal-card {
+            position: relative; z-index: 2;
+            background: #03050b; border: 1px solid var(--glass-border);
+            border-radius: 16px; width: 100%; max-width: 460px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+            backdrop-filter: blur(20px);
+            overflow: hidden;
+        }
+        .terminal-bar {
+            background: #0f172a; padding: 9px 12px; display: flex;
+            align-items: center; gap: 8px; border-bottom: 1px solid var(--glass-border);
+        }
+        .terminal-dots { display: flex; gap: 6px; }
+        .terminal-dots span { width: 10px; height: 10px; border-radius: 50%; }
+        .terminal-dots .r { background: #ff5f56; box-shadow: 0 0 8px #ff5f56; }
+        .terminal-dots .y { background: #ffbd2e; box-shadow: 0 0 8px #ffbd2e; }
+        .terminal-dots .g { background: #27c93f; box-shadow: 0 0 8px #27c93f; }
+        .terminal-title {
+            font-size: 0.72rem; color: #64748b; font-weight: 600;
+            letter-spacing: 0.3px; margin-left: auto;
+        }
+        .terminal-body {
+            padding: 14px 16px; font-family: 'Inter', ui-monospace, SFMono-Regular, monospace;
+            font-size: 0.82rem; line-height: 1.6; color: #cbd5e1;
+            background: #02040a;
+        }
+        .terminal-body .prompt { color: var(--primary); font-weight: 700; margin-right: 6px; }
+        .terminal-body .line { margin: 4px 0; white-space: pre-wrap; }
+        .terminal-body .cursor { color: var(--primary); animation: blink 1s infinite; }
+        @keyframes blink { 0%,50% { opacity: 1; } 51%,100% { opacity: 0; } }
+
+        /* ---------- Stats ---------- */
+        .stats {
+            background: var(--surface);
+            border: 1px solid var(--glass-border);
+            border-radius: 14px;
+            padding: 1.5rem 2rem;
+            margin-top: 3rem;
+            display: flex; flex-wrap: wrap; gap: 1.5rem;
+            justify-content: center;
+            backdrop-filter: blur(12px);
+        }
+        .stat {
+            display: flex; flex-direction: column; gap: 4px;
+            min-width: 110px; text-align: center;
+        }
+        .stat .num {
+            font-size: 1.35rem; font-weight: 800; color: var(--text);
+            letter-spacing: -0.5px;
+        }
+        .stat .lbl {
+            font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        /* ---------- Features ---------- */
+        .features {
+            padding: 5rem 1.5rem; max-width: 1100px; margin: 0 auto;
+        }
+        .section-head {
+            text-align: center; margin-bottom: 3rem;
+        }
+        .section-head .kicker {
+            font-size: 0.75rem; font-weight: 700; color: var(--primary);
+            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;
+        }
+        .section-head h2 {
+            font-size: clamp(1.8rem, 3vw, 2.5rem); font-weight: 800;
+            letter-spacing: -0.02em; margin-bottom: 10px;
+        }
+        .section-head p {
+            color: var(--text-muted); font-size: 1rem; max-width: 560px; margin: 0 auto;
+        }
+        .grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.5rem;
+        }
+        .feature-card {
+            background: var(--glass); border: 1px solid var(--glass-border);
+            border-radius: 14px; padding: 1.75rem;
+            backdrop-filter: blur(10px); transition: all 0.3s;
+            display: flex; flex-direction: column; gap: 1rem;
+        }
+        .feature-card:hover {
+            transform: translateY(-4px); border-color: var(--primary);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        .feature-card .icon {
+            width: 40px; height: 40px; border-radius: 10px;
+            background: rgba(14,165,233,0.1); color: var(--primary);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.25rem;
+        }
+        .feature-card h3 {
+            font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 6px;
+        }
+        .feature-card p {
+            font-size: 0.88rem; color: var(--text-muted); line-height: 1.55;
+        }
+
+        /* ---------- CTA ---------- */
+        .cta {
+            padding: 5rem 1.5rem; max-width: 1100px; margin: 0 auto;
+            text-align: center;
+        }
+        .cta-card {
+            background: linear-gradient(135deg, rgba(14,165,233,0.12), rgba(249,146,60,0.08));
+            border: 1px solid rgba(14,165,233,0.18);
+            border-radius: 20px; padding: 3rem 2rem;
+            backdrop-filter: blur(20px);
+        }
+        .cta h2 {
+            font-size: clamp(1.7rem, 3vw, 2.2rem); font-weight: 800;
+            letter-spacing: -0.02em; margin-bottom: 10px;
+        }
+        .cta p {
+            color: var(--text-muted); font-size: 1rem; max-width: 500px;
+            margin: 0 auto 1.75rem; line-height: 1.6;
+        }
+        .cta-actions {
+            display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+        }
+
+        /* ---------- Footer ---------- */
+        footer {
+            border-top: 1px solid var(--glass-border);
+            margin-top: auto; background: #02040a;
+        }
+        .footer-wrap {
+            max-width: 1100px; margin: 0 auto; padding: 3rem 1.5rem 2rem;
+            display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 2rem;
+        }
+        .footer-brand { max-width: 260px; }
+        .footer-brand .logo { font-size: 1.1rem; margin-bottom: 1rem; }
+        .footer-brand p {
+            font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;
+        }
+        .footer-col h4 {
+            font-size: 0.85rem; font-weight: 700; color: var(--text);
+            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1.25rem;
+        }
+        .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+        .footer-col a {
+            font-size: 0.9rem; color: var(--text-muted); transition: color 0.2s;
+        }
+        .footer-col a:hover { color: var(--primary); }
+        .footer-bottom {
+            max-width: 1100px; margin: 0 auto; padding: 1.5rem;
+            border-top: 1px solid var(--glass-border);
+            display: flex; flex-direction: column; gap: 10px; text-align: center;
+        }
+        .footer-bottom p {
+            font-size: 0.8rem; color: var(--text-muted);
+        }
+        .footer-bottom .legal {
+            display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;
+        }
+        .footer-bottom .legal a {
+            font-size: 0.8rem; color: var(--text-muted); transition: color 0.2s;
+        }
+        .footer-bottom .legal a:hover { color: var(--primary); }
+
+        /* ---------- Responsive ---------- */
+        @media (max-width: 768px) {
+            .hero .container { grid-template-columns: 1fr; gap: 2rem; }
+            .hero-visual { order: -1; height: 340px; }
+            .hero h1 { font-size: 2rem; }
+            .footer-wrap { grid-template-columns: 1fr 1fr; gap: 2rem; }
+            .footer-brand { grid-column: 1 / -1; max-width: none; }
+        }
+        @media (max-width: 480px) {
+            .footer-wrap { grid-template-columns: 1fr; }
+            .hero-actions { flex-direction: column; }
+            .btn-primary { width: 100%; text-align: center; }
+        }
     </style>
 </head>
 <body>
-<div class="page-portfolio" style="width: 100%;">
 
-<header class="portfolio-header" style="border-radius: 20px; display: flex; align-items: center; width: 95%; max-width: 1400px;">
-    <a href="/" class="header-logo" style="display: flex; align-items: center; gap: 12px; text-decoration: none; flex-shrink: 0;">
-        <img src="<?= Session::favicon() ?>" width="44" height="44" alt="<?= htmlspecialchars(Session::siteName()) ?> Icon" style="border-radius: 8px; object-fit: contain;">
-        <div style="display: flex; flex-direction: column; line-height: 1.1;">
-            <span style="font-size: 1.2rem; font-weight: 800; color: white; text-transform: uppercase; letter-spacing: 0.5px;">Tom <span style="color: var(--primary-color);">Labs</span></span>
-            <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 500;">Virtual Innovation Hub</span>
+<!-- Header -->
+<header>
+    <div class="nav-wrap">
+        <a href="/" class="logo">
+            <img src="<?= $logo ?>" alt="<?= htmlspecialchars($siteName) ?>">
+            <span><?= htmlspecialchars($siteName) ?> <em>Labs</em></span>
+        </a>
+
+        <ul class="nav-menu" id="navMenu">
+            <li><a href="/" class="nav-link active">Home</a></li>
+            <li><a href="/about" class="nav-link">About</a></li>
+            <li><a href="/dashboard" class="nav-link">Lab Listing</a></li>
+            <li><a href="#contact" class="nav-link">Contact</a></li>
+            <li><a href="/terms" class="nav-link">Terms of Service</a></li>
+            <li><a href="/privacy" class="nav-link">Privacy Policy</a></li>
+            <li><a href="/cookies" class="nav-link">Cookie Policy</a></li>
+        </ul>
+
+        <div class="nav-actions">
+            <?php if ($isLoggedIn): ?>
+                <a href="/dashboard" class="btn-primary">Go to Dashboard</a>
+            <?php else: ?>
+                <a href="/signin" class="btn-ghost">Sign in</a>
+                <a href="/signup" class="btn-primary">Get started</a>
+            <?php endif; ?>
+            <button class="menu-btn" id="menuBtn"><i class='bx bx-menu'></i></button>
         </div>
-    </a>
-    
-    <button class="nav-toggle-button" id="navToggle">
-        <i class='bx bx-menu'></i>
-    </button>
-
-    <div class="header-nav-container" id="navContainer" style="flex: 1; display: flex; justify-content: center;">
-        <nav class="header-nav" style="display: flex; gap: 2.5rem; align-items: center;">
-            <a href="/" class="nav-link active" style="font-weight: 600;">Home</a>
-            <a href="#features" class="nav-link" style="font-weight: 600;">About us</a>
-            <a href="/dashboard" class="nav-link" style="font-weight: 600;">Lab Listing</a>
-            <a href="#contact" class="nav-link" style="font-weight: 600;">Contact us</a>
-            <a href="https://blog.tomweb.fun/" class="nav-link" style="font-weight: 600;">Blog</a>
-        </nav>
-    </div> 
-    
-    <div class="header-right-actions" style="flex-shrink: 0;">
-        <?php if (Session::getAuthStatus() == Constants::STATUS_LOGGEDIN): ?>
-            <div class="user-profile logged-in-public" id="userProfileToggle" style="cursor: pointer; position: relative;">
-                <div class="avatar-container" style="background: rgba(255, 255, 255, 0.08); border-radius: 999px; padding: 4px 12px 4px 4px; display: flex; align-items: center; gap: 8px; border: 1px solid rgba(255, 255, 255, 0.05); transition: background 0.3s;" onmouseover="this.style.background='rgba(255, 255, 255, 0.15)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.08)'">
-                    <img src="<?= Session::getAvatar(); ?>" alt="User Avatar" class="avatar" style="width: 32px; height: 32px; border-radius: 50%; border: none; object-fit: cover; <?= Session::getAvatarStyle(); ?>">
-                    <i class='bx bx-chevron-down' style="color: #cbd5e1; font-size: 1.2rem;"></i>
-                </div>
-                
-                <div class="profile-dropdown" id="profileDropdown">
-                    <div class="dropdown-header" style="padding: 10px 15px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 5px;">
-                        <h4 style="margin: 0; font-size: 0.9rem; color: white; text-align: left;"><?php echo htmlspecialchars(Session::getUser()?->getUsername() ?? 'Guest'); ?></h4>
-                    </div>
-                    <ul class="dropdown-menu-list" style="list-style: none; padding: 5px; margin: 0;">
-                        <li>
-                            <a href="/dashboard" style="color: #cbd5e1; display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 6px; text-decoration: none; transition: all 0.2s;" onmouseover="this.style.color='#f97316'; this.style.background='rgba(255,255,255,0.05)';" onmouseout="this.style.color='#cbd5e1'; this.style.background='transparent';">
-                                <i class='bx bxs-dashboard'></i> 
-                                <span>Labs</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="/logout" style="color: #cbd5e1; display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 6px; text-decoration: none; transition: all 0.2s;" onmouseover="this.style.color='#ef4444'; this.style.background='rgba(255,255,255,0.05)';" onmouseout="this.style.color='#cbd5e1'; this.style.background='transparent';">
-                                <i class='bx bx-log-out'></i>
-                                <span>Logout</span>
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-        <?php else: ?>
-            <a href="/signin" class="login-button" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 999px; padding: 0.5rem 1.5rem; transition: all 0.3s; color: white; text-decoration: none; font-weight: 600;" onmouseover="this.style.background='rgba(255, 255, 255, 0.2)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.1)'">
-                Login
-            </a>
-        <?php endif; ?>
     </div>
 </header>
 
-<!-- <header class="portfolio-header">
-    <a href="/" class="header-logo" style="gap: 12px;">
-        <img src="/assets/logo/logo.png" width="44" height="44" alt="<?= htmlspecialchars(Session::siteName()) ?> Icon" style="border-radius: 8px;">
-        <span style="font-size: 1.5rem;"><?= htmlspecialchars(Session::siteName()) ?></span>
-    </a>
-    
-    <div class="header-nav-container">
-        <nav class="header-nav">
-            <a href="/" class="nav-link">Home</a>
-            <a href="#features" class="nav-link">About us</a>
-        </nav>
-    </div> 
-
-    <div class="header-right-actions">
-        <?php 
-        // Use Session class to determine header type
-        if (Session::getAuthStatus() == Constants::STATUS_LOGGEDIN): 
-            $user = Session::getUser(); //
-            $userAvatar = $user ? $user->getAvatarUrl() : '/assets/avatars/default.png';
-        ?>
-            <div class="user-profile">
-                <div class="avatar-container d-flex align-items-center" style="background: rgba(255, 255, 255, 0.1); border-radius: 999px; padding: 4px 12px 4px 4px; gap: 8px;">
-                    <img src="<?= $userAvatar ?>" alt="Profile" class="avatar" style="width: 32px; height: 32px; border: none;">
-                    <i class='bx bx-chevron-down text-white' style="font-size: 1.2rem; opacity: 0.8;"></i>
-                </div>
-                <div class="profile-dropdown">
-                    <div class="dropdown-header d-flex align-items-center justify-content-center" style="padding: 0 16px 8px 16px; margin-bottom: 4px;">
-                        <span class="fw-bold text-white" style="letter-spacing: 0.5px; font-size: 0.85rem;"><?= htmlspecialchars($user->getUserName()) ?></span>
+<!-- Hero -->
+<section class="hero">
+    <div class="container">
+        <div class="hero-visual">
+            <div class="terminal-card">
+                <div class="terminal-bar">
+                    <div class="terminal-dots">
+                        <span class="r"></span><span class="y"></span><span class="g"></span>
                     </div>
-                    <a href="<?= Session::url('dashboard') ?>"><i class='bx bx-tachometer'></i> Labs</a>
-                    <a href="#"><i class='bx bx-shield-alt-2'></i> My Account</a>
-                    <a href="<?= Session::url('logout') ?>"><i class='bx bx-log-in-circle' style="transform: scaleX(-1);"></i> Logout</a>
+                    <div class="terminal-title">labsctl — live</div>
+                </div>
+                <div class="terminal-body">
+                    <div class="line"><span class="prompt">→</span><span class="cursor">_</span></div>
+                    <div class="line">build&nbsp;&nbsp;&nbsp;image&nbsp;&nbsp;essentials&nbsp;built</div>
+                    <div class="line">deploy&nbsp;&nbsp;instance&nbsp;&nbsp;up&nbsp;&nbsp;·&nbsp;&nbsp;2&nbsp;GB&nbsp;/&nbsp;0.5&nbsp;CPU</div>
+                    <div class="line">domain&nbsp;&nbsp;&nbsp;code.**,&nbsp;web.**&nbsp;routed&nbsp;@&nbsp;:443</div>
+                    <div class="line">tls&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let's&nbsp;encrypt&nbsp;issued</div>
+                    <div class="line">wg&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;peer&nbsp;registered&nbsp;·&nbsp;10.20.x.x</div>
                 </div>
             </div>
+        </div>
 
-        <?php else: ?>
-            <a href="<?= Session::url('signin') ?>" class="login-button">Login</a>
-            
-        <?php endif; ?>
+        <div>
+            <h1><?= $initialQuote['p1'] ?> <em><?= $initialQuote['p2'] ?></em></h1>
+            <p>Isolated dev environments with VPN, browser IDE and an automated lifecycle engine — deploy, share and teach with one command.</p>
+            <div class="hero-actions">
+                <a href="/signup" class="btn-primary">Start building</a>
+                <a href="/signin" class="btn-ghost">Sign in to dashboard</a>
+            </div>
+
+            <div class="stats">
+                <div class="stat">
+                    <div class="num">3</div>
+                    <div class="lbl">Deploy modes</div>
+                </div>
+                <div class="stat">
+                    <div class="num">6</div>
+                    <div class="lbl">Managed services</div>
+                </div>
+                <div class="stat">
+                    <div class="num">1 cmd</div>
+                    <div class="lbl">Zero setup</div>
+                </div>
+                <div class="stat">
+                    <div class="num">∞</div>
+                    <div class="lbl">Labs</div>
+                </div>
+            </div>
+        </div>
     </div>
-</header> -->
+</section>
 
-
-    <section class="hero-section-wrapper position-relative overflow-hidden">
-        <!-- Premium Ambient Background Orbs -->
-        <div class="scenery-orb-1"></div>
-        <div class="scenery-orb-2"></div>
-        <div class="hero-bg"></div>
-        
-            
-        <div class="hero-container">
-            <div class="hero-content-left">
-                <h1 class="hero-heading" id="dynamic-hero-heading" style="transition: opacity 0.3s ease-in-out;">
-                    <span id="hero-part1"><?= htmlspecialchars($initialQuote['p1']) ?></span> - <span id="hero-part2" style="color:var(--primary-color);"><?= htmlspecialchars($initialQuote['p2']) ?></span>
-                </h1>
-                <p class="hero-lead">
-                    ⭐ Empowering developers and innovators with a world-class digital lab experience.
-                </p>
-                <div class="hero-credits-container" style="display: flex; flex-direction: column; gap: 12px; margin: 0.5rem 0 1.5rem 0;">
-                    <!-- Creator Badge -->
-                    <a href="https://sathish46.in" target="_blank" style="text-decoration: none; display: inline-flex; align-items: center; gap: 10px; background: rgba(56, 189, 248, 0.1); padding: 8px 20px; border-radius: 50px; border: 1px solid rgba(56, 189, 248, 0.2); width: fit-content; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(56, 189, 248, 0.2)'; this.style.transform='translateY(-2px)';" onmouseout="this.style.background='rgba(56, 189, 248, 0.1)'; this.style.transform='translateY(0)';">
-                        <i class='bx bx-code-alt' style="color: #38bdf8; font-size: 1.3rem;"></i>
-                        <span style="color: #cbd5e1; font-size: 0.95rem;">Engineered by</span>
-                        <span style="color: #38bdf8; font-weight: 700; font-family: 'Inter', 'Ubuntu', sans-serif; letter-spacing: 0.5px; font-size: 1.05rem;">Sathish46</span>
-                    </a>
-
-                    <!-- Credit Badge -->
-                    <div id="multi-link" style="display: inline-flex; align-items: center; gap: 10px; background: rgba(245, 158, 11, 0.08); padding: 8px 20px; border-radius: 50px; border: 1px solid rgba(245, 158, 11, 0.2); width: fit-content; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(245, 158, 11, 0.18)'; this.style.transform='translateY(-2px)';" onmouseout="this.style.background='rgba(245, 158, 11, 0.08)'; this.style.transform='translateY(0)';">
-                        <i class='bx bxs-graduation' style="color: #facc15; font-size: 1.3rem;"></i>
-                        <span style="color: #cbd5e1; font-size: 0.95rem;">Credits to</span>
-                        <span style="color: #facc15; font-weight: 700; font-family: 'Inter', 'Ubuntu', sans-serif; letter-spacing: 0.5px; font-size: 1.05rem;">TomCloudLab Academy</span>
-                    </div>
-                </div>
-                <div class="hero-button-group">
-                    <a href="/feature" class="btn btn-primary">
-                        Learn More
-                    </a>
-                    <a href="/signup" class="btn btn-secondary">
-                        Try For Free →
-                    </a>
-                </div>
-            </div>
-
-            <div class="hero-image-container">
-                <div class="floating-tech-wrapper">
-                    <div class="bg-circle-lg"></div>
-                    <div class="bg-circle-md"></div>
-
-                    <div class="floating-box box-1"></div>
-                    <div class="floating-box box-2"></div>
-                    <div class="floating-box box-3"></div>
-                    <div class="floating-box box-4"></div>
-
-                    <div class="floating-sphere sphere-1"></div>
-                    <div class="floating-sphere sphere-2"></div>
-                    <div class="floating-sphere sphere-3"></div>
-                </div>
-            </div>
+<!-- Features -->
+<section class="features">
+    <div class="section-head">
+        <div class="kicker">Capabilities</div>
+        <h2>Everything you need to run labs</h2>
+        <p>One reproducible install. Deterministic engine over Docker, real domains with TLS, VPN reachability and a full learning stack.</p>
+    </div>
+    <div class="grid">
+        <div class="feature-card">
+            <div class="icon"><i class='bx bx-code-alt'></i></div>
+            <h3>Browser IDE</h3>
+            <p>Every lab ships a browser code editor (code-server) — open a URL and code, no local setup needed.</p>
         </div>
-    </section>
-    
-    <section class="feature-section" id="features">
-        <div class="feature-heading-group">
-            <h2 class="feature-heading">
-                Explore <span style="color:var(--primary-color);">Next-Gen</span> Capabilities
-            </h2>
-            <p class="feature-lead">
-               Unlock a powerful set of tools designed for effortless development 
-               and secure experimentation. From rapid virtual lab creation to dynamic 
-               GUI-based environments, experience a smarter, faster, and more connected way to innovate.
-            </p>
+        <div class="feature-card">
+            <div class="icon"><i class='bx bx-globe'></i></div>
+            <h3>Every domain served</h3>
+            <p>Traefik at the edge with automatic Let's Encrypt TLS for every lab domain.</p>
         </div>
-        
-        <div class="feature-content-grid">
-            <div class="feature-list-column">
-                <div class="feature-item">
-                    <svg class="feature-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 0 0-7.3 16.7c1.7 1.4 3.7 2.3 6 2.3s4.3-.9 6-2.3A10 10 0 0 0 12 2z"></path><path d="M8 13s2-2 4-2 4 2 4 2"></path></svg>
-                    <div>
-                        <h3 class="feature-title">Smart Cloud Infrastructure for Developers</h3>
-                        <p class="feature-description"> 
-                            Experience a powerful and scalable cloud ecosystem built 
-                            to support your projects — featuring real-time synchronization, 
-                            encrypted data storage, and seamless server environment management for modern 
-                            learning and innovation.
-                        </p>
-                    </div>
-                </div>
-                
-                <div class="feature-item">
-                    <svg class="feature-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
-                    <div>
-                        <h3 class="feature-title">Instant & Effortless Deployment</h3>
-                        <p class="feature-description">
-                            Launch or reset your servers in just one click — start 
-                            fresh projects instantly and restore environments to their 
-                            default state anytime with ease and reliability.
-                        </p>
-                    </div>
-                </div>
-                
-                <div class="feature-item">
-                    <svg class="feature-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 13l-3 3-3-3"></path><path d="M15 11l-3-3-3 3"></path><path d="M12 2v20"></path></svg>
-                    <div>
-                        <h3 class="feature-title">All-in-One Development Environment</h3>
-                        <p class="feature-description">
-                            Work seamlessly with a suite of pre-configured 
-                            tools and frameworks — code, test, 
-                            and deploy applications instantly without manual setup,
-                             all within your secure virtual server workspace.
-                        </p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="feature-cards-column">
-                <div class="feature-card">
-                    <div class="feature-card-image">
-                        <img src="<?= Session::cdn3('main/lab.svg') ?>" alt="Code Arena Interface">
-                    </div>
-                    <h3 class="feature-card-title">Virtual Lab</h3>
-                    <p class="feature-description" style="opacity: 0.8;">The Virtual Cloud Lab is a secure, cloud-based development
-                         and testing environment that allows users to access their workspaces 
-                        from anywhere through an encrypted VPN connection. It is designed for developers, students, 
-                        and cybersecurity learners who need a 
-                        flexible, always-available virtual lab with high-level data protection and isolation.</p>
-                    <a href="/signin" class="btn btn-primary" style="align-self: flex-start;">Explore <i class='bx bx-right-arrow-alt'></i></a>
-                </div>
-            </div>
+        <div class="feature-card">
+            <div class="icon"><i class='bx bx-shield'></i></div>
+            <h3>WireGuard mesh</h3>
+            <p>Labs join a private VPN network — SSH, databases and ports stay reachable from enrolled devices.</p>
         </div>
-        
-        <div class="feature-content-grid" style="margin-top: 5rem;">
-            <div class="feature-cards-column">
-                <div class="feature-card">
-                    <div class="feature-card-image">
-                        <img src="<?= Session::cdn3('main/domain.svg') ?>" alt="Spot Quiz Interface">
-                    </div>
-                    <h3 class="feature-card-title">🌍 Domain Development</h3>
-                    <p class="feature-description" style="opacity: 0.8;">
-                        This module enables users to develop, host, and publish their own web 
-                        applications with fully customizable domains directly from the virtual lab environment. 
-                        It integrates a secure backend with automated deployment tools to simplify domain 
-                        configuration, SSL setup, and live hosting — all managed within a private cloud infrastructure.</p>
-                    <a href="/portfolio" class="btn btn-primary" style="align-self: flex-start;">Explore <i class='bx bx-right-arrow-alt'></i></a>
-                </div>
-            </div>
-            
-            <div class="feature-list-column">
-                <div class="feature-item">
-                    <svg class="feature-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 12h8"></path><path d="M12 8v8"></path></svg>
-                    <div>
-                        <h3 class="feature-title">Isolated Environments</h3>
-                        <p class="feature-description">Each server operates in a fully isolated environment, ensuring data privacy and security.</p>
-                    </div>
-                </div>
-                
-                <div class="feature-item">
-                    <svg class="feature-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15s4-2 8-2 8 2 8 2V8s-4 2-8 2-8-2-8-2z"></path><path d="M3 15v-7"></path><path d="M21 15v-7"></path><path d="M12 21V12"></path><path d="M12 12V3"></path></svg>
-                    <div>
-                        <h3 class="feature-title">Real-Time Monitoring</h3>
-                        <p class="feature-description">Monitor live metrics such as CPU, RAM, and IO usage directly on your server's dashboard for full performance visibility.</p>
-                    </div>
-                </div>
-                
-                <div class="feature-item">
-                    <svg class="feature-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" 
-                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" 
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 12h18"></path><path d="M12 3v18"></path>
-                    </svg>
-                    <div>
-                        <h3 class="feature-title">Domain Development & Custom Deployment</h3>
-                        <p class="feature-description">
-                            Build, host, and publish your own web applications with full custom domain integration, 
-                            automated SSL setup, and one-click deployment — all managed securely from the virtual cloud lab.
-                        </p>
-                    </div>
-                </div>
-
-            </div>
+        <div class="feature-card">
+            <div class="icon"><i class='bx bx-layer'></i></div>
+            <h3>Lifecycle engine</h3>
+            <p>Build, deploy, redeploy and tear down isolated containers from one CLI (labsctl).</p>
         </div>
-        <div class="feature-content-grid" style="margin-top: 5rem;">
-            <div class="feature-cards-column">
-                <div class="feature-card" id="confetti-target">
-                    <div class="feature-card-image">
-                        <img src="<?= Session::cdn3('main/services.svg') ?>" alt="Spot Quiz Interface">
-                    </div>
-                    <h3 class="feature-card-title">Database Services & Management</h3>
-                    <p class="feature-description" style="opacity: 0.8;">
-                        Launch and manage dedicated database instances including MySQL and PostgreSQL 
-                        with integrated <b>Adminer</b> access for real-time administration. 
-                        Seamlessly create, configure, and monitor databases — all secured within the virtual lab environment.
-                    </p>
-                    <a href="#" class="btn btn-primary" style="align-self: flex-start;">Explore <i class='bx bx-right-arrow-alt'></i></a>
-                </div>
-            </div>
-            
-            <div class="feature-list-column">
-                <div class="feature-item">
-                    <svg class="feature-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" 
-                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" 
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
-                        <path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"></path>
-                    </svg>
-                    <div>
-                        <h3 class="feature-title">Secure Database Access</h3>
-                        <p class="feature-description">
-                            Seamlessly connect to MySQL and PostgreSQL databases from your virtual Ubuntu lab 
-                            through a secure VPN tunnel, ensuring encrypted and private data communication.
-                        </p>
-                    </div>
-                </div>
-
-                <div class="feature-item">
-                    <svg class="feature-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" 
-                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" 
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M4 4h16v16H4z"></path>
-                        <path d="M9 4v16"></path>
-                        <path d="M15 10h5"></path>
-                    </svg>
-                    <div>
-                        <h3 class="feature-title">Unlimited Database Creation</h3>
-                        <p class="feature-description">
-                            Easily create and manage unlimited MySQL or PostgreSQL databases 
-                            directly from the virtual cloud interface — with full control and isolation per project.
-                        </p>
-                    </div>
-                </div>
-
-                <div class="feature-item">
-                    <svg class="feature-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" 
-                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" 
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 12l9-9 9 9"></path>
-                        <path d="M9 21V9h6v12"></path>
-                    </svg>
-                    <div>
-                        <h3 class="feature-title">Database Integration for Projects</h3>
-                        <p class="feature-description">
-                            Use your hosted databases directly in development projects to power 
-                            web applications and deployed websites with real-time, reliable backend connectivity.
-                        </p>
-                    </div>
-                </div>
-
-
-            </div>
+        <div class="feature-card">
+            <div class="icon"><i class='bx bx-database'></i></div>
+            <h3>Managed data</h3>
+            <p>MySQL, MariaDB, MongoDB, PostgreSQL, Redis & RabbitMQ with per-user access.</p>
         </div>
-    </section>
-
-    <section class="ticker-section">
-        <div class="feature-heading-group">
-            <h2 class="feature-heading">
-                Built on <span style="color:var(--primary-color);">Great Foundations</span>
-            </h2>
-            <p class="feature-lead">
-                Honoring the mentors, guides, and Academy that shaped this journey.
-            </p>
+        <div class="feature-card">
+            <div class="icon"><i class='bx bx-rocket'></i></div>
+            <h3>Full learning stack</h3>
+            <p>Learn AI, Roadmaps, Quiz, Code Arena, CTF missions, Clans and discussion feed.</p>
         </div>
+    </div>
+</section>
 
-        <div class="ticker-container">
-            <div class="ticker-track">
-                
-                <div class="ticker-card">
-                    <div class="card-icon">
-                        <i class='bx bxs-bulb' style="color: #facc15;"></i> 
-                        <h3>The Visionary</h3>
-                        <img src="<?= Session::cdn3('main/ticker/Sibidharan.png') ?>" alt="Sibidharan" class="card-img-avatar">
-                    </div>
-
-                    <h4>Sibidharan Nandhakumar</h4>
-                    <p>My Tech Guru and ultimate inspiration. I am building this today because of the knowledge and path he showed me.</p>
-                    
-                    <div class="card-action-row">
-                        
-                        <div class="card-stats">
-                            <div class="stat">
-                                <span class="stat-val" style="color: #facc15;">100%</span>
-                                <span class="stat-label">Inspiration</span>
-                            </div>
-                            <div class="stat">
-                                <span class="stat-val" style="color: #ffffff;">∞</span>
-                                <span class="stat-label">Knowledge</span>
-                            </div>
-                        </div>
-
-                        <div class="card-socials">
-                            <a href="https://sibidharan.me/" target="_blank" class="social-btn" title="Website">
-                                <i class='bx bx-world'></i>
-                            </a>
-                            <a href="https://www.linkedin.com/in/sibidharan/" target="_blank" class="social-btn" title="LinkedIn">
-                                <i class='bx bxl-linkedin'></i>
-                            </a>
-                        </div>
-
-                    </div>
-                </div>
-
-                <div class="ticker-card">
-                    <div class="card-icon">
-                        <i class='bx bxs-buoy' style="color: #38bdf8;"></i>
-                        <h3>The Solver</h3>
-                        
-                        <img src="<?= Session::cdn3('main/ticker/Anish.jpeg') ?>" alt="AnishKumar" class="card-img-avatar">
-                    </div>
-                    <h4>Anish Kumar</h4>
-                    <p>The pillar of support who never ignores a doubt. From complex logic to the smallest questions, he is always there to help.</p>
-                    <div class="card-stats">
-                        <div class="stat">
-                            <span class="stat-val" style="color: #38bdf8;">24/7</span>
-                            <span class="stat-label">Support</span>
-                        </div>
-                        <div class="stat">
-                            <span class="stat-val" style="color: #818cf8;">Zero</span>
-                            <span class="stat-label">Doubts Left</span>
-                        </div>
-                        <div class="card-socials">
-                            <a href="https://anishkumar.cloud" target="_blank" class="social-btn" title="Website">
-                                <i class='bx bx-world'></i> 
-                            </a>
-                            <a href="https://www.linkedin.com/in/anishkumar-originals/" target="_blank" class="social-btn" title="LinkedIn">
-                                <i class='bx bxl-linkedin'></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="ticker-card">
-                    <div class="card-icon">
-                        <i class='bx bxs-graduation' style="color: #a78bfa;"></i>
-                        <h3>The Forge</h3>
-                        <img src="<?= Session::cdn3('main/ticker/Sna.jpeg') ?>" alt="TomCloudLab Academy" class="card-img-avatar">
-                    </div>
-                    <h4>TomCloudLab Academy</h4>
-                    <p>The training ground where I learned everything. A community that transforms curiosity into elite engineering skills.</p>
-                    <div class="card-stats">
-                        <div class="stat">
-                            <span class="stat-val" style="color: #c084fc;">Elite</span>
-                            <span class="stat-label">Curriculum</span>
-                        </div>
-                        <div class="stat">
-                            <span class="stat-val" style="color: #e879f9;">Real</span>
-                            <span class="stat-label">Impact</span>
-                        </div>
-                        <div class="card-socials">
-                            <a href="https://tomweb.in" target="_blank" class="social-btn" title="Website">
-                                <i class='bx bx-world'></i>
-                            </a>
-                            <a href="https://tomweb.in" target="_blank" class="social-btn" title="Website">
-                                <i class='bx bxl-linkedin'></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="ticker-card">
-                    <div class="card-icon">
-                        <i class='bx bxs-rocket' style="color: #4ade80;"></i>
-                        <h3>The Result</h3>
-                        <img src="<?= Session::logo() ?>" alt="<?= htmlspecialchars(Session::siteName()) ?>" class="card-img-avatar">
-                    </div>
-                    <h4><?= htmlspecialchars(Session::siteName()) ?></h4>
-                    <p>The outcome of excellent mentorship and learning. A virtual innovation hub built to empower the next generation.</p>
-                    <div class="card-stats">
-                        <div class="stat">
-                            <span class="stat-val" style="color: #4ade80;">Ready</span>
-                            <span class="stat-label">To Scale</span>
-                        </div>
-                        <div class="stat">
-                            <span class="stat-val" style="color: #22d3ee;">100%</span>
-                            <span class="stat-label">Commitment</span>
-                        </div>
-                        <div class="card-socials">
-                            <a href="https://lab.tomweb.fun" target="_blank" class="social-btn" title="Website">
-                                <i class='bx bx-world'></i>
-                            </a>
-                            <a href="https://www.linkedin.com/in/sathish46/" target="_blank" class="social-btn" title="LinkedIn">
-                                <i class='bx bxl-linkedin'></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="ticker-card">
-                    <div class="card-icon">
-                        <i class='bx bxs-bulb' style="color: #facc15;"></i> 
-                        <h3>The Visionary</h3>
-                        <img src="<?= Session::cdn3('main/ticker/Sibidharan.png') ?>" alt="Sibidharan" class="card-img-avatar">
-                    </div>
-                    <h4>Sibidharan Nandhakumar</h4>
-                    <p>My Tech Guru and ultimate inspiration. I am building this today because of the knowledge and path he showed me.</p>
-                    <div class="card-stats">
-                        <div class="stat">
-                            <span class="stat-val" style="color: #facc15;">100%</span>
-                            <span class="stat-label">Inspiration</span>
-                        </div>
-                        <div class="stat">
-                            <span class="stat-val" style="color: #ffffff;">∞</span>
-                            <span class="stat-label">Knowledge</span>
-                        </div>
-                        <div class="card-socials">
-                            <a href="https://sibidharan.me/" target="_blank" class="social-btn" title="Website">
-                                <i class='bx bx-world'></i>
-                            </a>
-                            <a href="https://www.linkedin.com/in/sibidharan/" target="_blank" class="social-btn" title="LinkedIn">
-                                <i class='bx bxl-linkedin'></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="ticker-card">
-                    <div class="card-icon">
-                        <i class='bx bxs-buoy' style="color: #38bdf8;"></i>
-                        <h3>The Solver</h3>
-                        <img src="<?= Session::cdn3('main/ticker/Anish.jpeg') ?>" alt="AnishKumar" class="card-img-avatar">
-                    </div>
-                    <h4>AnishKumar</h4>
-                    <p>The pillar of support who never ignores a doubt. From complex logic to the smallest questions, he is always there to help.</p>
-                    <div class="card-stats">
-                        <div class="stat">
-                            <span class="stat-val" style="color: #38bdf8;">24/7</span>
-                            <span class="stat-label">Support</span>
-                        </div>
-                        <div class="stat">
-                            <span class="stat-val" style="color: #818cf8;">Zero</span>
-                            <span class="stat-label">Doubts Left</span>
-                        </div>
-                        <div class="card-socials">
-                            <a href="https://anishkumar.cloud" target="_blank" class="social-btn" title="Website">
-                                <i class='bx bx-world'></i>
-                            </a>
-                            <a href="https://www.linkedin.com/in/anishkumar-originals/" target="_blank" class="social-btn" title="LinkedIn">
-                                <i class='bx bxl-linkedin'></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="ticker-card">
-                    <div class="card-icon">
-                        <i class='bx bxs-graduation' style="color: #a78bfa;"></i>
-                        <h3>The Forge</h3>
-                        <img src="<?= Session::cdn3('main/ticker/Sna.jpeg') ?>" alt="TomCloudLab Academy" class="card-img-avatar">
-                    </div>
-                    <h4>TomCloudLab Academy</h4>
-                    <p>The training ground where I learned everything. A community that transforms curiosity into elite engineering skills.</p>
-                    <div class="card-stats">
-                        <div class="stat">
-                            <span class="stat-val" style="color: #c084fc;">Elite</span>
-                            <span class="stat-label">Curriculum</span>
-                        </div>
-                        <div class="stat">
-                            <span class="stat-val" style="color: #e879f9;">Real</span>
-                            <span class="stat-label">Impact</span>
-                        </div>
-                        <div class="card-socials">
-                            <a href="https://tomweb.in" target="_blank" class="social-btn" title="Website">
-                                <i class='bx bx-world'></i>
-                            </a>
-                            <a href="https://tomweb.in" target="_blank" class="social-btn" title="Website">
-                                <i class='bx bxl-linkedin'></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="ticker-card">
-                    <div class="card-icon">
-                        <i class='bx bxs-rocket' style="color: #4ade80;"></i>
-                        <h3>The Result</h3>
-                        <img src="<?= Session::logo() ?>" alt="<?= htmlspecialchars(Session::siteName()) ?>" class="card-img-avatar">
-                    </div>
-                    <h4><?= htmlspecialchars(Session::siteName()) ?></h4>
-                    <p>The outcome of excellent mentorship and learning. A virtual innovation hub built to empower the next generation.</p>
-                    <div class="card-stats">
-                        <div class="stat">
-                            <span class="stat-val" style="color: #4ade80;">Ready</span>
-                            <span class="stat-label">To Scale</span>
-                        </div>
-                        <div class="stat">
-                            <span class="stat-val" style="color: #22d3ee;">100%</span>
-                            <span class="stat-label">Commitment</span>
-                        </div>
-                        <div class="card-socials">
-                            <a href="https://lab.tomweb.fun" target="_blank" class="social-btn" title="Website">
-                                <i class='bx bx-world'></i>
-                            </a>
-                            <a href="https://www.linkedin.com/in/sathish46/" target="_blank" class="social-btn" title="LinkedIn">
-                                <i class='bx bxl-linkedin'></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
+<!-- CTA -->
+<section class="cta">
+    <div class="cta-card">
+        <h2>Ready to run your own?</h2>
+        <p>Three install modes cover a Mac, a home server behind a tunnel, or a clean VPS.</p>
+        <div class="cta-actions">
+            <a href="/signup" class="btn-primary">Start building</a>
+            <a href="/signin" class="btn-ghost">Sign in</a>
         </div>
-    </section>
-    
+    </div>
+</section>
 
-
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.js"></script>
+<!-- Footer -->
+<footer>
+    <div class="footer-wrap">
+        <div class="footer-brand">
+            <div class="logo" style="font-size: 1.1rem;">
+                <img src="<?= $logo ?>" alt="<?= htmlspecialchars($siteName) ?>" style="width:28px;height:28px;">
+                <span><?= htmlspecialchars($siteName) ?> <em>Labs</span></em></div>
+            <p style="margin-top:0.75rem;">Self-hosted cloud lab platform — isolated dev environments, VPN, browser IDEs and an automated lifecycle engine.</p>
+        </div>
+        <div class="footer-col">
+            <h4>Product</h4>
+            <ul>
+                <li><a href="/dashboard">Lab Listing</a></li>
+                <li><a href="/about">About</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </div>
+        <div class="footer-col">
+            <h4>Legal</h4>
+            <ul>
+                <li><a href="/terms">Terms of Service</a></li>
+                <li><a href="/privacy">Privacy Policy</a></li>
+                <li><a href="/cookies">Cookie Policy</a></li>
+            </ul>
+        </div>
+        <div class="footer-col">
+            <h4>Resources</h4>
+            <ul>
+                <li><a href="https://blog.tomweb.fun/" target="_blank" rel="noopener">Blog</a></li>
+                <li><a href="https://github.com/sathish46-lab/tom-cloud-labs" target="_blank" rel="noopener">GitHub</a></li>
+                <li><a href="#contact">Support</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p><?= htmlspecialchars($siteName) ?> Labs. Built for engineers.</p>
+        <div class="legal">
+            <a href="/terms">Terms of Service</a>
+            <a href="/privacy">Privacy Policy</a>
+            <a href="/cookies">Cookie Policy</a>
+        </div>
+    </div>
+</footer>
 
 <script>
-    // --- CONFETTI FUNCTION (Enhanced parameters) ---
-    function launchConfetti(originX) {
-        confetti({
-            particleCount: 200,     // Increased particles
-            spread: 120,            // Increased spread
-            startVelocity: 60,      // Increased speed for higher launch
-            origin: { 
-                x: originX,         
-                y: 0.5              // Launch from the middle height of the screen
-            },
-            colors: ['#f47923', '#ffffff', '#000000', '#ea580c']
-        });
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        console.log('DOM Content Loaded. Scroll-triggered animation active.');
-    
-        
-        // --- RESTORE SCROLL TRIGGER ---
-        const confettiTriggerElement = document.getElementById('confetti-target');
-        
-        // Use Intersection Observer for a smooth, single-fire triggered animation
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                // If the element is intersecting (in view) AND hasn't fired yet
-                if (entry.isIntersecting && !entry.target.classList.contains('confetti-fired')) {
-                    // Launch from the left and right
-                    launchConfetti(0.25); 
-                    launchConfetti(0.75); 
-                    entry.target.classList.add('confetti-fired'); // Mark as fired
-                    observer.unobserve(entry.target); // Stop watching the element
-                }
-            });
-        }, { threshold: 0.2 }); // Triggers when 20% of the element is visible
-
-        if (confettiTriggerElement) {
-            observer.observe(confettiTriggerElement);
-        }
-
-        // --- PROFILE DROPDOWN CLICK TOGGLE ---
-        const userProfile = document.querySelector('.user-profile');
-        if (userProfile) {
-            userProfile.addEventListener('click', function(e) {
-                // If the user is clicking a link inside the dropdown, don't stop it
-                if (e.target.closest('.profile-dropdown')) return;
-                this.classList.toggle('active');
-            });
-            
-            // Close dropdown if clicking outside
-            document.addEventListener('click', function(e) {
-                if (!userProfile.contains(e.target)) {
-                    userProfile.classList.remove('active');
-                }
-            });
-        }
+    const menuBtn = document.getElementById('menuBtn');
+    const navMenu = document.getElementById('navMenu');
+    menuBtn.addEventListener('click', () => {
+        navMenu.classList.toggle('open');
     });
-    document.getElementById("multi-link").addEventListener("click", function () {
-    // Opens both sites in new tabs
-    window.open("https://labs.tomweb.in/", "_blank");
-    window.open("https://tomweb.in/", "_blank");
-  });
+    // Close menu on link click
+    document.querySelectorAll('.nav-menu a').forEach(a => {
+        a.addEventListener('click', () => navMenu.classList.remove('open'));
+    });
+</script>
 
-  // --- DYNAMIC HERO QUOTES VIA API ---
-  const headingContainer = document.getElementById("dynamic-hero-heading");
-  const part1Element = document.getElementById("hero-part1");
-  const part2Element = document.getElementById("hero-part2");
-
-  if (headingContainer && part1Element && part2Element) {
-      // Fetch new quote every 2 seconds without exposing array in JS
-      setInterval(() => {
-          fetch('/api_quote.php')
-              .then(response => response.json())
-              .then(data => {
-                  // Fade out
-                  headingContainer.style.opacity = 0;
-                  
-                  setTimeout(() => {
-                      part1Element.textContent = data.p1;
-                      part2Element.textContent = data.p2;
-                      
-                      // Fade in
-                      headingContainer.style.opacity = 1;
-                  }, 300); // Wait for fade out to complete
-              })
-              .catch(err => console.error("Error fetching quote:", err));
-      }, 2000);
-  }
-
-  // --- SCROLL SPY FOR NAVIGATION ---
-  const sections = document.querySelectorAll('section[id]');
-  const navLinks = document.querySelectorAll('.header-nav .nav-link');
-
-  window.addEventListener('scroll', () => {
-      let current = '';
-      const scrollY = window.pageYOffset;
-
-      sections.forEach(section => {
-          const sectionHeight = section.offsetHeight;
-          const sectionTop = section.offsetTop - 150; // offset for fixed header
-          if (scrollY > sectionTop && scrollY <= sectionTop + sectionHeight) {
-              current = section.getAttribute('id');
-          }
-      });
-
-      if (scrollY < 100) {
-          current = 'home'; // Default to home at very top
-      }
-
-      navLinks.forEach(link => {
-          link.classList.remove('active');
-          if (link.getAttribute('href') === '#' + current || (current === 'home' && link.getAttribute('href') === '/')) {
-              link.classList.add('active');
-          }
-      });
-  });
 </body>
 </html>

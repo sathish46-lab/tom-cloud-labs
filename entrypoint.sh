@@ -163,33 +163,29 @@ export WG_ENDPOINT
 # 2. Generate Apache Configuration Files
 echo "[INFO] Generating Apache Configuration..."
 
-# Generate ports.conf to ensure all required ports are listening
+# Apache is the Traefik BACKEND only: never bind :80/:443 (Traefik owns those).
+# Public site vhosts listen on 8083; Traefik proxies 80/443 → 127.0.0.1:8083.
 cat <<EOF > /etc/apache2/ports.conf
-Listen 80
+Listen 8083
 Listen 8080
 Listen 8081
 Listen 8082
 Listen 8086
-<IfModule ssl_module>
-    Listen 443
-</IfModule>
 EOF
 
 echo "[INFO] Generating Apache VirtualHosts..."
 
-# X-Forwarded-Proto policy (per-environment via .env, default = force https).
-# Prod (Cloudflare TLS -> tunnel -> Traefik -> Apache): Apache must tell PHP
-# the original request was HTTPS so Secure cookies, HSTS, and wss://
-# connect-src are set correctly. Dev serves plain HTTP — forcing "https"
-# here makes PHP mark session cookies Secure, browsers refuse to send them
-# back over HTTP, and every request loses its session (CSRF token errors).
+# X-Forwarded-Proto policy (per-environment via .env).
+# true  → local/prod act-as-HTTPS: Apache always tells PHP the request was
+#         HTTPS (Secure cookies, HSTS, wss://). Use https:// host entry.
+# false → preserve Traefik's real X-Forwarded-Proto (pure HTTP mode).
 FORCE_XFP_HTTPS="${FORCE_XFP_HTTPS:-true}"
 if [ "$FORCE_XFP_HTTPS" = "true" ]; then
     XFP_HTTPS_HEADER='    RequestHeader set X-Forwarded-Proto "https"'
+    echo "[INFO] FORCE_XFP_HTTPS=true — app treats every request as HTTPS"
 else
-    # Empty line is valid inside the vhost — Apache ignores blank lines.
     XFP_HTTPS_HEADER=""
-    echo "[INFO] FORCE_XFP_HTTPS=false — preserving Traefik X-Forwarded-Proto (dev HTTP mode)"
+    echo "[INFO] FORCE_XFP_HTTPS=false — preserving Traefik X-Forwarded-Proto (HTTP mode)"
 fi
 cat <<EOF > /etc/apache2/sites-available/error-service.conf
 # Static branded error pages — deliberately decoupled from the labs app
@@ -212,7 +208,7 @@ cat <<EOF > /etc/apache2/sites-available/error-service.conf
 EOF
 
 cat <<EOF > /etc/apache2/sites-available/labs.conf
-<VirtualHost *:80>
+<VirtualHost *:8083>
     ServerAdmin $SSL_EMAIL
     DocumentRoot "/var/www/labs/htdocs"
     ServerName $MAIN_DOMAIN
@@ -228,14 +224,13 @@ cat <<EOF > /etc/apache2/sites-available/labs.conf
     ProxyPass /mcp !
 
     # WebSocket STOMP proxy for global chat (RabbitMQ web-stomp on 15674)
-    # Host port 9080 -> container port 80 -> this vhost -> RabbitMQ container 15674
+    # Traefik :80/:443 -> this vhost :8083 -> RabbitMQ container 15674
     ProxyPass /ws ws://rabbitmq.tomweb.in:15674/ws
     ProxyPassReverse /ws ws://rabbitmq.tomweb.in:15674/ws
 
-    # Cloudflare terminates HTTPS; Apache receives HTTP from Traefik.
-    # Tell PHP the original request was HTTPS so Secure cookies,
-    # HSTS, and wss:// connect-src are set correctly.
-    # (Conditional — see FORCE_XFP_HTTPS above; dev HTTP mode omits this.)
+    # Traefik terminates TLS (or forces XFP); Apache tells PHP the original
+    # scheme so Secure cookies / HSTS / wss:// connect-src are correct.
+    # (Conditional — see FORCE_XFP_HTTPS above.)
 ${XFP_HTTPS_HEADER}
 
     # OAuth discovery metadata
@@ -254,7 +249,7 @@ ${XFP_HTTPS_HEADER}
 EOF
 
 cat <<EOF > /etc/apache2/sites-available/mqs.conf
-<VirtualHost *:80>
+<VirtualHost *:8083>
     ServerName $MQS_DOMAIN
 
     ProxyRequests Off
@@ -298,7 +293,7 @@ RewriteMap code_map "txt:/etc/apache2/code_server_map.txt"
 ProxyTimeout 600
 ProxyBadHeader Ignore
 
-<VirtualHost *:80>
+<VirtualHost *:8083>
     ServerName $CODE_DOMAIN
     ServerAlias *.$CODE_DOMAIN
     
@@ -329,7 +324,7 @@ EOF
 # Optional vhosts — generated only when the corresponding domain is set
 if [ -n "${WORK_DOMAIN:-}" ]; then
 cat <<EOF > /etc/apache2/sites-available/work.conf
-<VirtualHost *:80>
+<VirtualHost *:8083>
     ServerAdmin $SSL_EMAIL
     DocumentRoot "/var/www/docs"
     ServerName $WORK_DOMAIN
@@ -348,7 +343,7 @@ fi
 
 if [ -n "${NEWS_DOMAIN:-}" ]; then
 cat <<EOF > /etc/apache2/sites-available/news.conf
-<VirtualHost *:80>
+<VirtualHost *:8083>
     ServerAdmin $SSL_EMAIL
     DocumentRoot "/var/www/news-site/public"
     ServerName $NEWS_DOMAIN
@@ -391,6 +386,22 @@ providers:
 EOF
 
 mkdir -p /etc/traefik/dynamic
+
+# When acting as HTTPS, redirect plain-HTTP entry → HTTPS (Secure cookies need it).
+if [ "$FORCE_XFP_HTTPS" = "true" ]; then
+    XFP_REDIRECT_MIDDLEWARE='
+    redirect-https:
+      redirectScheme:
+        scheme: https
+        permanent: false'
+    LABS_HTTP_MIDDLEWARES='
+      middlewares:
+        - redirect-https'
+else
+    XFP_REDIRECT_MIDDLEWARE=""
+    LABS_HTTP_MIDDLEWARES=""
+fi
+
 cat <<EOF > /etc/traefik/dynamic/dynamic_conf.yml
 http:
   middlewares:
@@ -415,7 +426,7 @@ http:
       errors:
         status: ["404", "500", "502", "503", "504"]
         service: error-service
-        query: "/{status}.html"
+        query: "/{status}.html"${XFP_REDIRECT_MIDDLEWARE}
 
   services:
     error-service:
@@ -429,11 +440,11 @@ http:
     apache-service:
       loadBalancer:
         servers:
-          - url: "http://127.0.0.1:80"
+          - url: "http://127.0.0.1:8083"
     mqs-service:
       loadBalancer:
         servers:
-          - url: "http://127.0.0.1:80"
+          - url: "http://127.0.0.1:8083"
     vpn-api-service:
       loadBalancer:
         servers:
@@ -441,7 +452,7 @@ http:
     code-server-service:
       loadBalancer:
         servers:
-          - url: "http://127.0.0.1:80"
+          - url: "http://127.0.0.1:8083"
 
   routers:
     labs-router:
@@ -456,7 +467,7 @@ http:
       rule: "Host(\`$MAIN_DOMAIN\`)"
       service: apache-service
       entryPoints:
-        - web
+        - web${LABS_HTTP_MIDDLEWARES}
 
     lab-catchall:
       rule: "HostRegexp(\`{any:.+}\`)"

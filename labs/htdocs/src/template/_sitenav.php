@@ -106,7 +106,7 @@
                 </button>
                 <!-- Notification card -->
                 <div class="dropdown-menu dropdown-menu-end dropdown-menu-lg pt-0 simple-blur notifications" id="notif-dropdown"
-                    style="position: fixed; top: 60px; right: 7.10rem; left: auto; min-width: 750px; max-height: 650px; max-height: calc(100vh - 80px); border-radius: 16px; overflow: hidden; display: none; flex-direction: column; background: var(--cui-body-bg, #212631); z-index: 1082; padding: 0;">
+                    style="position: fixed; top: 60px; right: 7.10rem; left: auto; min-width: 750px; max-height: 650px; max-height: calc(-80px + 80vh); border-radius: 16px; overflow: hidden; display: none; flex-direction: column; background: var(--cui-body-bg, #212631); z-index: 1082; padding: 0;">
                     <!-- Header -->
                     <div class="dropdown-header d-flex align-items-center justify-content-between flex-shrink-0 px-3 py-3 border-bottom border-secondary border-opacity-20" style="white-space: normal;">
                         <div class="me-2">
