@@ -21615,6 +21615,77 @@ html[data-coreui-theme=dark] .blur [class*=stat-pill-] {
   flex: 1;
 }
 
+/* ═════════════════════════════════════════════════════════════════════
+   Custom Theme-Aware Tooltip — Completion Time (Quiz)
+   Shows on hover, hidden by default, adapts to light/dark theme via CSS vars
+   ════════════════════════════════════════════════════════════════════ */
+.quiz-completion-tooltip {
+  position: relative;
+  cursor: default;
+}
+
+.quiz-completion-tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 12px;
+  max-width: 220px;
+  background: var(--cui-secondary-bg, rgba(12, 20, 32, 0.95));
+  color: var(--cui-body-color, #ffffff);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  text-align: center;
+  border-radius: 8px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  transform: translateX(-50%) translateY(4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  z-index: 10000;
+  pointer-events: none;
+}
+
+.quiz-completion-tooltip::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 7px 7px 0 7px;
+  border-style: solid;
+  border-color: var(--cui-secondary-bg, rgba(12, 20, 32, 0.95)) transparent transparent transparent;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  transform: translateX(-50%) translateY(2px);
+  z-index: 10000;
+}
+
+html[data-coreui-theme=light] .quiz-completion-tooltip::after,
+html[data-coreui-theme=light] .quiz-completion-tooltip::before {
+  background: rgba(240, 244, 248, 0.95);
+  color: #000000;
+  border-color: rgba(0, 0, 0, 0.08);
+  text-shadow: none;
+}
+
+html[data-coreui-theme=light] .quiz-completion-tooltip::before {
+  border-color: rgba(240, 244, 248, 0.95) transparent transparent transparent;
+}
+
+.quiz-completion-tooltip:hover::after,
+.quiz-completion-tooltip:hover::before {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
 /* Sidebar Layout Fix: Ensure Footer and Stats stay at bottom */
 .sidebar {
   display: flex !important;

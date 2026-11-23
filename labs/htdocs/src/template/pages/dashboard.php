@@ -391,7 +391,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                 
                 <div class="card-body p-3 d-flex flex-column position-relative z-2">
                     <!-- Greeting row -->
-                    <div class="d-flex align-items-center justify-content-between mb-2">
+                <div class="d-flex align-items-center justify-content-start mb-2">
                         <div class="d-flex align-items-center gap-3">
                             <img src="<?= $avatar ?>" alt="Profile" class="rounded-circle flex-shrink-0" style="width: 44px; height: 44px; object-fit: cover;">
                             <div>
@@ -917,12 +917,12 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
             <div class="liquid-rim p-3 mb-3" id="streak-card">
                 <div class="d-flex align-items-center justify-content-between mb-2">
                     <svg class="icon" style="color: rgb(var(--cui-warning-rgb));">
-                        <use xlink:href="/assets/icons/duotone.svg#cid-fire"></use>
+                        <use xlink:href="/assets/icons/duotone.svg#tom-fire"></use>
                     </svg>
                     <h6 class="fw-bold mb-0">Streak</h6>
                     <button class="btn btn-transparent btn-sm p-0" id="streak-help-btn" title="How streaks work" style="line-height:1;">
                         <svg class="icon" style="width:16px;height:16px;opacity:0.7;">
-                            <use xlink:href="/assets/icons/duotone.svg#cid-info"></use>
+                            <use xlink:href="/assets/icons/duotone.svg#tom-info"></use>
                         </svg>
                     </button>
                 </div>
@@ -954,8 +954,14 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                             <div class="<?= htmlspecialchars($cls) ?>" title="<?= htmlspecialchars($title) ?>">
                                 <?php if ($awarded): ?>
                                     <span class="streak-reward-label">+<?= $streakState['total_zeal_today'] ?? 0 ?></span>
+                                    🔥
+                                <?php elseif ($today): ?>
+                                    🔥
+                                <?php elseif ($done): ?>
+                                    ✅
+                                <?php else: ?>
+                                    ⚪
                                 <?php endif; ?>
-                                <?= htmlspecialchars((string)$d) ?>
                             </div>
                             <?php if ($d < 14): ?>
                             <div class="streak-seg <?= $done ? 'done' : '' ?>"></div>
@@ -1124,14 +1130,14 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                     <button type="button" class="btn-close modal-header-close d-none" data-coreui-dismiss="modal" aria-label="Close"></button>
                 </div>
             </div>
-            <div class="modal-body streak-modal-body" style="line-height: 1.7; height: 640px; overflow: hidden; display: flex;">
-                <div class="row g-3 w-100 h-100 m-0 p-0">
-                    <div class="col-md-7 d-flex flex-column p-0">
-                        <div class="table-responsive streak-table-responsive flex-fill">
-                            <table class="table table-sm mb-0" style="font-size:0.72rem; min-width: 600px;">
+            <div class="modal-body streak-modal-body" style="line-height: 1.7; display: flex; flex-direction: column; max-height: calc(100vh - 200px); padding: 1.25rem;">
+                <div class="row g-3 w-100 m-0 p-0 flex-fill overflow-hidden">
+                    <div class="col-md-7 d-flex flex-column p-0 border-end border-secondary border-opacity-20 overflow-y-auto" style="max-height: calc(100vh - 260px);">
+                        <div class="table-responsive streak-table-responsive flex-fill pe-3">
+                            <table class="table table-sm mb-0" style="font-size:0.72rem; min-width: 417px;">
                                 <thead style="position:sticky;top:0;z-index:1;">
                                     <tr>
-                                        <th style="width:36px;">Day</th>
+                                        <th style="width:34px;">Day</th>
                                         <th>🔥</th>
                                         <th>Milestone</th>
                                     </tr>
@@ -1142,23 +1148,23 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                             </table>
                         </div>
                     </div>
-                    <div class="col-md-5 d-flex flex-column p-0">
-                        <div class="d-flex gap-2 mb-3">
+                    <div class="col-md-5 d-flex flex-column p-0 ps-3 overflow-y-auto" style="max-height: calc(100vh - 260px);">
+                        <div class="d-flex gap-2 mb-3 flex-shrink-0">
                             <div class="liquid-rim p-2 text-center flex-fill">
-                                <div class="fw-bold" style="font-size:1.1rem;color:rgb(var(--cui-warning-rgb));"><?= htmlspecialchars((int)$streakState['max_zeal'] ?? 1500) ?></div>
+                                <div class="fw-bold" style="font-size:1.05rem;color:rgb(var(--cui-warning-rgb));"><?= htmlspecialchars((int)$streakState['max_zeal'] ?? 1500) ?></div>
                                 <small class="text-body-secondary" style="font-size:0.65rem;">🔥 Max Zeal</small>
                             </div>
                             <div class="liquid-rim p-2 text-center flex-fill">
-                                <div class="fw-bold" style="font-size:1.1rem;color:rgb(var(--cui-info-rgb));"><?= htmlspecialchars((int)$streakState['max_jolt'] ?? 500) ?></div>
+                                <div class="fw-bold" style="font-size:1.05rem;color:rgb(var(--cui-info-rgb));"><?= htmlspecialchars((int)$streakState['max_jolt'] ?? 500) ?></div>
                                 <small class="text-body-secondary" style="font-size:0.65rem;">⚡ Max Jolt</small>
                             </div>
                         </div>
-                        <div style="font-size:0.73rem; overflow-y: auto; flex: 1; min-height: 0;">
-                            <div class="liquid-rim p-2 mb-2">
+                        <div style="font-size:0.73rem; flex: 1;">
+                            <div class="liquid-rim p-2 mb-2 border-secondary border-opacity-10">
                                 <div class="fw-semibold mb-1">🔥 Daily</div>
                                 <div class="text-body-secondary">+25 zeal for every active day. Any quiz, lab, lesson, code, discussion, or roadmap activity counts.</div>
                             </div>
-                            <div class="liquid-rim p-2 mb-2">
+                            <div class="liquid-rim p-2 mb-2 border-secondary border-opacity-10">
                                 <div class="fw-semibold mb-1">🏆 Milestones</div>
                                 <div class="text-body-secondary">
                                     Bonus 
@@ -1168,7 +1174,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                     .
                                 </div>
                             </div>
-                            <div class="liquid-rim p-2 mb-2">
+                            <div class="liquid-rim p-2 mb-2 border-secondary border-opacity-10">
                                 <div class="fw-semibold mb-1">💔 Misses</div>
                                 <div class="text-body-secondary">
                                     Skip up to 
@@ -1178,7 +1184,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                      penalty. 4th miss breaks the streak.
                                 </div>
                             </div>
-                            <div class="liquid-rim p-2">
+                            <div class="liquid-rim p-2 border-secondary border-opacity-10">
                                 <div class="fw-semibold mb-1">🔄 Cycles</div>
                                 <div class="text-body-secondary">
                                     After 21 days, rewards cycle again. Consecutive cycles earn 

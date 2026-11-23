@@ -64,8 +64,8 @@ class QuizEngine:
 
         # 2. Construct Prompt
         prompt = f"""
-        Act as a world-class Cybersecurity Education Architect.
-        Generate a high-density technical quiz that feels like a professional tournament challenge.
+        Act as a senior technical quiz architect.
+        Generate a concise, hard-hitting technical multiple-choice quiz.
         
         Context:
         - Main Topic: {topic['title']}
@@ -73,23 +73,25 @@ class QuizEngine:
         - Focus: {subtopic['desc']}
         - Target Difficulty: {difficulty.upper()}
         
-        CRITICAL CONTENT RULES:
-        1. UNIQUE TITLE: DO NOT use "{subtopic['title']}" as the starting word. Create a narrative, high-impact title (e.g., "Guarding the Midnight Datastream", "Cracking the Digital Vault", "Sentinels of the Perimeter").
-        2. IMMERSIVE DESCRIPTION: DO NOT start with "Test your knowledge" or "This quiz...". Use an immersive, role-play narrative (e.g., "Step into the shoes of a lead SOC analyst...", "The digital sirens are wailing; only your grasp of {subtopic['title']} can silence them.").
-        3. DYNAMIC TAGS: Provide 5-8 highly specific technical tags (e.g., "snort", "heuristics", "pcp-inspection") instead of generic ones.
-        4. QUESTION QUALITY: Ensure professional, senior-level technical accuracy for the {difficulty} level.
+        STRICT RULES:
+        1. TITLE: Short, punchy narrative title (max 6 words). Do NOT start with "{subtopic['title']}".
+        2. DESC: One crisp sentence max. No roleplay fluff.
+        3. TAGS: 5-8 specific technical tags (e.g., "snort", "heuristics", "pcap-inspection").
+        4. QUESTIONS: {difficulty.upper()} level. Each question text under 20 words. Exactly 4 options, each under 12 words.
+        5. EXPLANATION: Under 25 words per question. Technical, no fluff.
+        6. Return ONLY valid JSON. No markdown fences.
         
-        Return ONLY a strictly valid JSON object:
+        JSON schema:
         {{
-          "title": "Narrative Catchy Title",
-          "desc": "Immersive role-play description (2-3 sentences).",
-          "tags": ["tech-tag-1", "tech-tag-2", "tech-tag-3", "tech-tag-4"],
+          "title": "short title",
+          "desc": "one sentence",
+          "tags": ["tag1", "tag2", "tag3"],
           "questions": [
             {{
-              "text": "Technical challenge question?",
-              "options": ["Choice 0", "Choice 1", "Choice 2", "Choice 3"],
+              "text": "question under 20 words",
+              "options": ["opt0","opt1","opt2","opt3"],
               "correct": 0,
-              "explanation": "Professional breakdown of the correct mechanics."
+              "explanation": "under 25 words"
             }}
           ]
         }}
@@ -119,6 +121,8 @@ class QuizEngine:
             quiz_doc = {
                 "subtopic_id": subtopic_id,
                 "category_id": topic_id,
+                "tag_id": topic_id,
+                "tag_title": topic['title'],
                 "hash": quiz_hash,
                 "difficulty": difficulty,
                 "title": quiz_data.get('title', f"{subtopic['title']} - {difficulty.capitalize()} Mode"),

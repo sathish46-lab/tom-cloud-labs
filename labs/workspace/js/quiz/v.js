@@ -76,6 +76,7 @@ window.startQuiz = function() {
     formData.append('score', 0);
     formData.append('status', 'started');
     formData.append('total', window.QuizEngineConfig.totalQuestions);
+    formData.append('_csrf_token', document.querySelector('meta[name="csrf-token"]')?.content || '');
     fetch('/api/quiz/record_attempt', {
         method: 'POST',
         body: formData
@@ -238,6 +239,7 @@ window.submitAnswer = function() {
     formData.append('question_index', currentStep);
     formData.append('selected_option', selectedOption);
     formData.append('answers', JSON.stringify(userAnswers));
+    formData.append('_csrf_token', document.querySelector('meta[name="csrf-token"]')?.content || '');
 
     fetch('/api/quiz/check_answer', {
         method: 'POST',
@@ -311,6 +313,7 @@ window.showResult = function() {
     formData.append('hash', quizHash);
     formData.append('status', 'completed');
     formData.append('answers', JSON.stringify(userAnswers));
+    formData.append('_csrf_token', document.querySelector('meta[name="csrf-token"]')?.content || '');
 
     fetch('/api/quiz/record_attempt', {
         method: 'POST',

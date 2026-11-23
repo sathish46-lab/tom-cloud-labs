@@ -30,14 +30,42 @@ elseif ($difficulty === 'hard') $joltReward = 5;
 
 // Check if user has already completed this quiz to prevent double rewards UI
 $hasCompletedBefore = false;
+$firstCompletedAt = null;
+$durationSeconds = null; // time from "started" to "completed"
 $user = Session::getUser();
 if ($user && isset($quiz['hash'])) {
     $db = DatabaseConnection::getDefaultDatabase();
-    $hasCompletedBefore = $db->quiz_attempts->findOne([
-        'user_email' => $user->getEmail(),
-        'quiz_hash' => $quiz['hash'],
-        'status' => 'completed'
-    ]) !== null;
+    $first = $db->quiz_attempts->findOne(
+        [
+            'user_email' => $user->getEmail(),
+            'quiz_hash' => $quiz['hash'],
+            'status' => 'completed'
+        ],
+        [
+            'sort' => ['attempted_at' => 1],
+        ]
+    );
+    if ($first) {
+        $hasCompletedBefore = true;
+        $firstCompletedAt = (int)($first['attempted_at'] ?? 0);
+
+        // Duration = started attempt -> completed attempt
+        $started = $db->quiz_attempts->findOne(
+            [
+                'user_email' => $user->getEmail(),
+                'quiz_hash' => $quiz['hash'],
+                'status' => 'started',
+                'score' => 0,
+                'attempted_at' => ['$lte' => $firstCompletedAt],
+            ],
+            [
+                'sort' => ['attempted_at' => -1],
+            ]
+        );
+        if ($started && !empty($started['attempted_at'])) {
+            $durationSeconds = max(0, $firstCompletedAt - (int)($started['attempted_at']));
+        }
+    }
 }
 
 if ($hasCompletedBefore) {
@@ -68,7 +96,8 @@ if ($hasCompletedBefore) {
             <div class="col-12 text-center mb-3">
                 <div class="d-flex flex-wrap justify-content-center gap-2">
                     <?php foreach ($tags as $tag): ?>
-                        <span class="badge bg-primary bg-opacity-75 text-white px-3 py-2 rounded-pill shadow-sm" style="font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.1); letter-spacing: 0.5px;"><?= strtolower($tag) ?></span>
+                        <?php $tagSlug = strtolower(preg_replace('/[^a-z0-9]+/i', '-', trim($tag))); ?>
+                        <span class="badge bg-primary bg-opacity-75 text-white px-3 py-2 rounded-pill shadow-sm" style="font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.1); letter-spacing: 0.5px;"><?= $tagSlug ?></span>
                     <?php endforeach; ?>
                     <button class="btn btn-link text-body-secondary p-0 ms-1" title="Share Quiz"><i class="bx bx-share-alt small"></i></button>
                 </div>
@@ -94,6 +123,13 @@ if ($hasCompletedBefore) {
                         <span class="text-body-secondary x-small me-3">Time Remaining</span>
                         <span id="timer-display" class="text-body-emphasis fw-bold">--:-- <i class="bx bx-time-five text-body-secondary ms-1"></i></span>
                     </div>
+                    <?php if ($hasCompletedBefore && $durationSeconds !== null): ?>
+                    <div class="vr bg-secondary opacity-10 d-none d-md-block" style="height: 20px;"></div>
+                    <div class="stat-group d-flex align-items-center quiz-completion-tooltip" data-tooltip="Started: <?= date('M j, Y \a\t g:i A', $firstCompletedAt - $durationSeconds) ?>&#10;Completed: <?= date('M j, Y \a\t g:i A', $firstCompletedAt) ?>">
+                        <span class="text-body-secondary x-small me-3">Completion Time</span>
+                        <span class="text-body-emphasis fw-bold text-success"><?= sprintf('%02d:%02d', (int)floor($durationSeconds / 60), $durationSeconds % 60) ?> <i class="bx bx-stopwatch text-success ms-1"></i></span>
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

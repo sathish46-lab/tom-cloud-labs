@@ -52,7 +52,8 @@ $remainingTagsJson = htmlspecialchars(json_encode(array_slice($tags, 3)));
                     </span>
 
                     <?php foreach (array_slice($tags, 0, 3) as $tag): ?>
-                        <span class="badge rounded-pill px-2 py-1" style="background: #5a57cb; color: #fff; font-size: 0.6rem;"><?= htmlspecialchars(ltrim($tag, '#')) ?></span>
+                        <?php $tagSlug = strtolower(preg_replace('/[^a-z0-9]+/i', '-', trim($tag))); ?>
+                        <span class="badge rounded-pill px-2 py-1" style="background: #5a57cb; color: #fff; font-size: 0.6rem;"><?= htmlspecialchars($tagSlug) ?></span>
                     <?php endforeach; ?>
 
                     <?php if ($remainingTagsCount > 0): ?>

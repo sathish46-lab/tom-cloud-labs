@@ -220,12 +220,14 @@ class Quiz {
     /**
      * Record a user's quiz attempt results in the database
      */
-    public static function recordAttempt($userEmail, $quizHash, $score, $total, $status = 'completed') {
+    public static function recordAttempt($userEmail, $quizHash, $score, $total, $status = 'completed', $tagId = null, $tagTitle = null) {
         if (!$userEmail) return false;
         $db = DatabaseConnection::getDefaultDatabase();
         return $db->quiz_attempts->insertOne([
             'user_email' => $userEmail,
             'quiz_hash' => $quizHash,
+            'tag_id' => $tagId,
+            'tag_title' => $tagTitle,
             'score' => (int)$score,
             'total' => (int)$total,
             'status' => $status,
