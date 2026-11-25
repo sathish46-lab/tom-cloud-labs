@@ -224,9 +224,14 @@ cat <<EOF > /etc/apache2/sites-available/labs.conf
     ProxyPass /mcp !
 
     # WebSocket STOMP proxy for global chat (RabbitMQ web-stomp on 15674)
-    # Traefik :80/:443 -> this vhost :8083 -> RabbitMQ container 15674
-    ProxyPass /ws ws://rabbitmq.tomweb.in:15674/ws
-    ProxyPassReverse /ws ws://rabbitmq.tomweb.in:15674/ws
+    # Traefik :80/:443 -> this vhost :8083 -> in-container RabbitMQ 15674
+    # Same-origin /ws keeps wss://host/ws valid (no separate mq host / TLS cert).
+    ProxyPass /ws ws://127.0.0.1:15674/ws
+    ProxyPassReverse /ws ws://127.0.0.1:15674/ws
+
+    # Overview stats WebSocket (stats-daemon node on 8085, same container)
+    ProxyPass /stats-ws ws://127.0.0.1:8085/
+    ProxyPassReverse /stats-ws ws://127.0.0.1:8085/
 
     # Traefik terminates TLS (or forces XFP); Apache tells PHP the original
     # scheme so Secure cookies / HSTS / wss:// connect-src are correct.

@@ -61,36 +61,11 @@ const TomSocketClient = function () {
     }
     this.isConnecting = true;
       try {
-        // Read MQ domain from server-injected config (env.json → PHP → window.TOM_CONFIG)
-        // Each environment (dev/prod) has its own mq_domain in env.json
-        let mqDomain = (window.TOM_CONFIG && window.TOM_CONFIG.mq_domain) ? window.TOM_CONFIG.mq_domain : null;
-        
-        // Determine current host for fallback logic
-        const currentHost = window.location.hostname;
-        
-        if (!mqDomain) {
-          // Fallback: dynamically resolve if TOM_CONFIG is not available
-          if (currentHost.includes("dev.tomweb.in")) {
-            mqDomain = "mq.dev.tomweb.in";
-          } else if (currentHost === "localhost" || currentHost === "127.0.0.1") {
-            mqDomain = "localhost:15674"; 
-          } else {
-            mqDomain = "mq.tomweb.in";
-          }
-        }
-        
+        // Same-origin WebSocket: Apache reverse-proxies /ws → RabbitMQ web_stomp
+        // (127.0.0.1:15674 inside Dev_lab). Reusing location.host keeps
+        // http→ws / https→wss in sync and avoids cross-origin TLS/cert failures.
         const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
-        // Determine WebSocket port: use configured MQ port or fallback based on host
-        // RabbitMQ WebStomp plugin listens on 15674; HTTP vhost may be on different port
-        let wsPort = "";
-        if (window.TOM_CONFIG && window.TOM_CONFIG.mq_ws_port) {
-          wsPort = ":" + window.TOM_CONFIG.mq_ws_port;
-        } else if (currentHost.includes("dev.tomweb.in")) {
-          wsPort = ":15674";  // RabbitMQ web_stomp plugin on Dev_lab
-        } else if (window.location.port) {
-          wsPort = ":" + window.location.port;
-        }
-        const wsUrl = `${wsProtocol}://${mqDomain}${wsPort}/ws`;
+        const wsUrl = `${wsProtocol}://${location.host}/ws`;
       
       console.log(`[MQ] Connecting to WebSocket: ${wsUrl}`);
       const ws = new WebSocket(wsUrl);
@@ -256,20 +231,11 @@ const NativeSocketClient = function () {
 
   this.connect = function (path, callback, ui = null) {
     try {
-      // Strictly use the domain injected by the PHP backend via env.json
-      let mqDomain = (window.TOM_CONFIG && window.TOM_CONFIG.mq_domain) ? window.TOM_CONFIG.mq_domain : "mq.tomweb.in";
-      
-      if (!mqDomain) {
-          console.error("[MQ Native] CRITICAL: mq_domain not provided by backend config!");
-          return;
-      }
-
+      // Same-origin WebSocket: Apache proxies the path (e.g. /stats-ws) to the
+      // stats-daemon (127.0.0.1:8085) on this host. location.host includes
+      // the port when the page is not on a default scheme port.
       const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
-      const port = window.location.port ? ":" + window.location.port : "";
-      
-      // If the backend injected a full localhost string (e.g. localhost:15674), don't append the window port
-      const finalDomain = mqDomain.includes(":") ? mqDomain : `${mqDomain}${port}`;
-      const wsUrl = `${wsProtocol}://${finalDomain}${path}`;
+      const wsUrl = `${wsProtocol}://${location.host}${path}`;
 
       console.log(`[MQ Native] Connecting to WebSocket: ${wsUrl}`);
       this.ws = new WebSocket(wsUrl);

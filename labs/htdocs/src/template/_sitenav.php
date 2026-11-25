@@ -117,6 +117,10 @@
                                 <svg class="icon" viewBox="0 0 256 256" width="14" height="14"><use href="/assets/icons/duotone.svg#tom-check-circle"></use></svg>
                                 Mark all as read
                             </button>
+                            <button class="btn btn-xs btn-link text-secondary p-0 me-2" id="notif-settings-btn" title="Notification preferences" onclick="notifOpenSettings(event)" style="line-height: normal; text-decoration: none; font-size: 0.75rem;">
+                                <svg class="icon" viewBox="0 0 256 256" width="14" height="14"><use href="/assets/icons/duotone.svg#tom-settings"></use></svg>
+                                Settings
+                            </button>
                             <button class="btn btn-danger btn-icon btn-sm n-dismiss p-0 ms-2" aria-label="Close" onclick="notifCloseDropdown(event)" style="width: 28px; height: 28px; border-radius: 50%;">
                                 <svg class="icon" viewBox="0 0 256 256" width="16" height="16"><use href="/assets/icons/duotone.svg#tom-x-circle"></use></svg>
                             </button>
@@ -163,46 +167,6 @@
                         <?php endforeach; ?>
                     </div>
                 </div>
-                <style>
-                #notif-dropdown .tab-buttons {
-                    display: flex;
-                    gap: 4px;
-                    overflow-x: auto;
-                    scrollbar-width: none;
-                }
-                #notif-dropdown .tab-buttons::-webkit-scrollbar { display: none; }
-                #notif-dropdown .tab-button {
-                    position: relative;
-                    flex: 0 0 auto;
-                    min-width: 74px;
-                    background: transparent;
-                    border: 1px solid transparent;
-                    border-radius: 10px;
-                    color: var(--cui-secondary-color);
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 2px;
-                }
-                #notif-dropdown .tab-button p { font-size: 0.7rem; line-height: 1.1; }
-                #notif-dropdown .tab-button:hover { background: rgba(var(--cui-body-color-rgb), 0.06); color: var(--cui-body-color); }
-                #notif-dropdown .tab-button.active-tab {
-                    background: rgba(var(--cui-primary-rgb, 99, 102, 241), 0.14);
-                    border-color: rgba(var(--cui-primary-rgb, 99, 102, 241), 0.45);
-                    color: var(--cui-primary, #6366f1);
-                }
-                #notif-dropdown .tab-button .notification-type-indicator { font-size: 0.6rem; line-height: 1; padding: 3px 5px; }
-                #notif-dropdown .notification-item { display: block; padding: 10px 12px; border-radius: 10px; border-bottom: 1px solid rgba(var(--cui-body-color-rgb), 0.06); white-space: normal; }
-                #notif-dropdown .notification-item:hover { background: rgba(var(--cui-body-color-rgb), 0.05); }
-                #notif-dropdown .notification-item .message { display: flex; align-items: flex-start; gap: 10px; }
-                #notif-dropdown .notif-avatar { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 10px; }
-                #notif-dropdown .notification-title { color: var(--cui-body-color); font-size: 0.85rem; line-height: 1.3; }
-                #notif-dropdown .notification-message { line-height: 1.35; }
-                #notif-dropdown .notification-time { white-space: nowrap; font-size: 0.7rem; }
-                #notif-dropdown .notification-subtitle { font-size: 0.7rem; }
-                #notif-dropdown .notif-spinner { display: flex; justify-content: center; padding: 1rem 0; }
-                #notif-dropdown .notif-item-unread { background: rgba(var(--cui-primary-rgb, 99, 102, 241), 0.06); }
-                </style>
             </li>
 
             <!-- Theme & Background Mega Dropdown -->
@@ -378,6 +342,10 @@
                             <i class="bx bx-crown me-2" style="font-size: 1rem;"></i>
                             <span style="font-size: 0.8rem; font-weight: 600;">Admin Panel</span>
                         </a>
+                        <a class="dropdown-item d-flex align-items-center px-2 py-1 rounded pointer text-warning" href="/admin/notifications">
+                            <i class="bx bx-bell me-2" style="font-size: 1rem;"></i>
+                            <span style="font-size: 0.8rem; font-weight: 600;">Notification Settings</span>
+                        </a>
                         <?php endif; ?>
 
                         <div class="dropdown-divider mx-n2 my-1"></div>
@@ -395,6 +363,156 @@
         </ul>
     </div>
 </header>
+
+
+                <!-- ── User notification settings modal (design: bd4fc6a2 nt-doc-overlay) ── -->
+                <div class="nt-settings-backdrop" id="ntSettingsModal" style="display:none;" onclick="if(event.target===this)notifCloseSettings()">
+                    <div class="card border-0 rounded-4 blur shadow-sm nt-settings-card" onclick="event.stopPropagation()">
+                        <div class="card-header bg-transparent border-bottom border-body-secondary border-opacity-10 py-3 d-flex align-items-center justify-content-between">
+                            <span class="fw-bold"><i class='bx bx-bell me-2'></i>Notification Settings</span>
+                            <button class="nt-doc-close" onclick="notifCloseSettings()" title="Close" aria-label="Close">✕</button>
+                        </div>
+                        <div class="card-body p-3">
+                            <div class="small text-body-secondary mb-3">
+                                Controls which notifications you receive. Admin may gate some globally via
+                                <a href="/admin/notifications">Notification Settings</a>.
+                            </div>
+
+                            <label class="fw-semibold d-block mb-1" for="ntSettingEmail">Email notifications</label>
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <label class="nt-toggle mb-0 d-inline-flex align-items-center" for="ntSettingEmail">
+                                    <input type="checkbox" id="ntSettingEmail">
+                                    <span class="track"><span class="knob"></span></span>
+                                </label>
+                                <span class="nt-toggle-label">Email me new device alerts &amp; digests</span>
+                            </div>
+                            <div class="small text-secondary mt-2">Receive notification emails (Gmail).</div>
+
+                            <hr class="my-3 border-secondary border-opacity-10">
+
+                            <label class="fw-semibold d-block mb-1" for="ntSettingSecurity">Security alerts</label>
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <label class="nt-toggle mb-0 d-inline-flex align-items-center" for="ntSettingSecurity">
+                                    <input type="checkbox" id="ntSettingSecurity">
+                                    <span class="track"><span class="knob"></span></span>
+                                </label>
+                                <span class="nt-toggle-label">Notify on new device sign-in</span>
+                            </div>
+                            <div class="small text-secondary mt-2">In-app alert when your account is used from a new device.</div>
+
+                            <hr class="my-3 border-secondary border-opacity-10">
+
+                            <label class="fw-semibold d-block mb-1" for="ntSettingMcp">MCP live data</label>
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <label class="nt-toggle mb-0 d-inline-flex align-items-center" for="ntSettingMcp">
+                                    <input type="checkbox" id="ntSettingMcp">
+                                    <span class="track"><span class="knob"></span></span>
+                                </label>
+                                <span class="nt-toggle-label">MCP connection live notifications</span>
+                            </div>
+                            <div class="small text-secondary mt-2">Real-time MCP server connect/disconnect events.</div>
+
+                            <hr class="my-3 border-secondary border-opacity-10">
+
+                            <label class="fw-semibold d-block mb-1" for="ntSettingCategories">Category toggles</label>
+                            <div id="ntSettingCategories" class="d-flex flex-wrap gap-2"></div>
+
+                            <div class="d-flex justify-content-end mt-3">
+                                <button class="btn btn-sm btn-outline-secondary me-2" onclick="notifCloseSettings()">Cancel</button>
+                                <button class="btn btn-sm btn-primary" id="ntSettingSave" onclick="notifSaveSettings()">Save changes</button>
+                            </div>
+                            <div id="ntSettingMsg" class="small mt-2"></div>
+                        </div>
+                    </div>
+                </div>
+                <style>
+                /* ── Notification category chips ──
+                   The unread-count badge uses position:absolute top-0 end-0;
+                   without a positioned ancestor it anchors to the dropdown-menu
+                   (floating over the close button). Make the chip the containing
+                   block so the badge sits on the chip's top-right corner. */
+                #notif-tabs .tab-button { position: relative; }
+
+                /* ── Modal shell ── */
+                .nt-settings-backdrop {
+                    position: fixed; inset: 0; z-index: 1300;
+                    display: flex; align-items: center; justify-content: center;
+                    background: rgba(0, 0, 0, .6);
+                    opacity: 0; pointer-events: none;
+                    transition: opacity .18s ease;
+                    padding: 1rem;
+                }
+                .nt-settings-backdrop.is-open { opacity: 1; pointer-events: auto; }
+                .nt-settings-card {
+                    width: min(550px, 94vw);
+                    max-height: min(70vh, 560px);
+                    overflow-y: auto;
+                    border-radius: 1.1rem;
+                    background: color-mix(in srgb, var(--cui-body-bg, #212631) 92%, transparent);
+                    border: 1px solid var(--cui-border-color, rgba(255,255,255,.12));
+                    box-shadow: 0 24px 60px rgba(0, 0, 0, .55);
+                    scrollbar-width: none;
+                    -ms-overflow-style: none;
+                }
+                .nt-settings-card::-webkit-scrollbar { display: none; }
+                .nt-doc-close {
+                    width: 32px; height: 32px;
+                    display: inline-flex; align-items: center; justify-content: center;
+                    border-radius: .5rem;
+                    background: rgba(255, 255, 255, .08);
+                    border: 1px solid rgba(255, 255, 255, .12);
+                    color: rgba(255, 255, 255, .75);
+                    font-size: 1.05rem;
+                    cursor: pointer;
+                    line-height: 1;
+                }
+                .nt-doc-close:hover { background: rgba(229, 83, 83, .18); color: #e55353; }
+                [data-coreui-theme="light"] .nt-doc-close {
+                    background: rgba(16, 24, 40, .06); border-color: rgba(16, 24, 40, .12); color: rgba(16, 24, 40, .65);
+                }
+
+                /* ── Toggle row ── */
+                .nt-toggle { cursor: pointer; user-select: none; }
+                .nt-toggle input { opacity: 0; position: absolute; }
+                .nt-toggle .track {
+                    width: 44px; height: 24px; background: rgba(255,255,255,.12);
+                    border: 1px solid rgba(255,255,255,.18); border-radius: 12px;
+                    display: inline-block; vertical-align: middle; transition: background .2s ease, border-color .2s ease;
+                }
+                .nt-toggle .knob {
+                    width: 20px; height: 20px; background: #fff; border-radius: 50%;
+                    display: inline-block; position: relative; top: 1px; left: 2px;
+                    transition: transform .2s ease, background .2s ease;
+                }
+                .nt-toggle input:checked + .track { background: var(--cui-primary, #6366f1); border-color: var(--cui-primary, #6366f1); }
+                .nt-toggle input:checked + .track .knob { transform: translateX(20px); }
+                .nt-toggle-label { display: inline-block; vertical-align: middle; margin-left: .75rem; font-size: .9rem; color: var(--cui-body-color); }
+                [data-coreui-theme="light"] .nt-toggle-label { color: var(--cui-body-color, #0f172a); }
+
+                /* ── Category chips ── */
+                .nt-settings-category {
+                    display: inline-flex; align-items: center; gap: .5rem;
+                    padding: .35rem .75rem;
+                    border: 1px solid rgba(255,255,255,.1);
+                    border-radius: .6rem;
+                    background: rgba(255, 255, 255, .03);
+                    color: var(--cui-body-color); font-size: .82rem; cursor: pointer;
+                }
+                .nt-settings-category input { opacity: 0; position: absolute; }
+                .nt-settings-category-inner {
+                    width: 18px; height: 18px; border: 1.5px solid rgba(255,255,255,.3);
+                    border-radius: .4rem; display: inline-block; vertical-align: middle;
+                    transition: border-color .2s, background .2s;
+                }
+                .nt-settings-category input:checked + .nt-settings-category-inner {
+                    background: var(--cui-primary, #6366f1); border-color: var(--cui-primary, #6366f1);
+                }
+                [data-coreui-theme="light"] .nt-settings-category { background: rgba(16, 24, 40, .03); border-color: rgba(16, 24, 40, .12); }
+                [data-coreui-theme="light"] .nt-settings-category-inner { border-color: rgba(16, 24, 40, .3); }
+
+                #ntSettingMsg { color: #22c55e; font-size: .82rem; }
+                #ntSettingMsg.error { color: #ef4444; }
+                </style>
 
 <!-- Command Palette Overlay (outside header for proper z-index) -->
 <div class="search-overlay" id="searchOverlay" onclick="if(event.target===this)closeSearchPalette()">
@@ -942,6 +1060,109 @@ document.body.addEventListener('htmx:afterSettle', function(e) {
             bellBtn.setAttribute('aria-expanded', 'false');
         }
     });
+
+    // ── User notification settings modal ──
+    var ntSettingsModal = document.getElementById('ntSettingsModal');
+    var ntSettingMsg = document.getElementById('ntSettingMsg');
+    var ntSettingEmail = document.getElementById('ntSettingEmail');
+    var ntSettingSecurity = document.getElementById('ntSettingSecurity');
+    var ntSettingMcp = document.getElementById('ntSettingMcp');
+    var ntSettingCategories = document.getElementById('ntSettingCategories');
+    var ntSettingSave = document.getElementById('ntSettingSave');
+    var ntSettingsCats = []; // [{cat, label, icon}]
+
+    window.notifOpenSettings = function(ev) {
+        if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+        window.notifCloseDropdown();
+        if (!ntSettingsModal) return;
+        ntSettingsModal.style.display = 'flex';
+        requestAnimationFrame(function() { ntSettingsModal.classList.add('is-open'); });
+        ntSettingMsg.textContent = '';
+        ntSettingMsg.className = '';
+        fetchSettings();
+    };
+
+    function fetchSettings() {
+        fetch('/api/notifications/settings', {
+            credentials: 'same-origin',
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data || !data.success) return;
+            var s = data.settings || {};
+            if (ntSettingEmail) ntSettingEmail.checked = !!s.email;
+            if (ntSettingSecurity) ntSettingSecurity.checked = !!s.security;
+            if (ntSettingMcp) ntSettingMcp.checked = !!s.mcp_live;
+            renderSettingsCats(s.categories || {});
+        })
+        .catch(function() {});
+    }
+
+    function renderSettingsCats(cats) {
+        if (!ntSettingCategories) return;
+        var labels = {};
+        <?php foreach ($notifTabMeta as $cat => $meta): ?>
+        labels['<?= $cat ?>'] = '<?= addslashes($meta[0]) ?>';
+        <?php endforeach; ?>
+        ntSettingCategories.innerHTML = '';
+        Object.keys(cats).forEach(function(cat) {
+            var checked = !!cats[cat];
+            var label = labels[cat] || cat.replace(/[_-]+/g, ' ').replace(/\b\w/g, function(c){ return c.toUpperCase(); });
+            var item = document.createElement('label');
+            item.className = 'nt-settings-category';
+            item.innerHTML = '<input type="checkbox" name="cat_' + cat + '" ' + (checked ? 'checked' : '') + '>' +
+                '<span class="nt-settings-category-inner"></span>' +
+                '<span>' + label + '</span>';
+            ntSettingCategories.appendChild(item);
+        });
+    }
+
+    window.notifCloseSettings = function() {
+        if (!ntSettingsModal) return;
+        ntSettingsModal.classList.remove('is-open');
+        ntSettingsModal.style.display = 'none';
+        dropdown.style.display = 'none';
+        if (bellBtn) bellBtn.setAttribute('aria-expanded', 'false');
+    };
+
+    window.notifSaveSettings = function() {
+        var email = ntSettingEmail ? ntSettingEmail.checked : false;
+        var security = ntSettingSecurity ? ntSettingSecurity.checked : true;
+        var mcp = ntSettingMcp ? ntSettingMcp.checked : true;
+        var categories = {};
+        ntSettingCategories.querySelectorAll('input').forEach(function(inp) {
+            var cat = inp.name.replace('cat_', '');
+            categories[cat] = inp.checked;
+        });
+        var payload = {
+            email: email ? 'true' : 'false',
+            security: security ? 'true' : 'false',
+            mcp_live: mcp ? 'true' : 'false',
+            categories: categories
+        };
+        fetch('/api/notifications/settings', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-Token': (document.querySelector('meta[name="csrf-token"]') || {}).content || ''
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            ntSettingMsg.textContent = data.success ? 'Settings saved.' : (data.error || 'Save failed.');
+            ntSettingMsg.className = data.success ? '' : 'error';
+            if (data.success && window.TomNotify) TomNotify.show('Notification settings saved', 'Success', 'success', 3000);
+        })
+        .catch(function() {
+            ntSettingMsg.textContent = 'Network error.';
+            ntSettingMsg.className = 'error';
+        });
+    };
 
     fetchUnreadCount();
 })();
