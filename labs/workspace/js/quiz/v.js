@@ -374,3 +374,27 @@ window.onPageLoad( () => {
         }
     }
 });
+
+window.reportQuiz = function() {
+    const hash = window.QuizEngineConfig ? window.QuizEngineConfig.hash : '';
+    const title = encodeURIComponent('Quiz Issue Report');
+    const body = encodeURIComponent(`I found an issue with quiz: ${hash}\n\nPlease describe the problem:`);
+    window.location.href = `mailto:support@tomweb.in?subject=${title}&body=${body}`;
+};
+
+window.shareQuiz = function() {
+    const hash = window.QuizEngineConfig ? window.QuizEngineConfig.hash : '';
+    const url = `${window.location.origin}/quiz/v/${hash}`;
+    const shareData = {
+        title: 'Quiz Challenge',
+        text: `Try this quiz: ${document.title}`,
+        url: url
+    };
+    if (navigator.share) {
+        navigator.share(shareData).catch(() => {});
+    } else {
+        navigator.clipboard.writeText(url).then(() => {
+            alert('Quiz link copied to clipboard!');
+        });
+    }
+};

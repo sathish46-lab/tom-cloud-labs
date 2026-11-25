@@ -192,14 +192,25 @@ if ($hasCompletedBefore) {
                         <div class="result-circle mx-auto mb-2">
                             <div class="result-score"><span id="score-val">0</span>/5</div>
                         </div>
-                        <h3 class="text-body-emphasis fw-bold mb-2">Evaluation Complete!</h3>
-                        <p id="result-msg" class="text-body-secondary mb-3"></p>
-                        <p id="reward-msg" class="text-info small mb-4 d-none">
+                        <h1 class="fw-bold text-body-emphasis mb-2">Quiz Completed!</h1>
+                        <p id="reward-msg" class="text-info small mb-4">
                             <i class="bx bxs-gift me-1"></i> Perfect Score! You earned <span id="zeal-earned">0</span> Zeal 🔥 and <span id="jolt-earned">0</span> Jolt ⚡️
                         </p>
-                        <div class="d-flex justify-content-center gap-3">
-                            <button class="btn btn-success rounded-pill px-5 py-2 fw-bold transition-all" onclick="htmx.ajax('GET', location.href, '#main-content')">Retake Quiz</button>
-                            <a href="/quiz" class="btn btn-outline-secondary rounded-pill px-5 py-2 fw-bold">Back to Hub</a>
+                        <div class="d-flex justify-content-center gap-2 mb-3">
+                            <button class="btn btn-success rounded-pill px-5 py-3 fw-bold shadow-lg transition-all" onclick="htmx.ajax('GET', location.href, '#main-content')">
+                                Restart Quiz <i class="bx bx-bolt-circle ms-1"></i>
+                            </button>
+                            <a href="/quiz" class="btn btn-primary rounded-pill px-5 py-3 fw-bold shadow-lg transition-all">
+                                Explore More <i class="bx bx-rocket ms-1"></i>
+                            </a>
+                        </div>
+                        <div class="d-flex justify-content-center gap-2">
+                            <button class="btn btn-danger rounded-pill px-4 py-2 fw-bold transition-all" onclick="reportQuiz()" title="Report Issues">
+                                Report Issues <i class="bx bx-bug ms-1"></i>
+                            </button>
+                            <a href="#" class="btn btn-info rounded-pill px-4 py-2 fw-bold transition-all" onclick="shareQuiz()" title="Share">
+                                Share <i class="bx bx-share-alt ms-1"></i>
+                            </a>
                         </div>
                     </div>
 

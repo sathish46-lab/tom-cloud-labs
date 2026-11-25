@@ -76,8 +76,8 @@ class QuizEngine:
         STRICT RULES:
         1. TITLE: Short, punchy narrative title (max 6 words). Do NOT start with "{subtopic['title']}".
         2. DESC: One crisp sentence max. No roleplay fluff.
-        3. TAGS: 5-8 specific technical tags (e.g., "snort", "heuristics", "pcap-inspection").
-        4. QUESTIONS: {difficulty.upper()} level. Each question text under 20 words. Exactly 4 options, each under 12 words.
+        3. TAGS: At least 3 specific technical tags (e.g., "snort", "heuristics", "pcap-inspection").
+        4. QUESTIONS: Exactly {difficulty.upper()} level. Generate exactly 5 questions — not less, not more. Each question text under 20 words. Exactly 4 options, each under 12 words.
         5. EXPLANATION: Under 25 words per question. Technical, no fluff.
         6. Return ONLY valid JSON. No markdown fences.
         
@@ -92,7 +92,8 @@ class QuizEngine:
               "options": ["opt0","opt1","opt2","opt3"],
               "correct": 0,
               "explanation": "under 25 words"
-            }}
+            }},
+            ... exactly 5 questions total ...
           ]
         }}
         """
@@ -113,6 +114,15 @@ class QuizEngine:
                 cleaned_content = raw_text
 
             quiz_data = json.loads(cleaned_content)
+
+            # Enforce exactly 5 questions and at least 3 tags
+            questions = quiz_data.get('questions', [])
+            if len(questions) != 5:
+                return {"error": f"Quiz must have exactly 5 questions, got {len(questions)}"}
+            tags = quiz_data.get('tags', [])
+            if len(tags) < 3:
+                return {"error": f"Quiz must have at least 3 tags, got {len(tags)}"}
+
             self._update_job(job_id, 70, "Expert evaluation completed. Finalizing...")
 
             # 4. Persistence & Hashing
