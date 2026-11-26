@@ -26032,6 +26032,7 @@ try {
                         this.loadStudyHighlights(container, chId);
                     }
                 }
+                this.scrollContentToBottom(container);
             };
 
             if (typeof marked !== 'undefined') {
@@ -26052,6 +26053,23 @@ try {
                         finishRendering();
                     }
                 }, 100);
+            }
+        },
+
+        scrollContentToBottom: function (container) {
+            if (!container) return;
+            let scrollEl = container;
+            while (scrollEl && scrollEl !== document.body) {
+                const style = window.getComputedStyle(scrollEl);
+                if (style.overflowY === 'auto' || style.overflowY === 'scroll' || style.overflow === 'auto' || style.overflow === 'scroll') {
+                    break;
+                }
+                scrollEl = scrollEl.parentElement;
+            }
+            if (scrollEl) {
+                requestAnimationFrame(() => {
+                    scrollEl.scrollTop = scrollEl.scrollHeight;
+                });
             }
         },
 
@@ -26124,8 +26142,6 @@ try {
                     renderTimer = setTimeout(() => {
                         renderTimer = null;
                         this.renderMarkdownWithHighlighting(accumulatedMd, container);
-                        const contentContainer = document.getElementById('chapterContentContainer');
-                        if (contentContainer) contentContainer.scrollTop = contentContainer.scrollHeight;
                     }, 80);
                 };
                 contentSocket.connect('/topic/content_stream.' + sessionId, (frame, headers) => {
@@ -26154,8 +26170,6 @@ try {
                             if (renderTimer) { clearTimeout(renderTimer); renderTimer = null; }
                             if (statusDiv) statusDiv.classList.add('d-none');
                             this.renderMarkdownWithHighlighting(accumulatedMd, container);
-                            const contentContainer = document.getElementById('chapterContentContainer');
-                            if (contentContainer) contentContainer.scrollTop = contentContainer.scrollHeight;
                             contentSocket.disconnect();
                         }
                     } catch (e) {
@@ -26235,7 +26249,6 @@ try {
                     renderTimer = setTimeout(() => {
                         renderTimer = null;
                         this.renderMarkdownWithHighlighting(buffer, container);
-                        container.scrollTop = container.scrollHeight;
                     }, 80);
                 };
                 sock.connect('/topic/content_stream.' + sessionId, (frame, headers) => {
@@ -26265,7 +26278,6 @@ try {
                             if (renderTimer) { clearTimeout(renderTimer); renderTimer = null; }
                             if (statusDiv) statusDiv.classList.add('d-none');
                             this.renderMarkdownWithHighlighting(buffer, container);
-                            container.scrollTop = container.scrollHeight;
                             sock.disconnect();
                             // Worker saves final content right after stream_end
                             setTimeout(refreshSaved, 1000);
@@ -26292,7 +26304,6 @@ try {
                             lastSeq = s2.seq || 0;
                             buffer = s2.partial;
                             this.renderMarkdownWithHighlighting(buffer, container);
-                            container.scrollTop = container.scrollHeight;
                         }
                     });
                 };
@@ -26314,7 +26325,6 @@ try {
                 // renderMarkdownWithHighlighting already calls loadStudyHighlights at the end,
                 // so do NOT call it again below to avoid race conditions
                 this.renderMarkdownWithHighlighting(md, container);
-                container.scrollTop = container.scrollHeight;
             } else {
                 if (typeof hljs !== 'undefined') {
                     container.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
