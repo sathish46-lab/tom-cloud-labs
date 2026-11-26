@@ -24778,13 +24778,14 @@ try {
                     LearnApp.renderMarkdownWithHighlighting(p.dataset.rawMd, p);
 
                     const scrollBtn = document.getElementById('aiChatScrollToBottom');
-                    if (!LearnApp._userScrolledUp) {
-                        chatHistory.scrollTop = chatHistory.scrollHeight;
-                    } else if (scrollBtn) {
+                    if (scrollBtn && LearnApp._userScrolledUp) {
                         scrollBtn.classList.remove('d-none');
                         scrollBtn.classList.add('d-flex');
                         scrollBtn.innerHTML = '<i class="bx bx-loader-circle bx-spin fs-4"></i>';
                     }
+                    requestAnimationFrame(() => {
+                        chatHistory.scrollTop = chatHistory.scrollHeight;
+                    });
                 }
             };
 
