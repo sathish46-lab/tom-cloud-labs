@@ -36,6 +36,21 @@ try {
     $hasRealHtml = !empty($contentHtml) && trim($contentHtml) !== '...' && trim($contentHtml) !== '' && stripos($contentHtml, 'Welcome to this chapter on') === false;
     $hasRealMd = !empty($contentMd) && trim($contentMd) !== '...' && trim($contentMd) !== '' && !$isDummyFallback;
 
+    // Fix C preprocessor directives incorrectly converted to HTML headings
+    // by the markdown processor: #include, #define, #ifdef, etc. were
+    // turned into <h1>include ...</h1>, <h1>define ...</h1>, etc.
+    function fixCPreprocessorHeadings(string $html): string {
+        $directives = ['include', 'define', 'ifdef', 'ifndef', 'endif', 'pragma', 'error', 'warning', 'undef'];
+        foreach ($directives as $dir) {
+            $html = preg_replace(
+                '/<h[1-6]>\s*' . $dir . '\b([^<]*)<\/h[1-6]>/i',
+                '<code>#$1$2</code>',
+                $html
+            );
+        }
+        return $html;
+    }
+
     // 1. Try Redis direct check
     try {
         $redis = new Redis();
@@ -54,11 +69,11 @@ try {
         // Populate Redis cache for next time
         try {
             if (isset($redis)) {
-                @$redis->setex("learn:content:{$chapterId}", 86400, $contentHtml);
+                @$redis->setex("learn:content:{$chapterId}", 86400, fixCPreprocessorHeadings($contentHtml));
             }
         } catch (Exception $e) {}
 
-        echo $contentHtml;
+        echo fixCPreprocessorHeadings($contentHtml);
         exit;
     }
 

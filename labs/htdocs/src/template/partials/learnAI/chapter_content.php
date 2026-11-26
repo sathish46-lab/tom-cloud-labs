@@ -39,10 +39,25 @@
                         // Set to true to enable the speed-dial freehand drawing toolbar in the bottom right of panel-2.
                         // Set to false to disable freehand drawing toolbar (keeping only text highlighting active).
                         $enable_study_pen_toolbar = true;
+
+                        // Fix C preprocessor directives incorrectly converted to HTML headings
+                        // by the markdown processor: #include, #define, #ifdef, etc. were
+                        // turned into <h1>include ...</h1>, <h1>define ...</h1>, etc.
+                        function fixCPreprocessorHeadings(string $html): string {
+                            $directives = ['include', 'define', 'ifdef', 'ifndef', 'endif', 'pragma', 'error', 'warning', 'undef'];
+                            foreach ($directives as $dir) {
+                                $html = preg_replace(
+                                    '/<h[1-6]>\s*' . $dir . '\b([^<]*)<\/h[1-6]>/i',
+                                    '<code>#$1$2</code>',
+                                    $html
+                                );
+                            }
+                            return $html;
+                        }
                         ?>
                         <div id="chapterContentContainer" class="chapter-text-content lh-lg" style="font-size: 1.05rem;" data-raw-md="<?= htmlspecialchars((!$hasRealHtml && $hasRealMd) ? $chapter['content'] : '') ?>" data-enable-pen-toolbar="<?= $enable_study_pen_toolbar ? 'true' : 'false' ?>">
                             <?php if ($hasRealHtml): ?>
-                                <?= $chapter['content_html'] ?>
+                                <?= fixCPreprocessorHeadings($chapter['content_html']) ?>
                             <?php elseif ($hasRealMd): ?>
                                 <div class="raw-markdown-fallback"><?= htmlspecialchars($chapter['content']) ?></div>
                             <?php else: ?>
