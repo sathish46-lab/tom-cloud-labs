@@ -31,8 +31,6 @@
                                     <span class="small text-secondary">Senior Mentor is crafting practical tutorial material...</span>
                                 </div>
 
-                                <h1 class="fw-bold mb-4 text-white fs-3"><?= htmlspecialchars($chapter['title']) ?></h1>
-
                         <?php
                         $isDummyFallback = !empty($chapter['content']) && strpos($chapter['content'], 'Welcome to this chapter on') !== false;
                         $hasRealHtml = !empty($chapter['content_html']) && $chapter['content_html'] !== '...' && strpos($chapter['content_html'], 'Welcome to this chapter on') === false;
