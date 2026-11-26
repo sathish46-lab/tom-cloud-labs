@@ -433,6 +433,24 @@
                    block so the badge sits on the chip's top-right corner. */
                 #notif-tabs .tab-button { position: relative; }
 
+                /* Active tab styling for notification bell dropdown */
+                #notif-tabs .tab-button.active-tab {
+                    background: rgba(255, 255, 255, 0.12);
+                    border-color: rgba(255, 255, 255, 0.25);
+                }
+                [data-coreui-theme="light"] #notif-tabs .tab-button.active-tab {
+                    background: rgba(0, 0, 0, 0.08);
+                    border-color: rgba(0, 0, 0, 0.12);
+                }
+
+                /* Tab button hover state */
+                #notif-tabs .tab-button:hover:not(.active-tab) {
+                    background: rgba(255, 255, 255, 0.06);
+                }
+                [data-coreui-theme="light"] #notif-tabs .tab-button:hover:not(.active-tab) {
+                    background: rgba(0, 0, 0, 0.04);
+                }
+
                 /* ── Modal shell ── */
                 .nt-settings-backdrop {
                     position: fixed; inset: 0; z-index: 1300;
@@ -479,10 +497,15 @@
                     border: 1px solid rgba(255,255,255,.18); border-radius: 12px;
                     display: inline-block; vertical-align: middle; transition: background .2s ease, border-color .2s ease;
                 }
+                [data-coreui-theme="light"] .nt-toggle .track {
+                    background: rgba(0,0,0,.08);
+                    border-color: rgba(0,0,0,.14);
+                }
                 .nt-toggle .knob {
                     width: 20px; height: 20px; background: #fff; border-radius: 50%;
                     display: inline-block; position: relative; top: 1px; left: 2px;
                     transition: transform .2s ease, background .2s ease;
+                    box-shadow: 0 1px 3px rgba(0,0,0,.25);
                 }
                 .nt-toggle input:checked + .track { background: var(--cui-primary, #6366f1); border-color: var(--cui-primary, #6366f1); }
                 .nt-toggle input:checked + .track .knob { transform: translateX(20px); }
@@ -512,6 +535,26 @@
 
                 #ntSettingMsg { color: #22c55e; font-size: .82rem; }
                 #ntSettingMsg.error { color: #ef4444; }
+
+                /* Account Settings card: same glass look as notification card, but keep its larger modal-lg size */
+                #accountSettingsModal .modal-content {
+                    width: min(920px, 92vw) !important;
+                    max-height: min(88vh, 760px) !important;
+                }
+                /* Use core --glass-bg for both cards so they match the theme color exactly */
+                #accountSettingsModal .modal-content,
+                /* #ntSettingsModal .nt-settings-card {
+                    background: var(--glass-bg) !important;
+                } */
+                /* Always show notification settings and account settings buttons regardless of theme/blur state */
+                #ntSettingsModal .btn,
+                #ntSettingsModal .btn-close,
+                #accountSettingsModal .btn,
+                #accountSettingsModal .btn-close {
+                    visibility: visible !important;
+                    opacity: 1 !important;
+                    pointer-events: auto !important;
+                }
                 </style>
 
 <!-- Command Palette Overlay (outside header for proper z-index) -->
@@ -943,9 +986,10 @@ document.body.addEventListener('htmx:afterSettle', function(e) {
     window.notifItemClick = function(ev, id, href) {
         if (ev) { ev.preventDefault(); ev.stopPropagation(); }
 
+        var clicked = null;
         Object.keys(state).forEach(function(cat) {
             state[cat].items.forEach(function(n) {
-                if (n.id === id) n.read = true;
+                if (n.id === id) { n.read = true; clicked = n; }
             });
         });
         renderPane(currentTab);
@@ -961,6 +1005,16 @@ document.body.addEventListener('htmx:afterSettle', function(e) {
             },
             body: JSON.stringify({ ids: [id] })
         }).then(fetchUnreadCount).catch(function() {});
+
+        // Report notifications carry the submitted data and open a read-only
+        // popup — they never navigate away from the current page.
+        if (clicked && clicked.data && clicked.data.popup === 'report') {
+            window.notifCloseDropdown();
+            if (window.TomReport && typeof window.TomReport.view === 'function') {
+                window.TomReport.view(clicked);
+            }
+            return false;
+        }
 
         if (href && href !== '#' && href !== 'javascript:void(0)') {
             window.location.href = href;
@@ -1107,7 +1161,7 @@ document.body.addEventListener('htmx:afterSettle', function(e) {
         <?php endforeach; ?>
         ntSettingCategories.innerHTML = '';
         Object.keys(cats).forEach(function(cat) {
-            var checked = !!cats[cat];
+            var checked = cats[cat] !== false;  // default checked unless explicitly disabled
             var label = labels[cat] || cat.replace(/[_-]+/g, ' ').replace(/\b\w/g, function(c){ return c.toUpperCase(); });
             var item = document.createElement('label');
             item.className = 'nt-settings-category';

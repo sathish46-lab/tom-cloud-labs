@@ -10,6 +10,18 @@
     window.openAccountSettings = function() {
         const modal = new coreui.Modal(document.getElementById('accountSettingsModal'));
         modal.show();
+        // Make the backdrop semi-transparent like the notification card so the
+        // card's blur actually shows the dimmed page behind it.
+        const setBackdrop = function() {
+            const bd = document.querySelector('.modal-backdrop');
+            if (bd) {
+                bd.style.setProperty('background-color', 'rgba(0, 0, 0, 0.6)', 'important');
+                bd.style.setProperty('opacity', '1', 'important');
+            } else {
+                setTimeout(setBackdrop, 50);
+            }
+        };
+        setBackdrop();
         if (!settingsLoaded) loadAccountSettings();
     };
 

@@ -28,7 +28,7 @@
                     <i class="bx bx-graduation-cap me-1"></i> Self Evaluation
                 </span>
             </div>
-            <small class="text-body-tertiary opacity-50">AI can make mistakes. Found an issue? <a href="#" class="text-info text-decoration-none">Report it</a></small>
+            <small class="text-body-tertiary opacity-50">AI can make mistakes. Found an issue? <a href="#" class="text-info text-decoration-none" onclick="event.preventDefault(); TomReport.open({type:'quiz_hub'}); return false;">Report it</a></small>
         </div>
 
         <!-- 2. Tracked Achievements Section -->

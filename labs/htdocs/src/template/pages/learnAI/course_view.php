@@ -448,7 +448,9 @@ $dbSizesArr = is_string($dbSizesRaw) ? json_decode($dbSizesRaw, true) : $dbSizes
                     <?php endif; ?>
 
                     <div id="aiChatHistory" class="chat-history flex-grow-1 overflow-auto hide-scrollbar p-3 flex-column gap-3 <?= $isAiAssistUnlocked ? 'd-flex' : 'd-none' ?>">
-                        <div class="text-center py-4 my-auto text-secondary small d-flex flex-column align-items-center gap-2"><i class="bx bx-loader-circle bx-spin fs-4 text-primary"></i><span>Loading conversation...</span></div>
+                        <div class="d-flex align-items-center justify-content-center flex-grow-1 w-100 mt-5">
+                            <img src="/assets/img/chatbot.png" style="width:200px;mix-blend-mode:exclusion;opacity:0.4;" alt="">
+                        </div>
                     </div>
 
                     <!-- Floating Scroll to Bottom / Auto-Scroll Wait Button -->

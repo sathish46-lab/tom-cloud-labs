@@ -1634,6 +1634,9 @@ try {
             const chatHistory = document.getElementById('aiChatHistory');
             if (!chatHistory) return;
 
+            const emptyPlaceholder = chatHistory.querySelector('.empty-chat-placeholder');
+            if (emptyPlaceholder) emptyPlaceholder.remove();
+
             const userAvatar = document.getElementById('userAvatarUrl')?.value || '';
             const userAvatarStyle = document.getElementById('userAvatarStyle')?.value || '';
             const aiAvatar = document.getElementById('aiAvatarUrl')?.value || '/assets/logo/logo.png';

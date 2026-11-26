@@ -82,25 +82,8 @@ $userToken  = create_test_user($userEmail, 'user');
 
 // The CSRF token lives in the PHP session, so the session cookie has to travel
 // with every request that must satisfy requireCsrf().
-function session_cookie(string $sessionToken, string $path = '/dashboard'): array {
-    $resp = http_request('GET', $path, ['cookie' => "session_token=$sessionToken"]);
-    $sid = '';
-    if (isset($resp['headers']['Set-Cookie'])
-        && preg_match('/PHPSESSID=([^;]+)/', $resp['headers']['Set-Cookie'], $m)) {
-        $sid = $m[1];
-    }
-    $csrf = null;
-    if (preg_match('/<meta name="csrf-token" content="([^"]+)">/', $resp['body'], $m)) {
-        $csrf = $m[1];
-    }
-    return [
-        'cookie' => 'session_token=' . $sessionToken . ($sid !== '' ? '; PHPSESSID=' . $sid : ''),
-        'csrf'   => $csrf,
-    ];
-}
-
-$admin = session_cookie($adminToken);
-$user  = session_cookie($userToken);
+$admin = test_session_cookie($adminToken);
+$user  = test_session_cookie($userToken);
 
 $resp = http_request('GET', '/admin/appearance', ['cookie' => $admin['cookie']]);
 test("Superuser gets 200 on /admin/appearance", $resp['status'] === 200, 'status=' . $resp['status']);

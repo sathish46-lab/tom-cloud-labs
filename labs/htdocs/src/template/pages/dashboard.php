@@ -1113,8 +1113,8 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
 
 <!-- Streak Rewards Modal -->
 <div class="modal fade" id="streakRewardsModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content blur" style="box-shadow: 0 20px 60px rgba(0,0,0,0.2); border-radius: 1rem; overflow: hidden;">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+            <div class="modal-content blur" style="box-shadow: 0 20px 60px rgba(0,0,0,0.2); border-radius: 1rem; overflow: hidden;">
             <div class="modal-header" style="border-bottom: 2px solid rgba(var(--cui-primary-rgb), 0.1); background: linear-gradient(135deg, rgba(var(--cui-primary-rgb), 0.03) 0%, rgba(var(--cui-info-rgb), 0.03) 100%);">
                 <div class="w-100">
                     <h4 class="modal-title mb-1" style="font-weight: 700;" id="streakModalTitle">Streak Rewards</h4>
@@ -1130,25 +1130,26 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                     <button type="button" class="btn-close modal-header-close d-none" data-coreui-dismiss="modal" aria-label="Close"></button>
                 </div>
             </div>
-            <div class="modal-body streak-modal-body" style="line-height: 1.7; display: flex; flex-direction: column; max-height: calc(100vh - 200px); padding: 1.25rem;">
-                <div class="row g-3 w-100 m-0 p-0 flex-fill overflow-hidden">
-                    <div class="col-md-7 d-flex flex-column p-0 border-end border-secondary border-opacity-20 overflow-y-auto" style="max-height: calc(100vh - 260px);">
-                        <div class="table-responsive streak-table-responsive flex-fill pe-3">
-                            <table class="table table-sm mb-0" style="font-size:0.72rem; min-width: 417px;">
-                                <thead style="position:sticky;top:0;z-index:1;">
-                                    <tr>
-                                        <th style="width:34px;">Day</th>
-                                        <th>🔥</th>
-                                        <th>Milestone</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="streak-table-body">
-                                    <!-- Days populated by JS -->
-                                </tbody>
-                            </table>
-                        </div>
+            <div class="modal-body streak-modal-body" style="line-height: 1.5; display: flex; flex-direction: column; max-height: calc(100vh - 260px); overflow: hidden; padding: 0.85rem; gap: 0.75rem;">
+                <!-- Two separate columns, each with its own scrollbar -->
+                <div style="display: flex; flex-direction: row; gap: 0.75rem; flex: 1; min-height: 0; min-width: 0;">
+                    <!-- Left: streak days table (own scrollbar) -->
+                    <div class="table-responsive streak-table-responsive pe-3" style="flex: 1; min-width: 0; overflow-y: auto;">
+                        <table class="table table-sm mb-0" style="font-size:0.72rem; width: 100%;">
+                            <thead style="position:sticky;top:0;z-index:1;">
+                                <tr>
+                                    <th style="width:34px;">Day</th>
+                                    <th>🔥</th>
+                                    <th>Milestone</th>
+                                </tr>
+                            </thead>
+                            <tbody id="streak-table-body">
+                                <!-- Days populated by JS -->
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="col-md-5 d-flex flex-column p-0 ps-3 overflow-y-auto" style="max-height: calc(100vh - 260px);">
+                    <!-- Right: summary cards (own scrollbar) -->
+                    <div class="d-flex flex-column gap-2" style="flex: 1; min-width: 0; overflow-y: auto;">
                         <div class="d-flex gap-2 mb-3 flex-shrink-0">
                             <div class="liquid-rim p-2 text-center flex-fill">
                                 <div class="fw-bold" style="font-size:1.05rem;color:rgb(var(--cui-warning-rgb));"><?= htmlspecialchars((int)$streakState['max_zeal'] ?? 1500) ?></div>
@@ -1159,7 +1160,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                 <small class="text-body-secondary" style="font-size:0.65rem;">⚡ Max Jolt</small>
                             </div>
                         </div>
-                        <div style="font-size:0.73rem; flex: 1;">
+                        <div class="d-flex flex-column gap-2" style="flex: 1 1 auto;">
                             <div class="liquid-rim p-2 mb-2 border-secondary border-opacity-10">
                                 <div class="fw-semibold mb-1">🔥 Daily</div>
                                 <div class="text-body-secondary">+25 zeal for every active day. Any quiz, lab, lesson, code, discussion, or roadmap activity counts.</div>
@@ -1171,7 +1172,7 @@ $greetingText = str_replace($username, '<span class="text-primary">' . htmlspeci
                                     <b>🔥 zeal + ⚡ jolt</b>
                                      at Day 5, 10, 15, and 21. First time = full reward. Already reached before = 
                                     <span class="text-danger">-15%</span>
-                                    .
+                                     .
                                 </div>
                             </div>
                             <div class="liquid-rim p-2 mb-2 border-secondary border-opacity-10">
@@ -1223,6 +1224,14 @@ window.onPageLoad(function() {
             ev.preventDefault();
             var inst = coreui.Modal.getInstance(streakModalEl) || new coreui.Modal(streakModalEl, { backdrop: true, keyboard: true });
             inst.show();
+            // Lock page scroll (html + body) like account settings modal
+            document.documentElement.style.setProperty('overflow', 'hidden', 'important');
+            document.body.style.setProperty('overflow', 'hidden', 'important');
+            streakModalEl.addEventListener('hidden.coreui.modal', function restoreScroll() {
+                document.documentElement.style.removeProperty('overflow');
+                document.body.style.removeProperty('overflow');
+                streakModalEl.removeEventListener('hidden.coreui.modal', restoreScroll);
+            }, { once: true });
             // Render streak table
             fetch('/api/dashboard/streak', {
                 credentials: 'same-origin',

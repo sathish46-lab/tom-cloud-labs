@@ -160,10 +160,16 @@ function http_request(
             $responseHeaders[trim($key)] = trim($val);
         }
     }
+
+    // Preserve every Set-Cookie line separately: HTTP emits LABSSESSID plus a
+    // stale PHPSESSID eviction header, and the map above keeps only the last.
+    preg_match_all('/^Set-Cookie:\s*([^\r\n]*)/mi', $headersRaw, $scMatches);
+    $setCookieLines = $scMatches[1] ?? [];
     
     return [
         'status' => $httpCode,
         'headers' => $responseHeaders,
+        'set_cookie_lines' => $setCookieLines,
         'body' => $body,
         'body_json' => json_decode($body, true),
     ];
@@ -237,4 +243,36 @@ function get_csrf_token(string $sessionToken): ?string {
     }
     
     return null;
+}
+
+/**
+ * Resolve a session cookie + CSRF token for an authenticated test user.
+ *
+ * The CSRF token lives in the PHP session, so the scheme-specific session
+ * cookie must travel with every request that must satisfy requireCsrf():
+ * HTTP uses LABSSESSID, HTTPS keeps PHPSESSID.
+ */
+function test_session_cookie(string $sessionToken, string $path = '/dashboard'): array {
+    $response = http_request('GET', $path, ['cookie' => "session_token=$sessionToken"]);
+
+    $sidName = '';
+    $sid = '';
+    foreach (($response['set_cookie_lines'] ?? []) as $line) {
+        if (preg_match('/(LABSSESSID|PHPSESSID)=([^;]+)/', $line, $m) && $m[2] !== 'deleted') {
+            $sidName = $m[1];
+            $sid = $m[2];
+        }
+    }
+
+    $csrf = null;
+    if (preg_match('/<meta name="csrf-token" content="([^"]+)">/', $response['body'], $m)) {
+        $csrf = $m[1];
+    }
+
+    $cookie = 'session_token=' . $sessionToken;
+    if ($sid !== '') {
+        $cookie .= '; ' . $sidName . '=' . $sid;
+    }
+
+    return ['cookie' => $cookie, 'csrf' => $csrf];
 }

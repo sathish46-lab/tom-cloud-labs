@@ -12,7 +12,7 @@ $currentUserRole = $currentUser?->getRole() ?? 'user';
 ?>
 <div class="modal fade" id="accountSettingsModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-        <div class="modal-content blur shadow-lg rounded-4 border-0" style="border: 1px solid rgba(255,255,255,0.08) !important;">
+        <div class="modal-content card border-0 rounded-4 blur nt-settings-card">
             <div class="modal-header border-0 pt-3 px-4 pb-0">
                 <h4 class="modal-title fw-bold fs-6">Account settings</h4>
                 <button type="button" class="btn-close btn-close-white" data-coreui-dismiss="modal"></button>

@@ -205,7 +205,7 @@ if ($hasCompletedBefore) {
                             </a>
                         </div>
                         <div class="d-flex justify-content-center gap-2">
-                            <button class="btn btn-danger rounded-pill px-4 py-2 fw-bold transition-all" onclick="reportQuiz()" title="Report Issues">
+                            <button class="btn btn-danger rounded-pill px-4 py-2 fw-bold transition-all" onclick="TomReport.open({type:'quiz', id: (window.QuizEngineConfig && window.QuizEngineConfig.hash) || ''})" title="Report Issues">
                                 Report Issues <i class="bx bx-bug ms-1"></i>
                             </button>
                             <a href="#" class="btn btn-info rounded-pill px-4 py-2 fw-bold transition-all" onclick="shareQuiz()" title="Share">

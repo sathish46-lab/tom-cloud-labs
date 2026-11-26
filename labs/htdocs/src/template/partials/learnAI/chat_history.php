@@ -118,6 +118,10 @@ try {
         }
     }
     
+    if (empty($messages)) {
+        $html .= '<div class="empty-chat-placeholder d-flex align-items-center justify-content-center flex-grow-1 w-100 mt-5"><img src="/assets/img/chatbot.png" style="width:200px;mix-blend-mode:exclusion;opacity:0.4;" alt=""></div>';
+    }
+
     echo $html;
 
 } catch (Exception $e) {
