@@ -101,35 +101,6 @@ if systemctl is-active --quiet redis-server; then
     redis-cli ACL SAVE 2>/dev/null || true
 fi
 
-# 1.9. MongoDB learner admin user (fresh datadir → localhost exception allows bootstrap)
-if systemctl is-active --quiet mongod; then
-    MONGO_USER=$(jq -r '.mongo_user // "admin"' /var/www/env.json 2>/dev/null)
-    MONGO_PASS=$(jq -r '.mongo_pass // empty' /var/www/env.json 2>/dev/null)
-    if [ -n "$MONGO_USER" ] && [ -n "$MONGO_PASS" ]; then
-        echo "[INFO] Waiting for mongod..."
-        for i in $(seq 1 30); do
-            mongosh --quiet --eval 'db.runCommand({ping:1})' >/dev/null 2>&1 && break
-            sleep 1
-        done
-        MONGO_BOOT=$(mongosh --quiet --eval "
-            const admin = db.getSiblingDB('admin');
-            try {
-                admin.runCommand({createUser: '${MONGO_USER}', pwd: '${MONGO_PASS}', roles: [{role: 'root', db: 'admin'}]});
-                print('MONGO_BOOTSTRAP_CREATED');
-            } catch (e) {
-                if (/already exists/i.test(e.message)) { print('MONGO_BOOTSTRAP_EXISTS'); }
-                else { print('MONGO_BOOTSTRAP_ERR ' + e.message); }
-            }" 2>/dev/null | tail -1)
-        case "$MONGO_BOOT" in
-            *CREATED*) echo "[INFO] MongoDB learner admin user '${MONGO_USER}' created." ;;
-            *EXISTS*)  echo "[INFO] MongoDB learner admin user '${MONGO_USER}' already present." ;;
-            *)         echo "[WARN] MongoDB bootstrap: ${MONGO_BOOT:-no output}" ;;
-        esac
-    else
-        echo "[WARN] mongo_pass missing in env.json — skipping MongoDB admin bootstrap."
-    fi
-fi
-
 # 2. Build dependencies (if directories exist)
 if [ -d "/var/www/labs/htdocs" ]; then
     echo "[INFO] Installing Composer dependencies for labs..."

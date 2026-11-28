@@ -16,5 +16,7 @@ if [ -f /var/www/env.json ]; then
     export MONGO_PASS=$(python3 -c "import json; print(json.load(open('/var/www/env.json'))['mongo_pass'])")
 fi
 
-# MCP server: restricted credentials (readWrite on tom_labs_db only), colocated mongod
-export MCP_MONGO_URI="mongodb://mcp_server:mcp_secure_2026@127.0.0.1:27017/tom_labs_db?authSource=admin"
+# MCP server: restricted credentials (readWrite on tom_labs_db only).
+# MCP_MONGO_PASS is injected via the vps environment in docker-compose.yml.
+# MCP connects to prodmongo.tomweb.in (private platform data), never the old colocated mongod.
+export MCP_MONGO_URI="mongodb://mcp_server:${MCP_MONGO_PASS}@prodmongo.tomweb.in:27017/tom_labs_db?authSource=admin"

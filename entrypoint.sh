@@ -19,7 +19,6 @@ export MAIN_DOMAIN=${MAIN_DOMAIN:-tomweb.in}
 export VPN_DOMAIN=${VPN_DOMAIN:-vpn.tomweb.in}
 export MQS_DOMAIN=${MQS_DOMAIN:-mq.tomweb.in}
 export CODE_DOMAIN=${CODE_DOMAIN:-tomweb.shop}
-export WORK_DOMAIN=${WORK_DOMAIN:-}
 export NEWS_DOMAIN=${NEWS_DOMAIN:-}
 export SSL_EMAIL=${SSL_EMAIL:-admin@example.com}
 
@@ -88,10 +87,12 @@ cat <<EOF > /etc/wireguard/wg0.conf
 Address = $TUNNEL_IP
 PostUp = iptables -A FORWARD -i wg0 -o eth0 -j ACCEPT
 PostUp = iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE
+PostUp = iptables -I FORWARD 1 -i wg0 -d 10.20.209.0/24 -j DROP
 ${BRIDGE_IF:+PostUp = iptables -A FORWARD -i wg0 -o $BRIDGE_IF -j ACCEPT}
 ${BRIDGE_IF:+PostUp = iptables -t nat -I POSTROUTING -o $BRIDGE_IF -j MASQUERADE}
 PreDown = iptables -D FORWARD -i wg0 -o eth0 -j ACCEPT
 PreDown = iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
+PreDown = iptables -D FORWARD -i wg0 -d 10.20.209.0/24 -j DROP
 ${BRIDGE_IF:+PreDown = iptables -D FORWARD -i wg0 -o $BRIDGE_IF -j ACCEPT}
 ${BRIDGE_IF:+PreDown = iptables -t nat -D POSTROUTING -o $BRIDGE_IF -j MASQUERADE}
 ListenPort = 51820
@@ -326,45 +327,6 @@ ${XFP_HTTPS_HEADER}
 </VirtualHost>
 EOF
 
-# Optional vhosts — generated only when the corresponding domain is set
-if [ -n "${WORK_DOMAIN:-}" ]; then
-cat <<EOF > /etc/apache2/sites-available/work.conf
-<VirtualHost *:8083>
-    ServerAdmin $SSL_EMAIL
-    DocumentRoot "/var/www/docs"
-    ServerName $WORK_DOMAIN
-
-    ErrorLog \${APACHE_LOG_DIR}/work_error.log
-    CustomLog \${APACHE_LOG_DIR}/work_access.log combined
-
-    <Directory "/var/www/docs">
-            Options -Indexes +FollowSymLinks -ExecCGI +Includes
-            AllowOverride All
-            Require all granted
-    </Directory>
-</VirtualHost>
-EOF
-fi
-
-if [ -n "${NEWS_DOMAIN:-}" ]; then
-cat <<EOF > /etc/apache2/sites-available/news.conf
-<VirtualHost *:8083>
-    ServerAdmin $SSL_EMAIL
-    DocumentRoot "/var/www/news-site/public"
-    ServerName $NEWS_DOMAIN
-
-    ErrorLog \${APACHE_LOG_DIR}/news_error.log
-    CustomLog \${APACHE_LOG_DIR}/news_access.log combined
-
-    <Directory "/var/www/news-site/public">
-            Options -Indexes +FollowSymLinks
-            AllowOverride All
-            Require all granted
-    </Directory>
-</VirtualHost>
-EOF
-fi
-
 # 3. Generate Traefik Dynamic config
 echo "[INFO] Generating Traefik Configuration..."
 
@@ -531,48 +493,6 @@ EOF
 
 # Optional Traefik routers for work/news — written as separate provider files
 # (and removed when the domains are unset).
-if [ -n "${WORK_DOMAIN:-}" ]; then
-cat <<EOF > /etc/traefik/dynamic/work.yml
-http:
-  routers:
-    work-http-router:
-      rule: "Host(\`$WORK_DOMAIN\`)"
-      service: apache-service
-      entryPoints:
-        - web
-    work-router:
-      rule: "Host(\`$WORK_DOMAIN\`)"
-      service: apache-service
-      entryPoints:
-        - websecure
-      tls:
-        certResolver: myresolver
-EOF
-else
-    rm -f /etc/traefik/dynamic/work.yml
-fi
-
-if [ -n "${NEWS_DOMAIN:-}" ]; then
-cat <<EOF > /etc/traefik/dynamic/news.yml
-http:
-  routers:
-    news-http-router:
-      rule: "Host(\`$NEWS_DOMAIN\`)"
-      service: apache-service
-      entryPoints:
-        - web
-    news-router:
-      rule: "Host(\`$NEWS_DOMAIN\`)"
-      service: apache-service
-      entryPoints:
-        - websecure
-      tls:
-        certResolver: myresolver
-EOF
-else
-    rm -f /etc/traefik/dynamic/news.yml
-fi
-
 # 3b. Mail transport (msmtp) — CONTACT_ADMIN_EMAIL is the one required env;
 # SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS/SMTP_FROM optional (all safe with
 # set -u thanks to the ${VAR:-} forms).
@@ -650,14 +570,32 @@ if [ -f "/var/www/env.json" ]; then
     fi
 fi
 
+# Inject DATABASE_FILE into env.json database_file (only if set)
+if [ -n "${DATABASE_FILE:-}" ]; then
+    echo "[INFO] Injecting DATABASE_FILE into env.json..."
+    jq --arg uri "$DATABASE_FILE" '.database_file = $uri' /var/www/env.json > /var/www/env.json.tmp && \
+    mv /var/www/env.json.tmp /var/www/env.json && \
+    chown www-data:www-data /var/www/env.json
+fi
+
+# Inject Redis config into env.json (only if set)
+if [ -n "${REDIS_PASS:-}" ]; then
+    echo "[INFO] Injecting Redis config into env.json..."
+    jq --arg host "${REDIS_HOST:-prodredis.tomweb.in}" \
+       --arg port "${REDIS_PORT:-6379}" \
+       --arg pass "${REDIS_PASS}" \
+       '.redis_host = $host | .redis_port = ($port | tonumber) | .redis_pass = $pass' \
+       /var/www/env.json > /var/www/env.json.tmp && \
+    mv /var/www/env.json.tmp /var/www/env.json && \
+    chown www-data:www-data /var/www/env.json
+fi
+
 # 5. Enable Apache Sites
 echo "[INFO] Enabling Apache Sites..."
 a2enmod rewrite proxy proxy_http proxy_wstunnel headers ssl
 a2dissite 000-default.conf
 
 SITES="labs.conf mqs.conf wg-api.conf code.conf error-service.conf"
-[ -n "${WORK_DOMAIN:-}" ] && SITES="$SITES work.conf"
-[ -n "${NEWS_DOMAIN:-}" ] && SITES="$SITES news.conf"
 a2ensite $SITES
 
 # 6. Setup Directory Permissions & Log Rotation
@@ -708,8 +646,8 @@ echo "[INFO] Setting up AI Worker systemd service..."
 cat <<EOF > /etc/systemd/system/ai-worker.service
 [Unit]
 Description=LearnAI Worker - AI Chat Processing
-After=mongod.service rabbitmq-server.service network.target
-Wants=mongod.service rabbitmq-server.service
+After=rabbitmq-server.service network.target
+Wants=rabbitmq-server.service
 
 [Service]
 Type=simple

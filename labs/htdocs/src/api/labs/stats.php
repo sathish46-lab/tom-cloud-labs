@@ -39,9 +39,12 @@ api_json(['status' => 'offline'], 200);
 // Lab is running — try the Redis-backed live stats store first
 $redisKeys = [$labHash, 'ctf-' . $labHash];
 try {
+    $redisHost = get_config('redis_host') ?: '127.0.0.1';
+    $redisPort = (int)(get_config('redis_port') ?: 6379);
+    $redisPass = get_config('redis_pass') ?: '';
     $redis = new Redis();
-    if (@$redis->connect('127.0.0.1', 6379, 0.5)) {
-        if (function_exists('get_config') ? $redis->auth(get_config('redis_admin_pass')) : false) {
+    if (@$redis->connect($redisHost, $redisPort, 0.5)) {
+        if (!$redisPass || $redis->auth($redisPass)) {
             foreach ($redisKeys as $rk) {
                 $raw = $redis->get('tomlabs:stats:' . $rk);
                 if (is_string($raw) && $raw !== '') {

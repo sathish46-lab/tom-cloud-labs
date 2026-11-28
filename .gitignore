@@ -90,6 +90,7 @@ vpn-api/**/logs/
 
 
 env.json
+backups/
 
 # =========================
 # Docker Infrastructure Data
@@ -117,3 +118,4 @@ opt/labs-control-panel/service-credentials.json
 # =========================
 config/credentials/*
 !/config/credentials/.gitkeep
+Old_service_backup/

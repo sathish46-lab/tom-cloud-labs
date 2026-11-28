@@ -3,9 +3,7 @@ services:
   # vps — app + SSH + WireGuard (ONLY container with WG port open)
   # ===========================================================================
   vps:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: dev_lab:latest
     container_name: ${VPS_CONTAINER:-vps}
     cap_add:
       - NET_ADMIN
@@ -21,8 +19,6 @@ services:
       - VPN_DOMAIN=${VPN_DOMAIN:?Set VPN_DOMAIN in .env}
       - MQS_DOMAIN=${MQS_DOMAIN:?Set MQS_DOMAIN in .env}
       - CODE_DOMAIN=${CODE_DOMAIN:?Set CODE_DOMAIN in .env}
-      - WORK_DOMAIN=${WORK_DOMAIN:?Set WORK_DOMAIN in .env}
-      - NEWS_DOMAIN=${NEWS_DOMAIN:?Set NEWS_DOMAIN in .env}
       - SSL_EMAIL=${SSL_EMAIL:-admin@example.com}
       # Force X-Forwarded-Proto=https at Apache (prod: behind Cloudflare TLS).
       # Dev HTTP mode sets false in .env so session cookies stay non-Secure.
@@ -42,15 +38,17 @@ services:
       - MONGO_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD:-${MONGO_PASS}}
       # Point app at split service containers (NOT localhost anymore)
       # Point app at split service containers (NOT localhost anymore)
-      - DATABASE_FILE=mongodb://admin:Tombootroot@127.0.0.1:27017/tom_labs_db?authSource=admin
+      - DATABASE_FILE=mongodb://tomapp:${PRODMONGO_APP_PASS:?Set PRODMONGO_APP_PASS in .env}@prodmongo.tomweb.in:27017/tom_labs_db?authSource=tom_labs_db
+      - MCP_MONGO_PASS=${MCP_MONGO_PASS:?Set MCP_MONGO_PASS in .env}
       - MYSQL_HOST=mysql.tomweb.in
       - MYSQL_PORT=3306
       - POSTGRES_HOST=postgres.tomweb.in
       - POSTGRES_PORT=5432
-      - REDIS_HOST=redis.tomweb.in
+      - REDIS_HOST=prodredis.tomweb.in
       - REDIS_PORT=6379
-      - API_SECRET=${API_SECRET:-your-super-secret-token-here}
-      - AI_INTERNAL_TOKEN=${AI_INTERNAL_TOKEN:-tclabs_ai_tool_92d3f8a1b5c7e4}
+      - REDIS_PASS=${REDIS_PASS:?Set REDIS_PASS in .env}
+      - API_SECRET=${API_SECRET:?Set API_SECRET in .env}
+      - AI_INTERNAL_TOKEN=${AI_INTERNAL_TOKEN:?Set AI_INTERNAL_TOKEN in .env}
       - AI_API_KEY=${AI_API_KEY:-}
     extra_hosts:
       # Internal .tomweb.in DNS → fixed service IPs
@@ -59,13 +57,13 @@ services:
       - "redis.tomweb.in:10.20.208.18"
       - "adminer.tomweb.in:10.20.208.19"
       - "mongo.tomweb.in:10.20.208.20"
+      - "prodmongo.tomweb.in:10.20.209.10"
+      - "prodredis.tomweb.in:10.20.209.11"
       - "mariadb.tomweb.in:10.20.208.26"
       - "dev.tomweb.in:127.0.0.1"
       - "vpn.dev.tomweb.in:127.0.0.1"
       - "mq.dev.tomweb.in:10.20.208.24"
       - "code.dev.tomweb.in:127.0.0.1"
-      - "work.dev.tomweb.in:127.0.0.1"
-      - "news.dev.tomweb.in:127.0.0.1"
       - "labs.tomweb.in:127.0.0.1"
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:rw
@@ -75,12 +73,14 @@ services:
       - ./init-services.sh:/usr/local/bin/init-services.sh
       - /var/run/docker.sock:/var/docker.sock
       - ./opt/labs-control-panel:/opt/labs-control-panel
-      - ./wireguard-conf:/etc/wireguard
-      - ./apache-logs:/var/log/apache2
-      - ./traefik-conf:/etc/traefik
-      - ./tomlabs/storage:/var/tomlabs/storage
-      # App-data MongoDB lives INSIDE the container (mongod, /etc/mongod.conf)
-      - ./mongo-data:/var/lib/mongodb
+      - devlab-wireguard-conf:/etc/wireguard
+      - traefik-conf-data:/etc/traefik
+      - devlab-storage:/var/tomlabs/storage
+    depends_on:
+      prodmongo:
+        condition: service_healthy
+      prodredis:
+        condition: service_healthy
     networks:
       tomweb_services:
         ipv4_address: 10.20.208.10
@@ -95,6 +95,8 @@ services:
           - work.tomweb.in
           - labs.tomweb.in
       labs_frontend: {}
+      prod_internal:
+        ipv4_address: 10.20.209.20
     ports:
       - "${HTTP_PORT:-9080}:80"
       - "${HTTPS_PORT:-9443}:443"
@@ -106,18 +108,67 @@ services:
     stop_signal: SIGRTMIN+3
 
   # ===========================================================================
+  # prodredis.tomweb.in — 10.20.209.11 (private, platform data only)
+  # ===========================================================================
+  prodredis:
+    image: ${PRODREDIS_IMAGE:-redis:7-alpine}
+    container_name: prodredis.tomweb.in
+    command: ["redis-server", "--requirepass", "${REDIS_PASS}"]
+    environment:
+      REDIS_PASS: ${REDIS_PASS:?Set REDIS_PASS in .env}
+    volumes:
+      - devlab-redis:/data
+    networks:
+      prod_internal:
+        ipv4_address: 10.20.209.11
+        aliases:
+          - prodredis.tomweb.in
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASS}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
+  # ===========================================================================
+  # prodmongo.tomweb.in — 10.20.209.10 (private, platform data only)
+  # ===========================================================================
+  prodmongo:
+    image: ${PRODMONGO_IMAGE:-mongo:8.0}
+    container_name: prodmongo.tomweb.in
+    command: ["--auth"]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: ${PRODMONGO_ROOT_PASS:?Set PRODMONGO_ROOT_PASS in .env}
+    volumes:
+      - devlab-mongo:/data/db
+    networks:
+      prod_internal:
+        ipv4_address: 10.20.209.10
+        aliases:
+          - prodmongo.tomweb.in
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand({ping:1})"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # ===========================================================================
   # mysql.tomweb.in — 10.20.208.16 (internal only, not published to host)
   # ===========================================================================
   mysql:
     image: mysql:8.0
     container_name: mysql.tomweb.in
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpass}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-tomcloud}
       MYSQL_USER: ${MYSQL_USER:-tomcloud}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-tomcloud}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD in .env}
     volumes:
-      - ./mysql-data:/var/lib/mysql
+      - mysql-service-data:/var/lib/mysql
     networks:
       tomweb_services:
         ipv4_address: 10.20.208.16
@@ -131,11 +182,11 @@ services:
     image: postgres:17
     container_name: postgres.tomweb.in
     environment:
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-tomcloud}
     volumes:
-      - ./postgres-data:/var/lib/postgresql/data
+      - postgres-service-data:/var/lib/postgresql/data
     networks:
       tomweb_services:
         ipv4_address: 10.20.208.17
@@ -152,7 +203,7 @@ services:
     container_name: redis.tomweb.in
     command: redis-server --save "" --appendonly no
     volumes:
-      - ./redis-data:/data
+      - redis-service-data:/data
     networks:
       tomweb_services:
         ipv4_address: 10.20.208.18
@@ -184,9 +235,9 @@ services:
     container_name: mongo.tomweb.in
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-admin}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-Tombootroot}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?Set MONGO_ROOT_PASSWORD in .env}
     volumes:
-      - ./mongo-service-data:/data/db
+      - mongo-service-data:/data/db
     networks:
       tomweb_services:
         ipv4_address: 10.20.208.20
@@ -207,9 +258,9 @@ services:
       ME_CONFIG_MONGODB_SERVER: mongo.tomweb.in
       ME_CONFIG_MONGODB_PORT: "27017"
       ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_USER:-admin}
-      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_ROOT_PASSWORD:-Tombootroot}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_ROOT_PASSWORD:?Set MONGO_ROOT_PASSWORD in .env}
       ME_CONFIG_BASICAUTH_USERNAME: ${ME_USER:-tomadmin}
-      ME_CONFIG_BASICAUTH_PASSWORD: ${ME_PASS:-express@2026}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${ME_PASS:?Set ME_PASS in .env}
       ME_CONFIG_OPTIONS_EDITORTHEME: default
     networks:
       tomweb_services:
@@ -269,7 +320,7 @@ services:
     environment:
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:?Set MARIADB_ROOT_PASSWORD in .env file}
     volumes:
-      - ./mariadb-service-data:/var/lib/mysql
+      - mariadb-service-data:/var/lib/mysql
     networks:
       tomweb_services:
         ipv4_address: 10.20.208.26
@@ -286,12 +337,10 @@ services:
     image: rabbitmq:3.12-management
     container_name: rabbitmq.tomweb.in
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-admin}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-admin}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:?Set RABBITMQ_USER in .env}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:?Set RABBITMQ_PASS in .env}
     volumes:
-      - ./rabbitmq-service-data:/var/lib/rabbitmq
-      # Persist enabled plugins (web_stomp = chat WebSocket transport)
-      - ./rabbitmq-conf/enabled_plugins:/etc/rabbitmq/enabled_plugins
+      - rabbitmq-service-data:/var/lib/rabbitmq
     networks:
       tomweb_services:
         ipv4_address: 10.20.208.24
@@ -374,7 +423,45 @@ networks:
     name: labs_frontend
     external: true
 
+  prod_internal:
+    name: prod_internal
+    driver: bridge
+    internal: true
+    ipam:
+      config:
+        - subnet: 10.20.209.0/24
+
 volumes:
-  labsstorage:
-    name: labsstorage
+  devlab-mongo:
+    name: devlab-mongo
+    external: true
+  devlab-redis:
+    name: devlab-redis
+    external: true
+  redis-service-data:
+    name: redis-service-data
+    external: true
+  postgres-service-data:
+    name: postgres-service-data
+    external: true
+  mysql-service-data:
+    name: mysql-service-data
+    external: true
+  mariadb-service-data:
+    name: mariadb-service-data
+    external: true
+  rabbitmq-service-data:
+    name: rabbitmq-service-data
+    external: true
+  mongo-service-data:
+    name: mongo-service-data
+    external: true
+  traefik-conf-data:
+    name: traefik-conf-data
+    external: true
+  devlab-storage:
+    name: devlab-storage
+    external: true
+  devlab-wireguard-conf:
+    name: devlab-wireguard-conf
     external: true
